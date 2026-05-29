@@ -640,6 +640,19 @@ export default function LivePage() {
     });
   };
 
+  // "New Diagram" from the Explorer. The current diagram's already in
+  // localStorage (we save on every change after hydration), so we don't
+  // need to persist anything — navigating to /live with no ?d= triggers
+  // a full reload and lands the user in the welcome flow for a fresh id.
+  // Using `window.location.assign` rather than state reset because the
+  // page owns a lot of derived state (history hook, drag state, picker
+  // mode, etc.) and a clean reload is the simplest way to guarantee a
+  // pristine starting point.
+  const newDiagram = () => {
+    if (typeof window === 'undefined') return;
+    window.location.assign(`${window.location.origin}/live`);
+  };
+
   const openTemplatePicker = () => {
     setTemplatePickerMode('templates');
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)));
@@ -1383,6 +1396,7 @@ export default function LivePage() {
         onToggleMinimized={() => setPaletteMinimized((v) => !v)}
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
+        onNewDiagram={newDiagram}
         onDeselect={() => {
           setSelectedId(null);
           setMultiSelectedIds(new Set());

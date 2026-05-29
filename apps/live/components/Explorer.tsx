@@ -7,6 +7,7 @@ type ExplorerProps = {
   minimized: boolean;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
+  onNewDiagram: () => void;
 };
 
 // Floating "Explorer" panel pinned to the top-left of the canvas by
@@ -16,7 +17,13 @@ type ExplorerProps = {
 // user's account. For now, with no auth and only localStorage persistence
 // of the current diagram, it shows a sign-up nudge so the surface is
 // already there when accounts ship.
-export function Explorer({ position, minimized, onMoveTo, onToggleMinimized }: ExplorerProps) {
+export function Explorer({
+  position,
+  minimized,
+  onMoveTo,
+  onToggleMinimized,
+  onNewDiagram,
+}: ExplorerProps) {
   if (minimized) return null;
   return (
     <MovablePanel
@@ -28,6 +35,14 @@ export function Explorer({ position, minimized, onMoveTo, onToggleMinimized }: E
       onMinimize={onToggleMinimized}
     >
       <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
+        <button
+          type="button"
+          onClick={onNewDiagram}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
+        >
+          <PlusIcon />
+          New Diagram
+        </button>
         <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-600">
           <p className="font-medium text-slate-800">Sign in to save your diagrams</p>
           <p className="mt-1 leading-relaxed text-slate-500">
@@ -46,6 +61,23 @@ export function Explorer({ position, minimized, onMoveTo, onToggleMinimized }: E
         </div>
       </div>
     </MovablePanel>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M6 2v8M2 6h8" />
+    </svg>
   );
 }
 

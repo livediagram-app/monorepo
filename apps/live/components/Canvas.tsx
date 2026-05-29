@@ -76,6 +76,7 @@ type CanvasProps = {
   onToggleMinimized: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
+  onNewDiagram: () => void;
   onDeselect: () => void;
   onSelect: (id: string) => void;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
@@ -169,6 +170,7 @@ export function Canvas(props: CanvasProps) {
     onToggleMinimized,
     onMoveExplorer,
     onToggleExplorerMinimized,
+    onNewDiagram,
     onDeselect,
     onSelect,
     onBeginDrag,
@@ -724,6 +726,7 @@ export function Canvas(props: CanvasProps) {
         minimized={explorerMinimized}
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}
+        onNewDiagram={onNewDiagram}
       />
 
       {welcomeOpen ? null : (
