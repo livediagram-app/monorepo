@@ -140,10 +140,17 @@ export async function apiSaveSelf(p: Participant): Promise<void> {
 // Realtime room
 // ---------------------------------------------------------------------
 
+// All op kinds the client sends / receives. Keep the room itself
+// agnostic of these — it just rebroadcasts. New op shapes only need
+// to grow this union and matching handlers in page.tsx.
+export type RoomOp =
+  | { kind: 'tabs'; tabs: Tab[]; name: string }
+  | { kind: 'select'; elementId: string | null };
+
 // Outgoing payloads sent from this client.
 export type RoomOutgoing =
   | { kind: 'hello'; participant: { id: string; name: string; color: string } }
-  | { kind: 'op'; op: { kind: 'tabs'; tabs: Tab[]; name: string } };
+  | { kind: 'op'; op: RoomOp };
 
 // Incoming payloads from the room (broadcast by the Durable Object).
 export type RoomIncoming =
@@ -151,11 +158,11 @@ export type RoomIncoming =
       kind: 'presence';
       participants: { id: string; name: string; color: string }[];
     }
-  | { kind: 'op'; from: string; op: { kind: 'tabs'; tabs: Tab[]; name: string } };
+  | { kind: 'op'; from: string; op: RoomOp };
 
 export type RoomHandlers = {
   onPresence: (participants: { id: string; name: string; color: string }[]) => void;
-  onOp: (from: string, op: { kind: 'tabs'; tabs: Tab[]; name: string }) => void;
+  onOp: (from: string, op: RoomOp) => void;
   onClose?: () => void;
 };
 

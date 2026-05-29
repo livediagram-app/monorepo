@@ -208,6 +208,12 @@ export default function LivePage() {
   // Durable Object room right now. Includes ourselves once our `hello`
   // round-trips. Rendered in the editor header avatar stack.
   const [livePresence, setLivePresence] = useState<Participant[]>([]);
+  // Per-participant selection: which element each remote participant
+  // currently has focused (null means deselected). Cleared for any
+  // participant who drops out of presence. Drives the on-element badges
+  // in BoxedElementView so users can see in real time what others are
+  // working on.
+  const [remoteSelections, setRemoteSelections] = useState<Map<string, string | null>>(new Map());
   const refreshDiagramList = (ownerId: string) => {
     apiListDiagrams(ownerId)
       .then((list) => setDiagramList(list))
@@ -342,12 +348,35 @@ export default function LivePage() {
             status: 'online',
           })),
         );
+        // Drop selections for any participant who's no longer connected.
+        // Stops stale "User X is here" badges from sticking after a tab
+        // close or network drop.
+        const present = new Set(participants.map((p) => p.id));
+        setRemoteSelections((prev) => {
+          let changed = false;
+          const next = new Map<string, string | null>();
+          for (const [id, sel] of prev) {
+            if (present.has(id)) {
+              next.set(id, sel);
+            } else {
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
       },
-      onOp: (_from, op) => {
-        if (op.kind !== 'tabs') return;
-        remoteUpdateRef.current = true;
-        resetTabs(op.tabs);
-        setDiagramName(op.name);
+      onOp: (from, op) => {
+        if (op.kind === 'tabs') {
+          remoteUpdateRef.current = true;
+          resetTabs(op.tabs);
+          setDiagramName(op.name);
+        } else if (op.kind === 'select') {
+          setRemoteSelections((prev) => {
+            const next = new Map(prev);
+            next.set(from, op.elementId);
+            return next;
+          });
+        }
       },
     };
     const room = connectRoom(
@@ -365,6 +394,16 @@ export default function LivePage() {
     // the dep list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, diagramId]);
+
+  // Broadcast local selection changes so peers can render "Tom is
+  // working on this element" indicators. Fires whenever `selectedId`
+  // changes (including to null). Skipped before the room is open or
+  // before hydration; peers learn the initial selection state via
+  // their own `select` ops when they happen, not from a snapshot.
+  useEffect(() => {
+    if (!hydrated || !diagramId) return;
+    roomRef.current?.send({ kind: 'op', op: { kind: 'select', elementId: selectedId } });
+  }, [hydrated, diagramId, selectedId]);
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
   const [viewportZoom, setViewportZoom] = useState(1);
   const canvasMainRef = useRef<HTMLElement>(null);
@@ -376,6 +415,26 @@ export default function LivePage() {
   }, [viewportZoom]);
 
   const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0]!;
+
+  // Per-element remote-selection map. Looks up each participant id
+  // against the current `livePresence` so we can render their colour +
+  // initials without bringing the participant blob along in every
+  // `select` op. Self is filtered out — we don't need a "you're here"
+  // badge on top of our own selection ring.
+  const livePresenceById = new Map(livePresence.map((p) => [p.id, p] as const));
+  const remoteSelectionsByElement = new Map<
+    string,
+    { id: string; name: string; color: string }[]
+  >();
+  for (const [participantId, elementId] of remoteSelections) {
+    if (!elementId) continue;
+    if (participantId === selfParticipant.id) continue;
+    const participant = livePresenceById.get(participantId);
+    if (!participant) continue;
+    const list = remoteSelectionsByElement.get(elementId) ?? [];
+    list.push({ id: participant.id, name: participant.name, color: participant.color });
+    remoteSelectionsByElement.set(elementId, list);
+  }
   // True only while the first-run welcome modal is up. Drives the chrome
   // hide rule (palette / explorer / dock / tab bar all suppressed so the
   // user's focus is on the modal). The Browse-templates flow uses the
@@ -1496,6 +1555,7 @@ export default function LivePage() {
         elements={activeTab.elements}
         selectedId={selectedId}
         multiSelectedIds={multiSelectedIds}
+        remoteSelectionsByElement={remoteSelectionsByElement}
         onSelectMarquee={selectMarquee}
         onDuplicateMultiSelected={duplicateMultiSelected}
         onDeleteMultiSelected={deleteMultiSelected}

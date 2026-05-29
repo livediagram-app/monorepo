@@ -11,6 +11,7 @@ import {
   type TextSize,
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
+import { initialsOf } from '@/lib/identity';
 import {
   FixedSizeLabel,
   LockBadge,
@@ -36,6 +37,10 @@ type BoxedElementViewProps = {
   onCancelEdit: () => void;
   onFollowLink: (tabId: string) => void;
   onOpenComments: () => void;
+  // Other participants whose realtime selection is currently on this
+  // element. Rendered as a small initial-badge stack at the top-left
+  // (opposite the link / comment badges).
+  remoteSelectors: { id: string; name: string; color: string }[];
 };
 
 export function BoxedElementView({
@@ -53,6 +58,7 @@ export function BoxedElementView({
   onCancelEdit,
   onFollowLink,
   onOpenComments,
+  remoteSelectors,
 }: BoxedElementViewProps) {
   const isLocked = element.locked === true;
   const label = element.label ?? '';
@@ -125,6 +131,10 @@ export function BoxedElementView({
       )}
 
       {isLocked ? <LockBadge zoom={zoom} /> : null}
+
+      {remoteSelectors.length > 0 ? (
+        <RemoteSelectorsStrip zoom={zoom} selectors={remoteSelectors} />
+      ) : null}
 
       {linked || commentCount > 0 ? (
         <BadgeStrip
@@ -232,6 +242,44 @@ const ANCHOR_STYLE: Record<'n' | 'e' | 's' | 'w', React.CSSProperties> = {
   s: { top: '100%', left: '50%' },
   w: { top: '50%', left: 0 },
 };
+
+// Stack of small circular avatars pinned to the element's top-left. Each
+// avatar shows another participant who currently has this element
+// selected (per the realtime `select` op). The first avatar is fully
+// visible; subsequent ones overlap with a small negative margin so a
+// busy element doesn't push the stack across the canvas. Counter-scaled
+// like the other badges so the on-screen size doesn't change with zoom.
+function RemoteSelectorsStrip({
+  zoom,
+  selectors,
+}: {
+  zoom: number;
+  selectors: { id: string; name: string; color: string }[];
+}) {
+  return (
+    <div
+      onPointerDown={(e) => e.stopPropagation()}
+      style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'left top' }}
+      className="pointer-events-none absolute -left-1 -top-1 flex"
+    >
+      {selectors.map((p, i) => (
+        <div
+          key={p.id}
+          title={`${p.name} is here`}
+          aria-label={`${p.name} is here`}
+          style={{
+            backgroundColor: p.color,
+            marginLeft: i === 0 ? 0 : -6,
+            zIndex: selectors.length - i,
+          }}
+          className="flex h-5 w-5 items-center justify-center rounded-full border border-white text-[9px] font-semibold text-white shadow-sm"
+        >
+          {initialsOf(p.name)}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Floating cluster at the top-right of the element. Holds the link badge
 // (if linked) and the comment badge (if there are unresolved comments) as

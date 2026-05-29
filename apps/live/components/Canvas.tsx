@@ -56,6 +56,10 @@ type CanvasProps = {
   selectedId: string | null;
   multiSelectedIds: Set<string>;
   onSelectMarquee: (ids: Set<string>) => void;
+  // Map of elementId -> remote participants currently focused on that
+  // element. Drives a small badge ring on each element so participants
+  // can see in real time what others are working on.
+  remoteSelectionsByElement: Map<string, { id: string; name: string; color: string }[]>;
   onDuplicateMultiSelected: () => void;
   onDeleteMultiSelected: () => void;
   editingId: string | null;
@@ -153,6 +157,7 @@ export function Canvas(props: CanvasProps) {
     selectedId,
     multiSelectedIds,
     onSelectMarquee,
+    remoteSelectionsByElement,
     onDuplicateMultiSelected,
     onDeleteMultiSelected,
     editingId,
@@ -523,6 +528,7 @@ export function Canvas(props: CanvasProps) {
             key={element.id}
             element={element}
             isSelected={memberIds.has(element.id) || multiSelectedIds.has(element.id)}
+            remoteSelectors={remoteSelectionsByElement.get(element.id) ?? []}
             isEditing={element.id === editingId}
             isPaintMode={isPaintMode || isGroupMode}
             showHandles={showHandles(element.id)}
