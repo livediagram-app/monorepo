@@ -3,7 +3,7 @@
 The diagram editor — where users actually build diagrams and mindmaps.
 
 - **Workspace:** `apps/live` (`@livediagram/live`).
-- **Public URL path:** `/live` (via the [router app](08-router-app.md)).
+- **Public URL:** `https://livediagram.app/live` (via the [router app](08-router-app.md)).
 - **Tech:** Next.js (static export), React, TypeScript, Tailwind. `basePath: '/live'` in `next.config.ts` so its internal URLs and asset paths are correctly prefixed.
 
 ## Always available without sign-in

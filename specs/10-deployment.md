@@ -76,9 +76,14 @@ On the first run, none of the workers exist yet. The job ordering handles this: 
 
 Subsequent deploys are idempotent updates.
 
-## Custom domains
+## Custom domain
 
-Out of scope for the prototype. Workers initially serve from default `*.workers.dev` URLs; routing the apex domain to the router worker comes later and lives outside the codebase (Cloudflare dashboard or `[routes]` in `apps/router/wrangler.toml`).
+Production lives at **`https://livediagram.app`**. The apex routes to the router worker (configured in the Cloudflare dashboard, not in `wrangler.toml`). From there:
+
+- `https://livediagram.app/` and `https://livediagram.app/<anything>` (other than `/live*`) → marketing
+- `https://livediagram.app/live` and `https://livediagram.app/live/<anything>` → live editor (the router strips the `/live` prefix before forwarding; see [08-router-app.md](08-router-app.md))
+
+The Workers themselves remain reachable at their default `*.workers.dev` URLs for direct testing.
 
 ## What this spec does **not** yet cover
 

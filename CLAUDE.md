@@ -124,6 +124,8 @@ All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static
 
 Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-router` — matching the service-binding targets in `apps/router/wrangler.toml`.
 
+Production is live at **https://livediagram.app** (`/` → marketing, `/live` → editor).
+
 Secrets needed in the GitHub repo: `CF_API_TOKEN`, `CF_ACCOUNT_ID`. See [secrets policy](specs/06-secrets-policy.md).
 
 ## Common commands
