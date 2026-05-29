@@ -1,9 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import {
-  endpointPosition,
-  type ArrowElement,
-  type Element,
-} from '@livediagram/diagram';
+import { endpointPosition, type ArrowElement, type Element } from '@livediagram/diagram';
 import type { ArrowEnd } from '@/lib/canvas';
 
 type ArrowViewProps = {
@@ -27,7 +23,7 @@ export function ArrowView({
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
 
-  const stroke = isSelected ? 'rgb(2 132 199)' /* brand-600 */ : 'rgb(51 65 85)' /* slate-700 */;
+  const stroke = isSelected ? 'rgb(2 132 199)' /* brand-600 */ : 'rgb(51 65 85)'; /* slate-700 */
   const strokeWidth = isSelected ? 2.5 : 2;
   const markerId = isSelected ? 'arrowhead-selected' : 'arrowhead-default';
   const hitCursor = isPaintMode ? 'copy' : 'pointer';

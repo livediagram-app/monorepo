@@ -7,5 +7,7 @@
     ".": "./theme.css",
     "./theme.css": "./theme.css"
   },
-  "files": ["theme.css"]
+  "files": [
+    "theme.css"
+  ]
 }

@@ -182,16 +182,13 @@ export function Canvas(props: CanvasProps) {
 
   // Pan tracking. viewportOffset is owned by the page (so element placement
   // can reason about the visible viewport); we just read/write through props.
-  const [pan, setPan] = useState<
-    | {
-        startClientX: number;
-        startClientY: number;
-        startOffsetX: number;
-        startOffsetY: number;
-        movedRef: { current: boolean };
-      }
-    | null
-  >(null);
+  const [pan, setPan] = useState<{
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+    movedRef: { current: boolean };
+  } | null>(null);
 
   useEffect(() => {
     if (!pan) return;
@@ -222,8 +219,10 @@ export function Canvas(props: CanvasProps) {
   const handleResetZoom = () => setViewportZoom(1);
 
   // Group-aware selection.
-  const memberIds = selectedId ? new Set(selectionMembers(elements, selectedId)) : new Set<string>();
-  const selected = selectedId ? elements.find((el) => el.id === selectedId) ?? null : null;
+  const memberIds = selectedId
+    ? new Set(selectionMembers(elements, selectedId))
+    : new Set<string>();
+  const selected = selectedId ? (elements.find((el) => el.id === selectedId) ?? null) : null;
   const selectedIsBoxed = selected ? isBoxed(selected) : false;
   const selectedIsGrouped = selected && isBoxed(selected) && selected.groupId !== undefined;
 
@@ -237,9 +236,11 @@ export function Canvas(props: CanvasProps) {
   }
 
   const selectedLocked = selected ? selected.locked === true : false;
-  const selectedAspectLocked = selected && isBoxed(selected) ? selected.aspectLocked === true : false;
+  const selectedAspectLocked =
+    selected && isBoxed(selected) ? selected.aspectLocked === true : false;
   const showPopover = selected && editingId !== selected.id && !isPaintMode && !isGroupMode;
-  const showPlus = selected && selectedIsBoxed && editingId !== selected.id && !isPaintMode && !isGroupMode;
+  const showPlus =
+    selected && selectedIsBoxed && editingId !== selected.id && !isPaintMode && !isGroupMode;
   const showHandles = (id: string) =>
     selectedIsBoxed &&
     id === selectedId &&
@@ -272,25 +273,23 @@ export function Canvas(props: CanvasProps) {
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
   const paletteSelection: SelectedElementControls | null = selected
     ? {
-        textSize: isBoxed(selected) ? selected.textSize ?? 'md' : null,
+        textSize: isBoxed(selected) ? (selected.textSize ?? 'md') : null,
         textAlignX:
           selected && isBoxed(selected) && selectedDefaultAlign
-            ? selected.textAlignX ?? selectedDefaultAlign.x
+            ? (selected.textAlignX ?? selectedDefaultAlign.x)
             : null,
         textAlignY:
           selected && isBoxed(selected) && selectedDefaultAlign
-            ? selected.textAlignY ?? selectedDefaultAlign.y
+            ? (selected.textAlignY ?? selectedDefaultAlign.y)
             : null,
-        textColor: isBoxed(selected)
-          ? selected.textColor ?? defaultTextColor(selected)
-          : null,
+        textColor: isBoxed(selected) ? (selected.textColor ?? defaultTextColor(selected)) : null,
         fillColor:
           selectionSupportsColours && isBoxed(selected)
-            ? selected.fillColor ?? defaultFillColor(selected)
+            ? (selected.fillColor ?? defaultFillColor(selected))
             : null,
         strokeColor:
           selectionSupportsColours && isBoxed(selected)
-            ? selected.strokeColor ?? defaultStrokeColor(selected)
+            ? (selected.strokeColor ?? defaultStrokeColor(selected))
             : null,
         opacity: selected.opacity ?? 1,
         onBringToFront,
@@ -320,7 +319,12 @@ export function Canvas(props: CanvasProps) {
       ref={mainRef}
       tabIndex={-1}
       className="relative flex-1 overflow-hidden outline-none"
-      style={tabBackgroundStyle(tabBackgroundPattern, viewportOffset, tabBackgroundColor, tabPatternColor)}
+      style={tabBackgroundStyle(
+        tabBackgroundPattern,
+        viewportOffset,
+        tabBackgroundColor,
+        tabPatternColor,
+      )}
     >
       <div
         ref={wrapperRef}
@@ -465,7 +469,17 @@ export function Canvas(props: CanvasProps) {
       {isPaintMode ? (
         <ModeBanner
           icon={
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M13.5 2.5l-6 6" />
               <path d="M7 8l1.5 1.5" />
               <path d="M6.5 9.5a3 3 0 1 0 1 4.5c.5-.6.5-1.4 0-2-.6-.5-1.4-.5-2 0" />
@@ -479,7 +493,16 @@ export function Canvas(props: CanvasProps) {
       {isGroupMode ? (
         <ModeBanner
           icon={
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <rect x="2.25" y="2.25" width="8" height="8" rx="1.25" />
               <rect x="5.75" y="5.75" width="8" height="8" rx="1.25" fill="white" />
             </svg>
@@ -510,12 +533,7 @@ export function Canvas(props: CanvasProps) {
           onReset={handleResetZoom}
           onFitToScreen={onFitToScreen}
         />
-        <HistoryControls
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onUndo={onUndo}
-          onRedo={onRedo}
-        />
+        <HistoryControls canUndo={canUndo} canRedo={canRedo} onUndo={onUndo} onRedo={onRedo} />
       </div>
     </main>
   );

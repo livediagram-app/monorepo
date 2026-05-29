@@ -115,7 +115,16 @@ export function BoxedElementView({
         </svg>
       ) : null}
 
-      {renderLabel(element, label, textSize, alignX, alignY, isEditing, onCommitLabel, onCancelEdit)}
+      {renderLabel(
+        element,
+        label,
+        textSize,
+        alignX,
+        alignY,
+        isEditing,
+        onCommitLabel,
+        onCancelEdit,
+      )}
 
       {isLocked ? <LockBadge zoom={zoom} /> : null}
 
@@ -129,10 +138,30 @@ export function BoxedElementView({
 
       {showAnchors ? (
         <>
-          <AnchorDot anchor="n" elementId={element.id} zoom={zoom} onBeginAnchorDrag={onBeginAnchorDrag} />
-          <AnchorDot anchor="e" elementId={element.id} zoom={zoom} onBeginAnchorDrag={onBeginAnchorDrag} />
-          <AnchorDot anchor="s" elementId={element.id} zoom={zoom} onBeginAnchorDrag={onBeginAnchorDrag} />
-          <AnchorDot anchor="w" elementId={element.id} zoom={zoom} onBeginAnchorDrag={onBeginAnchorDrag} />
+          <AnchorDot
+            anchor="n"
+            elementId={element.id}
+            zoom={zoom}
+            onBeginAnchorDrag={onBeginAnchorDrag}
+          />
+          <AnchorDot
+            anchor="e"
+            elementId={element.id}
+            zoom={zoom}
+            onBeginAnchorDrag={onBeginAnchorDrag}
+          />
+          <AnchorDot
+            anchor="s"
+            elementId={element.id}
+            zoom={zoom}
+            onBeginAnchorDrag={onBeginAnchorDrag}
+          />
+          <AnchorDot
+            anchor="w"
+            elementId={element.id}
+            zoom={zoom}
+            onBeginAnchorDrag={onBeginAnchorDrag}
+          />
         </>
       ) : null}
     </div>
@@ -146,13 +175,7 @@ const ANCHOR_STYLE: Record<'n' | 'e' | 's' | 'w', React.CSSProperties> = {
   w: { top: '50%', left: 0 },
 };
 
-function LinkBadge({
-  zoom,
-  onFollow,
-}: {
-  zoom: number;
-  onFollow: () => void;
-}) {
+function LinkBadge({ zoom, onFollow }: { zoom: number; onFollow: () => void }) {
   return (
     <button
       type="button"
@@ -165,7 +188,17 @@ function LinkBadge({
       style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
       className="pointer-events-auto absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
     >
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
         <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
         <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
         <line x1="6" y1="10" x2="10" y2="6" />

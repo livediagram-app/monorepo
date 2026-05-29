@@ -130,16 +130,16 @@ Secrets needed in the GitHub repo: `CF_API_TOKEN`, `CF_ACCOUNT_ID`. See [secrets
 
 Run from the repo root:
 
-| Command             | What it does                              |
-| ------------------- | ----------------------------------------- |
-| `pnpm install`      | Install all workspace deps                |
-| `pnpm dev`          | `turbo run dev` across workspaces         |
-| `pnpm build`        | `turbo run build`                         |
-| `pnpm lint`         | `turbo run lint`                          |
-| `pnpm typecheck`    | `turbo run typecheck`                     |
-| `pnpm test`         | `turbo run test`                          |
-| `pnpm format`       | Prettier write across the repo            |
-| `pnpm format:check` | Prettier check (CI)                       |
+| Command             | What it does                      |
+| ------------------- | --------------------------------- |
+| `pnpm install`      | Install all workspace deps        |
+| `pnpm dev`          | `turbo run dev` across workspaces |
+| `pnpm build`        | `turbo run build`                 |
+| `pnpm lint`         | `turbo run lint`                  |
+| `pnpm typecheck`    | `turbo run typecheck`             |
+| `pnpm test`         | `turbo run test`                  |
+| `pnpm format`       | Prettier write across the repo    |
+| `pnpm format:check` | Prettier check (CI)               |
 
 Run a script in a single workspace: `pnpm --filter @livediagram/<name> <script>`.
 

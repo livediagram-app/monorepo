@@ -14,13 +14,7 @@ export type TextSize = 'scale' | 'sm' | 'md' | 'lg';
 export type TextAlignX = 'left' | 'center' | 'right';
 export type TextAlignY = 'top' | 'middle' | 'bottom';
 
-export type BackgroundPattern =
-  | 'grid'
-  | 'blank'
-  | 'lines'
-  | 'crosshatch'
-  | 'graph'
-  | 'confetti';
+export type BackgroundPattern = 'grid' | 'blank' | 'lines' | 'crosshatch' | 'graph' | 'confetti';
 
 export const DEFAULT_BACKGROUND_COLOR = '#ffffff';
 export const DEFAULT_PATTERN_COLOR = '#cbd5e1'; // slate-300
@@ -388,14 +382,22 @@ export type Point = { x: number; y: number };
 export function anchorPosition(element: BoxedElement, anchor: Anchor): Point {
   const { x, y, width, height } = element;
   switch (anchor) {
-    case 'nw': return { x, y };
-    case 'n':  return { x: x + width / 2, y };
-    case 'ne': return { x: x + width, y };
-    case 'e':  return { x: x + width, y: y + height / 2 };
-    case 'se': return { x: x + width, y: y + height };
-    case 's':  return { x: x + width / 2, y: y + height };
-    case 'sw': return { x, y: y + height };
-    case 'w':  return { x, y: y + height / 2 };
+    case 'nw':
+      return { x, y };
+    case 'n':
+      return { x: x + width / 2, y };
+    case 'ne':
+      return { x: x + width, y };
+    case 'e':
+      return { x: x + width, y: y + height / 2 };
+    case 'se':
+      return { x: x + width, y: y + height };
+    case 's':
+      return { x: x + width / 2, y: y + height };
+    case 'sw':
+      return { x, y: y + height };
+    case 'w':
+      return { x, y: y + height / 2 };
   }
 }
 
@@ -406,7 +408,10 @@ export function endpointPosition(endpoint: Endpoint, elements: Element[]): Point
   return anchorPosition(target, endpoint.anchor);
 }
 
-export function elementBounds(element: Element, elements: Element[]): { x: number; y: number; width: number; height: number } {
+export function elementBounds(
+  element: Element,
+  elements: Element[],
+): { x: number; y: number; width: number; height: number } {
   if (isBoxed(element)) {
     return { x: element.x, y: element.y, width: element.width, height: element.height };
   }
@@ -530,7 +535,10 @@ export function unionBoxedBounds(
   elements: Element[],
   ids: Set<ElementId>,
 ): { x: number; y: number; width: number; height: number } | null {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
   let found = false;
   for (const el of elements) {
     if (!ids.has(el.id) || !isBoxed(el)) continue;

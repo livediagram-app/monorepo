@@ -33,11 +33,11 @@ Selectable from the [Selected Element](#selected-element-section) section of the
 
 Behaviour per label renderer:
 
-| Renderer            | How alignment is applied                                                   |
-| ------------------- | -------------------------------------------------------------------------- |
-| Scaling (auto-fit)  | The SVG `preserveAspectRatio` is set to the matching `x{Min/Mid/Max}Y{Min/Mid/Max} meet` so the text scales into the chosen corner. |
-| Fixed-size single   | CSS `align-items` + `text-align` on a flex container.                      |
-| Sticky multi-line   | CSS `align-items` for vertical + `text-align` on the inner block.          |
+| Renderer           | How alignment is applied                                                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Scaling (auto-fit) | The SVG `preserveAspectRatio` is set to the matching `x{Min/Mid/Max}Y{Min/Mid/Max} meet` so the text scales into the chosen corner. |
+| Fixed-size single  | CSS `align-items` + `text-align` on a flex container.                                                                               |
+| Sticky multi-line  | CSS `align-items` for vertical + `text-align` on the inner block.                                                                   |
 
 The label editor (input/textarea) inherits the horizontal alignment so the cursor appears where the committed text will land.
 
@@ -53,12 +53,12 @@ All stored as CSS-compatible colour strings (typically `#rrggbb`).
 
 Defaults follow the design system per type:
 
-| Type   | Fill        | Stroke      | Text           |
-| ------ | ----------- | ----------- | -------------- |
-| Shape  | `brand-50`  | `brand-500` | `brand-800`    |
-| Sticky | `amber-100` | `amber-200` | amber-950-ish  |
-| Text   | transparent | transparent | `slate-800`    |
-| Arrow  | n/a         | n/a         | n/a            |
+| Type   | Fill        | Stroke      | Text          |
+| ------ | ----------- | ----------- | ------------- |
+| Shape  | `brand-50`  | `brand-500` | `brand-800`   |
+| Sticky | `amber-100` | `amber-200` | amber-950-ish |
+| Text   | transparent | transparent | `slate-800`   |
+| Arrow  | n/a         | n/a         | n/a           |
 
 Setting a colour applies to every member of the current selection that supports it (group-aware).
 
@@ -230,10 +230,10 @@ type Element = ShapeElement | ArrowElement;
 
 Two shape kinds, both rendered as absolutely positioned elements on the canvas:
 
-| Kind     | Rendering                                        |
-| -------- | ------------------------------------------------ |
-| `square` | Rectangle with slight rounded corners.           |
-| `circle` | Square frame with `border-radius: 50%`.          |
+| Kind     | Rendering                               |
+| -------- | --------------------------------------- |
+| `square` | Rectangle with slight rounded corners.  |
+| `circle` | Square frame with `border-radius: 50%`. |
 
 Styling: a `brand-500` outline over a faint `brand-50` fill, with a subtle drop shadow. Same style for both — only the border-radius differs.
 
@@ -246,7 +246,7 @@ type ShapeKind = 'square' | 'circle';
 
 type Element = {
   id: ElementId;
-  type: 'shape';       // discriminator — future: 'edge', 'group', ...
+  type: 'shape'; // discriminator — future: 'edge', 'group', ...
   shape: ShapeKind;
   x: number;
   y: number;
@@ -413,16 +413,16 @@ Clicking any group member selects the **whole group** — all members receive th
 
 ### Operations on a group
 
-| Operation             | Behaviour                                                              |
-| --------------------- | ---------------------------------------------------------------------- |
-| Move (drag)           | All members translate by the same delta.                               |
-| Resize                | **Disabled.** Corner handles are hidden — ungroup to resize.           |
-| Delete                | Removes all members + cascading arrows pinned to any of them.          |
-| Lock                  | Toggles `locked` on all members. Direction is determined by the originally selected member's current lock state. |
-| Bring to Front / Send to Back | All members move to top / bottom together, preserving relative order. |
-| Double-click to edit  | Edits only the clicked member's label.                                 |
-| Quick add + connect   | Duplicates **all group members** together (preserving their relative positions) plus any arrows internal to the group, shifted as a unit. The connector arrow goes from the originally selected member to its duplicate. The copies form a new group. |
-| Format painter        | Applies to the clicked target only (group membership ignored).         |
+| Operation                     | Behaviour                                                                                                                                                                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Move (drag)                   | All members translate by the same delta.                                                                                                                                                                                                              |
+| Resize                        | **Disabled.** Corner handles are hidden — ungroup to resize.                                                                                                                                                                                          |
+| Delete                        | Removes all members + cascading arrows pinned to any of them.                                                                                                                                                                                         |
+| Lock                          | Toggles `locked` on all members. Direction is determined by the originally selected member's current lock state.                                                                                                                                      |
+| Bring to Front / Send to Back | All members move to top / bottom together, preserving relative order.                                                                                                                                                                                 |
+| Double-click to edit          | Edits only the clicked member's label.                                                                                                                                                                                                                |
+| Quick add + connect           | Duplicates **all group members** together (preserving their relative positions) plus any arrows internal to the group, shifted as a unit. The connector arrow goes from the originally selected member to its duplicate. The copies form a new group. |
+| Format painter                | Applies to the clicked target only (group membership ignored).                                                                                                                                                                                        |
 
 ### Ungrouping
 
@@ -478,12 +478,12 @@ Explicitly **not** copied — these are per-element, not formatting:
 
 Each boxed element carries a `textSize` setting controlling how its label renders. Four values:
 
-| Value      | Behaviour                                                               |
-| ---------- | ----------------------------------------------------------------------- |
-| `'scale'`  | **Default.** Label auto-scales to fit the box (current SVG fit-to-bounds for shapes / text; multi-line wrap at a small default font for sticky). |
-| `'sm'`     | Fixed small font.                                                       |
-| `'md'`     | Fixed medium font.                                                      |
-| `'lg'`     | Fixed large font.                                                       |
+| Value     | Behaviour                                                                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `'scale'` | **Default.** Label auto-scales to fit the box (current SVG fit-to-bounds for shapes / text; multi-line wrap at a small default font for sticky). |
+| `'sm'`    | Fixed small font.                                                                                                                                |
+| `'md'`    | Fixed medium font.                                                                                                                               |
+| `'lg'`    | Fixed large font.                                                                                                                                |
 
 Selectable from the [Selected Element](#selected-element-section) section of the palette. When set to a fixed size, content is centered (single-line) or wrapped (sticky). Resizing the element does not change the font — only `scale` reacts to box size.
 

@@ -13,8 +13,8 @@ export function Hero() {
           Diagrams your team builds <span className="text-brand-600">together</span>.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-slate-600">
-          A multiplayer canvas for diagrams and mindmaps. Live cursors, instant sync, no
-          friction — for teams who think visually.
+          A multiplayer canvas for diagrams and mindmaps. Live cursors, instant sync, no friction —
+          for teams who think visually.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a

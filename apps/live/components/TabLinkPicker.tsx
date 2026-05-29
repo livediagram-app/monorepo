@@ -51,8 +51,7 @@ export function TabLinkPicker({
     let dx = 0;
     let dy = 0;
     if (rect.left < margin) dx = margin - rect.left;
-    else if (rect.right > window.innerWidth - margin)
-      dx = window.innerWidth - margin - rect.right;
+    else if (rect.right > window.innerWidth - margin) dx = window.innerWidth - margin - rect.right;
     if (rect.top < margin) dy = margin - rect.top;
     else if (rect.bottom > window.innerHeight - margin)
       dy = window.innerHeight - margin - rect.bottom;
@@ -109,7 +108,14 @@ export function TabLinkPicker({
               <span className="truncate flex-1">{tab.name}</span>
               {isActive ? (
                 <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-                  <path d="M3 6l2 2 4-4" stroke="currentColor" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M3 6l2 2 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               ) : null}
             </button>

@@ -37,7 +37,6 @@ export function EditorHeader({ diagramName, onRename }: EditorHeaderProps) {
       {/* Spacer that mirrors the brand block on the left so the centred title
           stays visually centred even though the right side is intentionally empty. */}
       <div className="w-48" aria-hidden />
-
     </header>
   );
 }

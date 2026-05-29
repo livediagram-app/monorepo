@@ -4,11 +4,11 @@ All deployments run **via GitHub Actions** to **Cloudflare Workers** (Workers wi
 
 ## Apps and their Cloudflare Workers
 
-| App                | Cloudflare Worker         | Type                         |
-| ------------------ | ------------------------- | ---------------------------- |
-| `apps/marketing`   | `livediagram-marketing`   | Static assets only           |
-| `apps/live`        | `livediagram-live`        | Static assets only           |
-| `apps/router`      | `livediagram-router`      | Worker (service bindings)    |
+| App              | Cloudflare Worker       | Type                      |
+| ---------------- | ----------------------- | ------------------------- |
+| `apps/marketing` | `livediagram-marketing` | Static assets only        |
+| `apps/live`      | `livediagram-live`      | Static assets only        |
+| `apps/router`    | `livediagram-router`    | Worker (service bindings) |
 
 The marketing and live workers serve files from each Next.js app's `./out` directory (`output: 'export'`). The router worker holds **no application logic** — only the `MARKETING` and `LIVE` service bindings that forward requests to the right downstream worker. See [08-router-app.md](08-router-app.md).
 
@@ -48,10 +48,10 @@ The deploy uses [`cloudflare/wrangler-action@v3`](https://github.com/cloudflare/
 
 Set in the repo under **Settings → Secrets and variables → Actions**:
 
-| Secret           | What it is                                                                 |
-| ---------------- | -------------------------------------------------------------------------- |
-| `CF_API_TOKEN`   | A Cloudflare API token with permissions to deploy Workers and read account info. |
-| `CF_ACCOUNT_ID`  | The Cloudflare account ID the workers belong to.                           |
+| Secret          | What it is                                                                       |
+| --------------- | -------------------------------------------------------------------------------- |
+| `CF_API_TOKEN`  | A Cloudflare API token with permissions to deploy Workers and read account info. |
+| `CF_ACCOUNT_ID` | The Cloudflare account ID the workers belong to.                                 |
 
 ### Creating the API token
 

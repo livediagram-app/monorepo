@@ -256,8 +256,7 @@ function PortalMenu({
     let dx = 0;
     let dy = 0;
     if (rect.left < margin) dx = margin - rect.left;
-    else if (rect.right > window.innerWidth - margin)
-      dx = window.innerWidth - margin - rect.right;
+    else if (rect.right > window.innerWidth - margin) dx = window.innerWidth - margin - rect.right;
     if (rect.top < margin) dy = margin - rect.top;
     else if (rect.bottom > window.innerHeight - margin)
       dy = window.innerHeight - margin - rect.bottom;
@@ -294,7 +293,13 @@ function PortalMenu({
     >
       <MenuItem icon={<PencilIcon />} label="Rename" onClick={onRename} />
       <MenuItem icon={<CopyIcon />} label="Duplicate" onClick={onDuplicate} />
-      <MenuItem icon={<TrashIcon />} label="Delete" onClick={onDelete} danger disabled={!canDelete} />
+      <MenuItem
+        icon={<TrashIcon />}
+        label="Delete"
+        onClick={onDelete}
+        danger
+        disabled={!canDelete}
+      />
     </div>,
     document.body,
   );
@@ -313,7 +318,8 @@ function MenuItem({
   danger?: boolean;
   disabled?: boolean;
 }) {
-  const base = 'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition';
+  const base =
+    'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition';
   const tone = disabled
     ? 'cursor-not-allowed text-slate-300'
     : danger
@@ -331,7 +337,17 @@ function MenuItem({
 
 function PencilIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M11.5 2.5l2 2-8 8H3.5v-2z" />
       <path d="M10 4l2 2" />
     </svg>
@@ -340,7 +356,16 @@ function PencilIcon() {
 
 function CopyIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="3" y="3" width="8" height="8" rx="1.25" />
       <path d="M5.5 13.5h6a1 1 0 0 0 1-1v-6" />
     </svg>
@@ -349,7 +374,17 @@ function CopyIcon() {
 
 function TrashIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M2.5 4h11" />
       <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
       <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />

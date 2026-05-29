@@ -57,9 +57,7 @@ export function SelectionPopover({
   // Gap is divided by zoom so the on-screen gap stays constant.
   const visualGap = GAP / zoom;
   const placeAbove = bounds.y >= POPOVER_HEIGHT / zoom + visualGap;
-  const baseTop = placeAbove
-    ? bounds.y - visualGap
-    : bounds.y + bounds.height + visualGap;
+  const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;
   const baseLeft = bounds.x + bounds.width / 2;
 
   // After mount, measure the popover and nudge it so it stays inside the
@@ -272,7 +270,16 @@ function PopoverButton({
 
 function DuplicateIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
       <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
     </svg>
@@ -301,7 +308,17 @@ function LinkIcon() {
 
 function PaintbrushIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M13.5 2.5l-6 6" />
       <path d="M7 8l1.5 1.5" />
       <path d="M6.5 9.5a3 3 0 1 0 1 4.5c.5-.6.5-1.4 0-2-.6-.5-1.4-.5-2 0" />
@@ -311,7 +328,16 @@ function PaintbrushIcon() {
 
 function GroupIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="2.25" y="2.25" width="8" height="8" rx="1.25" />
       <rect x="5.75" y="5.75" width="8" height="8" rx="1.25" fill="white" />
     </svg>
@@ -320,7 +346,16 @@ function GroupIcon() {
 
 function UngroupIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="2" y="2" width="6" height="6" rx="1" />
       <rect x="8" y="8" width="6" height="6" rx="1" />
     </svg>
@@ -353,7 +388,17 @@ function AspectLockIcon({ closed }: { closed: boolean }) {
 
 function LockIcon({ closed }: { closed: boolean }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="3" y="7.5" width="10" height="6.5" rx="1.25" />
       {closed ? (
         <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.5 0v2.5" />
@@ -366,7 +411,17 @@ function LockIcon({ closed }: { closed: boolean }) {
 
 function TrashIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M2.5 4h11" />
       <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
       <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />

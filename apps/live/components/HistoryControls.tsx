@@ -22,7 +22,17 @@ export function HistoryControls({ canUndo, canRedo, onUndo, onRedo }: HistoryCon
         onClick={onUndo}
         disabled={!canUndo}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
           <path d="M5 8h6a4 4 0 0 1 0 8H7" />
           <path d="M5 8l3-3M5 8l3 3" />
         </svg>
@@ -33,7 +43,17 @@ export function HistoryControls({ canUndo, canRedo, onUndo, onRedo }: HistoryCon
         onClick={onRedo}
         disabled={!canRedo}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
           <path d="M13 8H7a4 4 0 0 0 0 8h4" />
           <path d="M13 8l-3-3M13 8l-3 3" />
         </svg>

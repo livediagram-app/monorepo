@@ -6,19 +6,19 @@ The livediagram brand color is **light blue**. Everything below builds on that.
 
 A single brand hue with a full 50–950 ramp. Built on Tailwind's `sky` scale.
 
-| Token         | Hex       | Usage                                                  |
-| ------------- | --------- | ------------------------------------------------------ |
-| `brand-50`    | `#F0F9FF` | App backgrounds, faint tints, hover surfaces           |
-| `brand-100`   | `#E0F2FE` | Subtle fills, selected-row backgrounds                 |
-| `brand-200`   | `#BAE6FD` | Accents, soft borders, collaborator cursor tints       |
-| `brand-300`   | `#7DD3FC` | Decorative accents, secondary indicators               |
-| `brand-400`   | `#38BDF8` | Light brand surfaces, illustrations                    |
+| Token           | Hex           | Usage                                                 |
+| --------------- | ------------- | ----------------------------------------------------- |
+| `brand-50`      | `#F0F9FF`     | App backgrounds, faint tints, hover surfaces          |
+| `brand-100`     | `#E0F2FE`     | Subtle fills, selected-row backgrounds                |
+| `brand-200`     | `#BAE6FD`     | Accents, soft borders, collaborator cursor tints      |
+| `brand-300`     | `#7DD3FC`     | Decorative accents, secondary indicators              |
+| `brand-400`     | `#38BDF8`     | Light brand surfaces, illustrations                   |
 | **`brand-500`** | **`#0EA5E9`** | **Primary brand color — buttons, links, focus rings** |
-| `brand-600`   | `#0284C7` | Hover state for primary                                |
-| `brand-700`   | `#0369A1` | Active/pressed state, emphasised text on light bg      |
-| `brand-800`   | `#075985` | High-contrast emphasis                                 |
-| `brand-900`   | `#0C4A6E` | Dark mode brand text                                   |
-| `brand-950`   | `#082F49` | Dark mode surfaces                                     |
+| `brand-600`     | `#0284C7`     | Hover state for primary                               |
+| `brand-700`     | `#0369A1`     | Active/pressed state, emphasised text on light bg     |
+| `brand-800`     | `#075985`     | High-contrast emphasis                                |
+| `brand-900`     | `#0C4A6E`     | Dark mode brand text                                  |
+| `brand-950`     | `#082F49`     | Dark mode surfaces                                    |
 
 `brand-500` (`#0EA5E9`) is the canonical "livediagram blue" — the color that appears in the logo, primary buttons, and selection highlights.
 
@@ -26,30 +26,30 @@ A single brand hue with a full 50–950 ramp. Built on Tailwind's `sky` scale.
 
 Slate complements sky cleanly (both are cool-toned). Use for text, borders, surfaces, and dividers.
 
-| Token       | Hex       | Usage                              |
-| ----------- | --------- | ---------------------------------- |
-| `neutral-50`  | `#F8FAFC` | Page background (light mode)       |
-| `neutral-100` | `#F1F5F9` | Card / panel background            |
-| `neutral-200` | `#E2E8F0` | Subtle borders, dividers           |
-| `neutral-300` | `#CBD5E1` | Default borders                    |
-| `neutral-400` | `#94A3B8` | Disabled text, placeholder         |
-| `neutral-500` | `#64748B` | Secondary text                     |
-| `neutral-600` | `#475569` | Body text on light surfaces        |
-| `neutral-700` | `#334155` | Headings                           |
-| `neutral-800` | `#1E293B` | Strong text, dark surface bg       |
-| `neutral-900` | `#0F172A` | Highest-contrast text, dark bg     |
-| `neutral-950` | `#020617` | Dark mode page background          |
+| Token         | Hex       | Usage                          |
+| ------------- | --------- | ------------------------------ |
+| `neutral-50`  | `#F8FAFC` | Page background (light mode)   |
+| `neutral-100` | `#F1F5F9` | Card / panel background        |
+| `neutral-200` | `#E2E8F0` | Subtle borders, dividers       |
+| `neutral-300` | `#CBD5E1` | Default borders                |
+| `neutral-400` | `#94A3B8` | Disabled text, placeholder     |
+| `neutral-500` | `#64748B` | Secondary text                 |
+| `neutral-600` | `#475569` | Body text on light surfaces    |
+| `neutral-700` | `#334155` | Headings                       |
+| `neutral-800` | `#1E293B` | Strong text, dark surface bg   |
+| `neutral-900` | `#0F172A` | Highest-contrast text, dark bg |
+| `neutral-950` | `#020617` | Dark mode page background      |
 
 ## Semantic colors
 
 Reserved for status — never used decoratively.
 
-| Role      | Light bg    | Foreground  | Notes                       |
-| --------- | ----------- | ----------- | --------------------------- |
-| Success   | `#D1FAE5`   | `#047857`   | Emerald (saves, confirmations) |
-| Warning   | `#FEF3C7`   | `#B45309`   | Amber (caution, soft alerts)  |
-| Error     | `#FEE2E2`   | `#B91C1C`   | Rose (destructive, errors)    |
-| Info      | `brand-100` | `brand-700` | Reuses the brand ramp         |
+| Role    | Light bg    | Foreground  | Notes                          |
+| ------- | ----------- | ----------- | ------------------------------ |
+| Success | `#D1FAE5`   | `#047857`   | Emerald (saves, confirmations) |
+| Warning | `#FEF3C7`   | `#B45309`   | Amber (caution, soft alerts)   |
+| Error   | `#FEE2E2`   | `#B91C1C`   | Rose (destructive, errors)     |
+| Info    | `brand-100` | `brand-700` | Reuses the brand ramp          |
 
 ## Usage rules
 
@@ -78,9 +78,17 @@ export default {
     extend: {
       colors: {
         brand: {
-          50:  '#F0F9FF', 100: '#E0F2FE', 200: '#BAE6FD', 300: '#7DD3FC',
-          400: '#38BDF8', 500: '#0EA5E9', 600: '#0284C7', 700: '#0369A1',
-          800: '#075985', 900: '#0C4A6E', 950: '#082F49',
+          50: '#F0F9FF',
+          100: '#E0F2FE',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9',
+          600: '#0284C7',
+          700: '#0369A1',
+          800: '#075985',
+          900: '#0C4A6E',
+          950: '#082F49',
         },
       },
     },

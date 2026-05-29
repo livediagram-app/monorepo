@@ -7,5 +7,7 @@
   "exports": {
     ".": "./index.js"
   },
-  "files": ["index.js"]
+  "files": [
+    "index.js"
+  ]
 }

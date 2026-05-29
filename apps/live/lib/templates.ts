@@ -129,11 +129,7 @@ function buildRetrospective(cx: number, cy: number): Element[] {
   const headerH = 48;
   const stickyH = 110;
   const stickyGap = 20;
-  const columns = [
-    'What went well',
-    "What didn't go well",
-    'Action items',
-  ];
+  const columns = ['What went well', "What didn't go well", 'Action items'];
   const firstColX = cx - colSpacing - colW / 2;
 
   const elements: Element[] = [];

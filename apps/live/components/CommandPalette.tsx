@@ -66,7 +66,15 @@ function MinimizedPalette({ onClick }: { onClick: () => void }) {
         aria-label="Open palette"
         className="pointer-events-auto absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/10 transition hover:bg-slate-50 hover:text-slate-900"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          aria-hidden
+        >
           <rect x="3" y="3" width="6" height="6" rx="1.25" />
           <rect x="11" y="3" width="6" height="6" rx="1.25" />
           <rect x="3" y="11" width="6" height="6" rx="1.25" />
@@ -98,7 +106,10 @@ function OpenPalette({
   useEffect(() => {
     if (!drag) return;
     const onMove = (e: PointerEvent) => {
-      onMoveTo(drag.startX + (e.clientX - drag.startClientX), drag.startY + (e.clientY - drag.startClientY));
+      onMoveTo(
+        drag.startX + (e.clientX - drag.startClientX),
+        drag.startY + (e.clientY - drag.startClientY),
+      );
     };
     const onUp = () => setDrag(null);
     window.addEventListener('pointermove', onMove);
@@ -136,7 +147,10 @@ function OpenPalette({
         <span className="select-none text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Palette
         </span>
-        <Tooltip title="Minimize palette" description="Collapse the palette into a small button at the canvas edge.">
+        <Tooltip
+          title="Minimize palette"
+          description="Collapse the palette into a small button at the canvas edge."
+        >
           <button
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
@@ -145,46 +159,102 @@ function OpenPalette({
             className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-              <line x1="2.5" y1="6" x2="9.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <line
+                x1="2.5"
+                y1="6"
+                x2="9.5"
+                y2="6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </Tooltip>
       </div>
 
       <div className="flex items-center gap-1 px-2 pb-2">
-        <IconButton label="Add square" description="Drop a new square shape on the canvas." onClick={() => onAddShape('square')}>
+        <IconButton
+          label="Add square"
+          description="Drop a new square shape on the canvas."
+          onClick={() => onAddShape('square')}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-            <rect x="3" y="3" width="12" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+            <rect
+              x="3"
+              y="3"
+              width="12"
+              height="12"
+              rx="2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
           </svg>
         </IconButton>
-        <IconButton label="Add circle" description="Drop a new circle shape on the canvas." onClick={() => onAddShape('circle')}>
+        <IconButton
+          label="Add circle"
+          description="Drop a new circle shape on the canvas."
+          onClick={() => onAddShape('circle')}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
             <circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
           </svg>
         </IconButton>
-        <IconButton label="Add diamond" description="Drop a diamond shape (decision node, UML-style)." onClick={() => onAddShape('diamond')}>
+        <IconButton
+          label="Add diamond"
+          description="Drop a diamond shape (decision node, UML-style)."
+          onClick={() => onAddShape('diamond')}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-            <polygon points="9,2.5 15.5,9 9,15.5 2.5,9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <polygon
+              points="9,2.5 15.5,9 9,15.5 2.5,9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
           </svg>
         </IconButton>
-        <IconButton label="Add text" description="Drop a draggable text element you can edit by double-clicking." onClick={onAddText}>
+        <IconButton
+          label="Add text"
+          description="Drop a draggable text element you can edit by double-clicking."
+          onClick={onAddText}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-            <path d="M3 5h12M9 5v9M6.5 14h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path
+              d="M3 5h12M9 5v9M6.5 14h5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </IconButton>
-        <IconButton label="Add sticky note" description="Drop a yellow sticky note for short multi-line annotations." onClick={onAddSticky}>
+        <IconButton
+          label="Add sticky note"
+          description="Drop a yellow sticky note for short multi-line annotations."
+          onClick={onAddSticky}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-            <path d="M3 3h9l3 3v9H3z" fill="rgb(254 243 199)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-            <path d="M12 3v3h3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <path
+              d="M3 3h9l3 3v9H3z"
+              fill="rgb(254 243 199)"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 3v3h3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
         </IconButton>
       </div>
 
-      {selection ? (
-        <SelectedElementSection selection={selection} />
-      ) : (
-        <TabSection tab={tab} />
-      )}
+      {selection ? <SelectedElementSection selection={selection} /> : <TabSection tab={tab} />}
     </div>
   );
 }
@@ -198,7 +268,8 @@ function SelectedElementSection({ selection }: { selection: SelectedElementContr
   }>({ appearance: false, layer: false, text: false, colours: false });
   const toggle = (key: keyof typeof open) => setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const showText = selection.textSize !== null || selection.textAlignX !== null || selection.textColor !== null;
+  const showText =
+    selection.textSize !== null || selection.textAlignX !== null || selection.textColor !== null;
   const showColours = selection.fillColor !== null && selection.strokeColor !== null;
 
   return (
@@ -247,16 +318,36 @@ function SelectedElementSection({ selection }: { selection: SelectedElementContr
               <p className="text-[10px] font-medium text-slate-500">Size</p>
               <div className="grid grid-cols-4 gap-1">
                 <Tooltip title="Scale" description="Auto-fit the label to the element's size.">
-                  <SizeButton active={selection.textSize === 'scale'} onClick={() => selection.onSetTextSize('scale')}>Scale</SizeButton>
+                  <SizeButton
+                    active={selection.textSize === 'scale'}
+                    onClick={() => selection.onSetTextSize('scale')}
+                  >
+                    Scale
+                  </SizeButton>
                 </Tooltip>
                 <Tooltip title="Small" description="Fixed small font size.">
-                  <SizeButton active={selection.textSize === 'sm'} onClick={() => selection.onSetTextSize('sm')}>Sm</SizeButton>
+                  <SizeButton
+                    active={selection.textSize === 'sm'}
+                    onClick={() => selection.onSetTextSize('sm')}
+                  >
+                    Sm
+                  </SizeButton>
                 </Tooltip>
                 <Tooltip title="Medium" description="Fixed medium font size.">
-                  <SizeButton active={selection.textSize === 'md'} onClick={() => selection.onSetTextSize('md')}>Md</SizeButton>
+                  <SizeButton
+                    active={selection.textSize === 'md'}
+                    onClick={() => selection.onSetTextSize('md')}
+                  >
+                    Md
+                  </SizeButton>
                 </Tooltip>
                 <Tooltip title="Large" description="Fixed large font size.">
-                  <SizeButton active={selection.textSize === 'lg'} onClick={() => selection.onSetTextSize('lg')}>Lg</SizeButton>
+                  <SizeButton
+                    active={selection.textSize === 'lg'}
+                    onClick={() => selection.onSetTextSize('lg')}
+                  >
+                    Lg
+                  </SizeButton>
                 </Tooltip>
               </div>
             </div>
@@ -275,7 +366,11 @@ function SelectedElementSection({ selection }: { selection: SelectedElementContr
             <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
               <p className="text-[10px] font-medium text-slate-500">Colour</p>
               <Tooltip title="Text colour" description="Set the colour of the element's label.">
-                <ColorSwatch label="Text" value={selection.textColor} onChange={selection.onSetTextColor} />
+                <ColorSwatch
+                  label="Text"
+                  value={selection.textColor}
+                  onChange={selection.onSetTextColor}
+                />
               </Tooltip>
             </div>
           ) : null}
@@ -286,10 +381,18 @@ function SelectedElementSection({ selection }: { selection: SelectedElementContr
         <Accordion title="Colours" open={open.colours} onToggle={() => toggle('colours')}>
           <div className="flex items-stretch gap-1">
             <Tooltip title="Background" description="The element's fill colour.">
-              <ColorSwatch label="Background" value={selection.fillColor!} onChange={selection.onSetFillColor} />
+              <ColorSwatch
+                label="Background"
+                value={selection.fillColor!}
+                onChange={selection.onSetFillColor}
+              />
             </Tooltip>
             <Tooltip title="Border" description="The element's outline colour.">
-              <ColorSwatch label="Border" value={selection.strokeColor!} onChange={selection.onSetStrokeColor} />
+              <ColorSwatch
+                label="Border"
+                value={selection.strokeColor!}
+                onChange={selection.onSetStrokeColor}
+              />
             </Tooltip>
           </div>
         </Accordion>
@@ -373,10 +476,18 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
         </p>
         <div className="mt-1 flex items-stretch gap-1">
           <Tooltip title="Canvas colour" description="The colour of the canvas background.">
-            <ColorSwatch label="Canvas" value={tab.backgroundColor} onChange={tab.onSetBackgroundColor} />
+            <ColorSwatch
+              label="Canvas"
+              value={tab.backgroundColor}
+              onChange={tab.onSetBackgroundColor}
+            />
           </Tooltip>
           <Tooltip title="Pattern colour" description="The colour of the grid dots or ruled lines.">
-            <ColorSwatch label="Pattern" value={tab.patternColor} onChange={tab.onSetPatternColor} />
+            <ColorSwatch
+              label="Pattern"
+              value={tab.patternColor}
+              onChange={tab.onSetPatternColor}
+            />
           </Tooltip>
         </div>
       </Accordion>
@@ -392,7 +503,17 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
             disabled={!tab.hasContent}
             className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-700 transition enabled:hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M2.5 4h11" />
               <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
               <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
@@ -433,7 +554,14 @@ function Accordion({
           className="transition-transform duration-200 ease-out"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         >
-          <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M2 4l3 3 3-3"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
       <div
@@ -515,7 +643,15 @@ function PatternButton({
 function BackgroundGridIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
       {Array.from({ length: 4 }).flatMap((_, i) =>
         Array.from({ length: 3 }).map((__, j) => (
           <circle key={`${i}-${j}`} cx={4 + i * 6} cy={4 + j * 6} r="0.8" fill="currentColor" />
@@ -528,7 +664,15 @@ function BackgroundGridIcon() {
 function BackgroundBlankIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
     </svg>
   );
 }
@@ -536,7 +680,15 @@ function BackgroundBlankIcon() {
 function BackgroundLinesIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
       <line x1="2" y1="6" x2="26" y2="6" stroke="currentColor" strokeWidth="0.7" />
       <line x1="2" y1="11" x2="26" y2="11" stroke="currentColor" strokeWidth="0.7" />
       <line x1="2" y1="16" x2="26" y2="16" stroke="currentColor" strokeWidth="0.7" />
@@ -547,7 +699,15 @@ function BackgroundLinesIcon() {
 function BackgroundGraphIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
       {[5, 10, 15].map((y) => (
         <line key={`h${y}`} x1="0" y1={y} x2="28" y2={y} stroke="currentColor" strokeWidth="0.4" />
       ))}
@@ -561,7 +721,15 @@ function BackgroundGraphIcon() {
 function BackgroundCrosshatchIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
       <line x1="0" y1="6" x2="22" y2="20" stroke="currentColor" strokeWidth="0.5" />
       <line x1="6" y1="0" x2="28" y2="14" stroke="currentColor" strokeWidth="0.5" />
       <line x1="0" y1="14" x2="14" y2="0" stroke="currentColor" strokeWidth="0.5" />
@@ -573,7 +741,15 @@ function BackgroundCrosshatchIcon() {
 function BackgroundConfettiIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
-      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
+      <rect
+        width="28"
+        height="20"
+        rx="2"
+        fill="white"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        opacity="0.5"
+      />
       <circle cx="5" cy="6" r="1.3" fill="rgb(248 113 113)" />
       <circle cx="13" cy="4" r="1" fill="rgb(96 165 250)" />
       <circle cx="22" cy="8" r="1.3" fill="rgb(250 204 21)" />
@@ -585,9 +761,15 @@ function BackgroundConfettiIcon() {
 }
 
 const ALIGN_GRID: { x: TextAlignX; y: TextAlignY }[] = [
-  { y: 'top', x: 'left' },    { y: 'top', x: 'center' },    { y: 'top', x: 'right' },
-  { y: 'middle', x: 'left' }, { y: 'middle', x: 'center' }, { y: 'middle', x: 'right' },
-  { y: 'bottom', x: 'left' }, { y: 'bottom', x: 'center' }, { y: 'bottom', x: 'right' },
+  { y: 'top', x: 'left' },
+  { y: 'top', x: 'center' },
+  { y: 'top', x: 'right' },
+  { y: 'middle', x: 'left' },
+  { y: 'middle', x: 'center' },
+  { y: 'middle', x: 'right' },
+  { y: 'bottom', x: 'left' },
+  { y: 'bottom', x: 'center' },
+  { y: 'bottom', x: 'right' },
 ];
 
 function alignLabel(x: TextAlignX, y: TextAlignY): string {
@@ -640,7 +822,16 @@ function AlignIcon({ x, y }: { x: TextAlignX; y: TextAlignY }) {
   const iy = y === 'top' ? 3 : y === 'bottom' ? 10 : 6.5;
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-      <rect x="1" y="1" width="14" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1" />
+      <rect
+        x="1"
+        y="1"
+        width="14"
+        height="14"
+        rx="1.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
       <rect x={ix} y={iy} width="5" height="3" rx="0.5" fill="currentColor" />
     </svg>
   );
@@ -709,7 +900,16 @@ function IconButton({ label, description, onClick, children, disabled }: IconBut
 
 function BringToFrontIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="2.5" y="2.5" width="7" height="7" rx="1" />
       <rect x="6.5" y="6.5" width="7" height="7" rx="1" fill="currentColor" fillOpacity="0.18" />
     </svg>
@@ -718,7 +918,16 @@ function BringToFrontIcon() {
 
 function SendToBackIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="2.5" y="2.5" width="7" height="7" rx="1" fill="currentColor" fillOpacity="0.18" />
       <rect x="6.5" y="6.5" width="7" height="7" rx="1" />
     </svg>

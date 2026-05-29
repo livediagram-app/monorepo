@@ -7,10 +7,10 @@ A small Cloudflare Worker that fronts the apex domain and routes URL paths to th
 
 ## Routing table
 
-| Path                 | Forwards to              |
-| -------------------- | ------------------------ |
-| `/live`, `/live/*`   | live app (`apps/live`)   |
-| everything else      | marketing app (`apps/marketing`) |
+| Path               | Forwards to                      |
+| ------------------ | -------------------------------- |
+| `/live`, `/live/*` | live app (`apps/live`)           |
+| everything else    | marketing app (`apps/marketing`) |
 
 The router does **not** rewrite the path. `/live/foo` is passed to the live app as `/live/foo`, which works because the live app uses `basePath: '/live'`. The marketing app sees `/`, `/pricing`, etc., as-is.
 
@@ -37,10 +37,10 @@ Service bindings target deployed Workers (or Pages projects exposed via Workers)
 
 The router worker is **not required for local dev**. Each app runs on its own port:
 
-| App        | Local URL                |
-| ---------- | ------------------------ |
-| marketing  | `http://localhost:3001/` |
-| live       | `http://localhost:3002/live` (basePath baked in) |
+| App       | Local URL                                        |
+| --------- | ------------------------------------------------ |
+| marketing | `http://localhost:3001/`                         |
+| live      | `http://localhost:3002/live` (basePath baked in) |
 
 Visit whichever you're working on directly. The router only matters in production where everything serves from one hostname.
 

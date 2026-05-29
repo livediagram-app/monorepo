@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   anchorPosition,
   bringManyToFront,
@@ -293,9 +288,7 @@ export default function LivePage() {
     // picker as dismissed for this tab (if it was still showing).
     commitTabs((ts) =>
       ts.map((t) =>
-        t.id === activeId
-          ? { ...t, elements: [...t.elements, el], templateChosen: true }
-          : t,
+        t.id === activeId ? { ...t, elements: [...t.elements, el], templateChosen: true } : t,
       ),
     );
     setSelectedId(el.id);
@@ -323,7 +316,9 @@ export default function LivePage() {
     }
     commit((els) =>
       els.map((el) =>
-        el.id === targetId && isBoxed(el) ? { ...el, width: source.width, height: source.height } : el,
+        el.id === targetId && isBoxed(el)
+          ? { ...el, width: source.width, height: source.height }
+          : el,
       ),
     );
     setFormatSourceId(null);
@@ -412,18 +407,14 @@ export default function LivePage() {
   };
 
   const openTemplatePicker = () => {
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)),
-    );
+    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)));
   };
 
   const chooseTemplate = (kind: TemplateKind) => {
     const centre = getViewportCenter();
     const elements = buildTemplate(kind, centre.x, centre.y);
     commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId ? { ...t, elements, templateChosen: true } : t,
-      ),
+      ts.map((t) => (t.id === activeId ? { ...t, elements, templateChosen: true } : t)),
     );
     setSelectedId(null);
     setEditingId(null);
@@ -442,15 +433,11 @@ export default function LivePage() {
   };
 
   const setBackgroundColor = (color: string) => {
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)),
-    );
+    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)));
   };
 
   const setPatternColor = (color: string) => {
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)),
-    );
+    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)));
   };
 
   // --- Element CRUD --------------------------------------------------------
@@ -465,9 +452,7 @@ export default function LivePage() {
     const el = createText(x - TEXT_W / 2, y - TEXT_H / 2);
     commitTabs((ts) =>
       ts.map((t) =>
-        t.id === activeId
-          ? { ...t, elements: [...t.elements, el], templateChosen: true }
-          : t,
+        t.id === activeId ? { ...t, elements: [...t.elements, el], templateChosen: true } : t,
       ),
     );
     setSelectedId(el.id);
@@ -574,9 +559,7 @@ export default function LivePage() {
     if (!selectedId) return;
     const ids = memberIdsOf(selectedId);
     commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) ? { ...el, link: { kind: 'tab' as const, tabId } } : el,
-      ),
+      els.map((el) => (ids.has(el.id) ? { ...el, link: { kind: 'tab' as const, tabId } } : el)),
     );
   };
 
@@ -604,9 +587,7 @@ export default function LivePage() {
   const setOpacitySelected = (opacity: number) => {
     if (!selectedId) return;
     const ids = memberIdsOf(selectedId);
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) ? { ...el, opacity } : el)),
-    );
+    commit((els) => els.map((el) => (ids.has(el.id) ? { ...el, opacity } : el)));
   };
 
   const duplicateSelected = () => {
@@ -646,9 +627,7 @@ export default function LivePage() {
     }
   };
 
-  const duplicateConnectSelected = (
-    direction: 'right' | 'below' | 'left' | 'above',
-  ) => {
+  const duplicateConnectSelected = (direction: 'right' | 'below' | 'left' | 'above') => {
     if (!selectedId) return;
     const source = activeTab.elements.find((el) => el.id === selectedId);
     if (!source || !isBoxed(source)) return;
@@ -884,9 +863,7 @@ export default function LivePage() {
           if (!start) return;
           const next = nextBounds(start, drag.mode, dx, dy, drag.aspectLocked);
           tick((els) =>
-            els.map((el) =>
-              el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el,
-            ),
+            els.map((el) => (el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el)),
           );
         }
         return;
@@ -987,9 +964,7 @@ export default function LivePage() {
         onSetLink={setLinkSelected}
         onClearLink={clearLinkSelected}
         onFollowLink={followLink}
-        showTemplatePicker={
-          activeTab.elements.length === 0 && activeTab.templateChosen !== true
-        }
+        showTemplatePicker={activeTab.elements.length === 0 && activeTab.templateChosen !== true}
         onChooseTemplate={chooseTemplate}
         onOpenTemplatePicker={openTemplatePicker}
         onSetBackgroundPattern={setBackgroundPattern}

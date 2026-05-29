@@ -26,7 +26,15 @@ export function ZoomControls({
       <Tooltip title="Zoom out" description="Zoom out by 10%.">
         <IconButton onClick={onZoomOut} label="Zoom out">
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
-            <line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            <line
+              x1="3"
+              y1="7"
+              x2="11"
+              y2="7"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
           </svg>
         </IconButton>
       </Tooltip>
@@ -43,8 +51,24 @@ export function ZoomControls({
       <Tooltip title="Zoom in" description="Zoom in by 10%.">
         <IconButton onClick={onZoomIn} label="Zoom in">
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
-            <line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-            <line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            <line
+              x1="3"
+              y1="7"
+              x2="11"
+              y2="7"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
+            <line
+              x1="7"
+              y1="3"
+              x2="7"
+              y2="11"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
           </svg>
         </IconButton>
       </Tooltip>
