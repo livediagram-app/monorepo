@@ -10,7 +10,7 @@ compatibility_date = "2026-05-29"
 [[d1_databases]]
 binding = "DB"
 database_name = "livediagram"
-database_id = "TODO_RUN_WRANGLER_D1_CREATE"
+database_id = "79642003-5866-4c5a-9011-7fbeb0de6b58"
 migrations_dir = "migrations"
 
 # Durable Object for per-diagram realtime (presence + broadcast). One
