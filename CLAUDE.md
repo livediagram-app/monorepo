@@ -19,9 +19,11 @@ Workflow:
 apps/
   marketing/    # static marketing site (Next.js, /)
   live/         # the diagram editor app (Next.js, /live)
+  api/          # Cloudflare Worker REST + WebSocket API (D1 + Durable Objects, /api)
   router/       # Cloudflare Worker stitching the apps under one hostname
 packages/
   ui/             # shared UI primitives (Brand, etc.)
+  diagram/        # diagram data model (Tab, Element, Participant types + helpers)
   eslint-config/  # shared ESLint flat config
   prettier-config/# shared Prettier config
   tailwind-config/# shared Tailwind theme (brand palette)
@@ -30,14 +32,12 @@ specs/          # product specs — read these first
 
 Workspaces are managed with **pnpm** (`pnpm-workspace.yaml`). Tasks are orchestrated with **Turborepo** (`turbo.json`). Node `>=20`, pnpm `>=9`.
 
-## Current phase: frontend prototype
+## Current phase: backend in scope
 
-See [specs/02-prototype-scope.md](specs/02-prototype-scope.md).
+The frontend-only prototype phase ended once the API app landed (see [spec 11-api.md](specs/11-api.md)). The editor now talks to a Cloudflare Worker API backed by D1 (durable diagram storage) and Durable Objects (per-diagram realtime room). The `localStorage` `DiagramStore` impl has been removed from the live app — `apps/live/lib/api-client.ts` is the single boundary.
 
-- **In scope:** Next.js (static export), React, TypeScript, Tailwind. The router Worker. Local-only state. Persist diagrams to **`localStorage`** through a `DiagramStore` interface.
-- **Out of scope (for now):** backend API Workers, real-time collaboration, multi-user sync, auth, payments, email, D1.
-- Write code that is **ready to swap** the persistence/data layer for an API later. Put storage behind an interface; the `localStorage` implementation now, a Workers/D1 implementation later — no UI changes needed.
-- Don't scaffold backend Workers, Clerk, Resend, Stripe, or D1 migrations during this phase.
+- **In scope now:** the api worker, D1 schema + migrations, REST endpoints (diagram + participant CRUD), Durable Object for presence + LWW broadcast.
+- **Still out of scope:** Clerk auth (the API is open, with owner identity carried in `X-Owner-Id`), Resend, Stripe, multi-user permissions, operational-transform / CRDT edits.
 
 ## Open source + commercial
 
@@ -122,7 +122,7 @@ See [specs/10-deployment.md](specs/10-deployment.md).
 
 All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static Assets for `marketing` and `live`). CI runs lint / format / typecheck / test / build on every PR and push. On `main`, a successful CI triggers the deploy workflow which builds, then deploys `marketing` + `live` in parallel, then `router` (service bindings depend on the other two existing).
 
-Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-router` — matching the service-binding targets in `apps/router/wrangler.toml`.
+Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-api`, `livediagram-router` — matching the service-binding targets in `apps/router/wrangler.toml`. Deploy order: marketing + live + api in parallel → router last (its service bindings depend on the other three existing).
 
 Production is live at **https://livediagram.app** (`/` → marketing, `/live` → editor).
 

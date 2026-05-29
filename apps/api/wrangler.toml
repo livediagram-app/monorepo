@@ -1,0 +1,25 @@
+name = "livediagram-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-29"
+
+# D1 database holding diagrams + participants. The local binding name
+# (`DB`) is what `src/db.ts` reads via the Env type. The `database_name`
+# is the Cloudflare-side name (must be created via `wrangler d1 create
+# livediagram` or the dashboard). `database_id` is filled in after the
+# database is created — until then deploys will fail loudly.
+[[d1_databases]]
+binding = "DB"
+database_name = "livediagram"
+database_id = "TODO_RUN_WRANGLER_D1_CREATE"
+migrations_dir = "migrations"
+
+# Durable Object for per-diagram realtime (presence + broadcast). One
+# instance per diagram id; clients connect via WebSocket through the
+# `/api/diagrams/<id>/ws` endpoint.
+[[durable_objects.bindings]]
+name = "DIAGRAM_ROOM"
+class_name = "DiagramRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["DiagramRoom"]

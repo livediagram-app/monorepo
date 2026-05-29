@@ -49,9 +49,14 @@ import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } from '@/lib/canvas';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import {
+  connectRoom,
+  deleteDiagram as apiDeleteDiagram,
+  listDiagrams as apiListDiagrams,
+  loadDiagram as apiLoadDiagram,
   loadSelfParticipant,
-  localStorageStore,
+  saveDiagram as apiSaveDiagram,
   saveSelfParticipant,
+  type RoomHandlers,
 } from '@/lib/diagram-store';
 import { buildTemplate, type TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
@@ -201,12 +206,26 @@ export default function LivePage() {
   const [diagramList, setDiagramList] = useState<{ id: string; name: string; savedAt: number }[]>(
     [],
   );
-  const refreshDiagramList = () => {
-    if (typeof window === 'undefined') return;
-    setDiagramList(
-      localStorageStore.loadAll().map((d) => ({ id: d.id, name: d.name, savedAt: d.savedAt })),
-    );
+  // Live presence: the participants connected to this diagram's
+  // Durable Object room right now. Includes ourselves once our `hello`
+  // round-trips. Rendered in the editor header avatar stack.
+  const [livePresence, setLivePresence] = useState<Participant[]>([]);
+  const refreshDiagramList = (ownerId: string) => {
+    apiListDiagrams(ownerId)
+      .then((list) => setDiagramList(list))
+      .catch(() => {
+        // Network glitch — the next save will retry. List staleness
+        // for a beat is acceptable; we don't want a transient error
+        // to wipe the rendered list.
+      });
   };
+  // `remoteUpdateRef` blocks the auto-save effect from re-broadcasting
+  // a remote update back through the room (which would cause an
+  // infinite save/broadcast loop between two connected clients).
+  const remoteUpdateRef = useRef(false);
+  // Single open room connection for the current diagram. Re-opens
+  // whenever diagramId changes.
+  const roomRef = useRef<ReturnType<typeof connectRoom> | null>(null);
   // Persistent diagram id. `null` until the post-mount hydration step
   // runs; that step reads ?d=<id> from the URL (or mints a fresh id +
   // updates the URL) and pulls any saved tabs + name from localStorage.
@@ -217,38 +236,44 @@ export default function LivePage() {
 
   useLayoutEffect(() => {
     if (hydrated) return;
-    const url = new URL(window.location.href);
-    const id = url.searchParams.get('d');
-    // Only hydrate from storage when the URL already carries an id. A
-    // fresh visit (no `?d=`) deliberately holds off on minting one until
-    // the user finishes the welcome flow — see `commitDiagramId` below.
-    if (id) {
-      const stored = localStorageStore.load(id);
-      if (stored) {
-        resetTabs(stored.tabs);
-        setDiagramName(stored.name);
-        setActiveId(stored.tabs[0]?.id ?? activeId);
+    // The post-mount hydration is async (the API is HTTP) so we run it
+    // inside an IIFE. UI stays at the placeholder during the fetch;
+    // the welcome modal is gated on `hydrated` so it doesn't flash the
+    // Guest placeholder name into the input.
+    void (async () => {
+      const url = new URL(window.location.href);
+      const id = url.searchParams.get('d');
+
+      // Identity comes first because every diagram fetch needs an
+      // owner id. Persistent id lives in localStorage as a tiny
+      // bootstrap value; the participant record itself is in the API.
+      let selfId = window.localStorage.getItem('livediagram:v2:self-id');
+      if (!selfId) {
+        selfId = crypto.randomUUID();
+        window.localStorage.setItem('livediagram:v2:self-id', selfId);
       }
-      setDiagramId(id);
-    }
-    const storedSelf = loadSelfParticipant();
-    if (storedSelf) {
-      setSelfParticipant({ ...storedSelf, status: 'online' });
-    } else {
-      // First-ever visit on this device — mint and save a fresh identity.
-      const fresh: Participant = {
-        id: 'self',
+      const storedSelf = await loadSelfParticipant(selfId).catch(() => null);
+      const self: Participant = storedSelf ?? {
+        id: selfId,
         name: randomName(),
         color: randomColor(),
         status: 'online',
       };
-      setSelfParticipant(fresh);
-      saveSelfParticipant(fresh);
-    }
-    setHydrated(true);
-    setDiagramList(
-      localStorageStore.loadAll().map((d) => ({ id: d.id, name: d.name, savedAt: d.savedAt })),
-    );
+      setSelfParticipant({ ...self, status: 'online' });
+      if (!storedSelf) await saveSelfParticipant(self).catch(() => {});
+
+      if (id) {
+        const fetched = await apiLoadDiagram(id).catch(() => null);
+        if (fetched) {
+          resetTabs(fetched.tabs);
+          setDiagramName(fetched.name);
+          setActiveId(fetched.tabs[0]?.id ?? activeId);
+        }
+        setDiagramId(id);
+      }
+      refreshDiagramList(self.id);
+      setHydrated(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -270,26 +295,78 @@ export default function LivePage() {
     return id;
   };
 
-  // Persist on any change after hydration. localStorage is sync so we
-  // don't bother debouncing; the prototype's diagrams are small and we'd
-  // rather not lose work if the page closes between debounce ticks.
-  // After saving, refresh the Explorer's diagram list so the current
-  // diagram's name updates in real time as the user renames it.
+  // Persist on any change after hydration. Debounced because the API
+  // is HTTP and rapid drag/keystroke edits would otherwise hammer it.
+  // 600 ms feels responsive without being chatty. The `remoteUpdateRef`
+  // gate prevents echoing remote ops back to the room.
   useEffect(() => {
     if (!hydrated || !diagramId) return;
-    localStorageStore.save({
-      id: diagramId,
-      name: diagramName,
-      tabs,
-      savedAt: Date.now(),
-    });
-    refreshDiagramList();
-  }, [hydrated, diagramId, tabs, diagramName]);
+    if (remoteUpdateRef.current) {
+      remoteUpdateRef.current = false;
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      const payload = { id: diagramId, name: diagramName, tabs, savedAt: Date.now() };
+      apiSaveDiagram(selfParticipant.id, payload).catch(() => {
+        // Surface this in a toast once we have one; for now swallow so
+        // the editor stays responsive.
+      });
+      // Broadcast the new snapshot to peers via the room so other
+      // viewers see the change in real time. The room's last-writer-
+      // wins model means the most recent broadcast becomes the truth.
+      roomRef.current?.send({
+        kind: 'op',
+        op: { kind: 'tabs', tabs, name: diagramName },
+      });
+      refreshDiagramList(selfParticipant.id);
+    }, 600);
+    return () => window.clearTimeout(handle);
+  }, [hydrated, diagramId, tabs, diagramName, selfParticipant.id]);
 
   useEffect(() => {
     if (!hydrated) return;
-    saveSelfParticipant(selfParticipant);
+    saveSelfParticipant(selfParticipant).catch(() => {});
   }, [hydrated, selfParticipant]);
+
+  // Realtime room: open a WebSocket per diagram. The room broadcasts
+  // presence + ops; ops from other clients overwrite our local tabs
+  // (LWW). The remote-update gate prevents the save effect from
+  // echoing the change back.
+  useEffect(() => {
+    if (!hydrated || !diagramId) return;
+    const handlers: RoomHandlers = {
+      onPresence: (participants) => {
+        setLivePresence(
+          participants.map((p) => ({
+            id: p.id,
+            name: p.name,
+            color: p.color,
+            status: 'online',
+          })),
+        );
+      },
+      onOp: (_from, op) => {
+        if (op.kind !== 'tabs') return;
+        remoteUpdateRef.current = true;
+        resetTabs(op.tabs);
+        setDiagramName(op.name);
+      },
+    };
+    const room = connectRoom(
+      diagramId,
+      { id: selfParticipant.id, name: selfParticipant.name, color: selfParticipant.color },
+      handlers,
+    );
+    roomRef.current = room;
+    return () => {
+      room.close();
+      roomRef.current = null;
+    };
+    // selfParticipant.id is stable across the session; name/color
+    // changes don't warrant a reconnect. Deliberately omitted from
+    // the dep list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, diagramId]);
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
   const [viewportZoom, setViewportZoom] = useState(1);
   const canvasMainRef = useRef<HTMLElement>(null);
@@ -515,12 +592,14 @@ export default function LivePage() {
     setTemplatePickerMode('templates');
   };
 
-  // Delete the entire diagram: remove from the local store, strip the
-  // id from the URL, and reload to a fresh welcome flow. Not undoable —
-  // the user explicitly opened the title menu and picked Delete.
+  // Delete the entire diagram: remove from the API, strip the id from
+  // the URL, and reload to a fresh welcome flow. Not undoable — the
+  // user explicitly opened the title menu and picked Delete. We don't
+  // await the delete so the redirect is instant; the row will be gone
+  // by the time the next list query runs.
   const deleteDiagram = () => {
     if (typeof window === 'undefined') return;
-    if (diagramId) localStorageStore.delete(diagramId);
+    if (diagramId) void apiDeleteDiagram(diagramId).catch(() => {});
     window.location.assign(`${window.location.origin}/live`);
   };
 
@@ -1404,7 +1483,12 @@ export default function LivePage() {
     <div className="flex h-dvh flex-col">
       <EditorHeader
         diagramName={diagramName}
-        participants={[selfParticipant]}
+        participants={
+          // Live presence is authoritative when the room is connected; it
+          // always includes us. Fall back to just self before the WS
+          // connects so the header avatar isn't briefly missing.
+          livePresence.length > 0 ? livePresence : [selfParticipant]
+        }
         hideTitle={welcomeOpen}
         onRename={setDiagramName}
         onDeleteDiagram={deleteDiagram}
