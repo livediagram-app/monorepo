@@ -194,6 +194,24 @@ function OpenPalette({
               />
             </svg>
           </IconButton>
+          <IconButton
+            label="Add stadium"
+            description="Drop a stadium / pill shape (Start / End in flowcharts)."
+            onClick={() => onAddShape('stadium')}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+              <rect
+                x="1.5"
+                y="6"
+                width="15"
+                height="6"
+                rx="3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+            </svg>
+          </IconButton>
         </div>
         <div className="my-1 h-px bg-slate-100" />
         <div className="flex items-center gap-1">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Participant } from '@/lib/identity';
-import { initialsOf } from '@/lib/identity';
+import { initialsOf, randomName } from '@/lib/identity';
 import type { TemplateKind } from '@/lib/templates';
 import { TEMPLATES } from '@/lib/templates';
 import { THEMES, type ThemeId } from '@/lib/themes';
@@ -98,6 +98,15 @@ export function TemplatePicker({
                 className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setName(randomName())}
+              aria-label="Generate a different name"
+              title="Generate a different name"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <RefreshIcon />
+            </button>
           </div>
 
           ) : null}
@@ -205,6 +214,27 @@ export function TemplatePicker({
         </div>
       </div>
     </div>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9L13.5 5.5" />
+      <path d="M13.5 2.5v3h-3" />
+      <path d="M13.5 8a5.5 5.5 0 0 1-9.4 3.9L2.5 10.5" />
+      <path d="M2.5 13.5v-3h3" />
+    </svg>
   );
 }
 
@@ -330,6 +360,67 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
           <line x1="18" y1="22" x2="18" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
           <line x1="40" y1="22" x2="40" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
           <line x1="62" y1="22" x2="62" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
+        </svg>
+      );
+    case 'flowchart':
+      return (
+        <svg width="60" height="44" viewBox="0 0 60 50" aria-hidden>
+          {/* Start (stadium) */}
+          <rect
+            x="14"
+            y="2"
+            width="20"
+            height="7"
+            rx="3.5"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {/* Step 1 (square) */}
+          <rect
+            x="14"
+            y="14"
+            width="20"
+            height="7"
+            rx="1"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {/* Decision (diamond) */}
+          <polygon
+            points="24,25 33,32 24,39 15,32"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {/* End (stadium) */}
+          <rect
+            x="14"
+            y="42"
+            width="20"
+            height="6"
+            rx="3"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {/* Side branch */}
+          <rect
+            x="40"
+            y="29"
+            width="16"
+            height="6"
+            rx="1"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {/* Arrows (simple lines) */}
+          <line x1="24" y1="9" x2="24" y2="14" stroke="rgb(100 116 139)" strokeWidth="1" />
+          <line x1="24" y1="21" x2="24" y2="25" stroke="rgb(100 116 139)" strokeWidth="1" />
+          <line x1="24" y1="39" x2="24" y2="42" stroke="rgb(100 116 139)" strokeWidth="1" />
+          <line x1="33" y1="32" x2="40" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
         </svg>
       );
     case 'retrospective':

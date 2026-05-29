@@ -175,10 +175,14 @@ export function BoxedElementView({
 }
 
 // Shapes that draw themselves via an inner SVG overlay rather than relying
-// on the wrapper's border/background. Square and circle are the only ones
-// rendered purely through CSS (border + border-radius).
+// on the wrapper's border/background. The CSS-rendered set are the ones
+// where a border + border-radius produces the right geometry at any
+// aspect ratio without distortion:
+//   - square: rounded rectangle
+//   - circle: border-radius 50% (forced 1:1 so it stays a circle)
+//   - stadium: border-radius 9999px → always semicircular ends
 function isSvgRenderedShape(kind: ShapeKind): boolean {
-  return kind !== 'square' && kind !== 'circle';
+  return kind !== 'square' && kind !== 'circle' && kind !== 'stadium';
 }
 
 function ShapeSvgOverlay({
@@ -388,7 +392,12 @@ function describeVariant(
       return {
         className: `border-2 text-brand-800 shadow-sm ${ring}`,
         style: {
-          borderRadius: element.shape === 'circle' ? '50%' : '8px',
+          borderRadius:
+            element.shape === 'circle'
+              ? '50%'
+              : element.shape === 'stadium'
+                ? '9999px'
+                : '8px',
           backgroundColor: element.fillColor ?? defaultFillColor(element),
           borderColor: element.strokeColor ?? defaultStrokeColor(element),
         },

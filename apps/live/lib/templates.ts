@@ -7,7 +7,7 @@ import {
   type Element,
 } from '@livediagram/diagram';
 
-export type TemplateKind = 'blank' | 'mindmap' | 'orgchart' | 'retrospective';
+export type TemplateKind = 'blank' | 'mindmap' | 'orgchart' | 'retrospective' | 'flowchart';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
@@ -36,6 +36,11 @@ export const TEMPLATES: TemplateDescriptor[] = [
     title: 'Retrospective',
     description: '"What went well", "What didn\'t", "Action items".',
   },
+  {
+    kind: 'flowchart',
+    title: 'Flowchart',
+    description: 'Start → step → decision → end, with a branching path.',
+  },
 ];
 
 // Build the elements for a given template, centred on the supplied canvas
@@ -50,6 +55,8 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildOrgChart(cx, cy);
     case 'retrospective':
       return buildRetrospective(cx, cy);
+    case 'flowchart':
+      return buildFlowchart(cx, cy);
   }
 }
 
@@ -137,6 +144,83 @@ function buildOrgChart(cx: number, cy: number): Element[] {
   const arrows = reports.map((r) => createPinnedArrow(head.id, 's', r.id, 'n'));
 
   return [head, ...reports, ...arrows];
+}
+
+// Vertical flowchart with a branch. Start (stadium) → Step 1 (square)
+// → Decision (diamond) → Yes path goes down to Step 2 and End; No path
+// goes right to a side step that rejoins End. Demonstrates every basic
+// flowchart shape (terminator / process / decision) plus a branching
+// connector.
+function buildFlowchart(cx: number, cy: number): Element[] {
+  const termW = 160;
+  const termH = 60;
+  const procW = 140;
+  const procH = 64;
+  const decW = 140;
+  const decH = 90;
+  const vGap = 32;
+
+  const startY = cy - 260;
+  const step1Y = startY + termH + vGap;
+  const decisionY = step1Y + procH + vGap;
+  const step2Y = decisionY + decH + vGap;
+  const endY = step2Y + procH + vGap;
+
+  const start = {
+    ...createShape('stadium', cx - termW / 2, startY),
+    width: termW,
+    height: termH,
+    label: 'Start',
+    textSize: 'md' as const,
+  };
+  const step1 = {
+    ...createShape('square', cx - procW / 2, step1Y),
+    width: procW,
+    height: procH,
+    label: 'Step 1',
+    textSize: 'md' as const,
+  };
+  const decision = {
+    ...createShape('diamond', cx - decW / 2, decisionY),
+    width: decW,
+    height: decH,
+    label: 'Decision?',
+    textSize: 'md' as const,
+  };
+  const step2 = {
+    ...createShape('square', cx - procW / 2, step2Y),
+    width: procW,
+    height: procH,
+    label: 'Step 2',
+    textSize: 'md' as const,
+  };
+  const end = {
+    ...createShape('stadium', cx - termW / 2, endY),
+    width: termW,
+    height: termH,
+    label: 'End',
+    textSize: 'md' as const,
+  };
+  // Side branch (No path): a square to the right of the decision that
+  // rejoins End's east side.
+  const sideStep = {
+    ...createShape('square', cx + decW / 2 + 80, decisionY + decH / 2 - procH / 2),
+    width: procW,
+    height: procH,
+    label: 'Alt path',
+    textSize: 'md' as const,
+  };
+
+  const arrows = [
+    createPinnedArrow(start.id, 's', step1.id, 'n'),
+    createPinnedArrow(step1.id, 's', decision.id, 'n'),
+    createPinnedArrow(decision.id, 's', step2.id, 'n'),
+    createPinnedArrow(step2.id, 's', end.id, 'n'),
+    createPinnedArrow(decision.id, 'e', sideStep.id, 'w'),
+    createPinnedArrow(sideStep.id, 's', end.id, 'e'),
+  ];
+
+  return [start, step1, decision, step2, sideStep, end, ...arrows];
 }
 
 function buildRetrospective(cx: number, cy: number): Element[] {

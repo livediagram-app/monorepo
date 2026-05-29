@@ -135,7 +135,8 @@ export type ShapeKind =
   | 'cylinder'
   | 'parallelogram'
   | 'hexagon'
-  | 'document';
+  | 'document'
+  | 'stadium';
 
 export type ShapeElement = {
   id: ElementId;
@@ -326,6 +327,11 @@ const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: number }> =
   parallelogram: { width: 160, height: 100 },
   hexagon: { width: 140, height: 120 },
   document: { width: 140, height: 110 },
+  // Stadium / pill — the conventional flowchart "Start / End" terminator
+  // shape. Wider than tall by default; the CSS `border-radius: 9999px`
+  // render path means the ends stay perfectly semicircular at any
+  // aspect ratio the user resizes to.
+  stadium: { width: 160, height: 64 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
