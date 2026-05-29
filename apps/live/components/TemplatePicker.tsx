@@ -314,52 +314,88 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
       );
     case 'orgchart':
       return (
-        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {/* CEO */}
           <rect
             x="32"
-            y="4"
+            y="2"
             width="16"
-            height="9"
+            height="7"
             rx="1.5"
             fill="rgb(186 230 253)"
             stroke="rgb(14 165 233)"
             strokeWidth="1"
           />
-          <rect
-            x="10"
-            y="32"
-            width="16"
-            height="9"
-            rx="1.5"
-            fill="none"
-            stroke="rgb(14 165 233)"
-            strokeWidth="1"
-          />
-          <rect
-            x="32"
-            y="32"
-            width="16"
-            height="9"
-            rx="1.5"
-            fill="none"
-            stroke="rgb(14 165 233)"
-            strokeWidth="1"
-          />
-          <rect
-            x="54"
-            y="32"
-            width="16"
-            height="9"
-            rx="1.5"
-            fill="none"
-            stroke="rgb(14 165 233)"
-            strokeWidth="1"
-          />
-          <line x1="40" y1="13" x2="40" y2="22" stroke="rgb(100 116 139)" strokeWidth="1" />
-          <line x1="18" y1="22" x2="62" y2="22" stroke="rgb(100 116 139)" strokeWidth="1" />
-          <line x1="18" y1="22" x2="18" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
-          <line x1="40" y1="22" x2="40" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
-          <line x1="62" y1="22" x2="62" y2="32" stroke="rgb(100 116 139)" strokeWidth="1" />
+          {/* VP row */}
+          {[6, 33, 60].map((x) => (
+            <rect
+              key={x}
+              x={x}
+              y="20"
+              width="14"
+              height="6"
+              rx="1.25"
+              fill="none"
+              stroke="rgb(14 165 233)"
+              strokeWidth="0.9"
+            />
+          ))}
+          {/* 3rd level: 2 reports under each VP */}
+          {[
+            [4, 12],
+            [31, 39],
+            [58, 66],
+          ].map(([l, r], i) => (
+            <g key={i}>
+              <rect
+                x={l}
+                y="40"
+                width="8"
+                height="5"
+                rx="1"
+                fill="none"
+                stroke="rgb(14 165 233)"
+                strokeWidth="0.8"
+              />
+              <rect
+                x={r}
+                y="40"
+                width="8"
+                height="5"
+                rx="1"
+                fill="none"
+                stroke="rgb(14 165 233)"
+                strokeWidth="0.8"
+              />
+            </g>
+          ))}
+          {/* CEO -> VPs */}
+          <line x1="40" y1="9" x2="40" y2="15" stroke="rgb(100 116 139)" strokeWidth="0.85" />
+          <line x1="13" y1="15" x2="67" y2="15" stroke="rgb(100 116 139)" strokeWidth="0.85" />
+          <line x1="13" y1="15" x2="13" y2="20" stroke="rgb(100 116 139)" strokeWidth="0.85" />
+          <line x1="40" y1="15" x2="40" y2="20" stroke="rgb(100 116 139)" strokeWidth="0.85" />
+          <line x1="67" y1="15" x2="67" y2="20" stroke="rgb(100 116 139)" strokeWidth="0.85" />
+          {/* VPs -> reports */}
+          {[13, 40, 67].map((vpX, i) => (
+            <g key={i}>
+              <line
+                x1={vpX}
+                y1="26"
+                x2={[8, 35, 62][i]}
+                y2="40"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.7"
+              />
+              <line
+                x1={vpX}
+                y1="26"
+                x2={[16, 43, 70][i]}
+                y2="40"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.7"
+              />
+            </g>
+          ))}
         </svg>
       );
     case 'flowchart':
@@ -426,46 +462,36 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
     case 'retrospective':
       return (
         <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
-          {[8, 32, 56].map((x) => (
-            <g key={x}>
-              <line
-                x1={x + 8}
-                y1="6"
-                x2={x + 8}
-                y2="11"
-                stroke="rgb(100 116 139)"
-                strokeWidth="1"
-              />
+          {/* Mad / Sad / Glad tinted containers with header bar + 3 stickies. */}
+          {[
+            { x: 4, fill: 'rgb(254 226 226)', stroke: 'rgb(252 165 165)' },
+            { x: 30, fill: 'rgb(219 234 254)', stroke: 'rgb(147 197 253)' },
+            { x: 56, fill: 'rgb(220 252 231)', stroke: 'rgb(134 239 172)' },
+          ].map((col) => (
+            <g key={col.x}>
               <rect
-                x={x}
-                y="14"
-                width="16"
-                height="10"
-                rx="1"
-                fill="rgb(254 243 199)"
-                stroke="rgb(253 224 71)"
+                x={col.x}
+                y="3"
+                width="20"
+                height="44"
+                rx="2"
+                fill={col.fill}
+                stroke={col.stroke}
                 strokeWidth="0.75"
               />
-              <rect
-                x={x}
-                y="26"
-                width="16"
-                height="10"
-                rx="1"
-                fill="rgb(254 243 199)"
-                stroke="rgb(253 224 71)"
-                strokeWidth="0.75"
-              />
-              <rect
-                x={x}
-                y="38"
-                width="16"
-                height="8"
-                rx="1"
-                fill="rgb(254 243 199)"
-                stroke="rgb(253 224 71)"
-                strokeWidth="0.75"
-              />
+              {[12, 22, 32].map((sy) => (
+                <rect
+                  key={sy}
+                  x={col.x + 2}
+                  y={sy}
+                  width="16"
+                  height="7"
+                  rx="0.5"
+                  fill="rgb(254 243 199)"
+                  stroke="rgb(253 224 71)"
+                  strokeWidth="0.5"
+                />
+              ))}
             </g>
           ))}
         </svg>

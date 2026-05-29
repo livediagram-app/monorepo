@@ -262,36 +262,69 @@ function buildFlowchart(cx: number, cy: number): Element[] {
   return [start, step1, decision, step2, sideStep, end, ...arrows];
 }
 
+// Classic "Mad / Sad / Glad" retro. Each column lives inside its own
+// tinted container shape (red / blue / green) so the framework's
+// emotional groupings read at a glance. Header text + three sticky
+// notes sit on top of the container; the container is the first
+// element pushed per column so subsequent label + sticky elements
+// render above it.
 function buildRetrospective(cx: number, cy: number): Element[] {
+  const containerW = 300;
+  const containerSpacing = 320;
   const colW = 260;
-  const colSpacing = 280;
   const headerH = 56;
   const stickyH = 110;
   const stickyGap = 20;
-  const columns = ['What went well', "What didn't go well", 'Action items'];
-  const firstColX = cx - colSpacing - colW / 2;
+  const topPadding = 16;
+  const headerGap = 16;
+  const bottomPadding = 16;
+  const containerH =
+    topPadding + headerH + headerGap + 3 * stickyH + 2 * stickyGap + bottomPadding;
+
+  const columns: { label: string; fill: string; stroke: string }[] = [
+    { label: 'Mad', fill: '#fee2e2', stroke: '#fca5a5' },
+    { label: 'Sad', fill: '#dbeafe', stroke: '#93c5fd' },
+    { label: 'Glad', fill: '#dcfce7', stroke: '#86efac' },
+  ];
+
+  const firstColCenterX = cx - containerSpacing;
+  const containerY = cy - containerH / 2 + 40;
 
   const elements: Element[] = [];
-  for (let i = 0; i < columns.length; i++) {
-    const x = firstColX + i * colSpacing;
-    const headerY = cy - 240;
+  columns.forEach((col, i) => {
+    const centerX = firstColCenterX + i * containerSpacing;
+    const containerX = centerX - containerW / 2;
+
     elements.push({
-      ...createText(x, headerY),
+      ...createShape('square', containerX, containerY),
+      width: containerW,
+      height: containerH,
+      fillColor: col.fill,
+      strokeColor: col.stroke,
+      textSize: 'md',
+    });
+
+    const innerX = centerX - colW / 2;
+    const headerY = containerY + topPadding;
+    elements.push({
+      ...createText(innerX, headerY),
       width: colW,
       height: headerH,
-      label: columns[i]!,
+      label: col.label,
       textSize: 'lg',
       textAlignX: 'center',
     });
+
     for (let j = 0; j < 3; j++) {
-      const stickyY = headerY + headerH + 24 + j * (stickyH + stickyGap);
+      const stickyY = headerY + headerH + headerGap + j * (stickyH + stickyGap);
       elements.push({
-        ...createSticky(x, stickyY),
+        ...createSticky(innerX, stickyY),
         width: colW,
         height: stickyH,
         textSize: 'sm',
       });
     }
-  }
+  });
+
   return elements;
 }
