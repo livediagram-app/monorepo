@@ -94,6 +94,7 @@ type CanvasProps = {
   onFollowLink: (tabId: string) => void;
   showTemplatePicker: boolean;
   onChooseTemplate: (kind: TemplateKind) => void;
+  onOpenTemplatePicker: () => void;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
   onSetPatternColor: (color: string) => void;
@@ -162,6 +163,7 @@ export function Canvas(props: CanvasProps) {
     onFollowLink,
     showTemplatePicker,
     onChooseTemplate,
+    onOpenTemplatePicker,
     onSetBackgroundPattern,
     onSetBackgroundColor,
     onSetPatternColor,
@@ -440,11 +442,21 @@ export function Canvas(props: CanvasProps) {
       </div>
 
       {elements.length === 0 && !showTemplatePicker ? (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
-          <p className="text-sm font-medium text-slate-500">{tabName}</p>
-          <p className="text-xs text-slate-400">
-            Use the palette or double-click the canvas. Drag anchor dots to connect elements.
-          </p>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="pointer-events-none max-w-sm rounded-lg border border-slate-200 bg-white px-6 py-4 text-center shadow-md">
+            <p className="text-sm font-medium text-slate-700">{tabName}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Use the palette or double-click the canvas. Drag anchor dots to connect elements.
+            </p>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onOpenTemplatePicker}
+              className="pointer-events-auto mt-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+            >
+              Browse templates
+            </button>
+          </div>
         </div>
       ) : null}
 

@@ -411,6 +411,12 @@ export default function LivePage() {
     });
   };
 
+  const openTemplatePicker = () => {
+    commitTabs((ts) =>
+      ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)),
+    );
+  };
+
   const chooseTemplate = (kind: TemplateKind) => {
     const centre = getViewportCenter();
     const elements = buildTemplate(kind, centre.x, centre.y);
@@ -985,6 +991,7 @@ export default function LivePage() {
           activeTab.elements.length === 0 && activeTab.templateChosen !== true
         }
         onChooseTemplate={chooseTemplate}
+        onOpenTemplatePicker={openTemplatePicker}
         onSetBackgroundPattern={setBackgroundPattern}
         onClearTabContent={clearTabContent}
         onSetBackgroundColor={setBackgroundColor}
