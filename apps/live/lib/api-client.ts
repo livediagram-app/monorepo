@@ -1,16 +1,39 @@
 import type { Tab } from '@livediagram/diagram';
 import type { Participant } from './identity';
 
-// Single HTTP/WS client for the livediagram API. Lives at `/api/*` in
-// production (router stitches it onto the same hostname) and in dev too
-// once the user runs the router worker alongside the live app.
+// Single HTTP/WS client for the livediagram API.
+//
+// `API_BASE` resolution:
+//   1. `NEXT_PUBLIC_API_BASE` env var if set — used for local dev (e.g.
+//      `https://www.livediagram.app/api` to hit prod, or
+//      `http://localhost:8787/api` to point at a local `wrangler dev`
+//      session of `@livediagram/api`). Baked into the static export at
+//      build time so it works in deployed builds too.
+//   2. Default `/api` — same-origin, served by the router worker in
+//      production (router stitches the api worker onto the same
+//      hostname). This is what the deployed live app uses.
 //
 // All requests carry an `X-Owner-Id` header set to the current
 // participant's id — the API uses it as the diagram-owner filter and
 // for create-time `owner_id`. There's no auth gate yet; this is the
 // hook that Clerk will replace in the post-prototype phase.
 
-const API_BASE = '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
+
+// WebSocket counterpart of API_BASE. Converts http(s):// to ws(s):// for
+// absolute bases; for the same-origin default it builds from
+// `window.location` at call time (so SSR-safe modules can still import
+// this file).
+function wsUrl(path: string): string {
+  if (API_BASE.startsWith('http://')) {
+    return `ws://${API_BASE.slice('http://'.length)}${path}`;
+  }
+  if (API_BASE.startsWith('https://')) {
+    return `wss://${API_BASE.slice('https://'.length)}${path}`;
+  }
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}${API_BASE}${path}`;
+}
 
 export type StoredDiagram = {
   id: string;
@@ -144,9 +167,7 @@ export function connectRoom(
   send: (msg: RoomOutgoing) => void;
   close: () => void;
 } {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = `${proto}//${window.location.host}${API_BASE}/diagrams/${diagramId}/ws`;
-  const ws = new WebSocket(url);
+  const ws = new WebSocket(wsUrl(`/diagrams/${diagramId}/ws`));
   ws.addEventListener('open', () => {
     ws.send(JSON.stringify({ kind: 'hello', participant } satisfies RoomOutgoing));
   });
