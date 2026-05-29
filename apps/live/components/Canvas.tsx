@@ -33,6 +33,7 @@ import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type SelectedElementControls } from './CommandPalette';
 import { Explorer, ExplorerIcon, PaletteIcon } from './Explorer';
 import { DockButton } from './MovablePanel';
+import { MultiSelectionToolbar } from './MultiSelectionToolbar';
 import { HistoryControls } from './HistoryControls';
 import { ModeBanner } from './ModeBanner';
 import { PlusButton } from './PlusButton';
@@ -55,6 +56,8 @@ type CanvasProps = {
   selectedId: string | null;
   multiSelectedIds: Set<string>;
   onSelectMarquee: (ids: Set<string>) => void;
+  onDuplicateMultiSelected: () => void;
+  onDeleteMultiSelected: () => void;
   editingId: string | null;
   formatSourceId: string | null;
   groupSourceId: string | null;
@@ -134,6 +137,8 @@ export function Canvas(props: CanvasProps) {
     selectedId,
     multiSelectedIds,
     onSelectMarquee,
+    onDuplicateMultiSelected,
+    onDeleteMultiSelected,
     editingId,
     formatSourceId,
     groupSourceId,
@@ -620,6 +625,14 @@ export function Canvas(props: CanvasProps) {
 
       {showTemplatePicker ? (
         <TemplatePicker participant={selfParticipant} onPick={onChooseTemplate} />
+      ) : null}
+
+      {multiSelectedIds.size >= 2 ? (
+        <MultiSelectionToolbar
+          count={multiSelectedIds.size}
+          onDuplicate={onDuplicateMultiSelected}
+          onDelete={onDeleteMultiSelected}
+        />
       ) : null}
 
       {marquee ? (

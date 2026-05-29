@@ -635,6 +635,28 @@ export default function LivePage() {
     setGroupSourceId(null);
   };
 
+  // Multi-select duplicate: clones every multi-selected boxed element with
+  // a small diagonal offset and selects the new copies as the next
+  // multi-selection. Arrows aren't duplicated (matches single-element
+  // Duplicate semantics — connections are user-rebuilt).
+  const duplicateMultiSelected = () => {
+    if (multiSelectedIds.size === 0) return;
+    const offset = 24;
+    const sources = activeTab.elements.filter((el) => multiSelectedIds.has(el.id) && isBoxed(el));
+    if (sources.length === 0) return;
+    const copies: BoxedElement[] = sources.map((s) => ({
+      ...(s as BoxedElement),
+      id: crypto.randomUUID(),
+      x: (s as BoxedElement).x + offset,
+      y: (s as BoxedElement).y + offset,
+      // Drop group membership — duplicates are independent. Existing
+      // groupings on the multi-selection don't carry over.
+      groupId: undefined,
+    }));
+    commit((els) => [...els, ...copies]);
+    setMultiSelectedIds(new Set(copies.map((c) => c.id)));
+  };
+
   // Multi-select delete: removes every marquee-selected element plus any
   // arrows that reference one of them. Falls back to single-element delete
   // when there's no active multi-selection.
@@ -1141,6 +1163,8 @@ export default function LivePage() {
         selectedId={selectedId}
         multiSelectedIds={multiSelectedIds}
         onSelectMarquee={selectMarquee}
+        onDuplicateMultiSelected={duplicateMultiSelected}
+        onDeleteMultiSelected={deleteMultiSelected}
         editingId={editingId}
         formatSourceId={formatSourceId}
         groupSourceId={groupSourceId}
