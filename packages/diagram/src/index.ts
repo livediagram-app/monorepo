@@ -155,6 +155,7 @@ export type ShapeElement = {
   textColor?: string;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  link?: ElementLink;
 };
 
 // --- Text ------------------------------------------------------------------
@@ -177,6 +178,7 @@ export type TextElement = {
   textColor?: string;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  link?: ElementLink;
 };
 
 // --- Sticky notes ----------------------------------------------------------
@@ -199,6 +201,7 @@ export type StickyElement = {
   textColor?: string;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  link?: ElementLink;
 };
 
 // --- Arrows ----------------------------------------------------------------
@@ -211,6 +214,13 @@ export type Endpoint =
   | { kind: 'free'; x: number; y: number }
   | { kind: 'pinned'; elementId: ElementId; anchor: Anchor };
 
+// Cross-tab link on any element. Currently always a tab link (jumping to a
+// different tab). Element-specific linking (jump-and-focus) is in the spec
+// but not in the UI yet.
+export type ElementLink =
+  | { kind: 'tab'; tabId: TabId }
+  | { kind: 'element'; tabId: TabId; elementId: ElementId };
+
 export type ArrowElement = {
   id: ElementId;
   type: 'arrow';
@@ -218,6 +228,7 @@ export type ArrowElement = {
   to: Endpoint;
   locked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  link?: ElementLink;
 };
 
 // --- Element union ---------------------------------------------------------

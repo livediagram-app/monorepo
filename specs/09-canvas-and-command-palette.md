@@ -540,6 +540,42 @@ The menu renders through a **portal** to `document.body` and positions itself fr
 
 Tabs are **draggable** via the native HTML5 drag API. Dragging a tab over another shows a ring around the drop target; releasing reorders the source to the target's position.
 
+## Element links
+
+Any element can carry a **link to another tab**. Clicking the link jumps to that tab.
+
+### Setting a link
+
+- The selection popover has a **Link** button (chain icon) between Duplicate and Lock-aspect.
+- Clicking it opens a small **TabLinkPicker** popover above the button (portal-rendered, viewport-clamped) listing every tab except the current one.
+- Click a tab name to set the link. Click again on the same tab to keep it, or click another to switch. A **Remove link** action appears at the bottom of the picker when a link is set.
+
+The Link button is brand-tinted when the selected element has a link.
+
+### Visual indicator
+
+A linked boxed element shows a small brand-coloured **link badge** in its top-right corner with a chain icon. The badge:
+
+- Is counter-scaled with `1/zoom` so it stays the same on-screen size at any zoom.
+- **On click**, navigates to the linked tab (`setActiveId(tabId)`), clearing selection and edit/mode state — the same effect as picking the tab in the tab bar.
+- Stops propagation so it doesn't trigger element select / drag.
+
+Arrows can also carry a link but don't show a visible badge yet (no obvious place to put one); future iteration may put a badge at the arrow's midpoint.
+
+### Data model
+
+```ts
+type ElementLink =
+  | { kind: 'tab'; tabId: TabId }
+  | { kind: 'element'; tabId: TabId; elementId: ElementId };
+```
+
+Today only the `'tab'` kind is exposed in the UI. The `'element'` kind is in the model so future iterations can "jump and focus a specific element" without a schema change.
+
+### Group behaviour
+
+Setting or clearing a link applies to **all members of the current selection** (consistent with other per-element ops). Each linked member shows its own badge.
+
 ## Tooltips
 
 Every icon button on the palette and selection popover shows a **tooltip** on hover (and focus) with:

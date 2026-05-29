@@ -21,6 +21,7 @@ import {
   type BackgroundPattern,
   type Element,
   type ShapeKind,
+  type Tab,
   type TextAlignX,
   type TextAlignY,
   type TextSize,
@@ -86,6 +87,11 @@ type CanvasProps = {
   onSetTextColor: (color: string) => void;
   onSetOpacity: (opacity: number) => void;
   onDuplicateSelected: () => void;
+  tabs: Tab[];
+  currentTabId: string;
+  onSetLink: (tabId: string) => void;
+  onClearLink: () => void;
+  onFollowLink: (tabId: string) => void;
   showTemplatePicker: boolean;
   onChooseTemplate: (kind: TemplateKind) => void;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
@@ -149,6 +155,11 @@ export function Canvas(props: CanvasProps) {
     onSetTextColor,
     onSetOpacity,
     onDuplicateSelected,
+    tabs,
+    currentTabId,
+    onSetLink,
+    onClearLink,
+    onFollowLink,
     showTemplatePicker,
     onChooseTemplate,
     onSetBackgroundPattern,
@@ -353,6 +364,7 @@ export function Canvas(props: CanvasProps) {
             onBeginEdit={() => onBeginEdit(element.id)}
             onCommitLabel={(label) => onCommitLabel(element.id, label)}
             onCancelEdit={onCancelEdit}
+            onFollowLink={onFollowLink}
           />
         ))}
 
@@ -409,12 +421,19 @@ export function Canvas(props: CanvasProps) {
             zoom={viewportZoom}
             locked={selectedLocked}
             aspectLocked={selectedAspectLocked}
+            tabs={tabs}
+            currentTabId={currentTabId}
+            linkedTabId={
+              selected && selected.link && selected.link.kind === 'tab' ? selected.link.tabId : null
+            }
             onCopyFormat={selectedIsBoxed ? onBeginFormatPainter : undefined}
             onGroup={selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
             onUngroup={selectedIsGrouped ? onUngroup : undefined}
             onToggleAspectLock={selectedIsBoxed ? onToggleAspectLock : undefined}
             onToggleLock={onToggleLockSelected}
             onDuplicate={onDuplicateSelected}
+            onSetLink={onSetLink}
+            onClearLink={onClearLink}
             onDelete={onDeleteSelected}
           />
         ) : null}

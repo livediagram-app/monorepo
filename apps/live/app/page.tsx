@@ -549,6 +549,37 @@ export default function LivePage() {
     );
   };
 
+  const setLinkSelected = (tabId: string) => {
+    if (!selectedId) return;
+    const ids = memberIdsOf(selectedId);
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) ? { ...el, link: { kind: 'tab' as const, tabId } } : el,
+      ),
+    );
+  };
+
+  const clearLinkSelected = () => {
+    if (!selectedId) return;
+    const ids = memberIdsOf(selectedId);
+    commit((els) =>
+      els.map((el) => {
+        if (!ids.has(el.id)) return el;
+        const { link: _drop, ...rest } = el;
+        return rest as typeof el;
+      }),
+    );
+  };
+
+  const followLink = (tabId: string) => {
+    if (!tabs.some((t) => t.id === tabId)) return;
+    setActiveId(tabId);
+    setSelectedId(null);
+    setEditingId(null);
+    setFormatSourceId(null);
+    setGroupSourceId(null);
+  };
+
   const setOpacitySelected = (opacity: number) => {
     if (!selectedId) return;
     const ids = memberIdsOf(selectedId);
@@ -930,6 +961,11 @@ export default function LivePage() {
         onSetTextColor={setTextColorSelected}
         onSetOpacity={setOpacitySelected}
         onDuplicateSelected={duplicateSelected}
+        tabs={tabs}
+        currentTabId={activeId}
+        onSetLink={setLinkSelected}
+        onClearLink={clearLinkSelected}
+        onFollowLink={followLink}
         showTemplatePicker={
           activeTab.elements.length === 0 && activeTab.templateChosen !== true
         }

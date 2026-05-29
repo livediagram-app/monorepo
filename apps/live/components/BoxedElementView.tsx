@@ -32,6 +32,7 @@ type BoxedElementViewProps = {
   onBeginEdit: () => void;
   onCommitLabel: (label: string) => void;
   onCancelEdit: () => void;
+  onFollowLink: (tabId: string) => void;
 };
 
 export function BoxedElementView({
@@ -47,6 +48,7 @@ export function BoxedElementView({
   onBeginEdit,
   onCommitLabel,
   onCancelEdit,
+  onFollowLink,
 }: BoxedElementViewProps) {
   const isLocked = element.locked === true;
   const label = element.label ?? '';
@@ -117,6 +119,10 @@ export function BoxedElementView({
 
       {isLocked ? <LockBadge zoom={zoom} /> : null}
 
+      {element.link && element.link.kind === 'tab' ? (
+        <LinkBadge zoom={zoom} onFollow={() => onFollowLink(element.link!.tabId)} />
+      ) : null}
+
       {showHandles ? (
         <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
       ) : null}
@@ -139,6 +145,34 @@ const ANCHOR_STYLE: Record<'n' | 'e' | 's' | 'w', React.CSSProperties> = {
   s: { top: '100%', left: '50%' },
   w: { top: '50%', left: 0 },
 };
+
+function LinkBadge({
+  zoom,
+  onFollow,
+}: {
+  zoom: number;
+  onFollow: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label="Follow link"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onFollow();
+      }}
+      style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
+      className="pointer-events-auto absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
+    >
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
+        <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
+        <line x1="6" y1="10" x2="10" y2="6" />
+      </svg>
+    </button>
+  );
+}
 
 function AnchorDot({
   anchor,

@@ -1,4 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { Tab } from '@livediagram/diagram';
+import { TabLinkPicker } from './TabLinkPicker';
 import { Tooltip } from './Tooltip';
 
 type Bounds = { x: number; y: number; width: number; height: number };
@@ -9,9 +11,14 @@ type SelectionPopoverProps = {
   zoom: number;
   locked: boolean;
   aspectLocked: boolean;
+  tabs: Tab[];
+  currentTabId: string;
+  linkedTabId: string | null;
   onToggleLock: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onSetLink: (tabId: string) => void;
+  onClearLink: () => void;
   onCopyFormat?: () => void;
   onGroup?: () => void;
   onUngroup?: () => void;
@@ -28,14 +35,21 @@ export function SelectionPopover({
   zoom,
   locked,
   aspectLocked,
+  tabs,
+  currentTabId,
+  linkedTabId,
   onToggleLock,
   onDelete,
   onDuplicate,
+  onSetLink,
+  onClearLink,
   onCopyFormat,
   onGroup,
   onUngroup,
   onToggleAspectLock,
 }: SelectionPopoverProps) {
+  const linkButtonRef = useRef<HTMLButtonElement>(null);
+  const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -98,6 +112,46 @@ export function SelectionPopover({
       >
         <DuplicateIcon />
       </PopoverButton>
+      <Tooltip
+        title={linkedTabId ? 'Edit link' : 'Link to tab'}
+        description={
+          linkedTabId
+            ? 'Change which tab this element links to, or remove the link.'
+            : 'Pick a tab to link this element to. Click the link icon on the element to follow it.'
+        }
+      >
+        <button
+          ref={linkButtonRef}
+          type="button"
+          onClick={() => setLinkPickerOpen((v) => !v)}
+          aria-label={linkedTabId ? 'Edit link' : 'Link to tab'}
+          aria-pressed={linkedTabId !== null}
+          className={
+            linkedTabId
+              ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
+              : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+          }
+        >
+          <LinkIcon />
+        </button>
+      </Tooltip>
+      {linkPickerOpen ? (
+        <TabLinkPicker
+          anchor={linkButtonRef.current}
+          tabs={tabs}
+          currentTabId={currentTabId}
+          linkedTabId={linkedTabId}
+          onSelect={(id) => {
+            onSetLink(id);
+            setLinkPickerOpen(false);
+          }}
+          onClear={() => {
+            onClearLink();
+            setLinkPickerOpen(false);
+          }}
+          onClose={() => setLinkPickerOpen(false)}
+        />
+      ) : null}
       {onUngroup ? (
         <PopoverButton
           label="Ungroup"
@@ -205,6 +259,26 @@ function DuplicateIcon() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
       <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
       <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
+    </svg>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
+      <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
+      <line x1="6" y1="10" x2="10" y2="6" />
     </svg>
   );
 }
