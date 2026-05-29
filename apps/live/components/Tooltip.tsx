@@ -4,13 +4,18 @@ import { createPortal } from 'react-dom';
 type TooltipProps = {
   title: string;
   description: string;
+  // When true, the wrapping span renders as a full-width flex container so
+  // the tooltip-wrapped child can stretch to fill a grid cell or flex
+  // parent. Default (false) keeps the historical `inline-flex` behaviour
+  // so existing toolbar usages don't reflow.
+  block?: boolean;
   children: ReactNode;
 };
 
 // Custom tooltip with a bold title and a one-line description. Appears above
 // the wrapped element on hover/focus. Rendered via portal so it isn't clipped
 // by floating panels or transform contexts.
-export function Tooltip({ title, description, children }: TooltipProps) {
+export function Tooltip({ title, description, block = false, children }: TooltipProps) {
   const wrapRef = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -34,7 +39,7 @@ export function Tooltip({ title, description, children }: TooltipProps) {
       onMouseLeave={hide}
       onFocus={show}
       onBlur={hide}
-      className="inline-flex"
+      className={block ? 'flex w-full' : 'inline-flex'}
     >
       {children}
       {visible && pos && typeof document !== 'undefined'

@@ -417,6 +417,7 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
                 key={t.id}
                 title={t.label}
                 description="Applies the theme's background and new-element colours."
+                block
               >
                 <button
                   type="button"
@@ -424,8 +425,8 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
                   aria-pressed={active}
                   className={
                     active
-                      ? 'flex flex-col items-center gap-1 rounded-md border border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800'
-                      : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40'
+                      ? 'flex w-full flex-col items-center gap-1 rounded-md border border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800'
+                      : 'flex w-full flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40'
                   }
                 >
                   <span

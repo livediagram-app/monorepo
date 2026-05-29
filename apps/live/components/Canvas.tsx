@@ -105,12 +105,14 @@ type CanvasProps = {
   onFollowLink: (tabId: string) => void;
   onOpenComments: (elementId: string) => void;
   showTemplatePicker: boolean;
+  templatePickerMode: 'welcome' | 'templates';
   selfParticipant: import('@/lib/identity').Participant;
   onChooseTemplate: (
     kind: TemplateKind,
     name: string,
     themeId: import('@/lib/themes').ThemeId,
   ) => void;
+  onSkipTemplatePicker: () => void;
   onOpenTemplatePicker: () => void;
   tabThemeId: import('@/lib/themes').ThemeId;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
@@ -190,8 +192,10 @@ export function Canvas(props: CanvasProps) {
     onFollowLink,
     onOpenComments,
     showTemplatePicker,
+    templatePickerMode,
     selfParticipant,
     onChooseTemplate,
+    onSkipTemplatePicker,
     onOpenTemplatePicker,
     tabThemeId,
     onSetTheme,
@@ -628,7 +632,13 @@ export function Canvas(props: CanvasProps) {
       ) : null}
 
       {showTemplatePicker ? (
-        <TemplatePicker participant={selfParticipant} onPick={onChooseTemplate} />
+        <TemplatePicker
+          mode={templatePickerMode}
+          participant={selfParticipant}
+          currentThemeId={tabThemeId}
+          onPick={onChooseTemplate}
+          onSkip={onSkipTemplatePicker}
+        />
       ) : null}
 
       {multiSelectedIds.size >= 2 ? (

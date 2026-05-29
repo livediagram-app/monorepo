@@ -6,11 +6,23 @@ import { TEMPLATES } from '@/lib/templates';
 import { THEMES, type ThemeId } from '@/lib/themes';
 
 type TemplatePickerProps = {
-  // The user's current identity. Their name is editable inside the picker;
-  // a colour was assigned at participant creation (random from the curated
-  // palette) and is shown but not editable here.
+  // 'welcome' — first-run modal: identity, template, theme, confirm.
+  // 'templates' — opened from the empty-state card's "Browse templates"
+  // button on an existing tab; just the template grid + Apply. Keeps the
+  // current participant name + current tab theme untouched.
+  mode: 'welcome' | 'templates';
+  // The user's current identity. Their name is editable inside the picker
+  // in welcome mode and hidden in templates-only mode.
   participant: Participant;
+  // Theme currently applied to the active tab — used as the initial /
+  // only theme in templates-only mode.
+  currentThemeId: ThemeId;
   onPick: (kind: TemplateKind, name: string, themeId: ThemeId) => void;
+  // Dismiss the modal without picking a template or theme. The diagram
+  // gets a fresh blank canvas (no seeded rectangle, no theme override)
+  // and the empty-state card prompts the next step. Triggered by either
+  // the Skip button or the X in the header.
+  onSkip: () => void;
 };
 
 // The "Start a new diagram" modal — now also the welcome screen. Lets the
@@ -18,10 +30,17 @@ type TemplatePickerProps = {
 // template AND a theme, then explicitly confirms with a Create button.
 // Multi-step pick-then-confirm replaced the previous one-click flow so
 // users can preview their choices before committing.
-export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
+export function TemplatePicker({
+  mode,
+  participant,
+  currentThemeId,
+  onPick,
+  onSkip,
+}: TemplatePickerProps) {
+  const isWelcome = mode === 'welcome';
   const [name, setName] = useState(participant.name);
   const [templateKind, setTemplateKind] = useState<TemplateKind>('blank');
-  const [themeId, setThemeId] = useState<ThemeId>('brand');
+  const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
 
@@ -31,15 +50,30 @@ export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
     >
       <div className="pointer-events-auto flex max-h-[90vh] w-[44rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
-        <div className="border-b border-slate-100 px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Welcome to livediagram</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Set your name, pick a template, and choose a theme to start with.
-          </p>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {isWelcome ? 'Welcome to livediagram' : 'Pick a template'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              {isWelcome
+                ? 'Set your name, pick a template, and choose a theme to start with.'
+                : 'Scaffold this tab with a starter diagram. Your current theme stays.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onSkip}
+            aria-label="Close"
+            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <CloseIcon />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* Identity row. */}
+          {/* Identity row — only in the first-run welcome flow. */}
+          {isWelcome ? (
           <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
             <div
               role="img"
@@ -66,9 +100,13 @@ export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
             </div>
           </div>
 
+          ) : null}
+
           {/* Template grid. 4 columns at wide widths so the picker uses the
               modal width instead of stretching cards vertically. */}
-          <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <p
+            className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 ${isWelcome ? 'mt-5' : ''}`}
+          >
             Pick a template
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -100,7 +138,10 @@ export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
             })}
           </div>
 
-          {/* Theme grid. Same data the palette's Theme accordion uses. */}
+          {/* Theme grid — only in the first-run welcome flow; existing
+              tabs keep whichever theme they already have. */}
+          {isWelcome ? (
+            <>
           <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             Select a theme
           </p>
@@ -136,23 +177,51 @@ export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
               );
             })}
           </div>
+            </>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-3">
           <p className="mr-auto text-[11px] text-slate-500">
-            You can change these later from the Palette.
+            {isWelcome
+              ? 'You can change these later from the Palette.'
+              : 'Existing content on this tab will be replaced.'}
           </p>
+          <button
+            type="button"
+            onClick={onSkip}
+            className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            {isWelcome ? 'Skip' : 'Cancel'}
+          </button>
           <button
             type="button"
             onClick={() => onPick(templateKind, effectiveName, themeId)}
             className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <SparkleIcon />
-            Create Diagram
+            {isWelcome ? 'Create Diagram' : 'Apply Template'}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
+    </svg>
   );
 }
 

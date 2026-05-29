@@ -170,15 +170,19 @@ export default function LivePage() {
   // selection / its popover / its accordion controls are suppressed. Both
   // are cleared together by `onDeselect` and by clicking any single element.
   const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
-  // Local-session participant. Initialised once per page load with a random
-  // name + colour from the curated palette. Once auth lands, this becomes
-  // the signed-in user (or guest with persisted localStorage identity).
-  const [selfParticipant, setSelfParticipant] = useState<Participant>(() => ({
+  // Local-session participant. Initialised to a stable placeholder so the
+  // SSG output and the first client paint agree (Math.random() in a lazy
+  // initialiser ran on both server and client and produced different
+  // names, tripping React's hydration mismatch). The post-mount hydration
+  // step below either loads a saved identity or mints a fresh random one
+  // — both happen synchronously inside useLayoutEffect, so the user never
+  // sees the placeholder.
+  const [selfParticipant, setSelfParticipant] = useState<Participant>({
     id: 'self',
-    name: randomName(),
-    color: randomColor(),
+    name: 'Guest',
+    color: '#0ea5e9',
     status: 'online',
-  }));
+  });
   // ID of the element whose comment thread popover is currently open.
   // Comment mutations bypass the history hook (so typing a comment then
   // Ctrl+Z doesn't unexpectedly wipe it).
@@ -209,7 +213,19 @@ export default function LivePage() {
       setActiveId(stored.tabs[0]?.id ?? activeId);
     }
     const storedSelf = loadSelfParticipant();
-    if (storedSelf) setSelfParticipant({ ...storedSelf, status: 'online' });
+    if (storedSelf) {
+      setSelfParticipant({ ...storedSelf, status: 'online' });
+    } else {
+      // First-ever visit on this device — mint and save a fresh identity.
+      const fresh: Participant = {
+        id: 'self',
+        name: randomName(),
+        color: randomColor(),
+        status: 'online',
+      };
+      setSelfParticipant(fresh);
+      saveSelfParticipant(fresh);
+    }
     setDiagramId(id);
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -582,14 +598,38 @@ export default function LivePage() {
     });
   };
 
+  // Which variant of the picker to render. 'welcome' is the first-run
+  // experience (name + theme + template). 'templates' is the lighter
+  // version opened by the empty-state card's Browse templates button —
+  // just the template grid, with the tab's current theme and the user's
+  // current name kept as-is.
+  const [templatePickerMode, setTemplatePickerMode] = useState<'welcome' | 'templates'>(
+    'welcome',
+  );
+
   const openTemplatePicker = () => {
+    setTemplatePickerMode('templates');
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)));
+  };
+
+  // Dismiss the welcome / templates modal without picking anything.
+  // Marks the tab as template-chosen so the modal doesn't reappear,
+  // leaves the canvas empty (so the empty-state card prompts the next
+  // step), and doesn't touch the participant name or the theme. Resets
+  // the picker mode to 'welcome' so the next first-run session is
+  // unaffected.
+  const skipTemplatePicker = () => {
+    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: true } : t)));
+    setTemplatePickerMode('welcome');
   };
 
   const chooseTemplate = (kind: TemplateKind, name?: string, themeId?: ThemeId) => {
     if (name && name !== selfParticipant.name) {
       setSelfParticipant((p) => ({ ...p, name }));
     }
+    // Reset the picker mode to 'welcome' so a future first-run session
+    // (new diagram, fresh URL) starts in the right variant.
+    setTemplatePickerMode('welcome');
     const centre = getViewportCenter();
     const rawElements = buildTemplate(kind, centre.x, centre.y);
     const theme = themeId ? getTheme(themeId) : null;
@@ -1025,6 +1065,21 @@ export default function LivePage() {
   const commitLabel = (elementId: string, label: string) => {
     commit((els) => els.map((el) => (el.id === elementId && isBoxed(el) ? { ...el, label } : el)));
     setEditingId(null);
+    // While the diagram is still on its default name, mirror the label of
+    // the very first element of the very first tab into the diagram title
+    // — typing on the welcome rectangle is a strong signal of intent.
+    // Once the user has explicitly named the diagram (or named it via
+    // another path), we stop tracking.
+    if (diagramName === 'Untitled diagram') {
+      const firstTab = tabs[0];
+      const firstEl = firstTab?.elements[0];
+      if (firstEl && firstEl.id === elementId) {
+        const trimmed = label.trim();
+        if (trimmed && trimmed !== 'Blank Diagram') {
+          setDiagramName(trimmed);
+        }
+      }
+    }
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -1324,8 +1379,10 @@ export default function LivePage() {
         onFollowLink={followLink}
         onOpenComments={openComments}
         showTemplatePicker={activeTab.elements.length === 0 && activeTab.templateChosen !== true}
+        templatePickerMode={templatePickerMode}
         selfParticipant={selfParticipant}
         onChooseTemplate={chooseTemplate}
+        onSkipTemplatePicker={skipTemplatePicker}
         onOpenTemplatePicker={openTemplatePicker}
         tabThemeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
         onSetTheme={setTheme}
