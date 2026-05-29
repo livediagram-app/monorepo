@@ -92,6 +92,7 @@ type CanvasProps = {
   onSetLink: (tabId: string) => void;
   onClearLink: () => void;
   onFollowLink: (tabId: string) => void;
+  onOpenComments: (elementId: string) => void;
   showTemplatePicker: boolean;
   selfParticipant: import('@/lib/identity').Participant;
   onChooseTemplate: (kind: TemplateKind, name: string) => void;
@@ -162,6 +163,7 @@ export function Canvas(props: CanvasProps) {
     onSetLink,
     onClearLink,
     onFollowLink,
+    onOpenComments,
     showTemplatePicker,
     selfParticipant,
     onChooseTemplate,
@@ -373,6 +375,7 @@ export function Canvas(props: CanvasProps) {
             onCommitLabel={(label) => onCommitLabel(element.id, label)}
             onCancelEdit={onCancelEdit}
             onFollowLink={onFollowLink}
+            onOpenComments={() => onOpenComments(element.id)}
           />
         ))}
 
@@ -442,6 +445,7 @@ export function Canvas(props: CanvasProps) {
             onDuplicate={onDuplicateSelected}
             onSetLink={onSetLink}
             onClearLink={onClearLink}
+            onOpenComments={selected ? () => onOpenComments(selected.id) : undefined}
             onDelete={onDeleteSelected}
           />
         ) : null}

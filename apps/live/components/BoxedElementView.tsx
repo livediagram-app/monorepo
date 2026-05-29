@@ -1,5 +1,6 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import {
+  activeCommentCount,
   defaultFillColor,
   defaultStrokeColor,
   defaultTextAlign,
@@ -34,6 +35,7 @@ type BoxedElementViewProps = {
   onCommitLabel: (label: string) => void;
   onCancelEdit: () => void;
   onFollowLink: (tabId: string) => void;
+  onOpenComments: () => void;
 };
 
 export function BoxedElementView({
@@ -50,6 +52,7 @@ export function BoxedElementView({
   onCommitLabel,
   onCancelEdit,
   onFollowLink,
+  onOpenComments,
 }: BoxedElementViewProps) {
   const isLocked = element.locked === true;
   const label = element.label ?? '';
@@ -83,8 +86,12 @@ export function BoxedElementView({
 
   const variant = describeVariant(element, isSelected);
 
+  const commentCount = activeCommentCount(element.commentThread);
+  const linked = element.link !== undefined && element.link.kind === 'tab';
+
   return (
     <div
+      data-element-id={element.id}
       onPointerDown={handleShapeDown}
       onDoubleClick={handleDoubleClick}
       className={`absolute origin-center animate-pop-in touch-none select-none ${variant.className} ${cursor}`}
@@ -119,8 +126,16 @@ export function BoxedElementView({
 
       {isLocked ? <LockBadge zoom={zoom} /> : null}
 
-      {element.link && element.link.kind === 'tab' ? (
-        <LinkBadge zoom={zoom} onFollow={() => onFollowLink(element.link!.tabId)} />
+      {linked || commentCount > 0 ? (
+        <BadgeStrip
+          zoom={zoom}
+          linked={linked}
+          commentCount={commentCount}
+          onFollowLink={() =>
+            element.link && element.link.kind === 'tab' ? onFollowLink(element.link.tabId) : null
+          }
+          onOpenComments={onOpenComments}
+        />
       ) : null}
 
       {showHandles ? (
@@ -214,35 +229,114 @@ const ANCHOR_STYLE: Record<'n' | 'e' | 's' | 'w', React.CSSProperties> = {
   w: { top: '50%', left: 0 },
 };
 
-function LinkBadge({ zoom, onFollow }: { zoom: number; onFollow: () => void }) {
+// Floating cluster at the top-right of the element. Holds the link badge
+// (if linked) and the comment badge (if there are unresolved comments) as
+// individual buttons inside a single rounded card — same shape language as
+// ZoomControls. Counter-scaled so the badges keep their on-screen size at
+// any canvas zoom.
+function BadgeStrip({
+  zoom,
+  linked,
+  commentCount,
+  onFollowLink,
+  onOpenComments,
+}: {
+  zoom: number;
+  linked: boolean;
+  commentCount: number;
+  onFollowLink: () => void;
+  onOpenComments: () => void;
+}) {
+  return (
+    <div
+      onPointerDown={(e) => e.stopPropagation()}
+      style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'right top' }}
+      className="pointer-events-auto absolute -right-1 -top-1 flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm"
+    >
+      {linked ? (
+        <BadgeButton label="Follow link" onClick={onFollowLink}>
+          <LinkBadgeIcon />
+        </BadgeButton>
+      ) : null}
+      {commentCount > 0 ? (
+        <BadgeButton
+          label={`Open ${commentCount} comment${commentCount === 1 ? '' : 's'}`}
+          onClick={onOpenComments}
+          dataAttr="data-comment-trigger"
+        >
+          <CommentBadgeIcon />
+          <span className="absolute -right-1 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold leading-none text-white">
+            {commentCount}
+          </span>
+        </BadgeButton>
+      ) : null}
+    </div>
+  );
+}
+
+function BadgeButton({
+  label,
+  onClick,
+  dataAttr,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  dataAttr?: string;
+  children: React.ReactNode;
+}) {
+  const extra = dataAttr ? { [dataAttr]: '' } : {};
   return (
     <button
       type="button"
-      aria-label="Follow link"
-      onPointerDown={(e) => e.stopPropagation()}
+      aria-label={label}
       onClick={(e) => {
         e.stopPropagation();
-        onFollow();
+        onClick();
       }}
-      style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
-      className="pointer-events-auto absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
+      className="relative flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
+      {...extra}
     >
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
-        <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
-        <line x1="6" y1="10" x2="10" y2="6" />
-      </svg>
+      {children}
     </button>
+  );
+}
+
+function LinkBadgeIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
+      <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
+      <line x1="6" y1="10" x2="10" y2="6" />
+    </svg>
+  );
+}
+
+function CommentBadgeIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4v5A1.5 1.5 0 0 1 12 10.5H7l-3 2.5V10.5A1.5 1.5 0 0 1 2.5 9z" />
+    </svg>
   );
 }
 

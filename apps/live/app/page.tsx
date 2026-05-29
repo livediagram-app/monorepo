@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import {
   anchorPosition,
   bringManyToFront,
+  createComment,
   createPinnedArrow,
   createShape,
   createSticky,
@@ -35,6 +36,7 @@ import {
   type TextSize,
 } from '@livediagram/diagram';
 import { Canvas } from '@/components/Canvas';
+import { CommentThreadPopover } from '@/components/CommentThreadPopover';
 import { EditorHeader } from '@/components/EditorHeader';
 import { TabBar } from '@/components/TabBar';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
@@ -157,6 +159,10 @@ export default function LivePage() {
     color: randomColor(),
     status: 'online',
   }));
+  // ID of the element whose comment thread popover is currently open.
+  // Comment mutations bypass the history hook (so typing a comment then
+  // Ctrl+Z doesn't unexpectedly wipe it).
+  const [commentThreadOpenId, setCommentThreadOpenId] = useState<string | null>(null);
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
   const [viewportZoom, setViewportZoom] = useState(1);
   const canvasMainRef = useRef<HTMLElement>(null);
@@ -367,6 +373,69 @@ export default function LivePage() {
     setViewportZoom(1);
     // setActiveId will be picked up on next render via the fallback chain
     // (activeTab = tabs.find(...) ?? tabs[0]) once the new tab is in state.
+  };
+
+  // Comment mutations live outside the history hook (per the comment on
+  // `commentThreadOpenId`). They all funnel through `tickTabs`, which
+  // updates the present tab list without pushing a snapshot to `past`.
+  const updateThread = (
+    elementId: string,
+    fn: (thread: import('@livediagram/diagram').CommentThread | undefined) => import(
+      '@livediagram/diagram'
+    ).CommentThread | undefined,
+  ) => {
+    tickTabs((ts) =>
+      ts.map((t) =>
+        t.id !== activeId
+          ? t
+          : {
+              ...t,
+              elements: t.elements.map((el) => {
+                if (el.id !== elementId || !isBoxed(el)) return el;
+                const next = fn(el.commentThread);
+                if (!next) {
+                  const { commentThread: _drop, ...rest } = el;
+                  return rest as typeof el;
+                }
+                return { ...el, commentThread: next };
+              }),
+            },
+      ),
+    );
+  };
+
+  const openComments = (elementId: string) => {
+    setCommentThreadOpenId((cur) => (cur === elementId ? null : elementId));
+  };
+  const closeComments = () => setCommentThreadOpenId(null);
+  const addComment = (elementId: string, text: string) => {
+    updateThread(elementId, (thread) => ({
+      comments: [
+        ...(thread?.comments ?? []),
+        createComment(text, { name: selfParticipant.name, color: selfParticipant.color }),
+      ],
+      // Adding a comment unresolves a resolved thread — the new message
+      // is itself a signal that the conversation isn't done.
+      resolved: false,
+    }));
+  };
+  const deleteComment = (elementId: string, commentId: string) => {
+    updateThread(elementId, (thread) => {
+      if (!thread) return undefined;
+      const remaining = thread.comments.filter((c) => c.id !== commentId);
+      if (remaining.length === 0) return undefined;
+      return { ...thread, comments: remaining };
+    });
+  };
+  const resolveThread = (elementId: string) => {
+    updateThread(elementId, (thread) =>
+      thread ? { ...thread, resolved: true } : undefined,
+    );
+  };
+  const unresolveThread = (elementId: string) => {
+    updateThread(elementId, (thread) =>
+      thread ? { ...thread, resolved: false } : undefined,
+    );
   };
 
   const renameTab = (id: string, name: string) => {
@@ -1002,6 +1071,7 @@ export default function LivePage() {
         onSetLink={setLinkSelected}
         onClearLink={clearLinkSelected}
         onFollowLink={followLink}
+        onOpenComments={openComments}
         showTemplatePicker={activeTab.elements.length === 0 && activeTab.templateChosen !== true}
         selfParticipant={selfParticipant}
         onChooseTemplate={chooseTemplate}
@@ -1032,6 +1102,25 @@ export default function LivePage() {
         onDelete={deleteTab}
         onReorder={reorderTabs}
       />
+      {commentThreadOpenId !== null
+        ? (() => {
+            const target = activeTab.elements.find(
+              (el) => el.id === commentThreadOpenId && isBoxed(el),
+            );
+            if (!target || !isBoxed(target)) return null;
+            return (
+              <CommentThreadPopover
+                elementId={target.id}
+                thread={target.commentThread}
+                onAddComment={(text) => addComment(target.id, text)}
+                onDeleteComment={(cid) => deleteComment(target.id, cid)}
+                onResolve={() => resolveThread(target.id)}
+                onUnresolve={() => unresolveThread(target.id)}
+                onClose={closeComments}
+              />
+            );
+          })()
+        : null}
     </div>
   );
 }

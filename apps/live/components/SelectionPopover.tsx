@@ -23,6 +23,7 @@ type SelectionPopoverProps = {
   onGroup?: () => void;
   onUngroup?: () => void;
   onToggleAspectLock?: () => void;
+  onOpenComments?: () => void;
 };
 
 const POPOVER_HEIGHT = 44;
@@ -47,6 +48,7 @@ export function SelectionPopover({
   onGroup,
   onUngroup,
   onToggleAspectLock,
+  onOpenComments,
 }: SelectionPopoverProps) {
   const linkButtonRef = useRef<HTMLButtonElement>(null);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
@@ -170,6 +172,15 @@ export function SelectionPopover({
           onClick={onGroup}
         >
           <GroupIcon />
+        </PopoverButton>
+      ) : null}
+      {onOpenComments ? (
+        <PopoverButton
+          label="Comments"
+          description="Open the comment thread for this element."
+          onClick={onOpenComments}
+        >
+          <CommentIcon />
         </PopoverButton>
       ) : null}
 
@@ -405,6 +416,24 @@ function LockIcon({ closed }: { closed: boolean }) {
       ) : (
         <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.4-.7" />
       )}
+    </svg>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4v5A1.5 1.5 0 0 1 12 10.5H7l-3 2.5V10.5A1.5 1.5 0 0 1 2.5 9z" />
     </svg>
   );
 }

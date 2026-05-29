@@ -262,11 +262,17 @@ export type Diagram = {
 
 // --- Comments --------------------------------------------------------------
 
-// A single comment inside a thread. No author yet — auth is post-prototype.
+// A single comment inside a thread. The author is the participant who
+// wrote it (per `apps/live/lib/identity.ts`). The participant model is
+// local-session-only today; the comment carries a denormalised copy of
+// the name + colour so the badge keeps rendering even if the participant
+// list later evolves (e.g. user renames themselves mid-session).
 export type Comment = {
   id: string;
   text: string;
   createdAt: number; // unix ms
+  authorName: string;
+  authorColor: string;
 };
 
 // Threads live on elements (currently boxed only). `resolved` is sticky:
@@ -276,11 +282,16 @@ export type CommentThread = {
   resolved: boolean;
 };
 
-export function createComment(text: string): Comment {
+export function createComment(
+  text: string,
+  author: { name: string; color: string },
+): Comment {
   return {
     id: crypto.randomUUID(),
     text,
     createdAt: Date.now(),
+    authorName: author.name,
+    authorColor: author.color,
   };
 }
 
