@@ -157,6 +157,7 @@ export type ShapeElement = {
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
+  commentThread?: CommentThread;
 };
 
 // --- Text ------------------------------------------------------------------
@@ -180,6 +181,7 @@ export type TextElement = {
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
+  commentThread?: CommentThread;
 };
 
 // --- Sticky notes ----------------------------------------------------------
@@ -203,6 +205,7 @@ export type StickyElement = {
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
+  commentThread?: CommentThread;
 };
 
 // --- Arrows ----------------------------------------------------------------
@@ -256,6 +259,37 @@ export type Diagram = {
   createdAt: string;
   updatedAt: string;
 };
+
+// --- Comments --------------------------------------------------------------
+
+// A single comment inside a thread. No author yet — auth is post-prototype.
+export type Comment = {
+  id: string;
+  text: string;
+  createdAt: number; // unix ms
+};
+
+// Threads live on elements (currently boxed only). `resolved` is sticky:
+// users can resolve and unresolve a thread without losing the comments.
+export type CommentThread = {
+  comments: Comment[];
+  resolved: boolean;
+};
+
+export function createComment(text: string): Comment {
+  return {
+    id: crypto.randomUUID(),
+    text,
+    createdAt: Date.now(),
+  };
+}
+
+// Count of comments shown on the badge. Resolved threads return 0 so the
+// badge hides — the comments still exist and reappear on unresolve.
+export function activeCommentCount(thread: CommentThread | undefined): number {
+  if (!thread || thread.resolved) return 0;
+  return thread.comments.length;
+}
 
 // --- Type guards -----------------------------------------------------------
 

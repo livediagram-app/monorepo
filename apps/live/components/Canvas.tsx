@@ -93,7 +93,8 @@ type CanvasProps = {
   onClearLink: () => void;
   onFollowLink: (tabId: string) => void;
   showTemplatePicker: boolean;
-  onChooseTemplate: (kind: TemplateKind) => void;
+  selfParticipant: import('@/lib/identity').Participant;
+  onChooseTemplate: (kind: TemplateKind, name: string) => void;
   onOpenTemplatePicker: () => void;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
@@ -162,6 +163,7 @@ export function Canvas(props: CanvasProps) {
     onClearLink,
     onFollowLink,
     showTemplatePicker,
+    selfParticipant,
     onChooseTemplate,
     onOpenTemplatePicker,
     onSetBackgroundPattern,
@@ -484,7 +486,9 @@ export function Canvas(props: CanvasProps) {
         </div>
       ) : null}
 
-      {showTemplatePicker ? <TemplatePicker onSelect={onChooseTemplate} /> : null}
+      {showTemplatePicker ? (
+        <TemplatePicker participant={selfParticipant} onPick={onChooseTemplate} />
+      ) : null}
 
       {isPaintMode ? (
         <ModeBanner

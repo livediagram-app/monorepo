@@ -39,6 +39,7 @@ import { EditorHeader } from '@/components/EditorHeader';
 import { TabBar } from '@/components/TabBar';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } from '@/lib/canvas';
+import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { buildTemplate, type TemplateKind } from '@/lib/templates';
 
 function createTab(name: string): Tab {
@@ -147,6 +148,15 @@ export default function LivePage() {
   const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
   const [paletteMinimized, setPaletteMinimized] = useState(false);
   const [diagramName, setDiagramName] = useState('Untitled diagram');
+  // Local-session participant. Initialised once per page load with a random
+  // name + colour from the curated palette. Once auth lands, this becomes
+  // the signed-in user (or guest with persisted localStorage identity).
+  const [selfParticipant, setSelfParticipant] = useState<Participant>(() => ({
+    id: 'self',
+    name: randomName(),
+    color: randomColor(),
+    status: 'online',
+  }));
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
   const [viewportZoom, setViewportZoom] = useState(1);
   const canvasMainRef = useRef<HTMLElement>(null);
@@ -427,7 +437,10 @@ export default function LivePage() {
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)));
   };
 
-  const chooseTemplate = (kind: TemplateKind) => {
+  const chooseTemplate = (kind: TemplateKind, name?: string) => {
+    if (name && name !== selfParticipant.name) {
+      setSelfParticipant((p) => ({ ...p, name }));
+    }
     const centre = getViewportCenter();
     const elements = buildTemplate(kind, centre.x, centre.y);
     commitTabs((ts) =>
@@ -926,6 +939,7 @@ export default function LivePage() {
     <div className="flex h-dvh flex-col">
       <EditorHeader
         diagramName={diagramName}
+        participants={[selfParticipant]}
         onRename={setDiagramName}
         onDeleteDiagram={deleteDiagram}
       />
@@ -989,6 +1003,7 @@ export default function LivePage() {
         onClearLink={clearLinkSelected}
         onFollowLink={followLink}
         showTemplatePicker={activeTab.elements.length === 0 && activeTab.templateChosen !== true}
+        selfParticipant={selfParticipant}
         onChooseTemplate={chooseTemplate}
         onOpenTemplatePicker={openTemplatePicker}
         onSetBackgroundPattern={setBackgroundPattern}

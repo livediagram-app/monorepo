@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from '@livediagram/ui';
+import type { Participant } from '@/lib/identity';
 import { MenuItem, PortalMenu } from './PortalMenu';
+import { ParticipantAvatar } from './ParticipantAvatar';
 
 type EditorHeaderProps = {
   diagramName: string;
+  participants: Participant[];
   onRename: (name: string) => void;
   onDeleteDiagram: () => void;
 };
 
-export function EditorHeader({ diagramName, onRename, onDeleteDiagram }: EditorHeaderProps) {
+export function EditorHeader({
+  diagramName,
+  participants,
+  onRename,
+  onDeleteDiagram,
+}: EditorHeaderProps) {
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -79,9 +87,11 @@ export function EditorHeader({ diagramName, onRename, onDeleteDiagram }: EditorH
           </div>
         )}
       </div>
-      {/* Spacer that mirrors the brand block on the left so the centred title
-          stays visually centred even though the right side is intentionally empty. */}
-      <div className="w-48" aria-hidden />
+      <div className="flex w-48 items-center justify-end gap-2">
+        {participants.map((p) => (
+          <ParticipantAvatar key={p.id} participant={p} withTooltip />
+        ))}
+      </div>
     </header>
   );
 }

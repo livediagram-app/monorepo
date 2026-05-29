@@ -286,9 +286,15 @@ type Element = {
 
 ## Templates
 
-A first-run **template picker** lets users scaffold a starter diagram instead of staring at a blank canvas. It is also reachable from the empty-state card's **Browse templates** button.
+A first-run **welcome screen** doubles as the template picker — the "Start a new diagram" modal lets users scaffold a starter diagram and set up their identity in one step. It is also reachable from the empty-state card's **Browse templates** button.
 
-The picker is a centred modal card with four options:
+### Welcome / identity section
+
+At the top of the modal, an inline avatar + name input lets the user adjust their display name. The participant is initialised on page load with a **randomly generated name** (`{adjective} {animal}` from a curated list) and a **random colour** from a 10-colour accessible palette. The name input is pre-populated with the generated name; the user can override it. The colour is shown via the avatar but not editable in the prototype. Picking any template commits the (possibly edited) name onto the self-participant — the colour stays as assigned. Submitting an empty name reverts to the generated default.
+
+### Templates section
+
+Below the welcome section, the picker shows four options:
 
 - **Blank diagram** — drops a **single 220 × 100 square** centred on the visible viewport, pre-labelled `Blank Diagram` at `md` text size, and **auto-selects it** so the user can immediately rename or edit. The user starts with one editable rectangle they can rename or grow from, rather than a fully empty canvas. (A truly empty canvas is psychologically intimidating; this gives users an anchor element to immediately interact with.) Generalised rule: a template that produces exactly one element auto-selects that element; multi-element templates leave the selection cleared.
 - **Mind map** — a central circle with four labelled branch circles connected by pinned arrows.
@@ -551,7 +557,7 @@ The editor header carries three things:
 
 - The `livediagram` brand mark (left).
 - The **diagram title** (centre). Defaults to `Untitled diagram`. Click to rename in place — the title becomes a text input with the current name pre-selected. **Enter** commits, **Escape** cancels, **blur** commits. Empty value reverts to the previous name.
-- Share / Sign in placeholder buttons (right).
+- **Participants** (right). The current user (and, eventually, anyone else collaborating on the diagram) appears here as a `ParticipantAvatar` — a circular badge with their initials over their assigned colour, a hover tooltip showing their name + presence label, and a coloured status ring (green = online, orange = away, red = stale, i.e. away ≥ 15 minutes; the stale state is reserved for the post-websockets phase).
 
 The diagram title is a single string at the page level (not yet persisted across reloads). Per-tab names live on each `Tab` and are edited from the tab bar (see [Tabs](#tabs)).
 

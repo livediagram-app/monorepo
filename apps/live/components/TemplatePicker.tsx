@@ -1,30 +1,71 @@
+import { useState } from 'react';
+import type { Participant } from '@/lib/identity';
+import { initialsOf } from '@/lib/identity';
 import type { TemplateKind } from '@/lib/templates';
 import { TEMPLATES } from '@/lib/templates';
 
 type TemplatePickerProps = {
-  onSelect: (kind: TemplateKind) => void;
+  // The user's current identity. Their name is editable inside the picker;
+  // a colour was assigned at participant creation (random from the curated
+  // palette) and is shown but not editable here.
+  participant: Participant;
+  onPick: (kind: TemplateKind, name: string) => void;
 };
 
-// Overlay shown on an empty canvas before any element exists. Lets the user
-// either start blank or scaffold a small starter diagram. Dismissed once
-// any template (including blank) is chosen.
-export function TemplatePicker({ onSelect }: TemplatePickerProps) {
+// The "Start a new diagram" modal — now also the welcome screen. Lets the
+// user adjust their display name (pre-filled with a generated one) and
+// pick a template, all in one step. Dismissed once a template is chosen.
+export function TemplatePicker({ participant, onPick }: TemplatePickerProps) {
+  const [name, setName] = useState(participant.name);
+  const trimmedName = name.trim();
+  const effectiveName = trimmedName || participant.name;
+
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
     >
       <div className="pointer-events-auto w-[34rem] max-w-[90%] animate-fly-up-in rounded-xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/10">
-        <h2 className="text-lg font-semibold text-slate-900">Start a new diagram</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Welcome to livediagram</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Pick a template to scaffold your canvas, or start with a blank one.
+          Tell us your name and pick a template to start with.
         </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+
+        <div className="mt-5 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+          <div
+            role="img"
+            aria-label={`Your avatar colour: ${participant.color}`}
+            style={{ backgroundColor: participant.color }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+          >
+            {initialsOf(effectiveName)}
+          </div>
+          <div className="flex-1">
+            <label
+              htmlFor="welcome-name"
+              className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+            >
+              Your name
+            </label>
+            <input
+              id="welcome-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={participant.name}
+              className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+            />
+          </div>
+        </div>
+
+        <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Pick a template
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-3">
           {TEMPLATES.map((t) => (
             <button
               key={t.kind}
               type="button"
-              onClick={() => onSelect(t.kind)}
+              onClick={() => onPick(t.kind, effectiveName)}
               className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/40"
             >
               <div className="flex h-16 w-full items-center justify-center rounded-md bg-slate-50">
