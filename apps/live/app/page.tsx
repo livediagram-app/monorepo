@@ -1333,6 +1333,7 @@ export default function LivePage() {
       <EditorHeader
         diagramName={diagramName}
         participants={[selfParticipant]}
+        hideTitle={welcomeOpen}
         onRename={setDiagramName}
         onDeleteDiagram={deleteDiagram}
       />

@@ -7,6 +7,10 @@ import { ParticipantAvatar } from './ParticipantAvatar';
 type EditorHeaderProps = {
   diagramName: string;
   participants: Participant[];
+  // Hides the centred diagram title + its ellipsis menu while the
+  // first-run welcome modal is up (no diagram exists yet, naming or
+  // deleting it makes no sense). Brand and participant avatars stay.
+  hideTitle?: boolean;
   onRename: (name: string) => void;
   onDeleteDiagram: () => void;
 };
@@ -14,6 +18,7 @@ type EditorHeaderProps = {
 export function EditorHeader({
   diagramName,
   participants,
+  hideTitle = false,
   onRename,
   onDeleteDiagram,
 }: EditorHeaderProps) {
@@ -27,7 +32,7 @@ export function EditorHeader({
         <Brand href="/" size="md" />
       </div>
       <div className="flex flex-1 items-center justify-center">
-        {editing ? (
+        {hideTitle ? null : editing ? (
           <NameEditor
             initial={diagramName}
             onCommit={(v) => {
