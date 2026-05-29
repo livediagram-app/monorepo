@@ -96,6 +96,7 @@ export function SelectionPopover({
         transformOrigin: placeAbove ? 'center bottom' : 'center top',
       }}
     >
+      {/* Group: copy / duplicate the element itself. */}
       {onCopyFormat ? (
         <PopoverButton
           label="Copy formatting"
@@ -112,6 +113,10 @@ export function SelectionPopover({
       >
         <DuplicateIcon />
       </PopoverButton>
+
+      <Divider />
+
+      {/* Group: relationships (links to other tabs, grouping with other elements). */}
       <Tooltip
         title={linkedTabId ? 'Edit link' : 'Link to tab'}
         description={
@@ -169,6 +174,10 @@ export function SelectionPopover({
           <GroupIcon />
         </PopoverButton>
       ) : null}
+
+      <Divider />
+
+      {/* Group: constraints on movement & resize. */}
       {onToggleAspectLock ? (
         <Tooltip
           title={aspectLocked ? 'Aspect ratio locked' : 'Lock aspect ratio'}
@@ -215,6 +224,9 @@ export function SelectionPopover({
           <LockIcon closed={locked} />
         </button>
       </Tooltip>
+      <Divider />
+
+      {/* Group: destructive (always last so it's not adjacent to anything benign). */}
       <Tooltip title="Delete" description="Remove this element. Connected arrows are removed too.">
         <button
           type="button"
@@ -227,6 +239,10 @@ export function SelectionPopover({
       </Tooltip>
     </div>
   );
+}
+
+function Divider() {
+  return <div aria-hidden className="mx-0.5 h-6 w-px shrink-0 bg-slate-200" />;
 }
 
 function PopoverButton({
