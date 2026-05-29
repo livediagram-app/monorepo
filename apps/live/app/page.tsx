@@ -173,9 +173,7 @@ export default function LivePage() {
   // derived `welcomeOpen` below — used to gate page-level chrome — can
   // read it. See `openTemplatePicker` / `skipTemplatePicker` for the
   // transition rules.
-  const [templatePickerMode, setTemplatePickerMode] = useState<'welcome' | 'templates'>(
-    'welcome',
-  );
+  const [templatePickerMode, setTemplatePickerMode] = useState<'welcome' | 'templates'>('welcome');
   const [diagramName, setDiagramName] = useState('Untitled diagram');
   // Multi-selection bag for marquee box-select. Mutually exclusive with the
   // single `selectedId` above: when `multiSelectedIds.size > 0`, single
@@ -608,9 +606,9 @@ export default function LivePage() {
   // updates the present tab list without pushing a snapshot to `past`.
   const updateThread = (
     elementId: string,
-    fn: (thread: import('@livediagram/diagram').CommentThread | undefined) => import(
-      '@livediagram/diagram'
-    ).CommentThread | undefined,
+    fn: (
+      thread: import('@livediagram/diagram').CommentThread | undefined,
+    ) => import('@livediagram/diagram').CommentThread | undefined,
   ) => {
     tickTabs((ts) =>
       ts.map((t) =>
@@ -656,14 +654,10 @@ export default function LivePage() {
     });
   };
   const resolveThread = (elementId: string) => {
-    updateThread(elementId, (thread) =>
-      thread ? { ...thread, resolved: true } : undefined,
-    );
+    updateThread(elementId, (thread) => (thread ? { ...thread, resolved: true } : undefined));
   };
   const unresolveThread = (elementId: string) => {
-    updateThread(elementId, (thread) =>
-      thread ? { ...thread, resolved: false } : undefined,
-    );
+    updateThread(elementId, (thread) => (thread ? { ...thread, resolved: false } : undefined));
   };
 
   const renameTab = (id: string, name: string) => {
@@ -870,17 +864,13 @@ export default function LivePage() {
               ...(theme.elementStroke
                 ? { strokeColor: theme.elementStroke }
                 : { strokeColor: undefined }),
-              ...(theme.elementText
-                ? { textColor: theme.elementText }
-                : { textColor: undefined }),
+              ...(theme.elementText ? { textColor: theme.elementText } : { textColor: undefined }),
             };
           }
           if (el.type === 'text') {
             return {
               ...el,
-              ...(theme.elementText
-                ? { textColor: theme.elementText }
-                : { textColor: undefined }),
+              ...(theme.elementText ? { textColor: theme.elementText } : { textColor: undefined }),
             };
           }
           return el;
@@ -1064,8 +1054,7 @@ export default function LivePage() {
     const ids = memberIdsOf(selectedId);
     commit((els) =>
       els.map((el) =>
-        ids.has(el.id) &&
-        (el.type === 'shape' || el.type === 'sticky' || el.type === 'arrow')
+        ids.has(el.id) && (el.type === 'shape' || el.type === 'sticky' || el.type === 'arrow')
           ? { ...el, strokeColor: color }
           : el,
       ),

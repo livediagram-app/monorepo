@@ -268,12 +268,9 @@ function SelectedElementSection({ selection }: { selection: SelectedElementContr
   }>({ appearance: false, layer: false, text: false, colours: false });
   const toggle = (key: keyof typeof open) => setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const showText =
-    selection.textSize !== null || selection.textAlignX !== null;
+  const showText = selection.textSize !== null || selection.textAlignX !== null;
   const showColours =
-    selection.textColor !== null ||
-    selection.fillColor !== null ||
-    selection.strokeColor !== null;
+    selection.textColor !== null || selection.fillColor !== null || selection.strokeColor !== null;
 
   return (
     <div className="flex flex-col border-t border-slate-200">
@@ -420,8 +417,8 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
       </p>
       <Accordion title="Theme" open={open.theme} onToggle={() => toggle('theme')}>
         <p className="text-[10px] font-medium text-slate-500">
-          Sets the canvas backdrop + the default colours for new elements. Existing elements aren&apos;t
-          recoloured.
+          Sets the canvas backdrop + the default colours for new elements. Existing elements
+          aren&apos;t recoloured.
         </p>
         <div className="mt-1 grid grid-cols-3 gap-1">
           {THEMES.map((t) => {

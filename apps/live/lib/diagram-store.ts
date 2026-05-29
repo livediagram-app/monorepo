@@ -13,4 +13,10 @@ export {
   apiSaveSelf as saveSelfParticipant,
   connectRoom,
 } from './api-client';
-export type { DiagramSummary, RoomHandlers, RoomIncoming, RoomOutgoing, StoredDiagram } from './api-client';
+export type {
+  DiagramSummary,
+  RoomHandlers,
+  RoomIncoming,
+  RoomOutgoing,
+  StoredDiagram,
+} from './api-client';

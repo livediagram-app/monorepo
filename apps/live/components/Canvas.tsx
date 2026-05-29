@@ -412,10 +412,10 @@ export function Canvas(props: CanvasProps) {
     : marquee
       ? 'cursor-crosshair'
       : isPaintMode
-      ? 'cursor-copy'
-      : isGroupMode
-        ? 'cursor-crosshair'
-        : 'cursor-grab';
+        ? 'cursor-copy'
+        : isGroupMode
+          ? 'cursor-crosshair'
+          : 'cursor-grab';
 
   const selectionSupportsColours = selected ? supportsColours(selected) : false;
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
@@ -439,7 +439,7 @@ export function Canvas(props: CanvasProps) {
           ? isBoxed(selected)
             ? (selected.strokeColor ?? defaultStrokeColor(selected))
             : selected.type === 'arrow'
-              ? (selected.strokeColor ?? 'rgb(51 65 85)' /* slate-700 = default arrow */)
+              ? (selected.strokeColor ?? 'rgb(51 65 85)') /* slate-700 = default arrow */
               : null
           : null,
         opacity: selected.opacity ?? 1,
@@ -785,12 +785,7 @@ export function Canvas(props: CanvasProps) {
               onReset={handleResetZoom}
               onFitToScreen={onFitToScreen}
             />
-            <HistoryControls
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={onUndo}
-              onRedo={onRedo}
-            />
+            <HistoryControls canUndo={canUndo} canRedo={canRedo} onUndo={onUndo} onRedo={onRedo} />
           </>
         )}
       </div>

@@ -65,10 +65,7 @@ export async function apiLoadDiagram(id: string): Promise<StoredDiagram | null> 
   return { id: diagram.id, name: diagram.name, tabs: diagram.tabs, savedAt: diagram.savedAt };
 }
 
-export async function apiSaveDiagram(
-  ownerId: string,
-  d: StoredDiagram,
-): Promise<void> {
+export async function apiSaveDiagram(ownerId: string, d: StoredDiagram): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${d.id}`, {
     method: 'PUT',
     headers: ownerHeaders(ownerId),
@@ -135,10 +132,7 @@ export type RoomIncoming =
 
 export type RoomHandlers = {
   onPresence: (participants: { id: string; name: string; color: string }[]) => void;
-  onOp: (
-    from: string,
-    op: { kind: 'tabs'; tabs: Tab[]; name: string },
-  ) => void;
+  onOp: (from: string, op: { kind: 'tabs'; tabs: Tab[]; name: string }) => void;
   onClose?: () => void;
 };
 

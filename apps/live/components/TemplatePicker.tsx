@@ -74,41 +74,40 @@ export function TemplatePicker({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {/* Identity row — only in the first-run welcome flow. */}
           {isWelcome ? (
-          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-            <div
-              role="img"
-              aria-label={`Your avatar colour: ${participant.color}`}
-              style={{ backgroundColor: participant.color }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-            >
-              {initialsOf(effectiveName)}
-            </div>
-            <div className="flex-1">
-              <label
-                htmlFor="welcome-name"
-                className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+              <div
+                role="img"
+                aria-label={`Your avatar colour: ${participant.color}`}
+                style={{ backgroundColor: participant.color }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
               >
-                Your name
-              </label>
-              <input
-                id="welcome-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={participant.name}
-                className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-              />
+                {initialsOf(effectiveName)}
+              </div>
+              <div className="flex-1">
+                <label
+                  htmlFor="welcome-name"
+                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+                >
+                  Your name
+                </label>
+                <input
+                  id="welcome-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={participant.name}
+                  className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setName(randomName())}
+                aria-label="Generate a different name"
+                title="Generate a different name"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <RefreshIcon />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setName(randomName())}
-              aria-label="Generate a different name"
-              title="Generate a different name"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-            >
-              <RefreshIcon />
-            </button>
-          </div>
-
           ) : null}
 
           {/* Template grid. 4 columns at wide widths so the picker uses the
@@ -151,41 +150,41 @@ export function TemplatePicker({
               tabs keep whichever theme they already have. */}
           {isWelcome ? (
             <>
-          <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Select a theme
-          </p>
-          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {THEMES.map((t) => {
-              const active = themeId === t.id;
-              const dot = t.elementStroke ?? t.patternColor;
-              const swatch = t.elementFill ?? '#ffffff';
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setThemeId(t.id)}
-                  aria-pressed={active}
-                  className={
-                    active
-                      ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800'
-                      : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40'
-                  }
-                >
-                  <span
-                    aria-hidden
-                    style={{ backgroundColor: t.backgroundColor }}
-                    className="flex h-8 w-full items-center justify-center rounded-sm border border-slate-200"
-                  >
-                    <span
-                      style={{ backgroundColor: swatch, borderColor: dot }}
-                      className="h-3.5 w-3.5 rounded-sm border"
-                    />
-                  </span>
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Select a theme
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {THEMES.map((t) => {
+                  const active = themeId === t.id;
+                  const dot = t.elementStroke ?? t.patternColor;
+                  const swatch = t.elementFill ?? '#ffffff';
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setThemeId(t.id)}
+                      aria-pressed={active}
+                      className={
+                        active
+                          ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800'
+                          : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40'
+                      }
+                    >
+                      <span
+                        aria-hidden
+                        style={{ backgroundColor: t.backgroundColor }}
+                        className="flex h-8 w-full items-center justify-center rounded-sm border border-slate-200"
+                      >
+                        <span
+                          style={{ backgroundColor: swatch, borderColor: dot }}
+                          className="h-3.5 w-3.5 rounded-sm border"
+                        />
+                      </span>
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </>
           ) : null}
         </div>

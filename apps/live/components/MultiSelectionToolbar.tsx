@@ -11,7 +11,11 @@ type MultiSelectionToolbarProps = {
 // (centred pill, brand colours) but lives in its own component because it
 // hosts real actions rather than a status + cancel button. Animates in
 // via the shared `fade-in` keyframe.
-export function MultiSelectionToolbar({ count, onDuplicate, onDelete }: MultiSelectionToolbarProps) {
+export function MultiSelectionToolbar({
+  count,
+  onDuplicate,
+  onDelete,
+}: MultiSelectionToolbarProps) {
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}

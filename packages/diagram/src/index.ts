@@ -123,9 +123,7 @@ export function defaultStrokeColor(element: BoxedElement): string {
 }
 
 export function supportsColours(element: Element): boolean {
-  return (
-    element.type === 'shape' || element.type === 'sticky' || element.type === 'arrow'
-  );
+  return element.type === 'shape' || element.type === 'sticky' || element.type === 'arrow';
 }
 
 // Default arrow stroke colour when the element has no explicit one set.
@@ -301,10 +299,7 @@ export type CommentThread = {
   resolved: boolean;
 };
 
-export function createComment(
-  text: string,
-  author: { name: string; color: string },
-): Comment {
+export function createComment(text: string, author: { name: string; color: string }): Comment {
   return {
     id: crypto.randomUUID(),
     text,

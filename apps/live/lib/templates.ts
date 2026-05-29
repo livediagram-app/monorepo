@@ -278,8 +278,7 @@ function buildRetrospective(cx: number, cy: number): Element[] {
   const topPadding = 16;
   const headerGap = 16;
   const bottomPadding = 16;
-  const containerH =
-    topPadding + headerH + headerGap + 3 * stickyH + 2 * stickyGap + bottomPadding;
+  const containerH = topPadding + headerH + headerGap + 3 * stickyH + 2 * stickyGap + bottomPadding;
 
   const columns: { label: string; fill: string; stroke: string }[] = [
     { label: 'Mad', fill: '#fee2e2', stroke: '#fca5a5' },

@@ -26,16 +26,16 @@ Clerk is the planned replacement (per [spec 04](04-auth-and-guest-access.md)). W
 
 All JSON. CORS allows any origin (the live app is same-origin via the router; this is mostly a dev convenience).
 
-| Method   | Path                            | Body / headers                         | Returns                                                            |
-| -------- | ------------------------------- | -------------------------------------- | ------------------------------------------------------------------ |
-| `GET`    | `/api/diagrams`                 | `X-Owner-Id`                           | `{ diagrams: DiagramSummary[] }` — owner's diagrams, newest first. |
-| `POST`   | `/api/diagrams`                 | `X-Owner-Id` + `{ id, name, tabs }`    | `{ diagram }` (201). Owner is set from the header.                 |
-| `GET`    | `/api/diagrams/:id`             | —                                      | `{ diagram }` or 404.                                              |
-| `PUT`    | `/api/diagrams/:id`             | `X-Owner-Id` + `{ name, tabs }`        | `{ diagram }`. Full upsert; owner preserved from existing row.     |
-| `DELETE` | `/api/diagrams/:id`             | —                                      | 204.                                                               |
-| `GET`    | `/api/diagrams/:id/ws`          | Upgrade: websocket                     | WebSocket connection to the `DiagramRoom` for this id.             |
-| `GET`    | `/api/participants/:id`         | —                                      | `{ participant }` or 404.                                          |
-| `PUT`    | `/api/participants/:id`         | `{ name, color }`                      | `{ participant }`. Upsert; no auth check (open phase).             |
+| Method   | Path                    | Body / headers                      | Returns                                                            |
+| -------- | ----------------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| `GET`    | `/api/diagrams`         | `X-Owner-Id`                        | `{ diagrams: DiagramSummary[] }` — owner's diagrams, newest first. |
+| `POST`   | `/api/diagrams`         | `X-Owner-Id` + `{ id, name, tabs }` | `{ diagram }` (201). Owner is set from the header.                 |
+| `GET`    | `/api/diagrams/:id`     | —                                   | `{ diagram }` or 404.                                              |
+| `PUT`    | `/api/diagrams/:id`     | `X-Owner-Id` + `{ name, tabs }`     | `{ diagram }`. Full upsert; owner preserved from existing row.     |
+| `DELETE` | `/api/diagrams/:id`     | —                                   | 204.                                                               |
+| `GET`    | `/api/diagrams/:id/ws`  | Upgrade: websocket                  | WebSocket connection to the `DiagramRoom` for this id.             |
+| `GET`    | `/api/participants/:id` | —                                   | `{ participant }` or 404.                                          |
+| `PUT`    | `/api/participants/:id` | `{ name, color }`                   | `{ participant }`. Upsert; no auth check (open phase).             |
 
 ## Realtime model
 

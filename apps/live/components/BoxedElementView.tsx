@@ -393,11 +393,7 @@ function describeVariant(
         className: `border-2 text-brand-800 shadow-sm ${ring}`,
         style: {
           borderRadius:
-            element.shape === 'circle'
-              ? '50%'
-              : element.shape === 'stadium'
-                ? '9999px'
-                : '8px',
+            element.shape === 'circle' ? '50%' : element.shape === 'stadium' ? '9999px' : '8px',
           backgroundColor: element.fillColor ?? defaultFillColor(element),
           borderColor: element.strokeColor ?? defaultStrokeColor(element),
         },

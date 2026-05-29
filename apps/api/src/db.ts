@@ -88,9 +88,7 @@ export async function getParticipant(env: Env, id: string): Promise<ParticipantD
   )
     .bind(id)
     .first<ParticipantRow>();
-  return row
-    ? { id: row.id, name: row.name, color: row.color, createdAt: row.created_at }
-    : null;
+  return row ? { id: row.id, name: row.name, color: row.color, createdAt: row.created_at } : null;
 }
 
 export async function upsertParticipant(env: Env, p: ParticipantDTO): Promise<void> {
