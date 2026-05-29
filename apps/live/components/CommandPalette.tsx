@@ -26,7 +26,11 @@ export type SelectedElementControls = {
 
 export type TabSectionControls = {
   backgroundPattern: BackgroundPattern;
+  backgroundColor: string;
+  patternColor: string;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
+  onSetBackgroundColor: (color: string) => void;
+  onSetPatternColor: (color: string) => void;
 };
 
 type CommandPaletteProps = {
@@ -304,7 +308,8 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
         Current Tab
       </p>
       <Accordion title="Background" open={open.background} onToggle={() => toggle('background')}>
-        <div className="grid grid-cols-3 gap-1">
+        <p className="text-[10px] font-medium text-slate-500">Pattern</p>
+        <div className="mt-1 grid grid-cols-3 gap-1">
           <Tooltip title="Grid" description="Subtle dot grid background.">
             <PatternButton
               active={tab.backgroundPattern === 'grid'}
@@ -331,6 +336,17 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
             >
               <BackgroundLinesIcon />
             </PatternButton>
+          </Tooltip>
+        </div>
+        <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium text-slate-500">
+          Colours
+        </p>
+        <div className="mt-1 flex items-stretch gap-1">
+          <Tooltip title="Canvas colour" description="The colour of the canvas background.">
+            <ColorSwatch label="Canvas" value={tab.backgroundColor} onChange={tab.onSetBackgroundColor} />
+          </Tooltip>
+          <Tooltip title="Pattern colour" description="The colour of the grid dots or ruled lines.">
+            <ColorSwatch label="Pattern" value={tab.patternColor} onChange={tab.onSetPatternColor} />
           </Tooltip>
         </div>
       </Accordion>

@@ -6,6 +6,8 @@ import {
   type Ref,
 } from 'react';
 import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_PATTERN_COLOR,
   defaultFillColor,
   defaultStrokeColor,
   defaultTextAlign,
@@ -34,6 +36,8 @@ import { SelectionPopover } from './SelectionPopover';
 type CanvasProps = {
   tabName: string;
   tabBackgroundPattern: BackgroundPattern;
+  tabBackgroundColor: string;
+  tabPatternColor: string;
   mainRef: Ref<HTMLElement>;
   viewportOffset: { x: number; y: number };
   setViewportOffset: (offset: { x: number; y: number }) => void;
@@ -74,6 +78,8 @@ type CanvasProps = {
   onSetStrokeColor: (color: string) => void;
   onSetTextColor: (color: string) => void;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
+  onSetBackgroundColor: (color: string) => void;
+  onSetPatternColor: (color: string) => void;
   onToggleAspectLock: () => void;
   onDuplicateConnect: (direction: 'right' | 'below') => void;
   onToggleLockSelected: () => void;
@@ -85,6 +91,8 @@ export function Canvas(props: CanvasProps) {
   const {
     tabName,
     tabBackgroundPattern,
+    tabBackgroundColor,
+    tabPatternColor,
     mainRef,
     viewportOffset,
     setViewportOffset,
@@ -125,6 +133,8 @@ export function Canvas(props: CanvasProps) {
     onSetStrokeColor,
     onSetTextColor,
     onSetBackgroundPattern,
+    onSetBackgroundColor,
+    onSetPatternColor,
     onToggleAspectLock,
     onDuplicateConnect,
     onToggleLockSelected,
@@ -253,15 +263,19 @@ export function Canvas(props: CanvasProps) {
 
   const tabSection = {
     backgroundPattern: tabBackgroundPattern,
+    backgroundColor: tabBackgroundColor,
+    patternColor: tabPatternColor,
     onSetBackgroundPattern,
+    onSetBackgroundColor,
+    onSetPatternColor,
   };
 
   return (
     <main
       ref={mainRef}
       tabIndex={-1}
-      className="relative flex-1 overflow-hidden bg-white outline-none"
-      style={tabBackgroundStyle(tabBackgroundPattern, viewportOffset)}
+      className="relative flex-1 overflow-hidden outline-none"
+      style={tabBackgroundStyle(tabBackgroundPattern, viewportOffset, tabBackgroundColor, tabPatternColor)}
     >
       <div
         ref={wrapperRef}
@@ -418,21 +432,28 @@ export function Canvas(props: CanvasProps) {
 function tabBackgroundStyle(
   pattern: BackgroundPattern,
   offset: { x: number; y: number },
+  backgroundColor: string,
+  patternColor: string,
 ): React.CSSProperties {
+  const base: React.CSSProperties = { backgroundColor };
   const px = offset.x;
   const py = offset.y;
-  if (pattern === 'blank') return {};
+  if (pattern === 'blank') return base;
   if (pattern === 'lines') {
     return {
-      backgroundImage:
-        'repeating-linear-gradient(0deg, transparent 0, transparent 23px, rgb(203 213 225) 23px, rgb(203 213 225) 24px)',
+      ...base,
+      backgroundImage: `repeating-linear-gradient(0deg, transparent 0, transparent 23px, ${patternColor} 23px, ${patternColor} 24px)`,
       backgroundPosition: `0px ${py}px`,
     };
   }
   // grid (default)
   return {
-    backgroundImage: 'radial-gradient(circle, rgb(203 213 225) 1px, transparent 1px)',
+    ...base,
+    backgroundImage: `radial-gradient(circle, ${patternColor} 1px, transparent 1px)`,
     backgroundSize: '24px 24px',
     backgroundPosition: `${px}px ${py}px`,
   };
 }
+
+// re-export for callers that haven't migrated to specifying default colour.
+export { DEFAULT_BACKGROUND_COLOR, DEFAULT_PATTERN_COLOR };

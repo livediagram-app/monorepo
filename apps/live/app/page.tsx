@@ -19,9 +19,12 @@ import {
   joinGroups,
   selectionMembers,
   sendManyToBack,
+  snapToAlignment,
   snapToAnchor,
   ungroup,
   unionBoxedBounds,
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_PATTERN_COLOR,
   type Anchor,
   type ArrowElement,
   type BackgroundPattern,
@@ -38,7 +41,7 @@ import { Canvas } from '@/components/Canvas';
 import { EditorHeader } from '@/components/EditorHeader';
 import { TabBar } from '@/components/TabBar';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
-import { SNAP_THRESHOLD, type ArrowEnd, type DragMode } from '@/lib/canvas';
+import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } from '@/lib/canvas';
 
 function createTab(name: string): Tab {
   return { id: crypto.randomUUID(), name, elements: [] };
@@ -329,6 +332,18 @@ export default function LivePage() {
     );
   };
 
+  const setBackgroundColor = (color: string) => {
+    commitTabs((ts) =>
+      ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)),
+    );
+  };
+
+  const setPatternColor = (color: string) => {
+    commitTabs((ts) =>
+      ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)),
+    );
+  };
+
   // --- Element CRUD --------------------------------------------------------
 
   const addShape = (kind: ShapeKind) => addBoxed((x, y) => createShape(kind, x, y));
@@ -598,12 +613,35 @@ export default function LivePage() {
 
       if (drag.kind === 'boxed') {
         if (drag.mode === 'move') {
+          // Snap the primary's candidate bounds to align with other
+          // elements' edges/centres; apply the same nudge to every group
+          // member so they translate together.
+          const primaryStart = drag.startBounds.get(drag.primaryId);
+          const memberIds = new Set(drag.startBounds.keys());
+          let snapDx = 0;
+          let snapDy = 0;
+          if (primaryStart) {
+            const candidate = {
+              x: primaryStart.x + dx,
+              y: primaryStart.y + dy,
+              width: primaryStart.width,
+              height: primaryStart.height,
+            };
+            const snap = snapToAlignment(
+              candidate,
+              activeTab.elements,
+              memberIds,
+              ALIGN_SNAP_THRESHOLD,
+            );
+            snapDx = snap.dx;
+            snapDy = snap.dy;
+          }
           tick((els) =>
             els.map((el) => {
               if (!isBoxed(el)) return el;
               const start = drag.startBounds.get(el.id);
               if (!start) return el;
-              return { ...el, x: start.x + dx, y: start.y + dy };
+              return { ...el, x: start.x + dx + snapDx, y: start.y + dy + snapDy };
             }),
           );
         } else {
@@ -658,6 +696,8 @@ export default function LivePage() {
       <Canvas
         tabName={activeTab.name}
         tabBackgroundPattern={activeTab.backgroundPattern ?? 'grid'}
+        tabBackgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
+        tabPatternColor={activeTab.patternColor ?? DEFAULT_PATTERN_COLOR}
         mainRef={canvasMainRef}
         viewportOffset={viewportOffset}
         setViewportOffset={setViewportOffset}
@@ -703,6 +743,8 @@ export default function LivePage() {
         onSetStrokeColor={setStrokeColorSelected}
         onSetTextColor={setTextColorSelected}
         onSetBackgroundPattern={setBackgroundPattern}
+        onSetBackgroundColor={setBackgroundColor}
+        onSetPatternColor={setPatternColor}
         onToggleAspectLock={toggleAspectLockSelected}
         onDuplicateConnect={duplicateConnectSelected}
         onToggleLockSelected={toggleLockSelected}

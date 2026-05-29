@@ -16,6 +16,9 @@ export type TextAlignY = 'top' | 'middle' | 'bottom';
 
 export type BackgroundPattern = 'grid' | 'blank' | 'lines';
 
+export const DEFAULT_BACKGROUND_COLOR = '#ffffff';
+export const DEFAULT_PATTERN_COLOR = '#cbd5e1'; // slate-300
+
 export function defaultTextColor(element: BoxedElement): string {
   switch (element.type) {
     case 'shape':
@@ -155,6 +158,8 @@ export type Tab = {
   name: string;
   elements: Element[];
   backgroundPattern?: BackgroundPattern;
+  backgroundColor?: string;
+  patternColor?: string;
 };
 
 export type Diagram = {
@@ -327,6 +332,50 @@ export function elementBounds(element: Element, elements: Element[]): { x: numbe
     width: Math.abs(to.x - from.x),
     height: Math.abs(to.y - from.y),
   };
+}
+
+// Alignment snapping: when dragging an element, snap its edges/centre to
+// match nearby OTHER elements' edges/centres on the same axis. Returns the
+// delta (dx, dy) to apply to the candidate position.
+//
+// Considers six lines per element: left / centre-x / right (X axis) and
+// top / centre-y / bottom (Y axis). For each axis, picks the nearest
+// candidate-target pair within `threshold` pixels.
+export function snapToAlignment(
+  candidate: { x: number; y: number; width: number; height: number },
+  elements: Element[],
+  excludeIds: Set<ElementId>,
+  threshold: number,
+): { dx: number; dy: number } {
+  const xs = [candidate.x, candidate.x + candidate.width / 2, candidate.x + candidate.width];
+  const ys = [candidate.y, candidate.y + candidate.height / 2, candidate.y + candidate.height];
+
+  let bestX: number | null = null;
+  let bestY: number | null = null;
+
+  for (const el of elements) {
+    if (!isBoxed(el) || excludeIds.has(el.id)) continue;
+    const targetXs = [el.x, el.x + el.width / 2, el.x + el.width];
+    const targetYs = [el.y, el.y + el.height / 2, el.y + el.height];
+    for (const cx of xs) {
+      for (const tx of targetXs) {
+        const delta = tx - cx;
+        if (Math.abs(delta) <= threshold && (bestX === null || Math.abs(delta) < Math.abs(bestX))) {
+          bestX = delta;
+        }
+      }
+    }
+    for (const cy of ys) {
+      for (const ty of targetYs) {
+        const delta = ty - cy;
+        if (Math.abs(delta) <= threshold && (bestY === null || Math.abs(delta) < Math.abs(bestY))) {
+          bestY = delta;
+        }
+      }
+    }
+  }
+
+  return { dx: bestX ?? 0, dy: bestY ?? 0 };
 }
 
 // Nearest boxed-element anchor to a canvas point. Returns the pinning
