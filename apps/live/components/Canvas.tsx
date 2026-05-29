@@ -447,16 +447,36 @@ export function Canvas(props: CanvasProps) {
 
       {elements.length === 0 && !showTemplatePicker ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="pointer-events-none max-w-sm rounded-lg border border-slate-200 bg-white px-6 py-4 text-center shadow-md">
-            <p className="text-sm font-medium text-slate-700">{tabName}</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Use the palette or double-click the canvas. Drag anchor dots to connect elements.
+          <div className="pointer-events-none flex max-w-sm animate-fly-up-in flex-col items-center rounded-xl border border-slate-200 bg-white px-6 py-5 text-center shadow-md">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="3" y="6" width="10" height="10" rx="1.5" />
+                <circle cx="16" cy="14" r="5" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-slate-800">{tabName}</p>
+            <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Empty canvas
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-slate-600">
+              Open the palette on the left to add shapes, double-click anywhere to drop text, or
+              connect elements by dragging from their anchor dots.
             </p>
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onOpenTemplatePicker}
-              className="pointer-events-auto mt-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+              className="pointer-events-auto mt-4 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
             >
               Browse templates
             </button>

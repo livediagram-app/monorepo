@@ -14,7 +14,7 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
       onPointerDown={(e) => e.stopPropagation()}
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
     >
-      <div className="pointer-events-auto w-[34rem] max-w-[90%] rounded-xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/10">
+      <div className="pointer-events-auto w-[34rem] max-w-[90%] animate-fly-up-in rounded-xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/10">
         <h2 className="text-lg font-semibold text-slate-900">Start a new diagram</h2>
         <p className="mt-1 text-sm text-slate-600">
           Pick a template to scaffold your canvas, or start with a blank one.

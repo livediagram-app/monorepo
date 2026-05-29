@@ -7,3 +7,62 @@
     cursor: pointer;
   }
 }
+
+/*
+ * Animation tokens. Each `--animate-*` variable creates a Tailwind
+ * `animate-<name>` utility that runs the matching @keyframes on mount.
+ * Transform-based animations (pop-in, fly-up-in) must only be used on
+ * elements that don't carry their own inline `transform` style, otherwise
+ * the animation overrides positioning. Use the opacity-only `fade-in`
+ * variants for elements that already use transform for positioning
+ * (popover, plus buttons, mode banner, portal menus).
+ */
+@theme {
+  --animate-pop-in: pop-in 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-fade-in: fade-in 260ms ease-out;
+  --animate-fly-up-in: fly-up-in 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-scale-in: fade-scale-in 260ms ease-out;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fly-up-in {
+  from {
+    transform: translateY(16px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-scale-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

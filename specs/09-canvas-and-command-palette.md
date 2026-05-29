@@ -261,7 +261,32 @@ type Element = {
 - Each tab owns its own array of elements. Adding a shape adds it to the **active tab** only.
 - Switching tabs swaps the canvas content; each tab's shapes persist while the page is loaded.
 - Reloading the page **loses all state** for now — `localStorage` persistence is the next iteration. See [02-prototype-scope.md](02-prototype-scope.md).
-- The empty-state hint ("Click a shape in the palette to add it") disappears once the active tab has at least one shape.
+- When the active tab has zero elements (and the template picker isn't open), an **empty-state card** is centred on the canvas. It contains, top to bottom: a brand-coloured icon (square + circle, evoking diagram primitives), the tab name in bold, an `EMPTY CANVAS` subtitle, a one-paragraph hint explaining the three ways to start ("Open the palette on the left to add shapes, double-click anywhere to drop text, or connect elements by dragging from their anchor dots"), and a **Browse templates** button that opens the template picker. The card sits on top of any background pattern so it stays legible on coloured / patterned canvases.
+- The empty-state card disappears once the active tab has at least one element.
+
+## Templates
+
+A first-run **template picker** lets users scaffold a starter diagram instead of staring at a blank canvas. It is also reachable from the empty-state card's **Browse templates** button.
+
+The picker is a centred modal card with four options:
+
+- **Blank diagram** — drops a **single 220 × 100 square** centred on the visible viewport, pre-labelled `Blank Diagram` at `md` text size, and **auto-selects it** so the user can immediately rename or edit. The user starts with one editable rectangle they can rename or grow from, rather than a fully empty canvas. (A truly empty canvas is psychologically intimidating; this gives users an anchor element to immediately interact with.) Generalised rule: a template that produces exactly one element auto-selects that element; multi-element templates leave the selection cleared.
+- **Mind map** — a central circle with four labelled branch circles connected by pinned arrows.
+- **Org chart** — a `CEO` rectangle with three direct-report rectangles pinned beneath it.
+- **Retrospective** — three columns ("What went well", "What didn't go well", "Action items") each with three blank stickies.
+
+All template elements are inserted via the history hook (commit), so they're undoable in one step. The picker animates in via the global `fly-up-in` keyframe (see [Motion and animations](#motion-and-animations)).
+
+## Motion and animations
+
+The editor uses subtle, purposeful motion to feel fluid and modern. All animations are defined as `@keyframes` in `apps/live/app/globals.css` and exposed as Tailwind utility classes via `@theme`:
+
+- **`pop-in`** — `scale(0) → scale(1.06) → scale(1)` over 240 ms with a spring-easing curve. Applied to `BoxedElementView` so newly added shapes / text / stickies pop into existence. Transform-based, so it must only be used on elements that don't carry their own inline `transform` style.
+- **`fade-in`** — pure `opacity` 0 → 1 over 180 ms. Used wherever the element already has an inline `transform` (the selection popover, plus buttons, mode banner, portal menus, tab-link picker, tooltips) so the animation doesn't fight positioning.
+- **`fly-up-in`** — combined `translateY(16px) scale(0.96) → 0 / 1` over 280 ms. Applied to modal-style surfaces (template picker, empty-state card).
+- **`fade-scale-in`** — reserved for surfaces that want a scale entrance without conflicting positioning.
+
+Animations only fire on mount, so they naturally trigger once per element. Switching tabs unmounts the old tab's elements and mounts the new ones, so the destination tab's elements animate in too — a side-effect that makes tab switches feel lively.
 
 ## Selection
 
@@ -509,6 +534,15 @@ The editor header carries three things:
 - Share / Sign in placeholder buttons (right).
 
 The diagram title is a single string at the page level (not yet persisted across reloads). Per-tab names live on each `Tab` and are edited from the tab bar (see [Tabs](#tabs)).
+
+#### Diagram title menu (ellipsis)
+
+A `⋯` ellipsis button sits immediately to the right of the diagram title and mirrors the tab ellipsis menu pattern. It opens a floating menu (rendered through the shared `PortalMenu`) with:
+
+- **Rename** — enters inline rename mode on the title.
+- **Delete** — clears the diagram back to a single empty `Tab 1`, resets the title to `Untitled diagram`, and resets viewport pan/zoom. The tab reset is undoable via the history hook; the title reset is not (the title is not part of element history).
+
+The menu uses the `below` placement of `PortalMenu` so it drops down from the button. The same `PortalMenu` / `MenuItem` pair is reused by the tab menu (with `above` placement) so the two menus share styling and behaviour.
 
 ## Tabs
 

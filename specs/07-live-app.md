@@ -38,7 +38,7 @@ The first version of the app is a layout shell — three regions stacked vertica
 ### Header (top, fixed height)
 
 - **Left:** `Brand` from `@livediagram/ui` (the `live[diagram]` wordmark).
-- **Center:** current diagram name (defaults to "Untitled diagram"; renameable later).
+- **Center:** current diagram name (defaults to "Untitled diagram"). Click to rename in place; an adjacent `⋯` ellipsis menu offers **Rename** and **Delete** — see [09-canvas-and-command-palette.md → Diagram title menu](09-canvas-and-command-palette.md#diagram-title-menu-ellipsis).
 - **Right:** action slot — placeholder for future Share / Account / Sign in buttons.
 
 ### Canvas area (middle, fills remaining space)

@@ -41,7 +41,7 @@ export function Tooltip({ title, description, children }: TooltipProps) {
         ? createPortal(
             <div
               role="tooltip"
-              className="pointer-events-none fixed z-50 w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left shadow-lg shadow-slate-900/10"
+              className="pointer-events-none fixed z-50 w-56 animate-fade-in rounded-lg border border-slate-200 bg-white px-3 py-2 text-left shadow-lg shadow-slate-900/10"
               style={{
                 left: pos.x,
                 top: pos.y,

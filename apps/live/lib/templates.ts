@@ -43,7 +43,7 @@ export const TEMPLATES: TemplateDescriptor[] = [
 export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Element[] {
   switch (kind) {
     case 'blank':
-      return [];
+      return buildBlank(cx, cy);
     case 'mindmap':
       return buildMindMap(cx, cy);
     case 'orgchart':
@@ -51,6 +51,22 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
     case 'retrospective':
       return buildRetrospective(cx, cy);
   }
+}
+
+// A truly blank canvas is intimidating, so the "Blank diagram" template
+// drops a single centred rectangle that the user can rename and grow from.
+function buildBlank(cx: number, cy: number): Element[] {
+  const w = 220;
+  const h = 100;
+  return [
+    {
+      ...createShape('square', cx - w / 2, cy - h / 2),
+      width: w,
+      height: h,
+      label: 'Blank Diagram',
+      textSize: 'md' as const,
+    },
+  ];
 }
 
 function buildMindMap(cx: number, cy: number): Element[] {

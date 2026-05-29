@@ -56,7 +56,7 @@ export function PlusButton({ x, y, placement, zoom, onClick }: PlusButtonProps) 
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
       aria-label={LABELS[placement]}
-      className="pointer-events-auto absolute z-20 flex items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-md transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
+      className="pointer-events-auto absolute z-20 flex animate-fade-in items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-md transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 hover:shadow-lg"
       style={{
         left: x + dx,
         top: y + dy,

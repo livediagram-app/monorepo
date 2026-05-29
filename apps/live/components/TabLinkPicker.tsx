@@ -79,7 +79,7 @@ export function TabLinkPicker({
       ref={ref}
       role="menu"
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed z-50 flex w-56 flex-col gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10"
+      className="fixed z-50 flex w-56 animate-fade-in flex-col gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10"
       style={{
         left: pos.left + adjust.x,
         top: pos.top + adjust.y,

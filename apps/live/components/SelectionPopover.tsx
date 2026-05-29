@@ -83,7 +83,7 @@ export function SelectionPopover({
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto absolute z-20 flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+      className="pointer-events-auto absolute z-20 flex animate-fade-in items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
       style={{
         left: baseLeft + adjust.x,
         top: baseTop + adjust.y,

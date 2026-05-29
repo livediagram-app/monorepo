@@ -86,7 +86,7 @@ export function BoxedElementView({
     <div
       onPointerDown={handleShapeDown}
       onDoubleClick={handleDoubleClick}
-      className={`absolute touch-none select-none ${variant.className} ${cursor}`}
+      className={`absolute origin-center animate-pop-in touch-none select-none ${variant.className} ${cursor}`}
       style={{
         left: element.x,
         top: element.y,

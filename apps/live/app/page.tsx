@@ -342,6 +342,23 @@ export default function LivePage() {
     setGroupSourceId(null);
   };
 
+  // "Delete" the whole diagram: replace every tab with a single empty
+  // Tab 1, reset the diagram name to its default, and clear viewport /
+  // selection state. The tab change is undoable via the history hook;
+  // diagramName isn't in history so undoing only restores the elements.
+  const deleteDiagram = () => {
+    commitTabs(() => [createTab('Tab 1')]);
+    setDiagramName('Untitled diagram');
+    setSelectedId(null);
+    setEditingId(null);
+    setFormatSourceId(null);
+    setGroupSourceId(null);
+    setViewportOffset({ x: 0, y: 0 });
+    setViewportZoom(1);
+    // setActiveId will be picked up on next render via the fallback chain
+    // (activeTab = tabs.find(...) ?? tabs[0]) once the new tab is in state.
+  };
+
   const renameTab = (id: string, name: string) => {
     commitTabs((ts) => ts.map((t) => (t.id === id ? { ...t, name } : t)));
   };
@@ -416,7 +433,10 @@ export default function LivePage() {
     commitTabs((ts) =>
       ts.map((t) => (t.id === activeId ? { ...t, elements, templateChosen: true } : t)),
     );
-    setSelectedId(null);
+    // Auto-select when a template produces a single element (today: blank
+    // diagram's seeded rectangle) so the user can immediately rename or edit
+    // it. Multi-element templates leave the selection cleared.
+    setSelectedId(elements.length === 1 ? elements[0]!.id : null);
     setEditingId(null);
   };
 
@@ -904,7 +924,11 @@ export default function LivePage() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <EditorHeader diagramName={diagramName} onRename={setDiagramName} />
+      <EditorHeader
+        diagramName={diagramName}
+        onRename={setDiagramName}
+        onDeleteDiagram={deleteDiagram}
+      />
       <Canvas
         tabName={activeTab.name}
         tabBackgroundPattern={activeTab.backgroundPattern ?? 'grid'}
