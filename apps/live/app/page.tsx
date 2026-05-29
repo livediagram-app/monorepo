@@ -149,6 +149,8 @@ export default function LivePage() {
   const [drag, setDrag] = useState<DragState | null>(null);
   const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
   const [paletteMinimized, setPaletteMinimized] = useState(false);
+  const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
+  const [explorerMinimized, setExplorerMinimized] = useState(false);
   const [diagramName, setDiagramName] = useState('Untitled diagram');
   // Local-session participant. Initialised once per page load with a random
   // name + colour from the curated palette. Once auth lands, this becomes
@@ -1030,6 +1032,8 @@ export default function LivePage() {
         groupSourceId={groupSourceId}
         palettePosition={palettePosition}
         paletteMinimized={paletteMinimized}
+        explorerPosition={explorerPosition}
+        explorerMinimized={explorerMinimized}
         canUndo={canUndo}
         canRedo={canRedo}
         onAddShape={addShape}
@@ -1039,6 +1043,8 @@ export default function LivePage() {
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
         onToggleMinimized={() => setPaletteMinimized((v) => !v)}
+        onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
+        onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
         onDeselect={() => {
           setSelectedId(null);
           setEditingId(null);

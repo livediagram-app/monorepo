@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useState } from 'react';
 import type {
   BackgroundPattern,
   ShapeKind,
@@ -6,6 +6,7 @@ import type {
   TextAlignY,
   TextSize,
 } from '@livediagram/diagram';
+import { MovablePanel } from './MovablePanel';
 import { Tooltip } from './Tooltip';
 
 export type SelectedElementControls = {
@@ -50,39 +51,9 @@ type CommandPaletteProps = {
 };
 
 export function CommandPalette(props: CommandPaletteProps) {
-  if (props.minimized) {
-    return <MinimizedPalette onClick={props.onToggleMinimized} />;
-  }
+  // Minimised state is rendered by Canvas's bottom dock — see DockButton.
+  if (props.minimized) return null;
   return <OpenPalette {...props} />;
-}
-
-function MinimizedPalette({ onClick }: { onClick: () => void }) {
-  return (
-    <Tooltip title="Open palette" description="Expand the palette back into its full panel.">
-      <button
-        type="button"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={onClick}
-        aria-label="Open palette"
-        className="pointer-events-auto absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/10 transition hover:bg-slate-50 hover:text-slate-900"
-      >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          aria-hidden
-        >
-          <rect x="3" y="3" width="6" height="6" rx="1.25" />
-          <rect x="11" y="3" width="6" height="6" rx="1.25" />
-          <rect x="3" y="11" width="6" height="6" rx="1.25" />
-          <rect x="11" y="11" width="6" height="6" rx="1.25" />
-        </svg>
-      </button>
-    </Tooltip>
-  );
 }
 
 function OpenPalette({
@@ -95,84 +66,15 @@ function OpenPalette({
   onAddText,
   onAddSticky,
 }: CommandPaletteProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<{
-    startClientX: number;
-    startClientY: number;
-    startX: number;
-    startY: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!drag) return;
-    const onMove = (e: PointerEvent) => {
-      onMoveTo(
-        drag.startX + (e.clientX - drag.startClientX),
-        drag.startY + (e.clientY - drag.startClientY),
-      );
-    };
-    const onUp = () => setDrag(null);
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, [drag, onMoveTo]);
-
-  const beginDrag = (e: ReactPointerEvent) => {
-    e.stopPropagation();
-    const node = ref.current;
-    if (!node) return;
-    const startX = node.offsetLeft;
-    const startY = node.offsetTop;
-    if (position === null) onMoveTo(startX, startY);
-    setDrag({ startClientX: e.clientX, startClientY: e.clientY, startX, startY });
-  };
-
-  const style: React.CSSProperties = position ? { left: position.x, top: position.y } : {};
-  const positionClass = position ? '' : 'right-4 top-4';
-
   return (
-    <div
-      ref={ref}
-      onPointerDown={(e) => e.stopPropagation()}
-      style={style}
-      className={`pointer-events-auto absolute z-10 flex w-56 flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${positionClass}`}
+    <MovablePanel
+      title="Palette"
+      position={position}
+      defaultCorner="top-right"
+      width="w-56"
+      onMoveTo={onMoveTo}
+      onMinimize={onToggleMinimized}
     >
-      <div
-        onPointerDown={beginDrag}
-        className={`flex items-center justify-between gap-2 rounded-t-lg px-2 pt-2 pb-1.5 ${drag ? 'cursor-grabbing' : 'cursor-grab'}`}
-      >
-        <span className="select-none text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Palette
-        </span>
-        <Tooltip
-          title="Minimize palette"
-          description="Collapse the palette into a small button at the canvas edge."
-        >
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onToggleMinimized}
-            aria-label="Minimize palette"
-            className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-              <line
-                x1="2.5"
-                y1="6"
-                x2="9.5"
-                y2="6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </Tooltip>
-      </div>
-
       <div className="px-2 pb-2">
         {/* Shape primitives. Wraps to a second row once the palette runs
             out of horizontal room. Ordered by frequency / familiarity:
@@ -332,7 +234,7 @@ function OpenPalette({
       </div>
 
       {selection ? <SelectedElementSection selection={selection} /> : <TabSection tab={tab} />}
-    </div>
+    </MovablePanel>
   );
 }
 

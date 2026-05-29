@@ -14,8 +14,16 @@ A small floating panel **initially placed in the top-right corner of the canvas*
 ### Minimizable
 
 - The header has a **minimize button** to the right of the `PALETTE` label.
-- When minimized, the panel collapses into a small **floating round button pinned to the middle-right edge of the canvas**.
-- Clicking the minimized button restores the panel to its last position (or the default top-right if it hasn't been moved).
+- When minimized, the panel collapses into a **square dock button at the bottom of the canvas**, rendered inside the same flex cluster as ZoomControls + HistoryControls (sitting immediately to the left of the zoom card). Multiple minimised panels stack left-to-right in the dock: the Explorer's dock button sits to the left of the Palette's, then Zoom, then History.
+- Clicking the dock button restores the panel to its last position (or the default top-right if it hasn't been moved).
+
+## Explorer panel
+
+A second floating panel, pinned to the **top-left** of the canvas by default. Shares the same draggable + minimisable behaviour as the [Command palette](#command-palette) via the shared `MovablePanel` component. Title: `EXPLORER`.
+
+The Explorer is intended to list every diagram in the user's account. Until auth lands, it shows a sign-up nudge — a dashed-border card with "Sign in to save your diagrams" copy and a disabled **Sign in (coming soon)** button. The empty state is a deliberate prompt: it surfaces the value of accounts (persistence) right where users will naturally look for their diagram list later.
+
+When minimised, the Explorer collapses into a dock button (folder icon) in the bottom dock, left of the Palette's dock button.
 
 ## Text alignment
 

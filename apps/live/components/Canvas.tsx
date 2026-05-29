@@ -31,6 +31,8 @@ import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
 import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type SelectedElementControls } from './CommandPalette';
+import { Explorer, ExplorerIcon, PaletteIcon } from './Explorer';
+import { DockButton } from './MovablePanel';
 import { HistoryControls } from './HistoryControls';
 import { ModeBanner } from './ModeBanner';
 import { PlusButton } from './PlusButton';
@@ -56,6 +58,8 @@ type CanvasProps = {
   groupSourceId: string | null;
   palettePosition: { x: number; y: number } | null;
   paletteMinimized: boolean;
+  explorerPosition: { x: number; y: number } | null;
+  explorerMinimized: boolean;
   canUndo: boolean;
   canRedo: boolean;
   onAddShape: (kind: ShapeKind) => void;
@@ -65,6 +69,8 @@ type CanvasProps = {
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
   onToggleMinimized: () => void;
+  onMoveExplorer: (x: number, y: number) => void;
+  onToggleExplorerMinimized: () => void;
   onDeselect: () => void;
   onSelect: (id: string) => void;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
@@ -127,6 +133,8 @@ export function Canvas(props: CanvasProps) {
     groupSourceId,
     palettePosition,
     paletteMinimized,
+    explorerPosition,
+    explorerMinimized,
     canUndo,
     canRedo,
     onAddShape,
@@ -136,6 +144,8 @@ export function Canvas(props: CanvasProps) {
     onRedo,
     onMovePalette,
     onToggleMinimized,
+    onMoveExplorer,
+    onToggleExplorerMinimized,
     onDeselect,
     onSelect,
     onBeginDrag,
@@ -541,6 +551,13 @@ export function Canvas(props: CanvasProps) {
         />
       ) : null}
 
+      <Explorer
+        position={explorerPosition}
+        minimized={explorerMinimized}
+        onMoveTo={onMoveExplorer}
+        onToggleMinimized={onToggleExplorerMinimized}
+      />
+
       <CommandPalette
         position={palettePosition}
         minimized={paletteMinimized}
@@ -553,7 +570,25 @@ export function Canvas(props: CanvasProps) {
         onAddSticky={onAddSticky}
       />
 
+      {/* Bottom dock. Order, left → right: minimised Explorer (if any),
+          minimised Palette (if any), Zoom controls, History controls. */}
       <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2">
+        {explorerMinimized ? (
+          <DockButton
+            label="Open Explorer"
+            description="Expand the Explorer panel back to its full size."
+            icon={<ExplorerIcon />}
+            onClick={onToggleExplorerMinimized}
+          />
+        ) : null}
+        {paletteMinimized ? (
+          <DockButton
+            label="Open palette"
+            description="Expand the palette back to its full panel."
+            icon={<PaletteIcon />}
+            onClick={onToggleMinimized}
+          />
+        ) : null}
         <ZoomControls
           zoom={viewportZoom}
           onZoomIn={handleZoomIn}
