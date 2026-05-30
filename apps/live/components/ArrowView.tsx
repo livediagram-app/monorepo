@@ -34,7 +34,10 @@ export function ArrowView({
   // on top in brand-600 regardless so the user can still tell what's
   // selected on a coloured arrow.
   const baseStroke = arrow.strokeColor ?? defaultArrowStrokeColor();
-  const strokeWidth = isSelected ? 2.5 : 2;
+  // Per-arrow thickness with a small selected-state bump so the user
+  // can tell the difference between "selected" and "thicker stroke".
+  const baseStrokeWidth = arrow.strokeWidth ?? 2;
+  const strokeWidth = isSelected ? baseStrokeWidth + 0.5 : baseStrokeWidth;
   const hitCursor = isPaintMode ? 'copy' : 'pointer';
   const opacity = arrow.opacity ?? 1;
 

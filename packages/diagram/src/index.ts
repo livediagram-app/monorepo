@@ -277,7 +277,44 @@ export type ArrowElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   arrowEnds?: ArrowEnds;
+  // Stroke width in px. Defaults to the medium preset when unset so
+  // existing arrows render unchanged. Presets surface via the Palette;
+  // the underlying field is a free number so future inputs (sliders,
+  // numeric entry) work without a schema migration.
+  strokeWidth?: number;
 };
+
+// Named thickness presets exposed via the Palette. Storing the raw px
+// in `strokeWidth` keeps the schema flexible while the UI sticks to a
+// constrained set of sensible widths.
+export type ArrowThickness = 'thin' | 'medium' | 'thick' | 'extra-thick';
+
+export const ARROW_THICKNESS_PX: Record<ArrowThickness, number> = {
+  thin: 1,
+  medium: 2,
+  thick: 4,
+  'extra-thick': 7,
+};
+
+export const DEFAULT_ARROW_THICKNESS: ArrowThickness = 'medium';
+
+export function arrowThicknessOf(arrow: ArrowElement): ArrowThickness {
+  const w = arrow.strokeWidth;
+  if (w === undefined) return DEFAULT_ARROW_THICKNESS;
+  // Snap to the closest preset so the UI's toggle group always lights
+  // up exactly one option, even for arrows created before the field
+  // existed or copied from other tools.
+  let best: ArrowThickness = DEFAULT_ARROW_THICKNESS;
+  let bestDelta = Number.POSITIVE_INFINITY;
+  for (const [name, px] of Object.entries(ARROW_THICKNESS_PX) as [ArrowThickness, number][]) {
+    const delta = Math.abs(px - w);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      best = name;
+    }
+  }
+  return best;
+}
 
 // --- Element union ---------------------------------------------------------
 

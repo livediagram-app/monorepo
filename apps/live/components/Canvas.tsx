@@ -6,6 +6,7 @@ import {
   type Ref,
 } from 'react';
 import {
+  arrowThicknessOf,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   defaultFillColor,
@@ -120,6 +121,7 @@ type CanvasProps = {
   onResetColors: () => void;
   onSetPadding: (padding: import('@livediagram/diagram').Padding) => void;
   onSetArrowEnds: (ends: import('@livediagram/diagram').ArrowEnds) => void;
+  onSetArrowThickness: (thickness: import('@livediagram/diagram').ArrowThickness) => void;
   onSetShapeKind: (kind: ShapeKind) => void;
   onDuplicateSelected: () => void;
   tabs: Tab[];
@@ -230,6 +232,7 @@ export function Canvas(props: CanvasProps) {
     onResetColors,
     onSetPadding,
     onSetArrowEnds,
+    onSetArrowThickness,
     onSetShapeKind,
     onDuplicateSelected,
     tabs,
@@ -493,6 +496,8 @@ export function Canvas(props: CanvasProps) {
         onSetPadding,
         arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
         onSetArrowEnds,
+        arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
+        onSetArrowThickness,
         shapeKind: selected.type === 'shape' ? selected.shape : null,
         onSetShapeKind,
       }

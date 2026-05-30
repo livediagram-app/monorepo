@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type {
   ArrowEnds,
+  ArrowThickness,
   BackgroundPattern,
   Padding,
   ShapeKind,
@@ -8,6 +9,7 @@ import type {
   TextAlignY,
   TextSize,
 } from '@livediagram/diagram';
+import { ARROW_THICKNESS_PX } from '@livediagram/diagram';
 import { THEMES, type ThemeId } from '@/lib/themes';
 import { MovablePanel } from './MovablePanel';
 import { Tooltip } from './Tooltip';
@@ -36,6 +38,11 @@ export type SelectedElementControls = {
   // get an arrowhead.
   arrowEnds: ArrowEnds | null;
   onSetArrowEnds: (ends: ArrowEnds) => void;
+  // Same gate as arrowEnds: drives the thickness row inside the
+  // Pointer accordion. Snapped to the nearest preset for display so
+  // arrows authored before the field existed still highlight one.
+  arrowThickness: ArrowThickness | null;
+  onSetArrowThickness: (thickness: ArrowThickness) => void;
   // Non-null only when a shape element is selected. Drives the Shape
   // accordion's morph-into-this-kind grid.
   shapeKind: ShapeKind | null;
@@ -577,6 +584,35 @@ function SelectedElementSection({
 
       {selection.arrowEnds !== null ? (
         <Accordion title="Pointer" open={open.pointer} onToggle={() => toggle('pointer')}>
+          {selection.arrowThickness !== null ? (
+            <>
+              <p className="text-[10px] font-medium text-slate-500">Thickness</p>
+              <div className="mt-1 grid grid-cols-4 gap-1">
+                {(
+                  [
+                    ['thin', 'Thin'],
+                    ['medium', 'Medium'],
+                    ['thick', 'Thick'],
+                    ['extra-thick', 'Extra thick'],
+                  ] as [ArrowThickness, string][]
+                ).map(([id, label]) => (
+                  <Tooltip
+                    key={id}
+                    title={label}
+                    description={`Sets the arrow stroke width to ${ARROW_THICKNESS_PX[id]}px.`}
+                  >
+                    <SizeButton
+                      active={selection.arrowThickness === id}
+                      onClick={() => selection.onSetArrowThickness(id)}
+                    >
+                      <ThicknessIcon px={ARROW_THICKNESS_PX[id]} />
+                    </SizeButton>
+                  </Tooltip>
+                ))}
+              </div>
+              <div className="my-2 h-px bg-slate-100" />
+            </>
+          ) : null}
           <p className="text-[10px] font-medium text-slate-500">
             Pick which end(s) of the arrow have a pointer.
           </p>
@@ -761,6 +797,25 @@ function ShapeIcon({ kind }: { kind: ShapeKind }) {
         </svg>
       );
   }
+}
+
+// Renders a short horizontal line at the given stroke-width inside the
+// SizeButton frame so the user can pick a thickness preset visually
+// rather than by name.
+function ThicknessIcon({ px }: { px: number }) {
+  return (
+    <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden>
+      <line
+        x1="3"
+        y1="7"
+        x2="19"
+        y2="7"
+        stroke="currentColor"
+        strokeWidth={px}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import {
   anchorPosition,
+  ARROW_THICKNESS_PX,
   bringManyToFront,
   createComment,
   createPinnedArrow,
@@ -1547,6 +1548,16 @@ export default function LivePage() {
     );
   };
 
+  const setArrowThicknessSelected = (thickness: import('@livediagram/diagram').ArrowThickness) => {
+    if (!selectedId) return;
+    const px = ARROW_THICKNESS_PX[thickness];
+    commit((els) =>
+      els.map((el) =>
+        el.id === selectedId && el.type === 'arrow' ? { ...el, strokeWidth: px } : el,
+      ),
+    );
+  };
+
   // Morph the selected shape into a different kind, preserving width /
   // height / label / colour overrides. Circle and diamond are 1:1
   // shapes — coming from a non-square box, snap to the larger side so
@@ -2120,6 +2131,7 @@ export default function LivePage() {
         onResetColors={resetColorsSelected}
         onSetPadding={setPaddingSelected}
         onSetArrowEnds={setArrowEndsSelected}
+        onSetArrowThickness={setArrowThicknessSelected}
         onSetShapeKind={setShapeKindSelected}
         onDuplicateSelected={duplicateSelected}
         tabs={tabs}
