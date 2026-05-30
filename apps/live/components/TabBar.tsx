@@ -89,13 +89,12 @@ export function TabBar({
                 setDragId(null);
                 setOverId(null);
               }}
-              className={`relative flex shrink-0 items-center gap-0.5 rounded-md transition ${
+              className={`relative flex shrink-0 items-center gap-1.5 rounded-md px-2 transition ${
                 isActive
                   ? 'bg-brand-100 text-brand-700'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
             >
-              <TabPresenceStack participants={participantsByTab.get(tab.id) ?? []} />
               {isEditing ? (
                 <TabNameEditor
                   initial={tab.name}
@@ -110,11 +109,12 @@ export function TabBar({
                   type="button"
                   onClick={() => onSelect(tab.id)}
                   onDoubleClick={() => isActive && setEditingId(tab.id)}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium"
+                  className="rounded-md py-1.5 text-sm font-medium"
                 >
                   {tab.name}
                 </button>
               )}
+              <TabPresenceStack participants={participantsByTab.get(tab.id) ?? []} />
               {isActive && !isEditing ? (
                 <EllipsisMenuButton
                   open={menuFor === tab.id}
@@ -493,27 +493,30 @@ function TrashIcon() {
   );
 }
 
-// Compact stack of participant initials, sitting just before the tab
-// label. Rendered slightly smaller than the EditorHeader avatars so
-// it doesn't dominate the tab. Hidden when nobody is on the tab.
+// Compact stack of participant initials, sitting between the tab
+// label and the ellipsis menu. Rendered smaller than the EditorHeader
+// avatars so it doesn't dominate the tab. Hidden when nobody is on
+// the tab. The last avatar uses 0 negative margin so the stack sits
+// fully inside the pill's right padding.
 function TabPresenceStack({ participants }: { participants: Participant[] }) {
   if (participants.length === 0) return null;
   const shown = participants.slice(0, 3);
   const overflow = participants.length - shown.length;
+  const slots = overflow > 0 ? shown.length + 1 : shown.length;
   return (
-    <div className="-ml-0.5 mr-1 flex items-center">
+    <div className="flex items-center">
       {shown.map((p, i) => (
         <span
           key={p.id}
-          className="-mr-1.5 inline-flex"
-          style={{ zIndex: shown.length - i }}
+          className={i === slots - 1 ? 'inline-flex' : '-mr-1.5 inline-flex'}
+          style={{ zIndex: slots - i }}
         >
-          <ParticipantAvatar participant={p} size={18} withTooltip />
+          <ParticipantAvatar participant={p} size={16} withTooltip />
         </span>
       ))}
       {overflow > 0 ? (
         <span
-          className="-mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[8px] font-semibold text-slate-600 shadow-sm"
+          className="inline-flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[8px] font-semibold text-slate-600 shadow-sm"
           title={`${overflow} more`}
         >
           +{overflow}
