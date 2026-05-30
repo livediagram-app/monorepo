@@ -46,6 +46,7 @@ type CanvasProps = {
   tabName: string;
   tabBackgroundPattern: BackgroundPattern;
   tabBackgroundColor: string;
+  tabBackgroundOpacity: number;
   tabPatternColor: string;
   mainRef: Ref<HTMLElement>;
   viewportOffset: { x: number; y: number };
@@ -138,6 +139,7 @@ type CanvasProps = {
   tabThemeId: import('@/lib/themes').ThemeId;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
+  onSetBackgroundOpacity: (opacity: number) => void;
   onSetTheme: (id: import('@/lib/themes').ThemeId) => void;
   onSetPatternColor: (color: string) => void;
   onClearTabContent: () => void;
@@ -153,6 +155,7 @@ export function Canvas(props: CanvasProps) {
     tabName,
     tabBackgroundPattern,
     tabBackgroundColor,
+    tabBackgroundOpacity,
     tabPatternColor,
     mainRef,
     viewportOffset,
@@ -482,7 +485,9 @@ export function Canvas(props: CanvasProps) {
   const tabSection = {
     backgroundPattern: tabBackgroundPattern,
     backgroundColor: tabBackgroundColor,
+    backgroundOpacity: tabBackgroundOpacity,
     patternColor: tabPatternColor,
+    onSetBackgroundOpacity,
     themeId: tabThemeId,
     hasContent: elements.length > 0,
     onSetBackgroundPattern,
@@ -502,6 +507,7 @@ export function Canvas(props: CanvasProps) {
         viewportOffset,
         tabBackgroundColor,
         tabPatternColor,
+        tabBackgroundOpacity,
       )}
     >
       <div
@@ -857,13 +863,31 @@ const CONFETTI_BG =
   "<circle cx='45' cy='55' r='2' fill='%23f87171'/>" +
   '</svg>")';
 
+// Apply the user-controlled tab background opacity by converting the
+// `#rrggbb` colour to `rgba(...)` with the supplied alpha. Hex parsing
+// is permissive — anything else falls back to the colour as-is so a
+// theme that ships a CSS keyword doesn't break.
+function applyAlpha(color: string, alpha: number): string {
+  if (alpha >= 1) return color;
+  const match = /^#?([0-9a-f]{6})$/i.exec(color);
+  if (!match) return color;
+  const hex = match[1]!;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function tabBackgroundStyle(
   pattern: BackgroundPattern,
   offset: { x: number; y: number },
   backgroundColor: string,
   patternColor: string,
+  backgroundOpacity = 1,
 ): React.CSSProperties {
-  const base: React.CSSProperties = { backgroundColor };
+  const base: React.CSSProperties = {
+    backgroundColor: applyAlpha(backgroundColor, backgroundOpacity),
+  };
   const px = offset.x;
   const py = offset.y;
   switch (pattern) {

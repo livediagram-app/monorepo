@@ -283,6 +283,10 @@ export type Tab = {
   elements: Element[];
   backgroundPattern?: BackgroundPattern;
   backgroundColor?: string;
+  // 0..1, defaults to 1. Applied to backgroundColor as the alpha
+  // channel so the canvas can sit over a transparent / lower-opacity
+  // backdrop (useful when embedded or layered on a theme).
+  backgroundOpacity?: number;
   patternColor?: string;
   // Selected preset theme name (see apps/live/lib/themes.ts). When set,
   // newly added elements inherit the theme's fill / stroke / text colours

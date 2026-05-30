@@ -40,6 +40,8 @@ export type TabSectionControls = {
   hasContent: boolean;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
+  backgroundOpacity: number;
+  onSetBackgroundOpacity: (opacity: number) => void;
   onSetPatternColor: (color: string) => void;
   onSetTheme: (id: ThemeId) => void;
   onClearTabContent: () => void;
@@ -637,6 +639,23 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
               onChange={tab.onSetPatternColor}
             />
           </Tooltip>
+        </div>
+        <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium text-slate-500">Background opacity</p>
+            <span className="text-[10px] font-medium text-slate-500">
+              {Math.round(tab.backgroundOpacity * 100)}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={tab.backgroundOpacity}
+            onChange={(e) => tab.onSetBackgroundOpacity(parseFloat(e.target.value))}
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500"
+          />
         </div>
       </Accordion>
 

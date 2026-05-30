@@ -1817,6 +1817,7 @@ export default function LivePage() {
         tabName={activeTab.name}
         tabBackgroundPattern={activeTab.backgroundPattern ?? 'grid'}
         tabBackgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
+        tabBackgroundOpacity={activeTab.backgroundOpacity ?? 1}
         tabPatternColor={activeTab.patternColor ?? DEFAULT_PATTERN_COLOR}
         mainRef={canvasMainRef}
         viewportZoom={viewportZoom}
@@ -1908,6 +1909,7 @@ export default function LivePage() {
         onSetBackgroundPattern={setBackgroundPattern}
         onClearTabContent={clearTabContent}
         onSetBackgroundColor={setBackgroundColor}
+        onSetBackgroundOpacity={setBackgroundOpacity}
         onSetPatternColor={setPatternColor}
         onToggleAspectLock={toggleAspectLockSelected}
         onDuplicateConnect={duplicateConnectSelected}
