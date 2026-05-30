@@ -94,18 +94,14 @@ export function EditorHeader({
 function SharedBadge({ shareable }: { shareable: boolean }) {
   return (
     <span
-      title={
-        shareable
-          ? 'This diagram is shared — anyone with a link in the Share dialog can access it.'
-          : 'This diagram is private to you. Open the Share dialog to invite collaborators.'
-      }
+      title={shareable ? 'Anyone with a link can view' : 'Only visible to you'}
       className={
         shareable
-          ? 'inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-700 ring-1 ring-brand-200'
-          : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 ring-1 ring-slate-200'
+          ? 'inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200'
+          : 'inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rose-700 ring-1 ring-rose-200'
       }
     >
-      <span aria-hidden className={shareable ? 'text-brand-500' : 'text-slate-400'}>
+      <span aria-hidden className={shareable ? 'text-emerald-500' : 'text-rose-500'}>
         {shareable ? <SharedDotIcon /> : <PrivateDotIcon />}
       </span>
       {shareable ? 'Shared' : 'Private'}
