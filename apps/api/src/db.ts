@@ -5,6 +5,7 @@ import type {
   DiagramDTO,
   DiagramSummary,
   Env,
+  FolderDTO,
   ParticipantDTO,
   ShareLinkDTO,
   ShareRole,
@@ -22,6 +23,7 @@ type DiagramRow = {
   name: string;
   shareable: number;
   share_code: string | null;
+  folder_id: string | null;
   saved_at: number;
   created_at: number;
 };
@@ -84,13 +86,15 @@ async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
     tabs: await listTabSummariesFor(env, row.id),
     shareable: row.shareable === 1,
     shareCode: row.share_code,
+    folderId: row.folder_id,
     savedAt: row.saved_at,
     createdAt: row.created_at,
   };
 }
 
-const DIAGRAM_COLS = 'id, owner_id, name, shareable, share_code, saved_at, created_at';
-const DIAGRAM_SUMMARY_COLS = 'id, owner_id, name, shareable, share_code, saved_at, created_at';
+const DIAGRAM_COLS =
+  'id, owner_id, name, shareable, share_code, folder_id, saved_at, created_at';
+const DIAGRAM_SUMMARY_COLS = DIAGRAM_COLS;
 
 export async function getDiagram(env: Env, id: string): Promise<DiagramDTO | null> {
   const row = await env.DB.prepare(`SELECT ${DIAGRAM_COLS} FROM diagrams WHERE id = ?`)
@@ -120,6 +124,7 @@ export async function listDiagramsByOwner(env: Env, ownerId: string): Promise<Di
     name: row.name,
     shareable: row.shareable === 1,
     shareCode: row.share_code,
+    folderId: row.folder_id,
     savedAt: row.saved_at,
     createdAt: row.created_at,
   }));
@@ -131,15 +136,32 @@ export async function listDiagramsByOwner(env: Env, ownerId: string): Promise<Di
 // /diagrams/:id and by the create endpoint.
 export async function upsertDiagramMeta(env: Env, d: Omit<DiagramDTO, 'tabs'>): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO diagrams (id, owner_id, name, shareable, share_code, saved_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO diagrams (id, owner_id, name, shareable, share_code, folder_id, saved_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        owner_id = excluded.owner_id,
        name = excluded.name,
        saved_at = excluded.saved_at`,
   )
-    .bind(d.id, d.ownerId, d.name, d.shareable ? 1 : 0, d.shareCode, d.savedAt, d.createdAt)
+    .bind(
+      d.id,
+      d.ownerId,
+      d.name,
+      d.shareable ? 1 : 0,
+      d.shareCode,
+      d.folderId,
+      d.savedAt,
+      d.createdAt,
+    )
     .run();
+}
+
+export async function setDiagramFolder(
+  env: Env,
+  id: string,
+  folderId: string | null,
+): Promise<void> {
+  await env.DB.prepare('UPDATE diagrams SET folder_id = ? WHERE id = ?').bind(folderId, id).run();
 }
 
 // --- Tabs (one row per tab) ----------------------------------------------
@@ -451,4 +473,123 @@ export async function deleteChangeLogEntry(
   await env.DB.prepare('DELETE FROM change_log WHERE diagram_id = ? AND id = ?')
     .bind(diagramId, entryId)
     .run();
+}
+
+// ---------------------------------------------------------------------
+// folders — owner-scoped, self-referential tree. See spec/15-folders.md.
+// ---------------------------------------------------------------------
+
+type FolderRow = {
+  id: string;
+  owner_id: string;
+  parent_id: string | null;
+  name: string;
+  created_at: number;
+  updated_at: number;
+};
+
+function rowToFolder(row: FolderRow): FolderDTO {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    parentId: row.parent_id,
+    name: row.name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+const FOLDER_COLS = 'id, owner_id, parent_id, name, created_at, updated_at';
+
+export async function listFoldersByOwner(env: Env, ownerId: string): Promise<FolderDTO[]> {
+  const result = await env.DB.prepare(
+    `SELECT ${FOLDER_COLS} FROM folders WHERE owner_id = ? ORDER BY name ASC`,
+  )
+    .bind(ownerId)
+    .all<FolderRow>();
+  return (result.results ?? []).map(rowToFolder);
+}
+
+export async function getFolder(env: Env, id: string): Promise<FolderDTO | null> {
+  const row = await env.DB.prepare(`SELECT ${FOLDER_COLS} FROM folders WHERE id = ?`)
+    .bind(id)
+    .first<FolderRow>();
+  return row ? rowToFolder(row) : null;
+}
+
+export async function createFolder(
+  env: Env,
+  f: { id: string; ownerId: string; parentId: string | null; name: string },
+): Promise<FolderDTO> {
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO folders (id, owner_id, parent_id, name, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(f.id, f.ownerId, f.parentId, f.name, now, now)
+    .run();
+  return {
+    id: f.id,
+    ownerId: f.ownerId,
+    parentId: f.parentId,
+    name: f.name,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export async function updateFolder(
+  env: Env,
+  id: string,
+  patch: { name?: string; parentId?: string | null },
+): Promise<void> {
+  const now = Date.now();
+  // Build a partial UPDATE so we never accidentally clear a column the
+  // caller didn't touch. `name` and `parentId` are both legal so we
+  // can't merge them into one statement without losing the
+  // "undefined = leave alone" semantic.
+  if (patch.name !== undefined) {
+    await env.DB.prepare('UPDATE folders SET name = ?, updated_at = ? WHERE id = ?')
+      .bind(patch.name, now, id)
+      .run();
+  }
+  if (patch.parentId !== undefined) {
+    await env.DB.prepare('UPDATE folders SET parent_id = ?, updated_at = ? WHERE id = ?')
+      .bind(patch.parentId, now, id)
+      .run();
+  }
+}
+
+export async function deleteFolder(env: Env, id: string): Promise<void> {
+  // Promote direct children before deleting: subfolders become root,
+  // diagrams fall to Unsorted. ON DELETE SET NULL on both FKs would
+  // do the same thing, but we run it explicitly so the behaviour is
+  // visible in code (and not dependent on SQLite enforcing the FK,
+  // which is opt-in via PRAGMA).
+  await env.DB.prepare('UPDATE folders SET parent_id = NULL WHERE parent_id = ?').bind(id).run();
+  await env.DB.prepare('UPDATE diagrams SET folder_id = NULL WHERE folder_id = ?').bind(id).run();
+  await env.DB.prepare('DELETE FROM folders WHERE id = ?').bind(id).run();
+}
+
+// Cycle check for folder moves. Walks the proposed ancestor chain
+// from `newParentId` upward; if we hit `folderId` along the way the
+// move would form a cycle. Caller rejects with a 409 in that case.
+export async function folderMoveWouldCycle(
+  env: Env,
+  folderId: string,
+  newParentId: string,
+): Promise<boolean> {
+  let cursor: string | null = newParentId;
+  const seen = new Set<string>();
+  while (cursor !== null) {
+    const here: string = cursor;
+    if (here === folderId) return true;
+    if (seen.has(here)) return true; // defensive — corrupt graph
+    seen.add(here);
+    const row = await env.DB.prepare('SELECT parent_id FROM folders WHERE id = ?')
+      .bind(here)
+      .first<{ parent_id: string | null }>();
+    cursor = row?.parent_id ?? null;
+  }
+  return false;
 }

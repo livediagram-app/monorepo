@@ -1,23 +1,30 @@
 import type { Tab } from '@livediagram/diagram';
 import {
+  createFolder,
   createShareLink,
   deleteChangeLogEntry,
   deleteChangeLogForTab,
   deleteDiagram,
+  deleteFolder,
   deleteShareLink,
   deleteTabRow,
+  folderMoveWouldCycle,
   generateShareCode,
   getDiagram,
   getDiagramByShareCode,
+  getFolder,
   getParticipant,
   getShareLink,
   getTab,
   insertChangeLogEntry,
   listChangeLog,
   listDiagramsByOwner,
+  listFoldersByOwner,
   listShareLinks,
   reorderTabs,
+  setDiagramFolder,
   setDiagramShare,
+  updateFolder,
   upsertDiagramMeta,
   upsertParticipant,
   upsertTab,
@@ -142,6 +149,7 @@ export default {
               name: body.name,
               shareable: body.shareable ?? false,
               shareCode: body.shareCode ?? null,
+              folderId: body.folderId ?? null,
               savedAt: now,
               createdAt: body.createdAt ?? now,
             });
@@ -198,6 +206,7 @@ export default {
               name: body.name ?? existing?.name ?? 'Untitled diagram',
               shareable: existing?.shareable ?? false,
               shareCode: existing?.shareCode ?? null,
+              folderId: existing?.folderId ?? null,
               savedAt: now,
               createdAt: existing?.createdAt ?? now,
             });
@@ -209,6 +218,29 @@ export default {
           }
           if (request.method === 'DELETE') {
             await deleteDiagram(env, id);
+            return new Response(null, { status: 204, headers: CORS_HEADERS });
+          }
+        }
+
+        // /api/diagrams/<id>/folder — owner-only assignment to a folder
+        // (or null for Unsorted). See spec/15. Folder existence + owner
+        // match is validated before the write so we don't leave the
+        // diagram pointing at a folder it can't see.
+        if (segments.length === 4 && segments[3] === 'folder') {
+          const id = segments[2]!;
+          const owner = ownerOf(request);
+          if (!owner) return badRequest('missing X-Owner-Id');
+          const existing = await getDiagram(env, id);
+          if (!existing) return notFound();
+          if (existing.ownerId !== owner) return forbidden();
+          if (request.method === 'PUT') {
+            const body = (await request.json()) as { folderId?: string | null };
+            const folderId = body.folderId ?? null;
+            if (folderId !== null) {
+              const folder = await getFolder(env, folderId);
+              if (!folder || folder.ownerId !== owner) return notFound();
+            }
+            await setDiagramFolder(env, id, folderId);
             return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
         }
@@ -395,6 +427,74 @@ export default {
 
           if (request.method === 'DELETE') {
             await deleteChangeLogForTab(env, id, tabId);
+            return new Response(null, { status: 204, headers: CORS_HEADERS });
+          }
+        }
+      }
+
+      // ---------- /api/folders ----------
+      // Owner-scoped folder tree. See spec/15-folders.md.
+      if (segments[1] === 'folders') {
+        const owner = ownerOf(request);
+        if (!owner) return badRequest('missing X-Owner-Id');
+
+        // /api/folders — list / create
+        if (segments.length === 2) {
+          if (request.method === 'GET') {
+            const folders = await listFoldersByOwner(env, owner);
+            return json({ folders });
+          }
+          if (request.method === 'POST') {
+            const body = (await request.json()) as {
+              id?: string;
+              name?: string;
+              parentId?: string | null;
+            };
+            if (!body.id || !body.name) return badRequest('missing id/name');
+            const parentId = body.parentId ?? null;
+            // Parent must exist and belong to the same owner before we
+            // accept it — otherwise the tree could grow into another
+            // user's folders.
+            if (parentId) {
+              const parent = await getFolder(env, parentId);
+              if (!parent || parent.ownerId !== owner) return notFound();
+            }
+            const folder = await createFolder(env, {
+              id: body.id,
+              ownerId: owner,
+              parentId,
+              name: body.name,
+            });
+            return json({ folder }, { status: 201 });
+          }
+        }
+
+        // /api/folders/<id> — update / delete
+        if (segments.length === 3) {
+          const id = segments[2]!;
+          const existing = await getFolder(env, id);
+          if (!existing) return notFound();
+          if (existing.ownerId !== owner) return forbidden();
+          if (request.method === 'PUT') {
+            const body = (await request.json()) as {
+              name?: string;
+              parentId?: string | null;
+            };
+            // Cycle check on reparent: refusing here keeps the tree
+            // walk in `listFoldersByOwner` consumers bounded.
+            if (body.parentId !== undefined && body.parentId !== null) {
+              const newParent = await getFolder(env, body.parentId);
+              if (!newParent || newParent.ownerId !== owner) return notFound();
+              if (await folderMoveWouldCycle(env, id, body.parentId)) {
+                return json({ error: 'cycle' }, { status: 409 });
+              }
+            }
+            await updateFolder(env, id, { name: body.name, parentId: body.parentId });
+            const updated = await getFolder(env, id);
+            return json({ folder: updated });
+          }
+          if (request.method === 'DELETE') {
+            await deleteFolder(env, id);
             return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
         }

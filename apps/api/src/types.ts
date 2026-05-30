@@ -17,6 +17,9 @@ export type DiagramDTO = {
   // when re-shared after a revoke.
   shareable: boolean;
   shareCode: string | null;
+  // Folder placement. `null` means the diagram is in the conceptual
+  // Unsorted bucket. See spec/15.
+  folderId: string | null;
   savedAt: number;
   createdAt: number;
 };
@@ -49,8 +52,20 @@ export type DiagramSummary = {
   name: string;
   shareable: boolean;
   shareCode: string | null;
+  folderId: string | null;
   savedAt: number;
   createdAt: number;
+};
+
+// A folder row. `parentId === null` means the folder lives at the
+// tree root. See spec/15-folders.md.
+export type FolderDTO = {
+  id: string;
+  ownerId: string;
+  parentId: string | null;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export type ParticipantDTO = {
