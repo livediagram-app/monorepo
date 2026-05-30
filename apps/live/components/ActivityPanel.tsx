@@ -4,6 +4,7 @@ import type { ChangeLogEntry } from '@/lib/api-client';
 import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from './EditorHeader';
 import { MovablePanel } from './MovablePanel';
+import { Tooltip } from './Tooltip';
 
 type ActivityPanelProps = {
   position: { x: number; y: number } | null;
@@ -122,16 +123,21 @@ export function ActivityPanel({
         </div>
 
         <div className="border-t border-slate-100 pt-2">
-          <button
-            type="button"
-            onClick={onClearActivity}
-            disabled={entries.length === 0}
-            className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
-            title="Delete every activity entry for this tab. The diagram itself is untouched."
+          <Tooltip
+            block
+            title="Clear Activity"
+            description="Delete every entry for this tab. The diagram is untouched."
           >
-            <TrashIcon />
-            Clear Activity
-          </button>
+            <button
+              type="button"
+              onClick={onClearActivity}
+              disabled={entries.length === 0}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <TrashIcon />
+              Clear Activity
+            </button>
+          </Tooltip>
         </div>
       </div>
     </MovablePanel>
@@ -157,14 +163,15 @@ function SaveStatusBadge({ status }: { status: SaveStatus; savedAt: number | nul
   }
   if (status === 'error') {
     return (
-      <span
-        role="status"
-        title="Couldn't save — check network."
-        className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-rose-700 ring-1 ring-rose-200"
-      >
-        <WarningIcon />
-        Not saved
-      </span>
+      <Tooltip title="Not saved" description="Couldn't save — check network.">
+        <span
+          role="status"
+          className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-rose-700 ring-1 ring-rose-200"
+        >
+          <WarningIcon />
+          Not saved
+        </span>
+      </Tooltip>
     );
   }
   return null;
@@ -234,18 +241,19 @@ function ActivityRow({
           space when idle. stopPropagation so clicking Revert
           doesn't ALSO fire the row click handler. */}
       {entry.elementIds.length > 0 && canRevert ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRevert();
-          }}
-          className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
-          title="Revert this change"
-          aria-label={`Revert: ${entry.summary}`}
-        >
-          <RevertIcon />
-        </button>
+        <Tooltip title="Revert" description={`Undo this change: ${entry.summary}`}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRevert();
+            }}
+            className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
+            aria-label={`Revert: ${entry.summary}`}
+          >
+            <RevertIcon />
+          </button>
+        </Tooltip>
       ) : null}
     </li>
   );

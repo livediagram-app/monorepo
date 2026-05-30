@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { MovablePanel } from './MovablePanel';
 import { MenuItem, PortalMenu } from './PortalMenu';
+import { Tooltip } from './Tooltip';
 
 type DiagramListItem = {
   id: string;
@@ -277,18 +278,19 @@ export function Explorer({
             onToggle={() => setFoldersOpen((v) => !v)}
             trailing={
               onCreateFolder ? (
-                <button
-                  type="button"
-                  title="New folder"
-                  aria-label="New folder"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void handleCreateRoot();
-                  }}
-                  className="flex h-4 w-4 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                >
-                  <PlusIcon />
-                </button>
+                <Tooltip title="New folder" description="Add a root-level folder.">
+                  <button
+                    type="button"
+                    aria-label="New folder"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleCreateRoot();
+                    }}
+                    className="flex h-4 w-4 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                  >
+                    <PlusIcon />
+                  </button>
+                </Tooltip>
               ) : null
             }
           />
@@ -338,15 +340,16 @@ export function Explorer({
           <p className="mt-1 leading-relaxed text-slate-500">
             Create an account to keep your diagrams across sessions.
           </p>
-          <button
-            type="button"
-            disabled
-            aria-disabled
-            className="mt-3 inline-flex w-full cursor-not-allowed items-center justify-center rounded-md bg-brand-500/60 px-3 py-1.5 text-xs font-medium text-white shadow-sm"
-            title="Sign-in is coming soon"
-          >
-            Sign in (coming soon)
-          </button>
+          <Tooltip title="Sign in" description="Coming soon.">
+            <button
+              type="button"
+              disabled
+              aria-disabled
+              className="mt-3 inline-flex w-full cursor-not-allowed items-center justify-center rounded-md bg-brand-500/60 px-3 py-1.5 text-xs font-medium text-white shadow-sm"
+            >
+              Sign in (coming soon)
+            </button>
+          </Tooltip>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { initialsOf, randomName } from '@/lib/identity';
 import type { TemplateKind } from '@/lib/templates';
 import { TEMPLATES } from '@/lib/templates';
 import { THEMES, type ThemeId } from '@/lib/themes';
+import { Tooltip } from './Tooltip';
 
 type TemplatePickerProps = {
   // 'welcome' — first-run modal: identity, template, theme, confirm.
@@ -127,15 +128,16 @@ export function TemplatePicker({
                   className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => setName(randomName())}
-                aria-label="Generate a different name"
-                title="Generate a different name"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                <RefreshIcon />
-              </button>
+              <Tooltip title="Shuffle name" description="Pick a different random name.">
+                <button
+                  type="button"
+                  onClick={() => setName(randomName())}
+                  aria-label="Generate a different name"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <RefreshIcon />
+                </button>
+              </Tooltip>
             </div>
           ) : null}
 

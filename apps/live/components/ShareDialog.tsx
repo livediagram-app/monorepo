@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
 import type { ShareLink, ShareRole } from '@/lib/diagram-store';
+import { Tooltip } from './Tooltip';
 
 type ShareDialogProps = {
   participant: Participant;
@@ -145,15 +146,16 @@ export function ShareDialog({
                 className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setName(randomName())}
-              aria-label="Generate a different name"
-              title="Generate a different name"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-            >
-              <RefreshIcon />
-            </button>
+            <Tooltip title="Shuffle name" description="Pick a different random name.">
+              <button
+                type="button"
+                onClick={() => setName(randomName())}
+                aria-label="Generate a different name"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <RefreshIcon />
+              </button>
+            </Tooltip>
           </div>
 
           <div className="flex flex-col gap-2">
