@@ -116,10 +116,16 @@ view-only visitors in V1.
 ## Activity Panel UI
 
 - Same shape language as Explorer / Palette: floating
-  `MovablePanel`, default top-left, minimisable to a dock button.
+  `MovablePanel`, default bottom-left, minimisable to a dock button.
+- **Scoped to the active tab.** The panel only renders entries whose
+  `tab_id` matches the currently visible tab; switching tabs swaps
+  the log. The server still stores every entry under the diagram
+  (so cross-tab history isn't lost), but the user only ever sees the
+  current tab's slice. Filtering is client-side.
 - Header row inside the panel hosts Undo / Redo buttons (moved out of
   the bottom-right HistoryControls).
-- Body: a vertical list of entries, newest first. Each entry shows:
+- Body: a fixed-height (~8 rows) vertical list of entries, newest
+  first; overflow scrolls. Each entry shows:
   - Author avatar dot (using `participant_color`)
   - Author name
   - Verb / summary ("Edited 'API'")

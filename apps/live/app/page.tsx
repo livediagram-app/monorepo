@@ -2370,7 +2370,7 @@ export default function LivePage() {
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
         diagramList={diagramList}
         diagramListLoading={diagramListLoading}
-        changeLog={changeLog}
+        changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
         changeLogLoading={changeLogLoading}
         activityPosition={activityPosition}
         activityMinimized={activityMinimized}
