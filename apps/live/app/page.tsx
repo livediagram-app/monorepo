@@ -353,7 +353,6 @@ export default function LivePage() {
     // for URLs that are about to load a real diagram.
     if (initialId || initialShareCode) setLoadingDiagram(true);
     void (async () => {
-      const url = initialUrl;
       const id = initialId;
       const shareCodeParam = initialShareCode;
 

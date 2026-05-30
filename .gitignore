@@ -13,6 +13,9 @@ out/
 # Turbo
 .turbo/
 
+# Wrangler local state (Miniflare D1 / Durable Object simulation cache)
+.wrangler/
+
 # Env files
 .env
 .env.local
