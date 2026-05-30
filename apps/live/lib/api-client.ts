@@ -411,28 +411,45 @@ export async function apiCreateDiagram(
   };
 }
 
+// In-flight tab loads, keyed by ownerId+diagramId+tabId+shareCode.
+// StrictMode double-invokes the lazy-load effect in dev, which
+// otherwise produces a duplicate GET for the same tab on every
+// mount. Returning the shared promise collapses the duplicates
+// into a single network request without changing the calling
+// shape.
+const inFlightTabLoads = new Map<string, Promise<Tab | null>>();
+
 // Full tab payload, including elements + per-tab metadata. Pulled
 // lazily when the user opens a tab; the diagram-summary fetch only
 // carries TabSummary rows.
-export async function apiLoadTab(
+export function apiLoadTab(
   ownerId: string,
   diagramId: string,
   tabId: string,
   shareCode: string | null = null,
 ): Promise<Tab | null> {
-  const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
-    headers: logAuthGetHeaders(ownerId, shareCode),
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`load tab failed: ${res.status}`);
-  const { tab } = (await res.json()) as TabResponse;
-  // Strip the server-only fields before handing back the live-app's
-  // Tab shape.
-  const { diagramId: _did, orderIndex: _oi, updatedAt: _ua, ...clientTab } = tab;
-  void _did;
-  void _oi;
-  void _ua;
-  return clientTab;
+  const key = `${ownerId}␟${diagramId}␟${tabId}␟${shareCode ?? ''}`;
+  const existing = inFlightTabLoads.get(key);
+  if (existing) return existing;
+  const request = (async (): Promise<Tab | null> => {
+    try {
+      const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
+        headers: logAuthGetHeaders(ownerId, shareCode),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`load tab failed: ${res.status}`);
+      const { tab } = (await res.json()) as TabResponse;
+      const { diagramId: _did, orderIndex: _oi, updatedAt: _ua, ...clientTab } = tab;
+      void _did;
+      void _oi;
+      void _ua;
+      return clientTab;
+    } finally {
+      inFlightTabLoads.delete(key);
+    }
+  })();
+  inFlightTabLoads.set(key, request);
+  return request;
 }
 
 // Upsert a single tab. The active edit path — autosave hits this
