@@ -51,6 +51,12 @@ export function ActivityPanel({
       defaultCorner="bottom-left"
       width="w-64"
       size={size}
+      // Header + 18rem entries floor + footer + padding all add up to
+      // ~360 px; round up so the user can't drag the panel into a
+      // state where everything is clipped. Width floor stops the
+      // entry rows truncating into uselessness.
+      minWidth={240}
+      minHeight={360}
       onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
@@ -138,7 +144,7 @@ function ActivityRow({
 }) {
   const relative = formatRelativeTime(Date.now() - entry.createdAt);
   return (
-    <li className="group flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-50">
+    <li className="group relative flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-50">
       <span
         aria-hidden
         style={{ backgroundColor: entry.participantColor }}
@@ -151,17 +157,17 @@ function ActivityRow({
           {entry.participantName} · {relative}
         </p>
       </div>
+      {/* Floats over the row on hover so it never reserves layout
+          space when idle. Icon-only; the title attribute is the
+          tooltip. */}
       <button
         type="button"
         onClick={onRevert}
-        className="opacity-0 transition group-hover:opacity-100 focus:opacity-100"
+        className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
         title="Revert this change"
         aria-label={`Revert: ${entry.summary}`}
       >
-        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700">
-          <RevertIcon />
-          Revert
-        </span>
+        <RevertIcon />
       </button>
     </li>
   );
@@ -287,6 +293,8 @@ function RevertIcon() {
   );
 }
 
+// Clock-with-counter-clockwise-arrow — the universal "history" icon.
+// Lines up with the Activity panel's role as the editorial timeline.
 export function ActivityIcon() {
   return (
     <svg
@@ -300,7 +308,9 @@ export function ActivityIcon() {
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M3 6h14M3 10h14M3 14h9" />
+      <path d="M3.5 6.5A6.5 6.5 0 1 1 3 10.5" />
+      <path d="M3 3.5V6.5H6" />
+      <path d="M10 6.5V10.5L12.75 12" />
     </svg>
   );
 }

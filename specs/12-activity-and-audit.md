@@ -84,6 +84,7 @@ view-only visitors in V1.
 
 - `GET    /api/diagrams/:id/log`              → `{ entries: ChangeLogEntry[] }` newest-first, capped at 200.
 - `POST   /api/diagrams/:id/log`              → append. Body: the new entry.
+- `DELETE /api/diagrams/:id/log/:entryId`     → drop one entry (revert).
 - `DELETE /api/diagrams/:id/log/tab/:tabId`   → drop entries for one tab.
 
 ## Client behaviour
@@ -102,11 +103,12 @@ view-only visitors in V1.
    action. The audit log diverges from the local undo stack by design.
 
 3. On a `Revert` click for entry E:
-   - Build a new commit that, for each `elementId` in E:
-     - If `before_state[elementId] === null` → remove that element.
-     - Else replace that element in the active tab with `before_state[elementId]`.
-   - That commit goes through the normal commit path, so it appears
-     in the log as `kind: 'revert'` with its own `before` / `after`.
+   - For each `elementId` in E, apply E's `before_state` to the
+     active tab: `null` ⇒ remove that element; otherwise replace it.
+   - Drop E from the log (local state first, then a `DELETE
+     /api/diagrams/:id/log/:entryId` call). The revert is treated as
+     a cancellation of E, not its own event, so the panel stays
+     compact instead of pairing every revert with a `reverted` twin.
 
 4. On `deleteTab(tabId)`:
    - Call `DELETE /log/tab/:tabId` *before* the PUT that drops the tab

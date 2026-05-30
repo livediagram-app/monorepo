@@ -54,6 +54,7 @@ import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } fr
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import {
   apiAppendChangeLogEntry,
+  apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
   apiListChangeLog,
   connectRoom,
@@ -338,7 +339,10 @@ export default function LivePage() {
   const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
   const [changeLogLoading, setChangeLogLoading] = useState(true);
   const [activityPosition, setActivityPosition] = useState<{ x: number; y: number } | null>(null);
-  const [activityMinimized, setActivityMinimized] = useState(false);
+  // Activity defaults to minimised: most users only want to peek at
+  // it occasionally. The dock button stays visible so it's one click
+  // to open.
+  const [activityMinimized, setActivityMinimized] = useState(true);
   // Live presence: the participants connected to this diagram's
   // Durable Object room right now. Includes ourselves once our `hello`
   // round-trips. Rendered in the editor header avatar stack.
@@ -848,21 +852,32 @@ export default function LivePage() {
   // target tab. Other elements (including newer edits) are untouched.
   // If the tab was deleted in between, the revert is a no-op — the
   // log entry has already been cascade-dropped.
+  //
+  // The reverted entry is removed from the log rather than getting a
+  // 'reverted' twin appended. Keeps the panel compact: a revert is a
+  // cancellation of an event, not its own event.
   const revertChange = (entry: ChangeLogEntry) => {
     if (!entry.tabId) return;
     const target = tabs.find((t) => t.id === entry.tabId);
     if (!target) return;
-    const before = target.elements;
-    const after = applyRevert(before, entry.beforeState as Record<string, Element | null>);
+    const after = applyRevert(
+      target.elements,
+      entry.beforeState as Record<string, Element | null>,
+    );
     commitTabs((ts) =>
       ts.map((t) => (t.id === entry.tabId ? { ...t, elements: after } : t)),
     );
-    // Switch focus so the user can see what just changed.
     if (entry.tabId !== activeId) setActiveId(entry.tabId);
-    emitChange(entry.tabId, before, after, {
-      kind: 'revert',
-      summary: `Reverted: ${entry.summary}`,
-    });
+    // Drop the entry locally first so the panel updates immediately;
+    // fire-and-forget the API delete.
+    setChangeLog((prev) => prev.filter((e) => e.id !== entry.id));
+    if (diagramId) {
+      apiDeleteChangeLogEntry(selfParticipant.id, diagramId, entry.id).catch(() => {
+        // Best-effort. A stale row in D1 surfaces on the next list
+        // fetch — at which point the entry would reappear; acceptable
+        // tradeoff for the lighter UX.
+      });
+    }
   };
 
   const tick = (mapElements: (els: Element[]) => Element[]) => {

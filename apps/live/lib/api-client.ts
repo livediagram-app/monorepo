@@ -213,6 +213,20 @@ export async function apiDeleteChangeLogForTab(
   }
 }
 
+export async function apiDeleteChangeLogEntry(
+  ownerId: string,
+  diagramId: string,
+  entryId: string,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/diagrams/${diagramId}/log/${entryId}`, {
+    method: 'DELETE',
+    headers: { 'X-Owner-Id': ownerId },
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`delete change log entry failed: ${res.status}`);
+  }
+}
+
 export async function apiListShareLinks(ownerId: string, id: string): Promise<ShareLink[]> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
     headers: { 'X-Owner-Id': ownerId },

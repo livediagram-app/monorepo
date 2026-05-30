@@ -58,6 +58,11 @@ export function Explorer({
       defaultCorner="top-left"
       width="w-64"
       size={size}
+      // Below this the New-Diagram button starts wrapping and the
+      // sign-in card looks broken. Height floor leaves room for the
+      // button, a short diagram list, and the sign-in nudge.
+      minWidth={220}
+      minHeight={280}
       onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}

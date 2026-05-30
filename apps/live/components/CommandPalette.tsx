@@ -143,6 +143,16 @@ function OpenPalette({
       defaultCorner="top-right"
       width="w-64"
       size={size}
+      // The Pan / Select toggle plus the shape grid wrap awkwardly
+      // below 220 px wide. Height floor leaves room for the canvas-
+      // tool row + a couple of shape rows + one accordion before
+      // anything starts clipping.
+      minWidth={220}
+      minHeight={300}
+      // The Palette anchors top-right, so grip sits at the bottom-
+      // left so it doesn't fall off the right edge of the screen
+      // and so resizing grows the panel into the canvas centre.
+      resizeFrom="bottom-left"
       onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}

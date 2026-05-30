@@ -1,5 +1,6 @@
 import {
   createShareLink,
+  deleteChangeLogEntry,
   deleteChangeLogForTab,
   deleteDiagram,
   deleteShareLink,
@@ -267,6 +268,25 @@ export default {
             };
             await insertChangeLogEntry(env, entry);
             return json({ entry }, { status: 201 });
+          }
+        }
+
+        // /api/diagrams/<id>/log/<entryId> — owner-only DELETE that
+        // drops a single log entry. Called when the user clicks Revert
+        // on an Activity row: the original entry is removed rather
+        // than getting paired with a 'reverted' twin.
+        if (segments.length === 5 && segments[3] === 'log') {
+          const id = segments[2]!;
+          const entryId = segments[4]!;
+          const owner = ownerOf(request);
+          if (!owner) return badRequest('missing X-Owner-Id');
+          const existing = await getDiagram(env, id);
+          if (!existing) return notFound();
+          if (existing.ownerId !== owner) return forbidden();
+
+          if (request.method === 'DELETE') {
+            await deleteChangeLogEntry(env, id, entryId);
+            return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
         }
 

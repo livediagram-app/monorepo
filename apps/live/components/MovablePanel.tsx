@@ -31,6 +31,12 @@ type MovablePanelProps = {
   // them from collapsing the panel into a sliver too small to use.
   minWidth?: number;
   minHeight?: number;
+  // Which corner hosts the resize grip. Right-anchored panels
+  // (defaultCorner: 'top-right' / 'bottom-right') should use
+  // 'bottom-left' so the right edge stays put and the handle isn't
+  // hidden off-screen. Left-anchored panels (the default) keep
+  // 'bottom-right'.
+  resizeFrom?: 'bottom-right' | 'bottom-left';
   onResize?: (size: PanelSize) => void;
   onMoveTo: (x: number, y: number) => void;
   onMinimize: () => void;
@@ -52,6 +58,7 @@ export function MovablePanel({
   size = null,
   minWidth = 200,
   minHeight = 200,
+  resizeFrom = 'bottom-right',
   onResize,
   onMoveTo,
   onMinimize,
@@ -69,6 +76,11 @@ export function MovablePanel({
     startClientY: number;
     startWidth: number;
     startHeight: number;
+    // Pre-resize panel left position. Only consulted for bottom-left
+    // grip: shrinking width from the left moves the panel's left
+    // origin so the right edge stays anchored.
+    startLeft: number;
+    startTop: number;
   } | null>(null);
 
   useEffect(() => {
@@ -91,9 +103,23 @@ export function MovablePanel({
   useEffect(() => {
     if (!resize || !onResize) return;
     const onMove = (e: PointerEvent) => {
-      const w = Math.max(minWidth, resize.startWidth + (e.clientX - resize.startClientX));
-      const h = Math.max(minHeight, resize.startHeight + (e.clientY - resize.startClientY));
-      onResize({ width: w, height: h });
+      const dx = e.clientX - resize.startClientX;
+      const dy = e.clientY - resize.startClientY;
+      const h = Math.max(minHeight, resize.startHeight + dy);
+      if (resizeFrom === 'bottom-left') {
+        // Width grows as the user drags left (negative dx ⇒ wider).
+        // The panel's left position shifts right by the same amount
+        // so the right edge stays anchored to where it was.
+        const targetWidth = resize.startWidth - dx;
+        const w = Math.max(minWidth, targetWidth);
+        // If we clamped to the min, the left edge stops moving too.
+        const clampedDx = resize.startWidth - w;
+        onResize({ width: w, height: h });
+        onMoveTo(resize.startLeft + clampedDx, resize.startTop);
+      } else {
+        const w = Math.max(minWidth, resize.startWidth + dx);
+        onResize({ width: w, height: h });
+      }
     };
     const onUp = () => setResize(null);
     window.addEventListener('pointermove', onMove);
@@ -102,7 +128,7 @@ export function MovablePanel({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [resize, onResize, minWidth, minHeight]);
+  }, [resize, onResize, minWidth, minHeight, resizeFrom, onMoveTo]);
 
   const beginDrag = (e: ReactPointerEvent) => {
     e.stopPropagation();
@@ -121,11 +147,20 @@ export function MovablePanel({
     e.preventDefault();
     const node = ref.current;
     if (!node) return;
+    const startLeft = node.offsetLeft;
+    const startTop = node.offsetTop;
+    // Freeze the corner-positioned panel's place before the resize
+    // starts so the bottom-left handler has a real left coordinate
+    // to slide from. Without this, position stays null and the
+    // panel jumps to (0,0) on the first move.
+    if (position === null && resizeFrom === 'bottom-left') onMoveTo(startLeft, startTop);
     setResize({
       startClientX: e.clientX,
       startClientY: e.clientY,
       startWidth: node.offsetWidth,
       startHeight: node.offsetHeight,
+      startLeft,
+      startTop,
     });
   };
 
@@ -195,18 +230,25 @@ export function MovablePanel({
           we don't double up scrollbars. */}
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       {/* Resize handle. Only rendered when the caller wires onResize —
-          otherwise the panel stays content-sized as before. Bottom-
-          right corner, diagonal grip, captures pointer events so the
-          drag doesn't propagate to anything underneath. */}
+          otherwise the panel stays content-sized as before. Corner
+          and cursor flip based on `resizeFrom` so right-anchored
+          panels grow toward the canvas centre and their handle stays
+          visible. */}
       {onResize ? (
         <div
           role="separator"
           aria-label={`Resize ${title.toLowerCase()}`}
           onPointerDown={beginResize}
-          className="absolute bottom-0 right-0 flex h-4 w-4 cursor-se-resize items-end justify-end p-0.5 text-slate-300 hover:text-slate-500"
+          className={`absolute bottom-0 flex h-4 w-4 items-end p-0.5 text-slate-300 hover:text-slate-500 ${
+            resizeFrom === 'bottom-left' ? 'left-0 cursor-sw-resize justify-start' : 'right-0 cursor-se-resize justify-end'
+          }`}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-            <path d="M9 4L4 9M9 7L7 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+            {resizeFrom === 'bottom-left' ? (
+              <path d="M1 4L6 9M3 9L1 7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+            ) : (
+              <path d="M9 4L4 9M9 7L7 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+            )}
           </svg>
         </div>
       ) : null}

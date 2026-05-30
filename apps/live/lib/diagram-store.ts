@@ -7,6 +7,7 @@
 export {
   apiAppendChangeLogEntry,
   apiCreateShareLink as createShareLink,
+  apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
   apiDeleteDiagram as deleteDiagram,
   apiDeleteShareLink as deleteShareLink,

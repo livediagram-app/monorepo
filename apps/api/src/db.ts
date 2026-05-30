@@ -346,3 +346,16 @@ export async function deleteChangeLogForTab(
     .bind(diagramId, tabId)
     .run();
 }
+
+// Drop a single log entry. Used by the live app when the user clicks
+// Revert — the original entry vanishes rather than gaining a
+// 'reverted' counterpart, so the log stays compact.
+export async function deleteChangeLogEntry(
+  env: Env,
+  diagramId: string,
+  entryId: string,
+): Promise<void> {
+  await env.DB.prepare('DELETE FROM change_log WHERE diagram_id = ? AND id = ?')
+    .bind(diagramId, entryId)
+    .run();
+}
