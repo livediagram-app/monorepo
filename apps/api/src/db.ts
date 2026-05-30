@@ -400,7 +400,7 @@ function rowToChangeLog(row: ChangeLogRow): ChangeLogEntryDTO {
 // 200 entries is plenty to drive the Activity Panel's scrolling list
 // while keeping the response small. Older entries stay in D1 for
 // audit completeness; the V1 UI just doesn't surface them.
-const CHANGE_LOG_LIST_LIMIT = 200;
+const CHANGE_LOG_LIST_LIMIT = 30;
 
 export async function listChangeLog(env: Env, diagramId: string): Promise<ChangeLogEntryDTO[]> {
   const result = await env.DB.prepare(

@@ -80,11 +80,10 @@ export function ActivityPanel({
 
         <div className="h-px bg-slate-100" />
 
-        {/* Entries area. Grows with the panel when the user resizes
-            it; otherwise sticks at a baseline of ~8 entry rows so the
-            panel stays a predictable size with a small log. Overflow
-            always scrolls inside this area. */}
-        <div className="scrollbar-slim flex-1 overflow-y-auto" style={{ minHeight: '18rem' }}>
+        {/* Entries area sized to ~8 rows; anything beyond scrolls
+            inside the area so the panel stays predictable on long
+            histories. API caps the underlying list at 30. */}
+        <div className="scrollbar-slim flex-1 overflow-y-auto" style={{ maxHeight: '18rem' }}>
           {loading ? (
             <ul className="flex flex-col gap-1" aria-busy="true">
               {[0, 1, 2].map((i) => (

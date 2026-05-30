@@ -1004,7 +1004,7 @@ export default function LivePage() {
           // match the hydrated list size.
           setChangeLog((prev) => {
             if (prev.some((e) => e.id === op.entry.id)) return prev;
-            return [op.entry, ...prev].slice(0, 200);
+            return [op.entry, ...prev].slice(0, 30);
           });
         } else if (op.kind === 'log-remove') {
           setChangeLog((prev) => prev.filter((e) => e.id !== op.entryId));
@@ -1298,7 +1298,7 @@ export default function LivePage() {
   // local append + fire-and-forget API + room broadcast + push onto
   // the Undo/Redo memory stack so the entry pops cleanly on undo.
   const appendLogEntry = (entry: ChangeLogEntry) => {
-    setChangeLog((prev) => [entry, ...prev].slice(0, 200));
+    setChangeLog((prev) => [entry, ...prev].slice(0, 30));
     entryHistoryRef.current = {
       past: [...entryHistoryRef.current.past, entry].slice(-LOG_HISTORY_LIMIT),
       future: [],
@@ -1441,7 +1441,7 @@ export default function LivePage() {
         past: [...past, next].slice(-LOG_HISTORY_LIMIT),
         future: future.slice(1),
       };
-      setChangeLog((prev) => [next, ...prev].slice(0, 200));
+      setChangeLog((prev) => [next, ...prev].slice(0, 30));
       if (diagramId) {
         // Same entry id and content — D1 ends up with the same row
         // it had before the undo. Idempotent under network retries
