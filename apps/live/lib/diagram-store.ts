@@ -5,8 +5,11 @@
 // surface stays the same.
 
 export {
+  apiCreateShareLink as createShareLink,
   apiDeleteDiagram as deleteDiagram,
+  apiDeleteShareLink as deleteShareLink,
   apiListDiagrams as listDiagrams,
+  apiListShareLinks as listShareLinks,
   apiLoadDiagram as loadDiagram,
   apiLoadSelf as loadSelfParticipant,
   apiLoadShared as loadSharedDiagram,
@@ -21,5 +24,8 @@ export type {
   RoomHandlers,
   RoomIncoming,
   RoomOutgoing,
+  ShareLink,
+  ShareRole,
+  SharedDiagramResolution,
   StoredDiagram,
 } from './api-client';

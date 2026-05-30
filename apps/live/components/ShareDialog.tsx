@@ -3,45 +3,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
+import type { ShareLink, ShareRole } from '@/lib/diagram-store';
 
 type ShareDialogProps = {
   participant: Participant;
-  // The diagram's current sharing state. Drives whether we show the
-  // share URL + Stop sharing button, or the initial "Share this
-  // diagram" CTA.
-  shareable: boolean;
-  shareUrl: string | null;
-  // Whether the participant has confirmed their name. If not, the
-  // dialog blocks until they do — share invitations need a name to
-  // attribute changes / comments / presence to.
+  links: ShareLink[];
+  shareUrlFor: (code: string) => string;
+  // Whether the owner has confirmed their name (drives the share button
+  // behaviour but no longer hides the identity card).
   nameConfirmed: boolean;
-  onConfirm: (name: string) => Promise<void> | void;
-  onUnshare: () => Promise<void> | void;
+  onSaveName: (name: string) => Promise<void> | void;
+  onCreateLink: (role: ShareRole) => Promise<void> | void;
+  onRevokeLink: (code: string) => Promise<void> | void;
   onClose: () => void;
 };
 
-// Modal dialog opened from the Share button in the editor header. Two
-// phases:
-//   1. The diagram is private. The user picks (or accepts) a name and
-//      clicks "Share Diagram", which generates a share code and
-//      unblocks the URL section.
-//   2. The diagram is already shared. We show the URL with a Copy
-//      button and a "Stop sharing" action that revokes the code.
-//
-// The dialog is portal-rendered to escape any transformed canvas
-// ancestor. Closes on outside click and Escape.
+// Share-diagram modal. Lists every active share link, lets the owner
+// create new ones with a role (Edit / View-only), and revoke any link
+// individually. The identity card is always visible so the owner can
+// see / edit the name peers see on their cursor and comments.
 export function ShareDialog({
   participant,
-  shareable,
-  shareUrl,
+  links,
+  shareUrlFor,
   nameConfirmed,
-  onConfirm,
-  onUnshare,
+  onSaveName,
+  onCreateLink,
+  onRevokeLink,
   onClose,
 }: ShareDialogProps) {
   const [name, setName] = useState(participant.name);
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<ShareRole>('edit');
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,40 +58,36 @@ export function ShareDialog({
 
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
-  // The avatar + name card is always visible so the user can see (and
-  // edit) the identity peers will see while they collaborate. The
-  // nameConfirmed flag still drives the share button gating below —
-  // it just doesn't hide the card any more.
   void nameConfirmed;
-  const needsName = !shareable;
 
-  const share = async () => {
+  const create = async () => {
     setBusy(true);
     try {
-      await onConfirm(effectiveName);
+      if (effectiveName !== participant.name) await onSaveName(effectiveName);
+      await onCreateLink(newRole);
     } finally {
       setBusy(false);
     }
   };
 
-  const unshare = async () => {
+  const revoke = async (code: string) => {
     setBusy(true);
     try {
-      await onUnshare();
+      await onRevokeLink(code);
     } finally {
       setBusy(false);
     }
   };
 
-  const copy = async () => {
-    if (!shareUrl) return;
+  const copy = async (code: string) => {
+    const url = shareUrlFor(code);
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(url);
+      setCopiedCode(code);
+      window.setTimeout(() => setCopiedCode(null), 1500);
     } catch {
-      // Some browsers refuse clipboard without a recent gesture; the
-      // user can still select the input. Falling through is fine.
+      // Browsers without clipboard permission silently no-op; the
+      // user can still select the input.
     }
   };
 
@@ -110,17 +100,14 @@ export function ShareDialog({
         ref={ref}
         role="dialog"
         aria-modal="true"
-        className="pointer-events-auto flex w-[28rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10"
+        className="pointer-events-auto flex w-[32rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10"
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              {shareable ? 'Share this diagram' : 'Share this diagram'}
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900">Share this diagram</h2>
             <p className="mt-1 text-sm text-slate-600">
-              {shareable
-                ? 'Anyone with this link can view and edit this diagram in real time.'
-                : 'Share a link so collaborators can join in real time.'}
+              Create one or more share links. Anyone with an editor link can join in real time; a
+              view-only link lets people watch without changing anything.
             </p>
           </div>
           <button
@@ -133,83 +120,127 @@ export function ShareDialog({
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 px-6 py-5">
-          {needsName ? (
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-              <div
-                role="img"
-                aria-label={`Your avatar colour: ${participant.color}`}
-                style={{ backgroundColor: participant.color }}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+        <div className="flex flex-col gap-5 px-6 py-5">
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+            <div
+              role="img"
+              aria-label={`Your avatar colour: ${participant.color}`}
+              style={{ backgroundColor: participant.color }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+            >
+              {initialsOf(effectiveName)}
+            </div>
+            <div className="flex-1">
+              <label
+                htmlFor="share-name"
+                className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
               >
-                {initialsOf(effectiveName)}
-              </div>
-              <div className="flex-1">
-                <label
-                  htmlFor="share-name"
-                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
-                >
-                  Your name
-                </label>
-                <input
-                  id="share-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={participant.name}
-                  className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                Your name
+              </label>
+              <input
+                id="share-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={participant.name}
+                className="mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setName(randomName())}
+              aria-label="Generate a different name"
+              title="Generate a different name"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <RefreshIcon />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Active share links
+            </p>
+            {links.length === 0 ? (
+              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-xs text-slate-500">
+                No share links yet. Pick a role below and click <strong>Create link</strong>.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {links.map((link) => (
+                  <li
+                    key={link.code}
+                    className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5"
+                  >
+                    <span
+                      className={
+                        link.role === 'edit'
+                          ? 'inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-800'
+                          : 'inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-700'
+                      }
+                    >
+                      {link.role === 'edit' ? 'Edit' : 'View'}
+                    </span>
+                    <input
+                      readOnly
+                      value={shareUrlFor(link.code)}
+                      onFocus={(e) => e.currentTarget.select()}
+                      className="flex-1 min-w-0 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-slate-700 outline-none focus:border-brand-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copy(link.code)}
+                      className="rounded-md bg-brand-500 px-2 py-1 text-[11px] font-medium text-white shadow-sm transition hover:bg-brand-600"
+                    >
+                      {copiedCode === link.code ? 'Copied' : 'Copy'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => revoke(link.code)}
+                      disabled={busy}
+                      aria-label="Revoke link"
+                      className="rounded-md p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-slate-100 pt-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Create new link
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-stretch gap-1 rounded-md border border-slate-200 bg-slate-50 p-0.5">
+                <RoleButton
+                  active={newRole === 'edit'}
+                  onClick={() => setNewRole('edit')}
+                  label="Edit"
+                  description="Full read / write access — visitors can change anything."
+                />
+                <RoleButton
+                  active={newRole === 'view'}
+                  onClick={() => setNewRole('view')}
+                  label="View only"
+                  description="Read-only — visitors can look but not edit."
                 />
               </div>
               <button
                 type="button"
-                onClick={() => setName(randomName())}
-                aria-label="Generate a different name"
-                title="Generate a different name"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                onClick={create}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50"
               >
-                <RefreshIcon />
+                <LinkIcon />
+                Create link
               </button>
             </div>
-          ) : null}
-
-          {shareable && shareUrl ? (
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="share-url"
-                className="text-[10px] font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Share link
-              </label>
-              <div className="flex items-stretch gap-1.5">
-                <input
-                  id="share-url"
-                  readOnly
-                  value={shareUrl}
-                  onFocus={(e) => e.currentTarget.select()}
-                  className="flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-brand-400"
-                />
-                <button
-                  type="button"
-                  onClick={copy}
-                  className="inline-flex items-center gap-1 rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-brand-600"
-                >
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-          ) : null}
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-3">
-          {shareable ? (
-            <button
-              type="button"
-              onClick={unshare}
-              disabled={busy}
-              className="mr-auto inline-flex items-center rounded-md border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
-            >
-              Stop sharing
-            </button>
-          ) : null}
           <button
             type="button"
             onClick={onClose}
@@ -217,21 +248,38 @@ export function ShareDialog({
           >
             Done
           </button>
-          {!shareable ? (
-            <button
-              type="button"
-              onClick={share}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50"
-            >
-              <LinkIcon />
-              Share Diagram
-            </button>
-          ) : null}
         </div>
       </div>
     </div>,
     document.body,
+  );
+}
+
+function RoleButton({
+  active,
+  label,
+  description,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={description}
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        active
+          ? 'flex-1 rounded-sm bg-white px-2 py-1 text-xs font-semibold text-slate-800 shadow-sm'
+          : 'flex-1 rounded-sm px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-white/60 hover:text-slate-700'
+      }
+    >
+      {label}
+    </button>
   );
 }
 
@@ -248,6 +296,26 @@ function CloseIcon() {
       aria-hidden
     >
       <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4h11" />
+      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
+      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
     </svg>
   );
 }

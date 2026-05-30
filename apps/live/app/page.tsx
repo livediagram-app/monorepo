@@ -51,16 +51,19 @@ import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } fr
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import {
   connectRoom,
+  createShareLink as apiCreateShareLink,
   deleteDiagram as apiDeleteDiagram,
+  deleteShareLink as apiDeleteShareLink,
   listDiagrams as apiListDiagrams,
+  listShareLinks as apiListShareLinks,
   loadDiagram as apiLoadDiagram,
   loadSelfParticipant,
   loadSharedDiagram as apiLoadShared,
   saveDiagram as apiSaveDiagram,
   saveSelfParticipant,
-  shareDiagram as apiShareDiagram,
-  unshareDiagram as apiUnshareDiagram,
   type RoomHandlers,
+  type ShareLink,
+  type ShareRole,
 } from '@/lib/diagram-store';
 import { buildTemplate, type TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
@@ -271,11 +274,25 @@ export default function LivePage() {
   // after share / unshare. Drives whether realtime (WS room) is
   // active.
   const [diagramShareable, setDiagramShareable] = useState(false);
+  // The legacy single share code (back-compat fallback for older
+  // diagrams that haven't been migrated to share_links yet, and for
+  // visitor arrivals that came in via the legacy URL flow). Modern
+  // diagrams populate shareLinks instead.
   const [diagramShareCode, setDiagramShareCode] = useState<string | null>(null);
   // True for the owner of the loaded diagram; false for visitors who
   // arrived via /live?s=<code>. Drives whether the Share button shows.
   const [isOwner, setIsOwner] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  // Every active share link for the current diagram (owner-only). The
+  // ShareDialog list renders straight off this array. shareable is
+  // derived: shareLinks.length > 0 OR diagramShareable from a freshly
+  // loaded row.
+  const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
+  // The role granted to the current session. Owners always have 'edit';
+  // visitors get whatever role their share code carried. Drives the
+  // save / op-broadcast gates so view-only visitors can't push edits.
+  const [sessionRole, setSessionRole] = useState<ShareRole>('edit');
+  const isReadOnly = sessionRole === 'view';
 
   useLayoutEffect(() => {
     if (hydrated) return;
@@ -311,8 +328,9 @@ export default function LivePage() {
       // arrivals get full diagram data via the share-code endpoint and
       // are flagged `!isOwner` so the Share button hides.
       if (shareCodeParam) {
-        const fetched = await apiLoadShared(shareCodeParam).catch(() => null);
-        if (fetched) {
+        const resolution = await apiLoadShared(shareCodeParam).catch(() => null);
+        if (resolution) {
+          const { diagram: fetched, role } = resolution;
           resetTabs(fetched.tabs);
           setDiagramName(fetched.name);
           setActiveId(fetched.tabs[0]?.id ?? activeId);
@@ -321,9 +339,9 @@ export default function LivePage() {
           setDiagramShareable(fetched.shareable);
           setDiagramShareCode(fetched.shareCode);
           setIsOwner(fetched.ownerId === self.id);
-          // Same join-flow trigger as the existing ?d= path — visitors
-          // landing fresh on a shared diagram pick a name before
-          // editing.
+          // Visitors inherit the role from their share code. Owners
+          // overwrite this to 'edit' below.
+          setSessionRole(fetched.ownerId === self.id ? 'edit' : role);
           if (window.localStorage.getItem('livediagram:v2:name-confirmed') !== '1') {
             setTemplatePickerMode('identity');
           }
@@ -338,6 +356,14 @@ export default function LivePage() {
           setDiagramShareable(fetched.shareable);
           setDiagramShareCode(fetched.shareCode);
           setIsOwner(fetched.ownerId === self.id);
+          setSessionRole('edit');
+          // If we own the diagram, prefetch its full share-link list so
+          // the dialog opens populated.
+          if (fetched.ownerId === self.id) {
+            apiListShareLinks(self.id, fetched.id)
+              .then((links) => setShareLinks(links))
+              .catch(() => {});
+          }
           if (window.localStorage.getItem('livediagram:v2:name-confirmed') !== '1') {
             setTemplatePickerMode('identity');
           }
@@ -375,6 +401,10 @@ export default function LivePage() {
   // gate prevents echoing remote ops back to the room.
   useEffect(() => {
     if (!hydrated || !diagramId) return;
+    // View-only visitors don't get to push edits. Local UI still lets
+    // them experiment for usability, but those experiments stay
+    // ephemeral — neither the API save nor the broadcast happens.
+    if (isReadOnly) return;
     if (remoteUpdateRef.current) {
       remoteUpdateRef.current = false;
       return;
@@ -395,7 +425,7 @@ export default function LivePage() {
       refreshDiagramList(selfParticipant.id);
     }, 600);
     return () => window.clearTimeout(handle);
-  }, [hydrated, diagramId, tabs, diagramName, selfParticipant.id]);
+  }, [hydrated, diagramId, tabs, diagramName, selfParticipant.id, isReadOnly]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -988,48 +1018,57 @@ export default function LivePage() {
     setNameConfirmed(true);
   };
 
-  // Toggle sharing for the current diagram. Both routes go through the
-  // dedicated /share endpoint (NOT through a regular PUT) so visitor
-  // saves can't accidentally flip the flag. We also commit the
-  // diagram id and persist the participant's name as part of the share
-  // gesture — it's the canonical "okay, this leaves your device" point.
-  const shareCurrentDiagram = async (name: string) => {
+  // Save the participant's name (used from the share dialog's identity
+  // card). Mints the diagram id if this is the first share gesture so
+  // the share URL is shareable from the moment it's created.
+  const updateParticipantName = async (name: string) => {
+    if (!name) return;
+    if (name === selfParticipant.name) return;
+    const updated: Participant = { ...selfParticipant, name };
+    setSelfParticipant(updated);
+    await saveSelfParticipant(updated).catch(() => {});
+  };
+
+  // Create a new share link for the current diagram with the given
+  // role. Also commits the diagram id (first share == canonical
+  // "this leaves your device" point) and flips the room-open flag.
+  const createShareLink = async (role: ShareRole) => {
     const id = commitDiagramId();
-    if (name && name !== selfParticipant.name) {
-      const updated: Participant = { ...selfParticipant, name };
-      setSelfParticipant(updated);
-      await saveSelfParticipant(updated).catch(() => {});
-    }
     confirmName();
     try {
-      const res = await apiShareDiagram(selfParticipant.id, id);
-      setDiagramShareable(res.shareable);
-      setDiagramShareCode(res.shareCode);
+      const link = await apiCreateShareLink(selfParticipant.id, id, role);
+      setShareLinks((prev) => [...prev, link]);
+      setDiagramShareable(true);
+      setDiagramShareCode((prev) => prev ?? link.code);
     } catch {
-      // Network glitch — leave the in-memory flag alone so the dialog
-      // doesn't lie about the state. A real app would surface this in
-      // a toast.
+      // Network glitch — leave state alone. A real app would toast.
     }
   };
 
-  const stopSharingCurrentDiagram = async () => {
+  const revokeShareLink = async (code: string) => {
     if (!diagramId) return;
     try {
-      await apiUnshareDiagram(selfParticipant.id, diagramId);
+      await apiDeleteShareLink(selfParticipant.id, diagramId, code);
     } catch {
-      // ignore — the next list refresh will reconcile if it fails.
+      // ignore — list refresh below reconciles if it actually went through.
     }
-    setDiagramShareable(false);
-    setDiagramShareCode(null);
+    setShareLinks((prev) => {
+      const next = prev.filter((l) => l.code !== code);
+      if (next.length === 0) {
+        setDiagramShareable(false);
+        setDiagramShareCode(null);
+      } else if (diagramShareCode === code) {
+        setDiagramShareCode(next[0]!.code);
+      }
+      return next;
+    });
   };
 
-  // Absolute share URL — falls back to current origin if env doesn't
-  // override. The router stitches /live onto the app's hostname so
-  // `${origin}/live?s=<code>` always resolves to the editor.
-  const shareUrl =
-    diagramShareCode && typeof window !== 'undefined'
-      ? `${window.location.origin}/live?s=${diagramShareCode}`
-      : null;
+  // Absolute share URL helper used by the dialog. Router stitches
+  // /live onto the app's hostname so `${origin}/live?s=<code>` always
+  // resolves to the editor.
+  const shareUrlFor = (code: string) =>
+    typeof window === 'undefined' ? '' : `${window.location.origin}/live?s=${code}`;
 
   // Dismiss the welcome / templates / identity modal without picking
   // anything. For the welcome flow this marks the tab as
@@ -1925,15 +1964,12 @@ export default function LivePage() {
       {shareDialogOpen ? (
         <ShareDialog
           participant={selfParticipant}
-          shareable={diagramShareable}
-          shareUrl={shareUrl}
+          links={shareLinks}
+          shareUrlFor={shareUrlFor}
           nameConfirmed={nameConfirmed}
-          onConfirm={async (name: string) => {
-            await shareCurrentDiagram(name);
-          }}
-          onUnshare={async () => {
-            await stopSharingCurrentDiagram();
-          }}
+          onSaveName={updateParticipantName}
+          onCreateLink={createShareLink}
+          onRevokeLink={revokeShareLink}
           onClose={() => setShareDialogOpen(false)}
         />
       ) : null}

@@ -1,4 +1,11 @@
-import type { DiagramDTO, DiagramSummary, Env, ParticipantDTO } from './types';
+import type {
+  DiagramDTO,
+  DiagramSummary,
+  Env,
+  ParticipantDTO,
+  ShareLinkDTO,
+  ShareRole,
+} from './types';
 
 // Thin D1 wrapper. Every diagram read/write parses or stringifies the
 // `data` JSON at this boundary; the rest of the worker deals with
@@ -151,4 +158,96 @@ export function generateShareCode(length = 8): string {
     code += SHARE_ALPHABET[byte % SHARE_ALPHABET.length];
   }
   return code;
+}
+
+// ---------------------------------------------------------------------
+// share_links — per-diagram, per-role short codes (migration 0003)
+// ---------------------------------------------------------------------
+
+type ShareLinkRow = {
+  code: string;
+  diagram_id: string;
+  role: string;
+  created_at: number;
+};
+
+function rowToShareLink(row: ShareLinkRow): ShareLinkDTO {
+  return {
+    code: row.code,
+    diagramId: row.diagram_id,
+    role: row.role === 'view' ? 'view' : 'edit',
+    createdAt: row.created_at,
+  };
+}
+
+export async function listShareLinks(env: Env, diagramId: string): Promise<ShareLinkDTO[]> {
+  const result = await env.DB.prepare(
+    'SELECT code, diagram_id, role, created_at FROM share_links WHERE diagram_id = ? ORDER BY created_at ASC',
+  )
+    .bind(diagramId)
+    .all<ShareLinkRow>();
+  return (result.results ?? []).map(rowToShareLink);
+}
+
+export async function getShareLink(env: Env, code: string): Promise<ShareLinkDTO | null> {
+  const row = await env.DB.prepare(
+    'SELECT code, diagram_id, role, created_at FROM share_links WHERE code = ?',
+  )
+    .bind(code)
+    .first<ShareLinkRow>();
+  return row ? rowToShareLink(row) : null;
+}
+
+export async function createShareLink(
+  env: Env,
+  diagramId: string,
+  code: string,
+  role: ShareRole,
+): Promise<ShareLinkDTO> {
+  const createdAt = Date.now();
+  await env.DB.prepare(
+    'INSERT INTO share_links (code, diagram_id, role, created_at) VALUES (?, ?, ?, ?)',
+  )
+    .bind(code, diagramId, role, createdAt)
+    .run();
+  // Mark the legacy single-code field too so old GETs still surface
+  // the diagram as shared.
+  await env.DB.prepare(
+    'UPDATE diagrams SET shareable = 1, share_code = COALESCE(share_code, ?) WHERE id = ?',
+  )
+    .bind(code, diagramId)
+    .run();
+  return { code, diagramId, role, createdAt };
+}
+
+export async function deleteShareLink(env: Env, code: string): Promise<void> {
+  const existing = await getShareLink(env, code);
+  if (!existing) return;
+  await env.DB.prepare('DELETE FROM share_links WHERE code = ?').bind(code).run();
+  // If this was the last link for the diagram, flip shareable off so
+  // the live app stops opening the realtime room.
+  const remaining = await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM share_links WHERE diagram_id = ?',
+  )
+    .bind(existing.diagramId)
+    .first<{ n: number }>();
+  if (!remaining || remaining.n === 0) {
+    await env.DB.prepare('UPDATE diagrams SET shareable = 0, share_code = NULL WHERE id = ?')
+      .bind(existing.diagramId)
+      .run();
+  } else if (existing.code === (await getDiagram(env, existing.diagramId))?.shareCode) {
+    // The legacy share_code column happened to point at the link we
+    // just deleted. Promote any remaining link so the legacy field
+    // still resolves.
+    const survivor = await env.DB.prepare(
+      'SELECT code FROM share_links WHERE diagram_id = ? ORDER BY created_at ASC LIMIT 1',
+    )
+      .bind(existing.diagramId)
+      .first<{ code: string }>();
+    if (survivor) {
+      await env.DB.prepare('UPDATE diagrams SET share_code = ? WHERE id = ?')
+        .bind(survivor.code, existing.diagramId)
+        .run();
+    }
+  }
 }

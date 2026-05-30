@@ -36,6 +36,15 @@ export type ParticipantDTO = {
   createdAt: number;
 };
 
+export type ShareRole = 'edit' | 'view';
+
+export type ShareLinkDTO = {
+  code: string;
+  diagramId: string;
+  role: ShareRole;
+  createdAt: number;
+};
+
 export type Env = {
   DB: D1Database;
   DIAGRAM_ROOM: DurableObjectNamespace;

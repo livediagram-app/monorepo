@@ -78,6 +78,23 @@ type ListResponse = {
 
 type ShareResponse = { shareable: boolean; shareCode: string | null };
 
+export type ShareRole = 'edit' | 'view';
+
+export type ShareLink = {
+  code: string;
+  diagramId: string;
+  role: ShareRole;
+  createdAt: number;
+};
+
+type ShareLinkResponse = { link: ShareLink };
+type ShareLinksResponse = { links: ShareLink[] };
+
+export type SharedDiagramResolution = {
+  diagram: StoredDiagram;
+  role: ShareRole;
+};
+
 type ParticipantResponse = {
   participant: {
     id: string;
@@ -107,23 +124,61 @@ export async function apiLoadDiagram(id: string): Promise<StoredDiagram | null> 
   };
 }
 
-// Resolve a share code to a full diagram. Visitors landing on
-// `/live?s=<code>` use this; private diagrams' codes are null so the
-// API returns 404 once the owner has revoked sharing.
-export async function apiLoadShared(code: string): Promise<StoredDiagram | null> {
+// Resolve a share code to a full diagram + the role granted by that
+// code. Visitors landing on `/live?s=<code>` use this; revoked codes
+// return 404 from the API.
+export async function apiLoadShared(code: string): Promise<SharedDiagramResolution | null> {
   const res = await fetch(`${API_BASE}/share/${code}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`load shared failed: ${res.status}`);
-  const { diagram } = (await res.json()) as DiagramResponse;
+  const body = (await res.json()) as DiagramResponse & { role?: ShareRole };
+  const { diagram } = body;
   return {
-    id: diagram.id,
-    ownerId: diagram.ownerId,
-    name: diagram.name,
-    tabs: diagram.tabs,
-    shareable: diagram.shareable,
-    shareCode: diagram.shareCode,
-    savedAt: diagram.savedAt,
+    diagram: {
+      id: diagram.id,
+      ownerId: diagram.ownerId,
+      name: diagram.name,
+      tabs: diagram.tabs,
+      shareable: diagram.shareable,
+      shareCode: diagram.shareCode,
+      savedAt: diagram.savedAt,
+    },
+    role: body.role === 'view' ? 'view' : 'edit',
   };
+}
+
+export async function apiListShareLinks(ownerId: string, id: string): Promise<ShareLink[]> {
+  const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
+    headers: { 'X-Owner-Id': ownerId },
+  });
+  if (!res.ok) throw new Error(`list share links failed: ${res.status}`);
+  const { links } = (await res.json()) as ShareLinksResponse;
+  return links;
+}
+
+export async function apiCreateShareLink(
+  ownerId: string,
+  id: string,
+  role: ShareRole,
+): Promise<ShareLink> {
+  const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
+    method: 'POST',
+    headers: ownerHeaders(ownerId),
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok) throw new Error(`create share link failed: ${res.status}`);
+  const { link } = (await res.json()) as ShareLinkResponse;
+  return link;
+}
+
+export async function apiDeleteShareLink(ownerId: string, id: string, code: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/diagrams/${id}/share/${code}`, {
+    method: 'DELETE',
+    headers: { 'X-Owner-Id': ownerId },
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`delete share link failed: ${res.status}`);
+  }
 }
 
 export async function apiShareDiagram(

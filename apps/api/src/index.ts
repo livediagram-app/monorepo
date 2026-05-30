@@ -1,16 +1,20 @@
 import {
+  createShareLink,
   deleteDiagram,
+  deleteShareLink,
   generateShareCode,
   getDiagram,
   getDiagramByShareCode,
   getParticipant,
+  getShareLink,
   listDiagramsByOwner,
+  listShareLinks,
   setDiagramShare,
   upsertDiagram,
   upsertParticipant,
 } from './db';
 import { DiagramRoom } from './diagram-room';
-import type { DiagramDTO, Env, ParticipantDTO } from './types';
+import type { DiagramDTO, Env, ParticipantDTO, ShareRole } from './types';
 
 export { DiagramRoom };
 
@@ -60,15 +64,23 @@ export default {
 
     try {
       // ---------- /api/share/<code> ----------
-      // Resolve a share code to its diagram. Used by visitors landing on
-      // /live?s=<code>. Returns 404 if the code doesn't exist OR the
-      // diagram has been unshared since (share_code = null is the
-      // canonical "no longer shared" signal).
+      // Resolve a share code to its diagram + role. Used by visitors
+      // landing on /live?s=<code>. Returns 404 if the code doesn't
+      // exist OR was revoked.
       if (segments[1] === 'share' && segments.length === 3) {
         const code = segments[2]!;
         if (request.method === 'GET') {
+          // Prefer share_links so multi-link diagrams resolve any of
+          // their codes; fall back to the legacy column for diagrams
+          // that pre-date migration 0003 and somehow didn't get
+          // backfilled.
+          const link = await getShareLink(env, code);
+          if (link) {
+            const d = await getDiagram(env, link.diagramId);
+            return d ? json({ diagram: d, role: link.role }) : notFound();
+          }
           const d = await getDiagramByShareCode(env, code);
-          return d ? json({ diagram: d }) : notFound();
+          return d ? json({ diagram: d, role: 'edit' as ShareRole }) : notFound();
         }
       }
 
@@ -141,7 +153,11 @@ export default {
           }
         }
 
-        // /api/diagrams/<id>/share — owner toggles sharing.
+        // /api/diagrams/<id>/share — owner-only.
+        //   GET     — list every share link for this diagram.
+        //   POST    — mint a new link. Body: { role: 'edit' | 'view' }
+        //   DELETE  — revoke every link (back-compat with the
+        //             single-code era).
         if (segments.length === 4 && segments[3] === 'share') {
           const id = segments[2]!;
           const owner = ownerOf(request);
@@ -150,16 +166,40 @@ export default {
           if (!existing) return notFound();
           if (existing.ownerId !== owner) return forbidden();
 
+          if (request.method === 'GET') {
+            const links = await listShareLinks(env, id);
+            return json({ links });
+          }
           if (request.method === 'POST') {
-            // Re-sharing rotates the code so the previously shared URL
-            // can't be revived without action.
-            const code = existing.shareCode ?? generateShareCode();
-            await setDiagramShare(env, id, true, code);
-            return json({ shareable: true, shareCode: code });
+            const body = (await request.json().catch(() => ({}))) as { role?: ShareRole };
+            const role: ShareRole = body.role === 'view' ? 'view' : 'edit';
+            const code = generateShareCode();
+            const link = await createShareLink(env, id, code, role);
+            return json({ link }, { status: 201 });
           }
           if (request.method === 'DELETE') {
+            // Bulk-revoke: drop every link AND flip legacy shareable
+            // off so the live app stops opening the room.
+            const links = await listShareLinks(env, id);
+            for (const link of links) await deleteShareLink(env, link.code);
             await setDiagramShare(env, id, false, null);
             return json({ shareable: false, shareCode: null });
+          }
+        }
+
+        // /api/diagrams/<id>/share/<code> — revoke one specific link.
+        if (segments.length === 5 && segments[3] === 'share') {
+          const id = segments[2]!;
+          const code = segments[4]!;
+          const owner = ownerOf(request);
+          if (!owner) return badRequest('missing X-Owner-Id');
+          const existing = await getDiagram(env, id);
+          if (!existing) return notFound();
+          if (existing.ownerId !== owner) return forbidden();
+
+          if (request.method === 'DELETE') {
+            await deleteShareLink(env, code);
+            return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
         }
 
