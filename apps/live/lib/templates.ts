@@ -7,7 +7,15 @@ import {
   type Element,
 } from '@livediagram/diagram';
 
-export type TemplateKind = 'blank' | 'mindmap' | 'orgchart' | 'retrospective' | 'flowchart';
+export type TemplateKind =
+  | 'blank'
+  | 'mindmap'
+  | 'orgchart'
+  | 'retrospective'
+  | 'flowchart'
+  | 'kanban'
+  | 'swot'
+  | 'timeline';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
@@ -41,6 +49,21 @@ export const TEMPLATES: TemplateDescriptor[] = [
     title: 'Flowchart',
     description: 'Start → step → decision → end, with a branching path.',
   },
+  {
+    kind: 'kanban',
+    title: 'Kanban',
+    description: 'Three columns: To do, In progress, Done — with starter cards.',
+  },
+  {
+    kind: 'swot',
+    title: 'SWOT',
+    description: 'Strengths, Weaknesses, Opportunities, Threats — 2×2 grid.',
+  },
+  {
+    kind: 'timeline',
+    title: 'Timeline',
+    description: 'Horizontal line with milestone markers, above + below.',
+  },
 ];
 
 // Build the elements for a given template, centred on the supplied canvas
@@ -57,6 +80,12 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildRetrospective(cx, cy);
     case 'flowchart':
       return buildFlowchart(cx, cy);
+    case 'kanban':
+      return buildKanban(cx, cy);
+    case 'swot':
+      return buildSwot(cx, cy);
+    case 'timeline':
+      return buildTimeline(cx, cy);
   }
 }
 
@@ -325,5 +354,157 @@ function buildRetrospective(cx: number, cy: number): Element[] {
     }
   });
 
+  return elements;
+}
+
+// Three-column Kanban board with starter cards in each lane. Same
+// container-around-column treatment as Retrospective so each lane reads
+// as a distinct zone; cards are squares (not stickies) since Kanban
+// vocabulary leans more "task ticket" than "thought".
+function buildKanban(cx: number, cy: number): Element[] {
+  const containerW = 280;
+  const containerSpacing = 300;
+  const cardW = 240;
+  const cardH = 56;
+  const headerH = 48;
+  const topPadding = 16;
+  const headerGap = 12;
+  const cardGap = 12;
+  const cardsPerCol = 3;
+  const containerH =
+    topPadding + headerH + headerGap + cardsPerCol * cardH + (cardsPerCol - 1) * cardGap + 16;
+
+  const columns: { label: string; fill: string; stroke: string }[] = [
+    { label: 'To do', fill: '#f1f5f9', stroke: '#cbd5e1' },
+    { label: 'In progress', fill: '#dbeafe', stroke: '#93c5fd' },
+    { label: 'Done', fill: '#dcfce7', stroke: '#86efac' },
+  ];
+  const firstColCenterX = cx - containerSpacing;
+  const containerY = cy - containerH / 2 + 40;
+
+  const elements: Element[] = [];
+  columns.forEach((col, i) => {
+    const centerX = firstColCenterX + i * containerSpacing;
+    const containerX = centerX - containerW / 2;
+    elements.push({
+      ...createShape('square', containerX, containerY),
+      width: containerW,
+      height: containerH,
+      fillColor: col.fill,
+      strokeColor: col.stroke,
+      textSize: 'md',
+    });
+    const innerX = centerX - cardW / 2;
+    const headerY = containerY + topPadding;
+    elements.push({
+      ...createText(innerX, headerY),
+      width: cardW,
+      height: headerH,
+      label: col.label,
+      textSize: 'lg',
+      textAlignX: 'center',
+    });
+    for (let j = 0; j < cardsPerCol; j++) {
+      const y = headerY + headerH + headerGap + j * (cardH + cardGap);
+      elements.push({
+        ...createShape('square', innerX, y),
+        width: cardW,
+        height: cardH,
+        label: 'Card',
+        textSize: 'md',
+      });
+    }
+  });
+  return elements;
+}
+
+// SWOT 2×2 grid. Strengths / Weaknesses / Opportunities / Threats live
+// in tinted containers (green / orange / blue / red) that match the
+// emotional weighting of each quadrant.
+function buildSwot(cx: number, cy: number): Element[] {
+  const cellW = 260;
+  const cellH = 200;
+  const gap = 16;
+  const labelH = 36;
+
+  const quadrants: { label: string; col: 0 | 1; row: 0 | 1; fill: string; stroke: string }[] = [
+    { label: 'Strengths', col: 0, row: 0, fill: '#dcfce7', stroke: '#86efac' },
+    { label: 'Weaknesses', col: 1, row: 0, fill: '#fee2e2', stroke: '#fca5a5' },
+    { label: 'Opportunities', col: 0, row: 1, fill: '#dbeafe', stroke: '#93c5fd' },
+    { label: 'Threats', col: 1, row: 1, fill: '#fef3c7', stroke: '#fcd34d' },
+  ];
+
+  const elements: Element[] = [];
+  for (const q of quadrants) {
+    const x = cx - cellW - gap / 2 + q.col * (cellW + gap);
+    const y = cy - cellH - gap / 2 + q.row * (cellH + gap);
+    elements.push({
+      ...createShape('square', x, y),
+      width: cellW,
+      height: cellH,
+      fillColor: q.fill,
+      strokeColor: q.stroke,
+      textSize: 'md',
+    });
+    elements.push({
+      ...createText(x + 12, y + 12),
+      width: cellW - 24,
+      height: labelH,
+      label: q.label,
+      textSize: 'lg',
+      textAlignX: 'left',
+    });
+  }
+  return elements;
+}
+
+// Horizontal timeline with 5 milestone markers — circles on the line,
+// alternating labels above and below so they don't crowd. Labels are
+// simple Text elements (no underlying card) so the chart reads cleanly.
+function buildTimeline(cx: number, cy: number): Element[] {
+  const lineLength = 720;
+  const milestoneRadius = 14;
+  const labelW = 140;
+  const labelH = 36;
+  const verticalOffset = 56;
+  const lineThickness = 4;
+
+  const startX = cx - lineLength / 2;
+  const baseY = cy;
+
+  const elements: Element[] = [];
+  // Track line as a thin slate rectangle so it picks up the theme via
+  // setTheme's shape rule.
+  elements.push({
+    ...createShape('square', startX, baseY - lineThickness / 2),
+    width: lineLength,
+    height: lineThickness,
+    fillColor: '#64748b',
+    strokeColor: '#64748b',
+    textSize: 'md',
+  });
+
+  const milestones = ['Kick-off', 'Phase 1', 'Phase 2', 'Phase 3', 'Launch'];
+  const above = (i: number) => i % 2 === 0;
+  milestones.forEach((label, i) => {
+    const x = startX + ((i + 0.5) / milestones.length) * lineLength;
+    elements.push({
+      ...createShape('circle', x - milestoneRadius, baseY - milestoneRadius),
+      width: milestoneRadius * 2,
+      height: milestoneRadius * 2,
+      textSize: 'sm',
+    });
+    elements.push({
+      ...createText(
+        x - labelW / 2,
+        above(i) ? baseY - verticalOffset : baseY + verticalOffset - labelH,
+      ),
+      width: labelW,
+      height: labelH,
+      label,
+      textSize: 'md',
+      textAlignX: 'center',
+    });
+  });
   return elements;
 }

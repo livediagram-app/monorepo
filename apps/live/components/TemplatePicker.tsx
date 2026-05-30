@@ -518,5 +518,101 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
           ))}
         </svg>
       );
+    case 'kanban':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* Three columns: To do (slate), In progress (blue), Done (green). */}
+          {[
+            { x: 4, fill: 'rgb(241 245 249)', stroke: 'rgb(203 213 225)' },
+            { x: 30, fill: 'rgb(219 234 254)', stroke: 'rgb(147 197 253)' },
+            { x: 56, fill: 'rgb(220 252 231)', stroke: 'rgb(134 239 172)' },
+          ].map((col) => (
+            <g key={col.x}>
+              <rect
+                x={col.x}
+                y="3"
+                width="20"
+                height="44"
+                rx="2"
+                fill={col.fill}
+                stroke={col.stroke}
+                strokeWidth="0.75"
+              />
+              {[13, 23, 33].map((sy) => (
+                <rect
+                  key={sy}
+                  x={col.x + 2}
+                  y={sy}
+                  width="16"
+                  height="7"
+                  rx="1"
+                  fill="white"
+                  stroke="rgb(148 163 184)"
+                  strokeWidth="0.5"
+                />
+              ))}
+            </g>
+          ))}
+        </svg>
+      );
+    case 'swot':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {[
+            { x: 4, y: 3, fill: 'rgb(220 252 231)', stroke: 'rgb(134 239 172)' },
+            { x: 42, y: 3, fill: 'rgb(254 226 226)', stroke: 'rgb(252 165 165)' },
+            { x: 4, y: 25, fill: 'rgb(219 234 254)', stroke: 'rgb(147 197 253)' },
+            { x: 42, y: 25, fill: 'rgb(254 243 199)', stroke: 'rgb(252 211 77)' },
+          ].map((q, i) => (
+            <rect
+              key={i}
+              x={q.x}
+              y={q.y}
+              width="34"
+              height="22"
+              rx="2"
+              fill={q.fill}
+              stroke={q.stroke}
+              strokeWidth="0.75"
+            />
+          ))}
+        </svg>
+      );
+    case 'timeline':
+      return (
+        <svg width="80" height="40" viewBox="0 0 80 50" aria-hidden>
+          <line x1="6" y1="25" x2="74" y2="25" stroke="rgb(100 116 139)" strokeWidth="1.5" />
+          {[14, 28, 42, 56, 70].map((mx, i) => (
+            <g key={mx}>
+              <circle
+                cx={mx}
+                cy="25"
+                r="3"
+                fill="rgb(186 230 253)"
+                stroke="rgb(14 165 233)"
+                strokeWidth="1"
+              />
+              <rect
+                x={mx - 6}
+                y={i % 2 === 0 ? 9 : 36}
+                width="12"
+                height="6"
+                rx="0.5"
+                fill="white"
+                stroke="rgb(148 163 184)"
+                strokeWidth="0.5"
+              />
+              <line
+                x1={mx}
+                y1={i % 2 === 0 ? 15 : 31}
+                x2={mx}
+                y2={i % 2 === 0 ? 22 : 36}
+                stroke="rgb(148 163 184)"
+                strokeWidth="0.5"
+              />
+            </g>
+          ))}
+        </svg>
+      );
   }
 }
