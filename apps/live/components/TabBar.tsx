@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Tab } from '@livediagram/diagram';
+import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from './EditorHeader';
 
 type TabBarProps = {
@@ -173,13 +174,9 @@ function SaveStatusIndicator({
   status: SaveStatus;
   savedAt: number | null;
 }) {
-  const [, force] = useState(0);
-  useEffect(() => {
-    // Refresh the relative-time string every 30s so "just now" doesn't
-    // linger past the moment it stops being true.
-    const id = window.setInterval(() => force((n) => n + 1), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
+  // Keeps the relative-time string fresh — "just now" needs to stop
+  // saying "just now" eventually.
+  useRelativeTimeTick();
 
   if (status === 'idle' && savedAt === null) return null;
   if (status === 'saving') {
@@ -209,22 +206,6 @@ function SaveStatusIndicator({
       {relative ? `Saved ${relative}` : 'Saved'}
     </span>
   );
-}
-
-// Convert a delta in ms to a short human string. Cuts off at "yesterday"
-// — by the time anything older shows up the user will have refreshed
-// and the savedAt is fresh again.
-function formatRelativeTime(deltaMs: number): string {
-  const seconds = Math.floor(deltaMs / 1000);
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds} seconds ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes === 1) return '1 minute ago';
-  if (minutes < 60) return `${minutes} minutes ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours === 1) return '1 hour ago';
-  if (hours < 24) return `${hours} hours ago`;
-  return 'yesterday';
 }
 
 function SpinnerDot() {

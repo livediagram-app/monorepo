@@ -1,5 +1,6 @@
 'use client';
 
+import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { MovablePanel } from './MovablePanel';
 
 type DiagramListItem = {
@@ -48,6 +49,10 @@ export function Explorer({
   onOpenDiagram,
   onNewDiagram,
 }: ExplorerProps) {
+  // Re-render every 30s so the "Updated X ago" strings stay fresh
+  // while the panel is open. Cheap when the panel is minimised (this
+  // function returns early below before the interval is set up).
+  useRelativeTimeTick();
   if (minimized) return null;
   // Most-recently-saved first so the user's last work tops the list.
   const ordered = [...diagrams].sort((a, b) => b.savedAt - a.savedAt);
@@ -103,9 +108,10 @@ export function Explorer({
             <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Your diagrams
             </p>
-            <ul className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+            <ul className="scrollbar-slim flex max-h-60 flex-col gap-0.5 overflow-y-auto">
               {ordered.map((d) => {
                 const active = d.id === currentDiagramId;
+                const relative = formatRelativeTime(Date.now() - d.savedAt);
                 return (
                   <li key={d.id}>
                     <button
@@ -114,12 +120,26 @@ export function Explorer({
                       aria-current={active ? 'true' : undefined}
                       className={
                         active
-                          ? 'flex w-full items-center gap-1.5 rounded-md bg-brand-100 px-2 py-1.5 text-left text-xs font-medium text-brand-800'
-                          : 'flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 transition hover:bg-slate-100'
+                          ? 'flex w-full items-start gap-1.5 rounded-md bg-brand-100 px-2 py-1.5 text-left text-xs font-medium text-brand-800'
+                          : 'flex w-full items-start gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 transition hover:bg-slate-100'
                       }
                     >
-                      <DiagramIcon active={active} />
-                      <span className="min-w-0 flex-1 truncate">{d.name}</span>
+                      <span className="mt-0.5">
+                        <DiagramIcon active={active} />
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate">{d.name}</span>
+                        <span
+                          className={
+                            active
+                              ? 'truncate text-[10px] font-normal text-brand-700/80'
+                              : 'truncate text-[10px] text-slate-400'
+                          }
+                          title={new Date(d.savedAt).toLocaleString()}
+                        >
+                          Updated {relative}
+                        </span>
+                      </span>
                     </button>
                   </li>
                 );

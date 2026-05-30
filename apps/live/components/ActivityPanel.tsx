@@ -1,6 +1,7 @@
 'use client';
 
 import type { ChangeLogEntry } from '@/lib/api-client';
+import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import { MovablePanel } from './MovablePanel';
 
 type ActivityPanelProps = {
@@ -142,7 +143,9 @@ function ActivityRow({
   entry: ChangeLogEntry;
   onRevert: () => void;
 }) {
-  const relative = formatRelativeTime(Date.now() - entry.createdAt);
+  // Re-render every 30s so the "2 min ago" string doesn't stick.
+  useRelativeTimeTick();
+  const relative = formatRelativeTimeShort(Date.now() - entry.createdAt);
   return (
     <li className="group relative flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-50">
       <span
@@ -197,23 +200,6 @@ function UndoRedoButton({
       {label}
     </button>
   );
-}
-
-// Hand-rolled relative-time formatter. Shared with the SaveStatus pill
-// in TabBar — kept inline here to avoid a one-line helper file.
-function formatRelativeTime(deltaMs: number): string {
-  const seconds = Math.floor(deltaMs / 1000);
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes === 1) return '1 min ago';
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours === 1) return '1 hour ago';
-  if (hours < 24) return `${hours} hours ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'yesterday';
-  return `${days} days ago`;
 }
 
 function TrashIcon() {
