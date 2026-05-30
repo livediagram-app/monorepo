@@ -298,17 +298,21 @@ function DiagramRow({
   const hasMenu = Boolean((onRename && active) || onDelete || onDuplicate);
   const relative = formatRelativeTime(Date.now() - item.savedAt);
 
-  const rowClasses = active
-    ? 'flex w-full items-start gap-1.5 rounded-md bg-brand-100 px-2 py-1.5 text-left text-xs font-medium text-brand-800'
-    : 'flex w-full items-start gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 transition hover:bg-slate-100';
+  // Container carries the pill background + hover state. Both the
+  // open-button and the ellipsis-button sit inside as transparent
+  // children so the ellipsis visually belongs to the pill rather
+  // than floating beside it.
+  const pillClasses = active
+    ? 'group flex items-stretch rounded-md bg-brand-100 text-brand-800'
+    : 'group flex items-stretch rounded-md text-slate-700 transition hover:bg-slate-100';
 
   return (
-    <div className="group relative flex items-stretch">
+    <div className={pillClasses}>
       <button
         type="button"
         onClick={editing ? undefined : onOpen}
         aria-current={active ? 'true' : undefined}
-        className={`${rowClasses} flex-1 pr-1`}
+        className={`flex flex-1 items-start gap-1.5 rounded-md bg-transparent px-2 py-1.5 text-left text-xs ${active ? 'font-medium' : ''}`}
       >
         <span className="mt-0.5">
           <DiagramIcon active={active} />
@@ -358,7 +362,7 @@ function DiagramRow({
           }}
           aria-label="Diagram menu"
           aria-expanded={menuOpen}
-          className={`flex w-6 shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700 ${
+          className={`mr-1 flex w-6 shrink-0 items-center justify-center self-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700 ${
             menuOpen ? 'opacity-100' : ''
           }`}
         >
