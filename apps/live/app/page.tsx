@@ -1345,6 +1345,12 @@ export default function LivePage() {
     commit((els) => els.map((el) => (ids.has(el.id) ? { ...el, opacity } : el)));
   };
 
+  const setPaddingSelected = (padding: import('@livediagram/diagram').Padding) => {
+    if (!selectedId) return;
+    const ids = memberIdsOf(selectedId);
+    commit((els) => els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, padding } : el)));
+  };
+
   // Clear per-element colour overrides so the element falls back to
   // whatever the current tab theme dictates. Each colour field is set
   // to undefined; the history hook snapshots the present so this is
@@ -1879,6 +1885,7 @@ export default function LivePage() {
         onSetTextColor={setTextColorSelected}
         onSetOpacity={setOpacitySelected}
         onResetColors={resetColorsSelected}
+        onSetPadding={setPaddingSelected}
         onDuplicateSelected={duplicateSelected}
         tabs={tabs}
         currentTabId={activeId}

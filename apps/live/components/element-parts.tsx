@@ -98,10 +98,12 @@ export function ScalingLabel({
   text,
   alignX,
   alignY,
+  padding,
 }: {
   text: string;
   alignX: TextAlignX;
   alignY: TextAlignY;
+  padding: number;
 }) {
   const textRef = useRef<SVGTextElement>(null);
   const [bbox, setBBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -116,7 +118,7 @@ export function ScalingLabel({
   const viewBox = bbox ? `${bbox.x} ${bbox.y} ${bbox.w} ${bbox.h}` : '0 0 100 24';
 
   return (
-    <div className="pointer-events-none absolute inset-1.5 flex">
+    <div className="pointer-events-none absolute inset-0 flex" style={{ padding }}>
       <svg
         width="100%"
         height="100%"
@@ -153,19 +155,22 @@ export function FixedSizeLabel({
   size,
   alignX,
   alignY,
+  padding,
 }: {
   text: string;
   size: Exclude<TextSize, 'scale'>;
   alignX: TextAlignX;
   alignY: TextAlignY;
+  padding: number;
 }) {
   if (!text) return null;
   return (
     <div
-      className="pointer-events-none absolute inset-1.5 flex overflow-hidden font-medium leading-tight"
+      className="pointer-events-none absolute inset-0 flex overflow-hidden font-medium leading-tight"
       style={{
         fontSize: `${FIXED_FONT_PX[size]}px`,
         alignItems: ALIGN_ITEMS[alignY],
+        padding,
       }}
     >
       <div className="w-full" style={{ textAlign: TEXT_ALIGN[alignX] }}>
@@ -286,19 +291,21 @@ export function MultilineLabel({
   textSize,
   alignX,
   alignY,
+  padding,
   className = '',
-}: MultilineLabelProps) {
+}: MultilineLabelProps & { padding: number }) {
   const fontSize = `${MULTI_FONT_PX[textSize]}px`;
   const outerStyle = {
     fontSize,
     alignItems: ALIGN_ITEMS[alignY],
+    padding,
   };
   const innerStyle = { textAlign: TEXT_ALIGN[alignX] };
   if (!text) {
     return (
       <div
         style={outerStyle}
-        className={`pointer-events-none absolute inset-3 flex overflow-hidden opacity-50 ${className}`}
+        className={`pointer-events-none absolute inset-0 flex overflow-hidden opacity-50 ${className}`}
       >
         <div className="w-full whitespace-pre-wrap" style={innerStyle}>
           {placeholder}
@@ -309,7 +316,7 @@ export function MultilineLabel({
   return (
     <div
       style={outerStyle}
-      className={`pointer-events-none absolute inset-3 flex overflow-hidden ${className}`}
+      className={`pointer-events-none absolute inset-0 flex overflow-hidden ${className}`}
     >
       <div className="w-full whitespace-pre-wrap" style={innerStyle}>
         {text}

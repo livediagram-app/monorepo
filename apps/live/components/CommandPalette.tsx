@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type {
   BackgroundPattern,
+  Padding,
   ShapeKind,
   TextAlignX,
   TextAlignY,
@@ -27,6 +28,8 @@ export type SelectedElementControls = {
   onSetStrokeColor: (color: string) => void;
   onSetOpacity: (opacity: number) => void;
   onResetColors: () => void;
+  padding: Padding | null;
+  onSetPadding: (padding: Padding) => void;
 };
 
 export type TabSectionControls = {
@@ -429,6 +432,29 @@ function SelectedElementSection({
               />
             </div>
           ) : null}
+          {selection.padding !== null ? (
+            <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
+              <p className="text-[10px] font-medium text-slate-500">Padding</p>
+              <div className="grid grid-cols-4 gap-1">
+                {(['none', 'sm', 'md', 'lg'] as const).map((p) => (
+                  <Tooltip
+                    key={p}
+                    title={
+                      p === 'none' ? 'None' : p === 'sm' ? 'Small' : p === 'md' ? 'Medium' : 'Large'
+                    }
+                    description="Space between the element's border and its label."
+                  >
+                    <SizeButton
+                      active={selection.padding === p}
+                      onClick={() => selection.onSetPadding(p)}
+                    >
+                      {p === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={p} />}
+                    </SizeButton>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </Accordion>
       ) : null}
 
@@ -781,6 +807,45 @@ function SelectIcon() {
       <rect x="2" y="2" width="9" height="9" strokeDasharray="2 1.5" />
       <path d="M11 11l3 3" />
       <path d="M11 11l-1.5 -0.5l-0.5 -1.5" />
+    </svg>
+  );
+}
+
+function NonePaddingIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="12" height="12" rx="1.5" />
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  );
+}
+
+function PaddingIcon({ size }: { size: 'sm' | 'md' | 'lg' }) {
+  // Outer box stays at 14x14; the inner box shrinks to visualise the
+  // padding amount. Mirrors the scale in PADDING_PX.
+  const inset = size === 'sm' ? 2.5 : size === 'md' ? 4 : 5.5;
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="12" height="12" rx="1.5" strokeDasharray="1.5 1.5" />
+      <rect x={2 + inset} y={2 + inset} width={12 - 2 * inset} height={12 - 2 * inset} rx="1" />
     </svg>
   );
 }

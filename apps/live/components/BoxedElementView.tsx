@@ -2,9 +2,11 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import {
   activeCommentCount,
   defaultFillColor,
+  defaultPadding,
   defaultStrokeColor,
   defaultTextAlign,
   defaultTextColor,
+  PADDING_PX,
   type Anchor,
   type BoxedElement,
   type ShapeKind,
@@ -153,6 +155,7 @@ export function BoxedElementView({
         textSize,
         alignX,
         alignY,
+        PADDING_PX[element.padding ?? defaultPadding(element)],
         isEditing,
         onCommitLabel,
         onCancelEdit,
@@ -530,6 +533,7 @@ function renderLabel(
   textSize: TextSize,
   alignX: import('@livediagram/diagram').TextAlignX,
   alignY: import('@livediagram/diagram').TextAlignY,
+  padding: number,
   isEditing: boolean,
   onCommitLabel: (label: string) => void,
   onCancelEdit: () => void,
@@ -575,6 +579,7 @@ function renderLabel(
         textSize={textSize}
         alignX={alignX}
         alignY={alignY}
+        padding={padding}
         className="text-amber-950"
       />
     );
@@ -582,8 +587,16 @@ function renderLabel(
 
   if (textSize === 'scale') {
     if (!label) return null;
-    return <ScalingLabel text={label} alignX={alignX} alignY={alignY} />;
+    return <ScalingLabel text={label} alignX={alignX} alignY={alignY} padding={padding} />;
   }
 
-  return <FixedSizeLabel text={label} size={textSize} alignX={alignX} alignY={alignY} />;
+  return (
+    <FixedSizeLabel
+      text={label}
+      size={textSize}
+      alignX={alignX}
+      alignY={alignY}
+      padding={padding}
+    />
+  );
 }

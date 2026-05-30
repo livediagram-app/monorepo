@@ -11,6 +11,28 @@ export type ElementId = string;
 
 export type TextSize = 'scale' | 'sm' | 'md' | 'lg';
 
+// Padding between the element's box and its label. Stored as a t-shirt
+// size for round-trip simplicity; the renderer converts to px.
+export type Padding = 'none' | 'sm' | 'md' | 'lg';
+
+export const PADDING_PX: Record<Padding, number> = {
+  none: 0,
+  sm: 6,
+  md: 14,
+  lg: 24,
+};
+
+export function defaultPadding(element: BoxedElement): Padding {
+  switch (element.type) {
+    case 'shape':
+      return 'sm';
+    case 'text':
+      return 'none';
+    case 'sticky':
+      return 'md';
+  }
+}
+
 export type TextAlignX = 'left' | 'center' | 'right';
 export type TextAlignY = 'top' | 'middle' | 'bottom';
 
@@ -166,6 +188,7 @@ export type ShapeElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  padding?: Padding;
 };
 
 // --- Text ------------------------------------------------------------------
@@ -190,6 +213,7 @@ export type TextElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  padding?: Padding;
 };
 
 // --- Sticky notes ----------------------------------------------------------
@@ -214,6 +238,7 @@ export type StickyElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  padding?: Padding;
 };
 
 // --- Arrows ----------------------------------------------------------------

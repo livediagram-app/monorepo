@@ -9,6 +9,7 @@ import {
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   defaultFillColor,
+  defaultPadding,
   defaultStrokeColor,
   defaultTextAlign,
   defaultTextColor,
@@ -110,6 +111,7 @@ type CanvasProps = {
   onSetTextColor: (color: string) => void;
   onSetOpacity: (opacity: number) => void;
   onResetColors: () => void;
+  onSetPadding: (padding: import('@livediagram/diagram').Padding) => void;
   onDuplicateSelected: () => void;
   tabs: Tab[];
   currentTabId: string;
@@ -213,6 +215,7 @@ export function Canvas(props: CanvasProps) {
     onSetTextColor,
     onSetOpacity,
     onResetColors,
+    onSetPadding,
     onDuplicateSelected,
     tabs,
     currentTabId,
@@ -462,6 +465,7 @@ export function Canvas(props: CanvasProps) {
               : null
           : null,
         opacity: selected.opacity ?? 1,
+        padding: isBoxed(selected) ? (selected.padding ?? defaultPadding(selected)) : null,
         onBringToFront,
         onSendToBack,
         onSetTextSize,
@@ -471,6 +475,7 @@ export function Canvas(props: CanvasProps) {
         onSetStrokeColor,
         onSetOpacity,
         onResetColors,
+        onSetPadding,
       }
     : null;
 
