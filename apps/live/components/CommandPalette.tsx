@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type {
   ArrowEnds,
   ArrowThickness,
@@ -962,15 +961,21 @@ function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   );
 }
 
-export function TabSection({ tab }: { tab: TabSectionControls }) {
-  const [open, setOpen] = useState<{ theme: boolean; background: boolean }>({
-    theme: false,
-    background: false,
-  });
+export type TabAccordionState = { theme: boolean; background: boolean };
+
+export function TabSection({
+  tab,
+  open,
+  setOpen,
+}: {
+  tab: TabSectionControls;
+  open: TabAccordionState;
+  setOpen: React.Dispatch<React.SetStateAction<TabAccordionState>>;
+}) {
   // Mutually exclusive (matches SelectedElementSection).
-  const toggle = (key: keyof typeof open) =>
+  const toggle = (key: keyof TabAccordionState) =>
     setOpen((prev) => {
-      const closed = { theme: false, background: false };
+      const closed: TabAccordionState = { theme: false, background: false };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
     });

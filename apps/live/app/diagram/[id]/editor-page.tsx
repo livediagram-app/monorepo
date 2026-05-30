@@ -275,6 +275,13 @@ export default function LivePage() {
   // under the Palette by default.
   const [contextPosition, setContextPosition] = useState<{ x: number; y: number } | null>(null);
   const [contextMinimized, setContextMinimized] = useState(false);
+  // Tab-section accordion state lifted here so the Activity row
+  // click handler can pop the matching accordion (e.g. clicking a
+  // "Changed theme to X" entry opens the Theme accordion).
+  const [tabAccordionsOpen, setTabAccordionsOpen] = useState<{
+    theme: boolean;
+    background: boolean;
+  }>({ theme: false, background: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -1343,6 +1350,50 @@ export default function LivePage() {
     const after = mapElements(before);
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, elements: after } : t)));
     emitChange(activeId, before, after);
+  };
+
+  // Click handler for Activity rows (Revert has its own button that
+  // stops propagation). Element-related entries select the affected
+  // element on the right tab; tab-meta entries pop the matching
+  // accordion in the Editor panel so the user can see what changed
+  // and tweak it again.
+  const handleActivityRowClick = (entry: ChangeLogEntry) => {
+    // Switch to the entry's tab if we're not already on it. Without
+    // this, selecting an element on a different tab would silently
+    // fail because tabs[].find(t=>t.id===entry.tabId) is the wrong
+    // active tab.
+    if (entry.tabId && entry.tabId !== activeId) {
+      setActiveId(entry.tabId);
+    }
+    if (entry.elementIds.length > 0) {
+      // Element entry — select the (first) affected element and
+      // clear any marquee multi-selection. The selection popover
+      // takes care of itself from there.
+      const target = entry.elementIds[0]!;
+      setSelectedId(target);
+      setMultiSelectedIds(new Set());
+      setEditingId(null);
+      return;
+    }
+    // Tab-meta entries (theme / background tweaks) have no element
+    // ids. Crude string-match on the summary picks the right
+    // accordion; we own the summary text so this stays stable.
+    const lower = entry.summary.toLowerCase();
+    if (lower.includes('theme')) {
+      setSelectedId(null);
+      setMultiSelectedIds(new Set());
+      setContextMinimized(false);
+      setTabAccordionsOpen({ theme: true, background: false });
+    } else if (
+      lower.includes('background') ||
+      lower.includes('pattern') ||
+      lower.includes('opacity')
+    ) {
+      setSelectedId(null);
+      setMultiSelectedIds(new Set());
+      setContextMinimized(false);
+      setTabAccordionsOpen({ theme: false, background: true });
+    }
   };
 
   // Drop every audit entry for the currently active tab. The diagram
@@ -3172,10 +3223,13 @@ export default function LivePage() {
         onResetActivity={() => setActivityPosition(null)}
         contextPosition={contextPosition}
         contextMinimized={contextMinimized}
+        tabAccordionsOpen={tabAccordionsOpen}
+        setTabAccordionsOpen={setTabAccordionsOpen}
         onMoveContext={(x, y) => setContextPosition({ x, y })}
         onToggleContextMinimized={() => setContextMinimized((v) => !v)}
         onResetContext={() => setContextPosition(null)}
         onRevertChange={revertChange}
+        onActivityRowClick={handleActivityRowClick}
         onClearActivity={clearActivityForActiveTab}
         saveStatus={saveStatus}
         savedAt={savedAt}

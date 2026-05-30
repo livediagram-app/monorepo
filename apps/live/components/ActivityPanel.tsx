@@ -20,6 +20,11 @@ type ActivityPanelProps = {
   onUndo: () => void;
   onRedo: () => void;
   onRevert: (entry: ChangeLogEntry) => void;
+  // Click anywhere on a row (outside the Revert button) — used by
+  // the editor to jump to the related element or open the matching
+  // accordion (e.g. a "Changed theme to X" entry pops the Theme
+  // accordion in the Editor panel).
+  onRowClick: (entry: ChangeLogEntry) => void;
   // Wipe every audit entry for the active tab. The diagram state is
   // untouched — only the log dies. Disabled when the list is empty
   // so the button doesn't no-op.
@@ -48,6 +53,7 @@ export function ActivityPanel({
   onUndo,
   onRedo,
   onRevert,
+  onRowClick,
   onClearActivity,
   saveStatus,
   savedAt,
@@ -108,6 +114,7 @@ export function ActivityPanel({
                   entry={entry}
                   canRevert={!tabLocked}
                   onRevert={() => onRevert(entry)}
+                  onClick={() => onRowClick(entry)}
                 />
               ))}
             </ul>
@@ -193,35 +200,46 @@ function ActivityRow({
   entry,
   canRevert,
   onRevert,
+  onClick,
 }: {
   entry: ChangeLogEntry;
   canRevert: boolean;
   onRevert: () => void;
+  onClick: () => void;
 }) {
   // Re-render every 30s so the "2 min ago" string doesn't stick.
   useRelativeTimeTick();
   const relative = formatRelativeTimeShort(Date.now() - entry.createdAt);
   return (
-    <li className="group relative flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-50">
-      <span
-        aria-hidden
-        style={{ backgroundColor: entry.participantColor }}
-        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-        title={entry.participantName}
-      />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-800">{entry.summary}</p>
-        <p className="truncate text-[10px] text-slate-500">
-          {entry.participantName} · {relative}
-        </p>
-      </div>
+    <li className="group relative">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50"
+      >
+        <span
+          aria-hidden
+          style={{ backgroundColor: entry.participantColor }}
+          className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+          title={entry.participantName}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium text-slate-800">{entry.summary}</p>
+          <p className="truncate text-[10px] text-slate-500">
+            {entry.participantName} · {relative}
+          </p>
+        </div>
+      </button>
       {/* Floats over the row on hover so it never reserves layout
-          space when idle. Icon-only; the title attribute is the
-          tooltip. */}
+          space when idle. stopPropagation so clicking Revert
+          doesn't ALSO fire the row click handler. */}
       {entry.elementIds.length > 0 && canRevert ? (
         <button
           type="button"
-          onClick={onRevert}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRevert();
+          }}
           className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
           title="Revert this change"
           aria-label={`Revert: ${entry.summary}`}

@@ -6,6 +6,7 @@ import {
   TabSection,
   type SelectedAccordionState,
   type SelectedElementControls,
+  type TabAccordionState,
   type TabSectionControls,
 } from './CommandPalette';
 import { MovablePanel } from './MovablePanel';
@@ -15,6 +16,12 @@ type ContextPanelProps = {
   minimized: boolean;
   selection: SelectedElementControls | null;
   tab: TabSectionControls;
+  // Tab-section accordion state lifted to the editor so external
+  // triggers (e.g. clicking a "Changed theme to X" entry in the
+  // Activity log) can open the matching accordion. Optional so old
+  // callers that don't care just get internal state.
+  tabAccordionsOpen?: TabAccordionState;
+  setTabAccordionsOpen?: React.Dispatch<React.SetStateAction<TabAccordionState>>;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
   onReset: () => void;
@@ -30,6 +37,8 @@ export function ContextPanel({
   minimized,
   selection,
   tab,
+  tabAccordionsOpen,
+  setTabAccordionsOpen,
   onMoveTo,
   onToggleMinimized,
   onReset,
@@ -46,6 +55,14 @@ export function ContextPanel({
     colours: false,
     pointer: false,
   });
+  // Local fallback for the tab-section accordion when the caller
+  // doesn't lift state. Same mutual-exclusion shape.
+  const [localTabOpen, setLocalTabOpen] = useState<TabAccordionState>({
+    theme: false,
+    background: false,
+  });
+  const tabOpen = tabAccordionsOpen ?? localTabOpen;
+  const setTabOpen = setTabAccordionsOpen ?? setLocalTabOpen;
   if (minimized) return null;
   return (
     <MovablePanel
@@ -64,7 +81,7 @@ export function ContextPanel({
           setOpen={setSelectedAccordionsOpen}
         />
       ) : (
-        <TabSection tab={tab} />
+        <TabSection tab={tab} open={tabOpen} setOpen={setTabOpen} />
       )}
     </MovablePanel>
   );

@@ -116,7 +116,15 @@ type CanvasProps = {
   onMoveContext: (x: number, y: number) => void;
   onToggleContextMinimized: () => void;
   onResetContext: () => void;
+  // Lifted accordion state for the Editor panel's Current Tab
+  // section so external triggers (Activity row click) can pop the
+  // matching accordion.
+  tabAccordionsOpen: import('./CommandPalette').TabAccordionState;
+  setTabAccordionsOpen: React.Dispatch<
+    React.SetStateAction<import('./CommandPalette').TabAccordionState>
+  >;
   onRevertChange: (entry: ChangeLogEntry) => void;
+  onActivityRowClick: (entry: ChangeLogEntry) => void;
   onClearActivity: () => void;
   saveStatus: import('./EditorHeader').SaveStatus;
   savedAt: number | null;
@@ -265,10 +273,13 @@ export function Canvas(props: CanvasProps) {
     onResetActivity,
     contextPosition,
     contextMinimized,
+    tabAccordionsOpen,
+    setTabAccordionsOpen,
     onMoveContext,
     onToggleContextMinimized,
     onResetContext,
     onRevertChange,
+    onActivityRowClick,
     onClearActivity,
     saveStatus,
     savedAt,
@@ -989,6 +1000,7 @@ export function Canvas(props: CanvasProps) {
           onUndo={onUndo}
           onRedo={onRedo}
           onRevert={onRevertChange}
+          onRowClick={onActivityRowClick}
           onClearActivity={onClearActivity}
           saveStatus={saveStatus}
           savedAt={savedAt}
@@ -1020,6 +1032,8 @@ export function Canvas(props: CanvasProps) {
           minimized={contextMinimized}
           selection={paletteSelection}
           tab={tabSection}
+          tabAccordionsOpen={tabAccordionsOpen}
+          setTabAccordionsOpen={setTabAccordionsOpen}
           onMoveTo={onMoveContext}
           onToggleMinimized={onToggleContextMinimized}
           onReset={onResetContext}
