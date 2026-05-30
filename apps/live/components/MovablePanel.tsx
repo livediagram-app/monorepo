@@ -200,7 +200,7 @@ export function MovablePanel({
     : defaultCorner === 'top-right'
       ? 'right-4 top-4'
       : defaultCorner === 'top-right-stacked'
-        ? 'right-4 top-[22rem]'
+        ? 'right-4 top-[15rem]'
         : defaultCorner === 'bottom-left'
           ? 'bottom-4 left-4'
           : defaultCorner === 'bottom-right'
