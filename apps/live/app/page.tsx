@@ -75,7 +75,7 @@ import {
 } from '@/lib/diagram-store';
 import { applyRevert, diffElements } from '@/lib/change-log';
 import { buildTemplate, type TemplateKind } from '@/lib/templates';
-import { getTheme, type ThemeId } from '@/lib/themes';
+import { getTheme, THEMES, type ThemeId } from '@/lib/themes';
 
 function createTab(name: string): Tab {
   return { id: crypto.randomUUID(), name, elements: [] };
@@ -896,25 +896,46 @@ export default function LivePage() {
       afterState: diff.afterState as Record<string, unknown>,
       createdAt: Date.now(),
     };
+    appendLogEntry(entry);
+  };
+
+  // Shared bookkeeping for any new log entry, regardless of whether
+  // it came from an element diff or a tab-meta change. Optimistic
+  // local append + fire-and-forget API + room broadcast + push onto
+  // the Undo/Redo memory stack so the entry pops cleanly on undo.
+  const appendLogEntry = (entry: ChangeLogEntry) => {
     setChangeLog((prev) => [entry, ...prev].slice(0, 200));
-    // Track this entry so Undo / Redo can pair with it. A fresh
-    // commit always clears the redo stack — same semantics as
-    // useDiagramHistory's future. Cap the past stack so a long
-    // editing session doesn't grow unbounded.
     entryHistoryRef.current = {
       past: [...entryHistoryRef.current.past, entry].slice(-LOG_HISTORY_LIMIT),
       future: [],
     };
-    apiAppendChangeLogEntry(selfParticipant.id, entry).catch(() => {
-      // Best-effort. The save-status pill already surfaces API
-      // outages; we don't need a second indicator for the log.
-    });
-    // Mirror the entry into every connected client's panel so
-    // collaborators see the edit in their Activity tab without
-    // waiting for a refetch. The Durable Object rebroadcasts ops
-    // verbatim; receivers de-dupe by id so the sender's own op
-    // round-trip is harmless.
+    apiAppendChangeLogEntry(selfParticipant.id, entry).catch(() => {});
     roomRef.current?.send({ kind: 'op', op: { kind: 'log', entry } });
+  };
+
+  // Emit a tab-meta entry — theme change, background tweak, rename,
+  // anything that mutates Tab metadata rather than its elements. The
+  // entry carries no before/after payload (revert isn't supported for
+  // these in V1) so the panel renders the row without a Revert
+  // button. Undo still works because the matching state lives in
+  // useDiagramHistory.
+  const emitTabMeta = (tabId: string, summary: string) => {
+    if (!diagramId) return;
+    const entry: ChangeLogEntry = {
+      id: crypto.randomUUID(),
+      diagramId,
+      tabId,
+      participantId: selfParticipant.id,
+      participantName: selfParticipant.name,
+      participantColor: selfParticipant.color,
+      kind: 'edit',
+      summary,
+      elementIds: [],
+      beforeState: {},
+      afterState: {},
+      createdAt: Date.now(),
+    };
+    appendLogEntry(entry);
   };
 
   const commit = (mapElements: (els: Element[]) => Element[]) => {
@@ -1319,7 +1340,14 @@ export default function LivePage() {
   };
 
   const renameTab = (id: string, name: string) => {
+    const previous = tabs.find((t) => t.id === id)?.name ?? '';
+    const trimmed = name.trim();
+    if (trimmed === previous.trim()) return;
     commitTabs((ts) => ts.map((t) => (t.id === id ? { ...t, name } : t)));
+    emitTabMeta(
+      id,
+      previous ? `Renamed tab '${previous}' to '${trimmed}'` : `Renamed tab to '${trimmed}'`,
+    );
   };
 
   // Copy the active tab into another diagram. Loads the destination,
@@ -1622,6 +1650,7 @@ export default function LivePage() {
     commitTabs((ts) =>
       ts.map((t) => (t.id === activeId ? { ...t, backgroundPattern: pattern } : t)),
     );
+    emitTabMeta(activeId, `Changed background pattern to ${pattern}`);
   };
 
   // Applying a theme swaps backdrop colours/pattern, records the theme
@@ -1632,6 +1661,10 @@ export default function LivePage() {
   // applying a theme is meant to be a one-tap "reset to this look".
   const setTheme = (id: ThemeId) => {
     const theme = getTheme(id);
+    const themeLabel = (
+      THEMES.find((t) => t.id === id)?.label ?? id.charAt(0).toUpperCase() + id.slice(1)
+    );
+    emitTabMeta(activeId, `Changed theme to ${themeLabel}`);
     commitTabs((ts) =>
       ts.map((t) => {
         if (t.id !== activeId) return t;
@@ -1676,16 +1709,19 @@ export default function LivePage() {
 
   const setBackgroundColor = (color: string) => {
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)));
+    emitTabMeta(activeId, `Changed background colour to ${color}`);
   };
 
   const setBackgroundOpacity = (opacity: number) => {
     commitTabs((ts) =>
       ts.map((t) => (t.id === activeId ? { ...t, backgroundOpacity: opacity } : t)),
     );
+    emitTabMeta(activeId, `Changed opacity to ${Math.round(opacity * 100)}%`);
   };
 
   const setPatternColor = (color: string) => {
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)));
+    emitTabMeta(activeId, `Changed pattern colour to ${color}`);
   };
 
   // --- Element CRUD --------------------------------------------------------

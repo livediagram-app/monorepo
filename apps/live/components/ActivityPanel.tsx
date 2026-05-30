@@ -252,15 +252,17 @@ function ActivityRow({
       {/* Floats over the row on hover so it never reserves layout
           space when idle. Icon-only; the title attribute is the
           tooltip. */}
-      <button
-        type="button"
-        onClick={onRevert}
-        className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
-        title="Revert this change"
-        aria-label={`Revert: ${entry.summary}`}
-      >
-        <RevertIcon />
-      </button>
+      {entry.elementIds.length > 0 ? (
+        <button
+          type="button"
+          onClick={onRevert}
+          className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
+          title="Revert this change"
+          aria-label={`Revert: ${entry.summary}`}
+        >
+          <RevertIcon />
+        </button>
+      ) : null}
     </li>
   );
 }
