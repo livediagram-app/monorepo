@@ -226,7 +226,7 @@ function EllipsisMenuButton({
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   return (
-    <div className="pr-1">
+    <div>
       <button
         ref={buttonRef}
         type="button"
