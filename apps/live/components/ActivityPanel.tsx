@@ -6,6 +6,7 @@ import { MovablePanel } from './MovablePanel';
 type ActivityPanelProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
+  size: { width: number; height: number } | null;
   entries: ChangeLogEntry[];
   loading: boolean;
   canUndo: boolean;
@@ -18,6 +19,7 @@ type ActivityPanelProps = {
   // so the button doesn't no-op.
   onClearActivity: () => void;
   onMoveTo: (x: number, y: number) => void;
+  onResize: (size: { width: number; height: number }) => void;
   onToggleMinimized: () => void;
 };
 
@@ -28,6 +30,7 @@ type ActivityPanelProps = {
 export function ActivityPanel({
   position,
   minimized,
+  size,
   entries,
   loading,
   canUndo,
@@ -37,6 +40,7 @@ export function ActivityPanel({
   onRevert,
   onClearActivity,
   onMoveTo,
+  onResize,
   onToggleMinimized,
 }: ActivityPanelProps) {
   if (minimized) return null;
@@ -46,10 +50,12 @@ export function ActivityPanel({
       position={position}
       defaultCorner="bottom-left"
       width="w-64"
+      size={size}
+      onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >
-      <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
+      <div className="flex flex-1 flex-col gap-2 px-3 pb-3 pt-1">
         {/* Undo / Redo bar lives at the top so the most common actions
             are the easiest to find. They drive the same local history
             stack as the old HistoryControls — moved here so the
@@ -72,11 +78,11 @@ export function ActivityPanel({
 
         <div className="h-px bg-slate-100" />
 
-        {/* Fixed body height — ~8 entry rows. The panel stays a
-            consistent size whether the log is empty or thousands of
-            entries deep; overflow scrolls. Keeps the editor chrome
-            predictable. */}
-        <div className="h-[18rem] overflow-y-auto">
+        {/* Entries area. Grows with the panel when the user resizes
+            it; otherwise sticks at a baseline of ~8 entry rows so the
+            panel stays a predictable size with a small log. Overflow
+            always scrolls inside this area. */}
+        <div className="scrollbar-slim flex-1 overflow-y-auto" style={{ minHeight: '18rem' }}>
           {loading ? (
             <ul className="flex flex-col gap-1" aria-busy="true">
               {[0, 1, 2].map((i) => (

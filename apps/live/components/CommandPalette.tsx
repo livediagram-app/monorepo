@@ -78,12 +78,14 @@ export type CanvasTool = 'pan' | 'select';
 type CommandPaletteProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
+  size: { width: number; height: number } | null;
   selection: SelectedElementControls | null;
   tab: TabSectionControls;
   canvasTool: CanvasTool;
   onSetCanvasTool: (tool: CanvasTool) => void;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
+  onResize: (size: { width: number; height: number }) => void;
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
@@ -101,12 +103,14 @@ export function CommandPalette(props: CommandPaletteProps) {
 
 function OpenPalette({
   position,
+  size,
   selection,
   tab,
   canvasTool,
   onSetCanvasTool,
   onMoveTo,
   onToggleMinimized,
+  onResize,
   onAddShape,
   onAddText,
   onAddSticky,
@@ -138,6 +142,8 @@ function OpenPalette({
       position={position}
       defaultCorner="top-right"
       width="w-64"
+      size={size}
+      onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >

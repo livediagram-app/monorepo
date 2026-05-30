@@ -11,6 +11,7 @@ type DiagramListItem = {
 type ExplorerProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
+  size: { width: number; height: number } | null;
   // Every diagram known to the local store. Current diagram is marked
   // active; clicking any other navigates to it (preserving the
   // current's state via the auto-save).
@@ -22,6 +23,7 @@ type ExplorerProps = {
   currentDiagramId: string | null;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
+  onResize: (size: { width: number; height: number }) => void;
   onOpenDiagram: (id: string) => void;
   onNewDiagram: () => void;
 };
@@ -36,11 +38,13 @@ type ExplorerProps = {
 export function Explorer({
   position,
   minimized,
+  size,
   diagrams,
   loading,
   currentDiagramId,
   onMoveTo,
   onToggleMinimized,
+  onResize,
   onOpenDiagram,
   onNewDiagram,
 }: ExplorerProps) {
@@ -53,6 +57,8 @@ export function Explorer({
       position={position}
       defaultCorner="top-left"
       width="w-64"
+      size={size}
+      onResize={onResize}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >

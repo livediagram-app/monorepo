@@ -81,8 +81,10 @@ type CanvasProps = {
   groupSourceId: string | null;
   palettePosition: { x: number; y: number } | null;
   paletteMinimized: boolean;
+  paletteSize: { width: number; height: number } | null;
   explorerPosition: { x: number; y: number } | null;
   explorerMinimized: boolean;
+  explorerSize: { width: number; height: number } | null;
   canUndo: boolean;
   canRedo: boolean;
   onAddShape: (kind: ShapeKind) => void;
@@ -93,16 +95,20 @@ type CanvasProps = {
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
   onToggleMinimized: () => void;
+  onResizePalette: (size: { width: number; height: number }) => void;
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
+  onResizeExplorer: (size: { width: number; height: number }) => void;
   diagramList: { id: string; name: string; savedAt: number }[];
   diagramListLoading: boolean;
   changeLog: ChangeLogEntry[];
   changeLogLoading: boolean;
   activityPosition: { x: number; y: number } | null;
   activityMinimized: boolean;
+  activitySize: { width: number; height: number } | null;
   onMoveActivity: (x: number, y: number) => void;
   onToggleActivityMinimized: () => void;
+  onResizeActivity: (size: { width: number; height: number }) => void;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onClearActivity: () => void;
   currentDiagramId: string | null;
@@ -205,8 +211,10 @@ export function Canvas(props: CanvasProps) {
     groupSourceId,
     palettePosition,
     paletteMinimized,
+    paletteSize,
     explorerPosition,
     explorerMinimized,
+    explorerSize,
     canUndo,
     canRedo,
     onAddShape,
@@ -217,16 +225,20 @@ export function Canvas(props: CanvasProps) {
     onRedo,
     onMovePalette,
     onToggleMinimized,
+    onResizePalette,
     onMoveExplorer,
     onToggleExplorerMinimized,
+    onResizeExplorer,
     diagramList,
     diagramListLoading,
     changeLog,
     changeLogLoading,
     activityPosition,
     activityMinimized,
+    activitySize,
     onMoveActivity,
     onToggleActivityMinimized,
+    onResizeActivity,
     onRevertChange,
     onClearActivity,
     currentDiagramId,
@@ -869,11 +881,13 @@ export function Canvas(props: CanvasProps) {
       <Explorer
         position={explorerPosition}
         minimized={explorerMinimized}
+        size={explorerSize}
         diagrams={diagramList}
         loading={diagramListLoading}
         currentDiagramId={currentDiagramId}
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}
+        onResize={onResizeExplorer}
         onOpenDiagram={onOpenDiagram}
         onNewDiagram={onNewDiagram}
       />
@@ -885,6 +899,7 @@ export function Canvas(props: CanvasProps) {
         <ActivityPanel
           position={activityPosition}
           minimized={activityMinimized}
+          size={activitySize}
           entries={changeLog}
           loading={changeLogLoading}
           canUndo={canUndo}
@@ -894,6 +909,7 @@ export function Canvas(props: CanvasProps) {
           onRevert={onRevertChange}
           onClearActivity={onClearActivity}
           onMoveTo={onMoveActivity}
+          onResize={onResizeActivity}
           onToggleMinimized={onToggleActivityMinimized}
         />
       )}
@@ -902,12 +918,14 @@ export function Canvas(props: CanvasProps) {
         <CommandPalette
           position={palettePosition}
           minimized={paletteMinimized}
+          size={paletteSize}
           selection={paletteSelection}
           tab={tabSection}
           canvasTool={canvasTool}
           onSetCanvasTool={onSetCanvasTool}
           onMoveTo={onMovePalette}
           onToggleMinimized={onToggleMinimized}
+          onResize={onResizePalette}
           onAddShape={onAddShape}
           onAddText={onAddText}
           onAddSticky={onAddSticky}

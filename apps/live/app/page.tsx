@@ -252,8 +252,11 @@ export default function LivePage() {
   const [drag, setDrag] = useState<DragState | null>(null);
   const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
   const [paletteMinimized, setPaletteMinimized] = useState(false);
+  const [paletteSize, setPaletteSize] = useState<{ width: number; height: number } | null>(null);
   const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
   const [explorerMinimized, setExplorerMinimized] = useState(false);
+  const [explorerSize, setExplorerSize] = useState<{ width: number; height: number } | null>(null);
+  const [activitySize, setActivitySize] = useState<{ width: number; height: number } | null>(null);
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -2369,8 +2372,10 @@ export default function LivePage() {
         groupSourceId={groupSourceId}
         palettePosition={palettePosition}
         paletteMinimized={paletteMinimized}
+        paletteSize={paletteSize}
         explorerPosition={explorerPosition}
         explorerMinimized={explorerMinimized}
+        explorerSize={explorerSize}
         canUndo={canUndo}
         canRedo={canRedo}
         onAddShape={addShape}
@@ -2381,16 +2386,20 @@ export default function LivePage() {
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
         onToggleMinimized={() => setPaletteMinimized((v) => !v)}
+        onResizePalette={setPaletteSize}
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
+        onResizeExplorer={setExplorerSize}
         diagramList={diagramList}
         diagramListLoading={diagramListLoading}
         changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
         changeLogLoading={changeLogLoading}
         activityPosition={activityPosition}
         activityMinimized={activityMinimized}
+        activitySize={activitySize}
         onMoveActivity={(x, y) => setActivityPosition({ x, y })}
         onToggleActivityMinimized={() => setActivityMinimized((v) => !v)}
+        onResizeActivity={setActivitySize}
         onRevertChange={revertChange}
         onClearActivity={clearActivityForActiveTab}
         currentDiagramId={diagramId}

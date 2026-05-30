@@ -9,6 +9,8 @@ import {
 } from 'react';
 import { Tooltip } from './Tooltip';
 
+type PanelSize = { width: number; height: number };
+
 type MovablePanelProps = {
   // Caps-styled label that sits at the top-left of the header (acts as
   // the panel's name + the drag handle).
@@ -19,7 +21,17 @@ type MovablePanelProps = {
   // Where to render the panel when the user hasn't dragged it yet.
   defaultCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   // Tailwind width utility for the panel body (e.g. `w-56`, `w-64`).
+  // Ignored once the user has resized — explicit px size wins.
   width?: string;
+  // User-set size in px. `null` ⇒ the panel grows with its content
+  // and respects the `width` utility. Once dragged from the resize
+  // handle, the caller persists the size and passes it back in.
+  size?: PanelSize | null;
+  // Minimum size in px when the user drags the resize handle. Stops
+  // them from collapsing the panel into a sliver too small to use.
+  minWidth?: number;
+  minHeight?: number;
+  onResize?: (size: PanelSize) => void;
   onMoveTo: (x: number, y: number) => void;
   onMinimize: () => void;
   children: ReactNode;
@@ -37,6 +49,10 @@ export function MovablePanel({
   position,
   defaultCorner,
   width = 'w-56',
+  size = null,
+  minWidth = 200,
+  minHeight = 200,
+  onResize,
   onMoveTo,
   onMinimize,
   children,
@@ -47,6 +63,12 @@ export function MovablePanel({
     startClientY: number;
     startX: number;
     startY: number;
+  } | null>(null);
+  const [resize, setResize] = useState<{
+    startClientX: number;
+    startClientY: number;
+    startWidth: number;
+    startHeight: number;
   } | null>(null);
 
   useEffect(() => {
@@ -66,6 +88,22 @@ export function MovablePanel({
     };
   }, [drag, onMoveTo]);
 
+  useEffect(() => {
+    if (!resize || !onResize) return;
+    const onMove = (e: PointerEvent) => {
+      const w = Math.max(minWidth, resize.startWidth + (e.clientX - resize.startClientX));
+      const h = Math.max(minHeight, resize.startHeight + (e.clientY - resize.startClientY));
+      onResize({ width: w, height: h });
+    };
+    const onUp = () => setResize(null);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, [resize, onResize, minWidth, minHeight]);
+
   const beginDrag = (e: ReactPointerEvent) => {
     e.stopPropagation();
     const node = ref.current;
@@ -78,7 +116,26 @@ export function MovablePanel({
     setDrag({ startClientX: e.clientX, startClientY: e.clientY, startX, startY });
   };
 
-  const style: React.CSSProperties = position ? { left: position.x, top: position.y } : {};
+  const beginResize = (e: ReactPointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const node = ref.current;
+    if (!node) return;
+    setResize({
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startWidth: node.offsetWidth,
+      startHeight: node.offsetHeight,
+    });
+  };
+
+  const style: React.CSSProperties = {
+    ...(position ? { left: position.x, top: position.y } : {}),
+    // Inline size wins over the Tailwind width utility when the user
+    // has dragged the resize handle. We force both dimensions so the
+    // panel can grow and shrink along either axis.
+    ...(size ? { width: size.width, height: size.height } : {}),
+  };
   const cornerClass = position
     ? ''
     : defaultCorner === 'top-right'
@@ -88,13 +145,17 @@ export function MovablePanel({
         : defaultCorner === 'bottom-right'
           ? 'bottom-16 right-4'
           : 'left-4 top-4';
+  // Tailwind `width` utility is only meaningful when the user hasn't
+  // resized — once they have, the inline `width` style takes over and
+  // we drop the class so it doesn't fight for specificity.
+  const widthClass = size ? '' : width;
 
   return (
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
       style={style}
-      className={`pointer-events-auto absolute z-10 flex ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${cornerClass}`}
+      className={`pointer-events-auto absolute z-10 flex ${widthClass} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${cornerClass}`}
     >
       <div
         onPointerDown={beginDrag}
@@ -128,7 +189,27 @@ export function MovablePanel({
           </button>
         </Tooltip>
       </div>
-      {children}
+      {/* Body. Always a min-h-0 flex column so children that opt into
+          `flex-1` can fill the panel's remaining height when the user
+          resizes it. Each panel handles its own internal scrolling so
+          we don't double up scrollbars. */}
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      {/* Resize handle. Only rendered when the caller wires onResize —
+          otherwise the panel stays content-sized as before. Bottom-
+          right corner, diagonal grip, captures pointer events so the
+          drag doesn't propagate to anything underneath. */}
+      {onResize ? (
+        <div
+          role="separator"
+          aria-label={`Resize ${title.toLowerCase()}`}
+          onPointerDown={beginResize}
+          className="absolute bottom-0 right-0 flex h-4 w-4 cursor-se-resize items-end justify-end p-0.5 text-slate-300 hover:text-slate-500"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+            <path d="M9 4L4 9M9 7L7 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+          </svg>
+        </div>
+      ) : null}
     </div>
   );
 }
