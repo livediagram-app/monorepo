@@ -32,6 +32,11 @@ type BoxedElementViewProps = {
   // it's obvious which elements are bundled into a multi-action like
   // Delete or Duplicate.
   isMultiSelected?: boolean;
+  // True when *any* marquee multi-selection is currently active (size > 0).
+  // While active, plain clicks on a non-member promote it into the
+  // multi-set instead of replacing the selection — that's the "drag a
+  // box, then click a few more" flow users expect.
+  multiSelectActive?: boolean;
   isEditing: boolean;
   isPaintMode: boolean;
   showHandles: boolean;
@@ -67,6 +72,7 @@ export function BoxedElementView({
   element,
   isSelected,
   isMultiSelected = false,
+  multiSelectActive = false,
   isEditing,
   isPaintMode,
   showHandles,
@@ -101,6 +107,16 @@ export function BoxedElementView({
     // instead of starting a drag. Matches the convention every
     // drawing tool uses.
     if (e.shiftKey) {
+      onShiftSelect?.(element.id);
+      return;
+    }
+    // While a multi-selection is already active, a plain click on a
+    // non-member promotes it into the marquee set instead of
+    // collapsing back to single-select. Lets the user drag a box and
+    // then refine the selection one element at a time without having
+    // to remember the Shift modifier. Clicks on existing members
+    // still start a drag — that's how the whole bundle gets moved.
+    if (multiSelectActive && !isMultiSelected) {
       onShiftSelect?.(element.id);
       return;
     }

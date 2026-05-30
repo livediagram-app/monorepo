@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   transpilePackages: ['@livediagram/ui', '@livediagram/diagram'],
+  // Dev-only: disable webpack's persistent filesystem cache. The
+  // cache is supposed to speed up rebuilds but in this app it
+  // produced repeated "CSS disappears" and "Cannot find module
+  // './XYZ.js'" failures after structural changes — the cached
+  // chunk graph diverged from what the running HMR client expected.
+  // In-memory only is slightly slower on cold starts but rock-solid.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = { type: 'memory' };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

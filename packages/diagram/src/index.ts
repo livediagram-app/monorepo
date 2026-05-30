@@ -306,6 +306,10 @@ export type ArrowElement = {
   // the underlying field is a free number so future inputs (sliders,
   // numeric entry) work without a schema migration.
   strokeWidth?: number;
+  // Arrowhead size preset. Lives separately from `strokeWidth` so a
+  // thin line can carry a chunky arrowhead and vice versa. Snapped
+  // to a named preset for the toggle UI (see `arrowheadSizeOf`).
+  arrowheadSize?: ArrowheadSize;
 };
 
 // Named thickness presets exposed via the Palette. Storing the raw px
@@ -338,6 +342,24 @@ export function arrowThicknessOf(arrow: ArrowElement): ArrowThickness {
     }
   }
   return best;
+}
+
+// Arrowhead size preset. Decoupled from line thickness so users can
+// tune the head separately (e.g. a thin line with a bold arrowhead).
+// Numbers are SVG marker viewport sizes — wider/taller markers render
+// chunkier arrowheads regardless of the line's stroke width because
+// of how `marker-end` scales independently from the path's stroke.
+export type ArrowheadSize = 'small' | 'medium' | 'large' | 'extra-large';
+export const ARROWHEAD_SIZE_PX: Record<ArrowheadSize, number> = {
+  small: 4,
+  medium: 6,
+  large: 8.5,
+  'extra-large': 12,
+};
+export const DEFAULT_ARROWHEAD_SIZE: ArrowheadSize = 'medium';
+
+export function arrowheadSizeOf(arrow: ArrowElement): ArrowheadSize {
+  return arrow.arrowheadSize ?? DEFAULT_ARROWHEAD_SIZE;
 }
 
 // --- Element union ---------------------------------------------------------

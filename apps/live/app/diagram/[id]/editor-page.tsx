@@ -2630,18 +2630,28 @@ export default function LivePage() {
   };
 
   const setArrowEndsSelected = (arrowEnds: import('@livediagram/diagram').ArrowEnds) => {
-    if (!selectedId) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
     commit((els) =>
-      els.map((el) => (el.id === selectedId && el.type === 'arrow' ? { ...el, arrowEnds } : el)),
+      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowEnds } : el)),
     );
   };
 
   const setArrowThicknessSelected = (thickness: import('@livediagram/diagram').ArrowThickness) => {
-    if (!selectedId) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
     const px = ARROW_THICKNESS_PX[thickness];
     commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeWidth: px } : el)),
+    );
+  };
+
+  const setArrowheadSizeSelected = (size: import('@livediagram/diagram').ArrowheadSize) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
       els.map((el) =>
-        el.id === selectedId && el.type === 'arrow' ? { ...el, strokeWidth: px } : el,
+        ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowheadSize: size } : el,
       ),
     );
   };
@@ -3403,6 +3413,7 @@ export default function LivePage() {
         onSetPadding={setPaddingSelected}
         onSetArrowEnds={setArrowEndsSelected}
         onSetArrowThickness={setArrowThicknessSelected}
+        onSetArrowheadSize={setArrowheadSizeSelected}
         onSetShapeKind={setShapeKindSelected}
         onDuplicateSelected={duplicateSelected}
         tabs={tabs}

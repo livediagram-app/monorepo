@@ -1,5 +1,6 @@
 import type {
   ArrowEnds,
+  ArrowheadSize,
   ArrowThickness,
   BackgroundPattern,
   Padding,
@@ -8,7 +9,7 @@ import type {
   TextAlignY,
   TextSize,
 } from '@livediagram/diagram';
-import { ARROW_THICKNESS_PX } from '@livediagram/diagram';
+import { ARROW_THICKNESS_PX, ARROWHEAD_SIZE_PX } from '@livediagram/diagram';
 import { THEMES, type ThemeId } from '@/lib/themes';
 import { MovablePanel } from './MovablePanel';
 import { Tooltip } from './Tooltip';
@@ -53,6 +54,10 @@ export type SelectedElementControls = {
   // arrows authored before the field existed still highlight one.
   arrowThickness: ArrowThickness | null;
   onSetArrowThickness: (thickness: ArrowThickness) => void;
+  // Independent arrowhead size — separated from the line thickness so
+  // users can pair a thin line with a chunky head (or vice versa).
+  arrowheadSize: ArrowheadSize | null;
+  onSetArrowheadSize: (size: ArrowheadSize) => void;
   // Non-null only when a shape element is selected. Drives the Shape
   // accordion's morph-into-this-kind grid.
   shapeKind: ShapeKind | null;
@@ -675,6 +680,35 @@ export function SelectedElementSection({
               <div className="my-2 h-px bg-slate-100" />
             </>
           ) : null}
+          {selection.arrowheadSize !== null ? (
+            <>
+              <p className="text-[10px] font-medium text-slate-500">Arrowhead size</p>
+              <div className="mt-1 grid grid-cols-4 gap-1">
+                {(
+                  [
+                    ['small', 'Small'],
+                    ['medium', 'Medium'],
+                    ['large', 'Large'],
+                    ['extra-large', 'Extra large'],
+                  ] as [ArrowheadSize, string][]
+                ).map(([id, label]) => (
+                  <Tooltip
+                    key={id}
+                    title={label}
+                    description={`Marker size ${ARROWHEAD_SIZE_PX[id]} — independent of line thickness.`}
+                  >
+                    <SizeButton
+                      active={selection.arrowheadSize === id}
+                      onClick={() => selection.onSetArrowheadSize(id)}
+                    >
+                      <ArrowheadSizeIcon px={ARROWHEAD_SIZE_PX[id]} />
+                    </SizeButton>
+                  </Tooltip>
+                ))}
+              </div>
+              <div className="my-2 h-px bg-slate-100" />
+            </>
+          ) : null}
           <p className="text-[10px] font-medium text-slate-500">
             Pick which end(s) of the arrow have a pointer.
           </p>
@@ -943,6 +977,18 @@ function ThicknessIcon({ px }: { px: number }) {
         strokeWidth={px}
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+// Mini chevron sized to the preset px so users can compare the
+// pointer sizes visually before picking. Uses the same path shape as
+// the real arrowhead marker so what you see is what you get.
+function ArrowheadSizeIcon({ px }: { px: number }) {
+  return (
+    <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden>
+      <line x1="3" y1="7" x2="14" y2="7" stroke="currentColor" strokeWidth="1.6" />
+      <path d={`M 14 ${7 - px / 2} L ${14 + px} 7 L 14 ${7 + px / 2} z`} fill="currentColor" />
     </svg>
   );
 }

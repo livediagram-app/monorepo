@@ -222,6 +222,13 @@ type ArrowElement = {
   from: Endpoint;
   to: Endpoint;
   locked?: boolean;
+  // Visual overrides. `strokeWidth` controls the line thickness, snapped
+  // to one of the four ArrowThickness presets (1 / 2 / 3.5 / 5 px) for
+  // the UI but stored as a raw number so legacy values survive.
+  // `arrowheadSize` is independent so users can pair a thin line with
+  // a chunky head (or vice versa).
+  strokeWidth?: number;
+  arrowheadSize?: 'small' | 'medium' | 'large' | 'extra-large';
 };
 
 type Element = ShapeElement | ArrowElement;
@@ -405,10 +412,11 @@ While multi-selected:
 
 - **Press-and-drag any member** moves the whole group in lockstep. The drag handler reads `multiSelectedIds` and pre-populates `startBounds` with every member.
 - **Delete / Backspace** removes every multi-selected element and any arrows that reference one of them. Single-element delete falls back to the same logic when there's no multi-selection. The keyboard handler is suppressed while a label is being edited or focus is inside any text input.
-- **Click any element** collapses the selection to that one (intuitive: explicit click on one thing == "I want only this").
+- **Plain click on a non-member** adds it to the multi-selection (the marquee mode is "sticky" once active — the user is clearly refining a bundle, not starting over). This applies to arrows as well as boxed elements.
+- **Shift-click any element** toggles its membership — adds if absent, removes if present. Folds the current single selection in first so "I had A selected, now also B and C" works without losing A.
 - **Click empty canvas** or **switch tabs** clears the multi-selection.
 
-Arrows are not yet included in marquee hits — only boxed elements (shape, text, sticky). Arrows still survive as connectors when their endpoints are inside the marquee, but they're not directly selected.
+Marquee hits include both boxed elements (shape, text, sticky) and arrows whose endpoint AABB falls inside the rectangle. Duplicating a marquee that contains both carries the connectors across with their endpoints remapped to the duplicated targets.
 
 ## Quick add + connect
 
@@ -761,7 +769,6 @@ When a shape is selected, **four corner handles** (NW, NE, SW, SE) appear as sma
 
 ## Out of scope (next iterations)
 
-- Multi-select (marquee box, shift-click).
 - Mid-edge resize handles, aspect-ratio constraint.
 - Rotation.
 - Connectors / edges between shapes.

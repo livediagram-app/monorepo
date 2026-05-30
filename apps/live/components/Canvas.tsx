@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   arrowThicknessOf,
+  arrowheadSizeOf,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   defaultFillColor,
@@ -173,6 +174,7 @@ type CanvasProps = {
   onSetPadding: (padding: import('@livediagram/diagram').Padding) => void;
   onSetArrowEnds: (ends: import('@livediagram/diagram').ArrowEnds) => void;
   onSetArrowThickness: (thickness: import('@livediagram/diagram').ArrowThickness) => void;
+  onSetArrowheadSize: (size: import('@livediagram/diagram').ArrowheadSize) => void;
   onSetShapeKind: (kind: ShapeKind) => void;
   onDuplicateSelected: () => void;
   tabs: Tab[];
@@ -327,6 +329,7 @@ export function Canvas(props: CanvasProps) {
     onSetPadding,
     onSetArrowEnds,
     onSetArrowThickness,
+    onSetArrowheadSize,
     onSetShapeKind,
     onDuplicateSelected,
     tabs,
@@ -648,6 +651,8 @@ export function Canvas(props: CanvasProps) {
         onSetArrowEnds,
         arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
         onSetArrowThickness,
+        arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,
+        onSetArrowheadSize,
         shapeKind: selected.type === 'shape' ? selected.shape : null,
         onSetShapeKind,
         aspectLocked: isBoxed(selected) ? (selected.aspectLocked ?? false) : null,
@@ -802,9 +807,19 @@ export function Canvas(props: CanvasProps) {
                 <ArrowView
                   arrow={element}
                   elements={elements}
-                  isSelected={element.id === selectedId}
+                  isSelected={element.id === selectedId || multiSelectedIds.has(element.id)}
                   isPaintMode={isPaintMode || isGroupMode}
-                  onSelect={() => onSelect(element.id)}
+                  onSelect={(e) => {
+                    // Mirror the boxed-element click semantics so arrows
+                    // can be included in marquee multi-selections via
+                    // plain click (when one is active) or Shift-click.
+                    const isMember = multiSelectedIds.has(element.id);
+                    if (e.shiftKey || (multiSelectedIds.size > 0 && !isMember)) {
+                      onShiftSelect(element.id);
+                      return;
+                    }
+                    onSelect(element.id);
+                  }}
                   onBeginEndpointDrag={(end, e) => onBeginEndpointDrag(element.id, end, e)}
                   onBeginTranslate={(e) => onBeginArrowTranslate(element.id, e)}
                 />
@@ -818,6 +833,7 @@ export function Canvas(props: CanvasProps) {
               element={element}
               isSelected={memberIds.has(element.id) || multiSelectedIds.has(element.id)}
               isMultiSelected={multiSelectedIds.has(element.id)}
+              multiSelectActive={multiSelectedIds.size > 0}
               remoteSelectors={remoteSelectionsByElement.get(element.id) ?? []}
               isEditing={element.id === editingId}
               isPaintMode={isPaintMode || isGroupMode}

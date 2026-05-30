@@ -1,8 +1,11 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import {
+  ARROWHEAD_SIZE_PX,
+  arrowheadSizeOf,
   defaultArrowStrokeColor,
   endpointPosition,
   type ArrowElement,
+  type ArrowheadSize,
   type Element,
 } from '@livediagram/diagram';
 import type { ArrowEnd } from '@/lib/canvas';
@@ -35,6 +38,7 @@ export function ArrowView({
   const isLocked = arrow.locked === true;
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
+  const markerUrl = `url(#${arrowheadMarkerId(arrowheadSizeOf(arrow))})`;
 
   // Per-arrow stroke colour overrides the default; selection ring sits
   // on top in brand-600 regardless so the user can still tell what's
@@ -77,11 +81,11 @@ export function ArrowView({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         markerStart={
-          arrow.arrowEnds === 'from' || arrow.arrowEnds === 'both' ? 'url(#arrowhead)' : undefined
+          arrow.arrowEnds === 'from' || arrow.arrowEnds === 'both' ? markerUrl : undefined
         }
         markerEnd={
           arrow.arrowEnds === 'to' || arrow.arrowEnds === 'both' || arrow.arrowEnds === undefined
-            ? 'url(#arrowhead)'
+            ? markerUrl
             : undefined
         }
         style={{ pointerEvents: 'none' }}
@@ -169,25 +173,34 @@ function EndpointHandle({ cx, cy, pinned, disabled, onPointerDown }: EndpointHan
   );
 }
 
+function arrowheadMarkerId(size: ArrowheadSize): string {
+  return `arrowhead-${size}`;
+}
+
 export function ArrowDefs() {
-  // Single shared arrowhead marker. `fill="context-stroke"` is the
-  // canonical SVG2 way to make a marker pick up the referencing line's
-  // stroke colour; modern Chrome / Firefox / Safari all support it.
-  // currentColor didn't reliably inherit through the marker boundary in
-  // every browser, leaving arrowheads stuck on the default slate.
+  // One marker per arrowhead-size preset so arrows can choose head
+  // weight independent of line thickness. `fill="context-stroke"` is
+  // the canonical SVG2 way to make a marker pick up the referencing
+  // line's stroke colour; modern Chrome / Firefox / Safari all
+  // support it. currentColor didn't reliably inherit through the
+  // marker boundary in every browser, leaving arrowheads stuck on
+  // the default slate.
   return (
     <defs>
-      <marker
-        id="arrowhead"
-        viewBox="0 0 10 10"
-        refX="9"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
-        orient="auto-start-reverse"
-      >
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
-      </marker>
+      {(Object.entries(ARROWHEAD_SIZE_PX) as [ArrowheadSize, number][]).map(([name, px]) => (
+        <marker
+          key={name}
+          id={arrowheadMarkerId(name)}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth={px}
+          markerHeight={px}
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
+        </marker>
+      ))}
     </defs>
   );
 }
