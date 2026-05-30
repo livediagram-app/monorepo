@@ -89,7 +89,7 @@ export function TabBar({
                 setDragId(null);
                 setOverId(null);
               }}
-              className={`relative flex shrink-0 items-center gap-1.5 rounded-md px-2 transition ${
+              className={`relative flex shrink-0 items-center gap-3 rounded-md px-2 transition ${
                 isActive
                   ? 'bg-brand-100 text-brand-700'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -508,7 +508,12 @@ function TabPresenceStack({ participants }: { participants: Participant[] }) {
       {shown.map((p, i) => (
         <span
           key={p.id}
-          className={i === slots - 1 ? 'inline-flex' : '-mr-1.5 inline-flex'}
+          // Smaller overlap (-mr-0.5 vs the old -mr-1.5) so each
+          // avatar has a wider hit area for hover tooltips while
+          // still reading as a stack. Last avatar drops the
+          // negative margin entirely so the cluster sits inside the
+          // pill's right padding.
+          className={i === slots - 1 ? 'inline-flex' : '-mr-0.5 inline-flex'}
           style={{ zIndex: slots - i }}
         >
           <ParticipantAvatar participant={p} size={16} withTooltip />
