@@ -1004,20 +1004,20 @@ export function Canvas(props: CanvasProps) {
                 onClick={onToggleMinimized}
               />
             ) : null}
-            {activityMinimized ? (
-              <DockButton
-                label="Open Tab Activity"
-                description="Expand the Tab Activity panel: changelog, Undo, Redo."
-                icon={<ActivityIcon />}
-                onClick={onToggleActivityMinimized}
-              />
-            ) : null}
             {contextMinimized ? (
               <DockButton
                 label="Open Editor"
                 description="Expand the Selected Element / Current Tab panel."
                 icon={<ContextIcon />}
                 onClick={onToggleContextMinimized}
+              />
+            ) : null}
+            {activityMinimized ? (
+              <DockButton
+                label="Open Tab Activity"
+                description="Expand the Tab Activity panel: changelog, Undo, Redo."
+                icon={<ActivityIcon />}
+                onClick={onToggleActivityMinimized}
               />
             ) : null}
             <ZoomControls
