@@ -14,10 +14,10 @@ import { useEffect, useState } from 'react';
 export function formatRelativeTime(deltaMs: number): string {
   const seconds = Math.floor(deltaMs / 1000);
   if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds} seconds ago`;
+  if (seconds < 60) return `${seconds} secs ago`;
   const minutes = Math.floor(seconds / 60);
-  if (minutes === 1) return '1 minute ago';
-  if (minutes < 60) return `${minutes} minutes ago`;
+  if (minutes === 1) return '1 min ago';
+  if (minutes < 60) return `${minutes} mins ago`;
   const hours = Math.floor(minutes / 60);
   if (hours === 1) return '1 hour ago';
   if (hours < 24) return `${hours} hours ago`;
