@@ -25,6 +25,7 @@ type ExplorerProps = {
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
   onResize: (size: { width: number; height: number }) => void;
+  onReset: () => void;
   onOpenDiagram: (id: string) => void;
   onNewDiagram: () => void;
 };
@@ -46,6 +47,7 @@ export function Explorer({
   onMoveTo,
   onToggleMinimized,
   onResize,
+  onReset,
   onOpenDiagram,
   onNewDiagram,
 }: ExplorerProps) {
@@ -69,6 +71,7 @@ export function Explorer({
       minWidth={220}
       minHeight={280}
       onResize={onResize}
+      onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >

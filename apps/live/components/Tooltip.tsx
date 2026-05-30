@@ -12,25 +12,91 @@ type TooltipProps = {
   children: ReactNode;
 };
 
-// Custom tooltip with a bold title and a one-line description. Appears above
-// the wrapped element on hover/focus. Rendered via portal so it isn't clipped
-// by floating panels or transform contexts.
+type Placement = 'top' | 'bottom' | 'left' | 'right';
+
+const TOOLTIP_WIDTH = 224; // matches w-56
+const GAP = 10;
+const VIEWPORT_MARGIN = 8;
+
+// Custom tooltip with a bold title and a one-line description. Appears next
+// to the wrapped element on hover/focus. Rendered via portal so it isn't
+// clipped by floating panels or transform contexts.
+//
+// Placement is adaptive: the tooltip prefers `top` but falls back to
+// `bottom`, then `right`, then `left` when there isn't room. The little
+// arrow pointer tracks the anchor element so the connection between
+// tooltip and trigger stays unambiguous even when the tooltip slides
+// sideways to stay on-screen.
 export function Tooltip({ title, description, block = false, children }: TooltipProps) {
   const wrapRef = useRef<HTMLSpanElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [layout, setLayout] = useState<{
+    left: number;
+    top: number;
+    placement: Placement;
+    arrowOffset: number;
+  } | null>(null);
 
   useLayoutEffect(() => {
     if (!visible || !wrapRef.current) return;
-    // Prefer the first child's rect so wrappers around absolutely-positioned
-    // children (e.g. the minimized palette button) still anchor correctly.
     const target = wrapRef.current.firstElementChild ?? wrapRef.current;
-    const rect = target.getBoundingClientRect();
-    setPos({ x: rect.left + rect.width / 2, y: rect.top });
-  }, [visible]);
+    const trigger = target.getBoundingClientRect();
+    const card = cardRef.current?.getBoundingClientRect();
+    const cardWidth = card?.width ?? TOOLTIP_WIDTH;
+    const cardHeight = card?.height ?? 48;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Decide placement: top > bottom > right > left, picking the first
+    // that fits the card within the viewport (with margin).
+    const fitsTop = trigger.top - cardHeight - GAP >= VIEWPORT_MARGIN;
+    const fitsBottom = trigger.bottom + cardHeight + GAP <= vh - VIEWPORT_MARGIN;
+    const fitsRight = trigger.right + cardWidth + GAP <= vw - VIEWPORT_MARGIN;
+    const fitsLeft = trigger.left - cardWidth - GAP >= VIEWPORT_MARGIN;
+    const placement: Placement = fitsTop
+      ? 'top'
+      : fitsBottom
+        ? 'bottom'
+        : fitsRight
+          ? 'right'
+          : fitsLeft
+            ? 'left'
+            : 'top';
+
+    let left: number;
+    let top: number;
+    let arrowOffset: number;
+    const triggerCenterX = trigger.left + trigger.width / 2;
+    const triggerCenterY = trigger.top + trigger.height / 2;
+
+    if (placement === 'top' || placement === 'bottom') {
+      // Centre under the trigger horizontally, then clamp into the
+      // viewport. The arrow stays pinned to the trigger's centre
+      // even when the card slides.
+      const idealLeft = triggerCenterX - cardWidth / 2;
+      const minLeft = VIEWPORT_MARGIN;
+      const maxLeft = vw - VIEWPORT_MARGIN - cardWidth;
+      left = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+      top = placement === 'top' ? trigger.top - cardHeight - GAP : trigger.bottom + GAP;
+      arrowOffset = triggerCenterX - left;
+    } else {
+      const idealTop = triggerCenterY - cardHeight / 2;
+      const minTop = VIEWPORT_MARGIN;
+      const maxTop = vh - VIEWPORT_MARGIN - cardHeight;
+      top = Math.max(minTop, Math.min(maxTop, idealTop));
+      left = placement === 'right' ? trigger.right + GAP : trigger.left - cardWidth - GAP;
+      arrowOffset = triggerCenterY - top;
+    }
+
+    setLayout({ left, top, placement, arrowOffset });
+  }, [visible, title, description]);
 
   const show = () => setVisible(true);
-  const hide = () => setVisible(false);
+  const hide = () => {
+    setVisible(false);
+    setLayout(null);
+  };
 
   return (
     <span
@@ -42,23 +108,68 @@ export function Tooltip({ title, description, block = false, children }: Tooltip
       className={block ? 'flex w-full' : 'inline-flex'}
     >
       {children}
-      {visible && pos && typeof document !== 'undefined'
+      {visible && typeof document !== 'undefined'
         ? createPortal(
             <div
+              ref={cardRef}
               role="tooltip"
               className="pointer-events-none fixed z-50 w-56 animate-fade-in rounded-lg border border-slate-200 bg-white px-3 py-2 text-left shadow-lg shadow-slate-900/10"
-              style={{
-                left: pos.x,
-                top: pos.y,
-                transform: 'translate(-50%, calc(-100% - 8px))',
-              }}
+              style={
+                layout
+                  ? { left: layout.left, top: layout.top }
+                  : { left: -9999, top: -9999, visibility: 'hidden' }
+              }
             >
               <p className="text-xs font-semibold text-slate-900">{title}</p>
               <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{description}</p>
+              {layout ? <Arrow placement={layout.placement} offset={layout.arrowOffset} /> : null}
             </div>,
             document.body,
           )
         : null}
     </span>
+  );
+}
+
+// Small white triangle that connects the card to its anchor. Rendered
+// as a CSS-rotated square so it inherits the card's border + shadow.
+// `offset` is the distance (px) from the card's leading edge to the
+// arrow centre, so a card that clamped sideways still points at the
+// trigger.
+function Arrow({ placement, offset }: { placement: Placement; offset: number }) {
+  const style: React.CSSProperties = { position: 'absolute' };
+  const size = 10;
+  if (placement === 'top') {
+    style.bottom = -size / 2;
+    style.left = offset - size / 2;
+    style.borderRight = '1px solid rgb(226 232 240)';
+    style.borderBottom = '1px solid rgb(226 232 240)';
+  } else if (placement === 'bottom') {
+    style.top = -size / 2;
+    style.left = offset - size / 2;
+    style.borderLeft = '1px solid rgb(226 232 240)';
+    style.borderTop = '1px solid rgb(226 232 240)';
+  } else if (placement === 'right') {
+    style.left = -size / 2;
+    style.top = offset - size / 2;
+    style.borderLeft = '1px solid rgb(226 232 240)';
+    style.borderBottom = '1px solid rgb(226 232 240)';
+  } else {
+    style.right = -size / 2;
+    style.top = offset - size / 2;
+    style.borderRight = '1px solid rgb(226 232 240)';
+    style.borderTop = '1px solid rgb(226 232 240)';
+  }
+  return (
+    <span
+      aria-hidden
+      style={{
+        ...style,
+        width: size,
+        height: size,
+        background: 'white',
+        transform: 'rotate(45deg)',
+      }}
+    />
   );
 }

@@ -2808,9 +2808,17 @@ export default function LivePage() {
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
         onToggleMinimized={() => setPaletteMinimized((v) => !v)}
         onResizePalette={setPaletteSize}
+        onResetPalette={() => {
+          setPalettePosition(null);
+          setPaletteSize(null);
+        }}
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
         onResizeExplorer={setExplorerSize}
+        onResetExplorer={() => {
+          setExplorerPosition(null);
+          setExplorerSize(null);
+        }}
         diagramList={diagramList}
         diagramListLoading={diagramListLoading}
         changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
@@ -2821,6 +2829,10 @@ export default function LivePage() {
         onMoveActivity={(x, y) => setActivityPosition({ x, y })}
         onToggleActivityMinimized={() => setActivityMinimized((v) => !v)}
         onResizeActivity={setActivitySize}
+        onResetActivity={() => {
+          setActivityPosition(null);
+          setActivitySize(null);
+        }}
         onRevertChange={revertChange}
         onClearActivity={clearActivityForActiveTab}
         saveStatus={saveStatus}

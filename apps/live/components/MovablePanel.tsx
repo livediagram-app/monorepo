@@ -37,6 +37,10 @@ type MovablePanelProps = {
   // surface a status badge in the header without inventing a new
   // bar. Pointer events stay live so buttons inside still click.
   headerExtra?: ReactNode;
+  // When provided, a "restore default" button appears to the left of
+  // the minimise button. Wired by the caller to clear position +
+  // size state so the panel snaps back to its default corner.
+  onReset?: () => void;
   onMoveTo: (x: number, y: number) => void;
   onMinimize: () => void;
   children: ReactNode;
@@ -59,6 +63,7 @@ export function MovablePanel({
   minHeight = 200,
   onResize,
   headerExtra,
+  onReset,
   onMoveTo,
   onMinimize,
   children,
@@ -224,30 +229,63 @@ export function MovablePanel({
             {headerExtra}
           </div>
         ) : null}
-        <Tooltip
-          title={`Minimize ${title.toLowerCase()}`}
-          description="Collapse this panel into a button at the bottom of the canvas."
-        >
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onMinimize}
-            aria-label={`Minimize ${title.toLowerCase()}`}
-            className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        <div className="flex items-center gap-0.5">
+          {onReset ? (
+            <Tooltip
+              title="Reset position"
+              description="Move and resize this panel back to its default corner."
+            >
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onReset}
+                aria-label={`Reset ${title.toLowerCase()} position`}
+                className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden fill="none">
+                  <path
+                    d="M2 4.5h6a2.5 2.5 0 0 1 0 5H4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M3.75 2.5L2 4.5l1.75 2"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </Tooltip>
+          ) : null}
+          <Tooltip
+            title={`Minimize ${title.toLowerCase()}`}
+            description="Collapse this panel into a button at the bottom of the canvas."
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-              <line
-                x1="2.5"
-                y1="6"
-                x2="9.5"
-                y2="6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </Tooltip>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onMinimize}
+              aria-label={`Minimize ${title.toLowerCase()}`}
+              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+                <line
+                  x1="2.5"
+                  y1="6"
+                  x2="9.5"
+                  y2="6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </Tooltip>
+        </div>
       </div>
       {/* Body. Always a min-h-0 flex column so children that opt into
           `flex-1` can fill the panel's remaining height when the user

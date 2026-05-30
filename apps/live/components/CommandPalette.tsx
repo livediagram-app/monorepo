@@ -91,6 +91,7 @@ type CommandPaletteProps = {
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
   onResize: (size: { width: number; height: number }) => void;
+  onReset: () => void;
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
@@ -116,6 +117,7 @@ function OpenPalette({
   onMoveTo,
   onToggleMinimized,
   onResize,
+  onReset,
   onAddShape,
   onAddText,
   onAddSticky,
@@ -155,6 +157,7 @@ function OpenPalette({
       minWidth={220}
       minHeight={300}
       onResize={onResize}
+      onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >

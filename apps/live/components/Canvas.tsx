@@ -98,9 +98,11 @@ type CanvasProps = {
   onMovePalette: (x: number, y: number) => void;
   onToggleMinimized: () => void;
   onResizePalette: (size: { width: number; height: number }) => void;
+  onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
   onResizeExplorer: (size: { width: number; height: number }) => void;
+  onResetExplorer: () => void;
   diagramList: { id: string; name: string; savedAt: number }[];
   diagramListLoading: boolean;
   changeLog: ChangeLogEntry[];
@@ -111,6 +113,7 @@ type CanvasProps = {
   onMoveActivity: (x: number, y: number) => void;
   onToggleActivityMinimized: () => void;
   onResizeActivity: (size: { width: number; height: number }) => void;
+  onResetActivity: () => void;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onClearActivity: () => void;
   saveStatus: import('./EditorHeader').SaveStatus;
@@ -232,9 +235,11 @@ export function Canvas(props: CanvasProps) {
     onMovePalette,
     onToggleMinimized,
     onResizePalette,
+    onResetPalette,
     onMoveExplorer,
     onToggleExplorerMinimized,
     onResizeExplorer,
+    onResetExplorer,
     diagramList,
     diagramListLoading,
     changeLog,
@@ -245,6 +250,7 @@ export function Canvas(props: CanvasProps) {
     onMoveActivity,
     onToggleActivityMinimized,
     onResizeActivity,
+    onResetActivity,
     onRevertChange,
     onClearActivity,
     saveStatus,
@@ -906,6 +912,7 @@ export function Canvas(props: CanvasProps) {
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}
         onResize={onResizeExplorer}
+        onReset={onResetExplorer}
         onOpenDiagram={onOpenDiagram}
         onNewDiagram={onNewDiagram}
       />
@@ -931,6 +938,7 @@ export function Canvas(props: CanvasProps) {
           savedAt={savedAt}
           onMoveTo={onMoveActivity}
           onResize={onResizeActivity}
+          onReset={onResetActivity}
           onToggleMinimized={onToggleActivityMinimized}
         />
       )}
@@ -947,6 +955,7 @@ export function Canvas(props: CanvasProps) {
           onMoveTo={onMovePalette}
           onToggleMinimized={onToggleMinimized}
           onResize={onResizePalette}
+          onReset={onResetPalette}
           onAddShape={onAddShape}
           onAddText={onAddText}
           onAddSticky={onAddSticky}

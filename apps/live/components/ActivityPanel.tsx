@@ -35,6 +35,7 @@ type ActivityPanelProps = {
   savedAt: number | null;
   onMoveTo: (x: number, y: number) => void;
   onResize: (size: { width: number; height: number }) => void;
+  onReset: () => void;
   onToggleMinimized: () => void;
 };
 
@@ -59,6 +60,7 @@ export function ActivityPanel({
   savedAt,
   onMoveTo,
   onResize,
+  onReset,
   onToggleMinimized,
 }: ActivityPanelProps) {
   if (minimized) return null;
@@ -72,6 +74,7 @@ export function ActivityPanel({
       minWidth={240}
       minHeight={360}
       onResize={onResize}
+      onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
       headerExtra={<SaveStatusBadge status={saveStatus} savedAt={savedAt} />}
