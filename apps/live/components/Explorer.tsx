@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { MovablePanel } from './MovablePanel';
 
@@ -54,15 +55,24 @@ export function Explorer({
   // while the panel is open. Cheap when the panel is minimised (this
   // function returns early below before the interval is set up).
   useRelativeTimeTick();
+  // Default to collapsed so the panel stays compact when the user
+  // has lots of diagrams. The header badge surfaces the count even
+  // when the list isn't visible.
+  const [yourDiagramsOpen, setYourDiagramsOpen] = useState(false);
   if (minimized) return null;
   // Split the open diagram into its own section so the user always
   // sees which one is active. Most-recently-saved first for the rest.
   const current = currentDiagramId
     ? (diagrams.find((d) => d.id === currentDiagramId) ?? null)
     : null;
-  const ordered = [...diagrams]
+  // Cap the recents list at 5 so the accordion stays compact even
+  // for power users with dozens of diagrams. Full-history access
+  // lands with auth later.
+  const RECENT_LIMIT = 5;
+  const allOthers = [...diagrams]
     .filter((d) => d.id !== currentDiagramId)
     .sort((a, b) => b.savedAt - a.savedAt);
+  const ordered = allOthers.slice(0, RECENT_LIMIT);
   return (
     <MovablePanel
       title="Explorer"
@@ -98,39 +108,41 @@ export function Explorer({
           </div>
         ) : null}
 
-        {loading ? (
+        {loading || ordered.length > 0 ? (
           <div className="flex flex-col gap-0.5">
-            <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Your diagrams
-            </p>
-            <ul className="flex flex-col gap-1" aria-busy="true">
-              {[0, 1, 2].map((i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1.5"
-                  aria-hidden
-                >
-                  <span className="h-3 w-3 shrink-0 animate-pulse rounded-sm bg-slate-200" />
-                  <span
-                    className="h-3 animate-pulse rounded bg-slate-200"
-                    style={{ width: `${70 - i * 12}%` }}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : ordered.length > 0 ? (
-          <div className="flex flex-col gap-0.5">
-            <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Your diagrams
-            </p>
-            <ul className="scrollbar-slim flex max-h-60 flex-col gap-0.5 overflow-y-auto">
-              {ordered.map((d) => (
-                <li key={d.id}>
-                  <DiagramRow item={d} active={false} onOpen={() => onOpenDiagram(d.id)} />
-                </li>
-              ))}
-            </ul>
+            <AccordionHeader
+              label="Recent Diagrams"
+              badge={loading ? null : ordered.length}
+              open={yourDiagramsOpen}
+              onToggle={() => setYourDiagramsOpen((v) => !v)}
+            />
+            {yourDiagramsOpen ? (
+              loading ? (
+                <ul className="flex flex-col gap-1" aria-busy="true">
+                  {[0, 1, 2].map((i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-1.5 rounded-md px-2 py-1.5"
+                      aria-hidden
+                    >
+                      <span className="h-3 w-3 shrink-0 animate-pulse rounded-sm bg-slate-200" />
+                      <span
+                        className="h-3 animate-pulse rounded bg-slate-200"
+                        style={{ width: `${70 - i * 12}%` }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="scrollbar-slim flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+                  {ordered.map((d) => (
+                    <li key={d.id}>
+                      <DiagramRow item={d} active={false} onOpen={() => onOpenDiagram(d.id)} />
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : null}
           </div>
         ) : null}
 
@@ -151,6 +163,68 @@ export function Explorer({
         </div>
       </div>
     </MovablePanel>
+  );
+}
+
+// Accordion header used for the Recent Diagrams section. Click
+// toggles the body open / closed; the chevron rotates to match.
+// `badge` shows the section count next to the label so the user
+// sees how many diagrams are stashed even when the body is
+// collapsed (the default state).
+function AccordionHeader({
+  label,
+  badge,
+  open,
+  onToggle,
+}: {
+  label: string;
+  badge: number | null;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="flex w-full items-center justify-between gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100"
+    >
+      <span className="flex items-center gap-1.5">
+        <span
+          className={`inline-block transition-transform ${open ? 'rotate-90' : 'rotate-0'}`}
+          aria-hidden
+        >
+          <ChevronIcon />
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          {label}
+        </span>
+      </span>
+      {badge !== null ? (
+        <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1.5 text-[10px] font-medium text-slate-600">
+          {badge}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 9 9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-slate-400"
+      aria-hidden
+    >
+      <path d="M3 1.5L6 4.5L3 7.5" />
+    </svg>
   );
 }
 
