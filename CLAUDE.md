@@ -30,7 +30,7 @@ packages/
 specs/          # product specs — read these first
 ```
 
-Workspaces are managed with **pnpm** (`pnpm-workspace.yaml`). Tasks are orchestrated with **Turborepo** (`turbo.json`). Node `>=20`, pnpm `>=9`.
+Workspaces are managed with **pnpm** (`pnpm-workspace.yaml`). Tasks are orchestrated with **Turborepo** (`turbo.json`). Node `>=22` (wrangler 4 requirement), pnpm `>=9`.
 
 ## Current phase: backend in scope
 
