@@ -804,16 +804,25 @@ export default function LivePage() {
   // before any pointer movement. Remote entries come from the
   // tab-focus RoomOp; only those whose sender is still present
   // (livePresence has them) survive.
+  //
+  // Status is per-viewer: a participant on the viewer's active tab
+  // is 'online' (green ring), a participant on any other tab is
+  // 'away' (orange ring). Cheap signal that someone's not where you
+  // are right now without leaving the TabBar.
   const participantsByTab = (() => {
     const map = new Map<string, Participant[]>();
-    map.set(activeId, [selfParticipant]);
+    map.set(activeId, [{ ...selfParticipant, status: 'online' }]);
     for (const [id, tabId] of remoteTabFocus) {
       if (id === selfParticipant.id) continue;
       const p = livePresenceById.get(id);
       if (!p) continue;
+      const withStatus: Participant = {
+        ...p,
+        status: tabId === activeId ? 'online' : 'away',
+      };
       const bucket = map.get(tabId);
-      if (bucket) bucket.push(p);
-      else map.set(tabId, [p]);
+      if (bucket) bucket.push(withStatus);
+      else map.set(tabId, [withStatus]);
     }
     return map;
   })();
