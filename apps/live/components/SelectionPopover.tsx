@@ -24,7 +24,6 @@ type SelectionPopoverProps = {
   onOpenComments?: () => void;
 };
 
-const POPOVER_HEIGHT = 44;
 // The plus button sits between the popover and the element edge it
 // belongs to. Bumped to 48 px so the plus has clear breathing room
 // — at 36 px the popover crowded it and felt visually cramped.
@@ -53,21 +52,35 @@ export function SelectionPopover({
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  // Prefer above by default. After mount we measure and flip to
+  // below only if there isn't room — checked in screen space, not
+  // canvas space, because auto-fit puts most elements at negative
+  // canvas-y, which made the old canvas-coord check always pick
+  // "below".
+  const [placeAbove, setPlaceAbove] = useState(true);
 
-  // Initial layout-time position: above if there's room, otherwise below.
-  // Gap is divided by zoom so the on-screen gap stays constant.
   const visualGap = GAP / zoom;
-  const placeAbove = bounds.y >= POPOVER_HEIGHT / zoom + visualGap;
   const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;
   const baseLeft = bounds.x + bounds.width / 2;
 
-  // After mount, measure the popover and nudge it so it stays inside the
-  // viewport. Without this, popovers on elements near the screen edge get
-  // clipped (their natural -translate-x-1/2 ignores viewport bounds).
+  // After mount: (1) flip below if above doesn't fit in the viewport,
+  // (2) nudge inside the viewport for edge cases. Both work off the
+  // popover's own getBoundingClientRect so they account for the
+  // outer canvas transform without needing to plumb it in.
   useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
     const rect = node.getBoundingClientRect();
+    // Flip if the chosen direction doesn't fit; only flip once per
+    // cycle so we don't oscillate when both directions are tight.
+    if (placeAbove && rect.top < EDGE_MARGIN) {
+      setPlaceAbove(false);
+      return;
+    }
+    if (!placeAbove && rect.bottom > window.innerHeight - EDGE_MARGIN) {
+      setPlaceAbove(true);
+      return;
+    }
     let dx = 0;
     let dy = 0;
     if (rect.left < EDGE_MARGIN) dx = EDGE_MARGIN - rect.left;
@@ -78,7 +91,7 @@ export function SelectionPopover({
       dy = window.innerHeight - EDGE_MARGIN - rect.bottom;
     if (dx !== adjust.x || dy !== adjust.y) setAdjust({ x: dx, y: dy });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bounds.x, bounds.y, bounds.width, bounds.height, canvasOffset.x, canvasOffset.y]);
+  }, [bounds.x, bounds.y, bounds.width, bounds.height, canvasOffset.x, canvasOffset.y, placeAbove]);
 
   return (
     <div
