@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from '@livediagram/ui';
-import type { Participant } from '@/lib/identity';
 import { MenuItem, PortalMenu } from './PortalMenu';
-import { ParticipantAvatar } from './ParticipantAvatar';
 
 // Sync state surfaced as a small pill next to the diagram title. The
 // editor is autosave-driven, so silent failures (offline, API down,
@@ -12,10 +10,9 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type EditorHeaderProps = {
   diagramName: string;
-  participants: Participant[];
   // Hides the centred diagram title + its ellipsis menu while the
   // first-run welcome modal is up (no diagram exists yet, naming or
-  // deleting it makes no sense). Brand and participant avatars stay.
+  // deleting it makes no sense). Brand and Share button stay.
   hideTitle?: boolean;
   // Only the diagram's owner sees the Share button — visitors arriving
   // via a share URL can't toggle sharing on their host's diagram.
@@ -31,7 +28,6 @@ type EditorHeaderProps = {
 
 export function EditorHeader({
   diagramName,
-  participants,
   hideTitle = false,
   showShare,
   shareable,
@@ -111,9 +107,6 @@ export function EditorHeader({
         )}
       </div>
       <div className="flex w-56 items-center justify-end gap-2">
-        {participants.map((p) => (
-          <ParticipantAvatar key={p.id} participant={p} withTooltip />
-        ))}
         {showShare ? (
           <button
             type="button"

@@ -358,6 +358,10 @@ export type RoomOp =
   // The named log entry was removed (e.g. via Undo or Revert). Other
   // clients drop it from their local list so the panel stays in sync.
   | { kind: 'log-remove'; entryId: string }
+  // The sender just switched to (or initially focused) a tab.
+  // Drives the per-tab avatar dots in the TabBar so collaborators
+  // can see at a glance which tab each peer is working on.
+  | { kind: 'tab-focus'; tabId: string }
   | { kind: 'tabs'; tabs: Tab[]; name: string }
   | { kind: 'select'; elementId: string | null }
   // Cursor position in canvas coordinates. `null` means the cursor

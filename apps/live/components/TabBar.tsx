@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Tab } from '@livediagram/diagram';
+import type { Participant } from '@/lib/identity';
+import { ParticipantAvatar } from './ParticipantAvatar';
 
 type TabBarProps = {
   tabs: Tab[];
@@ -26,6 +28,10 @@ type TabBarProps = {
   // after the operation completes.
   onCopyTabTo: (targetDiagramId: string) => Promise<void> | void;
   onReorder: (sourceId: string, targetId: string) => void;
+  // Remote participants grouped by which tab they're currently
+  // focused on. Each tab in the bar renders the matching avatars so
+  // collaborators can see at a glance where everyone is working.
+  participantsByTab: Map<string, Participant[]>;
 };
 
 export function TabBar({
@@ -41,6 +47,7 @@ export function TabBar({
   otherDiagrams,
   onCopyTabTo,
   onReorder,
+  participantsByTab,
 }: TabBarProps) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,6 +95,7 @@ export function TabBar({
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
             >
+              <TabPresenceStack participants={participantsByTab.get(tab.id) ?? []} />
               {isEditing ? (
                 <TabNameEditor
                   initial={tab.name}
@@ -482,6 +490,36 @@ function TrashIcon() {
       <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
       <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
     </svg>
+  );
+}
+
+// Compact stack of participant initials, sitting just before the tab
+// label. Rendered slightly smaller than the EditorHeader avatars so
+// it doesn't dominate the tab. Hidden when nobody is on the tab.
+function TabPresenceStack({ participants }: { participants: Participant[] }) {
+  if (participants.length === 0) return null;
+  const shown = participants.slice(0, 3);
+  const overflow = participants.length - shown.length;
+  return (
+    <div className="-ml-0.5 mr-1 flex items-center">
+      {shown.map((p, i) => (
+        <span
+          key={p.id}
+          className="-mr-1.5 inline-flex"
+          style={{ zIndex: shown.length - i }}
+        >
+          <ParticipantAvatar participant={p} size={18} withTooltip />
+        </span>
+      ))}
+      {overflow > 0 ? (
+        <span
+          className="-mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[8px] font-semibold text-slate-600 shadow-sm"
+          title={`${overflow} more`}
+        >
+          +{overflow}
+        </span>
+      ) : null}
+    </div>
   );
 }
 

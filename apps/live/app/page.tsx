@@ -362,6 +362,12 @@ export default function LivePage() {
   // Durable Object room right now. Includes ourselves once our `hello`
   // round-trips. Rendered in the editor header avatar stack.
   const [livePresence, setLivePresence] = useState<Participant[]>([]);
+  // Which tab each remote participant is currently looking at. Driven
+  // by the room's 'tab-focus' op; updated on every active-tab change
+  // and on initial room connect. Used to render avatar dots on the
+  // matching TabBar entries so collaborators can see at a glance
+  // where everyone is working.
+  const [remoteTabFocus, setRemoteTabFocus] = useState<Map<string, string>>(new Map());
   // Per-participant selection: which element each remote participant
   // currently has focused (null means deselected). Cleared for any
   // participant who drops out of presence. Drives the on-element badges
@@ -637,6 +643,20 @@ export default function LivePage() {
         // longer connected. Stops stale presence indicators from
         // sticking after a tab close or network drop.
         const present = new Set(participants.map((p) => p.id));
+        // Drop tab-focus entries for people who left so their avatar
+        // dot doesn't linger on a tab they no longer occupy.
+        setRemoteTabFocus((prev) => {
+          let changed = false;
+          const next = new Map<string, string>();
+          for (const [id, tabId] of prev) {
+            if (present.has(id)) {
+              next.set(id, tabId);
+            } else {
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
         setRemoteSelections((prev) => {
           let changed = false;
           const next = new Map<string, string | null>();
@@ -682,6 +702,12 @@ export default function LivePage() {
             );
             return next;
           });
+        } else if (op.kind === 'tab-focus') {
+          setRemoteTabFocus((prev) => {
+            const next = new Map(prev);
+            next.set(from, op.tabId);
+            return next;
+          });
         } else if (op.kind === 'log') {
           // Remote participant just emitted an audit entry. Prepend it
           // to the local list (de-duped by id so a sender that round-
@@ -722,6 +748,15 @@ export default function LivePage() {
     roomRef.current?.send({ kind: 'op', op: { kind: 'select', elementId: selectedId } });
   }, [hydrated, diagramId, diagramShareable, selectedId]);
 
+  // Broadcast the currently active tab so peers can show our avatar
+  // on the TabBar entry we're focused on. Fires both on initial room
+  // connect (when the dependencies first satisfy) and on every local
+  // tab switch.
+  useEffect(() => {
+    if (!hydrated || !diagramId || !diagramShareable) return;
+    roomRef.current?.send({ kind: 'op', op: { kind: 'tab-focus', tabId: activeId } });
+  }, [hydrated, diagramId, diagramShareable, activeId]);
+
   // Local cursor broadcaster. Sends the participant's pointer position
   // in canvas-coords whenever it moves, throttled to ~30 Hz so we
   // don't flood the room. `broadcastCursor(null)` is called when the
@@ -761,6 +796,22 @@ export default function LivePage() {
   // `select` op. Self is filtered out — we don't need a "you're here"
   // badge on top of our own selection ring.
   const livePresenceById = new Map(livePresence.map((p) => [p.id, p] as const));
+  // Group remote participants by the tab they're currently focused
+  // on, so each TabBar entry can render the right avatars. Self is
+  // excluded — we already know which tab we're on. Used as the
+  // single source for the new on-tab presence dots.
+  const participantsByTab = (() => {
+    const map = new Map<string, Participant[]>();
+    for (const [id, tabId] of remoteTabFocus) {
+      if (id === selfParticipant.id) continue;
+      const p = livePresenceById.get(id);
+      if (!p) continue;
+      const bucket = map.get(tabId);
+      if (bucket) bucket.push(p);
+      else map.set(tabId, [p]);
+    }
+    return map;
+  })();
   // Cursor rows joined with presence so we get a fresh colour + name on
   // every render and don't have to denormalise them into each `cursor`
   // op payload. Filter to the active tab so cursors of teammates
@@ -2437,13 +2488,6 @@ export default function LivePage() {
     <div className="flex h-dvh flex-col">
       <EditorHeader
         diagramName={diagramName}
-        participants={
-          // Avatar stack: live presence is authoritative when the room
-          // is connected. For private diagrams there's no room, so we
-          // hide the stack entirely (a single "you" avatar with no
-          // peers carries no information).
-          diagramShareable ? (livePresence.length > 0 ? livePresence : [selfParticipant]) : []
-        }
         hideTitle={anyWelcomeOpen}
         showShare={isOwner && hydrated && !anyWelcomeOpen}
         shareable={diagramShareable}
@@ -2616,6 +2660,7 @@ export default function LivePage() {
           otherDiagrams={diagramList.filter((d) => d.id !== diagramId)}
           onCopyTabTo={copyActiveTabTo}
           onReorder={reorderTabs}
+          participantsByTab={participantsByTab}
         />
       )}
       {commentThreadOpenId !== null
