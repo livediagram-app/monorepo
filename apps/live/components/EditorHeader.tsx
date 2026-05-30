@@ -103,6 +103,7 @@ export function EditorHeader({
                 />
               </PortalMenu>
             ) : null}
+            <SharedBadge shareable={shareable} />
           </div>
         )}
       </div>
@@ -125,6 +126,73 @@ export function EditorHeader({
         ) : null}
       </div>
     </header>
+  );
+}
+
+// Small pill rendered to the right of the diagram-name ellipsis menu
+// so the owner can see at a glance whether the diagram is private or
+// shared. Hover surfaces the same description that lives on the
+// Share button. Hidden on visitor views where the share UI doesn't
+// apply.
+function SharedBadge({ shareable }: { shareable: boolean }) {
+  return (
+    <span
+      title={
+        shareable
+          ? 'This diagram is shared — anyone with a link in the Share dialog can access it.'
+          : 'This diagram is private to you. Open the Share dialog to invite collaborators.'
+      }
+      className={
+        shareable
+          ? 'inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-700 ring-1 ring-brand-200'
+          : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 ring-1 ring-slate-200'
+      }
+    >
+      <span aria-hidden className={shareable ? 'text-brand-500' : 'text-slate-400'}>
+        {shareable ? <SharedDotIcon /> : <PrivateDotIcon />}
+      </span>
+      {shareable ? 'Shared' : 'Private'}
+    </span>
+  );
+}
+
+function SharedDotIcon() {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 9 9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="2" cy="4.5" r="1.4" />
+      <circle cx="7" cy="2" r="1.2" />
+      <circle cx="7" cy="7" r="1.2" />
+      <path d="M3.2 3.8L5.9 2.5M3.2 5.2L5.9 6.5" />
+    </svg>
+  );
+}
+
+function PrivateDotIcon() {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 9 9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="4" width="5" height="3.5" rx="0.8" />
+      <path d="M3.25 4V3a1.25 1.25 0 0 1 2.5 0v1" />
+    </svg>
   );
 }
 

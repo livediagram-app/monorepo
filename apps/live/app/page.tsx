@@ -387,8 +387,15 @@ export default function LivePage() {
     Map<string, { tabId: string; x: number; y: number } | null>
   >(new Map());
   const refreshDiagramList = (ownerId: string) => {
+    // Safety net: a hung fetch (e.g. dev server caches a stale
+    // bundle and the request never settles) would otherwise leave
+    // the Explorer skeleton up forever. After 10s force the flag
+    // off so the UI recovers — the next successful refresh
+    // replaces the empty list.
+    const safety = window.setTimeout(() => setDiagramListLoading(false), 10000);
     apiListDiagrams(ownerId)
       .then((list) => {
+        window.clearTimeout(safety);
         setDiagramList(list);
         setDiagramListLoading(false);
       })
@@ -397,6 +404,7 @@ export default function LivePage() {
         // for a beat is acceptable; we don't want a transient error
         // to wipe the rendered list. Drop the loading flag so the
         // Explorer doesn't spin forever on a dead network.
+        window.clearTimeout(safety);
         setDiagramListLoading(false);
       });
   };
