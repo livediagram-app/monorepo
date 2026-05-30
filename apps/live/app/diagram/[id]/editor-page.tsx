@@ -312,6 +312,12 @@ export default function LivePage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [diagramName, setDiagramName] = useState('Untitled diagram');
+  // Reflect the diagram name in the browser tab so users with many
+  // tabs open can spot the right one. Falls back to the bare brand
+  // until hydration lands the real name.
+  useEffect(() => {
+    document.title = diagramName ? `${diagramName} | livediagram` : 'livediagram';
+  }, [diagramName]);
   // Multi-selection bag for marquee box-select. Mutually exclusive with the
   // single `selectedId` above: when `multiSelectedIds.size > 0`, single
   // selection / its popover / its accordion controls are suppressed. Both

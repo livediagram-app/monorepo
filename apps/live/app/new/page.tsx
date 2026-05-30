@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
@@ -41,6 +41,10 @@ export default function NewDiagramPage() {
   //     local stub with the server-side participant if one exists.
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    document.title = 'New diagram | livediagram';
+  }, []);
 
   // Explorer panel state. Lives on this page so the user can hop back
   // into an existing diagram without first having to commit a new one

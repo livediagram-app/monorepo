@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'livediagram — canvas',
+  title: 'livediagram',
   description: 'Build diagrams and mindmaps. Multiplayer canvas.',
 };
 
