@@ -59,7 +59,13 @@ export function TabBar({
   const [overId, setOverId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-12 shrink-0 items-center gap-1 border-t border-slate-200 bg-white px-2">
+    <div className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3">
+      <span
+        className="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+        aria-hidden
+      >
+        Tabs
+      </span>
       <div className="scrollbar-slim flex flex-1 items-center gap-1 overflow-x-auto">
         {tabs.map((tab) => {
           const isActive = tab.id === activeId;
