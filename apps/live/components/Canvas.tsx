@@ -564,8 +564,11 @@ export function Canvas(props: CanvasProps) {
     !selectedLocked &&
     !tabLocked;
 
-  const boxed = elements.filter(isBoxed);
-  const arrows = elements.filter((el) => el.type === 'arrow');
+  // Cached counts only. Render loops iterate `elements` directly so
+  // arrows and boxed elements interleave in z-order (see render
+  // block below); the only thing we still need eagerly is "are
+  // there any arrows" to decide whether to mount the ArrowDefs.
+  const arrowCount = elements.reduce((n, el) => (el.type === 'arrow' ? n + 1 : n), 0);
 
   const cursorClass = pan
     ? 'cursor-grabbing'
@@ -753,51 +756,72 @@ export function Canvas(props: CanvasProps) {
           transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
         }}
       >
-        {boxed.map((element) => (
-          <BoxedElementView
-            key={element.id}
-            element={element}
-            isSelected={memberIds.has(element.id) || multiSelectedIds.has(element.id)}
-            isMultiSelected={multiSelectedIds.has(element.id)}
-            remoteSelectors={remoteSelectionsByElement.get(element.id) ?? []}
-            isEditing={element.id === editingId}
-            isPaintMode={isPaintMode || isGroupMode}
-            showHandles={showHandles(element.id)}
-            showAnchors={showAnchorsFor(element.id)}
-            zoom={viewportZoom}
-            badgeColor={badgeColor}
-            tabLocked={tabLocked}
-            onBeginDrag={onBeginDrag}
-            onBeginAnchorDrag={onBeginAnchorDrag}
-            onBeginEdit={() => onBeginEdit(element.id)}
-            onCommitLabel={(label) => onCommitLabel(element.id, label)}
-            onCancelEdit={onCancelEdit}
-            onFollowLink={onFollowLink}
-            onOpenComments={() => onOpenComments(element.id)}
-            onContextSelect={() => onSelect(element.id)}
-          />
-        ))}
-
-        {arrows.length > 0 ? (
+        {/* Shared arrowhead defs. Multiple per-arrow <svg>s below
+            all reference url(#arrowhead) — defs are document-scoped
+            in SVG so a single defs node lets every arrow render
+            with the same marker. */}
+        {arrowCount > 0 ? (
           <svg
-            className="absolute inset-0 h-full w-full"
-            style={{ pointerEvents: 'none', overflow: 'visible' }}
+            className="absolute"
+            style={{ width: 0, height: 0, overflow: 'visible' }}
+            aria-hidden
           >
             <ArrowDefs />
-            {arrows.map((arrow) => (
-              <ArrowView
-                key={arrow.id}
-                arrow={arrow}
-                elements={elements}
-                isSelected={arrow.id === selectedId}
-                isPaintMode={isPaintMode || isGroupMode}
-                onSelect={() => onSelect(arrow.id)}
-                onBeginEndpointDrag={(end, e) => onBeginEndpointDrag(arrow.id, end, e)}
-                onBeginTranslate={(e) => onBeginArrowTranslate(arrow.id, e)}
-              />
-            ))}
           </svg>
         ) : null}
+
+        {/* Render elements in their natural array order so
+            `bringToFront` / `sendToBack` reorder arrows relative to
+            boxed elements (instead of all arrows perpetually stacking
+            above all boxes inside a single SVG layer). Each arrow
+            gets its own <svg> overlay; pointer events on the SVG are
+            disabled in CSS, only the inner arrow line picks them up. */}
+        {elements.map((element) => {
+          if (element.type === 'arrow') {
+            return (
+              <svg
+                key={element.id}
+                className="absolute inset-0 h-full w-full"
+                style={{ pointerEvents: 'none', overflow: 'visible' }}
+              >
+                <ArrowView
+                  arrow={element}
+                  elements={elements}
+                  isSelected={element.id === selectedId}
+                  isPaintMode={isPaintMode || isGroupMode}
+                  onSelect={() => onSelect(element.id)}
+                  onBeginEndpointDrag={(end, e) => onBeginEndpointDrag(element.id, end, e)}
+                  onBeginTranslate={(e) => onBeginArrowTranslate(element.id, e)}
+                />
+              </svg>
+            );
+          }
+          if (!isBoxed(element)) return null;
+          return (
+            <BoxedElementView
+              key={element.id}
+              element={element}
+              isSelected={memberIds.has(element.id) || multiSelectedIds.has(element.id)}
+              isMultiSelected={multiSelectedIds.has(element.id)}
+              remoteSelectors={remoteSelectionsByElement.get(element.id) ?? []}
+              isEditing={element.id === editingId}
+              isPaintMode={isPaintMode || isGroupMode}
+              showHandles={showHandles(element.id)}
+              showAnchors={showAnchorsFor(element.id)}
+              zoom={viewportZoom}
+              badgeColor={badgeColor}
+              tabLocked={tabLocked}
+              onBeginDrag={onBeginDrag}
+              onBeginAnchorDrag={onBeginAnchorDrag}
+              onBeginEdit={() => onBeginEdit(element.id)}
+              onCommitLabel={(label) => onCommitLabel(element.id, label)}
+              onCancelEdit={onCancelEdit}
+              onFollowLink={onFollowLink}
+              onOpenComments={() => onOpenComments(element.id)}
+              onContextSelect={() => onSelect(element.id)}
+            />
+          );
+        })}
 
         {remoteCursors.map((c) => (
           <RemoteCursor key={c.id} cursor={c} zoom={viewportZoom} />
