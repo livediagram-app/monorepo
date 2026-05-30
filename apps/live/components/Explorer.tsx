@@ -131,8 +131,7 @@ export function Explorer({
         <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-600">
           <p className="font-medium text-slate-800">Sign in to save your diagrams</p>
           <p className="mt-1 leading-relaxed text-slate-500">
-            Your work lives only on this device for now. Create an account to keep diagrams across
-            sessions and share them.
+            Create an account to keep your diagrams across sessions.
           </p>
           <button
             type="button"
