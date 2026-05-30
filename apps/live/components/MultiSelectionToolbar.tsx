@@ -2,8 +2,14 @@ import { Tooltip } from './Tooltip';
 
 type MultiSelectionToolbarProps = {
   count: number;
+  // True if at least one member of the multi-selection is locked. The
+  // Lock button toggles them all to the inverse state — if anything is
+  // unlocked, the click locks everything; otherwise it unlocks.
+  anyLocked: boolean;
   onDuplicate: () => void;
   onDelete: () => void;
+  onGroup: () => void;
+  onToggleLock: () => void;
 };
 
 // Floating action toolbar shown at the top-middle of the canvas while a
@@ -13,8 +19,11 @@ type MultiSelectionToolbarProps = {
 // via the shared `fade-in` keyframe.
 export function MultiSelectionToolbar({
   count,
+  anyLocked,
   onDuplicate,
   onDelete,
+  onGroup,
+  onToggleLock,
 }: MultiSelectionToolbarProps) {
   return (
     <div
@@ -37,6 +46,41 @@ export function MultiSelectionToolbar({
           className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
         >
           <DuplicateIcon />
+        </button>
+      </Tooltip>
+      <Tooltip
+        title="Group"
+        description="Bind every selected element into one group so they move and lock together."
+      >
+        <button
+          type="button"
+          onClick={onGroup}
+          aria-label="Group selected elements"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          <GroupIcon />
+        </button>
+      </Tooltip>
+      <Tooltip
+        title={anyLocked ? 'Unlock' : 'Lock'}
+        description={
+          anyLocked
+            ? 'Unlock every selected element so they can be moved and resized again.'
+            : "Lock every selected element so they can't be moved or resized."
+        }
+      >
+        <button
+          type="button"
+          onClick={onToggleLock}
+          aria-label={anyLocked ? 'Unlock selected elements' : 'Lock selected elements'}
+          aria-pressed={anyLocked}
+          className={
+            anyLocked
+              ? 'flex h-7 w-7 items-center justify-center rounded-md bg-brand-100 text-brand-700'
+              : 'flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+          }
+        >
+          <LockIcon closed={anyLocked} />
         </button>
       </Tooltip>
       <Tooltip
@@ -70,6 +114,47 @@ function DuplicateIcon() {
     >
       <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
       <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
+    </svg>
+  );
+}
+
+function GroupIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2.25" y="2.25" width="8" height="8" rx="1.25" />
+      <rect x="5.75" y="5.75" width="8" height="8" rx="1.25" fill="white" />
+    </svg>
+  );
+}
+
+function LockIcon({ closed }: { closed: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="7.5" width="10" height="6.5" rx="1.25" />
+      {closed ? (
+        <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.5 0v2.5" />
+      ) : (
+        <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.4-.7" />
+      )}
     </svg>
   );
 }

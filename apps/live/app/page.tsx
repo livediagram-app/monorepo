@@ -1081,6 +1081,14 @@ export default function LivePage() {
               ...(theme.elementText ? { textColor: theme.elementText } : { textColor: undefined }),
             };
           }
+          if (el.type === 'arrow') {
+            return {
+              ...el,
+              ...(theme.elementStroke
+                ? { strokeColor: theme.elementStroke }
+                : { strokeColor: undefined }),
+            };
+          }
           return el;
         });
         return {
@@ -1154,6 +1162,31 @@ export default function LivePage() {
     setEditingId(null);
     setFormatSourceId(null);
     setGroupSourceId(null);
+  };
+
+  // Bind every multi-selected boxed element into a single group. Same
+  // groupId across all of them so move / lock / delete propagate
+  // through the selection in the existing group machinery.
+  const groupMultiSelected = () => {
+    if (multiSelectedIds.size < 2) return;
+    const groupId = crypto.randomUUID();
+    commit((els) =>
+      els.map((el) => (multiSelectedIds.has(el.id) && isBoxed(el) ? { ...el, groupId } : el)),
+    );
+  };
+
+  // Toggle lock across every multi-selected element. If any member is
+  // unlocked, the click locks everyone — so a partial-locked selection
+  // resolves toward "all locked" with one click instead of leaving the
+  // user to figure out the inverse state.
+  const toggleLockMultiSelected = () => {
+    if (multiSelectedIds.size === 0) return;
+    const anyUnlocked = activeTab.elements.some(
+      (el) => multiSelectedIds.has(el.id) && el.locked !== true,
+    );
+    commit((els) =>
+      els.map((el) => (multiSelectedIds.has(el.id) ? { ...el, locked: anyUnlocked } : el)),
+    );
   };
 
   // Multi-select duplicate: clones every multi-selected boxed element with
@@ -1570,11 +1603,16 @@ export default function LivePage() {
     const element = activeTab.elements.find((el) => el.id === elementId);
     if (!element || !isBoxed(element) || element.locked === true) return;
     const start = anchorPosition(element, anchor);
+    // New arrows inherit the tab's theme stroke colour so they
+    // visually belong with the rest of the diagram. Falls back to the
+    // built-in arrow default when the theme has no override (Brand).
+    const theme = getTheme(activeTab.theme);
     const arrow: ArrowElement = {
       id: crypto.randomUUID(),
       type: 'arrow',
       from: { kind: 'pinned', elementId, anchor },
       to: { kind: 'free', x: start.x, y: start.y },
+      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
     };
     commit((els) => [...els, arrow]);
     setSelectedId(arrow.id);
@@ -1789,6 +1827,8 @@ export default function LivePage() {
         onSetCanvasTool={setCanvasTool}
         onDuplicateMultiSelected={duplicateMultiSelected}
         onDeleteMultiSelected={deleteMultiSelected}
+        onGroupMultiSelected={groupMultiSelected}
+        onToggleLockMultiSelected={toggleLockMultiSelected}
         editingId={editingId}
         formatSourceId={formatSourceId}
         groupSourceId={groupSourceId}

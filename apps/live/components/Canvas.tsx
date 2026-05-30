@@ -64,6 +64,8 @@ type CanvasProps = {
   remoteSelectionsByElement: Map<string, { id: string; name: string; color: string }[]>;
   onDuplicateMultiSelected: () => void;
   onDeleteMultiSelected: () => void;
+  onGroupMultiSelected: () => void;
+  onToggleLockMultiSelected: () => void;
   editingId: string | null;
   formatSourceId: string | null;
   groupSourceId: string | null;
@@ -165,6 +167,8 @@ export function Canvas(props: CanvasProps) {
     remoteSelectionsByElement,
     onDuplicateMultiSelected,
     onDeleteMultiSelected,
+    onGroupMultiSelected,
+    onToggleLockMultiSelected,
     editingId,
     formatSourceId,
     groupSourceId,
@@ -692,8 +696,11 @@ export function Canvas(props: CanvasProps) {
       {multiSelectedIds.size >= 2 ? (
         <MultiSelectionToolbar
           count={multiSelectedIds.size}
+          anyLocked={elements.some((el) => multiSelectedIds.has(el.id) && el.locked === true)}
           onDuplicate={onDuplicateMultiSelected}
           onDelete={onDeleteMultiSelected}
+          onGroup={onGroupMultiSelected}
+          onToggleLock={onToggleLockMultiSelected}
         />
       ) : null}
 
