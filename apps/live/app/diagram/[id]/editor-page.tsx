@@ -2365,6 +2365,15 @@ export default function LivePage() {
     commit((els) =>
       els.map((el) => (multiSelectedIds.has(el.id) && isBoxed(el) ? { ...el, groupId } : el)),
     );
+    // After grouping, transition from marquee multi-select to single
+    // selection on the new group: `selectionMembers` picks up every
+    // member when one is selected, so the user sees the group treated
+    // as one unit. Without this transition the multi-select toolbar
+    // just stayed up looking identical and the Group click felt like
+    // a no-op.
+    const firstBoxed = activeTab.elements.find((el) => multiSelectedIds.has(el.id) && isBoxed(el));
+    if (firstBoxed) setSelectedId(firstBoxed.id);
+    setMultiSelectedIds(new Set());
   };
 
   // Toggle lock across every multi-selected element. If any member is
