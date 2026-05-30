@@ -826,6 +826,21 @@ export default function LivePage() {
     emitChange(activeId, before, after);
   };
 
+  // Drop every audit entry for the currently active tab. The diagram
+  // itself is untouched — only the log dies. The Activity Panel
+  // exposes this via its bottom "Clear Activity" button. Mirrors the
+  // server-side cascade that runs on tab delete, just user-triggered.
+  const clearActivityForActiveTab = () => {
+    if (!diagramId) return;
+    const targetTabId = activeId;
+    setChangeLog((prev) => prev.filter((entry) => entry.tabId !== targetTabId));
+    apiDeleteChangeLogForTab(selfParticipant.id, diagramId, targetTabId).catch(() => {
+      // Best-effort. Stale rows in D1 are harmless; the next list
+      // fetch reconciles. We don't want a transient error to block
+      // the local clear that already happened.
+    });
+  };
+
   // Surgical revert: replay the entry's `before` payload onto the
   // target tab. Other elements (including newer edits) are untouched.
   // If the tab was deleted in between, the revert is a no-op — the
@@ -2377,6 +2392,7 @@ export default function LivePage() {
         onMoveActivity={(x, y) => setActivityPosition({ x, y })}
         onToggleActivityMinimized={() => setActivityMinimized((v) => !v)}
         onRevertChange={revertChange}
+        onClearActivity={clearActivityForActiveTab}
         currentDiagramId={diagramId}
         onOpenDiagram={openDiagram}
         onNewDiagram={newDiagram}

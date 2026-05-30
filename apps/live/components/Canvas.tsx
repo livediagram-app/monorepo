@@ -104,6 +104,7 @@ type CanvasProps = {
   onMoveActivity: (x: number, y: number) => void;
   onToggleActivityMinimized: () => void;
   onRevertChange: (entry: ChangeLogEntry) => void;
+  onClearActivity: () => void;
   currentDiagramId: string | null;
   onOpenDiagram: (id: string) => void;
   onNewDiagram: () => void;
@@ -227,6 +228,7 @@ export function Canvas(props: CanvasProps) {
     onMoveActivity,
     onToggleActivityMinimized,
     onRevertChange,
+    onClearActivity,
     currentDiagramId,
     onOpenDiagram,
     onNewDiagram,
@@ -890,6 +892,7 @@ export function Canvas(props: CanvasProps) {
           onUndo={onUndo}
           onRedo={onRedo}
           onRevert={onRevertChange}
+          onClearActivity={onClearActivity}
           onMoveTo={onMoveActivity}
           onToggleMinimized={onToggleActivityMinimized}
         />

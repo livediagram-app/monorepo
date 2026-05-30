@@ -13,6 +13,10 @@ type ActivityPanelProps = {
   onUndo: () => void;
   onRedo: () => void;
   onRevert: (entry: ChangeLogEntry) => void;
+  // Wipe every audit entry for the active tab. The diagram state is
+  // untouched — only the log dies. Disabled when the list is empty
+  // so the button doesn't no-op.
+  onClearActivity: () => void;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
 };
@@ -31,6 +35,7 @@ export function ActivityPanel({
   onUndo,
   onRedo,
   onRevert,
+  onClearActivity,
   onMoveTo,
   onToggleMinimized,
 }: ActivityPanelProps) {
@@ -99,6 +104,19 @@ export function ActivityPanel({
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="border-t border-slate-100 pt-2">
+          <button
+            type="button"
+            onClick={onClearActivity}
+            disabled={entries.length === 0}
+            className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Delete every activity entry for this tab. The diagram itself is untouched."
+          >
+            <TrashIcon />
+            Clear Activity
+          </button>
         </div>
       </div>
     </MovablePanel>
@@ -184,6 +202,26 @@ function formatRelativeTime(deltaMs: number): string {
   const days = Math.floor(hours / 24);
   if (days === 1) return 'yesterday';
   return `${days} days ago`;
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4h11" />
+      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
+      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
+    </svg>
+  );
 }
 
 function UndoIcon() {

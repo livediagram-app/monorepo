@@ -28,41 +28,136 @@ function elementEquals(a: Element, b: Element): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-// Pick a human label for the element (falling back to the type when
-// there's no label). Sticky notes and arrows lean on the type since
-// their labels are often empty.
-function labelOf(el: Element): string {
-  if (el.type === 'arrow') return 'arrow';
-  const boxed = el as BoxedElement;
-  const trimmed = (boxed.label ?? '').trim();
-  if (trimmed) return `'${trimmed}'`;
-  if (el.type === 'sticky') return 'sticky note';
-  if (el.type === 'text') return 'text';
-  return el.type;
+// Display kind for an element — capitalised, no article. Shapes
+// surface their concrete sub-kind ('Square', 'Diamond'…) so log
+// entries read as "Added a Square" rather than the abstract "Shape".
+function kindLabel(el: Element): string {
+  if (el.type === 'arrow') return 'Arrow';
+  if (el.type === 'text') return 'Text';
+  if (el.type === 'sticky') return 'Sticky note';
+  if (el.type === 'shape') {
+    const s = el.shape;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  return 'Element';
 }
+
+function article(label: string): 'a' | 'an' {
+  return /^[aeiou]/i.test(label) ? 'an' : 'a';
+}
+
+function pluralise(label: string): string {
+  // 'Text' as a count noun ("2 texts") is awkward — promote to
+  // "Text elements". Everything else: append 's'. Good enough for
+  // V1; refine if a shape kind ends up needing irregular plural.
+  if (label === 'Text') return 'Text elements';
+  return `${label}s`;
+}
+
+// One-element description for verbs that act on a single target:
+// "Added 'API'", "Added a Square", "Moved an Arrow". Quoted labels
+// win when the element has one; otherwise we fall back to the
+// articled kind.
+function describeOne(el: Element): string {
+  if (el.type !== 'arrow') {
+    const trimmed = ((el as BoxedElement).label ?? '').trim();
+    if (trimmed) return `'${trimmed}'`;
+  }
+  const k = kindLabel(el);
+  return `${article(k)} ${k}`;
+}
+
+// Multi-element description grouping by kind: "a Square & an Arrow",
+// "3 Squares, 2 Arrows & a Circle". Order follows first-seen so the
+// summary stays stable across renders.
+function describeMany(elements: Element[]): string {
+  const counts = new Map<string, number>();
+  for (const el of elements) {
+    const k = kindLabel(el);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  const parts: string[] = [];
+  for (const [k, n] of counts) {
+    parts.push(n === 1 ? `${article(k)} ${k}` : `${n} ${pluralise(k)}`);
+  }
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0]!;
+  if (parts.length === 2) return `${parts[0]} & ${parts[1]}`;
+  return `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}`;
+}
+
+// Set of keys that differ between two snapshots of the same element.
+// JSON.stringify per key is the cheapest "deep equal" for the data
+// shapes we have here (no functions, no cyclical references).
+function diffKeys(before: Element, after: Element): Set<string> {
+  const allKeys = new Set([
+    ...Object.keys(before as Record<string, unknown>),
+    ...Object.keys(after as Record<string, unknown>),
+  ]);
+  const keys = new Set<string>();
+  for (const k of allKeys) {
+    const a = (before as Record<string, unknown>)[k];
+    const b = (after as Record<string, unknown>)[k];
+    if (JSON.stringify(a) !== JSON.stringify(b)) keys.add(k);
+  }
+  return keys;
+}
+
+const COLOUR_KEYS = new Set(['fillColor', 'strokeColor', 'textColor']);
+const POSITION_KEYS = new Set(['x', 'y']);
+const SIZE_KEYS = new Set(['x', 'y', 'width', 'height']);
+
+// Pick a sharper verb for a single-element edit by inspecting which
+// fields actually changed. Falls back to a plain "Edited X" when the
+// change touches a mix of unrelated fields.
+function describeSingleEdit(before: Element, after: Element): string {
+  const keys = diffKeys(before, after);
+  if (keys.size === 0) return `Edited ${describeOne(after)}`;
+
+  if (keys.size === 1 && keys.has('label')) {
+    const oldLabel = ((before as BoxedElement).label ?? '').trim();
+    const newLabel = ((after as BoxedElement).label ?? '').trim();
+    // Renaming to nothing reads better as "Cleared label on X".
+    if (!newLabel) return `Cleared label on ${kindLabel(after)}`;
+    const fromPart = oldLabel ? `'${oldLabel}'` : kindLabel(before);
+    return `Renamed ${fromPart} to '${newLabel}'`;
+  }
+
+  const allInSet = (allowed: Set<string>) => [...keys].every((k) => allowed.has(k));
+  if (allInSet(POSITION_KEYS)) return `Moved ${describeOne(after)}`;
+  if (allInSet(SIZE_KEYS) && (keys.has('width') || keys.has('height'))) {
+    return `Resized ${describeOne(after)}`;
+  }
+  if (allInSet(COLOUR_KEYS)) return `Recoloured ${describeOne(after)}`;
+
+  return `Edited ${describeOne(after)}`;
+}
+
+type EditedPair = { before: Element; after: Element };
 
 function summarize(
   kind: ChangeLogKind,
   added: Element[],
   removed: Element[],
-  edited: Element[],
+  edited: EditedPair[],
 ): string {
   if (kind === 'add') {
-    if (added.length === 1) return `Added ${labelOf(added[0]!)}`;
-    return `Added ${added.length} elements`;
+    if (added.length === 1) return `Added ${describeOne(added[0]!)}`;
+    return `Added ${describeMany(added)}`;
   }
   if (kind === 'delete') {
-    if (removed.length === 1) return `Deleted ${labelOf(removed[0]!)}`;
-    return `Deleted ${removed.length} elements`;
+    if (removed.length === 1) return `Deleted ${describeOne(removed[0]!)}`;
+    return `Deleted ${describeMany(removed)}`;
   }
   // 'edit' covers pure edits AND mixed changes (e.g. one add + one
-  // edit in the same commit). Lead with edited because it's the most
-  // common verb on a busy canvas.
+  // edit in the same commit). One pure edit gets a sharp verb via
+  // describeSingleEdit; everything else falls back to a kind-grouped
+  // summary so the user can still see what was touched.
   if (edited.length === 1 && added.length === 0 && removed.length === 0) {
-    return `Edited ${labelOf(edited[0]!)}`;
+    return describeSingleEdit(edited[0]!.before, edited[0]!.after);
   }
-  const total = added.length + removed.length + edited.length;
-  return `Edited ${total} element${total === 1 ? '' : 's'}`;
+  const touched = [...added, ...removed, ...edited.map((p) => p.after)];
+  return `Edited ${describeMany(touched)}`;
 }
 
 // Diff two element snapshots from the same tab. Returns null when
@@ -74,7 +169,7 @@ export function diffElements(before: Element[], after: Element[]): ChangeDiff | 
 
   const added: Element[] = [];
   const removed: Element[] = [];
-  const edited: Element[] = [];
+  const edited: EditedPair[] = [];
   const elementIds: string[] = [];
   const beforeState: Record<string, Element | null> = {};
   const afterState: Record<string, Element | null> = {};
@@ -87,7 +182,7 @@ export function diffElements(before: Element[], after: Element[]): ChangeDiff | 
       beforeState[id] = null;
       afterState[id] = el;
     } else if (!elementEquals(prev, el)) {
-      edited.push(el);
+      edited.push({ before: prev, after: el });
       elementIds.push(id);
       beforeState[id] = prev;
       afterState[id] = el;
