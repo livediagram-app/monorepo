@@ -58,6 +58,11 @@ export type SelectedElementControls = {
   // accordion's morph-into-this-kind grid.
   shapeKind: ShapeKind | null;
   onSetShapeKind: (kind: ShapeKind) => void;
+  // Whether the selected boxed element's width/height ratio is
+  // locked during resize. `null` when the selection is something
+  // that doesn't support aspect-lock (e.g. arrows).
+  aspectLocked: boolean | null;
+  onToggleAspectLock: () => void;
 };
 
 export type TabSectionControls = {
@@ -451,6 +456,21 @@ function SelectedElementSection({
               </Tooltip>
             ))}
           </div>
+          {selection.aspectLocked !== null ? (
+            <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium text-slate-700">Lock aspect ratio</span>
+                <span className="text-[10px] text-slate-500">
+                  Keep width-to-height fixed when resizing.
+                </span>
+              </div>
+              <ToggleSwitch
+                checked={selection.aspectLocked}
+                onChange={selection.onToggleAspectLock}
+                label="Lock aspect ratio"
+              />
+            </div>
+          ) : null}
         </Accordion>
       ) : null}
 
@@ -859,6 +879,43 @@ function ShapeIcon({ kind }: { kind: ShapeKind }) {
         </svg>
       );
   }
+}
+
+// iOS-style toggle switch. Used by the Shape accordion's Lock-aspect
+// row but generic enough for any future boolean preference that
+// belongs alongside its label rather than as an icon button.
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className={
+        checked
+          ? 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-brand-500 transition'
+          : 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-slate-300 transition'
+      }
+    >
+      <span
+        aria-hidden
+        className={
+          checked
+            ? 'inline-block h-3.5 w-3.5 translate-x-[18px] rounded-full bg-white shadow-sm transition'
+            : 'inline-block h-3.5 w-3.5 translate-x-[3px] rounded-full bg-white shadow-sm transition'
+        }
+      />
+    </button>
+  );
 }
 
 function BoldIcon() {

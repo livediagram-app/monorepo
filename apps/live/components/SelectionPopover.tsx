@@ -10,7 +10,6 @@ type SelectionPopoverProps = {
   canvasOffset: { x: number; y: number };
   zoom: number;
   locked: boolean;
-  aspectLocked: boolean;
   tabs: Tab[];
   currentTabId: string;
   linkedTabId: string | null;
@@ -22,7 +21,6 @@ type SelectionPopoverProps = {
   onCopyFormat?: () => void;
   onGroup?: () => void;
   onUngroup?: () => void;
-  onToggleAspectLock?: () => void;
   onOpenComments?: () => void;
 };
 
@@ -38,7 +36,6 @@ export function SelectionPopover({
   canvasOffset,
   zoom,
   locked,
-  aspectLocked,
   tabs,
   currentTabId,
   linkedTabId,
@@ -50,7 +47,6 @@ export function SelectionPopover({
   onCopyFormat,
   onGroup,
   onUngroup,
-  onToggleAspectLock,
   onOpenComments,
 }: SelectionPopoverProps) {
   const linkButtonRef = useRef<HTMLButtonElement>(null);
@@ -192,30 +188,6 @@ export function SelectionPopover({
         >
           <GroupIcon />
         </PopoverButton>
-      ) : null}
-      {onToggleAspectLock ? (
-        <Tooltip
-          title={aspectLocked ? 'Aspect ratio locked' : 'Lock aspect ratio'}
-          description={
-            aspectLocked
-              ? 'Click to unlock so width and height resize independently.'
-              : 'When on, resizing keeps the element’s width-to-height ratio.'
-          }
-        >
-          <button
-            type="button"
-            onClick={onToggleAspectLock}
-            aria-label={aspectLocked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
-            aria-pressed={aspectLocked}
-            className={
-              aspectLocked
-                ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
-                : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
-            }
-          >
-            <AspectLockIcon closed={aspectLocked} />
-          </button>
-        </Tooltip>
       ) : null}
       <Tooltip
         title={locked ? 'Unlock' : 'Lock'}
@@ -375,30 +347,6 @@ function UngroupIcon() {
     >
       <rect x="2" y="2" width="6" height="6" rx="1" />
       <rect x="8" y="8" width="6" height="6" rx="1" />
-    </svg>
-  );
-}
-
-function AspectLockIcon({ closed }: { closed: boolean }) {
-  // A small square with corner arrows + a tiny lock indicator when closed.
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="3" width="10" height="10" rx="1.5" />
-      {closed ? (
-        <path d="M5.5 5.5l1.5 1.5M10.5 10.5l-1.5-1.5M5.5 10.5l1.5-1.5M10.5 5.5l-1.5 1.5" />
-      ) : (
-        <path d="M5.5 5.5l2 2M10.5 10.5l-2-2" />
-      )}
     </svg>
   );
 }

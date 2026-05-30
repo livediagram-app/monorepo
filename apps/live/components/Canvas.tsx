@@ -455,8 +455,6 @@ export function Canvas(props: CanvasProps) {
   }
 
   const selectedLocked = selected ? selected.locked === true : false;
-  const selectedAspectLocked =
-    selected && isBoxed(selected) ? selected.aspectLocked === true : false;
   // Single-selection popover hides when a marquee multi-selection is active
   // (a per-element popover doesn't make sense for many elements at once).
   const showPopover =
@@ -552,6 +550,8 @@ export function Canvas(props: CanvasProps) {
         onSetArrowThickness,
         shapeKind: selected.type === 'shape' ? selected.shape : null,
         onSetShapeKind,
+        aspectLocked: isBoxed(selected) ? (selected.aspectLocked ?? false) : null,
+        onToggleAspectLock,
       }
     : null;
 
@@ -732,7 +732,6 @@ export function Canvas(props: CanvasProps) {
             canvasOffset={viewportOffset}
             zoom={viewportZoom}
             locked={selectedLocked}
-            aspectLocked={selectedAspectLocked}
             tabs={tabs}
             currentTabId={currentTabId}
             linkedTabId={
@@ -748,7 +747,6 @@ export function Canvas(props: CanvasProps) {
             }
             onGroup={selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
             onUngroup={selectedIsGrouped ? onUngroup : undefined}
-            onToggleAspectLock={selectedIsBoxed ? onToggleAspectLock : undefined}
             onToggleLock={onToggleLockSelected}
             onDuplicate={onDuplicateSelected}
             onSetLink={onSetLink}
