@@ -29,7 +29,7 @@ export { DiagramRoom };
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Owner-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Owner-Id, X-Share-Code',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -54,6 +54,31 @@ function forbidden(): Response {
 
 function ownerOf(request: Request): string | null {
   return request.headers.get('X-Owner-Id');
+}
+
+function shareCodeOf(request: Request): string | null {
+  return request.headers.get('X-Share-Code');
+}
+
+// True when the request is allowed to write to the given diagram —
+// either the X-Owner-Id matches the diagram's ownerId, OR the
+// caller provided an X-Share-Code that maps to an active edit-role
+// share link for this diagram. Used by the audit-log endpoints so
+// edit-role visitors can persist their own entries instead of
+// vanishing on refresh. See specs/12-activity-and-audit.md.
+async function canEditDiagram(
+  env: Env,
+  diagramId: string,
+  owner: string | null,
+  shareCode: string | null,
+  ownerId: string,
+): Promise<boolean> {
+  if (owner && owner === ownerId) return true;
+  if (!shareCode) return false;
+  const link = await getShareLink(env, shareCode);
+  if (!link) return false;
+  if (link.diagramId !== diagramId) return false;
+  return link.role === 'edit';
 }
 
 export default {
@@ -221,17 +246,19 @@ export default {
           return stub.fetch(request);
         }
 
-        // /api/diagrams/<id>/log — owner-only.
+        // /api/diagrams/<id>/log — owner OR edit-role share-code holder.
         //   GET  → newest-first list of audit entries (capped at 200).
         //   POST → append a new entry. Body is a ChangeLogEntryDTO.
         // See specs/12-activity-and-audit.md.
         if (segments.length === 4 && segments[3] === 'log') {
           const id = segments[2]!;
           const owner = ownerOf(request);
+          const shareCode = shareCodeOf(request);
           if (!owner) return badRequest('missing X-Owner-Id');
           const existing = await getDiagram(env, id);
           if (!existing) return notFound();
-          if (existing.ownerId !== owner) return forbidden();
+          const allowed = await canEditDiagram(env, id, owner, shareCode, existing.ownerId);
+          if (!allowed) return forbidden();
 
           if (request.method === 'GET') {
             const entries = await listChangeLog(env, id);
@@ -271,18 +298,20 @@ export default {
           }
         }
 
-        // /api/diagrams/<id>/log/<entryId> — owner-only DELETE that
-        // drops a single log entry. Called when the user clicks Revert
-        // on an Activity row: the original entry is removed rather
-        // than getting paired with a 'reverted' twin.
+        // /api/diagrams/<id>/log/<entryId> — owner OR edit-role share
+        // visitor. DELETE drops a single log entry; called by Revert
+        // and by the symmetric Undo path so the entry vanishes on the
+        // canvas of every connected client.
         if (segments.length === 5 && segments[3] === 'log') {
           const id = segments[2]!;
           const entryId = segments[4]!;
           const owner = ownerOf(request);
+          const shareCode = shareCodeOf(request);
           if (!owner) return badRequest('missing X-Owner-Id');
           const existing = await getDiagram(env, id);
           if (!existing) return notFound();
-          if (existing.ownerId !== owner) return forbidden();
+          const allowed = await canEditDiagram(env, id, owner, shareCode, existing.ownerId);
+          if (!allowed) return forbidden();
 
           if (request.method === 'DELETE') {
             await deleteChangeLogEntry(env, id, entryId);

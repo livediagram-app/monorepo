@@ -142,6 +142,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Apply any pending D1 migrations before the worker code goes
+      # live. Idempotent: wrangler tracks applied migrations in a
+      # bookkeeping table and skips any it's already run. Has to
+      # happen BEFORE the worker deploy so the new code doesn't
+      # briefly run against a schema it doesn't understand.
+      #
+      # If a migration's bad, this step will fail and the deploy
+      # halts before the worker is updated — that's the desired
+      # safety: we'd rather block the deploy than break prod.
+      - name: Apply D1 migrations (remote)
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          pnpm exec wrangler d1 migrations apply DB --remote --yes \
+            || (echo "::error::D1 migrations failed; halting deploy"; exit 1)
+
       - name: Deploy to Cloudflare Workers
         working-directory: apps/api
         env:
@@ -150,7 +168,9 @@ jobs:
         # The D1 binding's `database_id` placeholder in wrangler.toml
         # must be filled in before the first deploy succeeds. Run
         # `wrangler d1 create livediagram` locally once and commit the
-        # resulting id. Migrations run via `pnpm db:migrate:remote`.
+        # resulting id. Migrations run via `pnpm db:migrate:remote`
+        # for ad-hoc local runs; the deploy applies them automatically
+        # in the step above.
         run: pnpm exec wrangler deploy
 
   deploy-router:

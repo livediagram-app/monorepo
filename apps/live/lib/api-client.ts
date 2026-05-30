@@ -131,6 +131,25 @@ function ownerHeaders(ownerId: string): HeadersInit {
   return { 'X-Owner-Id': ownerId, 'Content-Type': 'application/json' };
 }
 
+// Visitors on a share URL authorise by the same `X-Owner-Id` (their
+// own participant id) PLUS the share code that admitted them. The
+// API checks the code grants an edit-role share link before allowing
+// the write. Owners pass `null` and the share-code header is omitted.
+function logAuthHeaders(ownerId: string, shareCode: string | null): HeadersInit {
+  const base: Record<string, string> = {
+    'X-Owner-Id': ownerId,
+    'Content-Type': 'application/json',
+  };
+  if (shareCode) base['X-Share-Code'] = shareCode;
+  return base;
+}
+
+function logAuthGetHeaders(ownerId: string, shareCode: string | null): HeadersInit {
+  const base: Record<string, string> = { 'X-Owner-Id': ownerId };
+  if (shareCode) base['X-Share-Code'] = shareCode;
+  return base;
+}
+
 export async function apiLoadDiagram(ownerId: string, id: string): Promise<StoredDiagram | null> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, {
     headers: { 'X-Owner-Id': ownerId },
@@ -176,9 +195,13 @@ export async function apiLoadShared(code: string): Promise<SharedDiagramResoluti
 // Change log (per-diagram audit) — see specs/12-activity-and-audit.md
 // ---------------------------------------------------------------------
 
-export async function apiListChangeLog(ownerId: string, id: string): Promise<ChangeLogEntry[]> {
+export async function apiListChangeLog(
+  ownerId: string,
+  id: string,
+  shareCode: string | null = null,
+): Promise<ChangeLogEntry[]> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/log`, {
-    headers: { 'X-Owner-Id': ownerId },
+    headers: logAuthGetHeaders(ownerId, shareCode),
   });
   if (!res.ok) throw new Error(`list change log failed: ${res.status}`);
   const { entries } = (await res.json()) as ChangeLogListResponse;
@@ -188,10 +211,11 @@ export async function apiListChangeLog(ownerId: string, id: string): Promise<Cha
 export async function apiAppendChangeLogEntry(
   ownerId: string,
   entry: Omit<ChangeLogEntry, 'diagramId'> & { diagramId: string },
+  shareCode: string | null = null,
 ): Promise<ChangeLogEntry> {
   const res = await fetch(`${API_BASE}/diagrams/${entry.diagramId}/log`, {
     method: 'POST',
-    headers: ownerHeaders(ownerId),
+    headers: logAuthHeaders(ownerId, shareCode),
     body: JSON.stringify(entry),
   });
   if (!res.ok) throw new Error(`append change log failed: ${res.status}`);
@@ -203,10 +227,11 @@ export async function apiDeleteChangeLogForTab(
   ownerId: string,
   diagramId: string,
   tabId: string,
+  shareCode: string | null = null,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/log/tab/${tabId}`, {
     method: 'DELETE',
-    headers: { 'X-Owner-Id': ownerId },
+    headers: logAuthGetHeaders(ownerId, shareCode),
   });
   if (!res.ok && res.status !== 404) {
     throw new Error(`delete change log failed: ${res.status}`);
@@ -217,10 +242,11 @@ export async function apiDeleteChangeLogEntry(
   ownerId: string,
   diagramId: string,
   entryId: string,
+  shareCode: string | null = null,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/log/${entryId}`, {
     method: 'DELETE',
-    headers: { 'X-Owner-Id': ownerId },
+    headers: logAuthGetHeaders(ownerId, shareCode),
   });
   if (!res.ok && res.status !== 404) {
     throw new Error(`delete change log entry failed: ${res.status}`);

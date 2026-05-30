@@ -434,6 +434,14 @@ export default function LivePage() {
   // save / op-broadcast gates so view-only visitors can't push edits.
   const [sessionRole, setSessionRole] = useState<ShareRole>('edit');
   const isReadOnly = sessionRole === 'view';
+  // Visitors are admitted via a share code in the URL (?s=<code>).
+  // Owners arrive via ?d=<id> with no share code. The log endpoints
+  // accept the code as a fallback authorisation so edit visitors can
+  // persist their own entries; null means "owner — owner check
+  // suffices". Tracked separately from `diagramShareCode` (which is
+  // the diagram's primary code surfaced for sharing) because a
+  // diagram can have many active codes.
+  const [sessionShareCode, setSessionShareCode] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     if (hydrated) return;
@@ -490,6 +498,27 @@ export default function LivePage() {
           // Visitors inherit the role from their share code. Owners
           // overwrite this to 'edit' below.
           setSessionRole(fetched.ownerId === self.id ? 'edit' : role);
+          // Visitor: stash the code they came in on so any log
+          // writes can present it as authorisation. Owner accessing
+          // via a share URL keeps null.
+          setSessionShareCode(fetched.ownerId === self.id ? null : shareCodeParam);
+          // Visitors with an edit-role share code can read + write the
+          // log too. View-only visitors get nothing from the endpoint
+          // (the API gates POST/DELETE but currently still serves
+          // GET when authorised; we skip the fetch so view-only
+          // visitors don't even attempt it). Owner case is handled
+          // in the ?d= branch below.
+          if (fetched.ownerId === self.id || role === 'edit') {
+            const codeForFetch = fetched.ownerId === self.id ? null : shareCodeParam;
+            apiListChangeLog(self.id, fetched.id, codeForFetch)
+              .then((entries) => {
+                setChangeLog(entries);
+                setChangeLogLoading(false);
+              })
+              .catch(() => setChangeLogLoading(false));
+          } else {
+            setChangeLogLoading(false);
+          }
           if (window.localStorage.getItem('livediagram:v2:name-confirmed') !== '1') {
             setTemplatePickerMode('identity');
           }
@@ -923,7 +952,7 @@ export default function LivePage() {
       past: [...entryHistoryRef.current.past, entry].slice(-LOG_HISTORY_LIMIT),
       future: [],
     };
-    apiAppendChangeLogEntry(selfParticipant.id, entry).catch(() => {});
+    apiAppendChangeLogEntry(selfParticipant.id, entry, sessionShareCode).catch(() => {});
     roomRef.current?.send({ kind: 'op', op: { kind: 'log', entry } });
   };
 
@@ -973,7 +1002,7 @@ export default function LivePage() {
     if (!diagramId) return;
     const targetTabId = activeId;
     setChangeLog((prev) => prev.filter((entry) => entry.tabId !== targetTabId));
-    apiDeleteChangeLogForTab(selfParticipant.id, diagramId, targetTabId).catch(() => {
+    apiDeleteChangeLogForTab(selfParticipant.id, diagramId, targetTabId, sessionShareCode).catch(() => {
       // Best-effort. Stale rows in D1 are harmless; the next list
       // fetch reconciles. We don't want a transient error to block
       // the local clear that already happened.
@@ -1004,7 +1033,12 @@ export default function LivePage() {
     // fire-and-forget the API delete.
     setChangeLog((prev) => prev.filter((e) => e.id !== entry.id));
     if (diagramId) {
-      apiDeleteChangeLogEntry(selfParticipant.id, diagramId, entry.id).catch(() => {
+      apiDeleteChangeLogEntry(
+        selfParticipant.id,
+        diagramId,
+        entry.id,
+        sessionShareCode,
+      ).catch(() => {
         // Best-effort. A stale row in D1 surfaces on the next list
         // fetch — at which point the entry would reappear; acceptable
         // tradeoff for the lighter UX.
@@ -1037,7 +1071,12 @@ export default function LivePage() {
       };
       setChangeLog((prev) => prev.filter((e) => e.id !== popped.id));
       if (diagramId) {
-        apiDeleteChangeLogEntry(selfParticipant.id, diagramId, popped.id).catch(() => {
+        apiDeleteChangeLogEntry(
+          selfParticipant.id,
+          diagramId,
+          popped.id,
+          sessionShareCode,
+        ).catch(() => {
           // Best-effort. A redo will re-POST the same id so a stale
           // duplicate is unlikely.
         });
@@ -1066,7 +1105,7 @@ export default function LivePage() {
         // it had before the undo. Idempotent under network retries
         // (the API treats POST as insert; a re-insert of the same id
         // would fail loudly but we don't double-fire).
-        apiAppendChangeLogEntry(selfParticipant.id, next).catch(() => {});
+        apiAppendChangeLogEntry(selfParticipant.id, next, sessionShareCode).catch(() => {});
       }
       roomRef.current?.send({ kind: 'op', op: { kind: 'log', entry: next } });
     }
@@ -1468,7 +1507,7 @@ export default function LivePage() {
     // then the API (fire-and-forget).
     setChangeLog((prev) => prev.filter((entry) => entry.tabId !== id));
     if (diagramId) {
-      apiDeleteChangeLogForTab(selfParticipant.id, diagramId, id).catch(() => {
+      apiDeleteChangeLogForTab(selfParticipant.id, diagramId, id, sessionShareCode).catch(() => {
         // Best-effort. Stale rows in D1 are harmless; next list fetch
         // simply omits them because the diagram is the source of truth.
       });

@@ -79,13 +79,20 @@ Diagram delete still cascades through the FK above.
 
 ## API surface
 
-All require `X-Owner-Id`. Owner-only — the audit isn't shared with
-view-only visitors in V1.
+All endpoints require `X-Owner-Id`. They additionally accept an
+optional `X-Share-Code` header so an edit-role visitor (someone who
+followed a `?s=<code>` share URL) can write to the log — when the
+code resolves to an active edit-role share link for this diagram,
+the request is authorised. Owners pass the header empty.
+View-role visitors fail the auth check.
 
-- `GET    /api/diagrams/:id/log`              → `{ entries: ChangeLogEntry[] }` newest-first, capped at 200.
-- `POST   /api/diagrams/:id/log`              → append. Body: the new entry.
-- `DELETE /api/diagrams/:id/log/:entryId`     → drop one entry (revert).
-- `DELETE /api/diagrams/:id/log/tab/:tabId`   → drop entries for one tab.
+The bulk tab-cascade DELETE stays owner-only — destructive bulk
+ops shouldn't ride a visitor's share code.
+
+- `GET    /api/diagrams/:id/log`              → `{ entries: ChangeLogEntry[] }` newest-first, capped at 200. (owner or edit visitor)
+- `POST   /api/diagrams/:id/log`              → append. Body: the new entry. (owner or edit visitor)
+- `DELETE /api/diagrams/:id/log/:entryId`     → drop one entry (revert / undo). (owner or edit visitor)
+- `DELETE /api/diagrams/:id/log/tab/:tabId`   → drop entries for one tab. (owner only)
 
 ## Client behaviour
 
