@@ -1107,6 +1107,12 @@ export default function LivePage() {
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)));
   };
 
+  const setBackgroundOpacity = (opacity: number) => {
+    commitTabs((ts) =>
+      ts.map((t) => (t.id === activeId ? { ...t, backgroundOpacity: opacity } : t)),
+    );
+  };
+
   const setPatternColor = (color: string) => {
     commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)));
   };

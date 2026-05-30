@@ -237,6 +237,7 @@ export function Canvas(props: CanvasProps) {
     onSetTheme,
     onSetBackgroundPattern,
     onSetBackgroundColor,
+    onSetBackgroundOpacity,
     onSetPatternColor,
     onClearTabContent,
     onToggleAspectLock,
