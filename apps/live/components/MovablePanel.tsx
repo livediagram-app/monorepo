@@ -109,7 +109,7 @@ export function MovablePanel({
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
       style={style}
-      className={`pointer-events-auto absolute z-10 flex ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${cornerClass}`}
+      className={`pointer-events-auto absolute z-10 flex animate-pop-in ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${cornerClass}`}
     >
       <div
         onPointerDown={beginDrag}
@@ -223,7 +223,7 @@ export function DockButton({
         onPointerDown={(e) => e.stopPropagation()}
         onClick={onClick}
         aria-label={label}
-        className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900"
+        className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900"
       >
         {icon}
       </button>

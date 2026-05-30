@@ -1043,7 +1043,7 @@ export function Canvas(props: CanvasProps) {
               // Collapsed Activity dock pairs the expand button with
               // inline Undo / Redo so common history actions don't
               // require reopening the panel.
-              <div className="pointer-events-auto flex items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
+              <div className="pointer-events-auto flex animate-pop-in items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
                 <Tooltip title="Undo" description="Undo last edit.">
                   <button
                     type="button"
