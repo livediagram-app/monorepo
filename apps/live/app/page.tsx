@@ -277,6 +277,11 @@ export default function LivePage() {
   const [diagramList, setDiagramList] = useState<{ id: string; name: string; savedAt: number }[]>(
     [],
   );
+  // True while the very first diagram-list fetch is in flight, so the
+  // Explorer can render a skeleton instead of an empty "no diagrams"
+  // state. We only flip this off — subsequent refreshes don't reset it
+  // because they're triggered by saves and shouldn't blank the list.
+  const [diagramListLoading, setDiagramListLoading] = useState(true);
   // Live presence: the participants connected to this diagram's
   // Durable Object room right now. Includes ourselves once our `hello`
   // round-trips. Rendered in the editor header avatar stack.
@@ -297,11 +302,16 @@ export default function LivePage() {
   >(new Map());
   const refreshDiagramList = (ownerId: string) => {
     apiListDiagrams(ownerId)
-      .then((list) => setDiagramList(list))
+      .then((list) => {
+        setDiagramList(list);
+        setDiagramListLoading(false);
+      })
       .catch(() => {
         // Network glitch — the next save will retry. List staleness
         // for a beat is acceptable; we don't want a transient error
-        // to wipe the rendered list.
+        // to wipe the rendered list. Drop the loading flag so the
+        // Explorer doesn't spin forever on a dead network.
+        setDiagramListLoading(false);
       });
   };
   // `remoteUpdateRef` blocks the auto-save effect from re-broadcasting
@@ -2195,6 +2205,7 @@ export default function LivePage() {
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
         diagramList={diagramList}
+        diagramListLoading={diagramListLoading}
         currentDiagramId={diagramId}
         onOpenDiagram={openDiagram}
         onNewDiagram={newDiagram}

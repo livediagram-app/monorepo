@@ -95,6 +95,7 @@ type CanvasProps = {
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
   diagramList: { id: string; name: string; savedAt: number }[];
+  diagramListLoading: boolean;
   currentDiagramId: string | null;
   onOpenDiagram: (id: string) => void;
   onNewDiagram: () => void;
@@ -210,6 +211,7 @@ export function Canvas(props: CanvasProps) {
     onMoveExplorer,
     onToggleExplorerMinimized,
     diagramList,
+    diagramListLoading,
     currentDiagramId,
     onOpenDiagram,
     onNewDiagram,
@@ -851,6 +853,7 @@ export function Canvas(props: CanvasProps) {
         position={explorerPosition}
         minimized={explorerMinimized}
         diagrams={diagramList}
+        loading={diagramListLoading}
         currentDiagramId={currentDiagramId}
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}

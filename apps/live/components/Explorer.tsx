@@ -15,6 +15,10 @@ type ExplorerProps = {
   // active; clicking any other navigates to it (preserving the
   // current's state via the auto-save).
   diagrams: DiagramListItem[];
+  // True while the initial diagram-list fetch is in flight. Shows a
+  // skeleton in place of the list so the panel doesn't read as "no
+  // diagrams" before the API call resolves.
+  loading: boolean;
   currentDiagramId: string | null;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
@@ -33,6 +37,7 @@ export function Explorer({
   position,
   minimized,
   diagrams,
+  loading,
   currentDiagramId,
   onMoveTo,
   onToggleMinimized,
@@ -61,7 +66,28 @@ export function Explorer({
           New Diagram
         </button>
 
-        {ordered.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-0.5">
+            <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Your diagrams
+            </p>
+            <ul className="flex flex-col gap-1" aria-busy="true">
+              {[0, 1, 2].map((i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1.5"
+                  aria-hidden
+                >
+                  <span className="h-3 w-3 shrink-0 animate-pulse rounded-sm bg-slate-200" />
+                  <span
+                    className="h-3 animate-pulse rounded bg-slate-200"
+                    style={{ width: `${70 - i * 12}%` }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : ordered.length > 0 ? (
           <div className="flex flex-col gap-0.5">
             <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Your diagrams
