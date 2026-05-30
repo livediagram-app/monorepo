@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack -p 3002",
-    "dev:webpack": "next dev -p 3002",
-    "dev:fresh": "rm -rf .next && next dev --turbopack -p 3002",
+    "dev": "node scripts/dev.mjs",
+    "dev:turbopack": "node scripts/dev.mjs --turbopack",
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "eslint .",

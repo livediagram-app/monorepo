@@ -1,0 +1,68 @@
+#!/usr/bin/env node
+// Robust local dev entry. Three sources of friction with the bare
+// `next dev` invocation were biting us repeatedly:
+//
+//  1. Port 3002 stays bound after an interrupted `next dev`, so the
+//     next start fails with EADDRINUSE and someone has to chase down
+//     a stray process by hand.
+//  2. The `.next` cache occasionally desynchronises after a route
+//     restructure or a shared-import shuffle, leaving the HMR client
+//     asking for chunks the bundler no longer emits ("Cannot find
+//     module './257.js'"). The dev server happily serves 500s until
+//     someone wipes it.
+//  3. Wrapping the same logic in package.json's `"dev"` field with
+//     shell pipelines is fragile across macOS / Linux xargs flavours.
+//
+// This script normalises the startup: free the port, clear the
+// cache, then exec next dev with the requested bundler flags.
+
+import { execSync, spawn } from 'node:child_process';
+import { rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const appRoot = resolve(__dirname, '..');
+const PORT = 3002;
+
+function freePort(port) {
+  let pids = '';
+  try {
+    pids = execSync(`lsof -ti:${port}`, { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+  } catch {
+    // lsof exits non-zero when nothing is bound — nothing to kill.
+    return;
+  }
+  if (!pids) return;
+  for (const pid of pids.split(/\s+/)) {
+    try {
+      execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
+    } catch {
+      // Already exited between lsof and kill — fine.
+    }
+  }
+  console.log(`[dev] freed port ${port} (killed ${pids.replace(/\s+/g, ', ')})`);
+}
+
+function clearCache() {
+  rmSync(resolve(appRoot, '.next'), { recursive: true, force: true });
+}
+
+freePort(PORT);
+clearCache();
+
+const useTurbopack = process.argv.includes('--turbopack');
+const nextArgs = ['next', 'dev', '-p', String(PORT)];
+if (useTurbopack) nextArgs.splice(2, 0, '--turbopack');
+
+const child = spawn('pnpm', nextArgs, { stdio: 'inherit', cwd: appRoot });
+child.on('exit', (code) => process.exit(code ?? 0));
+
+// Forward SIGINT / SIGTERM so Ctrl+C in the parent kills next cleanly.
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    if (!child.killed) child.kill(sig);
+  });
+}

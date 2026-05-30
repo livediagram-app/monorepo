@@ -156,8 +156,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        # `--yes` was dropped in current wrangler; non-interactive
+        # mode auto-confirms via the "fallback value" path. The
+        # database arg `DB` matches the binding name in wrangler.toml.
         run: |
-          pnpm exec wrangler d1 migrations apply DB --remote --yes \
+          pnpm exec wrangler d1 migrations apply DB --remote \
             || (echo "::error::D1 migrations failed; halting deploy"; exit 1)
 
       - name: Deploy to Cloudflare Workers
