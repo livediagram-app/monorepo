@@ -12,7 +12,6 @@ type DiagramListItem = {
 type ExplorerProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
-  size: { width: number; height: number } | null;
   // Every diagram known to the local store. Current diagram is marked
   // active; clicking any other navigates to it (preserving the
   // current's state via the auto-save).
@@ -24,7 +23,6 @@ type ExplorerProps = {
   currentDiagramId: string | null;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
-  onResize: (size: { width: number; height: number }) => void;
   onReset: () => void;
   onOpenDiagram: (id: string) => void;
   onNewDiagram: () => void;
@@ -40,13 +38,11 @@ type ExplorerProps = {
 export function Explorer({
   position,
   minimized,
-  size,
   diagrams,
   loading,
   currentDiagramId,
   onMoveTo,
   onToggleMinimized,
-  onResize,
   onReset,
   onOpenDiagram,
   onNewDiagram,
@@ -64,13 +60,6 @@ export function Explorer({
       position={position}
       defaultCorner="top-left"
       width="w-64"
-      size={size}
-      // Below this the New-Diagram button starts wrapping and the
-      // sign-in card looks broken. Height floor leaves room for the
-      // button, a short diagram list, and the sign-in nudge.
-      minWidth={220}
-      minHeight={280}
-      onResize={onResize}
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}

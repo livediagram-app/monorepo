@@ -12,7 +12,6 @@ import { MovablePanel } from './MovablePanel';
 type ActivityPanelProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
-  size: { width: number; height: number } | null;
   // True when the active tab is locked. Hides Revert buttons on rows
   // for the active tab (Undo/Redo are also disabled by the caller).
   // Locked-tab entries still render — the audit history stays
@@ -34,7 +33,6 @@ type ActivityPanelProps = {
   saveStatus: SaveStatus;
   savedAt: number | null;
   onMoveTo: (x: number, y: number) => void;
-  onResize: (size: { width: number; height: number }) => void;
   onReset: () => void;
   onToggleMinimized: () => void;
 };
@@ -46,7 +44,6 @@ type ActivityPanelProps = {
 export function ActivityPanel({
   position,
   minimized,
-  size,
   tabLocked,
   entries,
   loading,
@@ -59,7 +56,6 @@ export function ActivityPanel({
   saveStatus,
   savedAt,
   onMoveTo,
-  onResize,
   onReset,
   onToggleMinimized,
 }: ActivityPanelProps) {
@@ -70,10 +66,6 @@ export function ActivityPanel({
       position={position}
       defaultCorner="bottom-left"
       width="w-64"
-      size={size}
-      minWidth={240}
-      minHeight={360}
-      onResize={onResize}
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}

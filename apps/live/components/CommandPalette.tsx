@@ -83,12 +83,10 @@ export type CanvasTool = 'pan' | 'select';
 type CommandPaletteProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
-  size: { width: number; height: number } | null;
   canvasTool: CanvasTool;
   onSetCanvasTool: (tool: CanvasTool) => void;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
-  onResize: (size: { width: number; height: number }) => void;
   onReset: () => void;
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
@@ -107,12 +105,10 @@ export function CommandPalette(props: CommandPaletteProps) {
 
 function OpenPalette({
   position,
-  size,
   canvasTool,
   onSetCanvasTool,
   onMoveTo,
   onToggleMinimized,
-  onResize,
   onReset,
   onAddShape,
   onAddText,
@@ -128,16 +124,6 @@ function OpenPalette({
       position={position}
       defaultCorner="top-right"
       width="w-64"
-      size={size}
-      // Now that the Selected Element / Current Tab sections moved
-      // into the Editor panel, the Palette only hosts the canvas-
-      // tool toggle and the shape primitives. Mins shrink to match
-      // (200 wide keeps the 4-column shape grid tidy; 180 high fits
-      // the tool row, both shape rows, and the text/sticky/arrow
-      // row with breathing room).
-      minWidth={200}
-      minHeight={180}
-      onResize={onResize}
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}

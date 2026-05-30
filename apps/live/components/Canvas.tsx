@@ -84,10 +84,8 @@ type CanvasProps = {
   groupSourceId: string | null;
   palettePosition: { x: number; y: number } | null;
   paletteMinimized: boolean;
-  paletteSize: { width: number; height: number } | null;
   explorerPosition: { x: number; y: number } | null;
   explorerMinimized: boolean;
-  explorerSize: { width: number; height: number } | null;
   canUndo: boolean;
   canRedo: boolean;
   onAddShape: (kind: ShapeKind) => void;
@@ -98,11 +96,9 @@ type CanvasProps = {
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
   onToggleMinimized: () => void;
-  onResizePalette: (size: { width: number; height: number }) => void;
   onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
-  onResizeExplorer: (size: { width: number; height: number }) => void;
   onResetExplorer: () => void;
   diagramList: { id: string; name: string; savedAt: number }[];
   diagramListLoading: boolean;
@@ -110,17 +106,13 @@ type CanvasProps = {
   changeLogLoading: boolean;
   activityPosition: { x: number; y: number } | null;
   activityMinimized: boolean;
-  activitySize: { width: number; height: number } | null;
   onMoveActivity: (x: number, y: number) => void;
   onToggleActivityMinimized: () => void;
-  onResizeActivity: (size: { width: number; height: number }) => void;
   onResetActivity: () => void;
   contextPosition: { x: number; y: number } | null;
   contextMinimized: boolean;
-  contextSize: { width: number; height: number } | null;
   onMoveContext: (x: number, y: number) => void;
   onToggleContextMinimized: () => void;
-  onResizeContext: (size: { width: number; height: number }) => void;
   onResetContext: () => void;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onClearActivity: () => void;
@@ -233,10 +225,8 @@ export function Canvas(props: CanvasProps) {
     groupSourceId,
     palettePosition,
     paletteMinimized,
-    paletteSize,
     explorerPosition,
     explorerMinimized,
-    explorerSize,
     canUndo,
     canRedo,
     onAddShape,
@@ -247,11 +237,9 @@ export function Canvas(props: CanvasProps) {
     onRedo,
     onMovePalette,
     onToggleMinimized,
-    onResizePalette,
     onResetPalette,
     onMoveExplorer,
     onToggleExplorerMinimized,
-    onResizeExplorer,
     onResetExplorer,
     diagramList,
     diagramListLoading,
@@ -259,17 +247,13 @@ export function Canvas(props: CanvasProps) {
     changeLogLoading,
     activityPosition,
     activityMinimized,
-    activitySize,
     onMoveActivity,
     onToggleActivityMinimized,
-    onResizeActivity,
     onResetActivity,
     contextPosition,
     contextMinimized,
-    contextSize,
     onMoveContext,
     onToggleContextMinimized,
-    onResizeContext,
     onResetContext,
     onRevertChange,
     onClearActivity,
@@ -926,13 +910,11 @@ export function Canvas(props: CanvasProps) {
       <Explorer
         position={explorerPosition}
         minimized={explorerMinimized}
-        size={explorerSize}
         diagrams={diagramList}
         loading={diagramListLoading}
         currentDiagramId={currentDiagramId}
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}
-        onResize={onResizeExplorer}
         onReset={onResetExplorer}
         onOpenDiagram={onOpenDiagram}
         onNewDiagram={onNewDiagram}
@@ -945,7 +927,6 @@ export function Canvas(props: CanvasProps) {
         <ActivityPanel
           position={activityPosition}
           minimized={activityMinimized}
-          size={activitySize}
           tabLocked={tabLocked}
           entries={changeLog}
           loading={changeLogLoading}
@@ -958,7 +939,6 @@ export function Canvas(props: CanvasProps) {
           saveStatus={saveStatus}
           savedAt={savedAt}
           onMoveTo={onMoveActivity}
-          onResize={onResizeActivity}
           onReset={onResetActivity}
           onToggleMinimized={onToggleActivityMinimized}
         />
@@ -968,12 +948,10 @@ export function Canvas(props: CanvasProps) {
         <CommandPalette
           position={palettePosition}
           minimized={paletteMinimized}
-          size={paletteSize}
           canvasTool={canvasTool}
           onSetCanvasTool={onSetCanvasTool}
           onMoveTo={onMovePalette}
           onToggleMinimized={onToggleMinimized}
-          onResize={onResizePalette}
           onReset={onResetPalette}
           onAddShape={onAddShape}
           onAddText={onAddText}
@@ -986,12 +964,10 @@ export function Canvas(props: CanvasProps) {
         <ContextPanel
           position={contextPosition}
           minimized={contextMinimized}
-          size={contextSize}
           selection={paletteSelection}
           tab={tabSection}
           onMoveTo={onMoveContext}
           onToggleMinimized={onToggleContextMinimized}
-          onResize={onResizeContext}
           onReset={onResetContext}
         />
       )}

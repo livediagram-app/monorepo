@@ -13,12 +13,10 @@ import { MovablePanel } from './MovablePanel';
 type ContextPanelProps = {
   position: { x: number; y: number } | null;
   minimized: boolean;
-  size: { width: number; height: number } | null;
   selection: SelectedElementControls | null;
   tab: TabSectionControls;
   onMoveTo: (x: number, y: number) => void;
   onToggleMinimized: () => void;
-  onResize: (size: { width: number; height: number }) => void;
   onReset: () => void;
 };
 
@@ -30,12 +28,10 @@ type ContextPanelProps = {
 export function ContextPanel({
   position,
   minimized,
-  size,
   selection,
   tab,
   onMoveTo,
   onToggleMinimized,
-  onResize,
   onReset,
 }: ContextPanelProps) {
   // Accordion open state lives at the panel level so it survives the
@@ -57,10 +53,6 @@ export function ContextPanel({
       position={position}
       defaultCorner="top-right-stacked"
       width="w-64"
-      size={size}
-      minWidth={220}
-      minHeight={260}
-      onResize={onResize}
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
