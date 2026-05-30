@@ -942,8 +942,8 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
       </p>
       <Accordion title="Theme" open={open.theme} onToggle={() => toggle('theme')}>
         <p className="text-[10px] font-medium text-slate-500">
-          Sets the canvas backdrop + the default colours for new elements. Existing elements
-          aren&apos;t recoloured.
+          Sets the canvas backdrop and recolours every element on this tab to match the theme
+          (sticky notes keep their amber palette).
         </p>
         <div className="mt-1 grid grid-cols-3 gap-1">
           {THEMES.map((t) => {
@@ -1065,7 +1065,7 @@ function TabSection({ tab }: { tab: TabSectionControls }) {
         </div>
         <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium text-slate-500">Background opacity</p>
+            <p className="text-[10px] font-medium text-slate-500">Opacity</p>
             <span className="text-[10px] font-medium text-slate-500">
               {Math.round(tab.backgroundOpacity * 100)}%
             </span>

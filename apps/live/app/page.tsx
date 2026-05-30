@@ -22,6 +22,7 @@ import {
   joinGroups,
   selectionMembers,
   sendManyToBack,
+  snapResizeBounds,
   snapToAlignment,
   snapToAnchor,
   ungroup,
@@ -2004,7 +2005,32 @@ export default function LivePage() {
         } else {
           const start = drag.startBounds.get(drag.primaryId);
           if (!start) return;
-          const next = nextBounds(start, drag.mode, dx, dy, drag.aspectLocked);
+          const raw = nextBounds(start, drag.mode, dx, dy, drag.aspectLocked);
+          // Resize snapping: the active edges (the ones the handle is
+          // pulling) snap to align with other elements' edges/centres
+          // — same UX as the move-snap so users get the same alignment
+          // guides whether they're translating or scaling. Aspect-
+          // locked resizes skip snap because nudging one dimension
+          // would break the locked ratio.
+          const cornerOf = {
+            'resize-se': 'se',
+            'resize-sw': 'sw',
+            'resize-ne': 'ne',
+            'resize-nw': 'nw',
+          } as const;
+          const corner = cornerOf[drag.mode];
+          const memberIds = new Set(drag.startBounds.keys());
+          const next =
+            !drag.aspectLocked && corner
+              ? snapResizeBounds(
+                  raw,
+                  corner,
+                  activeTab.elements,
+                  memberIds,
+                  ALIGN_SNAP_THRESHOLD,
+                  MIN_SIZE,
+                )
+              : raw;
           tick((els) =>
             els.map((el) => (el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el)),
           );

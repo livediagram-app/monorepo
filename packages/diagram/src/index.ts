@@ -356,10 +356,11 @@ export type Tab = {
   // backdrop (useful when embedded or layered on a theme).
   backgroundOpacity?: number;
   patternColor?: string;
-  // Selected preset theme name (see apps/live/lib/themes.ts). When set,
-  // newly added elements inherit the theme's fill / stroke / text colours
-  // instead of the built-in brand defaults. Existing elements aren't
-  // retroactively recoloured. Unset = brand defaults.
+  // Selected preset theme name (see apps/live/lib/themes.ts). Setting
+  // a theme via the palette repaints every existing element on the tab
+  // to match (sticky notes keep their amber palette). Newly added
+  // elements inherit the same theme colours by default. Unset = brand
+  // defaults.
   theme?: string;
   // Set to true once the user has explicitly chosen a starting template
   // (including "Blank"), so the template picker doesn't reappear on this tab.
@@ -649,6 +650,85 @@ export function snapToAlignment(
   }
 
   return { dx: bestX ?? 0, dy: bestY ?? 0 };
+}
+
+// Snap candidate bounds during a resize to align with other elements'
+// edges and centres. Mirrors `snapToAlignment` but only nudges the
+// edges that the active resize handle actually moves — the opposite
+// corner is anchored and must not drift. Threshold is in canvas px.
+//
+// `mode` is the corner being dragged ("se" = bottom-right handle =
+// right + bottom edges move; etc.).
+export function snapResizeBounds(
+  candidate: { x: number; y: number; width: number; height: number },
+  mode: 'se' | 'sw' | 'ne' | 'nw',
+  elements: Element[],
+  excludeIds: Set<ElementId>,
+  threshold: number,
+  minSize: number,
+): { x: number; y: number; width: number; height: number } {
+  const movesRight = mode === 'se' || mode === 'ne';
+  const movesLeft = mode === 'sw' || mode === 'nw';
+  const movesBottom = mode === 'se' || mode === 'sw';
+  const movesTop = mode === 'ne' || mode === 'nw';
+
+  // Anchored coordinates — the corner that should NOT move.
+  const anchorRight = movesLeft ? candidate.x + candidate.width : null;
+  const anchorLeft = movesRight ? candidate.x : null;
+  const anchorBottom = movesTop ? candidate.y + candidate.height : null;
+  const anchorTop = movesBottom ? candidate.y : null;
+
+  // The active edge positions we'll try to snap.
+  const activeX = movesRight ? candidate.x + candidate.width : candidate.x;
+  const activeY = movesBottom ? candidate.y + candidate.height : candidate.y;
+
+  let bestDx: number | null = null;
+  let bestDy: number | null = null;
+
+  for (const el of elements) {
+    if (!isBoxed(el) || excludeIds.has(el.id)) continue;
+    const targetXs = [el.x, el.x + el.width / 2, el.x + el.width];
+    const targetYs = [el.y, el.y + el.height / 2, el.y + el.height];
+    if (movesLeft || movesRight) {
+      for (const tx of targetXs) {
+        const delta = tx - activeX;
+        if (Math.abs(delta) <= threshold && (bestDx === null || Math.abs(delta) < Math.abs(bestDx))) {
+          bestDx = delta;
+        }
+      }
+    }
+    if (movesTop || movesBottom) {
+      for (const ty of targetYs) {
+        const delta = ty - activeY;
+        if (Math.abs(delta) <= threshold && (bestDy === null || Math.abs(delta) < Math.abs(bestDy))) {
+          bestDy = delta;
+        }
+      }
+    }
+  }
+
+  let { x, y, width, height } = candidate;
+  if (bestDx !== null) {
+    if (movesRight && anchorLeft !== null) {
+      width = Math.max(minSize, activeX + bestDx - anchorLeft);
+    } else if (movesLeft && anchorRight !== null) {
+      const newX = activeX + bestDx;
+      const newWidth = Math.max(minSize, anchorRight - newX);
+      x = anchorRight - newWidth;
+      width = newWidth;
+    }
+  }
+  if (bestDy !== null) {
+    if (movesBottom && anchorTop !== null) {
+      height = Math.max(minSize, activeY + bestDy - anchorTop);
+    } else if (movesTop && anchorBottom !== null) {
+      const newY = activeY + bestDy;
+      const newHeight = Math.max(minSize, anchorBottom - newY);
+      y = anchorBottom - newHeight;
+      height = newHeight;
+    }
+  }
+  return { x, y, width, height };
 }
 
 // Nearest boxed-element anchor to a canvas point. Returns the pinning
