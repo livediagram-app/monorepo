@@ -1,11 +1,7 @@
 'use client';
 
 import type { ChangeLogEntry } from '@/lib/api-client';
-import {
-  formatRelativeTime,
-  formatRelativeTimeShort,
-  useRelativeTimeTick,
-} from '@/lib/relative-time';
+import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from './EditorHeader';
 import { MovablePanel } from './MovablePanel';
 
@@ -139,9 +135,12 @@ export function ActivityPanel({
 // Save-status badge that lived in the footer; the Activity panel
 // title is its new home — same factual content, paired with the
 // history it relates to.
-function SaveStatusBadge({ status, savedAt }: { status: SaveStatus; savedAt: number | null }) {
-  useRelativeTimeTick();
-  if (status === 'idle' && savedAt === null) return null;
+function SaveStatusBadge({ status }: { status: SaveStatus; savedAt: number | null }) {
+  // The "saved N ago" success state lives on the Explorer's Current
+  // Diagram row now — no need to duplicate it here. We still surface
+  // in-flight + error states because the Explorer doesn't carry
+  // those signals, and silent save failures are precisely what we
+  // want a visible warning for.
   if (status === 'saving') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium normal-case tracking-normal text-slate-400">
@@ -154,7 +153,7 @@ function SaveStatusBadge({ status, savedAt }: { status: SaveStatus; savedAt: num
     return (
       <span
         role="status"
-        title="The editor couldn't save your latest changes. Check your network and the API."
+        title="Couldn't save — check network."
         className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-rose-700 ring-1 ring-rose-200"
       >
         <WarningIcon />
@@ -162,36 +161,12 @@ function SaveStatusBadge({ status, savedAt }: { status: SaveStatus; savedAt: num
       </span>
     );
   }
-  const relative = savedAt !== null ? formatRelativeTime(Date.now() - savedAt) : null;
-  return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-medium normal-case tracking-normal text-slate-500">
-      <CheckIcon />
-      {relative ? `Saved ${relative}` : 'Saved'}
-    </span>
-  );
+  return null;
 }
 
 function SpinnerDot() {
   return (
     <span aria-hidden className="inline-block h-2 w-2 animate-pulse rounded-full bg-slate-400" />
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 10 10"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M2 5.5L4 7.5L8 3" />
-    </svg>
   );
 }
 
