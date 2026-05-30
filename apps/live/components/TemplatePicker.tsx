@@ -132,7 +132,7 @@ export function TemplatePicker({
           {showTemplates ? (
             <>
               <p
-                className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 ${isWelcome ? 'mt-5' : ''}`}
+                className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 ${showIdentity ? 'mt-5' : ''}`}
               >
                 Pick a template
               </p>

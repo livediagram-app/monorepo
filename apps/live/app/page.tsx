@@ -1266,6 +1266,31 @@ export default function LivePage() {
   const addText = () => addBoxed((x, y) => createText(x, y));
   const addSticky = () => addBoxed((x, y) => createSticky(x, y));
 
+  // Drop a plain connector at the viewport centre. Defaults to no
+  // pointers ('none') so the palette entry behaves like a "Line" tool;
+  // the user can change pointer style later via the Pointer accordion.
+  // Endpoints are free (unpinned) — drag them onto shapes after the
+  // fact to pin to anchors.
+  const addArrow = () => {
+    const centre = getViewportCenter();
+    const halfLen = 80;
+    const theme = getTheme(activeTab.theme);
+    const arrow: ArrowElement = {
+      id: crypto.randomUUID(),
+      type: 'arrow',
+      from: { kind: 'free', x: centre.x - halfLen, y: centre.y },
+      to: { kind: 'free', x: centre.x + halfLen, y: centre.y },
+      arrowEnds: 'none',
+      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
+    };
+    commitTabs((ts) =>
+      ts.map((t) =>
+        t.id === activeId ? { ...t, elements: [...t.elements, arrow], templateChosen: true } : t,
+      ),
+    );
+    setSelectedId(arrow.id);
+  };
+
   const handleCanvasDoubleClick = (x: number, y: number) => {
     const TEXT_W = 160;
     const TEXT_H = 48;
@@ -2038,6 +2063,7 @@ export default function LivePage() {
         onAddShape={addShape}
         onAddText={addText}
         onAddSticky={addSticky}
+        onAddArrow={addArrow}
         onUndo={undo}
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}

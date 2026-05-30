@@ -71,6 +71,10 @@ type CommandPaletteProps = {
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
+  // Drops a horizontal arrow at the viewport centre with no pointers
+  // on either end by default (i.e. a plain line). Users can flip the
+  // arrowEnds afterwards via the Pointer accordion.
+  onAddArrow: () => void;
 };
 
 export function CommandPalette(props: CommandPaletteProps) {
@@ -90,6 +94,7 @@ function OpenPalette({
   onAddShape,
   onAddText,
   onAddSticky,
+  onAddArrow,
 }: CommandPaletteProps) {
   // Accordion open state lives at the palette level so it survives the
   // SelectedElementSection / TabSection swap that happens whenever the
@@ -298,6 +303,23 @@ function OpenPalette({
                 d="M3 5h12M9 5v9M6.5 14h5"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </IconButton>
+          <IconButton
+            label="Add arrow"
+            description="Drop a plain connector at the viewport centre. Defaults to no pointers — toggle pointers from the Pointer accordion once it's selected."
+            onClick={onAddArrow}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+              <line
+                x1="3"
+                y1="9"
+                x2="15"
+                y2="9"
+                stroke="currentColor"
+                strokeWidth="1.8"
                 strokeLinecap="round"
               />
             </svg>
@@ -560,7 +582,7 @@ function SelectedElementSection({
           <p className="text-[10px] font-medium text-slate-500">
             Pick which end(s) of the arrow have a pointer.
           </p>
-          <div className="mt-1 grid grid-cols-3 gap-1">
+          <div className="mt-1 grid grid-cols-4 gap-1">
             <Tooltip title="Start only" description="Arrowhead on the left / starting end only.">
               <SizeButton
                 active={selection.arrowEnds === 'from'}
@@ -586,6 +608,17 @@ function SelectedElementSection({
                 onClick={() => selection.onSetArrowEnds('both')}
               >
                 <ArrowEndsIcon ends="both" />
+              </SizeButton>
+            </Tooltip>
+            <Tooltip
+              title="No pointers"
+              description="No arrowhead on either end — a plain connector / line."
+            >
+              <SizeButton
+                active={selection.arrowEnds === 'none'}
+                onClick={() => selection.onSetArrowEnds('none')}
+              >
+                <ArrowEndsIcon ends="none" />
               </SizeButton>
             </Tooltip>
           </div>
@@ -732,10 +765,11 @@ function ShapeIcon({ kind }: { kind: ShapeKind }) {
   }
 }
 
-function ArrowEndsIcon({ ends }: { ends: 'from' | 'to' | 'both' }) {
+function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   // Same shape language as the arrowhead used in ArrowView, scaled
   // down to fit a 14×14 button. Line spans the middle; chevrons sit
-  // on the appropriate end(s).
+  // on the appropriate end(s). 'none' renders a plain line — a
+  // connector with no pointer at either end.
   const showStart = ends === 'from' || ends === 'both';
   const showEnd = ends === 'to' || ends === 'both';
   return (

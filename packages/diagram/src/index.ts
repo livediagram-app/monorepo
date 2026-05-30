@@ -262,7 +262,7 @@ export type ElementLink =
 // is the conventional one-way arrow; 'from' flips it; 'both' makes a
 // two-headed connector. There's no 'none' yet — a line with no
 // direction is rare enough to defer.
-export type ArrowEnds = 'from' | 'to' | 'both';
+export type ArrowEnds = 'from' | 'to' | 'both' | 'none';
 
 export type ArrowElement = {
   id: ElementId;

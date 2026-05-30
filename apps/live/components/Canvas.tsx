@@ -85,6 +85,7 @@ type CanvasProps = {
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
+  onAddArrow: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
@@ -195,6 +196,7 @@ export function Canvas(props: CanvasProps) {
     onAddShape,
     onAddText,
     onAddSticky,
+    onAddArrow,
     onUndo,
     onRedo,
     onMovePalette,
@@ -844,6 +846,7 @@ export function Canvas(props: CanvasProps) {
           onAddShape={onAddShape}
           onAddText={onAddText}
           onAddSticky={onAddSticky}
+          onAddArrow={onAddArrow}
         />
       )}
 
