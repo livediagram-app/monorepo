@@ -448,11 +448,18 @@ export function Canvas(props: CanvasProps) {
       const wrapper = wrapperRef.current;
       if (wrapper) {
         const rect = wrapper.getBoundingClientRect();
-        // Transform is `scale(z) translate(ox, oy)`. Screen-x of canvas
-        // point cx = rect.left + (cx + ox) * z. Invert:
-        //   cx = (screen-x - rect.left) / z - ox
-        const toCanvasX = (sx: number) => (sx - rect.left) / viewportZoom - viewportOffset.x;
-        const toCanvasY = (sy: number) => (sy - rect.top) / viewportZoom - viewportOffset.y;
+        // Wrapper has `transform: scale(z) translate(ox, oy)` with
+        // origin: center. getBoundingClientRect returns the
+        // post-transform box, which ALREADY accounts for the
+        // translate. Working through the matrix:
+        //   screen.x = rect.left + z * cx
+        // so the inverse is just (screen.x - rect.left) / z — no
+        // extra `- ox`. The old version subtracted the offset on
+        // top of the rect that already had it baked in, throwing
+        // intersection bounds off by the pan amount and making the
+        // marquee silently miss every element on a panned canvas.
+        const toCanvasX = (sx: number) => (sx - rect.left) / viewportZoom;
+        const toCanvasY = (sy: number) => (sy - rect.top) / viewportZoom;
         const minX = Math.min(toCanvasX(m.startX), toCanvasX(m.currentX));
         const maxX = Math.max(toCanvasX(m.startX), toCanvasX(m.currentX));
         const minY = Math.min(toCanvasY(m.startY), toCanvasY(m.currentY));
