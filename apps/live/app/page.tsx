@@ -94,12 +94,12 @@ const LOG_HISTORY_LIMIT = 3;
 // editor chrome while the post-mount fetch resolves a ?d= or ?s= URL.
 // Reassures the user that data isn't lost — previously they'd briefly
 // see the empty-canvas welcome card and assume it had been wiped.
-// If the fetch hasn't returned within 3 seconds, surfaces a "taking
+// If the fetch hasn't returned within 10 seconds, surfaces a "taking
 // too long" message and a Refresh button so the user has an out.
 function DiagramLoading() {
   const [slow, setSlow] = useState(false);
   useEffect(() => {
-    const id = window.setTimeout(() => setSlow(true), 3000);
+    const id = window.setTimeout(() => setSlow(true), 10000);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -403,6 +403,11 @@ export default function LivePage() {
   // a remote update back through the room (which would cause an
   // infinite save/broadcast loop between two connected clients).
   const remoteUpdateRef = useRef(false);
+  // Tab ids whose full payload has been fetched. Hydration loads the
+  // active tab inline; the rest pop in lazily when the user switches
+  // to them. Tracked in a ref because it's only ever read inside the
+  // effects, not rendered.
+  const loadedTabIdsRef = useRef<Set<string>>(new Set());
   // Single open room connection for the current diagram. Re-opens
   // whenever diagramId changes.
   const roomRef = useRef<ReturnType<typeof connectRoom> | null>(null);
@@ -491,20 +496,29 @@ export default function LivePage() {
         if (resolution) {
           const { diagram: fetched, role } = resolution;
           const codeForVisitor = fetched.ownerId === self.id ? null : shareCodeParam;
-          // Fetch every tab's full payload in parallel. V1 keeps this
-          // eager — see spec/13. Lazy per-tab fetch on demand is a
-          // follow-up; the autosave win (one tab per save instead of
-          // all of them) already lands today.
-          const tabs = await Promise.all(
-            fetched.tabs.map((summary) =>
-              apiLoadTab(self.id, fetched.id, summary.id, codeForVisitor)
-                .catch(() => null)
-                .then((tab) => tab ?? { id: summary.id, name: summary.name, elements: [] }),
-            ),
-          );
-          resetTabs(tabs);
+          // Lazy per-tab fetch (spec/13): the active tab (first in the
+          // summaries) gets its full payload inline so the first paint
+          // has real content; the rest land as placeholders and a
+          // useEffect below fetches each one when the user switches.
+          const placeholderTabs: Tab[] = fetched.tabs.map((summary) => ({
+            id: summary.id,
+            name: summary.name,
+            elements: [],
+          }));
+          const firstSummary = fetched.tabs[0];
+          if (firstSummary) {
+            const first = await apiLoadTab(
+              self.id,
+              fetched.id,
+              firstSummary.id,
+              codeForVisitor,
+            ).catch(() => null);
+            if (first) placeholderTabs[0] = first;
+            loadedTabIdsRef.current.add(firstSummary.id);
+          }
+          resetTabs(placeholderTabs);
           setDiagramName(fetched.name);
-          setActiveId(tabs[0]?.id ?? activeId);
+          setActiveId(placeholderTabs[0]?.id ?? activeId);
           setLoadedExistingDiagram(true);
           setDiagramId(fetched.id);
           setDiagramShareable(fetched.shareable);
@@ -553,17 +567,22 @@ export default function LivePage() {
           return;
         }
         if (fetched) {
-          // Same eager tab-load pattern as the share branch above.
-          const tabs = await Promise.all(
-            fetched.tabs.map((summary) =>
-              apiLoadTab(self.id, fetched.id, summary.id)
-                .catch(() => null)
-                .then((tab) => tab ?? { id: summary.id, name: summary.name, elements: [] }),
-            ),
-          );
-          resetTabs(tabs);
+          // Lazy per-tab fetch — see the share branch above for
+          // rationale.
+          const placeholderTabs: Tab[] = fetched.tabs.map((summary) => ({
+            id: summary.id,
+            name: summary.name,
+            elements: [],
+          }));
+          const firstSummary = fetched.tabs[0];
+          if (firstSummary) {
+            const first = await apiLoadTab(self.id, fetched.id, firstSummary.id).catch(() => null);
+            if (first) placeholderTabs[0] = first;
+            loadedTabIdsRef.current.add(firstSummary.id);
+          }
+          resetTabs(placeholderTabs);
           setDiagramName(fetched.name);
-          setActiveId(tabs[0]?.id ?? activeId);
+          setActiveId(placeholderTabs[0]?.id ?? activeId);
           setLoadedExistingDiagram(true);
           setDiagramShareable(fetched.shareable);
           setDiagramShareCode(fetched.shareCode);
@@ -873,6 +892,30 @@ export default function LivePage() {
     roomRef.current?.send({ kind: 'op', op: { kind: 'tab-focus', tabId: activeId } });
   }, [hydrated, diagramId, diagramShareable, activeId]);
 
+  // Lazy fetch the active tab's full payload if we haven't loaded it
+  // yet. The hydration step seeds the first tab; switching to a
+  // never-opened tab kicks off a one-shot GET that merges the
+  // elements into local state. Failures fall back to the placeholder
+  // (empty elements) so the editor doesn't lock up.
+  useEffect(() => {
+    if (!hydrated || !diagramId) return;
+    if (loadedTabIdsRef.current.has(activeId)) return;
+    let cancelled = false;
+    loadedTabIdsRef.current.add(activeId);
+    apiLoadTab(selfParticipant.id, diagramId, activeId, sessionShareCode)
+      .then((tab) => {
+        if (cancelled || !tab) return;
+        remoteUpdateRef.current = true;
+        resetTabs((prev) => prev.map((t) => (t.id === tab.id ? tab : t)));
+      })
+      .catch(() => {
+        loadedTabIdsRef.current.delete(activeId);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, diagramId, activeId, selfParticipant.id, sessionShareCode, resetTabs]);
+
   // Local cursor broadcaster. Sends the participant's pointer position
   // in canvas-coords whenever it moves, throttled to ~30 Hz so we
   // don't flood the room. `broadcastCursor(null)` is called when the
@@ -895,7 +938,14 @@ export default function LivePage() {
     });
   };
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
-  const [viewportZoom, setViewportZoom] = useState(1);
+  // Mobile (≤768 px) defaults to 30% zoom so the diagram fits without
+  // a fit-to-screen tap; desktop stays at 100%. Re-evaluated on
+  // window resize so a rotation / desktop-to-mobile breakpoint
+  // change still gives a reasonable starting view.
+  const [viewportZoom, setViewportZoom] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    return window.innerWidth <= 768 ? 0.3 : 1;
+  });
   const canvasMainRef = useRef<HTMLElement>(null);
   // Keep latest zoom available to drag effects without re-creating them on
   // every zoom change (which would interrupt an in-progress drag).

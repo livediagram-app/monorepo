@@ -1,8 +1,10 @@
-node_modules
-dist
-build
-.next
-.turbo
-coverage
+node_modules/
+dist/
+build/
+.next/
+out/
+.turbo/
+.wrangler/
+coverage/
 pnpm-lock.yaml
 *.tsbuildinfo

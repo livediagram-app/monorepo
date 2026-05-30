@@ -64,7 +64,7 @@ export function ActivityPanel({
   if (minimized) return null;
   return (
     <MovablePanel
-      title="Activity"
+      title="Tab Activity"
       position={position}
       defaultCorner="bottom-left"
       width="w-64"

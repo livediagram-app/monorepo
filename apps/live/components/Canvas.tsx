@@ -979,8 +979,8 @@ export function Canvas(props: CanvasProps) {
             ) : null}
             {activityMinimized ? (
               <DockButton
-                label="Open Activity"
-                description="Expand the Activity panel: changelog, Undo, Redo."
+                label="Open Tab Activity"
+                description="Expand the Tab Activity panel: changelog, Undo, Redo."
                 icon={<ActivityIcon />}
                 onClick={onToggleActivityMinimized}
               />
