@@ -280,7 +280,7 @@ function TrashIcon() {
   );
 }
 
-function UndoIcon() {
+export function UndoIcon() {
   return (
     <svg
       width="13"
@@ -299,7 +299,7 @@ function UndoIcon() {
   );
 }
 
-function RedoIcon() {
+export function RedoIcon() {
   return (
     <svg
       width="13"

@@ -33,7 +33,7 @@ import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
 import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type SelectedElementControls } from './CommandPalette';
-import { ActivityIcon, ActivityPanel } from './ActivityPanel';
+import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
 import { ContextIcon, ContextPanel } from './ContextPanel';
 import { Explorer, ExplorerIcon, PaletteIcon } from './Explorer';
 import { getTheme } from '@/lib/themes';
@@ -44,6 +44,7 @@ import { ModeBanner } from './ModeBanner';
 import { PlusButton } from './PlusButton';
 import { SelectionPopover } from './SelectionPopover';
 import { TemplatePicker } from './TemplatePicker';
+import { Tooltip } from './Tooltip';
 import { ZoomControls } from './ZoomControls';
 
 type CanvasProps = {
@@ -1039,12 +1040,46 @@ export function Canvas(props: CanvasProps) {
               />
             ) : null}
             {activityMinimized ? (
-              <DockButton
-                label="Open Tab Activity"
-                description="Expand the Tab Activity panel: changelog, Undo, Redo."
-                icon={<ActivityIcon />}
-                onClick={onToggleActivityMinimized}
-              />
+              // Collapsed Activity dock pairs the expand button with
+              // inline Undo / Redo so common history actions don't
+              // require reopening the panel.
+              <div className="pointer-events-auto flex items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
+                <Tooltip title="Undo" description="Undo last edit.">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={onUndo}
+                    disabled={!canUndo}
+                    aria-label="Undo"
+                    className="flex h-11 w-9 items-center justify-center border-r border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                  >
+                    <UndoIcon />
+                  </button>
+                </Tooltip>
+                <Tooltip title="Open Tab Activity" description="Expand the Tab Activity panel.">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={onToggleActivityMinimized}
+                    aria-label="Open Tab Activity"
+                    className="flex h-11 w-9 items-center justify-center text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <ActivityIcon />
+                  </button>
+                </Tooltip>
+                <Tooltip title="Redo" description="Redo last undone edit.">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={onRedo}
+                    disabled={!canRedo}
+                    aria-label="Redo"
+                    className="flex h-11 w-9 items-center justify-center border-l border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                  >
+                    <RedoIcon />
+                  </button>
+                </Tooltip>
+              </div>
             ) : null}
             <ZoomControls
               zoom={viewportZoom}
