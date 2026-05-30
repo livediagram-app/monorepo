@@ -1,2 +1,179 @@
 @import 'tailwindcss';
 @import '@livediagram/tailwind-config';
+
+/*
+ * Hero illustration animation. Loops every ~14 s:
+ *   1. shapes pop in one by one
+ *   2. arrows draw between them
+ *   3. a remote collaborator's cursor sweeps the canvas
+ *   4. everything fades and the cycle restarts
+ *
+ * Stays in CSS so the marketing site doesn't need any JS for the
+ * animation — it works during static export, with reduced-motion
+ * support driving a fallback that just shows the finished diagram.
+ */
+
+.hero-shape {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: hero-shape-in 14s ease-out infinite;
+}
+.hero-shape-1 {
+  animation-delay: 0.2s;
+}
+.hero-shape-2 {
+  animation-delay: 1.4s;
+}
+.hero-shape-3 {
+  animation-delay: 2.6s;
+}
+.hero-shape-4 {
+  animation-delay: 4s;
+}
+.hero-shape-5 {
+  animation-delay: 5.2s;
+}
+
+@keyframes hero-shape-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  4% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  8% {
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  95% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.hero-arrow {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: hero-arrow-draw 14s ease-out infinite;
+}
+.hero-arrow-1 {
+  animation-delay: 1.7s;
+}
+.hero-arrow-2 {
+  animation-delay: 3s;
+}
+.hero-arrow-3 {
+  animation-delay: 4.3s;
+}
+.hero-arrow-4 {
+  animation-delay: 5.5s;
+}
+
+@keyframes hero-arrow-draw {
+  0% {
+    stroke-dashoffset: 200;
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  10% {
+    stroke-dashoffset: 0;
+  }
+  85% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 200;
+    opacity: 0;
+  }
+}
+
+.hero-cursor {
+  top: 220px;
+  left: 80px;
+  animation: hero-cursor-move 14s ease-in-out infinite;
+}
+
+@keyframes hero-cursor-move {
+  0%,
+  35% {
+    top: 220px;
+    left: 80px;
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  55% {
+    top: 130px;
+    left: 290px;
+  }
+  70% {
+    top: 145px;
+    left: 460px;
+  }
+  85% {
+    top: 230px;
+    left: 460px;
+    opacity: 1;
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    top: 220px;
+    left: 80px;
+    opacity: 0;
+  }
+}
+
+.animate-hero-presence-2 {
+  opacity: 0;
+  animation: hero-presence 14s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+@keyframes hero-presence {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-shape,
+  .hero-arrow,
+  .hero-cursor,
+  .animate-hero-presence-2 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+}

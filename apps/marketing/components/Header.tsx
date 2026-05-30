@@ -6,23 +6,17 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Brand href="/" size="md" />
         <nav className="hidden items-center gap-8 md:flex">
-          <a href="#product" className="text-sm text-slate-600 hover:text-slate-900">
-            Product
+          <a href="#features" className="text-sm text-slate-600 hover:text-slate-900">
+            Features
           </a>
-          <a href="#teams" className="text-sm text-slate-600 hover:text-slate-900">
-            For teams
+          <a href="#collab" className="text-sm text-slate-600 hover:text-slate-900">
+            Collaboration
           </a>
-          <a href="#pricing" className="text-sm text-slate-600 hover:text-slate-900">
-            Pricing
+          <a href="#foundations" className="text-sm text-slate-600 hover:text-slate-900">
+            Open source
           </a>
         </nav>
         <div className="flex items-center gap-3">
-          <a
-            href="#signin"
-            className="hidden text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline-block"
-          >
-            Sign in
-          </a>
           <a
             href="/live"
             className="inline-flex items-center rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
