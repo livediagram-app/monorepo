@@ -840,8 +840,14 @@ export default function LivePage() {
           lastSavedTabsRef.current = tabs;
           lastSavedNameRef.current = diagramName;
           setSaveStatus('saved');
-          setSavedAt(Date.now());
-          refreshDiagramList(selfParticipant.id);
+          const now = Date.now();
+          setSavedAt(now);
+          // Bump the current diagram's row locally so the Explorer's
+          // "Updated X ago" stays fresh — used to refetch the whole
+          // list here, which hit /api/diagrams on every autosave.
+          setDiagramList((prev) =>
+            prev.map((d) => (d.id === diagramId ? { ...d, savedAt: now, name: diagramName } : d)),
+          );
         })
         .catch(() => {
           setSaveStatus('error');
