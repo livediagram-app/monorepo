@@ -19,6 +19,8 @@ The editor is real:
 - Per-tab activity log with surgical revert (see [12-activity-and-audit.md](12-activity-and-audit.md)).
 - Folders in the Explorer (see [15-folders.md](15-folders.md)).
 - Themed templates (chosen on the `/live/new` route).
+- Export the active tab as Markdown / PDF / PNG / JSON file from the header (welcome-style overlay). Import is the round-trip: a previously-exported JSON envelope drops back in as a new tab; the envelope's `schemaVersion` lets the editor refuse files newer than it understands instead of silently corrupting state.
+- "Shared with you" Explorer accordion + standalone `/live/explorer` page surface the diagrams another owner has shared with the visitor; the row's link carries a still-live share code so the non-owner can actually open it. Visitor can copy a shared diagram into their own files via the header's "Make a copy" button.
 - **Hybrid Clerk auth.** Guests use the editor without signing in (the spec/04 hard rule); a signed-in user's diagrams travel under their Clerk userId via Bearer-verified requests. Sign-in lives at `/live/sign-in/` (email-code OR Google OAuth), sign-up at `/live/get-started/`, account self-delete from the header menu (gated by Clerk's reverification step-up). Guest → authed migration runs on first sign-in via `POST /api/migrate`. The api worker degrades to pure guest mode when `CLERK_JWKS_URL` is unset, and the frontend ClerkProvider becomes a pass-through when `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is unset — so a self-hoster can ship without Clerk (spec/03). See [04-auth-and-guest-access.md](04-auth-and-guest-access.md) and [11-api.md](11-api.md).
 
 The editor never touches `localStorage` for diagrams — `apps/live/lib/api-client.ts` is the single persistence boundary. `localStorage` is only used for **identity bootstrap** (the guest participant id + name-confirmed flag — Clerk users key off their userId instead).
@@ -29,7 +31,6 @@ These are the meaningful gaps between today and "full product":
 
 - **Payments + email** — Stripe (Pro subscription) and Resend (transactional mail) per [03](03-open-source-and-business-model.md).
 - **Operational transform / CRDT** — realtime is LWW; concurrent edits on the same element clobber.
-- **Export** — PNG / SVG / JSON. The data model is JSON-serialisable already; only the route is missing.
 - **Multi-user permissions beyond share links** — today a diagram is either private or shared via a link with role. No teams, no per-user grants.
 
 ## Hard rules carried forward
