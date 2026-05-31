@@ -95,7 +95,11 @@ function AuthControlsEnabled() {
             role="menuitem"
             onClick={() => {
               setMenuOpen(false);
-              void signOut({ redirectUrl: '/live/' });
+              // Land on the marketing landing page at `/` (router worker
+              // serves marketing there). Same destination as the delete-
+              // account flow — once you're signed out, the editor is
+              // the wrong default, the landing page is.
+              void signOut({ redirectUrl: '/' });
             }}
             className="block w-full rounded px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
           >
