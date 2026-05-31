@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { MovablePanel } from './MovablePanel';
 import { MenuItem, PortalMenu } from './PortalMenu';
+import { SignInPrompt } from './SignInPrompt';
 import { Tooltip } from './Tooltip';
 
 type DiagramListItem = {
@@ -380,22 +381,7 @@ export function Explorer({
           ) : null}
         </div>
 
-        <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-600">
-          <p className="font-medium text-slate-800">Sign in to keep your diagrams</p>
-          <p className="mt-1 leading-relaxed text-slate-500">
-            A free account is required to keep your diagrams across sessions.
-          </p>
-          <Tooltip title="Sign in" description="Coming soon.">
-            <button
-              type="button"
-              disabled
-              aria-disabled
-              className="mt-3 inline-flex w-full cursor-not-allowed items-center justify-center rounded-md bg-brand-500/60 px-3 py-1.5 text-xs font-medium text-white shadow-sm"
-            >
-              Sign in (coming soon)
-            </button>
-          </Tooltip>
-        </div>
+        <SignInPrompt />
       </div>
 
       {moveTargetDiagramId && onMoveDiagramToFolder ? (
