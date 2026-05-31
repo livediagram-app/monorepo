@@ -31,7 +31,9 @@ import { clerkEnabled } from '@/lib/clerk-config';
 
 type Phase = 1 | 2;
 
-const POST_AUTH_DEFAULT = '/live/';
+// See sign-in/page.tsx — router.replace applies the '/live' basePath
+// automatically, so the value here is the post-basePath path.
+const POST_AUTH_DEFAULT = '/';
 
 function GetStartedContent() {
   const router = useRouter();
@@ -129,7 +131,7 @@ function GetStartedContent() {
         msg.toLowerCase().includes('email address is taken') ||
         msg.toLowerCase().includes('that email address is taken')
       ) {
-        router.replace('/live/sign-in/');
+        router.replace('/sign-in/');
         return;
       }
       setError(msg);
@@ -186,7 +188,7 @@ function GetStartedContent() {
       footer={
         <>
           Already have an account?{' '}
-          <Link href="/live/sign-in/" className="font-medium text-brand-600 hover:underline">
+          <Link href="/sign-in/" className="font-medium text-brand-600 hover:underline">
             Sign in
           </Link>
         </>

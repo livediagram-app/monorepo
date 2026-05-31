@@ -50,7 +50,7 @@ function AuthControlsEnabled() {
   if (!isSignedIn) {
     return (
       <Link
-        href="/live/sign-in/"
+        href="/sign-in/"
         className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
       >
         Sign in

@@ -20,6 +20,10 @@ out/
 .env
 .env.local
 .env.*.local
+# Wrangler local-dev secrets (mirrors the production secret store but
+# stays on disk for `wrangler dev`). Per spec/06 these must never be
+# committed.
+.dev.vars
 
 # Logs
 npm-debug.log*

@@ -24,15 +24,22 @@ class_name = "DiagramRoom"
 tag = "v1"
 new_classes = ["DiagramRoom"]
 
-# Public env vars. JWKS URLs are not secrets (Clerk publishes them
-# at `.well-known/jwks.json` for token verification) so they live in
-# `[vars]`, not `wrangler secret put`. Leaving the value as the
-# empty string is supported: when CLERK_JWKS_URL is empty the api
-# worker stays in pure-guest mode and trusts `X-Owner-Id` exclusively
-# (see spec/04 + spec/11). Set the URL from your Clerk dashboard →
-# API Keys → Show JWKS URL, format
-# `https://<your-instance>.clerk.accounts.dev/.well-known/jwks.json`
+# CLERK_JWKS_URL is provisioned out-of-band so the value never lands
+# in the public repo (spec/06):
+#
+#   - Local dev: drop `CLERK_JWKS_URL=https://...` into
+#     `apps/api/.dev.vars` (gitignored). Wrangler reads it on the
+#     next `wrangler dev`.
+#   - Production: stored as a Cloudflare Worker secret via
+#     `wrangler secret put CLERK_JWKS_URL`. The deploy workflow
+#     pulls it from the GitHub repo secret `CLERK_JWKS_URL` and
+#     pipes it into `wrangler secret put` on every deploy so the
+#     value can rotate by editing the GitHub secret. Secrets
+#     persist across deploys independently of this file.
+#
+# When the secret is unset the api worker stays in pure-guest mode
+# and trusts `X-Owner-Id` exclusively (spec/04 + spec/11). Get the
+# URL from the Clerk dashboard → API Keys → "Show JWKS URL"; format
+# is `https://<your-instance>.clerk.accounts.dev/.well-known/jwks.json`
 # (test tenant) or `https://clerk.<your-domain>/.well-known/jwks.json`
 # (production tenant).
-[vars]
-CLERK_JWKS_URL = ""

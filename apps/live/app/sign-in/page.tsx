@@ -32,7 +32,12 @@ import {
 } from '@/components/auth-shared';
 import { clerkEnabled } from '@/lib/clerk-config';
 
-const POST_AUTH_DEFAULT = '/live/';
+// router.push / router.replace apply Next.js's basePath ('/live')
+// automatically — passing '/live/...' would yield '/live/live/...'.
+// External-supplied redirect_url query values come in raw and DO
+// contain the '/live' prefix; the resolver strips it before passing
+// to the router.
+const POST_AUTH_DEFAULT = '/';
 
 function SignInContent() {
   const router = useRouter();
@@ -49,15 +54,21 @@ function SignInContent() {
   const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Honour ?redirect_url when it's a same-origin path under /live and
-  // doesn't loop back to auth. Otherwise fall through to /live/ (which
-  // resolves to /live/new via the welcome flow per spec/14).
+  // doesn't loop back to auth. Strip the /live prefix before
+  // returning — router.replace/push apply basePath. Otherwise fall
+  // through to / (which resolves to /live/new via the welcome flow
+  // per spec/14).
   const resolvePostSignInDestination = useCallback((): string => {
     const redirect = searchParams.get('redirect_url');
     const safe =
       redirect?.startsWith('/live') &&
       !redirect.toLowerCase().startsWith('/live/sign-in') &&
       !redirect.toLowerCase().startsWith('/live/get-started');
-    return safe && redirect ? redirect : POST_AUTH_DEFAULT;
+    if (safe && redirect) {
+      const stripped = redirect.replace(/^\/live/, '');
+      return stripped.length > 0 ? stripped : '/';
+    }
+    return POST_AUTH_DEFAULT;
   }, [searchParams]);
 
   // Already signed in? Bounce straight to the editor. Without this the
@@ -194,7 +205,7 @@ function SignInContent() {
       footer={
         <>
           New to livediagram?{' '}
-          <Link href="/live/get-started/" className="font-medium text-brand-600 hover:underline">
+          <Link href="/get-started/" className="font-medium text-brand-600 hover:underline">
             Create an account
           </Link>
         </>

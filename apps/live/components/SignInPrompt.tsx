@@ -54,7 +54,7 @@ function SignInPromptEnabled() {
       body="A free account syncs your diagrams across devices."
       action={
         <Link
-          href="/live/sign-in/"
+          href="/sign-in/"
           className="inline-flex w-full items-center justify-center rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-brand-600"
         >
           Sign in
