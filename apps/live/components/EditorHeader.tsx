@@ -90,7 +90,12 @@ export function EditorHeader({
               aria-pressed={shareable}
             >
               <ShareIcon />
-              {shareable ? 'Shared' : 'Share'}
+              {/* Label stays "Share" in both states — the user dislikes
+                  the verb changing to "Shared". State is communicated
+                  by the brand-500 fill + aria-pressed flip; the small
+                  green SharedBadge next to the diagram title in the
+                  centre cluster is the explicit "on" affordance. */}
+              Share
             </button>
           </Tooltip>
         ) : null}
