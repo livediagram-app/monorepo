@@ -2,11 +2,14 @@ import {
   ActivityArt,
   ArrowsArt,
   CommentsArt,
+  DepthArt,
+  EasyStartArt,
   FoldersArt,
   FormatPainterArt,
   LaserArt,
   MarqueeArt,
   MitArt,
+  MultiplayerArt,
   NameArt,
   NoServersArt,
   NoTrackingArt,
@@ -34,10 +37,41 @@ export default function LandingPage() {
         <Hero />
 
         <Section
+          id="why"
+          eyebrow="Easy, not basic"
+          title="Simple by design, powerfully deep"
+          description="The simple path is the default — open a link and draw. The depth is there the moment you reach for it. You never trade one for the other."
+        >
+          <FeatureGrid
+            items={[
+              {
+                art: <EasyStartArt />,
+                title: 'Start in one click',
+                description:
+                  "No install, no account, no blank-canvas dread — land on a link and you're drawing. Twelve templates turn an empty tab into a real diagram in seconds.",
+              },
+              {
+                art: <DepthArt />,
+                title: 'Looks simple, runs deep',
+                description:
+                  'A clean canvas hides serious range: groups, locks, the format painter, arrows that track, links across tabs, and eighteen one-click themes.',
+              },
+              {
+                art: <MultiplayerArt />,
+                title: 'Multiplayer, no setup',
+                description:
+                  'Share one link and the whole team is on the canvas live — cursors, presence, comments, and an activity log you can rewind. No seats, no admin console.',
+              },
+            ]}
+          />
+        </Section>
+
+        <Section
           id="features"
           eyebrow="Draw"
           title="A real diagram editor, in your browser"
           description="Real shapes, connectors that track what they're tied to, and a dozen templates and themes so you never start from a blank page."
+          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -74,7 +108,6 @@ export default function LandingPage() {
           eyebrow="Refine"
           title="Keep a busy diagram tidy"
           description="Edit in bulk, copy a look from one element to the next, talk in context, and split a big system across linked tabs and folders."
-          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -117,6 +150,7 @@ export default function LandingPage() {
           eyebrow="Together"
           title="Edit the same canvas, live"
           description="Diagrams stay private until you share. Everyone you invite shows up on the canvas in real time — cursors, selections, and all."
+          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -153,7 +187,6 @@ export default function LandingPage() {
           eyebrow="Share & control"
           title="Shared by link, yours to revoke"
           description="Hand out editor or view-only links, rewind any change from a full activity trail, and trust that every save survives a refresh."
-          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -196,6 +229,7 @@ export default function LandingPage() {
           eyebrow="Open and honest"
           title="Open source. Self-hostable. No lock-in."
           description="MIT-licensed. Static frontend + Cloudflare Workers backend. Run it on your own account in an afternoon. Or use the hosted version — your call."
+          variant="tinted"
         >
           <FeatureGrid
             items={[

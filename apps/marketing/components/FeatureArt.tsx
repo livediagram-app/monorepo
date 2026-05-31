@@ -959,3 +959,72 @@ export function NoTrackingArt() {
     </Frame>
   );
 }
+
+/* ─────────────── Section: simple by design (lead-in) ─────────────────
+ * Lighter than the canvas mocks above — a clean icon badge per card, so
+ * the section about simplicity reads as simple. Uses the editor's
+ * bg-brand-50 / text-brand-500 circle motif with a gentle pulsing ring. */
+
+function IconBadge({ children, delay = '0s' }: { children: ReactNode; delay?: string }) {
+  return (
+    <div className="mb-5 flex h-24 items-center justify-center" aria-hidden>
+      <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+        <span
+          className="fa-pulse absolute inset-0 rounded-full ring-2 ring-brand-300"
+          style={{ animationDelay: delay }}
+        />
+        {children}
+      </span>
+    </div>
+  );
+}
+
+export function EasyStartArt() {
+  return (
+    <IconBadge>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M5 3 L19 11 L12 12 L15 19 L12 20 L9 13 L5 17 Z" fill="currentColor" />
+      </svg>
+    </IconBadge>
+  );
+}
+
+export function DepthArt() {
+  return (
+    <IconBadge delay="0.4s">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3 L21 8 L12 13 L3 8 Z" />
+        <path d="M3 12 L12 17 L21 12" strokeLinecap="round" />
+        <path d="M3 16 L12 21 L21 16" strokeLinecap="round" />
+      </svg>
+    </IconBadge>
+  );
+}
+
+export function MultiplayerArt() {
+  return (
+    <IconBadge delay="0.8s">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <circle cx="9" cy="8" r="3" />
+        <circle cx="17" cy="9" r="2.5" />
+        <path d="M3.5 19 a5.5 5.5 0 0 1 11 0" strokeLinecap="round" />
+        <path d="M14 18.5 a4.5 4.5 0 0 1 6.5 -1.2" strokeLinecap="round" />
+      </svg>
+    </IconBadge>
+  );
+}

@@ -16,12 +16,13 @@ The marketing app (`apps/marketing`) is the public landing site served at `/` (e
 Single landing page (`app/page.tsx`) with a sticky header, hero, themed feature sections, a closing CTA, and a footer. Feature sections group related capabilities (rather than two large catch-all grids) and alternate the `tinted` background for rhythm.
 
 1. **Hero** (`components/Hero.tsx`) — headline, subhead, primary CTA → `/live/new` ("Start drawing") with a no-sign-up note, animated `HeroIllustration` mock of the editor.
-2. **Draw** (`#features`) — the raw materials of a diagram: templates, themes, shapes, arrows.
-3. **Refine** (`#refine`, tinted) — working the canvas: multi-select, format painter, comments, tabs + cross-tab links, folders.
-4. **Together** (`#collab`) — live collaboration: presence, selection glow, LWW realtime edits, laser pointer.
-5. **Share & control** (`#sharing`, tinted) — editor/view-only links, revoke, activity log + revert, collaborator name, durable save.
-6. **Open and honest** (`#foundations`) — MIT license, self-host, no telemetry. See [03-open-source-and-business-model](03-open-source-and-business-model.md).
-7. **Closing CTA** (`#get-started`) — "no sign-up wall" message + `/live/new`.
+2. **Simple by design** (`#why`) — the positioning lead-in: tagline "Simple by design, powerfully deep" + three cards framing the easy-yet-powerful duality (start in one click, looks simple/runs deep, multiplayer with no setup). Lighter treatment than the sections below — clean icon badges, not canvas mocks — so the section about simplicity reads as simple.
+3. **Draw** (`#features`, tinted) — the raw materials of a diagram: templates, themes, shapes, arrows.
+4. **Refine** (`#refine`) — working the canvas: multi-select, format painter, comments, tabs + cross-tab links, folders.
+5. **Together** (`#collab`, tinted) — live collaboration: presence, selection glow, LWW realtime edits, laser pointer.
+6. **Share & control** (`#sharing`) — editor/view-only links, revoke, activity log + revert, collaborator name, durable save.
+7. **Open and honest** (`#foundations`, tinted) — MIT license, self-host, no telemetry. See [03-open-source-and-business-model](03-open-source-and-business-model.md).
+8. **Closing CTA** (`#get-started`) — "no sign-up wall" message + `/live/new`.
 
 The primary CTA reads **"Start drawing"** everywhere (header, hero, closing CTA) — keep it consistent. The `#features` anchor must stay on the first feature section (the hero's "See what's in it" button targets it).
 
