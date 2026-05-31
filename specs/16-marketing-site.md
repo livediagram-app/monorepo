@@ -16,8 +16,8 @@ The marketing app (`apps/marketing`) is the public landing site served at `/` (e
 Single landing page (`app/page.tsx`) with a sticky header, hero, themed feature sections, a closing CTA, and a footer. Feature sections group related capabilities (rather than two large catch-all grids) and alternate the `tinted` background for rhythm.
 
 1. **Hero** (`components/Hero.tsx`) — headline, subhead, primary CTA → `/live/new` ("Start drawing") with a no-sign-up note, animated `HeroIllustration` mock of the editor.
-2. **Simple by design** (`#why`) — the positioning lead-in: tagline "Simple by design, powerfully deep" + three cards framing the easy-yet-powerful duality (start in one click, looks simple/runs deep, multiplayer with no setup). Lighter treatment than the sections below — clean icon badges, not canvas mocks — so the section about simplicity reads as simple.
-3. **Draw** (`#features`, tinted) — the raw materials of a diagram: templates, themes, shapes, arrows.
+2. **Simple by design** (`#why`): the positioning lead-in. Tagline "Simple by design, powerfully deep" plus the easy-yet-powerful duality (start in one click, looks simple/runs deep, multiplayer with no setup) and the two easiest-start features, templates and themes. The three duality cards use light icon badges; the templates/themes cards keep their canvas mocks.
+3. **Draw** (`#features`, tinted): the raw materials of a diagram, shapes and arrows.
 4. **Refine** (`#refine`) — working the canvas: multi-select, format painter, comments, tabs + cross-tab links, folders.
 5. **Together** (`#collab`, tinted) — live collaboration: presence, selection glow, LWW realtime edits, laser pointer.
 6. **Share & control** (`#sharing`) — editor/view-only links, revoke, activity log + revert, collaborator name, durable save.

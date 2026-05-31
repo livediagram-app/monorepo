@@ -40,7 +40,7 @@ export default function LandingPage() {
           id="why"
           eyebrow="Easy, not basic"
           title="Simple by design, powerfully deep"
-          description="The simple path is the default — open a link and draw. The depth is there the moment you reach for it. You never trade one for the other."
+          description="The simple path is the default: open a link and draw. The depth is there the moment you reach for it, and you never trade one for the other."
         >
           <FeatureGrid
             items={[
@@ -48,19 +48,31 @@ export default function LandingPage() {
                 art: <EasyStartArt />,
                 title: 'Start in one click',
                 description:
-                  "No install, no account, no blank-canvas dread — land on a link and you're drawing. Twelve templates turn an empty tab into a real diagram in seconds.",
+                  "No install, no account, no blank-canvas dread. Land on a link and you're drawing in seconds.",
               },
               {
                 art: <DepthArt />,
                 title: 'Looks simple, runs deep',
                 description:
-                  'A clean canvas hides serious range: groups, locks, the format painter, arrows that track, links across tabs, and eighteen one-click themes.',
+                  'A clean canvas hides serious range: groups, locks, the format painter, arrows that track, and links across tabs.',
               },
               {
                 art: <MultiplayerArt />,
                 title: 'Multiplayer, no setup',
                 description:
-                  'Share one link and the whole team is on the canvas live — cursors, presence, comments, and an activity log you can rewind. No seats, no admin console.',
+                  'Share one link and the whole team is on the canvas live, with cursors, presence, comments, and an activity log you can rewind. No seats, no admin console.',
+              },
+              {
+                art: <TemplatesArt />,
+                title: 'Twelve starter templates',
+                description:
+                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, and Pyramid. Pick one, edit it, or start blank.',
+              },
+              {
+                art: <ThemesArt />,
+                title: 'Eighteen preset themes',
+                description:
+                  'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
               },
             ]}
           />
@@ -70,23 +82,11 @@ export default function LandingPage() {
           id="features"
           eyebrow="Draw"
           title="A real diagram editor, in your browser"
-          description="Real shapes, connectors that track what they're tied to, and a dozen templates and themes so you never start from a blank page."
+          description="Real shapes and connectors that track what they're tied to. The raw materials every diagram is built from."
           variant="tinted"
         >
           <FeatureGrid
             items={[
-              {
-                art: <TemplatesArt />,
-                title: 'Twelve starter templates',
-                description:
-                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline — plus Venn, User journey, Fishbone, and Pyramid. Pick one, edit it. Or start blank.',
-              },
-              {
-                art: <ThemesArt />,
-                title: 'Eighteen preset themes',
-                description:
-                  'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
-              },
               {
                 art: <ShapesArt />,
                 title: 'Shapes that match how you think',
