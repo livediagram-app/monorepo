@@ -97,6 +97,12 @@ export default function LandingPage() {
           <FeatureGrid
             items={[
               {
+                art: <ShareLinksArt />,
+                title: 'Editor or view-only links',
+                description:
+                  'Mint an editor link for collaborators or a view-only link for stakeholders who should watch, not touch. Run as many links as you like, side by side.',
+              },
+              {
                 art: <PresenceArt />,
                 title: 'Live presence',
                 description:
@@ -125,6 +131,12 @@ export default function LandingPage() {
                 title: 'Laser pointer for presenting',
                 description:
                   'Switch to the laser tool and your cursor leaves a glowing trail everyone can see. Point at the thing you mean while you talk it through. Trails fade on their own.',
+              },
+              {
+                art: <RevokeArt />,
+                title: 'Stop sharing on demand',
+                description:
+                  'Sharing is a toggle, not a state of being. Revoke a link and the URL stops working. The diagram is yours again.',
               },
             ]}
           />
@@ -226,24 +238,12 @@ export default function LandingPage() {
 
         <Section
           id="sharing"
-          title="Shared by link, yours to revoke"
-          description="Hand out editor or view-only links, rewind any change from a full activity trail, and trust that every save survives a refresh."
+          title="Your work is safe"
+          description="Rewind any change from a full activity trail, keep the name teammates know you by, and trust that every save survives a refresh."
           variant="tinted"
         >
           <FeatureGrid
             items={[
-              {
-                art: <ShareLinksArt />,
-                title: 'Editor or view-only links',
-                description:
-                  'Mint an editor link for collaborators or a view-only link for stakeholders who should watch, not touch. Run as many links as you like, side by side.',
-              },
-              {
-                art: <RevokeArt />,
-                title: 'Stop sharing on demand',
-                description:
-                  'Sharing is a toggle, not a state of being. Revoke a link and the URL stops working. The diagram is yours again.',
-              },
               {
                 art: <ActivityArt />,
                 title: 'Activity log with one-click revert',
