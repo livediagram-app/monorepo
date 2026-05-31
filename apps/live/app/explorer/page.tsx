@@ -252,12 +252,20 @@ export default function ExplorerPage() {
           )}
         </Section>
 
-        {/* Per-folder buckets. Unsorted first, then user folders
-            alphabetically. Each section renders the diagrams in
-            that bucket; user folders include rename + delete on
-            the section title. New-folder action lives at the
-            bottom of the group so it doesn't crowd the header. */}
-        {!loading && diagrams.length > 0 ? (
+        {/* Thin rule below Recent so the change in scrolling cadence
+            (one tight grid → a column of folder sections) reads as
+            a deliberate transition rather than two sections accidentally
+            butting against each other. */}
+        {!loading && diagrams.length > 0 ? <hr className="mb-8 border-slate-200" /> : null}
+
+        {/* Per-folder buckets. Unsorted first (only when it actually
+            has at least one diagram — empty Unsorted is noise on a
+            fully-bucketed account), then user folders alphabetically.
+            Each section renders the diagrams in that bucket; user
+            folders include rename + delete on the section title.
+            New-folder action lives at the bottom of the group so it
+            doesn't crowd the header. */}
+        {!loading && unsortedDiagrams.length > 0 ? (
           <FolderBucket
             title="Unsorted"
             count={unsortedDiagrams.length}
@@ -691,9 +699,7 @@ function DiagramCard({
           }}
           aria-label={`Menu for ${title}`}
           aria-expanded={menuOpen}
-          className={`absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-500 opacity-0 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus:opacity-100 group-hover:opacity-100 ${
-            menuOpen ? 'opacity-100' : ''
-          }`}
+          className="absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
             <circle cx="3" cy="7" r="1.25" fill="currentColor" />
