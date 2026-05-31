@@ -239,7 +239,7 @@ export function Explorer({
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
     >
-      <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
+      <div className="flex flex-col gap-2.5 px-3 pb-3 pt-1">
         {onNewDiagram ? (
           <button
             type="button"
@@ -252,7 +252,7 @@ export function Explorer({
         ) : null}
 
         {current ? (
-          <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200/70 bg-white p-2 shadow-sm">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60">
             <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Current Diagram
             </p>
@@ -287,7 +287,7 @@ export function Explorer({
         ) : null}
 
         {loading || recents.length > 0 ? (
-          <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200/70 bg-white p-2 shadow-sm">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60">
             <AccordionHeader
               label="Recent"
               badge={loading ? null : recents.length}
@@ -353,7 +353,7 @@ export function Explorer({
             (migration 0010) — bumped every time the visitor opens
             a share link for a diagram they don't own. */}
         {shared.length > 0 ? (
-          <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200/70 bg-white p-2 shadow-sm">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60">
             <AccordionHeader
               label="Shared with you"
               badge={shared.length}
@@ -379,7 +379,7 @@ export function Explorer({
         {/* Folders section (spec/15). Always shows because Unsorted
             is the home for any uncategorised diagram, so there's
             always at least one bucket. */}
-        <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200/70 bg-white p-2 shadow-sm">
+        <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60">
           <AccordionHeader
             label="Folders"
             badge={folders.length}
