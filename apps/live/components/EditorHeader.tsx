@@ -38,7 +38,13 @@ export function EditorHeader({
   const [editing, setEditing] = useState(false);
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4">
+    // `relative z-50` puts the entire header into its own stacking
+    // context above the canvas sibling that follows it. Without it,
+    // AuthControls's absolute-positioned dropdown menu (which
+    // overflows the header bounds downward) was getting hidden
+    // behind the canvas — siblings without explicit z-index stack in
+    // document order and the canvas wins.
+    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4">
       <div className="flex w-48 items-center">
         <Brand href="/" size="md" accentColor={brandAccent} />
       </div>
