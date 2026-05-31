@@ -279,12 +279,14 @@ function ShapeSvgOverlay({
   if (shape === 'actor') {
     // UML actor: an open circle head (the fill colour tints it) over a
     // line body, arms and legs. The viewBox is taller than wide and
-    // leaves a clear band below the legs (y 116..150) for the label.
-    // `meet` keeps the figure proportional and centred at any size.
+    // leaves a small clear band below the legs (y 112..130) for the
+    // label — the original 0..150 height left a 38-unit empty band
+    // that read as wasted padding under bare stickmen. `meet` keeps
+    // the figure proportional and centred at any size.
     return (
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-        viewBox="0 0 90 150"
+        viewBox="0 0 90 130"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden
       >

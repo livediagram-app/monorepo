@@ -596,10 +596,14 @@ const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: number }> =
   stadium: { width: 160, height: 64 },
   // Actor (UML stickman): line-art figure with its label below. Taller
   // than wide and aspect-locked on create so the figure never distorts.
-  actor: { width: 90, height: 150 },
+  // Default size hugs the figure tightly — earlier 90×150 left a 38-
+  // unit band below the legs which read as wasted padding under bare
+  // (unlabelled) stickmen. 90×130 keeps room for a short label
+  // (y 112..130) without dominating the box.
+  actor: { width: 90, height: 130 },
   // Cloud: a container shape (networking / architecture). Stretches to
   // fit its label like the other flowchart shapes.
-  cloud: { width: 180, height: 120 },
+  cloud: { width: 180, height: 140 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
