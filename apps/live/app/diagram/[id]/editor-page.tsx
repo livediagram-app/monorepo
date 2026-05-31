@@ -50,7 +50,7 @@ import { Explorer } from '@/components/Explorer';
 import { NotFound } from '@/components/NotFound';
 import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
-import { useAuth } from '@clerk/react';
+import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import {
   ALIGN_SNAP_THRESHOLD,
@@ -83,14 +83,12 @@ import {
   apiLoadSelf,
   apiLoadShared,
   apiLoadTab,
-  apiMigrateGuestData,
   apiSaveDiagramMeta,
   apiSaveSelf,
   apiSaveTab,
   apiSetDiagramFolder,
   apiUpdateFolder,
   connectRoom,
-  setTokenProvider,
   type ChangeLogEntry,
   type RoomHandlers,
   type ShareLink,
@@ -199,48 +197,11 @@ function RefreshIcon() {
 export default function LivePage() {
   const initialTabs: Tab[] = [createTab('Tab 1')];
 
-  // Clerk session hook. `getToken` resolves the current session JWT
-  // (auto-refreshing); `isSignedIn` flips on once Clerk has confirmed
-  // the user; `userId` is the canonical Clerk identity. We register
-  // `() => getToken()` as the api-client's token provider as long as
-  // the user is signed in — every api call after that point ships an
-  // `Authorization: Bearer <jwt>` instead of the legacy `X-Owner-Id`
-  // (spec/04 + spec/11). When signed out the provider is cleared and
-  // the legacy guest path resumes.
-  const { getToken, isSignedIn, isLoaded: authLoaded, userId: clerkUserId } = useAuth();
-  useEffect(() => {
-    if (isSignedIn) {
-      setTokenProvider(() => getToken());
-    } else {
-      setTokenProvider(null);
-    }
-    return () => setTokenProvider(null);
-  }, [isSignedIn, getToken]);
-
-  // Guest → authed migration. Fires once per session the first time
-  // the user is signed in AND a guest UUID is still in localStorage.
-  // The POST /api/migrate endpoint reassigns every owner_id row that
-  // was the guest id to the Clerk userId; on success we drop the
-  // localStorage key so subsequent loads skip this entirely. See
-  // spec/04 + spec/11. Wrapped in a ref so a React StrictMode double
-  // render in dev doesn't fire two migration calls.
-  const migrateAttemptedRef = useRef(false);
-  useEffect(() => {
-    if (!isSignedIn || !clerkUserId) return;
-    if (migrateAttemptedRef.current) return;
-    const guestId = window.localStorage.getItem('livediagram:v2:self-id');
-    if (!guestId || guestId === clerkUserId) return;
-    migrateAttemptedRef.current = true;
-    void apiMigrateGuestData(guestId)
-      .then((res) => {
-        if (res) window.localStorage.removeItem('livediagram:v2:self-id');
-      })
-      .catch(() => {
-        // Network glitch — leave the localStorage id in place so a
-        // future load retries.
-        migrateAttemptedRef.current = false;
-      });
-  }, [isSignedIn, clerkUserId]);
+  // Clerk wiring (token provider + guest→authed migration). One hook
+  // does both — see `hooks/useClerkApiBootstrap.ts`. The values it
+  // returns are the same ones `useAuth()` would; we read them via the
+  // hook so the page has one source of truth.
+  const { authLoaded, clerkUserId } = useClerkApiBootstrap();
 
   const {
     tabs,

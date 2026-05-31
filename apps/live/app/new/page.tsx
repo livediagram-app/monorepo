@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
 import type { Tab } from '@livediagram/diagram';
-import { useAuth } from '@clerk/react';
+import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
   apiCreateDiagram,
   apiCreateFolder,
@@ -16,11 +16,9 @@ import {
   apiLoadDiagram,
   apiLoadSelf,
   apiLoadTab,
-  apiMigrateGuestData,
   apiSaveSelf,
   apiSetDiagramFolder,
   apiUpdateFolder,
-  setTokenProvider,
   type Folder,
 } from '@/lib/api-client';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
@@ -51,39 +49,9 @@ export default function NewDiagramPage() {
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Clerk session. Mirrors the editor route: `getToken` resolves the
-  // JWT for api calls, `clerkUserId` becomes the canonical participant
-  // id when signed in (so the migrated diagrams + the new ones share
-  // an owner), `authLoaded` gates the bootstrap below.
-  const { getToken, isSignedIn, isLoaded: authLoaded, userId: clerkUserId } = useAuth();
-  useEffect(() => {
-    if (isSignedIn) {
-      setTokenProvider(() => getToken());
-    } else {
-      setTokenProvider(null);
-    }
-    return () => setTokenProvider(null);
-  }, [isSignedIn, getToken]);
-
-  // Guest → authed migration. Runs once when both: the user is signed
-  // in AND a guest UUID is still in localStorage. See the matching
-  // useEffect in editor-page.tsx for the full rationale; the ref
-  // guards against StrictMode double-render.
-  const migrateAttemptedRef = useRef(false);
-  useEffect(() => {
-    if (!isSignedIn || !clerkUserId) return;
-    if (migrateAttemptedRef.current) return;
-    const guestId = window.localStorage.getItem('livediagram:v2:self-id');
-    if (!guestId || guestId === clerkUserId) return;
-    migrateAttemptedRef.current = true;
-    void apiMigrateGuestData(guestId)
-      .then((res) => {
-        if (res) window.localStorage.removeItem('livediagram:v2:self-id');
-      })
-      .catch(() => {
-        migrateAttemptedRef.current = false;
-      });
-  }, [isSignedIn, clerkUserId]);
+  // Clerk wiring (token provider + guest→authed migration) — same
+  // hook as the editor route; see hooks/useClerkApiBootstrap.ts.
+  const { authLoaded, clerkUserId } = useClerkApiBootstrap();
 
   useEffect(() => {
     document.title = 'New diagram | livediagram';
@@ -150,7 +118,6 @@ export default function NewDiagramPage() {
     })();
 
     return () => window.clearTimeout(safety);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoaded, clerkUserId]);
 
   // Single commit point — shared by the Submit (Create Diagram) and
