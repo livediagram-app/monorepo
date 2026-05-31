@@ -6,9 +6,15 @@ import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
+  apiCreateDiagram,
+  apiDeleteDiagram,
   apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
+  apiLoadDiagram,
+  apiLoadTab,
+  apiSaveDiagramMeta,
+  apiSetDiagramFolder,
   type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
@@ -16,6 +22,8 @@ import { clerkEnabled } from '@/lib/clerk-config';
 import { useFolders } from '@/hooks/useFolders';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { getTheme, type ThemeId } from '@/lib/themes';
+import { MenuItem, PortalMenu } from '@/components/PortalMenu';
+import type { Tab } from '@livediagram/diagram';
 
 type DiagramItem = { id: string; name: string; folderId: string | null; savedAt: number };
 
@@ -42,6 +50,13 @@ export default function ExplorerPage() {
   // user commits or escapes. `null` means no folder is being
   // renamed right now.
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  // Mirror of the floating Explorer's per-card state: which diagram
+  // is mid-rename (so the title swaps to an input) and which is
+  // showing the move-to-folder picker (anchored on a button via
+  // moveAnchorRef so the portal can position itself).
+  const [renamingDiagramId, setRenamingDiagramId] = useState<string | null>(null);
+  const [moveTargetDiagramId, setMoveTargetDiagramId] = useState<string | null>(null);
+  const moveAnchorRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     document.title = 'Explorer | livediagram';
@@ -94,6 +109,81 @@ export default function ExplorerPage() {
     renameFolder(id, name);
   };
 
+  // Diagram-side mutations — mirror the floating Explorer's wiring
+  // so the standalone page exposes the same actions per card. All
+  // optimistic with silent rollback to keep the grid responsive.
+  const renameDiagram = (id: string, name: string) => {
+    if (!clerkUserId) return;
+    const trimmed = name.trim();
+    setRenamingDiagramId(null);
+    if (!trimmed) return;
+    setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, name: trimmed } : d)));
+    void apiSaveDiagramMeta(clerkUserId, { id, name: trimmed }).catch(() => {});
+  };
+
+  const deleteDiagram = (id: string) => {
+    if (!clerkUserId) return;
+    setDiagrams((prev) => prev.filter((d) => d.id !== id));
+    void apiDeleteDiagram(clerkUserId, id).catch(() => {});
+  };
+
+  const moveDiagramToFolder = (id: string, folderId: string | null) => {
+    if (!clerkUserId) return;
+    setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, folderId } : d)));
+    void apiSetDiagramFolder(clerkUserId, id, folderId).catch(() => {});
+  };
+
+  // Clone the source diagram + all its tabs into a fresh diagram
+  // under the same owner. Tab ids re-mint so the copy can stand
+  // alone; link references (`element.link.tabId`) walk through an
+  // old→new id map so cross-tab navigation survives the duplicate.
+  // Inlines the same shape used in editor-page + /new; a shared
+  // helper would consolidate the three but is out of scope for the
+  // immediate UX request.
+  const duplicateDiagram = async (id: string) => {
+    if (!clerkUserId) return;
+    const src = await apiLoadDiagram(clerkUserId, id).catch(() => null);
+    if (!src) return;
+    const fullTabs = await Promise.all(
+      src.tabs.map((t) => apiLoadTab(clerkUserId, src.id, t.id).catch(() => null)),
+    );
+    const tabIdMap = new Map<string, string>();
+    for (const t of src.tabs) tabIdMap.set(t.id, crypto.randomUUID());
+    const remappedTabs: Tab[] = [];
+    for (const tab of fullTabs) {
+      if (!tab) continue;
+      const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
+      const elements = tab.elements.map((el) => {
+        if ('link' in el && el.link) {
+          const next = tabIdMap.get(el.link.tabId);
+          if (next) return { ...el, link: { ...el.link, tabId: next } };
+        }
+        return el;
+      });
+      remappedTabs.push({ ...tab, id: newTabId, elements });
+    }
+    const newId = crypto.randomUUID();
+    await apiCreateDiagram(clerkUserId, {
+      id: newId,
+      name: `${src.name} copy`,
+      tabs: remappedTabs,
+    }).catch(() => {});
+    // Re-fetch the owned list so the new diagram lands in the grid
+    // with a real savedAt (rather than a guessed local stub).
+    const list = await apiListDiagrams(clerkUserId).catch(() => null);
+    if (list) setDiagrams(list);
+  };
+
+  const openMovePicker = (id: string, anchor: HTMLElement | null) => {
+    moveAnchorRef.current = anchor;
+    setMoveTargetDiagramId(id);
+  };
+
+  // Folder picker rows — every folder is a flat row with its name.
+  // No depth indicator; this surface is for "which folder?" not
+  // "where in the tree?".
+  const folderPickerRows = folders.slice().sort((a, b) => a.name.localeCompare(b.name));
+
   if (!clerkEnabled) {
     return (
       <FullPageNotice
@@ -128,7 +218,7 @@ export default function ExplorerPage() {
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-32 pt-10">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Hi {clerkDisplayName ?? 'there'} —
+            Hi {clerkDisplayName ?? 'there'},
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             Everything you own and everything that&apos;s been shared with you.
@@ -160,9 +250,17 @@ export default function ExplorerPage() {
                 .map((d) => (
                   <DiagramCard
                     key={d.id}
+                    id={d.id}
                     href={`/diagram/${d.id}`}
                     title={d.name}
                     savedAt={d.savedAt}
+                    renaming={renamingDiagramId === d.id}
+                    onStartRename={() => setRenamingDiagramId(d.id)}
+                    onCommitRename={(name) => renameDiagram(d.id, name)}
+                    onCancelRename={() => setRenamingDiagramId(null)}
+                    onDuplicate={() => void duplicateDiagram(d.id)}
+                    onDelete={() => deleteDiagram(d.id)}
+                    onMoveRequest={(anchor) => openMovePicker(d.id, anchor)}
                   />
                 ))}
             </Grid>
@@ -232,6 +330,37 @@ export default function ExplorerPage() {
       >
         <PlusIcon size={22} />
       </Link>
+      {moveTargetDiagramId ? (
+        // Move-to-folder picker rendered at the page level so the
+        // portal doesn't nest inside the card's per-row PortalMenu.
+        // Anchored on whichever card opened the picker via the
+        // moveAnchorRef set in openMovePicker.
+        <PortalMenu
+          anchor={moveAnchorRef.current}
+          placement="below"
+          onClose={() => setMoveTargetDiagramId(null)}
+        >
+          <MenuItem
+            icon={<MenuFolderIcon />}
+            label="Unsorted"
+            onClick={() => {
+              moveDiagramToFolder(moveTargetDiagramId, null);
+              setMoveTargetDiagramId(null);
+            }}
+          />
+          {folderPickerRows.map((f) => (
+            <MenuItem
+              key={f.id}
+              icon={<MenuFolderIcon />}
+              label={f.name}
+              onClick={() => {
+                moveDiagramToFolder(moveTargetDiagramId, f.id);
+                setMoveTargetDiagramId(null);
+              }}
+            />
+          ))}
+        </PortalMenu>
+      ) : null}
     </div>
   );
 }
@@ -272,30 +401,251 @@ function Grid({ children }: { children: React.ReactNode }) {
 // thumbnail (we don't fetch tab snapshots client-side here). Title
 // gets two lines of breathing room, the timestamp drops to a muted
 // caption.
-function DiagramCard({ href, title, savedAt }: { href: string; title: string; savedAt: number }) {
+function DiagramCard({
+  id,
+  href,
+  title,
+  savedAt,
+  renaming,
+  onStartRename,
+  onCommitRename,
+  onCancelRename,
+  onDuplicate,
+  onDelete,
+  onMoveRequest,
+}: {
+  id: string;
+  href: string;
+  title: string;
+  savedAt: number;
+  renaming: boolean;
+  onStartRename: () => void;
+  onCommitRename: (name: string) => void;
+  onCancelRename: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onMoveRequest: (anchor: HTMLElement | null) => void;
+}) {
   useRelativeTimeTick();
   // Cheap deterministic accent per diagram — hash the id-ish title
   // into the theme palette so cards aren't all one colour. Keeps
   // /explorer feeling like a personal library without making a
   // network call for the active tab's theme.
   const accent = pickAccent(title);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState(title);
+  useEffect(() => {
+    if (renaming) {
+      setDraft(title);
+      const t = window.setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [renaming, title]);
+
+  const titleNode = renaming ? (
+    <input
+      ref={inputRef}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onBlur={() => onCommitRename(draft)}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onCommitRename(draft);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          onCancelRename();
+        }
+      }}
+      className="w-full rounded border border-brand-300 bg-white px-2 py-1 text-sm font-semibold text-slate-900 outline-none focus:border-brand-500"
+    />
+  ) : (
+    <p className="line-clamp-2 text-sm font-semibold text-slate-900 group-hover:text-brand-700">
+      {title}
+    </p>
+  );
+  const cardBody = (
+    <>
+      <div className="h-1.5" style={{ backgroundColor: accent }} />
+      <div className="p-4">
+        {titleNode}
+        <p className="mt-2 text-[11px] uppercase tracking-wider text-slate-400">
+          Updated {formatRelativeTime(Date.now() - savedAt)}
+        </p>
+      </div>
+    </>
+  );
   return (
-    <li>
-      <Link
-        href={href}
-        className="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
-      >
-        <div className="h-1.5" style={{ backgroundColor: accent }} />
-        <div className="p-4">
-          <p className="line-clamp-2 text-sm font-semibold text-slate-900 group-hover:text-brand-700">
-            {title}
-          </p>
-          <p className="mt-2 text-[11px] uppercase tracking-wider text-slate-400">
-            Updated {formatRelativeTime(Date.now() - savedAt)}
-          </p>
+    <li className="group relative">
+      {renaming ? (
+        // Rendering the title-as-input requires us to bail out of
+        // the wrapping <Link> for this row only — clicking inside an
+        // <input> inside an <a> still propagates a navigation on
+        // some browsers, which would commit a rename + open the
+        // diagram simultaneously. Plain <div> keeps the input usable.
+        <div className="block overflow-hidden rounded-xl border border-brand-300 bg-white shadow-sm">
+          {cardBody}
         </div>
-      </Link>
+      ) : (
+        <Link
+          href={href}
+          className="block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+        >
+          {cardBody}
+        </Link>
+      )}
+      {renaming ? null : (
+        <button
+          ref={menuButtonRef}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen((o) => !o);
+          }}
+          aria-label={`Menu for ${title}`}
+          aria-expanded={menuOpen}
+          className={`absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-500 opacity-0 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus:opacity-100 group-hover:opacity-100 ${
+            menuOpen ? 'opacity-100' : ''
+          }`}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+            <circle cx="3" cy="7" r="1.25" fill="currentColor" />
+            <circle cx="7" cy="7" r="1.25" fill="currentColor" />
+            <circle cx="11" cy="7" r="1.25" fill="currentColor" />
+          </svg>
+        </button>
+      )}
+      {menuOpen ? (
+        <PortalMenu
+          anchor={menuButtonRef.current}
+          placement="below"
+          onClose={() => setMenuOpen(false)}
+        >
+          <MenuItem
+            icon={<MenuPencilIcon />}
+            label="Rename"
+            onClick={() => {
+              onStartRename();
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuDuplicateIcon />}
+            label="Duplicate"
+            onClick={() => {
+              onDuplicate();
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuFolderIcon />}
+            label="Move to folder…"
+            onClick={() => {
+              onMoveRequest(menuButtonRef.current);
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuTrashIcon />}
+            label="Delete"
+            danger
+            onClick={() => {
+              onDelete();
+              setMenuOpen(false);
+            }}
+          />
+        </PortalMenu>
+      ) : null}
     </li>
+  );
+  // `id` is captured at the call site for keying — referenced here
+  // only to satisfy unused-prop linters until the duplicate flow
+  // ever needs it locally.
+  void id;
+}
+
+// Menu glyphs colocated with DiagramCard so it stays self-contained.
+function MenuPencilIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M11 2.5l2.5 2.5L5 13.5H2.5V11z" />
+    </svg>
+  );
+}
+
+function MenuDuplicateIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="5" y="5" width="9" height="9" rx="1.5" />
+      <path d="M2 11V3.5A1.5 1.5 0 0 1 3.5 2H10" />
+    </svg>
+  );
+}
+
+function MenuFolderIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h2.4a1 1 0 0 1 .77.37l1 1.24A1 1 0 0 0 8.45 5h4.05A1.5 1.5 0 0 1 14 6.5v5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5v-7z" />
+    </svg>
+  );
+}
+
+function MenuTrashIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 4h10M6 4V2.5h4V4M4.5 4l.6 9.2A1 1 0 0 0 6.1 14h3.8a1 1 0 0 0 1-0.8l.6-9.2" />
+    </svg>
   );
 }
 

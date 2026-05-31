@@ -2132,7 +2132,9 @@ export default function LivePage() {
       name: `${src.name} copy`,
       tabs: remappedTabs,
     }).catch(() => {});
-    refreshDiagramList(selfParticipant.id);
+    // Open the freshly created copy. Navigation reloads the editor onto
+    // the new id, so a separate list refresh is unnecessary.
+    openDiagram(newId);
   };
 
   // Comment mutations live outside the history hook (per the comment on
@@ -3430,7 +3432,7 @@ export default function LivePage() {
   const beginAnchorDrag = (elementId: string, anchor: Anchor, e: ReactPointerEvent) => {
     if (formatSourceId !== null || groupSourceId !== null) return;
     const element = activeTab.elements.find((el) => el.id === elementId);
-    if (!element || !isBoxed(element) || element.locked === true) return;
+    if (!element || !isBoxed(element) || element.locked === true || isReadOnly) return;
     const start = anchorPosition(element, anchor);
     // New arrows inherit the tab's theme stroke colour so they
     // visually belong with the rest of the diagram. Falls back to the
@@ -3496,7 +3498,7 @@ export default function LivePage() {
     if (formatSourceId !== null || groupSourceId !== null) return;
     const arrow = activeTab.elements.find((el) => el.id === arrowId);
     if (!arrow || arrow.type !== 'arrow') return;
-    if (arrow.locked === true) return;
+    if (arrow.locked === true || isReadOnly) return;
     if (arrow.from.kind !== 'free' || arrow.to.kind !== 'free') return;
     setSelectedId(arrowId);
     markCheckpoint();
@@ -3517,7 +3519,7 @@ export default function LivePage() {
     const arrow = activeTab.elements.find((el) => el.id === arrowId);
     if (!arrow || arrow.type !== 'arrow') return;
     setSelectedId(arrowId);
-    if (arrow.locked === true) return;
+    if (arrow.locked === true || isReadOnly) return;
     const start = endpointPosition(end === 'from' ? arrow.from : arrow.to, activeTab.elements);
     markCheckpoint();
     setDrag({
@@ -3701,6 +3703,9 @@ export default function LivePage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      // A view-only session never deletes; bail before preventDefault so a
+      // viewer's Backspace still triggers browser-back as usual.
+      if (isReadOnly) return;
       const target = e.target as Element | null;
       if (
         target instanceof HTMLInputElement ||
@@ -3817,6 +3822,7 @@ export default function LivePage() {
       <Canvas
         tabName={activeTab.name}
         tabLocked={activeTabLocked}
+        readOnly={isReadOnly}
         diagramName={diagramName}
         tabBackgroundPattern={activeTab.backgroundPattern ?? 'grid'}
         tabBackgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
