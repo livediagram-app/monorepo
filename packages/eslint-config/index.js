@@ -10,6 +10,10 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/.next/**',
+      // Dev-server cache dir for `apps/live` — separated from
+      // `.next/` to keep `next dev` from racing `next build` on the
+      // same files. See `apps/live/next.config.ts` + the dev script.
+      '**/.next-dev/**',
       // Next.js `output: 'export'` static export directory — same status as
       // `.next/`: build output, not source.
       '**/out/**',

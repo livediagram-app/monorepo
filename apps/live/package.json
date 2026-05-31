@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next out node_modules .turbo"
+    "clean": "rm -rf .next .next-dev out node_modules .turbo"
   },
   "dependencies": {
     "@clerk/react": "^6.7.2",

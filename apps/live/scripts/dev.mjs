@@ -59,8 +59,19 @@ function freePort(port) {
   console.log(`[dev] freed port ${port} (killed ${pids.replace(/\s+/g, ', ')} + children)`);
 }
 
+// Isolate dev's cache directory from build's. Without this split,
+// a `next build` running anywhere in the same checkout (pre-commit
+// suite, ad-hoc verification, turbo task) overwrites the dev
+// server's `_buildManifest.js.tmp.*` mid-flight and dev then 500s
+// with `ENOENT: ... _buildManifest.js.tmp.*` until someone wipes
+// the cache by hand. `next.config.ts` reads `NEXT_DISTDIR` and
+// falls back to `.next/` when it's unset, so the env var here is
+// the only place dev's directory is reassigned — build / CI keep
+// the default.
+const DEV_DIST_DIR = '.next-dev';
+
 function clearCache() {
-  rmSync(resolve(appRoot, '.next'), { recursive: true, force: true });
+  rmSync(resolve(appRoot, DEV_DIST_DIR), { recursive: true, force: true });
 }
 
 freePort(PORT);
@@ -78,7 +89,11 @@ const useWebpack = process.argv.includes('--webpack');
 const nextArgs = ['next', 'dev', '-p', String(PORT)];
 if (!useWebpack) nextArgs.splice(2, 0, '--turbopack');
 
-const child = spawn('pnpm', nextArgs, { stdio: 'inherit', cwd: appRoot });
+const child = spawn('pnpm', nextArgs, {
+  stdio: 'inherit',
+  cwd: appRoot,
+  env: { ...process.env, NEXT_DISTDIR: DEV_DIST_DIR },
+});
 child.on('exit', (code) => process.exit(code ?? 0));
 
 // Forward SIGINT / SIGTERM so Ctrl+C in the parent kills next cleanly.

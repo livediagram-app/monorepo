@@ -9,8 +9,22 @@ import type { NextConfig } from 'next';
 // (spec/14).
 const isProdBuild = process.env.NODE_ENV === 'production';
 
+// distDir split keeps `next dev` from racing `next build` on
+// `apps/live/.next/`. Without this, a build kicked off in the same
+// checkout (e.g. from a pre-commit suite) overwrites the dev
+// server's `_buildManifest.js.tmp.*` files mid-flight, and dev
+// then 500s with `ENOENT: ... _buildManifest.js.tmp.*` until the
+// cache is wiped by hand. We move DEV (not build) to its own
+// directory because the build's `.next/` layout is what CI + the
+// deploy workflow expect, and a build invoked without env vars
+// (e.g. ad-hoc `next build`) should still work. `scripts/dev.mjs`
+// sets `NEXT_DISTDIR=.next-dev` before exec'ing `next dev` so dev
+// always lands in `.next-dev/`; everything else defaults to `.next/`.
+const distDir = process.env.NEXT_DISTDIR ?? '.next';
+
 const nextConfig: NextConfig = {
   ...(isProdBuild ? { output: 'export' } : {}),
+  distDir,
   basePath: '/live',
   images: {
     unoptimized: true,
