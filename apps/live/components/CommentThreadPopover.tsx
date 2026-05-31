@@ -15,6 +15,16 @@ type CommentThreadPopoverProps = {
   onResolve: () => void;
   onUnresolve: () => void;
   onClose: () => void;
+  // True for a view-only ('view' share role) session. View-role
+  // visitors can still READ the thread (so they can see what the
+  // host's collaborators have been discussing), but the composer
+  // hides, per-row delete buttons hide, and the resolve/unresolve
+  // toggle becomes a plain "Resolved" badge they can't flip. The
+  // selection-popover gate in Canvas means a view-role visitor
+  // can't open the popover from the toolbar anyway — but the
+  // element comment-badge is a separate entry point, so the
+  // mutations need their own gate.
+  readOnly?: boolean;
 };
 
 const WIDTH = 288;
@@ -33,6 +43,7 @@ export function CommentThreadPopover({
   onResolve,
   onUnresolve,
   onClose,
+  readOnly = false,
 }: CommentThreadPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -117,18 +128,30 @@ export function CommentThreadPopover({
         </h3>
         <div className="flex items-center gap-1">
           {comments.length > 0 ? (
-            <button
-              type="button"
-              onClick={resolved ? onUnresolve : onResolve}
-              className={
-                resolved
-                  ? 'rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 transition hover:bg-emerald-200'
-                  : 'rounded px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-100'
-              }
-              aria-pressed={resolved}
-            >
-              {resolved ? 'Resolved' : 'Resolve'}
-            </button>
+            readOnly ? (
+              // View-role can see WHETHER the thread is resolved
+              // but can't flip the state. Unresolved threads show
+              // nothing here (no toggleable affordance to suggest
+              // they could act on it).
+              resolved ? (
+                <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                  Resolved
+                </span>
+              ) : null
+            ) : (
+              <button
+                type="button"
+                onClick={resolved ? onUnresolve : onResolve}
+                className={
+                  resolved
+                    ? 'rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 transition hover:bg-emerald-200'
+                    : 'rounded px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-100'
+                }
+                aria-pressed={resolved}
+              >
+                {resolved ? 'Resolved' : 'Resolve'}
+              </button>
+            )
           ) : null}
           <button
             type="button"
@@ -150,13 +173,14 @@ export function CommentThreadPopover({
               key={c.id}
               comment={c}
               resolved={resolved}
-              onDelete={() => onDeleteComment(c.id)}
+              // View-role hides the per-row delete button entirely.
+              onDelete={readOnly ? undefined : () => onDeleteComment(c.id)}
             />
           ))
         )}
       </ul>
 
-      {!resolved ? (
+      {!resolved && !readOnly ? (
         <footer className="border-t border-slate-100 p-2">
           <textarea
             value={draft}
@@ -197,7 +221,9 @@ function CommentRow({
 }: {
   comment: Comment;
   resolved: boolean;
-  onDelete: () => void;
+  // Undefined in view-only mode so the row never renders a delete
+  // affordance. Editable rows pass the bound delete handler.
+  onDelete?: () => void;
 }) {
   return (
     <li className={`group flex gap-2 py-2 ${resolved ? 'opacity-60' : ''}`}>
@@ -215,7 +241,7 @@ function CommentRow({
         </div>
         <p className="mt-0.5 whitespace-pre-wrap text-xs text-slate-700">{comment.text}</p>
       </div>
-      {!resolved ? (
+      {!resolved && onDelete ? (
         <button
           type="button"
           aria-label="Delete comment"

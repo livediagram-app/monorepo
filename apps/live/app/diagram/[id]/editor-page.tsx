@@ -4027,6 +4027,7 @@ export default function LivePage() {
                 onResolve={() => resolveThread(target.id)}
                 onUnresolve={() => unresolveThread(target.id)}
                 onClose={closeComments}
+                readOnly={isReadOnly}
               />
             );
           })()
