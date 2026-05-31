@@ -24,6 +24,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 13  | [Per-tab storage](13-per-tab-storage.md)                             | Split tabs into their own D1 rows so autosave scope shrinks        |
 | 14  | [New-diagram route](14-new-diagram-route.md)                         | Split the welcome / create-new flow off `/live` into `/live/new`   |
 | 15  | [Folders](15-folders.md)                                             | Nested folders for diagrams in the Explorer; Unsorted default      |
+| 16  | [Marketing site](16-marketing-site.md)                               | Landing page at `/`; claims must map to shipped features           |
 
 ## Workflow
 
