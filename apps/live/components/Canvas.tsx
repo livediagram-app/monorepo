@@ -1176,7 +1176,7 @@ export function Canvas(props: CanvasProps) {
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={onToggleActivityMinimized}
                     aria-label="Open Tab Activity"
-                    className="flex h-11 w-9 items-center justify-center border-r border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex h-11 w-11 items-center justify-center border-r border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                   >
                     <ActivityIcon />
                   </button>
@@ -1188,7 +1188,7 @@ export function Canvas(props: CanvasProps) {
                     onClick={onUndo}
                     disabled={!canUndo}
                     aria-label="Undo"
-                    className="flex h-11 w-9 items-center justify-center text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                    className="flex h-11 w-11 items-center justify-center text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                   >
                     <UndoIcon />
                   </button>
@@ -1200,7 +1200,7 @@ export function Canvas(props: CanvasProps) {
                     onClick={onRedo}
                     disabled={!canRedo}
                     aria-label="Redo"
-                    className="flex h-11 w-9 items-center justify-center border-l border-slate-100 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                    className="flex h-11 w-11 items-center justify-center border-l border-slate-100 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                   >
                     <RedoIcon />
                   </button>
