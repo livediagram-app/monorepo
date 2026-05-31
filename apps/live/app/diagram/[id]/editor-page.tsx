@@ -724,7 +724,11 @@ export default function LivePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const didInitialFitRef = useRef(false);
+  // The id of the tab we last auto-fit. Drives the "fit on tab load"
+  // effect below — fits the first time we land on a tab (or on the
+  // tab whose elements just finished lazy-loading) and stays out of
+  // the way during subsequent element edits on the same tab.
+  const lastFittedTabRef = useRef<string | null>(null);
 
   // Active tab → URL fragment (#t=<tabId>) so refreshes land on the
   // same tab. replaceState so tab switches don't pollute history.
@@ -1165,24 +1169,27 @@ export default function LivePage() {
 
   const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0]!;
 
-  // Once the diagram is loaded and the canvas has measurable size,
-  // fit the content to the viewport. Templates from /live/new are
-  // built centred on (0, 0) but the editor's default offset is also
-  // (0, 0), which leaves the content in the top-left corner. Fires
-  // once per page load — `didInitialFitRef` blocks subsequent runs
-  // so the user's pan / zoom isn't reset every time a tab changes.
+  // Fit-to-screen on every tab load. Fires when:
+  //   - the page hydrates and lands on the first tab
+  //   - the user switches to a different tab
+  //   - the active tab's elements just finished lazy-loading (the
+  //     previous frame fired on an empty tab and bailed)
+  // The `lastFittedTabRef` gate means subsequent element edits on
+  // the same tab DON'T re-fit (so the user's pan / zoom isn't
+  // resnapped every time they add a shape).
   useEffect(() => {
-    if (!hydrated || didInitialFitRef.current) return;
+    if (!hydrated) return;
     if (activeTab.elements.length === 0) return;
-    didInitialFitRef.current = true;
+    if (lastFittedTabRef.current === activeId) return;
+    lastFittedTabRef.current = activeId;
     // Defer to the next frame so the canvas wrapper has its final
     // measured size before fitToScreen reads getBoundingClientRect.
     const handle = window.requestAnimationFrame(() => fitToScreen());
     return () => window.cancelAnimationFrame(handle);
     // fitToScreen reads live state via closure; we deliberately only
-    // re-evaluate the gate on hydration + element-count transitions.
+    // re-evaluate on hydration / tab-id / element-count transitions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, activeTab.elements.length]);
+  }, [hydrated, activeId, activeTab.elements.length]);
 
   // Per-element remote-selection map. Looks up each participant id
   // against the current `livePresence` so we can render their colour +
