@@ -14,19 +14,19 @@ export default function LandingPage() {
           id="features"
           eyebrow="The canvas"
           title="A real diagram editor, in your browser"
-          description="Eight starter templates, twelve themes, every shape you need for flowcharts and process maps. Group, lock, comment, link across tabs — the things that make a diagram useful, not just a sketch."
+          description="Twelve templates, eighteen themes, every shape you need for flowcharts and process maps. Group, lock, comment, paint formatting, link across tabs — the things that make a diagram useful, not just a sketch."
         >
           <FeatureGrid
             items={[
               {
-                title: 'Eight starter templates',
+                title: 'Twelve starter templates',
                 description:
-                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline. Pick one, edit it. Or start blank and build from scratch.',
+                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline — plus Venn, User journey, Fishbone, and Pyramid. Pick one, edit it. Or start blank.',
               },
               {
-                title: 'Twelve preset themes',
+                title: 'Eighteen preset themes',
                 description:
-                  'Brand, Slate, Forest, Sunset, Lavender, Mono, Ocean, Crimson, Midnight, Cream, Rose, Sand. Recolours the canvas, every shape, every arrow in one click.',
+                  'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
               },
               {
                 title: 'Shapes that match how you think',
@@ -36,7 +36,7 @@ export default function LandingPage() {
               {
                 title: 'Arrows that follow content',
                 description:
-                  'Drag from an anchor dot to connect two shapes. Move either shape and the arrow tracks. Custom strokes and end-styles per arrow.',
+                  'Drag from an anchor dot to connect two shapes. Move either shape and the arrow tracks. Straight, curved, or angled, with custom strokes and end-styles per arrow.',
               },
               {
                 title: 'Multi-select with marquee',
@@ -48,6 +48,21 @@ export default function LandingPage() {
                 description:
                   "Right-click an element, leave a thread. Replies, resolve, delete. Comments carry the author's name and colour so it's clear who said what.",
               },
+              {
+                title: 'Format painter',
+                description:
+                  "Copy one element's look — size, colours, text style, opacity, padding — and brush it onto the next. Consistent diagrams without re-picking every option.",
+              },
+              {
+                title: 'Many canvases per diagram',
+                description:
+                  'Split a system across tabs in one diagram, then link an element to another tab to jump straight there. Rename, duplicate, reorder, or lock each tab.',
+              },
+              {
+                title: 'Organise in folders',
+                description:
+                  'File diagrams into nested folders in the explorer. Recent diagrams stay one click away; everything else lives where you put it.',
+              },
             ]}
           />
         </Section>
@@ -56,7 +71,7 @@ export default function LandingPage() {
           id="collab"
           eyebrow="Real-time when you need it"
           title="Private by default. Shared by link."
-          description="Diagrams live on your account until you share. One click in the header generates a short share link; anyone with the link can join the canvas, edit it live, and show up in your presence stack with their own avatar."
+          description="Diagrams stay private until you share. One click in the header mints a share link — editor or view-only — and anyone with it joins the canvas live, showing up in your presence stack with their own avatar."
           variant="tinted"
         >
           <FeatureGrid
@@ -64,7 +79,7 @@ export default function LandingPage() {
               {
                 title: 'Live presence',
                 description:
-                  'See who is in the diagram via the participant avatars in the header. Status rings show online, away, or stale.',
+                  'See who is in the diagram via the participant avatars in the header and on each tab. Status rings show online, away, or stale.',
               },
               {
                 title: 'See what others are working on',
@@ -75,6 +90,21 @@ export default function LandingPage() {
                 title: 'Realtime edits, last-write-wins',
                 description:
                   'Every edit propagates over WebSockets within a beat. No queues, no locks. The latest change is the truth.',
+              },
+              {
+                title: 'Editor or view-only links',
+                description:
+                  'Mint an editor link for collaborators or a view-only link for stakeholders who should watch, not touch. Run as many links as you like, side by side.',
+              },
+              {
+                title: 'Laser pointer for presenting',
+                description:
+                  'Switch to the laser tool and your cursor leaves a glowing trail everyone can see — point at the thing you mean while you talk it through. Trails fade on their own.',
+              },
+              {
+                title: 'Activity log with one-click revert',
+                description:
+                  'Every tab keeps a running log of who changed what. Hit revert on any entry to undo just that change — even after later edits — without disturbing the rest.',
               },
               {
                 title: 'Stop sharing on demand',
