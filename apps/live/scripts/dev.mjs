@@ -37,13 +37,26 @@ function freePort(port) {
   }
   if (!pids) return;
   for (const pid of pids.split(/\s+/)) {
+    // Kill children FIRST — `lsof -ti` only returns processes bound
+    // to the port, so jest-worker / static-paths-worker etc. are
+    // invisible to it. Leaving them alive keeps file handles open
+    // on `.next/server`, which races the wipe below and leaves
+    // stale `webpack-runtime.js` references to vendor chunks whose
+    // pnpm-resolved hashes no longer match. Empirically that's the
+    // "Cannot find module './vendor-chunks/...'" crash that needs
+    // a manual rm -rf .next to recover from.
+    try {
+      execSync(`pkill -KILL -P ${pid}`, { stdio: 'ignore' });
+    } catch {
+      // No children — fine.
+    }
     try {
       execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
     } catch {
       // Already exited between lsof and kill — fine.
     }
   }
-  console.log(`[dev] freed port ${port} (killed ${pids.replace(/\s+/g, ', ')})`);
+  console.log(`[dev] freed port ${port} (killed ${pids.replace(/\s+/g, ', ')} + children)`);
 }
 
 function clearCache() {
