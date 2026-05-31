@@ -153,6 +153,25 @@ function GetStartedContent() {
         router.replace(POST_AUTH_DEFAULT);
         return;
       }
+      // Clerk verified the code but isn't ready to mint a session.
+      // The usual cause is the Clerk instance has additional required
+      // fields (password, username, phone) that this UI doesn't
+      // collect. Surface what's outstanding instead of the misleading
+      // "invalid or expired code" — that wording sends the user
+      // chasing a problem that isn't theirs.
+      if (res.status === 'missing_requirements') {
+        const missing = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].filter(
+          (f) => f !== 'email_address',
+        );
+        if (missing.length > 0) {
+          setError(
+            `Your Clerk instance also requires: ${missing.join(', ')}. Disable those requirements in the Clerk dashboard or add them here.`,
+          );
+        } else {
+          setError(`Sign-up could not be completed (status: ${res.status}).`);
+        }
+        return;
+      }
       setError('Invalid or expired code. Try again or request a new code.');
     } catch (err: unknown) {
       setError(messageOf(err, 'Verification failed'));
