@@ -430,17 +430,31 @@ export default function LivePage() {
     // Path scheme (spec/14): `/live/diagram/<id>` is the owner URL.
     // The static export ships a single placeholder file at
     // `out/diagram/placeholder/index.html`; the live worker rewrites
-    // `/diagram/<anything>` → that file, so the client always reads
-    // the real id from `window.location.pathname`. Visitor share URLs
-    // keep the `?s=<code>` query because they don't need a per-id
-    // path — the code is the lookup key.
+    // `/diagram/<anything>` → that file. A pre-hydration inline
+    // script in `app/layout.tsx` ALSO rewrites the URL in the address
+    // bar so the client router resolves the route cleanly (without
+    // it, every real id triggers the framework's not-found page on
+    // hydration). The script stashes the real id on
+    // `window.__LD_DIAGRAM_PATH_ID__`; we read it here, then restore
+    // the original URL synchronously so the user never sees
+    // `placeholder` in the address bar.
+    const captured = (window as Window & { __LD_DIAGRAM_PATH_ID__?: string })
+      .__LD_DIAGRAM_PATH_ID__;
     const initialUrl = new URL(window.location.href);
     const pathMatch = initialUrl.pathname.match(/\/live\/diagram\/([^/?#]+)/);
-    const rawPathId = pathMatch ? pathMatch[1]! : null;
+    const rawPathId = captured ?? (pathMatch ? pathMatch[1]! : null);
     // `placeholder` is the static-export build artefact, not a real
     // diagram id — ignore it so the IIFE doesn't try to fetch it.
     const initialId = rawPathId && rawPathId !== 'placeholder' ? rawPathId : null;
     const initialShareCode = initialUrl.searchParams.get('s');
+    if (captured) {
+      delete (window as Window & { __LD_DIAGRAM_PATH_ID__?: string }).__LD_DIAGRAM_PATH_ID__;
+      window.history.replaceState(
+        null,
+        '',
+        `/live/diagram/${captured}${initialUrl.search}${initialUrl.hash}`,
+      );
+    }
     // No path id and no share code → the user landed on the placeholder
     // route directly. Hand off to /live/new for the welcome flow.
     if (!initialId && !initialShareCode) {

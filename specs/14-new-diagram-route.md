@@ -83,27 +83,43 @@ Editor URLs use a path segment rather than a query string. `output:
 The hard cutover dropped the legacy `?d=<id>` query scheme — old
 bookmarks pointing at `/live?d=<id>` no longer work.
 
-### Do not add a root `app/not-found.tsx`
+### Pre-hydration URL swap
 
-Tempting and broken. With `output: 'export'` the client-side router
-treats every dynamic-segment value not enumerated in
-`generateStaticParams` as a not-found state on hydration. The
-placeholder id is the only enumerated value, so every real diagram
-URL (`/diagram/<uuid>`) triggers the not-found path the moment the
-JS hydrates — the page renders the editor for a frame, then the
-client router swaps it for whatever `app/not-found.tsx` exports.
+`output: 'export'` forces `dynamicParams=false`. The client-side
+router compares the current URL against the static manifest on
+hydration and treats any dynamic-segment value not enumerated in
+`generateStaticParams` as a not-found state. `placeholder` is the
+only enumerated id, so every real diagram URL triggers the
+framework's default 404 page the instant the JS hydrates — the
+editor briefly paints (loading spinner from `placeholder.html`)
+then vanishes.
 
-A route-level `app/diagram/[id]/not-found.tsx` does **not** rescue
-this: in static export mode Next.js doesn't wire route-level
-not-found chunks into the placeholder bundle, so the client router
-still falls through to the root component.
+This isn't fixable by removing `app/not-found.tsx`: Next.js inlines
+its built-in default 404 component into the same `notFound` slot
+of the placeholder's flight payload. The trigger is the URL
+mismatch, not the not-found component itself.
 
-If a branded 404 page is wanted for genuinely unknown routes, it
-needs a mechanism that doesn't piggyback on Next.js's app-router
-not-found slot (e.g. a separate static route the worker explicitly
-serves for unmatched paths). Until then the framework default 404
-page is what unknown routes render — the editor working is worth
-more than the 404 being on-brand.
+The workaround is an inline `<script>` in `apps/live/app/layout.tsx`
+that runs synchronously in `<head>`, before React hydrates:
+
+1. If the path matches `/live/diagram/<x>` and `<x> !== 'placeholder'`,
+   stash `<x>` on `window.__LD_DIAGRAM_PATH_ID__`.
+2. `history.replaceState` rewrites the address bar to
+   `/live/diagram/placeholder` (preserving search + hash).
+3. React hydrates against a URL that matches the static manifest —
+   no not-found triggered, editor renders normally.
+4. The editor's bootstrap `useLayoutEffect` reads the captured id,
+   clears the global, then `history.replaceState`s the real URL
+   back synchronously (before paint). The user never sees
+   `placeholder` in the address bar.
+
+The script is wrapped in `try/catch` so a failure degrades to the
+old broken state rather than blocking the page. Other routes
+(`/live/new`, `/live`, marketing) ignore the script — the regex
+gate keeps it scoped to the diagram route.
+
+Adding routes under `/live/diagram/<x>/...` with deeper paths would
+need the regex to be relaxed; today's routes are flat.
 
 ## Navigation flows
 
