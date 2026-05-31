@@ -83,53 +83,36 @@ Editor URLs use a path segment rather than a query string. `output:
 The hard cutover dropped the legacy `?d=<id>` query scheme — old
 bookmarks pointing at `/live?d=<id>` no longer work.
 
-### Pre-hydration URL swap
+### Not-found slot renders the editor
 
 `output: 'export'` forces `dynamicParams=false`. The client-side
 router compares the current URL against the static manifest on
-hydration and treats any dynamic-segment value not enumerated in
-`generateStaticParams` as a not-found state. `placeholder` is the
-only enumerated id, so every real diagram URL triggers the
-framework's default 404 page the instant the JS hydrates — the
-editor briefly paints (loading spinner from `placeholder.html`)
-then vanishes.
+hydration and fires `notFound()` for any dynamic-segment value not
+enumerated in `generateStaticParams`. `placeholder` is the only
+enumerated id, so every real diagram URL triggers `notFound()` the
+instant the JS hydrates.
 
-This isn't fixable by removing `app/not-found.tsx`: Next.js inlines
-its built-in default 404 component into the same `notFound` slot
-of the placeholder's flight payload. The trigger is the URL
-mismatch, not the not-found component itself.
+Earlier attempts tried to _prevent_ the trigger — a route-level
+`not-found.tsx`, a pre-hydration URL swap to `placeholder`, then
+the same swap using the captured native `replaceState` so Next's
+patched version wouldn't re-notify the router. None of them held
+up: Next.js's static export bakes the framework default 404 into
+the `notFound` slot of the layout's flight payload and the client
+router reaches it before any of those interventions can finish.
 
-The workaround is an inline `<script>` in `apps/live/app/layout.tsx`
-that runs synchronously in `<head>`, before React hydrates:
+Working approach: **embrace the trigger**. `apps/live/app/not-found.tsx`
+exports `<EditorPage />` directly. When the client router fires
+`notFound()` for an unrecognised id, the layout swaps from
+`children` to the `notFound` slot — which is now the editor. The
+editor mounts, reads the real id from `window.location.pathname`
+(unchanged throughout — no URL swap means no restoration to fight
+about), and loads the diagram via the API. The address bar stays
+on `/live/diagram/<uuid>`; nothing about the URL needs to lie.
 
-1. Stash the native `history.replaceState` on
-   `window.__LD_NATIVE_REPLACE_STATE__` before Next.js's app-router
-   bundle can patch it. After its bundle loads Next.js wraps both
-   `history.pushState` and `history.replaceState` so every call
-   notifies its routing layer — which, on a non-matching dynamic-
-   segment URL, fires `notFound` and replaces the editor with the
-   framework's default 404. The captured native reference lets the
-   editor change the URL without that notification.
-2. If the path matches `/live/diagram/<x>` and `<x> !== 'placeholder'`,
-   stash `<x>` on `window.__LD_DIAGRAM_PATH_ID__`.
-3. Use the captured native `replaceState` to rewrite the address
-   bar to `/live/diagram/placeholder` (preserving search + hash).
-4. React hydrates against a URL that matches the static manifest —
-   no not-found triggered, editor renders normally.
-5. The editor's bootstrap `useLayoutEffect` reads the captured id,
-   clears the global, then calls the captured native `replaceState`
-   to restore the real URL. Address bar updates synchronously
-   (before paint); Next.js's router is NOT notified, so it doesn't
-   re-evaluate the segment and notFound stays dormant.
-
-The script is wrapped in `try/catch` so a failure degrades to the
-old broken state rather than blocking the page. Other routes
-(`/live/new`, `/live`, marketing) ignore the path-rewrite step but
-still get the native-replaceState capture — harmless because no
-other code reads it.
-
-Adding routes under `/live/diagram/<x>/...` with deeper paths would
-need the regex to be relaxed; today's routes are flat.
+Behaviour for genuinely-unknown routes (e.g. `/live/typo`) is
+benign: the editor mounts, tries to load a diagram with id `typo`,
+the API 404s, the in-app `<NotFound>` card surfaces — branded with
+a "Create a new diagram" CTA.
 
 ## Navigation flows
 
