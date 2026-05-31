@@ -25,6 +25,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 14  | [New-diagram route](14-new-diagram-route.md)                         | Split the welcome / create-new flow off `/live` into `/live/new`   |
 | 15  | [Folders](15-folders.md)                                             | Nested folders for diagrams in the Explorer; Unsorted default      |
 | 16  | [Marketing site](16-marketing-site.md)                               | Landing page at `/`; claims must map to shipped features           |
+| 17  | [Tab ↔ diagram many-to-many](17-tab-diagram-many-to-many.md)         | Link table so a tab can live in multiple diagrams                  |
 
 ## Workflow
 

@@ -72,9 +72,19 @@ function rowToTabSummary(row: TabRow): TabSummaryDTO {
 }
 
 async function listTabSummariesFor(env: Env, diagramId: string): Promise<TabSummaryDTO[]> {
+  // Read through the diagram_tabs link table (migration 0011 /
+  // spec/17) — order_index now lives on the link, not on the tab,
+  // so two diagrams that share a tab can order it independently.
+  // The legacy tabs.diagram_id + tabs.order_index columns still
+  // exist for one more phase as a fallback; we read the canonical
+  // path here and let writes keep both in sync until they're
+  // dropped in a follow-up migration.
   const result = await env.DB.prepare(
-    `SELECT id, diagram_id, name, order_index, '' AS data, updated_at
-       FROM tabs WHERE diagram_id = ? ORDER BY order_index ASC`,
+    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, '' AS data, t.updated_at
+       FROM diagram_tabs dt
+       JOIN tabs t ON t.id = dt.tab_id
+      WHERE dt.diagram_id = ?
+      ORDER BY dt.order_index ASC`,
   )
     .bind(diagramId)
     .all<TabRow>();
@@ -200,6 +210,12 @@ export async function upsertTab(
   const { id, name, ...rest } = tab;
   const data = JSON.stringify(rest);
   const now = Date.now();
+  // Phase-1 (migration 0011 / spec/17): write to both `tabs` and
+  // `diagram_tabs` so the link table is the canonical read path
+  // but the legacy denormalised columns stay in sync until a
+  // follow-up migration drops them. The two writes are
+  // independent — even if the link upsert no-ops (existing entry)
+  // the tab body still gets updated.
   await env.DB.prepare(
     `INSERT INTO tabs (id, diagram_id, name, order_index, data, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)
@@ -211,12 +227,27 @@ export async function upsertTab(
   )
     .bind(id, diagramId, name, orderIndex, data, now)
     .run();
+  await env.DB.prepare(
+    `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT (diagram_id, tab_id) DO UPDATE SET order_index = excluded.order_index`,
+  )
+    .bind(diagramId, id, orderIndex, now)
+    .run();
   // Bump the diagram's saved_at so the Explorer's "Updated X ago"
   // line stays accurate. Pure metadata write — no element JSON.
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
 }
 
+// Remove the tab from this diagram. Today's contract still drops
+// the underlying tabs row too — once #14 + multi-diagram tabs land
+// the call gets split into "unlink from this diagram" vs "delete
+// the tab body everywhere," but for now every tab lives in exactly
+// one diagram so the two are equivalent.
 export async function deleteTabRow(env: Env, diagramId: string, tabId: string): Promise<void> {
+  await env.DB.prepare('DELETE FROM diagram_tabs WHERE diagram_id = ? AND tab_id = ?')
+    .bind(diagramId, tabId)
+    .run();
   await env.DB.prepare('DELETE FROM tabs WHERE id = ? AND diagram_id = ?')
     .bind(tabId, diagramId)
     .run();
@@ -227,11 +258,16 @@ export async function deleteTabRow(env: Env, diagramId: string, tabId: string): 
 // scale we see in practice (see spec/13 "Risk").
 export async function reorderTabs(env: Env, diagramId: string, tabIds: string[]): Promise<void> {
   const now = Date.now();
-  const batch = tabIds.map((tabId, idx) =>
+  // Update the link-table order alongside the legacy column.
+  // Phase-1 keeps both in sync per spec/17.
+  const batch = tabIds.flatMap((tabId, idx) => [
+    env.DB.prepare(
+      'UPDATE diagram_tabs SET order_index = ? WHERE diagram_id = ? AND tab_id = ?',
+    ).bind(idx, diagramId, tabId),
     env.DB.prepare(
       'UPDATE tabs SET order_index = ?, updated_at = ? WHERE id = ? AND diagram_id = ?',
     ).bind(idx, now, tabId, diagramId),
-  );
+  ]);
   if (batch.length > 0) await env.DB.batch(batch);
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
 }
@@ -277,13 +313,19 @@ export async function copyDiagram(
   )
     .bind(newId, newOwnerId, newName, now, now)
     .run();
-  // Walk the source's tab rows and re-insert each under the new
-  // diagram id with a freshly minted tab id. Preserves order_index
-  // verbatim so the cloned diagram opens to the same tab layout
-  // the visitor was looking at. Skipping share_links + change_log
-  // is by design — those don't survive ownership transfer.
+  // Walk the source's tab rows via the link table and re-insert
+  // each under the new diagram id with a freshly minted tab id.
+  // Preserves order_index verbatim so the cloned diagram opens to
+  // the same tab layout the visitor was looking at. Skipping
+  // share_links + change_log is by design — those don't survive
+  // ownership transfer. Copy semantics (vs link semantics, spec/17)
+  // are deliberate: edits to the copy stay isolated from the source.
   const tabRows = await env.DB.prepare(
-    'SELECT id, name, order_index, data FROM tabs WHERE diagram_id = ? ORDER BY order_index ASC',
+    `SELECT t.id, t.name, dt.order_index, t.data
+       FROM diagram_tabs dt
+       JOIN tabs t ON t.id = dt.tab_id
+      WHERE dt.diagram_id = ?
+      ORDER BY dt.order_index ASC`,
   )
     .bind(sourceId)
     .all<{ id: string; name: string; order_index: number; data: string }>();
@@ -294,6 +336,12 @@ export async function copyDiagram(
        VALUES (?, ?, ?, ?, ?, ?)`,
     )
       .bind(freshTabId, newId, row.name, row.order_index, row.data, now)
+      .run();
+    await env.DB.prepare(
+      `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
+       VALUES (?, ?, ?, ?)`,
+    )
+      .bind(newId, freshTabId, row.order_index, now)
       .run();
   }
   return await getDiagram(env, newId);
