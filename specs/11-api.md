@@ -102,6 +102,12 @@ Owner-only routes require `X-Owner-Id`; shared-edit routes accept `X-Owner-Id` +
 | GET    | `/api/participants/:id` | Fetch a participant by id.                                      |
 | PUT    | `/api/participants/:id` | Upsert `{ name, color }`. Open — no auth check (prototype-era). |
 
+**Migration (guest → authed)**
+
+| Method | Path           | Auth       | Notes                                                                                                                                                                                             |
+| ------ | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/migrate` | Clerk only | Body `{ guestOwnerId }`. Reassigns every `diagrams.owner_id` + `folders.owner_id` row from the guest id to the JWT's `sub`. No `X-Owner-Id` fallback. See [spec/04](04-auth-and-guest-access.md). |
+
 ## Realtime model
 
 The `DiagramRoom` Durable Object holds the live state for one diagram id. Clients connect via the `/ws` endpoint and immediately send a `hello` identifying themselves; the room broadcasts a `presence` snapshot whenever the set changes.

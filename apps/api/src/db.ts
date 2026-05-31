@@ -585,3 +585,31 @@ export async function folderMoveWouldCycle(
   }
   return false;
 }
+
+// Owner-id migration. Reassigns every `diagrams.owner_id` and
+// `folders.owner_id` row from `fromOwnerId` to `toOwnerId`. Called
+// from POST /api/migrate when a guest signs up — their localStorage
+// participant id moves to their Clerk userId so the new account sees
+// the diagrams + folders they built as a guest. Other tables
+// (`change_log`, `share_links`, `tabs`) don't carry their own
+// owner_id — they link via `diagram_id`, which is owner-bound, so
+// updating the diagrams cascade-fixes them implicitly.
+//
+// Returns `{ diagrams: N, folders: M }`. Idempotent — re-running
+// with the same `fromOwnerId` is a no-op once the rows have moved.
+export async function migrateOwnerId(
+  env: Env,
+  fromOwnerId: string,
+  toOwnerId: string,
+): Promise<{ diagrams: number; folders: number }> {
+  const diagramsRes = await env.DB.prepare('UPDATE diagrams SET owner_id = ? WHERE owner_id = ?')
+    .bind(toOwnerId, fromOwnerId)
+    .run();
+  const foldersRes = await env.DB.prepare('UPDATE folders SET owner_id = ? WHERE owner_id = ?')
+    .bind(toOwnerId, fromOwnerId)
+    .run();
+  return {
+    diagrams: diagramsRes.meta.changes ?? 0,
+    folders: foldersRes.meta.changes ?? 0,
+  };
+}

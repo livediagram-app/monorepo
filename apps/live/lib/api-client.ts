@@ -518,6 +518,35 @@ export async function apiLoadSelf(id: string): Promise<Participant | null> {
   };
 }
 
+// Guest → authed ownership migration. Called once on first sign-in
+// from editor-page.tsx + new/page.tsx when both conditions hold:
+//   - the Clerk session is active (a Bearer token will be sent)
+//   - `livediagram:v2:self-id` is still in localStorage
+// On success the caller clears the localStorage id so subsequent
+// loads use only the Clerk userId.
+//
+// The api worker (`POST /api/migrate` in `apps/api/src/index.ts`)
+// requires a verified Bearer token — there is no `X-Owner-Id`
+// fallback, because the whole point is to bind orphan guest data
+// to a Clerk account. Returns `{ migrated: { diagrams, folders } }`.
+export async function apiMigrateGuestData(
+  guestOwnerId: string,
+): Promise<{ diagrams: number; folders: number } | null> {
+  const res = await fetch(`${API_BASE}/migrate`, {
+    method: 'POST',
+    // `apiHeaders` reads the registered token provider; the Clerk
+    // Bearer will be on every call from the editor / new-diagram
+    // pages after they've set the provider. ownerId is unused
+    // server-side for this endpoint but the helper still expects
+    // it; pass the guest id to keep signatures uniform.
+    headers: await apiHeaders(guestOwnerId, { body: true }),
+    body: JSON.stringify({ guestOwnerId }),
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as { migrated: { diagrams: number; folders: number } };
+  return body.migrated;
+}
+
 export async function apiSaveSelf(p: Participant): Promise<void> {
   const res = await fetch(`${API_BASE}/participants/${p.id}`, {
     method: 'PUT',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
@@ -16,6 +16,7 @@ import {
   apiLoadDiagram,
   apiLoadSelf,
   apiLoadTab,
+  apiMigrateGuestData,
   apiSaveSelf,
   apiSetDiagramFolder,
   apiUpdateFolder,
@@ -63,6 +64,26 @@ export default function NewDiagramPage() {
     }
     return () => setTokenProvider(null);
   }, [isSignedIn, getToken]);
+
+  // Guest → authed migration. Runs once when both: the user is signed
+  // in AND a guest UUID is still in localStorage. See the matching
+  // useEffect in editor-page.tsx for the full rationale; the ref
+  // guards against StrictMode double-render.
+  const migrateAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (!isSignedIn || !clerkUserId) return;
+    if (migrateAttemptedRef.current) return;
+    const guestId = window.localStorage.getItem('livediagram:v2:self-id');
+    if (!guestId || guestId === clerkUserId) return;
+    migrateAttemptedRef.current = true;
+    void apiMigrateGuestData(guestId)
+      .then((res) => {
+        if (res) window.localStorage.removeItem('livediagram:v2:self-id');
+      })
+      .catch(() => {
+        migrateAttemptedRef.current = false;
+      });
+  }, [isSignedIn, clerkUserId]);
 
   useEffect(() => {
     document.title = 'New diagram | livediagram';

@@ -83,6 +83,7 @@ import {
   apiLoadSelf,
   apiLoadShared,
   apiLoadTab,
+  apiMigrateGuestData,
   apiSaveDiagramMeta,
   apiSaveSelf,
   apiSaveTab,
@@ -215,6 +216,31 @@ export default function LivePage() {
     }
     return () => setTokenProvider(null);
   }, [isSignedIn, getToken]);
+
+  // Guest → authed migration. Fires once per session the first time
+  // the user is signed in AND a guest UUID is still in localStorage.
+  // The POST /api/migrate endpoint reassigns every owner_id row that
+  // was the guest id to the Clerk userId; on success we drop the
+  // localStorage key so subsequent loads skip this entirely. See
+  // spec/04 + spec/11. Wrapped in a ref so a React StrictMode double
+  // render in dev doesn't fire two migration calls.
+  const migrateAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (!isSignedIn || !clerkUserId) return;
+    if (migrateAttemptedRef.current) return;
+    const guestId = window.localStorage.getItem('livediagram:v2:self-id');
+    if (!guestId || guestId === clerkUserId) return;
+    migrateAttemptedRef.current = true;
+    void apiMigrateGuestData(guestId)
+      .then((res) => {
+        if (res) window.localStorage.removeItem('livediagram:v2:self-id');
+      })
+      .catch(() => {
+        // Network glitch — leave the localStorage id in place so a
+        // future load retries.
+        migrateAttemptedRef.current = false;
+      });
+  }, [isSignedIn, clerkUserId]);
 
   const {
     tabs,

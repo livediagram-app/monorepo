@@ -6,25 +6,18 @@
 
 We don't put auth in front of the core experience. We add auth where it _enables_ something the user wants (sharing, syncing, collaborating, paying).
 
-## Auth provider
+## Hybrid identity
 
-**Clerk** is the chosen provider. It is **not** wired up yet — the api worker today is open and carries owner identity via an `X-Owner-Id` header (see [02-prototype-scope.md](02-prototype-scope.md) for current build-phase scope). Clerk lands once we're ready to gate sync/sharing behind a real account.
+The api worker accepts **two equivalent ways** of identifying the request owner, in this order of preference:
 
-## Two modes
+1. **Clerk Bearer JWT** — `Authorization: Bearer <token>`. Verified against `env.CLERK_JWKS_URL` in `apps/api/src/auth/clerk.ts` (using `jose`'s `createRemoteJWKSet` + `jwtVerify`). The token's `sub` claim is the owner id.
+2. **Guest header** — `X-Owner-Id: <participant-id>`. The participant id is a `crypto.randomUUID()` minted on first visit and persisted in `localStorage` under `livediagram:v2:self-id`.
 
-### Today (pre-Clerk)
+When both are present the Bearer wins. When verification fails (expired token, missing JWKS URL, etc.) the worker silently falls through to the guest header — never 401, because the guest path must always serve.
 
-The api is open. Owner identity is carried by the participant id minted on first visit (`livediagram:v2:self-id` in `localStorage`). With auth not wired, every user is effectively a guest and gets the **whole** feature set:
+The two paths coexist forever. A signed-in user can hand a share link to a guest who edits without auth.
 
-- Diagrams persist via the api worker (D1).
-- Share links (`/api/share/:code`) — anyone with the link can view / edit.
-- Real-time multiplayer collab via the per-diagram Durable Object room (see [11-api.md](11-api.md)).
-
-The participant id is per-browser, not per-user, so a user clearing storage or switching devices is treated as a different "owner" and won't see the diagrams they made before. That's the gap Clerk closes.
-
-### Future (post-Clerk)
-
-Once Clerk lands, the line between guest and authenticated tightens:
+## Capability matrix
 
 | Capability                  | Guest                         | Authenticated                                                       |
 | --------------------------- | ----------------------------- | ------------------------------------------------------------------- |
@@ -32,24 +25,40 @@ Once Clerk lands, the line between guest and authenticated tightens:
 | Persistence                 | ✓ (per-browser, not per-user) | ✓ (per-account, syncs across devices)                               |
 | Open a share link as viewer | ✓                             | ✓                                                                   |
 | Open a share link as editor | ✓                             | ✓                                                                   |
-| Mint a new share link       | (TBD — likely auth-gated)     | ✓                                                                   |
+| Mint a new share link       | ✓                             | ✓                                                                   |
 | Real-time presence          | ✓ on shared sessions          | ✓                                                                   |
-| Team workspaces             | —                             | ✓                                                                   |
+| Team workspaces             | —                             | ✓ (future)                                                          |
 | Pro features                | —                             | ✓ (when Pro lands — see [03](03-open-source-and-business-model.md)) |
 
-The principle stays the same: the **canvas itself** is always usable without signing in. Auth unlocks per-account persistence, team scoping, and billing — never gates a feature that doesn't actually need them.
+## Auth surface
+
+Three routes inside `apps/live/`:
+
+- **`/live/sign-in/`** — email-code or Google OAuth. Bounces to `/live/` (which falls through to the welcome flow per [spec/14](14-new-diagram-route.md)) on success. Already-signed-in users get redirected away.
+- **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code, or Google OAuth). Same post-auth destination.
+- **`/live/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
+
+The shared card chrome and inputs live in `apps/live/components/auth-shared.tsx` so the two pages don't drift.
+
+Signed-in status surfaces in the editor header via `<AuthControls>` (initial bubble + Sign out menu). Signed-out users see a "Sign in" link in the same slot. Neither blocks the editor — they're purely informational.
 
 ## Guest → account migration
 
-When a guest signs up, the diagrams they built locally should **migrate into their account** rather than being lost. They've already invested effort — losing it on sign-up would be the opposite of friction-free.
+When a guest signs up, the diagrams they built as a guest **migrate into their account** rather than being lost. They've already invested effort — losing it on sign-up would be the opposite of friction-free.
 
-- On first authenticated session, detect local diagrams.
-- Offer to import them into the account.
-- Don't auto-delete the local copies until the import is confirmed.
+Mechanism (see also [spec/11 — `POST /api/migrate`](11-api.md)):
+
+1. The editor + new-diagram pages mount with a `useEffect` that watches `isSignedIn + clerkUserId` from `useAuth`.
+2. The first time both are truthy AND `livediagram:v2:self-id` is still in `localStorage` AND the stored id differs from the Clerk userId, the page calls `POST /api/migrate { guestOwnerId: <localStorage id> }` with the Clerk Bearer token.
+3. The worker (Clerk-only auth — no `X-Owner-Id` fallback for this endpoint) reassigns every `diagrams.owner_id` and `folders.owner_id` row from the guest id to the Clerk userId. Other tables (`change_log`, `share_links`, `tabs`) link via `diagram_id`, so they cascade for free.
+4. On success the page removes the localStorage key. The migration is idempotent — a retry with the same `guestOwnerId` simply moves zero rows.
+
+Participants are not migrated. The participant row is owner-less in the schema; signed-in users get a fresh participant record keyed by their Clerk userId on first save. A guest's name + colour don't survive — small cosmetic regression that's not worth a second endpoint to fix.
 
 ## Implications for how we build
 
 - UI must never block the canvas behind a sign-in wall.
-- Features that genuinely need an account (Share, Invite, Sync) are surfaced as opt-in prompts: "Sign in to share this diagram" — not modal walls.
-- The single persistence boundary (`apps/live/lib/api-client.ts` against the api worker — see [11-api.md](11-api.md)) is the same in guest and authenticated mode. Only the owner-id header changes: a `localStorage`-minted UUID for guests, a Clerk-verified user id once auth lands.
+- Features that genuinely need an account are surfaced as opt-in prompts ("Sign in to keep your diagrams"), never modal walls.
+- The single persistence boundary (`apps/live/lib/api-client.ts` against the api worker — see [11-api.md](11-api.md)) is the same in guest and authenticated mode. Only the request headers differ: a `localStorage`-minted UUID in `X-Owner-Id` for guests, a Clerk JWT in `Authorization` for signed-in users. The api-client's module-level `setTokenProvider` is the single switch.
 - Public client code that uses Clerk uses only the **publishable key** (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`), never the secret key. See [06-secrets-policy.md](06-secrets-policy.md).
+- The api worker's degraded-mode behaviour matters: with `CLERK_JWKS_URL` unset (no `[vars]` value in `wrangler.toml`), every request silently falls through to the guest path. Useful for local dev and for environments where Clerk hasn't been provisioned yet — the editor stays usable.
