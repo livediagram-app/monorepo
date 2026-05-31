@@ -190,6 +190,13 @@ export function TemplatePicker({
                       key={t.kind}
                       type="button"
                       onClick={() => setTemplateKind(t.kind)}
+                      // Double-click is a "commit shortcut" — same as
+                      // clicking the template to select it + then
+                      // clicking the primary Create button. Picks up
+                      // whichever theme is currently selected and the
+                      // entered name; saves a click for users who
+                      // know what they want.
+                      onDoubleClick={() => onPick(t.kind, effectiveName, themeId)}
                       aria-pressed={active}
                       className={
                         active

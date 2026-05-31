@@ -271,6 +271,11 @@ export default function NewDiagramPage() {
           diagrams={diagramList}
           folders={folders}
           loading={diagramListLoading}
+          // Returning users land here with diagrams already saved;
+          // expanding the Recent accordion on mount means they see
+          // their library straight away rather than having to click
+          // the header to reveal it.
+          defaultRecentOpen={diagramList.length > 0}
           shared={sharedDiagrams}
           onDismissShared={(diagramId) => {
             setSharedDiagrams((prev) => prev.filter((d) => d.id !== diagramId));

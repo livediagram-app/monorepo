@@ -84,6 +84,11 @@ type ExplorerProps = {
   onRenameFolder?: (id: string, name: string) => void;
   onDeleteFolder?: (id: string) => void;
   onMoveDiagramToFolder?: (diagramId: string, folderId: string | null) => void;
+  // Initial open state for the Recent accordion. Defaults to
+  // collapsed so the panel stays compact, but the welcome /
+  // /live/new surface flips this to true when there are recent
+  // diagrams so a returning user lands looking at their library.
+  defaultRecentOpen?: boolean;
 };
 
 // Floating "Explorer" panel pinned to the top-left of the canvas by
@@ -110,6 +115,7 @@ export function Explorer({
   shared = [],
   onDismissShared,
   onOpenFullExplorer,
+  defaultRecentOpen = false,
 }: ExplorerProps) {
   const [sharedOpen, setSharedOpen] = useState(false);
   // Re-render every 30s so the "Updated X ago" strings stay fresh
@@ -119,7 +125,7 @@ export function Explorer({
   // Default to collapsed so the panel stays compact when the user
   // has lots of diagrams. The header badge surfaces the count even
   // when the list isn't visible.
-  const [recentOpen, setRecentOpen] = useState(false);
+  const [recentOpen, setRecentOpen] = useState(defaultRecentOpen);
   const [foldersOpen, setFoldersOpen] = useState(false);
   // Expansion state for each folder node + Unsorted (keyed by
   // folder id, or the literal 'unsorted' for the synthetic bucket).
