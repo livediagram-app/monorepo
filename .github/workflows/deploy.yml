@@ -170,15 +170,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         # Database arg is the binding name (`DB`) — wrangler resolves
-        # it via wrangler.toml. If this fails with a 7403, the CF API
-        # token in repo secrets needs the D1 Edit scope on the same
-        # account that owns the database (see the Verify step above).
-        run: |
-          pnpm exec wrangler d1 migrations apply DB --remote --yes \
-            || {
-              echo "::error::D1 migrations failed. Most likely the CF_API_TOKEN secret lacks the 'D1: Edit' permission on account ${CLOUDFLARE_ACCOUNT_ID}. Mint a new token with Workers Scripts:Edit + D1:Edit + Workers Routes:Edit + Cloudflare Pages:Edit and update the GitHub secret CF_API_TOKEN."
-              exit 1
-            }
+        # it via wrangler.toml. Wrangler 4 auto-skips the confirmation
+        # prompt in non-interactive CI environments, so no flag is
+        # needed (the `--yes` flag from wrangler 3 was removed).
+        # If this step fails, the most common cause is the CF_API_TOKEN
+        # secret missing the D1: Edit permission on the account that
+        # owns the database — but the `Verify Cloudflare token` step
+        # above is the authoritative diagnostic.
+        run: pnpm exec wrangler d1 migrations apply DB --remote
 
       - name: Deploy to Cloudflare Workers
         working-directory: apps/api
