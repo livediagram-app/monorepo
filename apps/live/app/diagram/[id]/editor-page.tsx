@@ -252,7 +252,8 @@ export default function LivePage() {
   const [tabAccordionsOpen, setTabAccordionsOpen] = useState<{
     theme: boolean;
     canvas: boolean;
-  }>({ theme: false, canvas: false });
+    file: boolean;
+  }>({ theme: false, canvas: false, file: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -1642,12 +1643,12 @@ export default function LivePage() {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: true, canvas: false });
+      setTabAccordionsOpen({ theme: true, canvas: false, file: false });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: false, canvas: true });
+      setTabAccordionsOpen({ theme: false, canvas: true, file: false });
     }
   };
 

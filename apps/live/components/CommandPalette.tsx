@@ -1136,7 +1136,7 @@ function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   );
 }
 
-export type TabAccordionState = { theme: boolean; canvas: boolean };
+export type TabAccordionState = { theme: boolean; canvas: boolean; file: boolean };
 
 export function TabSection({
   tab,
@@ -1150,7 +1150,7 @@ export function TabSection({
   // Mutually exclusive (matches SelectedElementSection).
   const toggle = (key: keyof TabAccordionState) =>
     setOpen((prev) => {
-      const closed: TabAccordionState = { theme: false, canvas: false };
+      const closed: TabAccordionState = { theme: false, canvas: false, file: false };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
     });
@@ -1285,9 +1285,11 @@ export function TabSection({
         </div>
       </Accordion>
       {tab.onExportTab || tab.onImportTab ? (
-        <div className="flex flex-col gap-1.5 border-t border-slate-100 px-3 py-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">File</p>
-          <div className="flex items-stretch gap-1.5">
+        <Accordion title="File" open={open.file} onToggle={() => toggle('file')}>
+          <p className="text-[10px] font-medium text-slate-500">
+            Move a tab in or out of this diagram.
+          </p>
+          <div className="mt-1 flex items-stretch gap-1.5">
             {tab.onImportTab ? (
               <Tooltip title="Import tab" description="Drop a .json tab into this diagram." block>
                 <button
@@ -1314,11 +1316,11 @@ export function TabSection({
             ) : null}
           </div>
           {tab.importError ? (
-            <p className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700">
+            <p className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700">
               {tab.importError}
             </p>
           ) : null}
-        </div>
+        </Accordion>
       ) : null}
     </div>
   );
