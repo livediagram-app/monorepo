@@ -36,7 +36,19 @@ export function defaultPadding(element: BoxedElement): Padding {
 export type TextAlignX = 'left' | 'center' | 'right';
 export type TextAlignY = 'top' | 'middle' | 'bottom';
 
-export type BackgroundPattern = 'grid' | 'blank' | 'lines' | 'crosshatch' | 'graph' | 'confetti';
+export type BackgroundPattern =
+  | 'grid'
+  | 'blank'
+  | 'lines'
+  | 'crosshatch'
+  | 'graph'
+  | 'confetti'
+  | 'stripes'
+  | 'diagonal'
+  | 'dashed'
+  | 'bricks'
+  | 'plus'
+  | 'stars';
 
 export const DEFAULT_BACKGROUND_COLOR = '#ffffff';
 export const DEFAULT_PATTERN_COLOR = '#cbd5e1'; // slate-300

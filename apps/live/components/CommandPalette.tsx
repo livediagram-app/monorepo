@@ -1116,6 +1116,13 @@ export function TabSection({
   );
   const visibleThemes = THEMES.filter((t) => !t.extra || showExtraThemes);
   const hasExtraThemes = THEMES.some((t) => t.extra);
+  // Same shape for background patterns. Auto-expanded if the current
+  // tab is already on an extra pattern.
+  const [showExtraPatterns, setShowExtraPatterns] = useState(
+    PATTERNS.find((p) => p.id === tab.backgroundPattern)?.extra === true,
+  );
+  const visiblePatterns = PATTERNS.filter((p) => !p.extra || showExtraPatterns);
+  const hasExtraPatterns = PATTERNS.some((p) => p.extra);
 
   return (
     <div className="flex flex-col border-t border-slate-200">
@@ -1181,61 +1188,28 @@ export function TabSection({
       <Accordion title="Canvas" open={open.background} onToggle={() => toggle('background')}>
         <p className="text-[10px] font-medium text-slate-500">Pattern</p>
         <div className="mt-1 grid grid-cols-3 gap-1">
-          <Tooltip title="Grid" description="Subtle dot grid background.">
-            <PatternButton
-              active={tab.backgroundPattern === 'grid'}
-              onClick={() => tab.onSetBackgroundPattern('grid')}
-              label="Grid"
-            >
-              <BackgroundGridIcon />
-            </PatternButton>
-          </Tooltip>
-          <Tooltip title="Blank" description="No background pattern.">
-            <PatternButton
-              active={tab.backgroundPattern === 'blank'}
-              onClick={() => tab.onSetBackgroundPattern('blank')}
-              label="Blank"
-            >
-              <BackgroundBlankIcon />
-            </PatternButton>
-          </Tooltip>
-          <Tooltip title="Lines" description="Horizontal ruled lines.">
-            <PatternButton
-              active={tab.backgroundPattern === 'lines'}
-              onClick={() => tab.onSetBackgroundPattern('lines')}
-              label="Lines"
-            >
-              <BackgroundLinesIcon />
-            </PatternButton>
-          </Tooltip>
-          <Tooltip title="Graph" description="Square graph paper.">
-            <PatternButton
-              active={tab.backgroundPattern === 'graph'}
-              onClick={() => tab.onSetBackgroundPattern('graph')}
-              label="Graph"
-            >
-              <BackgroundGraphIcon />
-            </PatternButton>
-          </Tooltip>
-          <Tooltip title="Crosshatch" description="Diagonal crosshatch pattern.">
-            <PatternButton
-              active={tab.backgroundPattern === 'crosshatch'}
-              onClick={() => tab.onSetBackgroundPattern('crosshatch')}
-              label="Cross"
-            >
-              <BackgroundCrosshatchIcon />
-            </PatternButton>
-          </Tooltip>
-          <Tooltip title="Confetti" description="Multi-colour dots — pattern colour ignored.">
-            <PatternButton
-              active={tab.backgroundPattern === 'confetti'}
-              onClick={() => tab.onSetBackgroundPattern('confetti')}
-              label="Confetti"
-            >
-              <BackgroundConfettiIcon />
-            </PatternButton>
-          </Tooltip>
+          {visiblePatterns.map((p) => (
+            <Tooltip key={p.id} title={p.label} description={p.description}>
+              <PatternButton
+                active={tab.backgroundPattern === p.id}
+                onClick={() => tab.onSetBackgroundPattern(p.id)}
+                label={p.shortLabel}
+              >
+                <p.icon />
+              </PatternButton>
+            </Tooltip>
+          ))}
         </div>
+        {hasExtraPatterns && !showExtraPatterns ? (
+          <button
+            type="button"
+            onClick={() => setShowExtraPatterns(true)}
+            className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 hover:text-brand-800"
+          >
+            Show more patterns
+            <span aria-hidden>↓</span>
+          </button>
+        ) : null}
         <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium text-slate-500">
           Colours
         </p>
@@ -1654,6 +1628,224 @@ function BackgroundConfettiIcon() {
     </svg>
   );
 }
+
+function BackgroundStripesIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[6, 12, 18, 24].map((x) => (
+        <line key={x} x1={x} y1="3" x2={x} y2="17" stroke="currentColor" strokeWidth="0.75" />
+      ))}
+    </svg>
+  );
+}
+
+function BackgroundDiagonalIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[-6, 0, 6, 12, 18, 24].map((x) => (
+        <line key={x} x1={x} y1="20" x2={x + 16} y2="4" stroke="currentColor" strokeWidth="0.75" />
+      ))}
+    </svg>
+  );
+}
+
+function BackgroundDashedIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[5, 11, 17].map((y) => (
+        <line
+          key={`h${y}`}
+          x1="3"
+          y1={y}
+          x2="25"
+          y2={y}
+          stroke="currentColor"
+          strokeWidth="0.75"
+          strokeDasharray="2 2"
+        />
+      ))}
+      {[7, 14, 21].map((x) => (
+        <line
+          key={`v${x}`}
+          x1={x}
+          y1="3"
+          x2={x}
+          y2="17"
+          stroke="currentColor"
+          strokeWidth="0.75"
+          strokeDasharray="2 2"
+        />
+      ))}
+    </svg>
+  );
+}
+
+function BackgroundBricksIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {/* Row 1 — full cells. */}
+      <line x1="2" y1="6" x2="26" y2="6" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="2" y1="14" x2="26" y2="14" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="10" y1="2" x2="10" y2="6" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="18" y1="2" x2="18" y2="6" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="6" y1="6" x2="6" y2="14" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="14" y1="6" x2="14" y2="14" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="22" y1="6" x2="22" y2="14" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="10" y1="14" x2="10" y2="18" stroke="currentColor" strokeWidth="0.75" />
+      <line x1="18" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="0.75" />
+    </svg>
+  );
+}
+
+function BackgroundPlusIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[
+        { x: 7, y: 6 },
+        { x: 21, y: 6 },
+        { x: 14, y: 13 },
+      ].map((c) => (
+        <g key={`${c.x}-${c.y}`} stroke="currentColor" strokeWidth="0.9" strokeLinecap="round">
+          <line x1={c.x - 2} y1={c.y} x2={c.x + 2} y2={c.y} />
+          <line x1={c.x} y1={c.y - 2} x2={c.x} y2={c.y + 2} />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function BackgroundStarsIcon() {
+  // Tiny five-point stars sized to read as decorative sprinkles.
+  const star = (cx: number, cy: number, key: string) => {
+    const r = 2;
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = (i * Math.PI) / 5 - Math.PI / 2;
+      const radius = i % 2 === 0 ? r : r * 0.45;
+      pts.push(`${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`);
+    }
+    return <polygon key={key} points={pts.join(' ')} fill="currentColor" />;
+  };
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {star(7, 6, 'a')}
+      {star(20, 5, 'b')}
+      {star(14, 13, 'c')}
+      {star(23, 15, 'd')}
+    </svg>
+  );
+}
+
+// One entry per pattern, with the `extra` flag driving the Show more
+// toggle. New patterns slot in by editing this list — the picker UI
+// has no hard-coded ids.
+type PatternEntry = {
+  id: BackgroundPattern;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: () => React.ReactElement;
+  extra?: boolean;
+};
+
+const PATTERNS: PatternEntry[] = [
+  {
+    id: 'grid',
+    label: 'Grid',
+    shortLabel: 'Grid',
+    description: 'Subtle dot grid background.',
+    icon: BackgroundGridIcon,
+  },
+  {
+    id: 'blank',
+    label: 'Blank',
+    shortLabel: 'Blank',
+    description: 'No background pattern.',
+    icon: BackgroundBlankIcon,
+  },
+  {
+    id: 'lines',
+    label: 'Lines',
+    shortLabel: 'Lines',
+    description: 'Horizontal ruled lines.',
+    icon: BackgroundLinesIcon,
+  },
+  {
+    id: 'graph',
+    label: 'Graph',
+    shortLabel: 'Graph',
+    description: 'Square graph paper.',
+    icon: BackgroundGraphIcon,
+  },
+  {
+    id: 'crosshatch',
+    label: 'Crosshatch',
+    shortLabel: 'Cross',
+    description: 'Diagonal crosshatch pattern.',
+    icon: BackgroundCrosshatchIcon,
+  },
+  {
+    id: 'confetti',
+    label: 'Confetti',
+    shortLabel: 'Confetti',
+    description: 'Multi-colour dots — pattern colour ignored.',
+    icon: BackgroundConfettiIcon,
+  },
+  {
+    id: 'stripes',
+    label: 'Stripes',
+    shortLabel: 'Stripes',
+    description: 'Vertical ruled lines.',
+    extra: true,
+    icon: BackgroundStripesIcon,
+  },
+  {
+    id: 'diagonal',
+    label: 'Diagonal',
+    shortLabel: 'Diagonal',
+    description: 'Single-direction 45° lines.',
+    extra: true,
+    icon: BackgroundDiagonalIcon,
+  },
+  {
+    id: 'dashed',
+    label: 'Dashed',
+    shortLabel: 'Dashed',
+    description: 'Dashed grid — graph paper made of dashes.',
+    extra: true,
+    icon: BackgroundDashedIcon,
+  },
+  {
+    id: 'bricks',
+    label: 'Bricks',
+    shortLabel: 'Bricks',
+    description: 'Offset masonry brickwork.',
+    extra: true,
+    icon: BackgroundBricksIcon,
+  },
+  {
+    id: 'plus',
+    label: 'Plus',
+    shortLabel: 'Plus',
+    description: 'Sprinkled plus signs.',
+    extra: true,
+    icon: BackgroundPlusIcon,
+  },
+  {
+    id: 'stars',
+    label: 'Stars',
+    shortLabel: 'Stars',
+    description: 'Sprinkled five-point stars.',
+    extra: true,
+    icon: BackgroundStarsIcon,
+  },
+];
 
 const ALIGN_GRID: { x: TextAlignX; y: TextAlignY }[] = [
   { y: 'top', x: 'left' },

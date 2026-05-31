@@ -1349,6 +1349,63 @@ function tabBackgroundStyle(
         backgroundSize: '60px 60px',
         backgroundPosition: `${px}px ${py}px`,
       };
+    case 'stripes':
+      // Vertical lines counterpart to the existing horizontal 'lines'.
+      return {
+        ...base,
+        backgroundImage: `repeating-linear-gradient(90deg, transparent 0 23px, ${fadedPatternColor} 23px 24px)`,
+        backgroundPosition: `${px}px 0px`,
+      };
+    case 'diagonal':
+      // Single-direction 45° lines — distinct from crosshatch's two.
+      return {
+        ...base,
+        backgroundImage: `repeating-linear-gradient(45deg, transparent 0 17px, ${fadedPatternColor} 17px 18px)`,
+        backgroundPosition: `${px}px ${py}px`,
+      };
+    case 'dashed':
+      // Dashed grid: short segments instead of the continuous lines
+      // of 'graph'. Achieved by stacking a vertical dashed stripe on
+      // top of a horizontal one, where each stripe alternates
+      // transparent/colour every few px.
+      return {
+        ...base,
+        backgroundImage:
+          `repeating-linear-gradient(0deg, ${fadedPatternColor} 0 6px, transparent 6px 12px, transparent 12px 23px, transparent 23px 24px), ` +
+          `repeating-linear-gradient(90deg, ${fadedPatternColor} 0 6px, transparent 6px 12px, transparent 12px 23px, transparent 23px 24px)`,
+        backgroundSize: '24px 24px',
+        backgroundPosition: `${px}px ${py}px`,
+      };
+    case 'bricks':
+      // Staggered horizontal lines + alternating vertical separators
+      // give a brick masonry impression without an SVG. Even rows
+      // use full-cell separators; we fake the staggered offset by
+      // tiling at 2x the cell height.
+      return {
+        ...base,
+        backgroundImage:
+          `repeating-linear-gradient(0deg, ${fadedPatternColor} 0 1px, transparent 1px 18px), ` +
+          `repeating-linear-gradient(90deg, ${fadedPatternColor} 0 1px, transparent 1px 36px)`,
+        backgroundSize: '36px 18px',
+        backgroundPosition: `${px}px ${py}px, ${(px + 18) % 36}px ${py}px`,
+      };
+    case 'plus':
+      // Sprinkled + signs via inline SVG. Uses currentColor would
+      // require additional wrapping; we inline the patternColor.
+      return {
+        ...base,
+        backgroundImage: plusBg(fadedPatternColor),
+        backgroundSize: '32px 32px',
+        backgroundPosition: `${px}px ${py}px`,
+      };
+    case 'stars':
+      // Sprinkled stars via inline SVG.
+      return {
+        ...base,
+        backgroundImage: starBg(fadedPatternColor),
+        backgroundSize: '48px 48px',
+        backgroundPosition: `${px}px ${py}px`,
+      };
     case 'grid':
     default:
       return {
@@ -1358,6 +1415,29 @@ function tabBackgroundStyle(
         backgroundPosition: `${px}px ${py}px`,
       };
   }
+}
+
+// Inline-SVG backgrounds for the patterns whose glyphs can't be built
+// from linear-gradient stripes. URL-encoded so they can sit inside a
+// CSS `url(...)` value — `#` MUST become `%23`. Both patterns pick up
+// the tab's `patternColor` (already alpha-adjusted by the caller).
+function plusBg(stroke: string): string {
+  const enc = stroke.replace(/#/g, '%23');
+  return (
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>" +
+    `<path d='M16 10 L16 22 M10 16 L22 16' stroke='${enc}' stroke-width='1.5' stroke-linecap='round' fill='none'/>` +
+    '</svg>")'
+  );
+}
+
+function starBg(stroke: string): string {
+  const enc = stroke.replace(/#/g, '%23');
+  // Five-point star path centred at (24, 24) with radius ~5.
+  return (
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'>" +
+    `<path d='M24 19 L25.5 22.5 L29 23 L26.5 25.5 L27 29 L24 27.5 L21 29 L21.5 25.5 L19 23 L22.5 22.5 Z' fill='${enc}'/>` +
+    '</svg>")'
+  );
 }
 
 // re-export for callers that haven't migrated to specifying default colour.
