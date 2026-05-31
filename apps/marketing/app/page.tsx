@@ -82,14 +82,49 @@ export default function LandingPage() {
           id="collaboration"
           eyebrow="Collaboration"
           title="A shared canvas your team builds together."
-        />
+          variant="tinted"
+        >
+          <FeatureGrid
+            items={[
+              {
+                art: <PresenceArt />,
+                title: 'Live presence',
+                description:
+                  'See who is in the diagram via the participant avatars in the header and on each tab. Status rings show online, away, or stale.',
+              },
+              {
+                art: <SelectionGlowArt />,
+                title: 'See what others are working on',
+                description:
+                  'Click an element and your collaborators see your colour glow on its border, plus your initials in the corner, in real time.',
+              },
+              {
+                art: <RealtimeArt />,
+                title: 'Realtime edits, last-write-wins',
+                description:
+                  'Every edit propagates over WebSockets within a beat. No queues, no locks. The latest change is the truth.',
+              },
+              {
+                art: <CommentsArt />,
+                title: 'Comments on any element',
+                description:
+                  "Right-click an element, leave a thread. Replies, resolve, delete. Comments carry the author's name and colour so it's clear who said what.",
+              },
+              {
+                art: <LaserArt />,
+                title: 'Laser pointer for presenting',
+                description:
+                  'Switch to the laser tool and your cursor leaves a glowing trail everyone can see. Point at the thing you mean while you talk it through. Trails fade on their own.',
+              },
+            ]}
+          />
+        </Section>
 
         <Section
           id="features"
           eyebrow="Draw"
           title="A real diagram editor, in your browser"
           description="Real shapes and connectors that track what they're tied to. The raw materials every diagram is built from."
-          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -113,7 +148,8 @@ export default function LandingPage() {
           id="refine"
           eyebrow="Refine"
           title="Keep a busy diagram tidy"
-          description="Edit in bulk, copy a look from one element to the next, talk in context, and split a big system across linked tabs and folders."
+          description="Edit in bulk, copy a look from one element to the next, and split a big system across linked tabs and folders."
+          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -130,12 +166,6 @@ export default function LandingPage() {
                   "Copy one element's look — size, colours, text style, opacity, padding — and brush it onto the next. Consistent diagrams without re-picking every option.",
               },
               {
-                art: <CommentsArt />,
-                title: 'Comments on any element',
-                description:
-                  "Right-click an element, leave a thread. Replies, resolve, delete. Comments carry the author's name and colour so it's clear who said what.",
-              },
-              {
                 art: <TabsArt />,
                 title: 'Many canvases per diagram',
                 description:
@@ -146,43 +176,6 @@ export default function LandingPage() {
                 title: 'Organise in folders',
                 description:
                   'File diagrams into nested folders in the explorer. Recent diagrams stay one click away; everything else lives where you put it.',
-              },
-            ]}
-          />
-        </Section>
-
-        <Section
-          id="collab"
-          eyebrow="Together"
-          title="Edit the same canvas, live"
-          description="Diagrams stay private until you share. Everyone you invite shows up on the canvas in real time — cursors, selections, and all."
-          variant="tinted"
-        >
-          <FeatureGrid
-            items={[
-              {
-                art: <PresenceArt />,
-                title: 'Live presence',
-                description:
-                  'See who is in the diagram via the participant avatars in the header and on each tab. Status rings show online, away, or stale.',
-              },
-              {
-                art: <SelectionGlowArt />,
-                title: 'See what others are working on',
-                description:
-                  'Click an element and your collaborators see your colour glow on its border, plus your initials in the corner — in real time.',
-              },
-              {
-                art: <RealtimeArt />,
-                title: 'Realtime edits, last-write-wins',
-                description:
-                  'Every edit propagates over WebSockets within a beat. No queues, no locks. The latest change is the truth.',
-              },
-              {
-                art: <LaserArt />,
-                title: 'Laser pointer for presenting',
-                description:
-                  'Switch to the laser tool and your cursor leaves a glowing trail everyone can see — point at the thing you mean while you talk it through. Trails fade on their own.',
               },
             ]}
           />
