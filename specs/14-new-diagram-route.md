@@ -83,6 +83,28 @@ Editor URLs use a path segment rather than a query string. `output:
 The hard cutover dropped the legacy `?d=<id>` query scheme — old
 bookmarks pointing at `/live?d=<id>` no longer work.
 
+### Do not add a root `app/not-found.tsx`
+
+Tempting and broken. With `output: 'export'` the client-side router
+treats every dynamic-segment value not enumerated in
+`generateStaticParams` as a not-found state on hydration. The
+placeholder id is the only enumerated value, so every real diagram
+URL (`/diagram/<uuid>`) triggers the not-found path the moment the
+JS hydrates — the page renders the editor for a frame, then the
+client router swaps it for whatever `app/not-found.tsx` exports.
+
+A route-level `app/diagram/[id]/not-found.tsx` does **not** rescue
+this: in static export mode Next.js doesn't wire route-level
+not-found chunks into the placeholder bundle, so the client router
+still falls through to the root component.
+
+If a branded 404 page is wanted for genuinely unknown routes, it
+needs a mechanism that doesn't piggyback on Next.js's app-router
+not-found slot (e.g. a separate static route the worker explicitly
+serves for unmatched paths). Until then the framework default 404
+page is what unknown routes render — the editor working is worth
+more than the 404 being on-brand.
+
 ## Navigation flows
 
 ### Owner creates a new diagram
