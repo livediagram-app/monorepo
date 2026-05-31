@@ -525,6 +525,31 @@ export async function apiLoadSelf(id: string): Promise<Participant | null> {
   };
 }
 
+// Account self-deletion (Clerk-only). Wipes the caller's diagrams,
+// folders, and participant row server-side; the caller is expected
+// to follow up with Clerk's `user.delete()` to drop the Clerk
+// account itself. Order matters — backend first, then Clerk — so a
+// Clerk-side failure doesn't leave the user without an account but
+// with orphaned data. Returns the change counts on success or null
+// on any non-2xx so the caller can decide whether to proceed with
+// the Clerk delete.
+export async function apiDeleteAccount(): Promise<{
+  diagrams: number;
+  folders: number;
+} | null> {
+  // ownerId arg is unused server-side for this endpoint (the
+  // resolved Clerk id wins), but apiHeaders' signature wants
+  // something — pass an empty string. The registered token
+  // provider attaches the Bearer; the endpoint refuses if absent.
+  const res = await fetch(`${API_BASE}/account`, {
+    method: 'DELETE',
+    headers: await apiHeaders(''),
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as { deleted: { diagrams: number; folders: number } };
+  return body.deleted;
+}
+
 // Guest → authed ownership migration. Called once on first sign-in
 // from editor-page.tsx + new/page.tsx when both conditions hold:
 //   - the Clerk session is active (a Bearer token will be sent)

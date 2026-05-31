@@ -18,6 +18,7 @@ import {
   getTab,
   insertChangeLogEntry,
   listChangeLog,
+  deleteAccount,
   listDiagramsByOwner,
   listFoldersByOwner,
   migrateOwnerId,
@@ -521,6 +522,25 @@ export default {
             await deleteFolder(env, id);
             return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
+        }
+      }
+
+      // ---------- /api/account ----------
+      // Account self-deletion. Clerk-only — no X-Owner-Id fallback,
+      // because the entire purpose is to wipe data bound to a
+      // verified Clerk identity. The client then calls Clerk's
+      // `user.delete()` to drop the Clerk record too; the order
+      // (backend first, then Clerk) means a Clerk-delete failure
+      // leaves the user signed in but with empty data, which they
+      // can recover from by re-signing-out — vs. losing access to
+      // Clerk but leaving orphaned rows in D1. Idempotent: re-
+      // calling with the same Clerk id is a no-op once the rows
+      // are gone.
+      if (segments[1] === 'account' && segments.length === 2) {
+        if (request.method === 'DELETE') {
+          if (!clerkUserId) return forbidden();
+          const deleted = await deleteAccount(env, clerkUserId);
+          return json({ deleted });
         }
       }
 

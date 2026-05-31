@@ -108,6 +108,12 @@ Owner-only routes require `X-Owner-Id`; shared-edit routes accept `X-Owner-Id` +
 | ------ | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | POST   | `/api/migrate` | Clerk only | Body `{ guestOwnerId }`. Reassigns every `diagrams.owner_id` + `folders.owner_id` row from the guest id to the JWT's `sub`. No `X-Owner-Id` fallback. See [spec/04](04-auth-and-guest-access.md). |
 
+**Account self-delete**
+
+| Method | Path           | Auth       | Notes                                                                                                                                                                                                                                                                                                                   |
+| ------ | -------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DELETE | `/api/account` | Clerk only | Wipes every diagrams + folders row for the verified Clerk userId, plus the participant record keyed by that id. Cascades via `ON DELETE CASCADE` on `tabs`, `share_links`, `change_log`. Returns `{ deleted: { diagrams, folders } }`. Client follows up with Clerk's `user.delete()` to drop the Clerk account itself. |
+
 ## Realtime model
 
 The `DiagramRoom` Durable Object holds the live state for one diagram id. Clients connect via the `/ws` endpoint and immediately send a `hello` identifying themselves; the room broadcasts a `presence` snapshot whenever the set changes.

@@ -586,6 +586,38 @@ export async function folderMoveWouldCycle(
   return false;
 }
 
+// Wipe every row belonging to a given owner — diagrams, folders,
+// and the participant record. Called from DELETE /api/account when
+// the user opts in via the "Delete account" dialog. Cascade rules
+// take care of the dependent tables: `tabs`, `share_links`, and
+// `change_log` all FK to `diagrams.id` with ON DELETE CASCADE
+// (migrations 0003 / 0004 / 0005), so removing the diagrams rows
+// also drops the per-diagram tab content, share links, and audit
+// trail. Folders carry their own owner_id and need their own
+// DELETE. Participants are owner-less in the schema but their id
+// IS the owner id, so a single id-match delete clears the
+// display-name / colour row too.
+//
+// Returns `{ diagrams, folders }` change counts for the audit log.
+// Idempotent — re-running with the same owner id is a no-op once
+// the rows are gone.
+export async function deleteAccount(
+  env: Env,
+  ownerId: string,
+): Promise<{ diagrams: number; folders: number }> {
+  const diagramsRes = await env.DB.prepare('DELETE FROM diagrams WHERE owner_id = ?')
+    .bind(ownerId)
+    .run();
+  const foldersRes = await env.DB.prepare('DELETE FROM folders WHERE owner_id = ?')
+    .bind(ownerId)
+    .run();
+  await env.DB.prepare('DELETE FROM participants WHERE id = ?').bind(ownerId).run();
+  return {
+    diagrams: diagramsRes.meta.changes ?? 0,
+    folders: foldersRes.meta.changes ?? 0,
+  };
+}
+
 // Owner-id migration. Reassigns every `diagrams.owner_id` and
 // `folders.owner_id` row from `fromOwnerId` to `toOwnerId`. Called
 // from POST /api/migrate when a guest signs up — their localStorage

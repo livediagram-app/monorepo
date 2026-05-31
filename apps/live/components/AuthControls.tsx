@@ -24,12 +24,14 @@ import { useAuth, useClerk, useUser } from '@clerk/react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { clerkEnabled } from '@/lib/clerk-config';
+import { DeleteAccountDialog } from './DeleteAccountDialog';
 
 function AuthControlsEnabled() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Click-outside to close. Bound only when the menu is open so
@@ -98,8 +100,31 @@ function AuthControlsEnabled() {
           >
             Sign out
           </button>
+          <div className="my-1 border-t border-slate-100" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setMenuOpen(false);
+              setDeleteOpen(true);
+            }}
+            className="block w-full rounded px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+          >
+            Delete account
+          </button>
         </div>
       ) : null}
+      <DeleteAccountDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={async () => {
+          // Backend + Clerk delete already completed inside the
+          // dialog. Sign out (just to clear any client-side Clerk
+          // state — the token's already invalid) and reload the
+          // editor as a fresh guest.
+          await signOut({ redirectUrl: '/live/' });
+        }}
+      />
     </div>
   );
 }
