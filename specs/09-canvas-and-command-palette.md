@@ -21,7 +21,12 @@ A small floating panel **initially placed in the top-right corner of the canvas*
 
 A second floating panel, pinned to the **top-left** of the canvas by default. Shares the same draggable + minimisable behaviour as the [Command palette](#command-palette) via the shared `MovablePanel` component. Title: `EXPLORER`.
 
-The Explorer is intended to list every diagram in the user's account. Until auth lands, it shows a sign-up nudge — a dashed-border card with "Sign in to save your diagrams" copy and a disabled **Sign in (coming soon)** button. The empty state is a deliberate prompt: it surfaces the value of accounts (persistence) right where users will naturally look for their diagram list later.
+Sections, top to bottom:
+
+- **Current Diagram** — the active diagram's row. Click to rename in place; the row's ellipsis menu surfaces Rename, Duplicate, and Delete for the current diagram (moved here from the editor header).
+- **Recent Diagrams** — accordion listing up to the five most-recently-saved diagrams the current participant owns, newest first. Capped + collapsed by default with a count badge.
+- **Folders + Unsorted** — accordion holding the nested folder tree per [15-folders.md](15-folders.md). Every folder is itself an accordion (expand to show child folders + direct diagrams). The synthetic **Unsorted** bucket always renders so freshly-created diagrams have an obvious home, even when no user folders exist. Folder rows have their own ellipsis (Rename, Delete, New subfolder, Move-to-folder); diagram rows have a "Move to folder…" sub-action.
+- **Sign-in nudge** — a dashed-border card at the bottom with "Sign in to keep your diagrams" copy and a disabled **Sign in (coming soon)** button. Surfaces the value of accounts (cross-device persistence) right where the user is looking at their library; lights up once Clerk lands and the per-browser participant id is replaced by a Clerk user id.
 
 When minimised, the Explorer collapses into a dock button (folder icon) in the bottom dock, left of the Palette's dock button.
 
