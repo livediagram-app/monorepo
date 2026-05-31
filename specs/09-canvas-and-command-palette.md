@@ -344,8 +344,8 @@ Below the welcome section, a 4-column responsive grid of template cards (2-col o
 - **Org chart** — a leader rectangle with three direct-report rectangles pinned beneath it.
 - **Retrospective** — three columns ("Mad", "Sad", "Glad") each with three blank stickies in tinted containers.
 - **Flowchart** — Start → Step → Decision → Step → End vertical chain with shape-kind variety (stadium / square / diamond).
-- **Kanban** — three columns (To do, In progress, Done) with three starter cards each.
-- **SWOT** — Strengths / Weaknesses / Opportunities / Threats 2×2 grid in tinted quadrants.
+- **Kanban** — five lanes (Backlog / To do / In progress / Review / Done) with four ticket cards each. Every card pairs a title block with a priority chip (high / medium / low). Board carries a "Sprint board" title above the columns so the diagram has an anchor and a natural rename target.
+- **SWOT** — Strengths / Weaknesses / Opportunities / Threats 2×2 grid in tinted quadrants, with three bullet starters per quadrant and a centre "Subject" pill that names the thing being analysed.
 - **Timeline** — horizontal line with five milestone circles, labels alternating above and below.
 
 Extras (behind Show more):
