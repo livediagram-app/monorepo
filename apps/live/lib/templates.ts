@@ -18,12 +18,20 @@ export type TemplateKind =
   | 'flowchart'
   | 'kanban'
   | 'swot'
-  | 'timeline';
+  | 'timeline'
+  | 'venn'
+  | 'journey'
+  | 'fishbone'
+  | 'pyramid';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
   title: string;
   description: string;
+  // True for templates that sit behind the picker's "Show more"
+  // toggle. Default templates render in the first batch; extras
+  // unlock on click so the grid stays compact for first-time users.
+  extra?: boolean;
 };
 
 export const TEMPLATES: TemplateDescriptor[] = [
@@ -66,6 +74,30 @@ export const TEMPLATES: TemplateDescriptor[] = [
     kind: 'timeline',
     title: 'Timeline',
     description: 'Horizontal line with milestone markers, above + below.',
+  },
+  {
+    kind: 'venn',
+    title: 'Venn diagram',
+    description: 'Three overlapping sets with shared and exclusive labels.',
+    extra: true,
+  },
+  {
+    kind: 'journey',
+    title: 'User journey',
+    description: 'Stages a user moves through, with feeling notes below each.',
+    extra: true,
+  },
+  {
+    kind: 'fishbone',
+    title: 'Fishbone',
+    description: 'Cause-and-effect spine with four contributing categories.',
+    extra: true,
+  },
+  {
+    kind: 'pyramid',
+    title: 'Pyramid',
+    description: 'Four stacked tiers — foundation at the bottom, peak on top.',
+    extra: true,
   },
 ];
 
@@ -138,6 +170,14 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildSwot(cx, cy);
     case 'timeline':
       return buildTimeline(cx, cy);
+    case 'venn':
+      return buildVenn(cx, cy);
+    case 'journey':
+      return buildJourney(cx, cy);
+    case 'fishbone':
+      return buildFishbone(cx, cy);
+    case 'pyramid':
+      return buildPyramid(cx, cy);
   }
 }
 
@@ -656,5 +696,196 @@ function buildTimeline(cx: number, cy: number): Element[] {
       textAlignX: 'center',
     });
   });
+  return elements;
+}
+
+// Three overlapping outlined circles arranged in a triangle so the
+// intersections are visible. Each set gets a label rendered outside
+// the circle (toward the corner away from the centroid) and there's
+// a small "All" label at the centre intersection. Outlined-only
+// (no fill) so the overlap reads cleanly.
+function buildVenn(cx: number, cy: number): Element[] {
+  const radius = 110;
+  // Triangle offsets — each circle sits ~0.6r from the centroid so
+  // pairwise overlap is meaningful but the three-way intersection
+  // stays a recognisable lens.
+  const offset = radius * 0.6;
+  const centers = [
+    { x: cx, y: cy - offset, label: 'Set A', tx: 0, ty: -radius - 30 },
+    { x: cx - offset * 0.95, y: cy + offset * 0.55, label: 'Set B', tx: -radius - 60, ty: 0 },
+    { x: cx + offset * 0.95, y: cy + offset * 0.55, label: 'Set C', tx: radius + 60, ty: 0 },
+  ];
+  const labelW = 110;
+  const labelH = 32;
+  const elements: Element[] = [];
+  centers.forEach((c) => {
+    elements.push({
+      ...createShape('circle', c.x - radius, c.y - radius),
+      width: radius * 2,
+      height: radius * 2,
+      fillColor: '#ffffff',
+      opacity: 0.7,
+    });
+    elements.push({
+      ...createText(c.x - labelW / 2 + c.tx, c.y - labelH / 2 + c.ty),
+      width: labelW,
+      height: labelH,
+      label: c.label,
+      textSize: 'md',
+      textAlignX: 'center',
+    });
+  });
+  // Centre label sits at the geometric centroid of the three circle
+  // centres — that's where all three lenses overlap.
+  const centroidX = (centers[0]!.x + centers[1]!.x + centers[2]!.x) / 3;
+  const centroidY = (centers[0]!.y + centers[1]!.y + centers[2]!.y) / 3;
+  elements.push({
+    ...createText(centroidX - 60, centroidY - 14),
+    width: 120,
+    height: 28,
+    label: 'All',
+    textSize: 'sm',
+    textAlignX: 'center',
+  });
+  return elements;
+}
+
+// Customer-journey scaffold: a row of stage cards connected by arrows,
+// with a sticky note under each stage capturing how the user feels at
+// that moment. Five stages is the sweet spot — more crowds; fewer
+// reads as a flowchart.
+function buildJourney(cx: number, cy: number): Element[] {
+  const stages: { label: string; feeling: string }[] = [
+    { label: 'Awareness', feeling: 'Curious' },
+    { label: 'Consideration', feeling: 'Comparing options' },
+    { label: 'Decision', feeling: 'Confident' },
+    { label: 'Onboarding', feeling: 'Eager but uncertain' },
+    { label: 'Loyalty', feeling: 'Advocate' },
+  ];
+  const cardW = 150;
+  const cardH = 60;
+  const stickyW = 150;
+  const stickyH = 80;
+  const gap = 40;
+  const totalW = stages.length * cardW + (stages.length - 1) * gap;
+  const startX = cx - totalW / 2;
+  const cardY = cy - cardH - 30;
+  const stickyY = cardY + cardH + 28;
+
+  const elements: Element[] = [];
+  stages.forEach((s, i) => {
+    const x = startX + i * (cardW + gap);
+    elements.push({
+      ...createShape('square', x, cardY),
+      width: cardW,
+      height: cardH,
+      label: s.label,
+      textSize: 'md',
+    });
+    elements.push({
+      ...createSticky(x, stickyY),
+      width: stickyW,
+      height: stickyH,
+      label: s.feeling,
+      textSize: 'sm',
+    });
+  });
+  // Connector arrows between adjacent stages.
+  for (let i = 0; i < stages.length - 1; i++) {
+    const fromX = startX + i * (cardW + gap) + cardW;
+    const toX = startX + (i + 1) * (cardW + gap);
+    const midY = cardY + cardH / 2;
+    elements.push(createArrow(fromX, midY, toX, midY));
+  }
+  return elements;
+}
+
+// Cause-and-effect (Ishikawa) skeleton: a horizontal spine arrow
+// pointing at the "Effect" card, with four diagonal category branches
+// (two above, two below) feeding into the spine. The branches are
+// arrows so the visual reads as causes flowing INTO the spine.
+function buildFishbone(cx: number, cy: number): Element[] {
+  const spineLength = 600;
+  const branchOffset = 130;
+  const branchSpacing = 180;
+  const effectW = 160;
+  const effectH = 70;
+  const categoryW = 130;
+  const categoryH = 40;
+
+  const spineLeft = cx - spineLength / 2;
+  const spineRight = cx + spineLength / 2;
+  const elements: Element[] = [];
+
+  // Effect card at the head of the spine.
+  elements.push({
+    ...createShape('square', spineRight, cy - effectH / 2),
+    width: effectW,
+    height: effectH,
+    label: 'Effect',
+    textSize: 'md',
+  });
+
+  // Spine arrow → pointing at the Effect card.
+  elements.push(createArrow(spineLeft, cy, spineRight, cy));
+
+  // Four category branches feeding into the spine. The two above sit
+  // at branchOffset above the spine; the two below sit at branchOffset
+  // below. branchSpacing pushes them apart along x so they fan out.
+  const categories = [
+    { label: 'People', x: cx - branchSpacing, above: true },
+    { label: 'Process', x: cx + branchSpacing * 0.3, above: true },
+    { label: 'Equipment', x: cx - branchSpacing, above: false },
+    { label: 'Materials', x: cx + branchSpacing * 0.3, above: false },
+  ];
+  categories.forEach((c) => {
+    const branchY = c.above ? cy - branchOffset : cy + branchOffset;
+    const cardY = c.above ? branchY - categoryH : branchY;
+    elements.push({
+      ...createShape('square', c.x - categoryW / 2, cardY),
+      width: categoryW,
+      height: categoryH,
+      label: c.label,
+      textSize: 'sm',
+    });
+    // Branch arrow from the corner of the category card down/up to
+    // a point on the spine to the right of the card.
+    const fromX = c.x;
+    const fromY = c.above ? branchY : branchY;
+    const toX = c.x + 110;
+    const toY = cy;
+    elements.push(createArrow(fromX, fromY, toX, toY));
+  });
+  return elements;
+}
+
+// Four-tier pyramid built from squares of decreasing width, stacked
+// peak-up. Generic labels because the use case ranges from Maslow's
+// hierarchy to "strategy / tactics / operations / daily" decks —
+// users rename per their domain.
+function buildPyramid(cx: number, cy: number): Element[] {
+  const tiers = ['Vision', 'Strategy', 'Tactics', 'Operations'];
+  const tierH = 70;
+  const baseWidth = 480;
+  const widthStep = 90;
+  const elements: Element[] = [];
+  const totalH = tiers.length * tierH;
+  const topY = cy - totalH / 2;
+  tiers.forEach((label, i) => {
+    const tierW = baseWidth - i * widthStep;
+    const x = cx - tierW / 2;
+    const y = topY + i * tierH;
+    elements.push({
+      ...createShape('square', x, y),
+      width: tierW,
+      height: tierH,
+      label,
+      textSize: 'md',
+    });
+  });
+  // Top-to-bottom order in the source array reads peak-down, but
+  // visually the user expects the foundation at the bottom. Reverse
+  // labels on render so first array entry = top tier.
+  // (Already top-down in the array above; loop just iterates.)
   return elements;
 }

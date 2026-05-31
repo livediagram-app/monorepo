@@ -61,6 +61,14 @@ export function TemplatePicker({
   const [name, setName] = useState(participant.name);
   const [templateKind, setTemplateKind] = useState<TemplateKind>('blank');
   const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
+  // "Show more" toggle reveals the templates marked `extra: true`.
+  // Auto-expanded if the user has already picked an extra template
+  // (e.g. revisiting the picker on a tab that was created from one).
+  const [showExtraTemplates, setShowExtraTemplates] = useState(
+    TEMPLATES.find((t) => t.kind === templateKind)?.extra === true,
+  );
+  const visibleTemplates = TEMPLATES.filter((t) => !t.extra || showExtraTemplates);
+  const hasExtraTemplates = TEMPLATES.some((t) => t.extra);
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
 
@@ -151,7 +159,7 @@ export function TemplatePicker({
                 Pick a template
               </p>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {TEMPLATES.map((t) => {
+                {visibleTemplates.map((t) => {
                   const active = templateKind === t.kind;
                   return (
                     <button
@@ -178,6 +186,16 @@ export function TemplatePicker({
                   );
                 })}
               </div>
+              {hasExtraTemplates && !showExtraTemplates ? (
+                <button
+                  type="button"
+                  onClick={() => setShowExtraTemplates(true)}
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 hover:text-brand-800"
+                >
+                  Show more templates
+                  <span aria-hidden>↓</span>
+                </button>
+              ) : null}
             </>
           ) : null}
 
@@ -625,6 +643,158 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
                 strokeWidth="0.5"
               />
             </g>
+          ))}
+        </svg>
+      );
+    case 'venn':
+      return (
+        <svg width="70" height="46" viewBox="0 0 70 50" aria-hidden>
+          {/* Three semi-transparent outlined circles arranged in a triangle. */}
+          <circle
+            cx="35"
+            cy="18"
+            r="14"
+            fill="rgb(186 230 253)"
+            fillOpacity="0.45"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          <circle
+            cx="24"
+            cy="32"
+            r="14"
+            fill="rgb(254 226 226)"
+            fillOpacity="0.45"
+            stroke="rgb(248 113 113)"
+            strokeWidth="1"
+          />
+          <circle
+            cx="46"
+            cy="32"
+            r="14"
+            fill="rgb(220 252 231)"
+            fillOpacity="0.45"
+            stroke="rgb(74 222 128)"
+            strokeWidth="1"
+          />
+        </svg>
+      );
+    case 'journey':
+      return (
+        <svg width="80" height="40" viewBox="0 0 80 50" aria-hidden>
+          {/* Four stage boxes in a row with arrows between, sticky-note row below. */}
+          {[6, 24, 42, 60].map((x) => (
+            <g key={x}>
+              <rect
+                x={x}
+                y="6"
+                width="12"
+                height="9"
+                rx="1"
+                fill="rgb(186 230 253)"
+                stroke="rgb(14 165 233)"
+                strokeWidth="0.75"
+              />
+              <rect
+                x={x}
+                y="28"
+                width="12"
+                height="10"
+                rx="1"
+                fill="rgb(254 243 199)"
+                stroke="rgb(252 211 77)"
+                strokeWidth="0.75"
+              />
+            </g>
+          ))}
+          {[18, 36, 54].map((mx) => (
+            <line
+              key={mx}
+              x1={mx}
+              y1="10"
+              x2={mx + 6}
+              y2="10"
+              stroke="rgb(100 116 139)"
+              strokeWidth="1"
+              markerEnd=""
+            />
+          ))}
+        </svg>
+      );
+    case 'fishbone':
+      return (
+        <svg width="80" height="40" viewBox="0 0 80 50" aria-hidden>
+          {/* Horizontal spine with effect box at the right. */}
+          <line x1="6" y1="25" x2="62" y2="25" stroke="rgb(100 116 139)" strokeWidth="1.25" />
+          <rect
+            x="62"
+            y="20"
+            width="14"
+            height="10"
+            rx="1"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.75"
+          />
+          {/* Two upper and two lower diagonal branches. */}
+          {[
+            { x1: 16, y1: 6, x2: 28, y2: 25 },
+            { x1: 36, y1: 6, x2: 48, y2: 25 },
+            { x1: 16, y1: 44, x2: 28, y2: 25 },
+            { x1: 36, y1: 44, x2: 48, y2: 25 },
+          ].map((b, i) => (
+            <line
+              key={i}
+              x1={b.x1}
+              y1={b.y1}
+              x2={b.x2}
+              y2={b.y2}
+              stroke="rgb(100 116 139)"
+              strokeWidth="0.75"
+            />
+          ))}
+          {/* Small category labels at the ends of each branch. */}
+          {[
+            { x: 8, y: 4 },
+            { x: 30, y: 4 },
+            { x: 8, y: 42 },
+            { x: 30, y: 42 },
+          ].map((c, i) => (
+            <rect
+              key={i}
+              x={c.x}
+              y={c.y}
+              width="12"
+              height="5"
+              rx="0.5"
+              fill="white"
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.5"
+            />
+          ))}
+        </svg>
+      );
+    case 'pyramid':
+      return (
+        <svg width="70" height="46" viewBox="0 0 70 50" aria-hidden>
+          {/* Four tiers stacked; each row narrower than the one below to read as a pyramid. */}
+          {[
+            { x: 28, y: 6, w: 14, h: 9 },
+            { x: 22, y: 16, w: 26, h: 9 },
+            { x: 16, y: 26, w: 38, h: 9 },
+            { x: 10, y: 36, w: 50, h: 9 },
+          ].map((t, i) => (
+            <rect
+              key={i}
+              x={t.x}
+              y={t.y}
+              width={t.w}
+              height={t.h}
+              rx="1"
+              fill={i === 0 ? 'rgb(186 230 253)' : 'rgb(241 245 249)'}
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.75"
+            />
           ))}
         </svg>
       );
