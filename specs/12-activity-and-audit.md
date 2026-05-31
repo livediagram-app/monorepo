@@ -34,15 +34,18 @@ the **Activity Panel**.
 
 ## Data model
 
-New D1 table, migration `0004_change_log.sql`. Migration `0012` dropped the `diagram_id` column (item #14 / spec/17) — every entry is now tab-scoped, and the per-diagram filter joins through `diagram_tabs`:
+New D1 table, migration `0004_change_log.sql`. Two follow-up migrations narrowed the shape:
+
+- **`0012`** — dropped `diagram_id` (item #14 / spec/17). Every entry is tab-scoped; per-diagram reads join through `diagram_tabs`.
+- **`0013`** — dropped the denormalised `participant_name` + `participant_color` (item #15). Reads `LEFT JOIN participants` on `participant_id`; rows whose author has been deleted fall back to "Unknown" / slate-400 client-side.
+
+Post-migration shape:
 
 ```sql
 CREATE TABLE change_log (
   id           TEXT PRIMARY KEY,             -- UUID
   tab_id       TEXT,                         -- the tab this entry belongs to (post #14)
-  participant_id   TEXT NOT NULL,            -- author at commit time
-  participant_name TEXT NOT NULL,            -- snapshot at commit time
-  participant_color TEXT NOT NULL,           -- snapshot for the dot
+  participant_id   TEXT NOT NULL,            -- joined to participants on read (post #15)
   kind         TEXT NOT NULL,                -- 'add' | 'edit' | 'delete' | 'revert'
   summary      TEXT NOT NULL,                -- short display string ("Edited 'API'")
   element_ids  TEXT NOT NULL,                -- JSON array of affected element ids

@@ -533,8 +533,11 @@ type ChangeLogRow = {
   id: string;
   tab_id: string | null;
   participant_id: string;
-  participant_name: string;
-  participant_color: string;
+  // LEFT-joined from participants — null when the participant row
+  // was deleted (account delete, sign-out cleanup). The DTO
+  // surfaces an "Unknown" fallback on the client.
+  participant_name: string | null;
+  participant_color: string | null;
   kind: string;
   summary: string;
   element_ids: string;
@@ -543,13 +546,21 @@ type ChangeLogRow = {
   created_at: number;
 };
 
+// Fallback display values for change_log rows whose participant has
+// been deleted since the entry was written. The denormalised columns
+// went away with migration 0013 (item #15), so we have to fill
+// something in — leaving these undefined would mean the activity
+// panel renders blank rows.
+const UNKNOWN_PARTICIPANT_NAME = 'Unknown';
+const UNKNOWN_PARTICIPANT_COLOR = '#94a3b8'; // slate-400
+
 function rowToChangeLog(row: ChangeLogRow): ChangeLogEntryDTO {
   return {
     id: row.id,
     tabId: row.tab_id,
     participantId: row.participant_id,
-    participantName: row.participant_name,
-    participantColor: row.participant_color,
+    participantName: row.participant_name ?? UNKNOWN_PARTICIPANT_NAME,
+    participantColor: row.participant_color ?? UNKNOWN_PARTICIPANT_COLOR,
     kind: (row.kind as ChangeLogKind) ?? 'edit',
     summary: row.summary,
     elementIds: JSON.parse(row.element_ids),
@@ -572,11 +583,18 @@ const CHANGE_LOG_LIST_LIMIT = 30;
 // answer once spec/17's many-to-many tabs land: the change exists
 // in every diagram it shows up in.
 export async function listChangeLog(env: Env, diagramId: string): Promise<ChangeLogEntryDTO[]> {
+  // LEFT JOIN through participants so rows whose author has been
+  // deleted (account delete) still surface, with a fallback name
+  // and colour from rowToChangeLog. Inner join would silently hide
+  // those entries.
   const result = await env.DB.prepare(
-    `SELECT cl.id, cl.tab_id, cl.participant_id, cl.participant_name, cl.participant_color,
+    `SELECT cl.id, cl.tab_id, cl.participant_id,
+            p.name  AS participant_name,
+            p.color AS participant_color,
             cl.kind, cl.summary, cl.element_ids, cl.before_state, cl.after_state, cl.created_at
        FROM change_log cl
        JOIN diagram_tabs dt ON dt.tab_id = cl.tab_id
+       LEFT JOIN participants p ON p.id = cl.participant_id
       WHERE dt.diagram_id = ?
       ORDER BY cl.created_at DESC
       LIMIT ?`,
@@ -587,19 +605,20 @@ export async function listChangeLog(env: Env, diagramId: string): Promise<Change
 }
 
 export async function insertChangeLogEntry(env: Env, entry: ChangeLogEntryDTO): Promise<void> {
+  // Post-migration 0013: participant_name + _color columns are gone.
+  // The DTO still carries them so the WebSocket op + UI can keep
+  // showing the author cheaply — we just don't write them to D1.
   await env.DB.prepare(
     `INSERT INTO change_log (
-       id, tab_id, participant_id, participant_name, participant_color,
+       id, tab_id, participant_id,
        kind, summary, element_ids, before_state, after_state, created_at
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       entry.id,
       entry.tabId,
       entry.participantId,
-      entry.participantName,
-      entry.participantColor,
       entry.kind,
       entry.summary,
       JSON.stringify(entry.elementIds),
