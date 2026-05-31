@@ -705,18 +705,18 @@ function buildTimeline(cx: number, cy: number): Element[] {
 // a small "All" label at the centre intersection. Outlined-only
 // (no fill) so the overlap reads cleanly.
 function buildVenn(cx: number, cy: number): Element[] {
-  const radius = 180;
+  const radius = 380;
   // Triangle offsets — each circle sits ~0.6r from the centroid so
   // pairwise overlap is meaningful but the three-way intersection
   // stays a recognisable lens.
   const offset = radius * 0.6;
   const centers = [
-    { x: cx, y: cy - offset, label: 'Set A', tx: 0, ty: -radius - 40 },
-    { x: cx - offset * 0.95, y: cy + offset * 0.55, label: 'Set B', tx: -radius - 80, ty: 0 },
-    { x: cx + offset * 0.95, y: cy + offset * 0.55, label: 'Set C', tx: radius + 80, ty: 0 },
+    { x: cx, y: cy - offset, label: 'Set A', tx: 0, ty: -radius - 60 },
+    { x: cx - offset * 0.95, y: cy + offset * 0.55, label: 'Set B', tx: -radius - 120, ty: 0 },
+    { x: cx + offset * 0.95, y: cy + offset * 0.55, label: 'Set C', tx: radius + 120, ty: 0 },
   ];
-  const labelW = 160;
-  const labelH = 44;
+  const labelW = 320;
+  const labelH = 80;
   const elements: Element[] = [];
   centers.forEach((c) => {
     elements.push({
@@ -740,11 +740,11 @@ function buildVenn(cx: number, cy: number): Element[] {
   const centroidX = (centers[0]!.x + centers[1]!.x + centers[2]!.x) / 3;
   const centroidY = (centers[0]!.y + centers[1]!.y + centers[2]!.y) / 3;
   elements.push({
-    ...createText(centroidX - 90, centroidY - 22),
-    width: 180,
-    height: 44,
+    ...createText(centroidX - 160, centroidY - 40),
+    width: 320,
+    height: 80,
     label: 'All',
-    textSize: 'md',
+    textSize: 'lg',
     textAlignX: 'center',
   });
   return elements;
