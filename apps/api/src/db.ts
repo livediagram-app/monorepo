@@ -13,9 +13,9 @@ import type {
   TabSummaryDTO,
 } from './types';
 
-// Thin D1 wrapper. Diagrams + tabs each have their own table; the
-// `diagrams.data` blob is retained one release window (see spec 13)
-// but never read on this path.
+// Thin D1 wrapper. Diagrams + tabs each have their own table —
+// `diagrams.data` (the legacy single-row JSON blob) was dropped in
+// migration 0006. See spec/13 for the rollout that got us here.
 
 type DiagramRow = {
   id: string;
