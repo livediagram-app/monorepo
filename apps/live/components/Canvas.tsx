@@ -815,6 +815,7 @@ export function Canvas(props: CanvasProps) {
                   isSelected={element.id === selectedId || multiSelectedIds.has(element.id)}
                   isPaintMode={isPaintMode || isGroupMode}
                   isEditing={element.id === editingId}
+                  tabLocked={tabLocked}
                   onSelect={(e) => {
                     // Mirror the boxed-element click semantics so arrows
                     // can be included in marquee multi-selections via

@@ -20,6 +20,11 @@ type ArrowViewProps = {
   isSelected: boolean;
   isPaintMode: boolean;
   isEditing: boolean;
+  // True when the whole tab is locked (toggled from the tab ellipsis
+  // menu). Treated the same as a per-arrow `arrow.locked === true`
+  // — endpoint handles disabled, body drag suppressed, double-click
+  // edit suppressed. Mirrors how BoxedElementView handles it.
+  tabLocked: boolean;
   onSelect: (e: ReactPointerEvent) => void;
   onBeginEndpointDrag: (end: ArrowEnd, e: ReactPointerEvent) => void;
   // Double-click on the arrow body fires this so the page can flip
@@ -42,6 +47,7 @@ export function ArrowView({
   isSelected,
   isPaintMode,
   isEditing,
+  tabLocked,
   onSelect,
   onBeginEndpointDrag,
   onBeginEdit,
@@ -49,7 +55,7 @@ export function ArrowView({
   onCancelEdit,
   onBeginTranslate,
 }: ArrowViewProps) {
-  const isLocked = arrow.locked === true;
+  const isLocked = arrow.locked === true || tabLocked;
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
   const markerUrl = `url(#${arrowheadMarkerId(arrowheadSizeOf(arrow))})`;
