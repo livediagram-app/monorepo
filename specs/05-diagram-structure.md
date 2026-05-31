@@ -16,8 +16,8 @@ Diagram
 ```
 
 - A diagram has **one or more tabs**. New diagrams start with a single empty tab.
-- Each tab has its own independent canvas — nodes, edges, layout.
-- Tabs are **ordered**; the order is part of the diagram and is editable by the user.
+- Each tab has its own independent canvas — elements, layout, theme, background pattern, optional lock state.
+- Tabs are **ordered**; users can drag-reorder them in the tab bar.
 - A tab has a name (default `"Tab 1"`, `"Tab 2"`, etc.) and is renameable.
 
 ## Cross-tab links
@@ -27,7 +27,7 @@ Any element on any canvas can **link to** something on another tab:
 - A link can target **a tab** (open that tab when clicked).
 - A link can target **a specific element on another tab** (open that tab and focus/scroll-to that element).
 
-Activating a link is a navigation action inside the diagram, not a URL.
+Activating a link is a navigation action inside the diagram, not a URL. Each linked element renders a small "Follow link" badge in its selection popover.
 
 ### Use cases
 
@@ -35,36 +35,34 @@ Activating a link is a navigation action inside the diagram, not a URL.
 - **Mindmap deep-dives.** A leaf branch on the mindmap links to its own tab for deeper structure.
 - **Cross-references.** A process step links to a related decision elsewhere in the diagram, without duplicating the content.
 
-## Data model sketch
+## Data model
 
-This is a sketch, not the final schema. The shape lives in a shared package so the prototype `localStorage` store, the future Worker/D1 store, and the editor UI all agree.
+Canonical types live in **`packages/diagram/src/index.ts`** — that file is the source of truth for the cross-app shape (consumed by the live editor, the api worker, and any future code that handles diagrams). Treat the sketch below as a high-level outline; read the package for the full field list.
 
 ```ts
-type DiagramId = string;
-type TabId = string;
-type ElementId = string;
-
 type Diagram = {
   id: DiagramId;
   name: string;
+  shareable: boolean;
+  folderId: string | null;
   tabs: Tab[]; // ordered
-  createdAt: string;
-  updatedAt: string;
+  // …plus owner, share code, timestamps
 };
 
 type Tab = {
   id: TabId;
   name: string;
   elements: Element[];
+  // …plus theme, backgroundColor/Pattern/Opacity, patternColor, locked
 };
 
-// Concrete element types (see 09-canvas-and-command-palette.md):
-//   ShapeElement   { type: 'shape',  shape: 'square' | 'circle', x, y, width, height, label?, locked? }
-//   TextElement    { type: 'text',   x, y, width, height, label?, locked? }
-//   StickyElement  { type: 'sticky', x, y, width, height, label?, locked? }
-//   ArrowElement   { type: 'arrow',  from: Endpoint, to: Endpoint, locked? }
+// Concrete element kinds — see packages/diagram for the full shape of each:
+//   ShapeElement   (shape: square / circle / diamond / triangle / cylinder / cloud / parallelogram)
+//   TextElement
+//   StickyElement
+//   ArrowElement   (from + to Endpoints, arrowStyle, arrowheadSize, optional label)
 //
-// All elements may eventually carry `link?: ElementLink` for cross-tab navigation.
+// Most elements may carry `link?: ElementLink` for cross-tab navigation.
 type Element = ShapeElement | TextElement | StickyElement | ArrowElement;
 
 type ElementLink =
@@ -72,15 +70,16 @@ type ElementLink =
   | { kind: 'element'; tabId: TabId; elementId: ElementId };
 ```
 
+Persistence shape lives in [11-api.md](11-api.md) (per-tab rows + diagram-meta rows in D1). The `apps/live/lib/api-client.ts` boundary serialises this same in-memory shape against the api worker.
+
 ### Why element IDs are unique across the whole diagram, not per tab
 
 Element IDs are diagram-scoped so cross-tab links are stable even if elements move between tabs (e.g. cut from Tab A, paste into Tab B). The id doesn't change; the link still resolves.
 
 ## UI implications
 
-- The editor shows tabs at the **bottom** of the screen (see [07-live-app.md](07-live-app.md)).
-- The active tab fills the canvas area.
-- A "+" button on the tab bar adds a new empty tab.
-- Tabs can be renamed (double-click or context menu — TBD).
-- Tabs can be reordered (drag — TBD).
-- Creating a cross-tab link is a future interaction (TBD); the data model is ready for it from day one.
+- The tab bar sits at the **bottom** of the editor (see [07-live-app.md](07-live-app.md)). The active tab fills the canvas area.
+- A `+` button on the tab bar adds a new empty tab and switches to it.
+- **Rename** a tab by double-clicking its label (inline input — Enter commits, Escape cancels). Also available via the per-tab ellipsis menu.
+- **Reorder** tabs by dragging a tab to a new position in the bar.
+- **Create a cross-tab link** from the selection popover — click "Link to tab", pick a target tab; the link follows the element if it's moved.
