@@ -295,19 +295,6 @@ export default function ExplorerPage() {
                 />
               ))
           : null}
-        {!loading ? (
-          <div className="mb-10">
-            <button
-              type="button"
-              onClick={() => void createFolder()}
-              className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-transparent px-3 py-1.5 text-[11px] font-medium text-slate-500 transition hover:border-brand-300 hover:text-brand-700"
-            >
-              <PlusIcon />
-              New folder
-            </button>
-          </div>
-        ) : null}
-
         {shared.length > 0 ? (
           <Section title="Shared with you" count={shared.length}>
             <Grid>
