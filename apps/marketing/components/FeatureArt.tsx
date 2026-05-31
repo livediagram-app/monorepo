@@ -1,7 +1,7 @@
 // Per-card mini illustrations for the landing page feature grids.
 //
 // Each export is a small, self-contained mock of the real editor surface
-// the card describes — built from the same visual vocabulary as the hero
+// the card describes, built from the same visual vocabulary as the hero
 // (dot-grid canvas, brand-blue rounded shapes, pinned arrows, presence
 // avatars, the floating palette / explorer / activity panels). Motion is
 // pure CSS (classes + keyframes live in globals.css) so it survives the
@@ -830,7 +830,7 @@ export function MitArt() {
             MIT
           </span>
         </div>
-        <span className="text-[7px] text-slate-400">editor · api · marketing — all public</span>
+        <span className="text-[7px] text-slate-400">editor · api · marketing, all public</span>
       </div>
     </Frame>
   );
@@ -917,7 +917,7 @@ export function NoTrackingArt() {
 }
 
 /* ─────────────── Section: simple by design (lead-in) ─────────────────
- * Lighter than the canvas mocks above — a clean icon badge per card, so
+ * Lighter than the canvas mocks above, a clean icon badge per card, so
  * the section about simplicity reads as simple. Uses the editor's
  * bg-brand-50 / text-brand-500 circle motif with a gentle pulsing ring. */
 
@@ -1169,6 +1169,84 @@ export function TabReorderArt() {
             {t.name}
           </span>
         ))}
+      </div>
+    </Frame>
+  );
+}
+
+/* ────────────────────────── Section: reliability ─────────────────── */
+
+export function AutosaveArt() {
+  return (
+    <Frame>
+      <div className="flex h-full items-center justify-center px-3">
+        <div className="relative h-7 w-28">
+          {/* saving */}
+          <span className="fa-on absolute inset-0 flex items-center justify-center gap-1.5 rounded-full bg-slate-100 text-[9px] font-medium text-slate-500">
+            <svg
+              className="fa-spin h-3 w-3"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M8 2 a6 6 0 1 0 6 6" strokeLinecap="round" />
+            </svg>
+            Saving&hellip;
+          </span>
+          {/* saved */}
+          <span className="fa-off absolute inset-0 flex items-center justify-center gap-1.5 rounded-full bg-brand-50 text-[9px] font-medium text-brand-600">
+            <svg
+              className="h-3 w-3"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="m3.5 8 3 3 6-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Saved
+          </span>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+export function UndoRedoArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* a shape whose state toggles, as if a change is applied then undone */}
+        <rect className="fa-lww" x="86" y="26" width="48" height="26" rx="6" strokeWidth="2" />
+      </svg>
+      <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-3">
+        <span className="fa-pulse flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <path d="M6 5 H10 a3.5 3.5 0 0 1 0 7 H5" strokeLinecap="round" />
+            <path d="M6 2.5 L3.3 5 L6 7.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 shadow-sm">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <path d="M10 5 H6 a3.5 3.5 0 0 0 0 7 H11" strokeLinecap="round" />
+            <path d="M10 2.5 L12.7 5 L10 7.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </div>
     </Frame>
   );

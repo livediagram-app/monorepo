@@ -12,7 +12,7 @@ export function Hero() {
           A canvas your team builds <span className="text-brand-600">together</span>.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-slate-600">
-          Flowcharts, mindmaps, retros, org charts — drawn from real shapes, themed in one click,
+          Flowcharts, mindmaps, retros, org charts, drawn from real shapes, themed in one click,
           shared with a link. Private by default, live with whoever you invite.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -29,7 +29,7 @@ export function Hero() {
             See what's in it
           </a>
         </div>
-        <p className="mt-4 text-sm text-slate-500">No sign-up — the canvas opens straight away.</p>
+        <p className="mt-4 text-sm text-slate-500">No sign-up. The canvas opens straight away.</p>
 
         <HeroIllustration />
       </div>

@@ -1,7 +1,7 @@
 // Animated mini-editor illustration shown in the hero. Mirrors the real
-// editor's visual vocabulary — dot-grid canvas, brand-coloured shapes
+// editor's visual vocabulary, dot-grid canvas, brand-coloured shapes
 // with rounded corners, pinned arrows, participant avatars in the
-// top-right — so the landing page actually shows what the product
+// top-right, so the landing page actually shows what the product
 // looks like. The animation loops every ~14 seconds, building a small
 // flowchart-style diagram and then settling.
 

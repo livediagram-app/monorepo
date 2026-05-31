@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 /** Canonical production URL and the line we want people to pass along. */
 const SHARE_URL = 'https://livediagram.app';
 const SHARE_TEXT =
-  'livediagram — a real-time multiplayer canvas for diagrams and mindmaps. No sign-up needed.';
+  'livediagram: a real-time multiplayer canvas for diagrams and mindmaps. No sign-up needed.';
 
 const encodedUrl = encodeURIComponent(SHARE_URL);
 const encodedText = encodeURIComponent(SHARE_TEXT);
@@ -86,7 +86,7 @@ export function ShareButtons() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard blocked (insecure context / permissions) — leave the row as-is.
+      // Clipboard blocked (insecure context / permissions), leave the row as-is.
     }
   }
 

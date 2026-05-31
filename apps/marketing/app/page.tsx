@@ -2,6 +2,7 @@ import {
   ActivityArt,
   AnyDeviceArt,
   ArrowsArt,
+  AutosaveArt,
   CommentsArt,
   DepthArt,
   EasyStartArt,
@@ -26,6 +27,7 @@ import {
   TabsArt,
   TemplatesArt,
   ThemesArt,
+  UndoRedoArt,
   UnlimitedTabsArt,
 } from '@/components/FeatureArt';
 import { Footer } from '@/components/Footer';
@@ -176,13 +178,13 @@ export default function LandingPage() {
                 art: <MarqueeArt />,
                 title: 'Multi-select with marquee',
                 description:
-                  'Switch to the Select tool, drag a box. Move, duplicate, group, lock, or delete every element inside — one action, one Cmd-Z.',
+                  'Switch to the Select tool, drag a box. Move, duplicate, group, lock, or delete every element inside, one action, one Cmd-Z.',
               },
               {
                 art: <FormatPainterArt />,
                 title: 'Format painter',
                 description:
-                  "Copy one element's look — size, colours, text style, opacity, padding — and brush it onto the next. Consistent diagrams without re-picking every option.",
+                  "Copy one element's look, size, colours, text style, opacity, padding, and brush it onto the next. Consistent diagrams without re-picking every option.",
               },
               {
                 art: <FoldersArt />,
@@ -236,18 +238,30 @@ export default function LandingPage() {
         </Section>
 
         <Section
-          id="sharing"
-          title="Your work is safe"
-          description="Rewind any change from a full activity trail, and trust that every save survives a refresh."
+          id="reliability"
+          title="Diagrams you can rely on"
+          description="Your work saves itself, steps back when you slip, and comes back exactly as you left it. Nothing to remember, nothing to lose."
           variant="tinted"
         >
           <FeatureGrid
             items={[
               {
+                art: <AutosaveArt />,
+                title: 'Autosave, always on',
+                description:
+                  'Every change saves on its own as you work, with a status that shows saving, saved, or a problem. There is no save button to remember.',
+              },
+              {
+                art: <UndoRedoArt />,
+                title: 'Undo and redo',
+                description:
+                  'Back out a recent edit with Cmd-Z, or bring it back with Cmd-Shift-Z. For anything older, the activity log can revert a specific change.',
+              },
+              {
                 art: <ActivityArt />,
                 title: 'Activity log with one-click revert',
                 description:
-                  'Every tab keeps a running log of who changed what. Hit revert on any entry to undo just that change — even after later edits — without disturbing the rest.',
+                  'Every tab keeps a running log of who changed what. Hit revert on any entry to undo just that change, even after later edits, without disturbing the rest.',
               },
               {
                 art: <RefreshArt />,
@@ -262,7 +276,7 @@ export default function LandingPage() {
         <Section
           id="foundations"
           title="Open source. Self-hostable. No lock-in."
-          description="MIT-licensed. Static frontend + Cloudflare Workers backend. Run it on your own account in an afternoon. Or use the hosted version — your call."
+          description="MIT-licensed. Static frontend + Cloudflare Workers backend. Run it on your own account in an afternoon. Or use the hosted version, your call."
         >
           <FeatureGrid
             items={[
@@ -270,7 +284,7 @@ export default function LandingPage() {
                 art: <MitArt />,
                 title: 'MIT licensed',
                 description:
-                  'The whole thing — editor, API, marketing site — is on GitHub under the MIT license. Fork it, rebrand it, ship your own variant.',
+                  'The whole thing (editor, API, marketing site) is on GitHub under the MIT license. Fork it, rebrand it, ship your own variant.',
               },
               {
                 art: <NoServersArt />,
