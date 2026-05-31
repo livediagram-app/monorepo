@@ -92,8 +92,8 @@ Each boxed element can have its **aspect ratio locked**. Stored as `aspectLocked
 
 When **nothing is selected**, the Selected Element section is replaced by a **Current Tab** section. Accordions, top to bottom:
 
-- **Theme** — a 3-column grid of preset themes. Picking a theme writes `theme: ThemeId` onto the tab AND replaces the tab's `backgroundColor`, `backgroundPattern`, and `patternColor` with the theme's values. From that point on, newly added boxed elements inherit the theme's `elementFill / elementStroke / elementText` colours (sticky notes keep their amber identity regardless). Existing elements are **not** retroactively recoloured — the user can re-apply colours per-element via the Selected Element → Colours accordion. The theme catalogue (`apps/live/lib/themes.ts`) ships with: **Brand** (default sky-blue + white), **Slate** (cool grey), **Forest** (greens on a mint backdrop), **Sunset** (warm orange), **Lavender** (purple), **Mono** (black & white). Adding a new theme is just one entry in the catalogue.
-- **Background** — per-tab background controls. Six pattern choices (Grid, Blank, Lines, Graph, Crosshatch, Confetti) plus Canvas + Pattern colour pickers. Patterns store as `backgroundPattern?: BackgroundPattern`. When the user pans, the grid/lines/graph/crosshatch pattern phase tracks the pan offset so the pattern tiles indefinitely. Confetti renders a fixed multi-colour scatter and ignores the pattern colour.
+- **Theme** — a 3-column grid of preset themes. Picking a theme writes `theme: ThemeId` onto the tab AND replaces the tab's `backgroundColor`, `backgroundPattern`, and `patternColor` with the theme's values. From that point on, newly added boxed elements inherit the theme's `elementFill / elementStroke / elementText` colours (sticky notes keep their amber identity regardless). Existing elements are **not** retroactively recoloured — the user can re-apply colours per-element via the Selected Element → Colours accordion. The theme catalogue (`apps/live/lib/themes.ts`) ships **12 default themes** (Brand, Slate, Forest, Sunset, Lavender, Mono, Ocean, Crimson, Midnight, Cream, Rose, Sand) plus **6 extras behind a "Show more themes" toggle** (Olive, Indigo, Pine, Steel, Mocha, Charcoal). The opt-in is descriptor-driven (`extra?: boolean` on each entry), so adding more is one line in the catalogue with no UI plumbing. The same toggle ships in the welcome / template picker's theme grid. The toggle auto-expands when the active themeId is an extra so the user always sees the active swatch.
+- **Canvas** — per-tab background controls. Twelve pattern choices total: six defaults (Grid, Blank, Lines, Graph, Crosshatch, Confetti) plus six behind a "Show more patterns" toggle (Stripes, Diagonal, Waves, Bricks, Plus, Stars). Patterns store as `backgroundPattern?: BackgroundPattern`. When the user pans, the gradient-based pattern phase tracks the pan offset so the pattern tiles indefinitely. Confetti renders a fixed multi-colour scatter and ignores the pattern colour; Plus, Stars, and Waves render via inline `data:image/svg+xml` and pick up the active pattern colour. Plus Canvas + Pattern colour pickers and an Opacity slider.
 - **Content** — destructive operations on the tab's contents (today: a single "Remove all content" button, disabled when there's nothing to clear).
 
 ### Selected Element section
@@ -105,6 +105,7 @@ Accordion groups:
 - **Layer**
   - Front — bring to top of the z-order.
   - Back — send to bottom of the z-order.
+  - Opacity slider — 0–100% on the element's `opacity` field. Folded into Layer (was a standalone "Appearance" accordion until the merge — single-control accordions weren't worth the extra header).
 - **Text** _(boxed elements only)_
   - Text size — `Scale | Small | Medium | Large`. See [Text size](#text-size).
   - Text alignment — 3 × 3 grid. See [Text alignment](#text-alignment).
@@ -317,12 +318,25 @@ At the top of the modal, an inline avatar + name input lets the user adjust thei
 
 ### Templates section
 
-Below the welcome section, a 4-column responsive grid of template cards (2-col on narrow viewports). One card is always selected (defaults to **Blank**). The card's compact layout — small preview thumbnail + title + 2-line description — lets the grid show all four options at once without scrolling. Options:
+Below the welcome section, a 4-column responsive grid of template cards (2-col on narrow viewports). One card is always selected (defaults to **Blank**). The catalogue (`apps/live/lib/templates.ts`) ships **8 default templates** plus **4 extras behind a "Show more templates" toggle**:
 
-- **Blank diagram** — drops a **single 220 × 100 square** centred on the visible viewport, pre-labelled `Blank Diagram` at `md` text size, and **auto-selects it** so the user can immediately rename or edit. The user starts with one editable rectangle they can rename or grow from, rather than a fully empty canvas. (A truly empty canvas is psychologically intimidating; this gives users an anchor element to immediately interact with.) Generalised rule: a template that produces exactly one element auto-selects that element; multi-element templates leave the selection cleared.
-- **Mind map** — a central circle with four labelled branch circles connected by pinned arrows.
-- **Org chart** — a `CEO` rectangle with three direct-report rectangles pinned beneath it.
-- **Retrospective** — three columns ("What went well", "What didn't go well", "Action items") each with three blank stickies.
+- **Blank diagram** — drops a **single 220 × 100 square** centred on the visible viewport, pre-labelled `Blank Diagram` at `md` text size, and **auto-selects it** so the user can immediately rename or edit. Generalised rule: a template that produces exactly one element auto-selects that element; multi-element templates leave the selection cleared.
+- **Mind map** — a central circle with four labelled branch boxes, each sprouting two leaf cards, all connected by pinned arrows.
+- **Org chart** — a leader rectangle with three direct-report rectangles pinned beneath it.
+- **Retrospective** — three columns ("Mad", "Sad", "Glad") each with three blank stickies in tinted containers.
+- **Flowchart** — Start → Step → Decision → Step → End vertical chain with shape-kind variety (stadium / square / diamond).
+- **Kanban** — three columns (To do, In progress, Done) with three starter cards each.
+- **SWOT** — Strengths / Weaknesses / Opportunities / Threats 2×2 grid in tinted quadrants.
+- **Timeline** — horizontal line with five milestone circles, labels alternating above and below.
+
+Extras (behind Show more):
+
+- **Venn diagram** — three semi-transparent outlined circles arranged in a triangle, set labels around the outside, "All" label at the centroid.
+- **User journey** — five stage cards in a row with arrows between, each backed by a sticky note for the feeling at that stage.
+- **Fishbone** — horizontal spine arrow pointing at an Effect card, four diagonal category branches.
+- **Pyramid** — four stacked tiers (Vision → Strategy → Tactics → Operations), peak tier accent-coloured.
+
+The opt-in shape mirrors themes + canvas patterns: `TemplateDescriptor.extra?: boolean` drives the toggle; the picker filters by `(!t.extra || showExtra)`. Auto-expands on revisit when the tab was created from an extra template.
 
 All template elements are inserted via the history hook (commit), so they're undoable in one step. The picker animates in via the global `fly-up-in` keyframe (see [Motion and animations](#motion-and-animations)).
 
