@@ -4,6 +4,7 @@ import { useAuth, useUser } from '@clerk/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { apiMigrateGuestData, setTokenProvider } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
+import { clearGuestSelfId, getGuestSelfId } from '@/lib/local-identity';
 
 // Two things every page that talks to the api needs to do once Clerk
 // is in the tree:
@@ -83,12 +84,12 @@ function useClerkApiBootstrapEnabled(): BootstrapResult {
   useEffect(() => {
     if (!isSignedIn || !clerkUserId) return;
     if (migrateAttemptedRef.current) return;
-    const guestId = window.localStorage.getItem('livediagram:v2:self-id');
+    const guestId = getGuestSelfId();
     if (!guestId || guestId === clerkUserId) return;
     migrateAttemptedRef.current = true;
     void apiMigrateGuestData(guestId)
       .then((res) => {
-        if (res) window.localStorage.removeItem('livediagram:v2:self-id');
+        if (res) clearGuestSelfId();
       })
       .catch(() => {
         // Network glitch — leave the localStorage id in place so a

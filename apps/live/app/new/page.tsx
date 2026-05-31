@@ -22,6 +22,7 @@ import {
   type Folder,
 } from '@/lib/api-client';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
+import { getGuestSelfId, markNameConfirmed, setGuestSelfId } from '@/lib/local-identity';
 import { buildTemplatedTab, type TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
 
@@ -78,12 +79,12 @@ export default function NewDiagramPage() {
     if (clerkUserId) {
       selfId = clerkUserId;
     } else {
-      const stored = window.localStorage.getItem('livediagram:v2:self-id');
+      const stored = getGuestSelfId();
       if (stored) {
         selfId = stored;
       } else {
         selfId = crypto.randomUUID();
-        window.localStorage.setItem('livediagram:v2:self-id', selfId);
+        setGuestSelfId(selfId);
       }
     }
     const local: Participant = {
@@ -139,7 +140,7 @@ export default function NewDiagramPage() {
       setSelf(updated);
       await apiSaveSelf(updated).catch(() => {});
     }
-    window.localStorage.setItem('livediagram:v2:name-confirmed', '1');
+    markNameConfirmed();
 
     const diagramId = crypto.randomUUID();
     const tabId = crypto.randomUUID();

@@ -65,6 +65,12 @@ import {
 } from '@/lib/canvas';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import {
+  getGuestSelfId,
+  hasConfirmedName,
+  markNameConfirmed,
+  setGuestSelfId,
+} from '@/lib/local-identity';
+import {
   apiAppendChangeLogEntry,
   apiCreateDiagram,
   apiCreateFolder,
@@ -508,12 +514,12 @@ export default function LivePage() {
       if (clerkUserId) {
         selfId = clerkUserId;
       } else {
-        const stored = window.localStorage.getItem('livediagram:v2:self-id');
+        const stored = getGuestSelfId();
         if (stored) {
           selfId = stored;
         } else {
           selfId = crypto.randomUUID();
-          window.localStorage.setItem('livediagram:v2:self-id', selfId);
+          setGuestSelfId(selfId);
         }
       }
       const storedSelf = await apiLoadSelf(selfId).catch(() => null);
@@ -637,10 +643,7 @@ export default function LivePage() {
           // is locked downstream when they have a Clerk identity so
           // they can't pretend to be someone else.
           const isOwnerVisit = fetched.ownerId === self.id;
-          if (
-            !isOwnerVisit &&
-            window.localStorage.getItem('livediagram:v2:name-confirmed') !== '1'
-          ) {
+          if (!isOwnerVisit && !hasConfirmedName()) {
             setTemplatePickerMode('identity');
           }
         }
@@ -655,7 +658,7 @@ export default function LivePage() {
           setDiagramNotFound(true);
           setHydrated(true);
           setLoadingDiagram(false);
-          setNameConfirmed(window.localStorage.getItem('livediagram:v2:name-confirmed') === '1');
+          setNameConfirmed(hasConfirmedName());
           return;
         }
         if (fetched) {
@@ -712,10 +715,7 @@ export default function LivePage() {
           // settled — skip the identity prompt entirely. Guests fall
           // back to the legacy localStorage gate so they still get the
           // one-time naming nudge.
-          if (
-            !clerkUserId &&
-            window.localStorage.getItem('livediagram:v2:name-confirmed') !== '1'
-          ) {
+          if (!clerkUserId && !hasConfirmedName()) {
             setTemplatePickerMode('identity');
           }
         }
@@ -726,7 +726,7 @@ export default function LivePage() {
       if (!shareCodeParam && !id) {
         setChangeLogLoading(false);
       }
-      setNameConfirmed(window.localStorage.getItem('livediagram:v2:name-confirmed') === '1');
+      setNameConfirmed(hasConfirmedName());
       refreshDiagramList(self.id);
       // One-shot folder fetch on hydration. Folder mutations update
       // state optimistically; no need to refetch on every autosave.
@@ -2173,9 +2173,7 @@ export default function LivePage() {
   // localStorage so a returning visitor isn't re-prompted, and clears
   // the in-memory flag so the modal closes immediately.
   const confirmName = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('livediagram:v2:name-confirmed', '1');
-    }
+    markNameConfirmed();
     setNameConfirmed(true);
   };
 
