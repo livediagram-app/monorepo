@@ -25,6 +25,10 @@ type EditorHeaderProps = {
   // view stays unchanged.
   onMakeCopy?: () => void;
   copying?: boolean;
+  // Opens the Export-tab overlay (item #10). Optional so render
+  // surfaces that don't have a tab loaded yet (welcome flow) can
+  // omit it.
+  onExportTab?: () => void;
   // Accent colour for the brand logo's "diagram" half. Comes from the
   // active tab's theme stroke so the header subtly echoes the canvas.
   brandAccent?: string;
@@ -39,6 +43,7 @@ export function EditorHeader({
   shareable,
   onMakeCopy,
   copying = false,
+  onExportTab,
   brandAccent,
   onOpenShare,
   onRename,
@@ -81,7 +86,22 @@ export function EditorHeader({
           </div>
         )}
       </div>
-      <div className="flex w-56 items-center justify-end gap-2">
+      <div className="flex w-72 items-center justify-end gap-2">
+        {onExportTab ? (
+          <Tooltip
+            title="Export tab"
+            description="Save the current tab as Markdown, PDF, PNG, or a file."
+          >
+            <button
+              type="button"
+              onClick={onExportTab}
+              aria-label="Export tab"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+            >
+              <ExportIcon />
+            </button>
+          </Tooltip>
+        ) : null}
         {onMakeCopy ? (
           <Tooltip title="Make a copy" description="Duplicate this diagram into your own files.">
             <button
@@ -188,6 +208,26 @@ function PrivateDotIcon() {
     >
       <rect x="2" y="4" width="5" height="3.5" rx="0.8" />
       <path d="M3.25 4V3a1.25 1.25 0 0 1 2.5 0v1" />
+    </svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2v8" />
+      <path d="M5 5l3-3 3 3" />
+      <path d="M2.5 11v2.5h11V11" />
     </svg>
   );
 }

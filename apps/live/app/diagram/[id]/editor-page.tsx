@@ -46,6 +46,7 @@ import {
 import { Canvas } from '@/components/Canvas';
 import { CommentThreadPopover } from '@/components/CommentThreadPopover';
 import { EditorHeader, type SaveStatus } from '@/components/EditorHeader';
+import { ExportTabDialog } from '@/components/ExportTabDialog';
 import { Explorer } from '@/components/Explorer';
 import { NotFound } from '@/components/NotFound';
 import { ShareDialog } from '@/components/ShareDialog';
@@ -490,6 +491,9 @@ export default function LivePage() {
   // itself while the api round-trips so a frantic double-click can't
   // produce two copies under the user's account.
   const [copying, setCopying] = useState(false);
+  // Export-tab overlay (item #10). Open / closed only; the picker
+  // surface lives in components/ExportTabDialog.
+  const [exportOpen, setExportOpen] = useState(false);
   // Every active share link for the current diagram (owner-only). The
   // ShareDialog list renders straight off this array. shareable is
   // derived: shareLinks.length > 0 OR diagramShareable from a freshly
@@ -3723,10 +3727,18 @@ export default function LivePage() {
         // is the owner.
         onMakeCopy={!isOwner && hydrated && !anyWelcomeOpen && diagramId ? makeCopy : undefined}
         copying={copying}
+        onExportTab={hydrated && !anyWelcomeOpen ? () => setExportOpen(true) : undefined}
         brandAccent={getTheme(activeTab.theme).elementStroke ?? undefined}
         onOpenShare={() => setShareDialogOpen(true)}
         onRename={setDiagramName}
       />
+      {exportOpen ? (
+        <ExportTabDialog
+          tab={activeTab}
+          diagramName={diagramName}
+          onClose={() => setExportOpen(false)}
+        />
+      ) : null}
       {shareDialogOpen ? (
         <ShareDialog
           participant={selfParticipant}
