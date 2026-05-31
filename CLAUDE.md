@@ -32,12 +32,12 @@ specs/          # product specs — read these first
 
 Workspaces are managed with **pnpm** (`pnpm-workspace.yaml`). Tasks are orchestrated with **Turborepo** (`turbo.json`). Node `>=22` (wrangler 4 requirement), pnpm `>=9`.
 
-## Current phase: backend in scope
+## What's built, what's still ahead
 
-The frontend-only prototype phase ended once the API app landed (see [spec 11-api.md](specs/11-api.md)). The editor now talks to a Cloudflare Worker API backed by D1 (durable diagram storage) and Durable Objects (per-diagram realtime room). The `localStorage` `DiagramStore` impl has been removed from the live app — `apps/live/lib/api-client.ts` is the single boundary.
+The frontend-only prototype phase ended when the API app landed (see [spec/02](specs/02-prototype-scope.md) and [spec/11](specs/11-api.md)). Today the editor talks to a Cloudflare Worker API backed by D1 (durable diagram storage) + Durable Objects (per-diagram realtime room). `apps/live/lib/api-client.ts` is the single persistence boundary; the editor never reads or writes `localStorage` for diagrams.
 
-- **In scope now:** the api worker, D1 schema + migrations, REST endpoints (diagram + participant CRUD), Durable Object for presence + LWW broadcast.
-- **Still out of scope:** Clerk auth (the API is open, with owner identity carried in `X-Owner-Id`), Resend, Stripe, multi-user permissions, operational-transform / CRDT edits.
+- **Built:** the canvas editor (shapes, arrows of every style, marquee + multi-select, groups, format painter, comments, links, themed templates, folders), the api worker (REST + share links + change log + Durable Object realtime room with cursor/select/log ops), per-tab storage.
+- **Still ahead:** Clerk auth (the API is open today, identity via `X-Owner-Id`), Resend (transactional email), Stripe (Pro subscription), multi-user team permissions, operational-transform / CRDT edits.
 
 ## Open source + commercial
 
@@ -83,22 +83,23 @@ When the right place for code is genuinely unclear, default to `packages/`.
 - Server-side logic lives in Cloudflare Workers, **not** in Next.js. Frontends call those Workers.
 - Database access goes through a Worker that holds the D1 binding — never from the browser.
 
-## Target tech stack (post-prototype)
+## Tech stack
 
-This is what the full product runs on. Most of it is **not built yet** — see "Current phase".
+What the product runs on. Items marked ✗ haven't shipped yet — see "What's built, what's still ahead".
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS
-- **APIs:** Cloudflare Workers
-- **Routing edge:** Cloudflare Workers (the router app)
-- **Database:** Cloudflare D1
-- **Auth:** Clerk
-- **Email:** Resend
-- **Payments:** Stripe
+- **Frontend:** Next.js (`output: 'export'`), React, TypeScript, Tailwind CSS — ✓
+- **APIs:** Cloudflare Workers — ✓
+- **Routing edge:** Cloudflare Workers (the router app) — ✓
+- **Database:** Cloudflare D1 (via the api worker only) — ✓
+- **Realtime:** Cloudflare Durable Objects (per-diagram room) — ✓
+- **Auth:** Clerk — ✗
+- **Email:** Resend — ✗
+- **Payments:** Stripe — ✗
 
 ## Naming conventions
 
 - Workspace packages: `@livediagram/<name>`.
-- Apps in `apps/<name>` (e.g. `apps/marketing`, `apps/live`, `apps/router`).
+- Apps in `apps/<name>` (e.g. `apps/marketing`, `apps/live`, `apps/api`, `apps/router`).
 - Cross-workspace deps use `"@livediagram/foo": "workspace:*"`.
 
 ## Shared config
