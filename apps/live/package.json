@@ -14,7 +14,7 @@
     "clean": "rm -rf .next out node_modules .turbo"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.3.3",
+    "@clerk/react": "^6.7.2",
     "@livediagram/api-schema": "workspace:*",
     "@livediagram/diagram": "workspace:*",
     "@livediagram/ui": "workspace:*",

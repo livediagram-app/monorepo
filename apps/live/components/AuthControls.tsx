@@ -14,7 +14,7 @@
 // useAuth().isLoaded) we render nothing so the header doesn't flicker
 // a "Sign in" link only to swap it for the user pill a tick later.
 
-import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { useAuth, useClerk, useUser } from '@clerk/react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 

@@ -6,7 +6,10 @@
 // apps/dashboard/app/sso-callback/page.tsx with livediagram fallback
 // destinations.
 
-import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
+// Import from @clerk/react (framework-agnostic) so the static export
+// build doesn't pull in @clerk/nextjs's Server Actions — see
+// components/providers/ClerkProvider.tsx for the same rationale.
+import { AuthenticateWithRedirectCallback } from '@clerk/react';
 
 export default function SSOCallbackPage() {
   return (

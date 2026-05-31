@@ -5,7 +5,7 @@ import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
 import type { Tab } from '@livediagram/diagram';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/react';
 import {
   apiCreateDiagram,
   apiCreateFolder,

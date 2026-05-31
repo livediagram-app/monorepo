@@ -1,6 +1,14 @@
 'use client';
 
-import { ClerkProvider as Clerk } from '@clerk/nextjs';
+// Use `@clerk/react`'s framework-agnostic provider instead of
+// `@clerk/nextjs`'s — the Next.js variant pulls Server Actions into
+// the build, and `output: 'export'` rejects that (matches MT's
+// pattern in apps/dashboard/components/providers/ClerkProvider.tsx).
+// The provider's runtime behaviour is identical; only the surrounding
+// SSR plumbing differs. Hook consumers (`useAuth`, `useSignIn`, etc.)
+// keep importing from `@clerk/nextjs` because those don't trigger
+// the Server Actions check.
+import { ClerkProvider as Clerk } from '@clerk/react';
 import type { ReactNode } from 'react';
 
 // Wraps the live app with Clerk's React context so `useAuth` / `useSignIn`

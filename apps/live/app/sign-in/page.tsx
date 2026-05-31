@@ -10,8 +10,15 @@
 // Authenticated users get redirected straight to the editor; guests
 // can sign in here when they want to bind their session to an account.
 
-import { useAuth } from '@clerk/nextjs';
-import { useSignIn } from '@clerk/nextjs/legacy';
+// `useAuth` lives on the modern @clerk/react root export, but
+// `useSignIn` here uses the LEGACY shape ({ signIn, setActive,
+// isLoaded }) that MT's email-code flow was built against. The new
+// signal-based @clerk/react `useSignIn` returns a different shape
+// (`{ signIn, errors, fetchStatus }`) — porting to it is a separate
+// effort. `/legacy` doesn't pull in any Server Actions, so static
+// export still builds.
+import { useAuth } from '@clerk/react';
+import { useSignIn } from '@clerk/react/legacy';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';

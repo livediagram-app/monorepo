@@ -50,7 +50,7 @@ import { Explorer } from '@/components/Explorer';
 import { NotFound } from '@/components/NotFound';
 import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/react';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import {
   ALIGN_SNAP_THRESHOLD,

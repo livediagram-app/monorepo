@@ -12,8 +12,10 @@
 // pre-existing diagrams lives in Stage 4 — out of scope for this page
 // for now.
 
-import { useAuth } from '@clerk/nextjs';
-import { useSignUp } from '@clerk/nextjs/legacy';
+// See sign-in/page.tsx for why useSignUp comes from @clerk/react/legacy
+// while useAuth comes from the modern entry.
+import { useAuth } from '@clerk/react';
+import { useSignUp } from '@clerk/react/legacy';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
