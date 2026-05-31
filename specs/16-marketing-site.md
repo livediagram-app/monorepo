@@ -23,6 +23,8 @@ Single landing page (`app/page.tsx`) with a sticky header, hero, three feature s
 
 Reusable building blocks: `Section` + `FeatureGrid` (`components/Section.tsx`), `Header`, `Footer`, `Brand` (from `@livediagram/ui`). Add new feature cards by editing the `items` arrays in `page.tsx` — do not fork the grid.
 
+**Feature-card illustrations.** Every feature card carries a small animated mock of the real editor surface it describes (`components/FeatureArt.tsx`), passed via the card's `art` slot. Like the hero, the motion is **pure CSS** — shared keyframe classes (`fa-*`) live in `app/globals.css` — so it works under static export with no JS and settles to a finished frame under `prefers-reduced-motion`. The mocks must stay faithful to how the feature actually looks (brand-blue rounded shapes, dot-grid canvas, presence avatars, the explorer / share / activity panels); when a feature's UI changes, update its art. This is part of the golden rule above — an illustration is a claim too.
+
 ## Tone & brand
 
 - Product name **livediagram** (lowercase). Brand colour sky-blue `#0EA5E9` (`brand-500`) — see [01-color-scheme](01-color-scheme.md).

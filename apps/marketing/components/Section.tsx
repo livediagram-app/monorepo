@@ -41,6 +41,8 @@ export function Section({
 type FeatureProps = {
   title: string;
   description: string;
+  /** Optional animated mini-illustration rendered above the text. */
+  art?: ReactNode;
 };
 
 export function FeatureGrid({ items }: { items: FeatureProps[] }) {
@@ -51,6 +53,7 @@ export function FeatureGrid({ items }: { items: FeatureProps[] }) {
           key={item.title}
           className="rounded-lg border border-slate-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-sm"
         >
+          {item.art}
           <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
         </div>
