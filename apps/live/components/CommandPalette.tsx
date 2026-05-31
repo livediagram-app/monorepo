@@ -1365,11 +1365,8 @@ export function TabSection({
         </div>
       </Accordion>
       {tab.onExportTab || tab.onImportTab ? (
-        <Accordion title="File" open={open.file} onToggle={() => toggle('file')}>
-          <p className="text-[10px] font-medium text-slate-500">
-            Move a tab in or out of this diagram.
-          </p>
-          <div className="mt-1 flex items-stretch gap-1.5">
+        <Accordion title="Import / Export" open={open.file} onToggle={() => toggle('file')}>
+          <div className="flex items-stretch gap-1.5">
             {tab.onImportTab ? (
               <Tooltip title="Import tab" description="Drop a .json tab into this diagram." block>
                 <button
