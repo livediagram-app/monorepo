@@ -120,11 +120,11 @@ This is what the full product runs on. Most of it is **not built yet** — see "
 
 See [specs/10-deployment.md](specs/10-deployment.md).
 
-All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static Assets for `marketing` and `live`). CI runs lint / format / typecheck / test / build on every PR and push. On `main`, a successful CI triggers the deploy workflow which builds, then deploys `marketing` + `live` in parallel, then `router` (service bindings depend on the other two existing).
+All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static Assets for `marketing` and `live`). CI runs lint / format / typecheck / test / build on every PR and push. On `main`, a successful CI triggers the deploy workflow which builds, then deploys `marketing` + `live` + `api` in parallel, then `router` last (its service bindings depend on the other three existing).
 
 Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-api`, `livediagram-router` — matching the service-binding targets in `apps/router/wrangler.toml`. Deploy order: marketing + live + api in parallel → router last (its service bindings depend on the other three existing).
 
-Production is live at **https://livediagram.app** (`/` → marketing, `/live` → editor).
+Production is live at **https://livediagram.app** (`/` → marketing, `/live` → editor, `/api/*` → api).
 
 Secrets needed in the GitHub repo: `CF_API_TOKEN`, `CF_ACCOUNT_ID`. See [secrets policy](specs/06-secrets-policy.md).
 
