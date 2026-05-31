@@ -51,7 +51,17 @@ import { NotFound } from '@/components/NotFound';
 import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
-import { ALIGN_SNAP_THRESHOLD, SNAP_THRESHOLD, type ArrowEnd, type DragMode } from '@/lib/canvas';
+import {
+  ALIGN_SNAP_THRESHOLD,
+  arrowReferencesAny,
+  MIN_SIZE,
+  nextBounds,
+  SNAP_THRESHOLD,
+  type ArrowEnd,
+  type DragMode,
+  type DragState,
+  type ShapeBounds,
+} from '@/lib/canvas';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import {
   apiAppendChangeLogEntry,
@@ -164,98 +174,6 @@ function RefreshIcon() {
       <path d="M13.5 8a5.5 5.5 0 0 1-9.4 3.9L2.5 10.5" />
       <path d="M2.5 13.5v-3h3" />
     </svg>
-  );
-}
-
-const MIN_SIZE = 20;
-
-type ShapeBounds = { x: number; y: number; width: number; height: number };
-
-type DragState =
-  | {
-      kind: 'boxed';
-      primaryId: string;
-      mode: DragMode;
-      startClientX: number;
-      startClientY: number;
-      startBounds: Map<string, ShapeBounds>;
-      aspectLocked: boolean;
-    }
-  | {
-      kind: 'arrow-endpoint';
-      arrowId: string;
-      end: ArrowEnd;
-      startClientX: number;
-      startClientY: number;
-      startCanvasX: number;
-      startCanvasY: number;
-    }
-  | {
-      // Whole-arrow translation. Only fires for arrows with both
-      // endpoints `kind: 'free'` — pinned endpoints stay anchored to
-      // their elements, so there's nothing to drag.
-      kind: 'arrow-translate';
-      arrowId: string;
-      startClientX: number;
-      startClientY: number;
-      startFromX: number;
-      startFromY: number;
-      startToX: number;
-      startToY: number;
-    };
-
-function nextBounds(
-  start: ShapeBounds,
-  mode: DragMode,
-  dx: number,
-  dy: number,
-  aspectLocked: boolean,
-): ShapeBounds {
-  const { x, y, width, height } = start;
-  if (mode === 'move') return { x: x + dx, y: y + dy, width, height };
-
-  const freeForCorner = (signX: number, signY: number) => {
-    const newW = Math.max(MIN_SIZE, width + signX * dx);
-    const newH = Math.max(MIN_SIZE, height + signY * dy);
-    return { newW, newH };
-  };
-
-  const lockedForCorner = (signX: number, signY: number) => {
-    const candW = Math.max(MIN_SIZE, width + signX * dx);
-    const candH = Math.max(MIN_SIZE, height + signY * dy);
-    const ratio = width / height;
-    const useW = Math.abs(candW - width) >= Math.abs(candH - height);
-    const newW = useW ? candW : candH * ratio;
-    const newH = useW ? candW / ratio : candH;
-    return { newW: Math.max(MIN_SIZE, newW), newH: Math.max(MIN_SIZE, newH) };
-  };
-
-  const compute = aspectLocked ? lockedForCorner : freeForCorner;
-
-  switch (mode) {
-    case 'resize-se': {
-      const { newW, newH } = compute(1, 1);
-      return { x, y, width: newW, height: newH };
-    }
-    case 'resize-sw': {
-      const { newW, newH } = compute(-1, 1);
-      return { x: x + (width - newW), y, width: newW, height: newH };
-    }
-    case 'resize-ne': {
-      const { newW, newH } = compute(1, -1);
-      return { x, y: y + (height - newH), width: newW, height: newH };
-    }
-    case 'resize-nw': {
-      const { newW, newH } = compute(-1, -1);
-      return { x: x + (width - newW), y: y + (height - newH), width: newW, height: newH };
-    }
-  }
-}
-
-function arrowReferencesAny(arrow: ArrowElement, ids: Set<string>): boolean {
-  return (
-    (arrow.from.kind === 'pinned' && ids.has(arrow.from.elementId)) ||
-    (arrow.to.kind === 'pinned' && ids.has(arrow.to.elementId))
   );
 }
 
