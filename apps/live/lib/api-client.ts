@@ -184,13 +184,44 @@ function apiHeaders(
   return h;
 }
 
+// Response-handling shape every fetch call here used to inline:
+// throw a labelled Error on non-2xx, otherwise parse JSON. The `action`
+// string gets baked into the thrown message so debugging keeps the
+// caller's intent without a stack walk.
+async function expectOk<T>(res: Response, action: string): Promise<T> {
+  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+  return (await res.json()) as T;
+}
+
+// Same as `expectOk`, but 404 means "doesn't exist" not "broken" —
+// used by read paths where a missing row is a legitimate result the
+// caller wants to handle (welcome flow, share-resolution etc.)
+async function expectOkOrNull<T>(res: Response, action: string): Promise<T | null> {
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+  return (await res.json()) as T;
+}
+
+// For endpoints with no response body (DELETE, write-only PUT). Same
+// error-on-non-ok contract; nothing to return.
+async function expectOkVoid(res: Response, action: string): Promise<void> {
+  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+}
+
+// DELETE that tolerates 404 — used everywhere "remove this if it
+// exists" is the semantic. A racing concurrent delete shouldn't
+// throw.
+async function expectOkOr404Void(res: Response, action: string): Promise<void> {
+  if (!res.ok && res.status !== 404) throw new Error(`${action} failed: ${res.status}`);
+}
+
 export async function apiLoadDiagram(ownerId: string, id: string): Promise<StoredDiagram | null> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, {
     headers: apiHeaders(ownerId),
   });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`load failed: ${res.status}`);
-  const { diagram } = (await res.json()) as DiagramResponse;
+  const body = await expectOkOrNull<DiagramResponse>(res, 'load');
+  if (!body) return null;
+  const { diagram } = body;
   return {
     id: diagram.id,
     ownerId: diagram.ownerId,
@@ -208,9 +239,8 @@ export async function apiLoadDiagram(ownerId: string, id: string): Promise<Store
 // return 404 from the API.
 export async function apiLoadShared(code: string): Promise<SharedDiagramResolution | null> {
   const res = await fetch(`${API_BASE}/share/${code}`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`load shared failed: ${res.status}`);
-  const body = (await res.json()) as DiagramResponse & { role?: ShareRole };
+  const body = await expectOkOrNull<DiagramResponse & { role?: ShareRole }>(res, 'load shared');
+  if (!body) return null;
   const { diagram } = body;
   return {
     diagram: {
@@ -239,8 +269,7 @@ export async function apiListChangeLog(
   const res = await fetch(`${API_BASE}/diagrams/${id}/log`, {
     headers: apiHeaders(ownerId, { share: shareCode }),
   });
-  if (!res.ok) throw new Error(`list change log failed: ${res.status}`);
-  const { entries } = (await res.json()) as ChangeLogListResponse;
+  const { entries } = await expectOk<ChangeLogListResponse>(res, 'list change log');
   return entries;
 }
 
@@ -254,8 +283,7 @@ export async function apiAppendChangeLogEntry(
     headers: apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify(entry),
   });
-  if (!res.ok) throw new Error(`append change log failed: ${res.status}`);
-  const { entry: stored } = (await res.json()) as ChangeLogAppendResponse;
+  const { entry: stored } = await expectOk<ChangeLogAppendResponse>(res, 'append change log');
   return stored;
 }
 
@@ -269,9 +297,7 @@ export async function apiDeleteChangeLogForTab(
     method: 'DELETE',
     headers: apiHeaders(ownerId, { share: shareCode }),
   });
-  if (!res.ok && res.status !== 404) {
-    throw new Error(`delete change log failed: ${res.status}`);
-  }
+  await expectOkOr404Void(res, 'delete change log');
 }
 
 export async function apiDeleteChangeLogEntry(
@@ -284,17 +310,14 @@ export async function apiDeleteChangeLogEntry(
     method: 'DELETE',
     headers: apiHeaders(ownerId, { share: shareCode }),
   });
-  if (!res.ok && res.status !== 404) {
-    throw new Error(`delete change log entry failed: ${res.status}`);
-  }
+  await expectOkOr404Void(res, 'delete change log entry');
 }
 
 export async function apiListShareLinks(ownerId: string, id: string): Promise<ShareLink[]> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
     headers: apiHeaders(ownerId),
   });
-  if (!res.ok) throw new Error(`list share links failed: ${res.status}`);
-  const { links } = (await res.json()) as ShareLinksResponse;
+  const { links } = await expectOk<ShareLinksResponse>(res, 'list share links');
   return links;
 }
 
@@ -308,8 +331,7 @@ export async function apiCreateShareLink(
     headers: apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({ role }),
   });
-  if (!res.ok) throw new Error(`create share link failed: ${res.status}`);
-  const { link } = (await res.json()) as ShareLinkResponse;
+  const { link } = await expectOk<ShareLinkResponse>(res, 'create share link');
   return link;
 }
 
@@ -318,9 +340,7 @@ export async function apiDeleteShareLink(ownerId: string, id: string, code: stri
     method: 'DELETE',
     headers: apiHeaders(ownerId),
   });
-  if (!res.ok && res.status !== 404) {
-    throw new Error(`delete share link failed: ${res.status}`);
-  }
+  await expectOkOr404Void(res, 'delete share link');
 }
 
 export async function apiShareDiagram(
@@ -331,8 +351,7 @@ export async function apiShareDiagram(
     method: 'POST',
     headers: apiHeaders(ownerId, { body: true }),
   });
-  if (!res.ok) throw new Error(`share failed: ${res.status}`);
-  return (await res.json()) as ShareResponse;
+  return expectOk<ShareResponse>(res, 'share');
 }
 
 export async function apiUnshareDiagram(
@@ -343,8 +362,7 @@ export async function apiUnshareDiagram(
     method: 'DELETE',
     headers: apiHeaders(ownerId, { body: true }),
   });
-  if (!res.ok) throw new Error(`unshare failed: ${res.status}`);
-  return (await res.json()) as ShareResponse;
+  return expectOk<ShareResponse>(res, 'unshare');
 }
 
 // Persist diagram-level metadata: name (rename) and tab order. Used
@@ -360,7 +378,7 @@ export async function apiSaveDiagramMeta(
     headers: apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify({ name: d.name, tabIds: d.tabIds }),
   });
-  if (!res.ok) throw new Error(`save diagram meta failed: ${res.status}`);
+  await expectOkVoid(res, 'save diagram meta');
 }
 
 // Create a brand-new diagram with an optional initial set of tabs.
@@ -394,8 +412,7 @@ export async function apiCreateDiagram(
       tabs: (d.tabs ?? []).map(stripTemplateChosen),
     }),
   });
-  if (!res.ok) throw new Error(`create diagram failed: ${res.status}`);
-  const { diagram } = (await res.json()) as DiagramResponse;
+  const { diagram } = await expectOk<DiagramResponse>(res, 'create diagram');
   return {
     id: diagram.id,
     ownerId: diagram.ownerId,
@@ -433,9 +450,9 @@ export function apiLoadTab(
       const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
         headers: apiHeaders(ownerId, { share: shareCode }),
       });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`load tab failed: ${res.status}`);
-      const { tab } = (await res.json()) as TabResponse;
+      const body = await expectOkOrNull<TabResponse>(res, 'load tab');
+      if (!body) return null;
+      const { tab } = body;
       const { diagramId: _did, orderIndex: _oi, updatedAt: _ua, ...clientTab } = tab;
       void _did;
       void _oi;
@@ -462,7 +479,7 @@ export async function apiSaveTab(
     headers: apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify(stripTemplateChosen(tab)),
   });
-  if (!res.ok) throw new Error(`save tab failed: ${res.status}`);
+  await expectOkVoid(res, 'save tab');
 }
 
 export async function apiDeleteTab(
@@ -475,20 +492,19 @@ export async function apiDeleteTab(
     method: 'DELETE',
     headers: apiHeaders(ownerId, { share: shareCode }),
   });
-  if (!res.ok && res.status !== 404) throw new Error(`delete tab failed: ${res.status}`);
+  await expectOkOr404Void(res, 'delete tab');
 }
 
 export async function apiDeleteDiagram(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 404) throw new Error(`delete failed: ${res.status}`);
+  await expectOkOr404Void(res, 'delete diagram');
 }
 
 export async function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
   const res = await fetch(`${API_BASE}/diagrams`, {
     headers: apiHeaders(ownerId),
   });
-  if (!res.ok) throw new Error(`list failed: ${res.status}`);
-  const { diagrams } = (await res.json()) as ListResponse;
+  const { diagrams } = await expectOk<ListResponse>(res, 'list');
   return diagrams.map((d) => ({
     id: d.id,
     name: d.name,
@@ -505,8 +521,7 @@ export async function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]
 
 export async function apiListFolders(ownerId: string): Promise<Folder[]> {
   const res = await fetch(`${API_BASE}/folders`, { headers: apiHeaders(ownerId) });
-  if (!res.ok) throw new Error(`list folders failed: ${res.status}`);
-  const { folders } = (await res.json()) as FoldersResponse;
+  const { folders } = await expectOk<FoldersResponse>(res, 'list folders');
   return folders;
 }
 
@@ -523,8 +538,7 @@ export async function apiCreateFolder(
       parentId: input.parentId ?? null,
     }),
   });
-  if (!res.ok) throw new Error(`create folder failed: ${res.status}`);
-  const { folder } = (await res.json()) as FolderResponse;
+  const { folder } = await expectOk<FolderResponse>(res, 'create folder');
   return folder;
 }
 
@@ -538,8 +552,7 @@ export async function apiUpdateFolder(
     headers: apiHeaders(ownerId, { body: true }),
     body: JSON.stringify(patch),
   });
-  if (!res.ok) throw new Error(`update folder failed: ${res.status}`);
-  const { folder } = (await res.json()) as FolderResponse;
+  const { folder } = await expectOk<FolderResponse>(res, 'update folder');
   return folder;
 }
 
@@ -548,7 +561,7 @@ export async function apiDeleteFolder(ownerId: string, id: string): Promise<void
     method: 'DELETE',
     headers: apiHeaders(ownerId),
   });
-  if (!res.ok && res.status !== 404) throw new Error(`delete folder failed: ${res.status}`);
+  await expectOkOr404Void(res, 'delete folder');
 }
 
 export async function apiSetDiagramFolder(
@@ -561,14 +574,14 @@ export async function apiSetDiagramFolder(
     headers: apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({ folderId }),
   });
-  if (!res.ok) throw new Error(`set folder failed: ${res.status}`);
+  await expectOkVoid(res, 'set folder');
 }
 
 export async function apiLoadSelf(id: string): Promise<Participant | null> {
   const res = await fetch(`${API_BASE}/participants/${id}`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`load self failed: ${res.status}`);
-  const { participant } = (await res.json()) as ParticipantResponse;
+  const body = await expectOkOrNull<ParticipantResponse>(res, 'load self');
+  if (!body) return null;
+  const { participant } = body;
   return {
     id: participant.id,
     name: participant.name,
@@ -583,7 +596,7 @@ export async function apiSaveSelf(p: Participant): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: p.name, color: p.color }),
   });
-  if (!res.ok) throw new Error(`save self failed: ${res.status}`);
+  await expectOkVoid(res, 'save self');
 }
 
 // ---------------------------------------------------------------------
