@@ -6,6 +6,25 @@
 
 We don't put auth in front of the core experience. We add auth where it _enables_ something the user wants (sharing, syncing, collaborating, paying).
 
+## Three deployment modes
+
+| Mode                 | Configuration                                                      | Frontend                                                                                                   | API worker                                      |
+| -------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Hybrid (production)  | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` set + `CLERK_JWKS_URL` set     | ClerkProvider active. Guests + signed-in users coexist.                                                    | Verifies Bearer, falls through to `X-Owner-Id`. |
+| Guest-only           | Either env var unset (typical self-host without Clerk per spec/03) | ClerkProvider becomes pass-through. Auth routes show "not enabled" notice. Editor unchanged.               | Falls through to `X-Owner-Id` on every request. |
+| Guest-only (partial) | Frontend has key, api JWKS unset                                   | ClerkProvider active. Users _can_ sign in, but the api verifies nothing and treats every request as guest. | `X-Owner-Id` only.                              |
+
+The first two are the supported modes. The third is a misconfiguration — useful for debugging, not for prod.
+
+The `clerkEnabled` flag (`apps/live/lib/clerk-config.ts`) is the single source of truth on the frontend. Every Clerk-aware module reads it and picks one of two implementations at module load:
+
+- `ClerkProvider` becomes a pass-through `<>{children}</>`.
+- `useClerkApiBootstrap` returns a stable stub (`isSignedIn: false`, `authLoaded: true`, `clerkUserId: null`) without ever touching `useAuth`.
+- `AuthControls` renders nothing.
+- `/live/sign-in/`, `/live/get-started/`, `/live/sso-callback/` render an `AuthDisabledNotice` with a "Continue as guest" CTA.
+
+Because `NEXT_PUBLIC_*` vars are baked at build time, the choice is a compile-time constant — no per-render cost and Clerk-only code paths can be tree-shaken out of guest-only builds.
+
 ## Hybrid identity
 
 The api worker accepts **two equivalent ways** of identifying the request owner, in this order of preference:

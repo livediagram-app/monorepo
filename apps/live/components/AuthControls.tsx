@@ -13,12 +13,19 @@
 // While Clerk is still loading (first paint, before
 // useAuth().isLoaded) we render nothing so the header doesn't flicker
 // a "Sign in" link only to swap it for the user pill a tick later.
+//
+// When Clerk is disabled for the deployment (no publishable key set —
+// spec/03 self-host path), the component is a no-op. Same module-load
+// hook-swap pattern as `useClerkApiBootstrap` — calling `useAuth`
+// outside a ClerkProvider would throw, so the disabled branch never
+// touches Clerk.
 
 import { useAuth, useClerk, useUser } from '@clerk/react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { clerkEnabled } from '@/lib/clerk-config';
 
-export function AuthControls() {
+function AuthControlsEnabled() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -96,3 +103,11 @@ export function AuthControls() {
     </div>
   );
 }
+
+function AuthControlsDisabled() {
+  // Clerk not configured — sign-in is not part of this deployment.
+  // Render nothing so the header just shows the Share button.
+  return null;
+}
+
+export const AuthControls = clerkEnabled ? AuthControlsEnabled : AuthControlsDisabled;

@@ -21,11 +21,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   AuthCard,
+  AuthDisabledNotice,
   CodeInputRow,
   GoogleGlyph,
   messageOf,
   RedirectingCard,
 } from '@/components/auth-shared';
+import { clerkEnabled } from '@/lib/clerk-config';
 
 type Phase = 1 | 2;
 
@@ -318,6 +320,8 @@ function GetStartedContent() {
 }
 
 export default function GetStartedPage() {
+  // Same gate as sign-in — see that file for the rationale.
+  if (!clerkEnabled) return <AuthDisabledNotice />;
   return (
     <Suspense fallback={<RedirectingCard />}>
       <GetStartedContent />

@@ -24,11 +24,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AuthCard,
+  AuthDisabledNotice,
   CodeInputRow,
   GoogleGlyph,
   messageOf,
   RedirectingCard,
 } from '@/components/auth-shared';
+import { clerkEnabled } from '@/lib/clerk-config';
 
 const POST_AUTH_DEFAULT = '/live/';
 
@@ -292,6 +294,11 @@ function SignInContent() {
 }
 
 export default function SignInPage() {
+  // Clerk-disabled deployments (no NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  // skip the form entirely and show the "guest-only" notice. The
+  // useSignIn / useAuth calls inside SignInContent would throw
+  // outside a ClerkProvider, so the gate has to happen before render.
+  if (!clerkEnabled) return <AuthDisabledNotice />;
   return (
     <Suspense fallback={<RedirectingCard />}>
       <SignInContent />

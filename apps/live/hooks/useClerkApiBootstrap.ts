@@ -3,6 +3,7 @@
 import { useAuth } from '@clerk/react';
 import { useEffect, useRef } from 'react';
 import { apiMigrateGuestData, setTokenProvider } from '@/lib/api-client';
+import { clerkEnabled } from '@/lib/clerk-config';
 
 // Two things every page that talks to the api needs to do once Clerk
 // is in the tree:
@@ -28,11 +29,23 @@ import { apiMigrateGuestData, setTokenProvider } from '@/lib/api-client';
 // Returns the relevant `useAuth` fields so callers don't need to also
 // destructure them — there's exactly one place those values come from
 // per page.
-export function useClerkApiBootstrap(): {
+//
+// When Clerk isn't configured for the deployment (spec/03 self-host
+// path, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` unset), the hook returns
+// a stable stub — `useAuth` would throw outside a ClerkProvider, so
+// the disabled branch never touches Clerk at all. The choice between
+// real-Clerk and stub is made at module load, then frozen — React's
+// rules-of-hooks require the same function to run on every render,
+// which this satisfies because `clerkEnabled` is a compile-time
+// constant baked from a `NEXT_PUBLIC_*` env var.
+
+type BootstrapResult = {
   isSignedIn: boolean | undefined;
   authLoaded: boolean;
   clerkUserId: string | null | undefined;
-} {
+};
+
+function useClerkApiBootstrapEnabled(): BootstrapResult {
   const { getToken, isSignedIn, isLoaded: authLoaded, userId: clerkUserId } = useAuth();
 
   // 1. Token provider registration.
@@ -66,3 +79,15 @@ export function useClerkApiBootstrap(): {
 
   return { isSignedIn, authLoaded, clerkUserId };
 }
+
+function useClerkApiBootstrapDisabled(): BootstrapResult {
+  // Stable stub for Clerk-disabled deployments. `authLoaded: true`
+  // so anything gated on "has Clerk reported its state yet?" doesn't
+  // wait forever; `isSignedIn: false` / `clerkUserId: null` keep the
+  // caller in pure-guest mode.
+  return { isSignedIn: false, authLoaded: true, clerkUserId: null };
+}
+
+export const useClerkApiBootstrap = clerkEnabled
+  ? useClerkApiBootstrapEnabled
+  : useClerkApiBootstrapDisabled;

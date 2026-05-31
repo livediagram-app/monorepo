@@ -76,6 +76,36 @@ export function RedirectingCard() {
 }
 
 // ---------------------------------------------------------------------
+// Notice shown on the auth routes when Clerk isn't configured for the
+// deployment (self-host path, no NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).
+// The editor still works — only sign-up / sign-in are off — so the
+// CTA points back to the editor's welcome flow.
+// ---------------------------------------------------------------------
+
+export function AuthDisabledNotice() {
+  return (
+    <AuthCard subtitle="Sign-in isn't enabled on this deployment" error="">
+      <p className="text-sm leading-relaxed text-slate-600">
+        This livediagram instance is running in <strong>guest-only</strong> mode — the canvas works
+        without an account. To enable sign-in, set{' '}
+        <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        </code>{' '}
+        at build time and redeploy.
+      </p>
+      <div className="mt-6 flex justify-center">
+        <a
+          href="/live/"
+          className="inline-flex items-center rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+        >
+          Continue as guest
+        </a>
+      </div>
+    </AuthCard>
+  );
+}
+
+// ---------------------------------------------------------------------
 // 6-digit code input — used by both the sign-in `first factor` and
 // sign-up `email_address` verification flows. Auto-advances on type,
 // back-deletes on backspace into an empty cell, and pastes a full
