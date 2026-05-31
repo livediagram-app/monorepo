@@ -125,6 +125,9 @@ type CanvasProps = {
     shareCode: string;
   }[];
   onDismissShared?: (diagramId: string) => void;
+  // Navigate to the standalone full-page Explorer. Forwarded into
+  // the floating Explorer panel's header "expand" button.
+  onOpenFullExplorer?: () => void;
   diagramListLoading: boolean;
   changeLog: ChangeLogEntry[];
   changeLogLoading: boolean;
@@ -236,6 +239,13 @@ type CanvasProps = {
   onSetBackgroundOpacity: (opacity: number) => void;
   onSetTheme: (id: import('@/lib/themes').ThemeId) => void;
   onResetElementsToTheme: () => void;
+  // File I/O for the current tab — moved here so the Current Tab
+  // section (right-hand inspector) houses them next to theme +
+  // canvas, where the user is editing the tab anyway. Optional so
+  // welcome-flow surfaces with no tab loaded yet can omit them.
+  onExportTab?: () => void;
+  onImportTab?: () => void;
+  importError?: string | null;
   onSetPatternColor: (color: string) => void;
   onToggleAspectLock: () => void;
   onDuplicateConnect: (direction: 'right' | 'below' | 'left' | 'above') => void;
@@ -298,6 +308,7 @@ export function Canvas(props: CanvasProps) {
     folders,
     sharedDiagrams,
     onDismissShared,
+    onOpenFullExplorer,
     diagramListLoading,
     changeLog,
     changeLogLoading,
@@ -381,6 +392,9 @@ export function Canvas(props: CanvasProps) {
     tabThemeId,
     onSetTheme,
     onResetElementsToTheme,
+    onExportTab,
+    onImportTab,
+    importError,
     onSetBackgroundPattern,
     onSetBackgroundColor,
     onSetBackgroundOpacity,
@@ -709,6 +723,9 @@ export function Canvas(props: CanvasProps) {
     onSetPatternColor,
     onSetTheme,
     onResetElementsToTheme,
+    onExportTab,
+    onImportTab,
+    importError,
   };
 
   // Colour for the link / comment badges. The active theme's
@@ -1110,6 +1127,7 @@ export function Canvas(props: CanvasProps) {
         loading={diagramListLoading}
         shared={sharedDiagrams}
         onDismissShared={onDismissShared}
+        onOpenFullExplorer={onOpenFullExplorer}
         currentDiagramId={currentDiagramId}
         onMoveTo={onMoveExplorer}
         onToggleMinimized={onToggleExplorerMinimized}

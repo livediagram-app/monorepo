@@ -54,6 +54,13 @@ type ExplorerProps = {
   // server-side so the row no longer surfaces. Optional so consumers
   // that haven't wired the api endpoint can omit it.
   onDismissShared?: (diagramId: string) => void;
+  // Navigate to the standalone /live/explorer page. When set, the
+  // panel header surfaces an "Expand" button next to the title.
+  // Optional because pure-guest surfaces (no Clerk) could leave it
+  // off — the standalone route gates itself with a sign-in CTA
+  // either way, so passing it is safe even when the user isn't
+  // signed in.
+  onOpenFullExplorer?: () => void;
   // True while the initial diagram-list fetch is in flight. Shows a
   // skeleton in place of the list so the panel doesn't read as "no
   // diagrams" before the API call resolves.
@@ -102,6 +109,7 @@ export function Explorer({
   onMoveDiagramToFolder,
   shared = [],
   onDismissShared,
+  onOpenFullExplorer,
 }: ExplorerProps) {
   const [sharedOpen, setSharedOpen] = useState(false);
   // Re-render every 30s so the "Updated X ago" strings stay fresh
@@ -230,6 +238,23 @@ export function Explorer({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
+      headerExtra={
+        onOpenFullExplorer ? (
+          <Tooltip
+            title="Open full Explorer"
+            description="Go to the standalone /live/explorer page."
+          >
+            <button
+              type="button"
+              onClick={onOpenFullExplorer}
+              aria-label="Open full Explorer"
+              className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+            >
+              <ExpandIcon />
+            </button>
+          </Tooltip>
+        ) : null
+      }
     >
       <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
         {onNewDiagram ? (
@@ -1281,6 +1306,30 @@ function OpenIcon() {
       <path d="M9.5 2.5h4v4" />
       <path d="M13 3L7.5 8.5" />
       <path d="M12.5 9.5v3a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h3" />
+    </svg>
+  );
+}
+
+function ExpandIcon() {
+  // Diagonal-arrow-out glyph — "open this in a bigger surface". Same
+  // 9px size + 1.6 stroke as ChevronIcon so the panel header chrome
+  // stays visually consistent.
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4.5 1.5h-3v3" />
+      <path d="M7.5 10.5h3v-3" />
+      <path d="M1.5 1.5l4 4" />
+      <path d="M10.5 10.5l-4-4" />
     </svg>
   );
 }

@@ -327,6 +327,7 @@ export default function NewDiagramPage() {
             setSharedDiagrams((prev) => prev.filter((d) => d.id !== diagramId));
             void apiDismissSharedWith(self.id, diagramId).catch(() => {});
           }}
+          onOpenFullExplorer={() => window.location.assign('/live/explorer')}
           currentDiagramId={null}
           onMoveTo={(x, y) => setExplorerPosition({ x, y })}
           onToggleMinimized={() => setExplorerMinimized((v) => !v)}

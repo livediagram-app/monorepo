@@ -94,6 +94,13 @@ export type TabSectionControls = {
   // customs. Surfaces as a "Reset elements to theme" button under
   // the theme grid.
   onResetElementsToTheme: () => void;
+  // File I/O — moved from the editor header into the Current Tab
+  // section so theme / canvas / file controls all live in the same
+  // panel. Both optional so callers without the routing wired (e.g.
+  // welcome-flow surfaces) can omit them.
+  onExportTab?: () => void;
+  onImportTab?: () => void;
+  importError?: string | null;
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser';
@@ -1277,7 +1284,83 @@ export function TabSection({
           />
         </div>
       </Accordion>
+      {tab.onExportTab || tab.onImportTab ? (
+        <div className="flex flex-col gap-1.5 border-t border-slate-100 px-3 py-3">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">File</p>
+          <div className="flex items-stretch gap-1.5">
+            {tab.onImportTab ? (
+              <Tooltip title="Import tab" description="Drop a .json tab into this diagram." block>
+                <button
+                  type="button"
+                  onClick={tab.onImportTab}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700"
+                >
+                  <FileImportIcon />
+                  Import
+                </button>
+              </Tooltip>
+            ) : null}
+            {tab.onExportTab ? (
+              <Tooltip title="Export tab" description="Save as Markdown, PDF, PNG, or .json." block>
+                <button
+                  type="button"
+                  onClick={tab.onExportTab}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700"
+                >
+                  <FileExportIcon />
+                  Export
+                </button>
+              </Tooltip>
+            ) : null}
+          </div>
+          {tab.importError ? (
+            <p className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700">
+              {tab.importError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function FileImportIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 13.5V5.5" />
+      <path d="M5 10.5l3 3 3-3" />
+      <path d="M2.5 3v-0.5h11V3" />
+    </svg>
+  );
+}
+
+function FileExportIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2v8" />
+      <path d="M5 5l3-3 3 3" />
+      <path d="M2.5 11v2.5h11V11" />
+    </svg>
   );
 }
 

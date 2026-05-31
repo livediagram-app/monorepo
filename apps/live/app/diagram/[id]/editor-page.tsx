@@ -3761,6 +3761,9 @@ export default function LivePage() {
             loading={diagramListLoading}
             shared={sharedDiagrams}
             onDismissShared={dismissSharedDiagram}
+            onOpenFullExplorer={() =>
+              window.location.assign(`${window.location.origin}/live/explorer`)
+            }
             currentDiagramId={null}
             onMoveTo={(x, y) => setExplorerPosition({ x, y })}
             onToggleMinimized={() => setExplorerMinimized((v) => !v)}
@@ -3801,11 +3804,6 @@ export default function LivePage() {
         // is the owner.
         onMakeCopy={!isOwner && hydrated && !anyWelcomeOpen && diagramId ? makeCopy : undefined}
         copying={copying}
-        onExportTab={hydrated && !anyWelcomeOpen ? () => setExportOpen(true) : undefined}
-        onImportTab={
-          hydrated && !anyWelcomeOpen && !isReadOnly ? () => void importTabFromFile() : undefined
-        }
-        importError={importError}
         brandAccent={getTheme(activeTab.theme).elementStroke ?? undefined}
         onOpenShare={() => setShareDialogOpen(true)}
         onRename={setDiagramName}
@@ -3891,6 +3889,7 @@ export default function LivePage() {
         folders={folders}
         sharedDiagrams={sharedDiagrams}
         onDismissShared={dismissSharedDiagram}
+        onOpenFullExplorer={() => window.location.assign(`${window.location.origin}/live/explorer`)}
         diagramListLoading={diagramListLoading}
         changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
         changeLogLoading={changeLogLoading}
@@ -3987,6 +3986,11 @@ export default function LivePage() {
         tabThemeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
         onSetTheme={setTheme}
         onResetElementsToTheme={resetElementsToTheme}
+        onExportTab={hydrated && !anyWelcomeOpen ? () => setExportOpen(true) : undefined}
+        onImportTab={
+          hydrated && !anyWelcomeOpen && !isReadOnly ? () => void importTabFromFile() : undefined
+        }
+        importError={importError}
         onSetBackgroundPattern={setBackgroundPattern}
         onSetBackgroundColor={setBackgroundColor}
         onSetBackgroundOpacity={setBackgroundOpacity}

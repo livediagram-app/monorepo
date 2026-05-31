@@ -96,7 +96,7 @@ function AuthControlsEnabled() {
             onClick={() => setMenuOpen(false)}
             className="block w-full rounded px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
           >
-            My files
+            Explorer
           </Link>
           <button
             type="button"
