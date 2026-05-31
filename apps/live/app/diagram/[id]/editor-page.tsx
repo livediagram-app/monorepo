@@ -479,7 +479,8 @@ export default function LivePage() {
   // diagrams populate shareLinks instead.
   const [diagramShareCode, setDiagramShareCode] = useState<string | null>(null);
   // True for the owner of the loaded diagram; false for visitors who
-  // arrived via /live?s=<code>. Drives whether the Share button shows.
+  // arrived via /live/diagram/shared?s=<code>. Drives whether the
+  // Share button shows.
   const [isOwner, setIsOwner] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   // Every active share link for the current diagram (owner-only). The

@@ -235,8 +235,8 @@ export async function apiLoadDiagram(ownerId: string, id: string): Promise<Store
 }
 
 // Resolve a share code to a full diagram + the role granted by that
-// code. Visitors landing on `/live?s=<code>` use this; revoked codes
-// return 404 from the API.
+// code. Visitors landing on `/live/diagram/shared?s=<code>` use
+// this; revoked codes return 404 from the API.
 export async function apiLoadShared(code: string): Promise<SharedDiagramResolution | null> {
   const res = await fetch(`${API_BASE}/share/${code}`);
   const body = await expectOkOrNull<DiagramResponse & { role?: ShareRole }>(res, 'load shared');
