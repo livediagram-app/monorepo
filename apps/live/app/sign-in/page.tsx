@@ -131,10 +131,24 @@ function SignInContent() {
     } catch (err: unknown) {
       const msg = messageOf(err, 'Something went wrong');
       // Unknown email → bounce to sign-up with the email pre-filled.
-      if (msg.toLowerCase().includes("couldn't find your account")) {
+      // The Clerk message wording shifts between releases ("couldn't
+      // find your account" / "form_identifier_not_found" / "is invalid")
+      // so we match any of the known forms. Routing uses bare paths
+      // (no `/live` prefix) because Next.js prepends the basePath
+      // automatically — `/live/get-started` would yield
+      // `/live/live/get-started` which the static-export 404 handler
+      // catches and routes into the editor, ultimately landing the
+      // user on /live/new with no sign-up form in sight.
+      const lower = msg.toLowerCase();
+      if (
+        lower.includes("couldn't find your account") ||
+        lower.includes('form_identifier_not_found') ||
+        lower.includes('identifier is invalid') ||
+        lower.includes('not found')
+      ) {
         const trimmed = email.trim();
         router.replace(
-          trimmed ? `/live/get-started?email=${encodeURIComponent(trimmed)}` : '/live/get-started',
+          trimmed ? `/get-started?email=${encodeURIComponent(trimmed)}` : '/get-started',
         );
         return;
       }
