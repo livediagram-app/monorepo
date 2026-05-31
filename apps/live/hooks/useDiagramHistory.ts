@@ -13,13 +13,61 @@ import type { Tab } from '@livediagram/diagram';
 //
 // All keep the past stack capped to HISTORY_LIMIT.
 
-const HISTORY_LIMIT = 3;
+export const HISTORY_LIMIT = 3;
 
-type History = {
+export type History = {
   past: Tab[][];
   present: Tab[];
   future: Tab[][];
 };
+
+// Pure transitions on a History value — exported for unit tests.
+// The hook wraps them with `setHistory((h) => transition(h, ...))`.
+
+export function historyCommit(h: History, mapTabs: (tabs: Tab[]) => Tab[]): History {
+  return {
+    past: [...h.past, h.present].slice(-HISTORY_LIMIT),
+    present: mapTabs(h.present),
+    future: [],
+  };
+}
+
+export function historyTick(h: History, mapTabs: (tabs: Tab[]) => Tab[]): History {
+  return { ...h, present: mapTabs(h.present) };
+}
+
+export function historyMarkCheckpoint(h: History): History {
+  return {
+    past: [...h.past, h.present].slice(-HISTORY_LIMIT),
+    present: h.present,
+    future: [],
+  };
+}
+
+export function historyUndo(h: History): History {
+  if (h.past.length === 0) return h;
+  const prev = h.past[h.past.length - 1]!;
+  return {
+    past: h.past.slice(0, -1),
+    present: prev,
+    future: [h.present, ...h.future].slice(0, HISTORY_LIMIT),
+  };
+}
+
+export function historyRedo(h: History): History {
+  if (h.future.length === 0) return h;
+  const next = h.future[0]!;
+  return {
+    past: [...h.past, h.present].slice(-HISTORY_LIMIT),
+    present: next,
+    future: h.future.slice(1),
+  };
+}
+
+export function historyReset(h: History, tabs: Tab[] | ((prev: Tab[]) => Tab[])): History {
+  const next = typeof tabs === 'function' ? tabs(h.present) : tabs;
+  return { past: [], present: next, future: [] };
+}
 
 export type DiagramHistory = {
   tabs: Tab[];
@@ -41,47 +89,23 @@ export function useDiagramHistory(initialTabs: Tab[]): DiagramHistory {
   });
 
   const commit = (mapTabs: (tabs: Tab[]) => Tab[]) => {
-    setHistory((h) => ({
-      past: [...h.past, h.present].slice(-HISTORY_LIMIT),
-      present: mapTabs(h.present),
-      future: [],
-    }));
+    setHistory((h) => historyCommit(h, mapTabs));
   };
 
   const tick = (mapTabs: (tabs: Tab[]) => Tab[]) => {
-    setHistory((h) => ({ ...h, present: mapTabs(h.present) }));
+    setHistory((h) => historyTick(h, mapTabs));
   };
 
   const markCheckpoint = () => {
-    setHistory((h) => ({
-      past: [...h.past, h.present].slice(-HISTORY_LIMIT),
-      present: h.present,
-      future: [],
-    }));
+    setHistory(historyMarkCheckpoint);
   };
 
   const undo = () => {
-    setHistory((h) => {
-      if (h.past.length === 0) return h;
-      const prev = h.past[h.past.length - 1]!;
-      return {
-        past: h.past.slice(0, -1),
-        present: prev,
-        future: [h.present, ...h.future].slice(0, HISTORY_LIMIT),
-      };
-    });
+    setHistory(historyUndo);
   };
 
   const redo = () => {
-    setHistory((h) => {
-      if (h.future.length === 0) return h;
-      const next = h.future[0]!;
-      return {
-        past: [...h.past, h.present].slice(-HISTORY_LIMIT),
-        present: next,
-        future: h.future.slice(1),
-      };
-    });
+    setHistory(historyRedo);
   };
 
   // Replace the present tab list with `tabs` and clear history. Used by
@@ -89,10 +113,7 @@ export function useDiagramHistory(initialTabs: Tab[]): DiagramHistory {
   // `diagram-meta` op needs to merge changes from a peer (the
   // callback form gives the merger access to the current state).
   const reset = (tabs: Tab[] | ((prev: Tab[]) => Tab[])) => {
-    setHistory((h) => {
-      const next = typeof tabs === 'function' ? tabs(h.present) : tabs;
-      return { past: [], present: next, future: [] };
-    });
+    setHistory((h) => historyReset(h, tabs));
   };
 
   return {
