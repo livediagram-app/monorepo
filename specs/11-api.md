@@ -16,6 +16,12 @@ The first prototype phase ([spec 02](02-prototype-scope.md)) ran entirely client
 - **DB:** Cloudflare D1 (binding `DB`). Schema lives in `apps/api/migrations/`; each numbered file is one applied change. Treat the migration log as the source of truth on the schema — features get a migration each, so the count grows.
 - **Realtime:** Cloudflare Durable Objects (`DiagramRoom`, binding `DIAGRAM_ROOM`). One instance per diagram id, identified by the diagram's UUID via `idFromName`.
 
+## Wire-format types
+
+The DTO shapes the api worker emits + the live editor consumes live in `packages/api-schema` (`@livediagram/api-schema`) — `Diagram`, `TabSummary`, `TabRecord`, `Folder`, `ShareLink`, `ChangeLogEntry`, `ServerMessage` / `ClientMessage`, etc. Both apps import them; the api worker also re-exports under historical `XxxDTO` aliases (`apps/api/src/types.ts`) for backward compatibility with its existing call sites.
+
+Defining the wire shapes once means server and client cannot drift — adding a field on one side without updating the other is a typechecker error. **Do not redefine these types inline in `apps/api/` or `apps/live/`**; extend the schema package instead. Per CLAUDE.md the reuse-over-duplication rule is non-negotiable.
+
 ## Auth (TODO)
 
 The API is currently **open** — no auth on any endpoint. Owner identity is carried by an `X-Owner-Id` header set by the live app to the current participant id. The participant id is a `crypto.randomUUID()` minted on first visit and persisted in `localStorage` under the bootstrap key `livediagram:v2:self-id`.
