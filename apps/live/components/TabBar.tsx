@@ -2,7 +2,19 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Tab } from '@livediagram/diagram';
 import type { Participant } from '@/lib/identity';
+import { getTheme } from '@/lib/themes';
 import { ParticipantAvatar } from './ParticipantAvatar';
+
+// Pick the accent colour a tab pill uses to identify itself in the bar.
+// Each tab knows its theme id; the theme's `elementStroke` already
+// drives the rest of the canvas accent for that tab, so reusing it on
+// the pill ties the bar visually to the tab content. Themes without a
+// stroke override (e.g. brand) fall through to the palette default so
+// the bar still reads.
+const DEFAULT_TAB_ACCENT = 'rgb(2 132 199)';
+function tabAccent(tab: Tab): string {
+  return getTheme(tab.theme).elementStroke ?? DEFAULT_TAB_ACCENT;
+}
 
 type TabBarProps = {
   tabs: Tab[];
@@ -100,10 +112,12 @@ export function TabBar({
                 setDragId(null);
                 setOverId(null);
               }}
+              style={{
+                color: tabAccent(tab),
+                ...(isActive ? { backgroundColor: `${tabAccent(tab)}1a` } : {}),
+              }}
               className={`relative flex shrink-0 items-center gap-3 rounded-md px-2 transition ${
-                isActive
-                  ? 'bg-brand-100 text-brand-700'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                isActive ? '' : 'hover:bg-slate-100'
               } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
             >
               {isEditing ? (
