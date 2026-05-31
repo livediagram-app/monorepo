@@ -1,6 +1,13 @@
 @import 'tailwindcss';
 @import '@livediagram/tailwind-config';
 
+/* Scan the shared UI package so utility classes used inside its
+ * components (e.g. `text-brand-500` in <Brand>'s wordmark) are
+ * generated here too. Tailwind v4 skips node_modules by default, and
+ * these workspace components are the only place some of those classes
+ * appear in the marketing app. */
+@source '../../../packages/ui/src';
+
 /*
  * Hero illustration animation. Loops every ~14 s:
  *   1. shapes pop in one by one
