@@ -8,18 +8,18 @@ import type { Tab } from '@livediagram/diagram';
 import {
   apiCreateDiagram,
   apiCreateFolder,
+  apiDeleteDiagram,
   apiDeleteFolder,
+  apiListDiagrams,
   apiListFolders,
+  apiLoadDiagram,
+  apiLoadSelf,
   apiLoadTab,
+  apiSaveSelf,
   apiSetDiagramFolder,
   apiUpdateFolder,
-  deleteDiagram as apiDeleteDiagram,
   type Folder,
-  listDiagrams,
-  loadDiagram as apiLoadDiagram,
-  loadSelfParticipant,
-  saveSelfParticipant,
-} from '@/lib/diagram-store';
+} from '@/lib/api-client';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { buildTemplatedTab, type TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
@@ -41,7 +41,7 @@ export default function NewDiagramPage() {
   // Two-phase ready:
   //   - `ready` flips as soon as we have a stable local id + name. This
   //     unblocks render so the picker shows even when the API is slow
-  //     or offline (a stalled `loadSelfParticipant` used to leave this
+  //     or offline (a stalled `apiLoadSelf` used to leave this
   //     route stuck on the spinner forever).
   //   - The API roundtrip then runs in the background and replaces the
   //     local stub with the server-side participant if one exists.
@@ -86,14 +86,14 @@ export default function NewDiagramPage() {
     // surfaces an empty list rather than an indefinite spinner.
     const safety = window.setTimeout(() => setDiagramListLoading(false), 10000);
     void (async () => {
-      const stored = await loadSelfParticipant(selfId).catch(() => null);
+      const stored = await apiLoadSelf(selfId).catch(() => null);
       if (stored) {
         setSelf({ ...stored, status: 'online' });
       } else {
-        await saveSelfParticipant(local).catch(() => {});
+        await apiSaveSelf(local).catch(() => {});
       }
       const [list, foldersList] = await Promise.all([
-        listDiagrams(selfId).catch(() => null),
+        apiListDiagrams(selfId).catch(() => null),
         apiListFolders(selfId).catch(() => null),
       ]);
       window.clearTimeout(safety);
@@ -122,7 +122,7 @@ export default function NewDiagramPage() {
     if (trimmed !== self.name) {
       const updated: Participant = { ...self, name: trimmed };
       setSelf(updated);
-      await saveSelfParticipant(updated).catch(() => {});
+      await apiSaveSelf(updated).catch(() => {});
     }
     window.localStorage.setItem('livediagram:v2:name-confirmed', '1');
 
@@ -160,7 +160,7 @@ export default function NewDiagramPage() {
 
   const refreshList = async (ownerId: string) => {
     const [list, foldersList] = await Promise.all([
-      listDiagrams(ownerId).catch(() => null),
+      apiListDiagrams(ownerId).catch(() => null),
       apiListFolders(ownerId).catch(() => null),
     ]);
     setDiagramList(list ?? []);

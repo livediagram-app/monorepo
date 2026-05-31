@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
-import type { ShareLink, ShareRole } from '@/lib/diagram-store';
+import type { ShareLink, ShareRole } from '@/lib/api-client';
 import { Tooltip } from './Tooltip';
 
 type ShareDialogProps = {

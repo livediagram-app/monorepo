@@ -57,32 +57,32 @@ import {
   apiAppendChangeLogEntry,
   apiCreateDiagram,
   apiCreateFolder,
+  apiCreateShareLink,
   apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
+  apiDeleteDiagram,
   apiDeleteFolder,
+  apiDeleteShareLink,
   apiDeleteTab,
   apiListChangeLog,
+  apiListDiagrams,
   apiListFolders,
+  apiListShareLinks,
+  apiLoadDiagram,
+  apiLoadSelf,
+  apiLoadShared,
   apiLoadTab,
   apiSaveDiagramMeta,
+  apiSaveSelf,
   apiSaveTab,
   apiSetDiagramFolder,
   apiUpdateFolder,
   connectRoom,
   type ChangeLogEntry,
-  createShareLink as apiCreateShareLink,
-  deleteDiagram as apiDeleteDiagram,
-  deleteShareLink as apiDeleteShareLink,
-  listDiagrams as apiListDiagrams,
-  listShareLinks as apiListShareLinks,
-  loadDiagram as apiLoadDiagram,
-  loadSelfParticipant,
-  loadSharedDiagram as apiLoadShared,
-  saveSelfParticipant,
   type RoomHandlers,
   type ShareLink,
   type ShareRole,
-} from '@/lib/diagram-store';
+} from '@/lib/api-client';
 import { applyRevert, diffElements } from '@/lib/change-log';
 import { buildTemplate, type TemplateKind } from '@/lib/templates';
 import { getTheme, THEMES, type ThemeId } from '@/lib/themes';
@@ -540,7 +540,7 @@ export default function LivePage() {
         selfId = crypto.randomUUID();
         window.localStorage.setItem('livediagram:v2:self-id', selfId);
       }
-      const storedSelf = await loadSelfParticipant(selfId).catch(() => null);
+      const storedSelf = await apiLoadSelf(selfId).catch(() => null);
       const self: Participant = storedSelf ?? {
         id: selfId,
         name: randomName(),
@@ -548,7 +548,7 @@ export default function LivePage() {
         status: 'online',
       };
       setSelfParticipant({ ...self, status: 'online' });
-      if (!storedSelf) await saveSelfParticipant(self).catch(() => {});
+      if (!storedSelf) await apiSaveSelf(self).catch(() => {});
       // Seed the persistence guard with whatever's on the server (or
       // what we just saved for a brand-new participant) so the
       // post-hydration effect doesn't immediately echo the same
@@ -898,7 +898,7 @@ export default function LivePage() {
       return;
     }
     lastPersistedSelfRef.current = { name: selfParticipant.name, color: selfParticipant.color };
-    saveSelfParticipant(selfParticipant).catch(() => {});
+    apiSaveSelf(selfParticipant).catch(() => {});
   }, [hydrated, selfParticipant]);
 
   // Realtime room: open a WebSocket per diagram, BUT only when the
@@ -2086,7 +2086,7 @@ export default function LivePage() {
     if (name === selfParticipant.name) return;
     const updated: Participant = { ...selfParticipant, name };
     setSelfParticipant(updated);
-    await saveSelfParticipant(updated).catch(() => {});
+    await apiSaveSelf(updated).catch(() => {});
   };
 
   // Create a new share link for the current diagram with the given
