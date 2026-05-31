@@ -54,6 +54,7 @@ import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
+import { useFolders } from '@/hooks/useFolders';
 import {
   ALIGN_SNAP_THRESHOLD,
   arrowReferencesAny,
@@ -81,12 +82,10 @@ import {
 import {
   apiAppendChangeLogEntry,
   apiCreateDiagram,
-  apiCreateFolder,
   apiCreateShareLink,
   apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
   apiDeleteDiagram,
-  apiDeleteFolder,
   apiDeleteShareLink,
   apiDeleteTab,
   apiListChangeLog,
@@ -94,7 +93,6 @@ import {
   apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
-  apiListFolders,
   apiListShareLinks,
   apiLoadDiagram,
   apiLoadSelf,
@@ -104,7 +102,6 @@ import {
   apiSaveSelf,
   apiSaveTab,
   apiSetDiagramFolder,
-  apiUpdateFolder,
   connectRoom,
   type ChangeLogEntry,
   type RoomHandlers,
@@ -332,11 +329,18 @@ export default function LivePage() {
   const [diagramList, setDiagramList] = useState<
     { id: string; name: string; folderId: string | null; savedAt: number }[]
   >([]);
-  // Folders for the owner. Refreshed alongside the diagram list. The
-  // synthetic Unsorted bucket is rendered client-side.
-  const [folders, setFolders] = useState<{ id: string; parentId: string | null; name: string }[]>(
-    [],
-  );
+  // Folders for the owner — state + the mutation triple
+  // (create / rename / delete) come from the shared useFolders
+  // hook so editor-page, /new, and /explorer all share the same
+  // behaviour. The hook handles its own autoLoad fetch on
+  // mount, so we don't have to manually pull /api/folders here
+  // anymore.
+  const {
+    folders,
+    createFolder,
+    renameFolder,
+    deleteFolder: hookDeleteFolder,
+  } = useFolders(selfParticipant.id === 'self' ? null : selfParticipant.id);
   // True while the very first diagram-list fetch is in flight, so the
   // Explorer can render a skeleton instead of an empty "no diagrams"
   // state. We only flip this off — subsequent refreshes don't reset it
@@ -792,11 +796,9 @@ export default function LivePage() {
       }
       setNameConfirmed(hasConfirmedName());
       refreshDiagramList(self.id);
-      // One-shot folder fetch on hydration. Folder mutations update
-      // state optimistically; no need to refetch on every autosave.
-      apiListFolders(self.id)
-        .then((fs) => setFolders(fs))
-        .catch(() => {});
+      // Folder list is auto-loaded by the useFolders hook once
+      // selfParticipant.id transitions off the placeholder — no
+      // manual fetch needed here.
       setHydrated(true);
       setLoadingDiagram(false);
     })();
@@ -2070,40 +2072,14 @@ export default function LivePage() {
     refreshDiagramList(selfParticipant.id);
   };
 
-  // Folder helpers (spec/15). Optimistic local updates so the
-  // Explorer feels responsive; refreshDiagramList re-syncs from the
-  // server right after.
-  const createFolder = async (input: { name: string; parentId: string | null }) => {
-    const id = crypto.randomUUID();
-    try {
-      const folder = await apiCreateFolder(selfParticipant.id, {
-        id,
-        name: input.name,
-        parentId: input.parentId,
-      });
-      setFolders((prev) => [...prev, folder]);
-      return folder;
-    } catch {
-      return undefined;
-    }
-  };
-
-  const renameFolder = (id: string, name: string) => {
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
-    void apiUpdateFolder(selfParticipant.id, id, { name }).catch(() => {});
-  };
-
+  // Folder helpers (spec/15). createFolder / renameFolder come
+  // straight from useFolders; deleteFolder wraps the hook with a
+  // diagram-side cascade so diagrams that pointed at the deleted
+  // folder visibly re-bucket to Unsorted instead of waiting for
+  // the next list refresh.
   const deleteFolder = (id: string) => {
-    // Match the server: subfolders promote to root, diagrams to
-    // Unsorted. Mirror locally so the panel doesn't flash an
-    // out-of-date tree before the next list fetch.
-    setFolders((prev) =>
-      prev
-        .filter((f) => f.id !== id)
-        .map((f) => (f.parentId === id ? { ...f, parentId: null } : f)),
-    );
     setDiagramList((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)));
-    void apiDeleteFolder(selfParticipant.id, id).catch(() => {});
+    hookDeleteFolder(id);
   };
 
   const moveDiagramToFolder = (diagramId: string, folderId: string | null) => {

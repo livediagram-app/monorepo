@@ -8,22 +8,18 @@ import type { Tab } from '@livediagram/diagram';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
   apiCreateDiagram,
-  apiCreateFolder,
   apiDeleteDiagram,
-  apiDeleteFolder,
   apiDismissSharedWith,
   apiListDiagrams,
-  apiListFolders,
   apiListSharedWith,
   apiLoadDiagram,
   apiLoadSelf,
   apiLoadTab,
   apiSaveSelf,
   apiSetDiagramFolder,
-  apiUpdateFolder,
-  type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
+import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { getGuestSelfId, markNameConfirmed, setGuestSelfId } from '@/lib/local-identity';
 import { buildTemplatedTab, type TemplateKind } from '@/lib/templates';
@@ -69,7 +65,17 @@ export default function NewDiagramPage() {
   const [diagramList, setDiagramList] = useState<
     { id: string; name: string; folderId: string | null; savedAt: number }[]
   >([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
+  // Folder state + mutations via the shared useFolders hook. The
+  // ownerId is `'pending'` until the post-mount effect resolves
+  // self.id, so we gate the hook on a real id — passing `null`
+  // tells the hook to no-op until the real owner arrives, at
+  // which point autoLoad fires the list fetch.
+  const {
+    folders,
+    createFolder,
+    renameFolder,
+    deleteFolder: hookDeleteFolder,
+  } = useFolders(self.id === 'pending' ? null : self.id);
   const [sharedDiagrams, setSharedDiagrams] = useState<SharedWithItem[]>([]);
   const [diagramListLoading, setDiagramListLoading] = useState(true);
   const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
@@ -112,14 +118,15 @@ export default function NewDiagramPage() {
       } else {
         await apiSaveSelf(local).catch(() => {});
       }
-      const [list, foldersList, sharedList] = await Promise.all([
+      // Folders are loaded by useFolders' autoLoad effect once
+      // self.id resolves to a real value — don't double-fetch
+      // here.
+      const [list, sharedList] = await Promise.all([
         apiListDiagrams(selfId).catch(() => null),
-        apiListFolders(selfId).catch(() => null),
         apiListSharedWith(selfId).catch(() => null),
       ]);
       window.clearTimeout(safety);
       setDiagramList(list ?? []);
-      setFolders(foldersList ?? []);
       setSharedDiagrams(sharedList ?? []);
       setDiagramListLoading(false);
     })();
@@ -184,42 +191,17 @@ export default function NewDiagramPage() {
   };
 
   const refreshList = async (ownerId: string) => {
-    const [list, foldersList] = await Promise.all([
-      apiListDiagrams(ownerId).catch(() => null),
-      apiListFolders(ownerId).catch(() => null),
-    ]);
+    const list = await apiListDiagrams(ownerId).catch(() => null);
     setDiagramList(list ?? []);
-    setFolders(foldersList ?? []);
   };
 
-  const createFolder = async (input: { name: string; parentId: string | null }) => {
-    const id = crypto.randomUUID();
-    try {
-      const folder = await apiCreateFolder(self.id, {
-        id,
-        name: input.name,
-        parentId: input.parentId,
-      });
-      setFolders((prev) => [...prev, folder]);
-      return folder;
-    } catch {
-      return undefined;
-    }
-  };
-
-  const renameFolder = (id: string, name: string) => {
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
-    void apiUpdateFolder(self.id, id, { name }).catch(() => {});
-  };
-
+  // Diagram-side cascade chains in front of the hook's
+  // folder-side update so the list doesn't flash a stale
+  // "folder-id pointing at a deleted folder" state between the
+  // click and the next list refresh.
   const deleteFolder = (id: string) => {
-    setFolders((prev) =>
-      prev
-        .filter((f) => f.id !== id)
-        .map((f) => (f.parentId === id ? { ...f, parentId: null } : f)),
-    );
     setDiagramList((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)));
-    void apiDeleteFolder(self.id, id).catch(() => {});
+    hookDeleteFolder(id);
   };
 
   const moveDiagramToFolder = (diagramId: string, folderId: string | null) => {

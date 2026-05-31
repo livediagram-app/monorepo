@@ -238,23 +238,6 @@ export function Explorer({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
-      headerExtra={
-        onOpenFullExplorer ? (
-          <Tooltip
-            title="Open full Explorer"
-            description="Go to the standalone /live/explorer page."
-          >
-            <button
-              type="button"
-              onClick={onOpenFullExplorer}
-              aria-label="Open full Explorer"
-              className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-            >
-              <ExpandIcon />
-            </button>
-          </Tooltip>
-        ) : null
-      }
     >
       <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
         {onNewDiagram ? (
@@ -264,7 +247,7 @@ export function Explorer({
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
           >
             <PlusIcon />
-            Quick Start
+            New diagram
           </button>
         ) : null}
 
@@ -306,7 +289,7 @@ export function Explorer({
         {loading || recents.length > 0 ? (
           <div className="flex flex-col gap-0.5">
             <AccordionHeader
-              label="Recent Diagrams"
+              label="Recent"
               badge={loading ? null : recents.length}
               open={recentOpen}
               onToggle={() => setRecentOpen((v) => !v)}
@@ -462,6 +445,17 @@ export function Explorer({
             </ul>
           ) : null}
         </div>
+
+        {onOpenFullExplorer ? (
+          <button
+            type="button"
+            onClick={onOpenFullExplorer}
+            className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700"
+          >
+            <ExpandIcon />
+            Open Explorer
+          </button>
+        ) : null}
 
         <SignInPrompt />
       </div>

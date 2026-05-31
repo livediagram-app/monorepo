@@ -6,17 +6,14 @@ import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
-  apiCreateFolder,
-  apiDeleteFolder,
   apiDismissSharedWith,
   apiListDiagrams,
-  apiListFolders,
   apiListSharedWith,
-  apiUpdateFolder,
   type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
+import { useFolders } from '@/hooks/useFolders';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { getTheme, type ThemeId } from '@/lib/themes';
 
@@ -32,7 +29,13 @@ type DiagramItem = { id: string; name: string; folderId: string | null; savedAt:
 export default function ExplorerPage() {
   const { authLoaded, isSignedIn, clerkUserId, clerkDisplayName } = useClerkApiBootstrap();
   const [diagrams, setDiagrams] = useState<DiagramItem[]>([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const {
+    folders,
+    createFolder: hookCreateFolder,
+    renameFolder,
+    deleteFolder,
+    refresh: refreshFolders,
+  } = useFolders(clerkUserId ?? null, { autoLoad: false });
   const [shared, setShared] = useState<SharedWithItem[]>([]);
   const [loading, setLoading] = useState(true);
   // Folder id mid-rename so the row swaps to an input until the
@@ -44,18 +47,20 @@ export default function ExplorerPage() {
     document.title = 'Explorer | livediagram';
   }, []);
 
-  const refresh = useCallback(async (ownerId: string) => {
-    setLoading(true);
-    const [list, foldersList, sharedList] = await Promise.all([
-      apiListDiagrams(ownerId).catch(() => null),
-      apiListFolders(ownerId).catch(() => null),
-      apiListSharedWith(ownerId).catch(() => null),
-    ]);
-    setDiagrams(list ?? []);
-    setFolders(foldersList ?? []);
-    setShared(sharedList ?? []);
-    setLoading(false);
-  }, []);
+  const refresh = useCallback(
+    async (ownerId: string) => {
+      setLoading(true);
+      const [list, sharedList] = await Promise.all([
+        apiListDiagrams(ownerId).catch(() => null),
+        apiListSharedWith(ownerId).catch(() => null),
+        refreshFolders(),
+      ]);
+      setDiagrams(list ?? []);
+      setShared(sharedList ?? []);
+      setLoading(false);
+    },
+    [refreshFolders],
+  );
 
   useEffect(() => {
     if (!authLoaded) return;
@@ -72,49 +77,21 @@ export default function ExplorerPage() {
     void apiDismissSharedWith(clerkUserId, diagramId).catch(() => {});
   };
 
-  // Folder mutations — optimistic local updates first so the grid
-  // reacts immediately, then API call with no spinner. Failure
-  // refreshes from the server so the user doesn't end up with a
-  // ghost folder that disappears on next load. New folders enter
-  // rename mode immediately; the user types the real name and Enter
-  // / blur commits.
+  // Local wrapper around the hook's create — drops the user into
+  // rename mode immediately after the optimistic stub lands so they
+  // can type the real name. On failure rolls back the renaming
+  // state too.
   const createFolder = async () => {
-    if (!clerkUserId) return;
-    const id = crypto.randomUUID();
-    const stub: Folder = {
-      id,
-      ownerId: clerkUserId,
-      parentId: null,
-      name: 'New folder',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    setFolders((prev) => [...prev, stub]);
-    setRenamingFolderId(id);
-    try {
-      const created = await apiCreateFolder(clerkUserId, { id, name: stub.name, parentId: null });
-      setFolders((prev) => prev.map((f) => (f.id === id ? created : f)));
-    } catch {
-      setFolders((prev) => prev.filter((f) => f.id !== id));
-      setRenamingFolderId(null);
-    }
+    const created = await hookCreateFolder({});
+    if (created) setRenamingFolderId(created.id);
   };
 
-  const renameFolder = (id: string, name: string) => {
-    if (!clerkUserId) return;
-    const trimmed = name.trim();
+  // Commit a rename via the hook, but also pull the row out of
+  // "renaming" mode regardless of whether the new name is empty
+  // (empty name → cancel; non-empty → persist).
+  const commitRename = (id: string, name: string) => {
     setRenamingFolderId(null);
-    if (!trimmed) return;
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
-    void apiUpdateFolder(clerkUserId, id, { name: trimmed }).catch(() => {});
-  };
-
-  const deleteFolder = (id: string) => {
-    if (!clerkUserId) return;
-    setFolders((prev) => prev.filter((f) => f.id !== id));
-    // Server promotes orphan children + diagrams to Unsorted; we
-    // just need to drop the row locally.
-    void apiDeleteFolder(clerkUserId, id).catch(() => {});
+    renameFolder(id, name);
   };
 
   if (!clerkEnabled) {
@@ -219,7 +196,7 @@ export default function ExplorerPage() {
                     folder={f}
                     renaming={renamingFolderId === f.id}
                     onStartRename={() => setRenamingFolderId(f.id)}
-                    onCommitRename={(name) => renameFolder(f.id, name)}
+                    onCommitRename={(name) => commitRename(f.id, name)}
                     onCancelRename={() => setRenamingFolderId(null)}
                     onDelete={() => deleteFolder(f.id)}
                   />
