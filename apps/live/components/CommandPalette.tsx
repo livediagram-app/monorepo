@@ -361,7 +361,6 @@ function OpenPalette({
 
 export type SelectedAccordionState = {
   shape: boolean;
-  appearance: boolean;
   layer: boolean;
   text: boolean;
   colours: boolean;
@@ -396,7 +395,6 @@ export function SelectedElementSection({
     setOpen((prev) => {
       const closed: SelectedAccordionState = {
         shape: false,
-        appearance: false,
         layer: false,
         text: false,
         colours: false,
@@ -464,7 +462,20 @@ export function SelectedElementSection({
         </Accordion>
       ) : null}
 
-      <Accordion title="Appearance" open={open.appearance} onToggle={() => toggle('appearance')}>
+      <Accordion title="Layer" open={open.layer} onToggle={() => toggle('layer')}>
+        <div className="flex items-center gap-1">
+          <Tooltip title="Bring to front" description="Render this element above everything else.">
+            <LabelButton onClick={selection.onBringToFront} label="Front">
+              <BringToFrontIcon />
+            </LabelButton>
+          </Tooltip>
+          <Tooltip title="Send to back" description="Render this element behind everything else.">
+            <LabelButton onClick={selection.onSendToBack} label="Back">
+              <SendToBackIcon />
+            </LabelButton>
+          </Tooltip>
+        </div>
+        <div className="my-2 h-px bg-slate-100" />
         <p className="text-[10px] font-medium text-slate-500">Opacity</p>
         <div className="mt-1 flex items-center gap-2">
           <input
@@ -479,21 +490,6 @@ export function SelectedElementSection({
           <span className="w-10 text-right text-xs font-medium text-slate-700">
             {Math.round(selection.opacity * 100)}%
           </span>
-        </div>
-      </Accordion>
-
-      <Accordion title="Layer" open={open.layer} onToggle={() => toggle('layer')}>
-        <div className="flex items-center gap-1">
-          <Tooltip title="Bring to front" description="Render this element above everything else.">
-            <LabelButton onClick={selection.onBringToFront} label="Front">
-              <BringToFrontIcon />
-            </LabelButton>
-          </Tooltip>
-          <Tooltip title="Send to back" description="Render this element behind everything else.">
-            <LabelButton onClick={selection.onSendToBack} label="Back">
-              <SendToBackIcon />
-            </LabelButton>
-          </Tooltip>
         </div>
       </Accordion>
 

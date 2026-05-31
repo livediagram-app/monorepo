@@ -55,7 +55,6 @@ export function ContextPanel({
   // collapsed the accordions and the user had to re-click in.
   const [selectedAccordionsOpen, setSelectedAccordionsOpen] = useState<SelectedAccordionState>({
     shape: false,
-    appearance: false,
     layer: false,
     text: false,
     colours: false,
