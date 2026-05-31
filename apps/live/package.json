@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "dev:turbopack": "node scripts/dev.mjs --turbopack",
+    "dev:webpack": "node scripts/dev.mjs --webpack",
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "eslint .",

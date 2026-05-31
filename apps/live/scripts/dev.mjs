@@ -66,9 +66,17 @@ function clearCache() {
 freePort(PORT);
 clearCache();
 
-const useTurbopack = process.argv.includes('--turbopack');
+// Turbopack is the default bundler now. Webpack's HMR repeatedly
+// desynchronises after live edits and serves
+// `__webpack_modules__[moduleId] is not a function` until someone
+// wipes `.next` and restarts — even with the persistent FS cache
+// already disabled in `next.config.ts` and child workers killed
+// cleanly here. Turbopack (stable in Next 15) sidesteps that whole
+// class of failure. Opt back into webpack only when something
+// Turbopack genuinely doesn't support.
+const useWebpack = process.argv.includes('--webpack');
 const nextArgs = ['next', 'dev', '-p', String(PORT)];
-if (useTurbopack) nextArgs.splice(2, 0, '--turbopack');
+if (!useWebpack) nextArgs.splice(2, 0, '--turbopack');
 
 const child = spawn('pnpm', nextArgs, { stdio: 'inherit', cwd: appRoot });
 child.on('exit', (code) => process.exit(code ?? 0));
