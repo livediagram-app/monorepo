@@ -1363,17 +1363,13 @@ function tabBackgroundStyle(
         backgroundImage: `repeating-linear-gradient(45deg, transparent 0 17px, ${fadedPatternColor} 17px 18px)`,
         backgroundPosition: `${px}px ${py}px`,
       };
-    case 'dashed':
-      // Dashed grid: short segments instead of the continuous lines
-      // of 'graph'. Achieved by stacking a vertical dashed stripe on
-      // top of a horizontal one, where each stripe alternates
-      // transparent/colour every few px.
+    case 'waves':
+      // Gentle sinusoidal stripes via inline SVG. Reads as a soft
+      // texture, not a structural grid.
       return {
         ...base,
-        backgroundImage:
-          `repeating-linear-gradient(0deg, ${fadedPatternColor} 0 6px, transparent 6px 12px, transparent 12px 23px, transparent 23px 24px), ` +
-          `repeating-linear-gradient(90deg, ${fadedPatternColor} 0 6px, transparent 6px 12px, transparent 12px 23px, transparent 23px 24px)`,
-        backgroundSize: '24px 24px',
+        backgroundImage: wavesBg(fadedPatternColor),
+        backgroundSize: '48px 24px',
         backgroundPosition: `${px}px ${py}px`,
       };
     case 'bricks':
@@ -1426,6 +1422,18 @@ function plusBg(stroke: string): string {
   return (
     "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>" +
     `<path d='M16 10 L16 22 M10 16 L22 16' stroke='${enc}' stroke-width='1.5' stroke-linecap='round' fill='none'/>` +
+    '</svg>")'
+  );
+}
+
+function wavesBg(stroke: string): string {
+  const enc = stroke.replace(/#/g, '%23');
+  // Sine wave tile — quadratic peaks/troughs across a 48-wide span
+  // so the pattern reads as gentle horizontal ripples. Stroke width
+  // is intentionally light so the texture stays subtle.
+  return (
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='24'>" +
+    `<path d='M0 12 Q12 4 24 12 T48 12' fill='none' stroke='${enc}' stroke-width='1'/>` +
     '</svg>")'
   );
 }

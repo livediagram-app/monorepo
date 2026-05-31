@@ -1651,32 +1651,17 @@ function BackgroundDiagonalIcon() {
   );
 }
 
-function BackgroundDashedIcon() {
+function BackgroundWavesIcon() {
   return (
     <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
       <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
-      {[5, 11, 17].map((y) => (
-        <line
-          key={`h${y}`}
-          x1="3"
-          y1={y}
-          x2="25"
-          y2={y}
+      {[6, 12, 17].map((y) => (
+        <path
+          key={y}
+          d={`M2 ${y} Q 8 ${y - 2.5} 14 ${y} T 26 ${y}`}
+          fill="none"
           stroke="currentColor"
-          strokeWidth="0.75"
-          strokeDasharray="2 2"
-        />
-      ))}
-      {[7, 14, 21].map((x) => (
-        <line
-          key={`v${x}`}
-          x1={x}
-          y1="3"
-          x2={x}
-          y2="17"
-          stroke="currentColor"
-          strokeWidth="0.75"
-          strokeDasharray="2 2"
+          strokeWidth="0.7"
         />
       ))}
     </svg>
@@ -1814,12 +1799,12 @@ const PATTERNS: PatternEntry[] = [
     icon: BackgroundDiagonalIcon,
   },
   {
-    id: 'dashed',
-    label: 'Dashed',
-    shortLabel: 'Dashed',
-    description: 'Dashed grid — graph paper made of dashes.',
+    id: 'waves',
+    label: 'Waves',
+    shortLabel: 'Waves',
+    description: 'Gentle sinusoidal lines — softest of the textures.',
     extra: true,
-    icon: BackgroundDashedIcon,
+    icon: BackgroundWavesIcon,
   },
   {
     id: 'bricks',

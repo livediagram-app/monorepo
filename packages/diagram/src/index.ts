@@ -45,7 +45,7 @@ export type BackgroundPattern =
   | 'confetti'
   | 'stripes'
   | 'diagonal'
-  | 'dashed'
+  | 'waves'
   | 'bricks'
   | 'plus'
   | 'stars';
