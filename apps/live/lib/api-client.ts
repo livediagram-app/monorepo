@@ -95,21 +95,55 @@ export type SharedDiagramResolution = {
   role: ShareRole;
 };
 
-// Owner identity is always carried via `X-Owner-Id`. Visitors on a
-// share URL include their own participant id there PLUS the share
-// code that admitted them in `X-Share-Code` — the API checks the
-// code's role before allowing the write. Owners pass `share: null`
-// (the default) and the share-code header is omitted.
+// Hybrid identity (spec/04, spec/11). When a token provider has been
+// registered via `setTokenProvider` and resolves to a non-null Clerk
+// session token, every request goes out with
+// `Authorization: Bearer <jwt>` and NO `X-Owner-Id` — the api worker
+// verifies the token, derives the owner from the `sub` claim, and
+// ignores the legacy header. Without a provider (or when the provider
+// resolves to null — guest, or signed out), requests go out with
+// `X-Owner-Id: <participant-id>` as before.
+//
+// Module-level state (rather than threading a tokenProvider through
+// 22 function signatures) because livediagram ships only as a static
+// export — single browser tab, single-threaded, single Clerk session
+// per page load. The editor wires it up once in a `useEffect`
+// (`setTokenProvider(() => getToken())`) and clears on unmount.
+// Tests reset between cases via the same setter.
+//
+// Visitors on a share URL include their own participant id PLUS the
+// share code that admitted them in `X-Share-Code` — the api checks
+// the code's role before allowing the write. Share-code visitors who
+// happen to also be signed in send Bearer + X-Share-Code; the
+// per-link role still gates write access.
 //
 // `body: true` adds `Content-Type: application/json` for write
-// requests; GETs / DELETEs omit it. One helper instead of three
-// near-identical ones, with intent at the call site spelled out
-// by the option flags.
-function apiHeaders(
+// requests; GETs / DELETEs omit it.
+export type TokenProvider = () => Promise<string | null>;
+
+let currentTokenProvider: TokenProvider | null = null;
+
+// Register / clear the Clerk token provider. Call sites:
+//   - `apps/live/app/diagram/[id]/editor-page.tsx`: useEffect with
+//     `setTokenProvider(() => getToken())` and a cleanup that clears
+//     it.
+//   - `apps/live/app/new/page.tsx`: same pattern.
+// Pass `null` to clear (sign-out / unmount).
+export function setTokenProvider(provider: TokenProvider | null): void {
+  currentTokenProvider = provider;
+}
+
+async function apiHeaders(
   ownerId: string,
   opts: { share?: string | null; body?: boolean } = {},
-): HeadersInit {
-  const h: Record<string, string> = { 'X-Owner-Id': ownerId };
+): Promise<HeadersInit> {
+  const h: Record<string, string> = {};
+  const token = currentTokenProvider ? await currentTokenProvider() : null;
+  if (token) {
+    h['Authorization'] = `Bearer ${token}`;
+  } else {
+    h['X-Owner-Id'] = ownerId;
+  }
   if (opts.body) h['Content-Type'] = 'application/json';
   if (opts.share) h['X-Share-Code'] = opts.share;
   return h;
@@ -148,7 +182,7 @@ async function expectOkOr404Void(res: Response, action: string): Promise<void> {
 
 export async function apiLoadDiagram(ownerId: string, id: string): Promise<StoredDiagram | null> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, {
-    headers: apiHeaders(ownerId),
+    headers: await apiHeaders(ownerId),
   });
   const body = await expectOkOrNull<DiagramResponse>(res, 'load');
   return body?.diagram ?? null;
@@ -177,7 +211,7 @@ export async function apiListChangeLog(
   shareCode: string | null = null,
 ): Promise<ChangeLogEntry[]> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/log`, {
-    headers: apiHeaders(ownerId, { share: shareCode }),
+    headers: await apiHeaders(ownerId, { share: shareCode }),
   });
   const { entries } = await expectOk<ChangeLogListResponse>(res, 'list change log');
   return entries;
@@ -190,7 +224,7 @@ export async function apiAppendChangeLogEntry(
 ): Promise<ChangeLogEntry> {
   const res = await fetch(`${API_BASE}/diagrams/${entry.diagramId}/log`, {
     method: 'POST',
-    headers: apiHeaders(ownerId, { share: shareCode, body: true }),
+    headers: await apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify(entry),
   });
   const { entry: stored } = await expectOk<ChangeLogAppendResponse>(res, 'append change log');
@@ -205,7 +239,7 @@ export async function apiDeleteChangeLogForTab(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/log/tab/${tabId}`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId, { share: shareCode }),
+    headers: await apiHeaders(ownerId, { share: shareCode }),
   });
   await expectOkOr404Void(res, 'delete change log');
 }
@@ -218,14 +252,14 @@ export async function apiDeleteChangeLogEntry(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/log/${entryId}`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId, { share: shareCode }),
+    headers: await apiHeaders(ownerId, { share: shareCode }),
   });
   await expectOkOr404Void(res, 'delete change log entry');
 }
 
 export async function apiListShareLinks(ownerId: string, id: string): Promise<ShareLink[]> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
-    headers: apiHeaders(ownerId),
+    headers: await apiHeaders(ownerId),
   });
   const { links } = await expectOk<ShareLinksResponse>(res, 'list share links');
   return links;
@@ -238,7 +272,7 @@ export async function apiCreateShareLink(
 ): Promise<ShareLink> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
     method: 'POST',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({ role }),
   });
   const { link } = await expectOk<ShareLinkResponse>(res, 'create share link');
@@ -248,7 +282,7 @@ export async function apiCreateShareLink(
 export async function apiDeleteShareLink(ownerId: string, id: string, code: string): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share/${code}`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId),
+    headers: await apiHeaders(ownerId),
   });
   await expectOkOr404Void(res, 'delete share link');
 }
@@ -259,7 +293,7 @@ export async function apiShareDiagram(
 ): Promise<{ shareable: boolean; shareCode: string | null }> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
     method: 'POST',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
   });
   return expectOk<ShareResponse>(res, 'share');
 }
@@ -270,7 +304,7 @@ export async function apiUnshareDiagram(
 ): Promise<{ shareable: boolean; shareCode: string | null }> {
   const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
   });
   return expectOk<ShareResponse>(res, 'unshare');
 }
@@ -285,7 +319,7 @@ export async function apiSaveDiagramMeta(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${d.id}`, {
     method: 'PUT',
-    headers: apiHeaders(ownerId, { share: shareCode, body: true }),
+    headers: await apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify({ name: d.name, tabIds: d.tabIds }),
   });
   await expectOkVoid(res, 'save diagram meta');
@@ -315,7 +349,7 @@ export async function apiCreateDiagram(
 ): Promise<StoredDiagram> {
   const res = await fetch(`${API_BASE}/diagrams`, {
     method: 'POST',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({
       id: d.id,
       name: d.name,
@@ -349,7 +383,7 @@ export function apiLoadTab(
   const request = (async (): Promise<Tab | null> => {
     try {
       const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
-        headers: apiHeaders(ownerId, { share: shareCode }),
+        headers: await apiHeaders(ownerId, { share: shareCode }),
       });
       const body = await expectOkOrNull<TabResponse>(res, 'load tab');
       if (!body) return null;
@@ -377,7 +411,7 @@ export async function apiSaveTab(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tab.id}`, {
     method: 'PUT',
-    headers: apiHeaders(ownerId, { share: shareCode, body: true }),
+    headers: await apiHeaders(ownerId, { share: shareCode, body: true }),
     body: JSON.stringify(stripTemplateChosen(tab)),
   });
   await expectOkVoid(res, 'save tab');
@@ -391,7 +425,7 @@ export async function apiDeleteTab(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId, { share: shareCode }),
+    headers: await apiHeaders(ownerId, { share: shareCode }),
   });
   await expectOkOr404Void(res, 'delete tab');
 }
@@ -403,7 +437,7 @@ export async function apiDeleteDiagram(id: string): Promise<void> {
 
 export async function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
   const res = await fetch(`${API_BASE}/diagrams`, {
-    headers: apiHeaders(ownerId),
+    headers: await apiHeaders(ownerId),
   });
   const { diagrams } = await expectOk<ListResponse>(res, 'list');
   return diagrams;
@@ -414,7 +448,7 @@ export async function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]
 // ---------------------------------------------------------------------
 
 export async function apiListFolders(ownerId: string): Promise<Folder[]> {
-  const res = await fetch(`${API_BASE}/folders`, { headers: apiHeaders(ownerId) });
+  const res = await fetch(`${API_BASE}/folders`, { headers: await apiHeaders(ownerId) });
   const { folders } = await expectOk<FoldersResponse>(res, 'list folders');
   return folders;
 }
@@ -425,7 +459,7 @@ export async function apiCreateFolder(
 ): Promise<Folder> {
   const res = await fetch(`${API_BASE}/folders`, {
     method: 'POST',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({
       id: input.id,
       name: input.name,
@@ -443,7 +477,7 @@ export async function apiUpdateFolder(
 ): Promise<Folder> {
   const res = await fetch(`${API_BASE}/folders/${id}`, {
     method: 'PUT',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
     body: JSON.stringify(patch),
   });
   const { folder } = await expectOk<FolderResponse>(res, 'update folder');
@@ -453,7 +487,7 @@ export async function apiUpdateFolder(
 export async function apiDeleteFolder(ownerId: string, id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/folders/${id}`, {
     method: 'DELETE',
-    headers: apiHeaders(ownerId),
+    headers: await apiHeaders(ownerId),
   });
   await expectOkOr404Void(res, 'delete folder');
 }
@@ -465,7 +499,7 @@ export async function apiSetDiagramFolder(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/folder`, {
     method: 'PUT',
-    headers: apiHeaders(ownerId, { body: true }),
+    headers: await apiHeaders(ownerId, { body: true }),
     body: JSON.stringify({ folderId }),
   });
   await expectOkVoid(res, 'set folder');

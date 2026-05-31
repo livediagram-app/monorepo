@@ -50,6 +50,7 @@ import { Explorer } from '@/components/Explorer';
 import { NotFound } from '@/components/NotFound';
 import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
+import { useAuth } from '@clerk/nextjs';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import {
   ALIGN_SNAP_THRESHOLD,
@@ -88,6 +89,7 @@ import {
   apiSetDiagramFolder,
   apiUpdateFolder,
   connectRoom,
+  setTokenProvider,
   type ChangeLogEntry,
   type RoomHandlers,
   type ShareLink,
@@ -195,6 +197,24 @@ function RefreshIcon() {
 
 export default function LivePage() {
   const initialTabs: Tab[] = [createTab('Tab 1')];
+
+  // Clerk session hook. `getToken` resolves the current session JWT
+  // (auto-refreshing); `isSignedIn` flips on once Clerk has confirmed
+  // the user; `userId` is the canonical Clerk identity. We register
+  // `() => getToken()` as the api-client's token provider as long as
+  // the user is signed in — every api call after that point ships an
+  // `Authorization: Bearer <jwt>` instead of the legacy `X-Owner-Id`
+  // (spec/04 + spec/11). When signed out the provider is cleared and
+  // the legacy guest path resumes.
+  const { getToken, isSignedIn, isLoaded: authLoaded, userId: clerkUserId } = useAuth();
+  useEffect(() => {
+    if (isSignedIn) {
+      setTokenProvider(() => getToken());
+    } else {
+      setTokenProvider(null);
+    }
+    return () => setTokenProvider(null);
+  }, [isSignedIn, getToken]);
 
   const {
     tabs,
@@ -451,6 +471,12 @@ export default function LivePage() {
 
   useLayoutEffect(() => {
     if (hydrated) return;
+    // Wait for Clerk to determine the auth state before bootstrapping.
+    // Otherwise a signed-in user lands here with `clerkUserId === null`
+    // briefly, we mint a guest id, and the participant record + every
+    // subsequent diagram load uses the wrong owner. With this gate
+    // the effect re-runs once `authLoaded` flips true.
+    if (!authLoaded) return;
     // The post-mount hydration is async (the API is HTTP) so we run it
     // inside an IIFE. UI stays at the placeholder during the fetch;
     // the welcome modal is gated on `hydrated` so it doesn't flash the
@@ -484,12 +510,24 @@ export default function LivePage() {
       const shareCodeParam = initialShareCode;
 
       // Identity comes first because every diagram fetch needs an
-      // owner id. Persistent id lives in localStorage as a tiny
-      // bootstrap value; the participant record itself is in the API.
-      let selfId = window.localStorage.getItem('livediagram:v2:self-id');
-      if (!selfId) {
-        selfId = crypto.randomUUID();
-        window.localStorage.setItem('livediagram:v2:self-id', selfId);
+      // owner id. Two ways in (spec/04): when signed in, the Clerk
+      // userId becomes the canonical participant id — same id the
+      // api worker resolves from the Bearer token, so the
+      // participant record keys match. When signed out, fall back
+      // to the localStorage guest UUID (minted on first visit and
+      // persisted forever, so a guest's diagrams survive page
+      // reloads).
+      let selfId: string;
+      if (clerkUserId) {
+        selfId = clerkUserId;
+      } else {
+        const stored = window.localStorage.getItem('livediagram:v2:self-id');
+        if (stored) {
+          selfId = stored;
+        } else {
+          selfId = crypto.randomUUID();
+          window.localStorage.setItem('livediagram:v2:self-id', selfId);
+        }
       }
       const storedSelf = await apiLoadSelf(selfId).catch(() => null);
       const self: Participant = storedSelf ?? {
@@ -672,7 +710,7 @@ export default function LivePage() {
       setLoadingDiagram(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoaded]);
 
   // The id of the tab we last auto-fit. Drives the "fit on tab load"
   // effect below — fits the first time we land on a tab (or on the

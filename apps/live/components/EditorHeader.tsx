@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from '@livediagram/ui';
+import { AuthControls } from './AuthControls';
 import { Tooltip } from './Tooltip';
 
 // Sync state surfaced as a small pill next to the diagram title. The
@@ -87,6 +88,7 @@ export function EditorHeader({
             </button>
           </Tooltip>
         ) : null}
+        <AuthControls />
       </div>
     </header>
   );

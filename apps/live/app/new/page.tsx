@@ -5,6 +5,7 @@ import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
 import type { Tab } from '@livediagram/diagram';
+import { useAuth } from '@clerk/nextjs';
 import {
   apiCreateDiagram,
   apiCreateFolder,
@@ -18,6 +19,7 @@ import {
   apiSaveSelf,
   apiSetDiagramFolder,
   apiUpdateFolder,
+  setTokenProvider,
   type Folder,
 } from '@/lib/api-client';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
@@ -48,6 +50,20 @@ export default function NewDiagramPage() {
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Clerk session. Mirrors the editor route: `getToken` resolves the
+  // JWT for api calls, `clerkUserId` becomes the canonical participant
+  // id when signed in (so the migrated diagrams + the new ones share
+  // an owner), `authLoaded` gates the bootstrap below.
+  const { getToken, isSignedIn, isLoaded: authLoaded, userId: clerkUserId } = useAuth();
+  useEffect(() => {
+    if (isSignedIn) {
+      setTokenProvider(() => getToken());
+    } else {
+      setTokenProvider(null);
+    }
+    return () => setTokenProvider(null);
+  }, [isSignedIn, getToken]);
+
   useEffect(() => {
     document.title = 'New diagram | livediagram';
   }, []);
@@ -66,10 +82,20 @@ export default function NewDiagramPage() {
   const [explorerMinimized, setExplorerMinimized] = useState(false);
 
   useLayoutEffect(() => {
-    let selfId = window.localStorage.getItem('livediagram:v2:self-id');
-    if (!selfId) {
-      selfId = crypto.randomUUID();
-      window.localStorage.setItem('livediagram:v2:self-id', selfId);
+    // Wait for Clerk to settle so a signed-in user gets the Clerk
+    // userId, not a freshly-minted guest UUID.
+    if (!authLoaded) return;
+    let selfId: string;
+    if (clerkUserId) {
+      selfId = clerkUserId;
+    } else {
+      const stored = window.localStorage.getItem('livediagram:v2:self-id');
+      if (stored) {
+        selfId = stored;
+      } else {
+        selfId = crypto.randomUUID();
+        window.localStorage.setItem('livediagram:v2:self-id', selfId);
+      }
     }
     const local: Participant = {
       id: selfId,
@@ -103,7 +129,8 @@ export default function NewDiagramPage() {
     })();
 
     return () => window.clearTimeout(safety);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoaded, clerkUserId]);
 
   // Single commit point — shared by the Submit (Create Diagram) and
   // Skip / X paths. Submit passes a template + theme; Skip passes
