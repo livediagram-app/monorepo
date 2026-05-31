@@ -24,6 +24,17 @@ class_name = "DiagramRoom"
 tag = "v1"
 new_classes = ["DiagramRoom"]
 
+# Scheduled jobs the worker handles via the `scheduled` export. One
+# entry per cron; each fires the same handler with `event.cron` set
+# to the matching pattern so the body can dispatch.
+#
+# `0 3 * * *` — daily at 03:00 UTC. Drops change_log entries older
+# than 90 days (item #16 / spec/12). The 90-day retention matches
+# what's surfaced in the Activity Panel today; older entries were
+# never user-visible, just sitting on the table.
+[triggers]
+crons = ["0 3 * * *"]
+
 # CLERK_JWKS_URL is provisioned out-of-band so the value never lands
 # in the public repo (spec/06):
 #

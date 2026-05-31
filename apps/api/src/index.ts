@@ -20,6 +20,7 @@ import {
   listChangeLog,
   copyDiagram,
   deleteAccount,
+  deleteOldChangeLogEntries,
   dropSharedAccess,
   listDiagramsByOwner,
   listFoldersByOwner,
@@ -733,4 +734,32 @@ export default {
 
     return notFound();
   },
+
+  // Scheduled handler — wired to the cron schedule in wrangler.toml.
+  // One worker invocation per `triggers.crons` entry; dispatch on
+  // `event.cron` if we add more patterns later. Today's only job is
+  // the 90-day change_log retention sweep (item #16 / spec/12).
+  async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (event.cron === '0 3 * * *') {
+      const cutoff = Date.now() - CHANGE_LOG_RETENTION_MS;
+      ctx.waitUntil(
+        deleteOldChangeLogEntries(env, cutoff)
+          .then((count) => {
+            // wrangler tail shows these so an oversized sweep
+            // surfaces in observability without needing a metrics
+            // pipeline. A zero is fine — most days nothing's older
+            // than 90 days yet.
+            console.log(`change_log sweep: deleted ${count} entries older than ${cutoff}`);
+          })
+          .catch((err) => {
+            console.error('change_log sweep failed', err);
+          }),
+      );
+    }
+  },
 } satisfies ExportedHandler<Env>;
+
+// 90 days in ms — pulled out as a named constant because the
+// scheduled handler is the only caller today and naming it makes
+// the intent obvious from the dispatch site.
+const CHANGE_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;

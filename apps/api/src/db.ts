@@ -645,6 +645,21 @@ export async function deleteChangeLogEntry(env: Env, entryId: string): Promise<v
   await env.DB.prepare('DELETE FROM change_log WHERE id = ?').bind(entryId).run();
 }
 
+// 90-day retention sweep — fired from the scheduled handler (item
+// #16 / spec/12). The Activity Panel only ever surfaces the most
+// recent CHANGE_LOG_LIST_LIMIT entries, so anything older than the
+// retention window has been invisible since the day it landed.
+// Keeping it around forever was a slow leak.
+//
+// Returns the row count deleted so the scheduled handler can log
+// it for observability.
+export async function deleteOldChangeLogEntries(env: Env, cutoffMs: number): Promise<number> {
+  const result = await env.DB.prepare('DELETE FROM change_log WHERE created_at < ?')
+    .bind(cutoffMs)
+    .run();
+  return result.meta.changes ?? 0;
+}
+
 // ---------------------------------------------------------------------
 // folders — owner-scoped, self-referential tree. See spec/15-folders.md.
 // ---------------------------------------------------------------------
