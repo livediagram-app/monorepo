@@ -51,11 +51,12 @@ The two paths coexist forever. A signed-in user can hand a share link to a guest
 
 ## Auth surface
 
-Three routes inside `apps/live/`:
+Four routes inside `apps/live/`:
 
 - **`/live/sign-in/`** — email-code or Google OAuth. Bounces to `/live/` (which falls through to the welcome flow per [spec/14](14-new-diagram-route.md)) on success. Already-signed-in users get redirected away.
 - **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code, or Google OAuth). Same post-auth destination.
 - **`/live/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
+- **`/live/explorer/`** — standalone full-page Explorer (item #12). Signed-in only; pure-guest deployments + signed-out users see a notice card with a "Sign in" / "Back to editor" CTA. Reached from the AuthControls dropdown's "My files" item. Shows owned diagrams, folders, and the shared-with-you list in three sections — a glanceable cross-device view that the floating Explorer panel inside the editor can't be.
 
 The shared card chrome and inputs live in `apps/live/components/auth-shared.tsx` so the two pages don't drift.
 
