@@ -120,9 +120,12 @@ function AuthControlsEnabled() {
         onDeleted={async () => {
           // Backend + Clerk delete already completed inside the
           // dialog. Sign out (just to clear any client-side Clerk
-          // state — the token's already invalid) and reload the
-          // editor as a fresh guest.
-          await signOut({ redirectUrl: '/live/' });
+          // state — the token's already invalid) and land the user
+          // on the marketing site at `/` (router worker serves the
+          // marketing app there). signOut's redirectUrl goes through
+          // window.location, so the basePath '/live' is NOT applied
+          // — `/` is the real root, not `/live/`.
+          await signOut({ redirectUrl: '/' });
         }}
       />
     </div>
