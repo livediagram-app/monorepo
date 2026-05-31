@@ -54,6 +54,9 @@ import { ZoomControls } from './ZoomControls';
 type CanvasProps = {
   tabName: string;
   tabLocked: boolean;
+  // True for a view-only ('view' share role) session: the editing chrome
+  // (command palette, selection + multi-select toolbars) is suppressed.
+  readOnly: boolean;
   diagramName: string;
   tabBackgroundPattern: BackgroundPattern;
   tabBackgroundColor: string;
@@ -258,6 +261,7 @@ export function Canvas(props: CanvasProps) {
   const {
     tabName,
     tabLocked,
+    readOnly,
     diagramName,
     tabBackgroundPattern,
     tabBackgroundColor,
@@ -963,7 +967,7 @@ export function Canvas(props: CanvasProps) {
           </>
         ) : null}
 
-        {showPopover && selectionBounds ? (
+        {showPopover && selectionBounds && !readOnly ? (
           <SelectionPopover
             bounds={selectionBounds}
             canvasOffset={viewportOffset}
@@ -1045,7 +1049,7 @@ export function Canvas(props: CanvasProps) {
         />
       ) : null}
 
-      {multiSelectedIds.size >= 2 ? (
+      {multiSelectedIds.size >= 2 && !readOnly ? (
         <MultiSelectionToolbar
           count={multiSelectedIds.size}
           anyLocked={elements.some((el) => multiSelectedIds.has(el.id) && el.locked === true)}
@@ -1168,7 +1172,12 @@ export function Canvas(props: CanvasProps) {
         />
       )}
 
-      {welcomeOpen ? null : (
+      {readOnly && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-medium text-white shadow-sm">
+          View only
+        </div>
+      )}
+      {welcomeOpen || readOnly ? null : (
         <CommandPalette
           position={palettePosition}
           minimized={paletteMinimized}
