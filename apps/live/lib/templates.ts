@@ -357,16 +357,25 @@ function buildMindMap(cx: number, cy: number): Element[] {
 }
 
 function buildOrgChart(cx: number, cy: number): Element[] {
-  const headW = 180;
-  const headH = 70;
-  const vpW = 150;
-  const vpH = 54;
-  const subW = 120;
-  const subH = 46;
+  const headW = 220;
+  const headH = 80;
+  const vpW = 180;
+  const vpH = 64;
+  const subW = 140;
+  const subH = 54;
 
-  const ceoY = cy - 200;
+  // VP centres are `vpSpacing` apart; sub centres sit `subSpread`
+  // either side of their VP. For "no sub overlap between adjacent
+  // VPs", `vpSpacing` must be larger than `2 * subSpread + subW`
+  // (the previous values violated this and the right-of-VP1 sub
+  // collided with left-of-VP2). 360 / 100 / 140 leaves a 20 px
+  // gap between adjacent VPs' inner subs.
+  const vpSpacing = 360;
+  const subSpread = 100;
+
+  const ceoY = cy - 240;
   const vpY = cy - 40;
-  const subY = cy + 120;
+  const subY = cy + 150;
 
   const head = {
     ...createShape('square', cx - headW / 2, ceoY),
@@ -377,7 +386,7 @@ function buildOrgChart(cx: number, cy: number): Element[] {
   };
 
   const vpLabels = ['VP Engineering', 'VP Sales', 'VP Operations'];
-  const vpXs = [cx - vpW * 1.7, cx - vpW / 2, cx + vpW * 0.7];
+  const vpXs = [cx - vpW / 2 - vpSpacing, cx - vpW / 2, cx - vpW / 2 + vpSpacing];
   const vps = vpLabels.map((label, i) => ({
     ...createShape('square', vpXs[i]!, vpY),
     width: vpW,
@@ -396,8 +405,8 @@ function buildOrgChart(cx: number, cy: number): Element[] {
   const subs = vps.flatMap((vp, i) => {
     const vpCenterX = vp.x + vpW / 2;
     const [leftLabel, rightLabel] = subLabels[i]!;
-    const leftCenter = vpCenterX - 65;
-    const rightCenter = vpCenterX + 65;
+    const leftCenter = vpCenterX - subSpread;
+    const rightCenter = vpCenterX + subSpread;
     return [
       {
         ...createShape('square', leftCenter - subW / 2, subY),
