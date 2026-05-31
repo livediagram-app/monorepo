@@ -30,6 +30,7 @@ type DiagramItem = { id: string; name: string; folderId: string | null; savedAt:
 type SelectedNode =
   | { kind: 'recent' }
   | { kind: 'all' }
+  | { kind: 'unsorted' }
   | { kind: 'shared' }
   | { kind: 'folder'; id: string };
 
@@ -293,35 +294,81 @@ export default function ExplorerPage() {
     return m;
   }, [diagrams]);
 
-  // What to show in the right pane for the current selection. For
-  // `recent` and `shared` we ignore folders; for `all` and a
-  // specific folder we show direct subfolders + direct diagrams,
-  // mixed in one list (Windows Explorer pattern).
-  const paneContent = useMemo(() => {
+  // Unsorted is a virtual folder backed by `folder_id IS NULL` —
+  // not a row in the folders table, just a synthetic bucket so loose
+  // diagrams have somewhere obvious to live (spec/15). Cached so the
+  // sidebar + the "All diagrams" list row both reference the same
+  // count without re-filtering.
+  const unsortedDiagrams = useMemo(
+    () => diagrams.filter((d) => d.folderId === null).sort((a, b) => b.savedAt - a.savedAt),
+    [diagrams],
+  );
+
+  // What to show in the right pane for the current selection.
+  // - `recent`: last N owned diagrams (no folders).
+  // - `shared`: handled separately via SharedList.
+  // - `all`: root user folders + the synthetic Unsorted bucket as a
+  //   leading row when there are unsorted diagrams. Loose root-level
+  //   diagrams don't appear here directly; they live in Unsorted so
+  //   the root view stays purely a folder index.
+  // - `unsorted`: just diagrams with folderId === null.
+  // - `folder`: direct subfolders + direct diagrams in that folder.
+  const paneContent = useMemo<{
+    showUnsortedRow: boolean;
+    folders: Folder[];
+    diagrams: DiagramItem[];
+  }>(() => {
     if (selected.kind === 'recent') {
       const sorted = diagrams.slice().sort((a, b) => b.savedAt - a.savedAt);
-      return { folders: [] as Folder[], diagrams: sorted.slice(0, RECENT_LIMIT) };
+      return { showUnsortedRow: false, folders: [], diagrams: sorted.slice(0, RECENT_LIMIT) };
     }
     if (selected.kind === 'shared') {
-      return { folders: [] as Folder[], diagrams: [] as DiagramItem[] };
+      return { showUnsortedRow: false, folders: [], diagrams: [] };
     }
-    const parentId = selected.kind === 'all' ? null : selected.id;
+    if (selected.kind === 'unsorted') {
+      return { showUnsortedRow: false, folders: [], diagrams: unsortedDiagrams };
+    }
+    if (selected.kind === 'all') {
+      return {
+        showUnsortedRow: true,
+        folders: childrenByParent.get(null) ?? [],
+        diagrams: [],
+      };
+    }
     return {
-      folders: childrenByParent.get(parentId) ?? [],
-      diagrams: diagramsByFolder.get(parentId) ?? [],
+      showUnsortedRow: false,
+      folders: childrenByParent.get(selected.id) ?? [],
+      diagrams: diagramsByFolder.get(selected.id) ?? [],
     };
-  }, [selected, diagrams, childrenByParent, diagramsByFolder]);
+  }, [selected, diagrams, childrenByParent, diagramsByFolder, unsortedDiagrams]);
 
   const paneTitle = useMemo(() => {
     if (selected.kind === 'recent') return 'Recent';
     if (selected.kind === 'shared') return 'Shared with me';
     if (selected.kind === 'all') return 'All diagrams';
+    if (selected.kind === 'unsorted') return 'Unsorted';
     return folderById.get(selected.id)?.name ?? 'Folder';
   }, [selected, folderById]);
 
-  const paneCrumbs = useMemo(() => {
-    if (selected.kind === 'folder') return breadcrumb(selected.id);
-    return [];
+  // Breadcrumb segments for the pane header. Each segment carries
+  // an optional onClick — the leaf (current selection) is plain
+  // text so the user can't navigate to where they already are.
+  type Crumb = { name: string; onClick?: () => void };
+  const paneCrumbs = useMemo<Crumb[]>(() => {
+    const all: Crumb = { name: 'All diagrams', onClick: () => setSelected({ kind: 'all' }) };
+    if (selected.kind === 'recent') return [{ name: 'Recent' }];
+    if (selected.kind === 'shared') return [{ name: 'Shared with me' }];
+    if (selected.kind === 'all') return [{ name: 'All diagrams' }];
+    if (selected.kind === 'unsorted') return [all, { name: 'Unsorted' }];
+    const chain = breadcrumb(selected.id);
+    return [
+      all,
+      ...chain.slice(0, -1).map((c) => ({
+        name: c.name,
+        onClick: () => setSelected({ kind: 'folder', id: c.id }),
+      })),
+      { name: chain[chain.length - 1]?.name ?? 'Folder' },
+    ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, folderById]);
 
@@ -362,11 +409,21 @@ export default function ExplorerPage() {
     newSubfolder: () => void createFolder(f.id),
     move: () => openMovePickerForFolder(f.id, anchor),
     delete: () => {
+      // Mirror the server's ON DELETE SET NULL locally: any diagram
+      // sitting in this folder (or any descendant of it) returns to
+      // Unsorted. The useFolders hook already re-parents descendant
+      // folders, but it doesn't touch diagrams — so without this
+      // sweep, locally-cached diagrams hold a folderId pointing at a
+      // row that no longer exists until the next list refresh.
+      const dropped = descendantSet(f.id);
+      setDiagrams((prev) =>
+        prev.map((d) => (d.folderId && dropped.has(d.folderId) ? { ...d, folderId: null } : d)),
+      );
       deleteFolder(f.id);
-      // If the currently-selected node is the one being deleted,
-      // promote selection back to "All diagrams" so the right pane
-      // doesn't keep pointing at a phantom folder.
-      if (selected.kind === 'folder' && selected.id === f.id) {
+      // If the currently-selected node is the one being deleted (or
+      // a descendant of it), promote selection back to "All diagrams"
+      // so the right pane doesn't keep pointing at a phantom folder.
+      if (selected.kind === 'folder' && dropped.has(selected.id)) {
         setSelected({ kind: 'all' });
       }
     },
@@ -389,8 +446,8 @@ export default function ExplorerPage() {
           style={{ width: SIDEBAR_WIDTH }}
           aria-label="Folders"
         >
-          <div className="sticky top-20 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
-            <SidebarSectionLabel>Hi {clerkDisplayName ?? 'there'}</SidebarSectionLabel>
+          <div className="sticky top-20 rounded-xl border border-slate-200 bg-white px-2 py-3 shadow-sm">
+            <SidebarSectionLabel first>Hi {clerkDisplayName ?? 'there'}</SidebarSectionLabel>
             <SidebarRow
               icon={<ClockIcon />}
               label="Recent"
@@ -409,6 +466,17 @@ export default function ExplorerPage() {
               hasChildren={rootFolders.length > 0}
               expanded={true}
               onToggleExpand={undefined}
+            />
+            {/* Unsorted is a synthetic folder backed by folder_id IS
+                NULL — always present at the top of the root level so
+                loose diagrams have somewhere obvious to land. */}
+            <SidebarRow
+              icon={<FolderIcon open={false} />}
+              label="Unsorted"
+              selected={selected.kind === 'unsorted'}
+              onClick={() => setSelected({ kind: 'unsorted' })}
+              depth={1}
+              badge={unsortedDiagrams.length > 0 ? unsortedDiagrams.length : undefined}
             />
             {rootFolders.map((f) => (
               <SidebarFolderSubtree
@@ -445,19 +513,15 @@ export default function ExplorerPage() {
 
         {/* ---------- Right pane ---------- */}
         <section className="min-w-0 flex-1">
-          <PaneHeader
-            title={paneTitle}
-            crumbs={paneCrumbs}
-            onCrumb={(crumbId) =>
-              setSelected(crumbId === null ? { kind: 'all' } : { kind: 'folder', id: crumbId })
-            }
-          />
+          <PaneHeader title={paneTitle} crumbs={paneCrumbs} />
 
           {loading ? (
             <SkeletonRows />
           ) : selected.kind === 'shared' ? (
             <SharedList shared={shared} onDismiss={dismissShared} />
-          ) : paneContent.folders.length === 0 && paneContent.diagrams.length === 0 ? (
+          ) : paneContent.folders.length === 0 &&
+            paneContent.diagrams.length === 0 &&
+            !paneContent.showUnsortedRow ? (
             <EmptyPane
               selected={selected}
               onCreateDiagram={() => window.location.assign('/live/new')}
@@ -469,6 +533,9 @@ export default function ExplorerPage() {
             <ListView
               folders={paneContent.folders}
               diagrams={paneContent.diagrams}
+              showUnsortedRow={paneContent.showUnsortedRow}
+              unsortedCount={unsortedDiagrams.length}
+              onOpenUnsorted={() => setSelected({ kind: 'unsorted' })}
               onOpenFolder={(id) => setSelected({ kind: 'folder', id })}
               onCommitRenameFolder={commitRenameFolder}
               onCancelRenameFolder={() => setRenamingFolderId(null)}
@@ -558,9 +625,22 @@ export default function ExplorerPage() {
 
 // ---------- Sidebar tree primitives -------------------------------
 
-function SidebarSectionLabel({ children }: { children: React.ReactNode }) {
+function SidebarSectionLabel({
+  children,
+  first,
+}: {
+  children: React.ReactNode;
+  // `first` skips the inter-section gap on the topmost label so the
+  // sidebar box has matching breathing room above the first label and
+  // below the last row. Without this the top reads as too padded.
+  first?: boolean;
+}) {
   return (
-    <div className="mt-2 px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+    <div
+      className={`px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${
+        first ? '' : 'mt-3 pt-1'
+      }`}
+    >
       {children}
     </div>
   );
@@ -580,6 +660,7 @@ function SidebarRow({
   expanded,
   onToggleExpand,
   trailing,
+  renaming,
 }: {
   icon: React.ReactNode;
   label: React.ReactNode;
@@ -591,7 +672,26 @@ function SidebarRow({
   expanded?: boolean;
   onToggleExpand?: () => void;
   trailing?: React.ReactNode;
+  // When true, the label area renders as a plain div instead of a
+  // <button>, so a child <input> (e.g. inline rename) can take focus
+  // without the parent button intercepting it. An input nested inside
+  // a button is invalid HTML and browsers steal the input's focus.
+  renaming?: boolean;
 }) {
+  const labelClass = `flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left text-xs ${
+    selected ? 'font-semibold text-brand-700' : 'text-slate-700'
+  }`;
+  const labelInner = (
+    <>
+      <span className="shrink-0 text-slate-400">{icon}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {badge !== undefined ? (
+        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+          {badge}
+        </span>
+      ) : null}
+    </>
+  );
   return (
     <div
       className={`group flex items-center gap-1 rounded-md px-1 ${selected ? 'bg-brand-50' : 'hover:bg-slate-100'}`}
@@ -608,21 +708,13 @@ function SidebarRow({
       >
         {hasChildren ? <ChevronIcon open={!!expanded} /> : null}
       </button>
-      <button
-        type="button"
-        onClick={onClick}
-        className={`flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left text-xs ${
-          selected ? 'font-semibold text-brand-700' : 'text-slate-700'
-        }`}
-      >
-        <span className="shrink-0 text-slate-400">{icon}</span>
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        {badge !== undefined ? (
-          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
-            {badge}
-          </span>
-        ) : null}
-      </button>
+      {renaming ? (
+        <div className={labelClass}>{labelInner}</div>
+      ) : (
+        <button type="button" onClick={onClick} className={labelClass}>
+          {labelInner}
+        </button>
+      )}
       {trailing}
     </div>
   );
@@ -695,6 +787,7 @@ function SidebarFolderSubtree({
         hasChildren={hasKids}
         expanded={isOpen}
         onToggleExpand={() => onToggleExpand(folder.id)}
+        renaming={renaming}
         trailing={
           renaming ? null : (
             <button
@@ -747,38 +840,43 @@ function SidebarFolderSubtree({
 function PaneHeader({
   title,
   crumbs,
-  onCrumb,
 }: {
   title: string;
-  crumbs: Folder[];
-  onCrumb: (id: string | null) => void;
+  crumbs: { name: string; onClick?: () => void }[];
 }) {
   return (
     <div className="mb-4">
-      <nav aria-label="Breadcrumb" className="mb-1 text-[11px] text-slate-500">
-        <button
-          type="button"
-          onClick={() => onCrumb(null)}
-          className="rounded px-1 hover:bg-slate-100 hover:text-slate-700"
-        >
-          All diagrams
-        </button>
-        {crumbs.length === 0
-          ? null
-          : crumbs.slice(0, -1).map((c) => (
-              <span key={c.id}>
-                <span className="px-1 text-slate-400">/</span>
+      <h1 className="mb-2 truncate text-2xl font-semibold tracking-tight text-slate-900">
+        {title}
+      </h1>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex flex-wrap items-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 shadow-sm"
+      >
+        {crumbs.map((c, i) => {
+          const isLast = i === crumbs.length - 1;
+          return (
+            <span key={`${c.name}-${i}`} className="flex items-center">
+              {i > 0 ? (
+                <span aria-hidden className="px-1 text-slate-300">
+                  ›
+                </span>
+              ) : null}
+              {c.onClick && !isLast ? (
                 <button
                   type="button"
-                  onClick={() => onCrumb(c.id)}
-                  className="rounded px-1 hover:bg-slate-100 hover:text-slate-700"
+                  onClick={c.onClick}
+                  className="rounded px-1.5 py-0.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                 >
                   {c.name}
                 </button>
-              </span>
-            ))}
+              ) : (
+                <span className="rounded px-1.5 py-0.5 font-medium text-slate-900">{c.name}</span>
+              )}
+            </span>
+          );
+        })}
       </nav>
-      <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
     </div>
   );
 }
@@ -786,6 +884,9 @@ function PaneHeader({
 function ListView({
   folders,
   diagrams,
+  showUnsortedRow,
+  unsortedCount,
+  onOpenUnsorted,
   onOpenFolder,
   onCommitRenameFolder,
   onCancelRenameFolder,
@@ -803,6 +904,14 @@ function ListView({
 }: {
   folders: Folder[];
   diagrams: DiagramItem[];
+  // True on the "All diagrams" view: the synthetic Unsorted row
+  // renders at the very top so the root has the same "folder row
+  // per child" feel as any non-root folder. The row is only
+  // surfaced when there's something to put in it (unsortedCount > 0)
+  // to avoid showing an empty folder by default.
+  showUnsortedRow: boolean;
+  unsortedCount: number;
+  onOpenUnsorted: () => void;
   onOpenFolder: (id: string) => void;
   onCommitRenameFolder: (id: string, name: string) => void;
   onCancelRenameFolder: () => void;
@@ -834,6 +943,7 @@ function ListView({
         <span aria-hidden></span>
       </div>
       <ul className="divide-y divide-slate-100">
+        {showUnsortedRow ? <UnsortedRow count={unsortedCount} onOpen={onOpenUnsorted} /> : null}
         {folders.map((f) => (
           <FolderRow
             key={f.id}
@@ -843,7 +953,6 @@ function ListView({
             onOpen={() => onOpenFolder(f.id)}
             onCommitRename={(name) => onCommitRenameFolder(f.id, name)}
             onCancelRename={onCancelRenameFolder}
-            actions={folderActions(f, null)}
             getActionsForAnchor={(anchor) => folderActions(f, anchor)}
           />
         ))}
@@ -865,6 +974,39 @@ function ListView({
   );
 }
 
+// Synthetic "Unsorted" folder row for the All-diagrams list view.
+// Looks like a regular folder row (folder glyph + name + child
+// count) but has no rename / move / new-subfolder / delete actions
+// because the row isn't backed by a folders table entry — Unsorted
+// is the absence of a parent. Clicking drills into the Unsorted
+// pseudo-folder which lists every diagram with folder_id IS NULL.
+function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+      <button
+        type="button"
+        onDoubleClick={onOpen}
+        onClick={onOpen}
+        className="flex min-w-0 items-center gap-2 text-left"
+      >
+        <span className="shrink-0 text-slate-400">
+          <FolderIcon open={false} />
+        </span>
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+          Unsorted
+        </span>
+        {count > 0 ? (
+          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+            {count}
+          </span>
+        ) : null}
+      </button>
+      <span className="text-[11px] uppercase tracking-wider text-slate-400">—</span>
+      <span aria-hidden />
+    </li>
+  );
+}
+
 function FolderRow({
   folder,
   renaming,
@@ -880,12 +1022,6 @@ function FolderRow({
   onOpen: () => void;
   onCommitRename: (name: string) => void;
   onCancelRename: () => void;
-  actions: {
-    rename: () => void;
-    newSubfolder: () => void;
-    move: () => void;
-    delete: () => void;
-  };
   getActionsForAnchor: (anchor: HTMLElement | null) => {
     rename: () => void;
     newSubfolder: () => void;
@@ -897,35 +1033,46 @@ function FolderRow({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
 
+  // When renaming, the label area is a plain div so the <input>
+  // inside it isn't nested in a <button> (which steals focus).
+  const labelInner = (
+    <>
+      <span className="shrink-0 text-amber-500">
+        <FolderIcon open={false} />
+      </span>
+      {renaming ? (
+        <InlineRenameInput
+          initial={folder.name}
+          onCommit={onCommitRename}
+          onCancel={onCancelRename}
+          className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+        />
+      ) : (
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+          {folder.name}
+        </span>
+      )}
+      {childCount > 0 ? (
+        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+          {childCount}
+        </span>
+      ) : null}
+    </>
+  );
   return (
     <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
-      <button
-        type="button"
-        onDoubleClick={renaming ? undefined : onOpen}
-        onClick={renaming ? undefined : onOpen}
-        className="flex min-w-0 items-center gap-2 text-left"
-      >
-        <span className="shrink-0 text-amber-500">
-          <FolderIcon open={false} />
-        </span>
-        {renaming ? (
-          <InlineRenameInput
-            initial={folder.name}
-            onCommit={onCommitRename}
-            onCancel={onCancelRename}
-            className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
-          />
-        ) : (
-          <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
-            {folder.name}
-          </span>
-        )}
-        {childCount > 0 ? (
-          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
-            {childCount}
-          </span>
-        ) : null}
-      </button>
+      {renaming ? (
+        <div className="flex min-w-0 items-center gap-2">{labelInner}</div>
+      ) : (
+        <button
+          type="button"
+          onDoubleClick={onOpen}
+          onClick={onOpen}
+          className="flex min-w-0 items-center gap-2 text-left"
+        >
+          {labelInner}
+        </button>
+      )}
       <span className="text-[11px] uppercase tracking-wider text-slate-400">
         {formatRelativeTime(Date.now() - folder.updatedAt)}
       </span>
