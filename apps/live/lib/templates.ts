@@ -203,7 +203,7 @@ function buildMindMap(cx: number, cy: number): Element[] {
   const branchH = 80;
   const leafW = 140;
   const leafH = 60;
-  const branchRadius = 360;
+  const branchRadius = 260;
   const leafOffset = 230;
 
   // Central node: the only circle on the map. Surrounding topics use
@@ -291,7 +291,13 @@ function buildMindMap(cx: number, cy: number): Element[] {
     const parent = branchElements[i]!;
     const parentCx = parent.x + parent.width / 2;
     const parentCy = parent.y + parent.height / 2;
-    const spread = 32;
+    // Half the gap between the two leaves of a branch, applied
+    // perpendicular to the branch axis. Has to be > leafW/2 (70)
+    // for the horizontal pairs (above/below) so the leaves don't
+    // overlap; 110 gives ~80px clear there AND ~160px between
+    // centres for the vertical pairs (left/right) so they read as
+    // distinct siblings rather than a touching stack.
+    const spread = 110;
     branch.leafLabels.forEach((label, leafIndex) => {
       const offsetSign = leafIndex === 0 ? -1 : 1;
       let lx = parentCx;
