@@ -100,8 +100,12 @@ When **nothing is selected**, the Selected Element section is replaced by a **Cu
 
 When **any** element is selected, the palette grows a fourth section at the bottom titled `SELECTED ELEMENT`. It hosts per-element controls grouped into **collapsible accordions** so the palette stays compact. Each accordion is **closed by default**; clicking the header toggles it open.
 
-Accordion groups:
+Accordion groups (rendered in this order top-to-bottom, hidden when their gate doesn't apply):
 
+- **Shape** _(shape elements only)_
+  - 8-shape grid (Square, Circle, Diamond, Cylinder, Parallelogram, Hexagon, Document, Stadium) — clicking morphs the selected element into that kind in place, preserving size + colour overrides. Circle and diamond force the bounding box square; the rest preserve free aspect.
+  - **Lock aspect ratio** toggle — when on, resize handles enforce the current width:height ratio.
+  - **Padding** preset (None / Small / Medium / Large) — distance between the label and the element box, snapped to a preset for round-trip simplicity.
 - **Layer**
   - Front — bring to top of the z-order.
   - Back — send to bottom of the z-order.
@@ -109,11 +113,21 @@ Accordion groups:
 - **Text** _(boxed elements only)_
   - Text size — `Scale | Small | Medium | Large`. See [Text size](#text-size).
   - Text alignment — 3 × 3 grid. See [Text alignment](#text-alignment).
+  - Bold / Italic / Underline / Strikethrough toggles.
 - **Colours** _(boxed elements only)_
   - **Text** swatch — colours the element's label. Shown for every boxed kind (shape, text, sticky).
   - **Background** swatch — fill colour. Shapes & sticky notes only.
   - **Border** swatch — outline colour. Shapes & sticky notes only.
   - See [Colours](#colours). Text elements show only the Text swatch; shapes and sticky notes show all three.
+- **Pointer** _(arrows only)_
+  - **Line thickness** — four snapped presets (Thin / Medium / Thick / Extra-thick → 1 / 2 / 4 / 7 px on the arrow's `strokeWidth`). Snapping is one-way for display so legacy free-number widths still highlight the nearest preset.
+  - **Line style** — Straight / Curved / Angled. Drives the geometry (single line / quadratic bezier bowing ¼ of the chord / axis-aligned L-elbow). See [Arrows → Data model](#data-model-2).
+  - **Arrowhead type** — Start only / End only / Both / No pointers. Stored as `arrowEnds`.
+  - **Arrowhead size** — Small / Medium / Large / Extra-large (4 / 6 / 8.5 / 12 px marker size). Sits **below** Arrowhead type so the user picks whether they want a head before sizing it; hidden entirely when `arrowEnds === 'none'` (nothing to size).
+
+### Arrow labels
+
+Double-clicking the body of a selected arrow opens an inline `<foreignObject>` editor for the arrow's `label?: string`. Enter / blur commits, Escape cancels. The label renders as an SVG `<text>` anchored at the path's midpoint (chord midpoint for straight, t=0.5 of the quadratic bezier for curved, the elbow vertex for angled). Placement chooses one of four cardinal slots around the midpoint (right → below → left → above) and picks the first whose AABB doesn't collide with a neighbouring boxed element; falls back to "right" if every slot collides. Empty label string strips the field on commit so persisted JSON stays clean.
 
 Accordion headers show a chevron that rotates 180° when open. The body slides open/closed via a `grid-template-rows` 0fr↔1fr transition (~200 ms) so motion is smooth and free of layout jumps.
 
