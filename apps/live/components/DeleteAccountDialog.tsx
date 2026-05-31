@@ -18,7 +18,7 @@
 // with data they can recover from; Clerk-first would leave orphan
 // rows behind that the user could no longer reach.
 
-import { useUser } from '@clerk/react';
+import { useReverification, useUser } from '@clerk/react';
 import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import { apiDeleteAccount } from '@/lib/api-client';
@@ -37,6 +37,18 @@ export function DeleteAccountDialog({
 }) {
   const { user } = useUser();
   const expectedEmail = user?.primaryEmailAddress?.emailAddress ?? '';
+  // Wrap `user.delete()` in Clerk's reverification flow — destructive
+  // actions require fresh step-up auth even for already-signed-in
+  // users (Clerk's "Reverification required" error came from this
+  // exact missing wrapper). `useReverification` automatically opens
+  // Clerk's pre-built modal, the user re-verifies (email code /
+  // OAuth / etc.), then the wrapped function runs with the fresh
+  // token. Capturing `user` in the closure is safe — useUser keeps
+  // it stable across renders.
+  const deleteUserReverified = useReverification(async () => {
+    if (!user) throw new Error('Not signed in');
+    await user.delete();
+  });
 
   const [typed, setTyped] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -84,15 +96,15 @@ export function DeleteAccountDialog({
       return;
     }
     try {
-      await user.delete();
+      await deleteUserReverified();
     } catch (err) {
       // Backend data is already gone, so surface Clerk's actual
-      // error rather than swallowing it. The most common cause is
-      // that account self-deletion is disabled on the Clerk
-      // instance — Clerk's "Delete account" toggle in Dashboard →
-      // User & Authentication → Personal information has to be on
-      // for `user.delete()` to succeed client-side. Other paths
-      // (stale token, network blip) bubble up as-is.
+      // error rather than swallowing it. With the reverification
+      // wrapper this should usually only fire for harder problems
+      // (self-deletion disabled on the Clerk instance, stale
+      // token, network blip). If it says self-deletion is disabled,
+      // the toggle lives at Clerk Dashboard → User & Authentication
+      // → Personal information → Delete account.
       setPhase('error');
       const detail = messageOf(err, 'Clerk delete failed');
       setErrorMsg(
