@@ -2243,10 +2243,15 @@ export default function LivePage() {
 
   // Applying a theme swaps backdrop colours/pattern, records the theme
   // id (so future element-create calls in `addBoxed` inherit the theme),
-  // AND retroactively recolours every shape + text element on the tab to
-  // match. Sticky notes are skipped — the amber palette is iconic. Any
-  // per-element colour overrides the user previously set are replaced;
-  // applying a theme is meant to be a one-tap "reset to this look".
+  // AND retroactively recolours shape + text + arrow elements on the
+  // tab to match — UNLESS the user has previously set a custom colour
+  // on a specific field, in which case that field stays untouched.
+  // Heuristic for "custom": the current value differs from what the
+  // PREVIOUS theme would have set. Anything still equal to the
+  // previous theme's value (or undefined) is treated as
+  // theme-controlled and gets the new theme's value; anything else is
+  // the user's choice and survives. Sticky notes are skipped entirely
+  // — the amber palette is iconic.
   const setTheme = (id: ThemeId) => {
     if (activeTabLocked) return;
     const theme = getTheme(id);
@@ -2256,29 +2261,43 @@ export default function LivePage() {
     commitTabs((ts) =>
       ts.map((t) => {
         if (t.id !== activeId) return t;
+        const prevTheme = getTheme(t.theme);
+        // For one colour field on one element: if the element's
+        // current value matches the previous theme's value for that
+        // field (or is unset), the user hasn't overridden it — apply
+        // the new theme. Otherwise it's custom; leave it.
+        const applyOrKeep = (
+          current: string | undefined,
+          prev: string | null,
+          next: string | null,
+        ) => (current === undefined || current === prev ? (next ?? undefined) : current);
         const elements = t.elements.map((el) => {
           if (el.type === 'shape') {
             return {
               ...el,
-              ...(theme.elementFill ? { fillColor: theme.elementFill } : { fillColor: undefined }),
-              ...(theme.elementStroke
-                ? { strokeColor: theme.elementStroke }
-                : { strokeColor: undefined }),
-              ...(theme.elementText ? { textColor: theme.elementText } : { textColor: undefined }),
+              fillColor: applyOrKeep(el.fillColor, prevTheme.elementFill, theme.elementFill),
+              strokeColor: applyOrKeep(
+                el.strokeColor,
+                prevTheme.elementStroke,
+                theme.elementStroke,
+              ),
+              textColor: applyOrKeep(el.textColor, prevTheme.elementText, theme.elementText),
             };
           }
           if (el.type === 'text') {
             return {
               ...el,
-              ...(theme.elementText ? { textColor: theme.elementText } : { textColor: undefined }),
+              textColor: applyOrKeep(el.textColor, prevTheme.elementText, theme.elementText),
             };
           }
           if (el.type === 'arrow') {
             return {
               ...el,
-              ...(theme.elementStroke
-                ? { strokeColor: theme.elementStroke }
-                : { strokeColor: undefined }),
+              strokeColor: applyOrKeep(
+                el.strokeColor,
+                prevTheme.elementStroke,
+                theme.elementStroke,
+              ),
             };
           }
           return el;
