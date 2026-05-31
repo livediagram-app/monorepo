@@ -239,22 +239,32 @@ function ActivityRow({
         </div>
       </button>
       {/* Floats over the row on hover so it never reserves layout
-          space when idle. stopPropagation so clicking Revert
-          doesn't ALSO fire the row click handler. */}
+          space when idle. The outer absolute wrapper carries the
+          positioning + visibility — that way the inner Tooltip
+          anchors to the actual button (its wrapping span tracks
+          the button's bounding box), instead of a 0-size sibling
+          which left the tooltip card drifting up to the row's
+          top-left when the button was absolutely positioned
+          itself. stopPropagation so clicking Revert doesn't ALSO
+          fire the row click handler. Anchored to the row's top
+          rather than vertically centred so the button sits beside
+          the summary line on the now-taller two-line rows. */}
       {entry.elementIds.length > 0 && canRevert ? (
-        <Tooltip title="Revert" description={`Undo this change: ${entry.summary}`}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRevert();
-            }}
-            className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 group-hover:flex focus:flex"
-            aria-label={`Revert: ${entry.summary}`}
-          >
-            <RevertIcon />
-          </button>
-        </Tooltip>
+        <div className="absolute right-1.5 top-1.5 hidden group-hover:block group-focus-within:block">
+          <Tooltip title="Revert" description={`Undo this change: ${entry.summary}`}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRevert();
+              }}
+              className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
+              aria-label={`Revert: ${entry.summary}`}
+            >
+              <RevertIcon />
+            </button>
+          </Tooltip>
+        </div>
       ) : null}
     </li>
   );
