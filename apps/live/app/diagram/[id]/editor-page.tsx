@@ -55,6 +55,7 @@ import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { useFolders } from '@/hooks/useFolders';
+import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import {
   ALIGN_SNAP_THRESHOLD,
   arrowReferencesAny,
@@ -81,7 +82,6 @@ import {
 } from '@/lib/local-identity';
 import {
   apiAppendChangeLogEntry,
-  apiCreateDiagram,
   apiCreateShareLink,
   apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
@@ -2104,37 +2104,10 @@ export default function LivePage() {
   // resolving), and rewrites any tab-link references on the new tabs
   // through the id remap so cross-tab navigation survives the copy.
   const duplicateDiagram = async (id: string) => {
-    const src = await apiLoadDiagram(selfParticipant.id, id).catch(() => null);
-    if (!src) return;
-    const fullTabs = await Promise.all(
-      src.tabs.map((t) => apiLoadTab(selfParticipant.id, src.id, t.id).catch(() => null)),
-    );
-    const tabIdMap = new Map<string, string>();
-    for (const t of src.tabs) tabIdMap.set(t.id, crypto.randomUUID());
-    const remappedTabs: Tab[] = [];
-    for (const tab of fullTabs) {
-      if (!tab) continue;
-      const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
-      const elements = tab.elements.map((el) => {
-        // ElementLink.kind === 'tab' / 'element' both carry tabId; both
-        // need to retarget at the duplicate's new tab ids.
-        if ('link' in el && el.link) {
-          const next = tabIdMap.get(el.link.tabId);
-          if (next) return { ...el, link: { ...el.link, tabId: next } };
-        }
-        return el;
-      });
-      remappedTabs.push({ ...tab, id: newTabId, elements });
-    }
-    const newId = crypto.randomUUID();
-    await apiCreateDiagram(selfParticipant.id, {
-      id: newId,
-      name: `${src.name} copy`,
-      tabs: remappedTabs,
-    }).catch(() => {});
+    const newId = await duplicate(selfParticipant.id, id);
     // Open the freshly created copy. Navigation reloads the editor onto
     // the new id, so a separate list refresh is unnecessary.
-    openDiagram(newId);
+    if (newId) openDiagram(newId);
   };
 
   // Comment mutations live outside the history hook (per the comment on

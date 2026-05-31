@@ -1,0 +1,63 @@
+// Single-source duplicate-diagram helper.
+//
+// "Clone an existing diagram into a fresh one under the same owner"
+// is a multi-step operation that lived as three near-identical
+// inlines (editor-page, /new, /explorer). Per CLAUDE.md it's
+// supposed to live in one place — extracting it here removes the
+// drift risk (one copy could silently forget to remap link
+// references and break cross-tab navigation in the copy).
+//
+// Steps:
+//
+//   1. Load the source diagram's meta + every tab.
+//   2. Mint a fresh tab id for each source tab.
+//   3. Walk every element; any element.link.tabId that points at a
+//      source tab gets rewritten to the matching new id so the copy
+//      keeps its internal navigation.
+//   4. Create the new diagram with a fresh id under `ownerId`, with
+//      the remapped tabs seeded inline.
+//
+// Returns the new diagram id on success, undefined on failure
+// (network glitch, source not found, etc.). Callers handle
+// post-duplication side effects (list refresh, navigate, etc.) —
+// the helper deliberately doesn't touch state outside the api
+// round-trip so it can stand alone.
+
+import type { Tab } from '@livediagram/diagram';
+import { apiCreateDiagram, apiLoadDiagram, apiLoadTab } from './api-client';
+
+export async function duplicateDiagram(
+  ownerId: string,
+  sourceId: string,
+): Promise<string | undefined> {
+  const src = await apiLoadDiagram(ownerId, sourceId).catch(() => null);
+  if (!src) return undefined;
+  const fullTabs = await Promise.all(
+    src.tabs.map((t) => apiLoadTab(ownerId, src.id, t.id).catch(() => null)),
+  );
+  // Build the old → new tab-id map from the source's declared tab
+  // list, not from the loaded payloads — a missing tab fetch
+  // shouldn't break the link remap for tabs that DID load.
+  const tabIdMap = new Map<string, string>();
+  for (const t of src.tabs) tabIdMap.set(t.id, crypto.randomUUID());
+  const remappedTabs: Tab[] = [];
+  for (const tab of fullTabs) {
+    if (!tab) continue;
+    const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
+    const elements = tab.elements.map((el) => {
+      if ('link' in el && el.link) {
+        const next = tabIdMap.get(el.link.tabId);
+        if (next) return { ...el, link: { ...el.link, tabId: next } };
+      }
+      return el;
+    });
+    remappedTabs.push({ ...tab, id: newTabId, elements });
+  }
+  const newId = crypto.randomUUID();
+  await apiCreateDiagram(ownerId, {
+    id: newId,
+    name: `${src.name} copy`,
+    tabs: remappedTabs,
+  }).catch(() => undefined);
+  return newId;
+}

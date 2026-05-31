@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { TemplatePicker } from '@/components/TemplatePicker';
-import type { Tab } from '@livediagram/diagram';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
   apiCreateDiagram,
@@ -12,9 +11,7 @@ import {
   apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
-  apiLoadDiagram,
   apiLoadSelf,
-  apiLoadTab,
   apiSaveSelf,
   apiSetDiagramFolder,
   type SharedWithItem,
@@ -22,6 +19,7 @@ import {
 import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { getGuestSelfId, markNameConfirmed, setGuestSelfId } from '@/lib/local-identity';
+import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { buildTemplatedTab, type TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
 
@@ -215,39 +213,8 @@ export default function NewDiagramPage() {
     void refreshList(self.id);
   };
 
-  // Duplicate logic mirrors the editor route's `duplicateDiagram`:
-  // load the source + every tab, mint new tab ids, rewrite tab-link
-  // references through the id remap so cross-tab navigation survives
-  // the copy. Kept here (rather than in a shared helper) because the
-  // welcome route can hit a different participant id than the editor
-  // route during the brief identity-bootstrap window.
   const duplicateDiagram = async (id: string) => {
-    const src = await apiLoadDiagram(self.id, id).catch(() => null);
-    if (!src) return;
-    const fullTabs = await Promise.all(
-      src.tabs.map((t) => apiLoadTab(self.id, src.id, t.id).catch(() => null)),
-    );
-    const tabIdMap = new Map<string, string>();
-    for (const t of src.tabs) tabIdMap.set(t.id, crypto.randomUUID());
-    const remappedTabs: Tab[] = [];
-    for (const tab of fullTabs) {
-      if (!tab) continue;
-      const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
-      const elements = tab.elements.map((el) => {
-        if ('link' in el && el.link) {
-          const next = tabIdMap.get(el.link.tabId);
-          if (next) return { ...el, link: { ...el.link, tabId: next } };
-        }
-        return el;
-      });
-      remappedTabs.push({ ...tab, id: newTabId, elements });
-    }
-    const newId = crypto.randomUUID();
-    await apiCreateDiagram(self.id, {
-      id: newId,
-      name: `${src.name} copy`,
-      tabs: remappedTabs,
-    }).catch(() => {});
+    await duplicate(self.id, id);
     await refreshList(self.id);
   };
 

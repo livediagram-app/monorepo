@@ -6,23 +6,20 @@ import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
-  apiCreateDiagram,
   apiDeleteDiagram,
   apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
-  apiLoadDiagram,
-  apiLoadTab,
   apiSaveDiagramMeta,
   apiSetDiagramFolder,
   type SharedWithItem,
 } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useFolders } from '@/hooks/useFolders';
+import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { getTheme, type ThemeId } from '@/lib/themes';
 import { MenuItem, PortalMenu } from '@/components/PortalMenu';
-import type { Tab } from '@livediagram/diagram';
 
 type DiagramItem = { id: string; name: string; folderId: string | null; savedAt: number };
 
@@ -138,41 +135,9 @@ export default function ExplorerPage() {
     void apiSetDiagramFolder(clerkUserId, id, folderId).catch(() => {});
   };
 
-  // Clone the source diagram + all its tabs into a fresh diagram
-  // under the same owner. Tab ids re-mint so the copy can stand
-  // alone; link references (`element.link.tabId`) walk through an
-  // old→new id map so cross-tab navigation survives the duplicate.
-  // Inlines the same shape used in editor-page + /new; a shared
-  // helper would consolidate the three but is out of scope for the
-  // immediate UX request.
   const duplicateDiagram = async (id: string) => {
     if (!clerkUserId) return;
-    const src = await apiLoadDiagram(clerkUserId, id).catch(() => null);
-    if (!src) return;
-    const fullTabs = await Promise.all(
-      src.tabs.map((t) => apiLoadTab(clerkUserId, src.id, t.id).catch(() => null)),
-    );
-    const tabIdMap = new Map<string, string>();
-    for (const t of src.tabs) tabIdMap.set(t.id, crypto.randomUUID());
-    const remappedTabs: Tab[] = [];
-    for (const tab of fullTabs) {
-      if (!tab) continue;
-      const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
-      const elements = tab.elements.map((el) => {
-        if ('link' in el && el.link) {
-          const next = tabIdMap.get(el.link.tabId);
-          if (next) return { ...el, link: { ...el.link, tabId: next } };
-        }
-        return el;
-      });
-      remappedTabs.push({ ...tab, id: newTabId, elements });
-    }
-    const newId = crypto.randomUUID();
-    await apiCreateDiagram(clerkUserId, {
-      id: newId,
-      name: `${src.name} copy`,
-      tabs: remappedTabs,
-    }).catch(() => {});
+    await duplicate(clerkUserId, id);
     // Re-fetch the owned list so the new diagram lands in the grid
     // with a real savedAt (rather than a guessed local stub).
     const list = await apiListDiagrams(clerkUserId).catch(() => null);
