@@ -684,8 +684,17 @@ The tab bar sits at the bottom of the editor. Each tab represents one canvas wit
 
 ### Selecting & adding
 
-- Click a tab to switch to it. Switching clears element selection, edit mode, and any active picker/group mode.
+- Click a tab to switch to it. Switching clears element selection, edit mode, and any active picker/group mode, AND **fit-to-screens** the new tab's content on load (so the user lands centred on whatever's there, not wherever the previous tab left the viewport). Subsequent edits on the same tab don't re-fit — the gate is per tab id.
 - The **+** button at the right of the bar adds a fresh empty tab and switches to it.
+
+### Tab pill styling
+
+Each tab pill colours itself from its tab's theme:
+
+- Pill text colour uses `getTheme(tab.theme).elementStroke` (falls through to the brand sky for themes that don't override the stroke).
+- The active pill additionally tints its background to a 10% alpha of the same accent.
+- A small **padlock icon** sits to the left of the name when `tab.locked === true`.
+- Per-tab **participant avatars** stack to the right of the name — one circle per remote participant whose `tab-focus` op points at this tab. Lets the user see at a glance who's working where.
 
 ### Renaming
 
@@ -700,6 +709,9 @@ The active tab carries a **`⋯` ellipsis button** to the right of its name. Cli
 
 - **Rename** — enters inline rename mode.
 - **Duplicate** — creates a copy of the tab (same elements, same pattern, name suffixed with " copy") inserted directly after the source, and switches to it.
+- **Clear content** — wipes every element from the tab in one undoable commit. Disabled when the tab is already empty or when the tab is locked.
+- **Lock / Unlock** — toggles `tab.locked`. While locked, every element on the tab is read-only (matches per-element lock semantics), the palette's Add buttons stop firing, theme / canvas changes are blocked, and the tab pill shows the padlock icon (see above).
+- **Move to another diagram** — submenu listing every other diagram the participant owns. Picking one copies the tab into that diagram (the source tab stays put) so the user can stage content across libraries without leaving the editor.
 - **Delete** — removes the tab and falls back to a neighbouring tab. Disabled when only one tab remains.
 
 The menu renders through a **portal** to `document.body` and positions itself from the ellipsis button's bounding rect, so it isn't clipped by the tab bar's horizontal scroll.
