@@ -67,21 +67,6 @@ export function HeroIllustration() {
             viewBox="0 0 600 280"
             preserveAspectRatio="xMidYMid meet"
           >
-            {/* Arrow defs */}
-            <defs>
-              <marker
-                id="hero-arrow"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
-              </marker>
-            </defs>
-
             {/* Start (stadium) */}
             <g className="hero-shape hero-shape-1">
               <rect
@@ -204,51 +189,43 @@ export function HeroIllustration() {
               </text>
             </g>
 
-            {/* Arrows */}
-            <g style={{ color: '#0284c7' }}>
-              <line
+            {/* Arrows. Each is a single path that traces the line and then
+                its two arrowhead barbs, so with the stroke-draw animation the
+                head appears only once the stroke reaches the end (a shared
+                <marker> would render the head immediately, regardless of the
+                draw progress). */}
+            <g style={{ color: '#0284c7' }} fill="none">
+              <path
                 className="hero-arrow hero-arrow-1"
-                x1="140"
-                y1="78"
-                x2="140"
-                y2="118"
+                d="M140 78 L140 118 M134 111 L140 118 L146 111"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
-                markerEnd="url(#hero-arrow)"
+                strokeLinejoin="round"
               />
-              <line
+              <path
                 className="hero-arrow hero-arrow-2"
-                x1="200"
-                y1="140"
-                x2="220"
-                y2="140"
+                d="M200 140 L220 140 M214 134 L220 140 L214 146"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
-                markerEnd="url(#hero-arrow)"
+                strokeLinejoin="round"
               />
-              <line
+              <path
                 className="hero-arrow hero-arrow-3"
-                x1="360"
-                y1="140"
-                x2="400"
-                y2="140"
+                d="M360 140 L400 140 M394 134 L400 140 L394 146"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
-                markerEnd="url(#hero-arrow)"
+                strokeLinejoin="round"
               />
-              <line
+              <path
                 className="hero-arrow hero-arrow-4"
-                x1="460"
-                y1="170"
-                x2="460"
-                y2="206"
+                d="M460 170 L460 206 M454 199 L460 206 L466 199"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
-                markerEnd="url(#hero-arrow)"
+                strokeLinejoin="round"
               />
             </g>
           </svg>

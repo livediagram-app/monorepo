@@ -1008,28 +1008,117 @@ export function MultiplayerArt() {
 }
 
 export function AnyDeviceArt() {
+  // The same diagram on a laptop, tablet, and phone. A highlight ring
+  // cycles across the three (like the template tiles).
   return (
-    <IconBadge delay="1.2s">
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        {/* laptop / monitor */}
-        <rect x="2" y="4" width="13" height="9" rx="1.5" />
-        <path d="M5 17 H12" strokeLinecap="round" />
-        <path d="M8.5 13 V17" />
-        {/* phone, sitting over the corner */}
-        <rect x="15" y="9" width="6" height="11" rx="1.5" fill="white" />
-        <path d="M17.5 17.5 h1" strokeLinecap="round" />
-        {/* the same live diagram, pulsing on both screens in sync */}
-        <circle className="fa-pulse" cx="8" cy="8.5" r="1.3" fill="currentColor" stroke="none" />
-        <circle className="fa-pulse" cx="18" cy="13.5" r="1.1" fill="currentColor" stroke="none" />
+    <Frame>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* shared mini diagram, drawn inside each screen via <use>-like repetition */}
+        {/* Laptop */}
+        <rect
+          x="8"
+          y="12"
+          width="70"
+          height="42"
+          rx="3"
+          fill="#fff"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M2 58 L84 58 L80 62 L6 62 Z"
+          fill="#e2e8f0"
+          stroke="#cbd5e1"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
+        <g fill={BLUE_FILL} stroke={BLUE_STROKE} strokeWidth="1.2">
+          <line x1="40" y1="27" x2="48" y2="41" stroke={BLUE_STROKE} />
+          <rect x="22" y="22" width="18" height="10" rx="2" />
+          <rect x="48" y="36" width="18" height="10" rx="2" />
+        </g>
+        <rect
+          className="fa-hl"
+          x="4"
+          y="8"
+          width="78"
+          height="50"
+          rx="5"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+          style={{ animationDelay: '0s' }}
+        />
+        <text x="43" y="74" textAnchor="middle" fontSize="7" fontWeight="500" fill="#64748b">
+          Laptop
+        </text>
+
+        {/* Tablet */}
+        <rect
+          x="92"
+          y="12"
+          width="46"
+          height="56"
+          rx="5"
+          fill="#fff"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        <g fill={BLUE_FILL} stroke={BLUE_STROKE} strokeWidth="1.2">
+          <line x1="110" y1="34" x2="121" y2="44" stroke={BLUE_STROKE} />
+          <rect x="100" y="24" width="18" height="10" rx="2" />
+          <rect x="113" y="44" width="18" height="10" rx="2" />
+        </g>
+        <rect
+          className="fa-hl"
+          x="88"
+          y="8"
+          width="54"
+          height="64"
+          rx="7"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+          style={{ animationDelay: '2s' }}
+        />
+        <text x="115" y="80" textAnchor="middle" fontSize="7" fontWeight="500" fill="#64748b">
+          Tablet
+        </text>
+
+        {/* Phone */}
+        <rect
+          x="150"
+          y="14"
+          width="30"
+          height="54"
+          rx="5"
+          fill="#fff"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        <rect x="160" y="17" width="10" height="1.6" rx="0.8" fill="#cbd5e1" />
+        <g fill={BLUE_FILL} stroke={BLUE_STROKE} strokeWidth="1.2">
+          <line x1="163" y1="34" x2="167" y2="42" stroke={BLUE_STROKE} />
+          <rect x="155" y="24" width="20" height="9" rx="2" />
+          <rect x="156" y="42" width="20" height="9" rx="2" />
+        </g>
+        <rect
+          className="fa-hl"
+          x="146"
+          y="10"
+          width="38"
+          height="62"
+          rx="7"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+          style={{ animationDelay: '4s' }}
+        />
+        <text x="165" y="80" textAnchor="middle" fontSize="7" fontWeight="500" fill="#64748b">
+          Phone
+        </text>
       </svg>
-    </IconBadge>
+    </Frame>
   );
 }
 
