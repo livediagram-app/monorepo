@@ -1,6 +1,6 @@
 # Deployment
 
-All deployments run **via GitHub Actions** to **Cloudflare Workers**. No manual deploys.
+All deployments run **via GitHub Actions** to **Cloudflare Workers**. The deploy is **manually triggered** — a green CI run no longer ships on its own.
 
 ## Apps and their Cloudflare Workers
 
@@ -34,13 +34,13 @@ Steps:
 5. `pnpm test`
 6. `pnpm build`
 
-CI must pass before deploy is allowed to run.
+CI is the gate you check before deploying, but it does **not** trigger the deploy — deploy is a separate, manually-dispatched workflow (see below).
 
 **Testing** runs via [Vitest](https://vitest.dev). Workspaces opt in by adding `"test": "vitest run"` to their `package.json` scripts and `vitest` to their `devDependencies`; turbo then picks the task up automatically. Tests live next to the source they cover as `*.test.ts` files. Today `packages/diagram` and `apps/live` are opted in; other workspaces mirror the pattern when they add their first test.
 
 ## Deploy
 
-`.github/workflows/deploy.yml` runs only on `main` and only **after CI has succeeded** (via `workflow_run`). Can also be triggered manually with `workflow_dispatch`.
+`.github/workflows/deploy.yml` is **manual-only** (`workflow_dispatch`). It does not chain off CI; trigger it yourself from the Actions tab (or `gh workflow run Deploy --ref main`) once CI on `main` is green and you've decided to ship. It checks out and builds whatever the current `main` is at trigger time.
 
 Jobs:
 

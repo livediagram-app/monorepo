@@ -1,14 +1,13 @@
 name: Deploy
 
-# Runs only after CI has passed on `main`. Builds each app, then
-# deploys them to Cloudflare Workers in dependency order:
-#   marketing + live in parallel → router (which has service bindings
-#   to both, so it must deploy last).
+# Manual deploy only. Trigger from the Actions tab (or `gh workflow
+# run Deploy`) once CI on `main` is green and you're ready to ship.
+# It is intentionally NOT chained to CI — a green build no longer
+# deploys on its own. Builds each app, then deploys them to
+# Cloudflare Workers in dependency order: marketing + live + api in
+# parallel → router (which has service bindings to all three, so it
+# must deploy last).
 on:
-  workflow_run:
-    workflows: ['CI']
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -20,10 +19,6 @@ jobs:
     name: Build apps
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Only run when triggered by a successful CI run (or manually).
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
