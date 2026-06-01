@@ -742,16 +742,23 @@ export function Canvas(props: CanvasProps) {
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
   const paletteSelection: SelectedElementControls | null = selected
     ? {
-        textSize: isBoxed(selected) ? (selected.textSize ?? 'md') : null,
+        // Image elements are boxed but carry no inline text + no
+        // colours; nulling these out hides the Text + Colours
+        // accordions in the Editor panel for image selections.
+        textSize:
+          isBoxed(selected) && selected.type !== 'image' ? (selected.textSize ?? 'md') : null,
         textAlignX:
-          selected && isBoxed(selected) && selectedDefaultAlign
+          selected && isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
             ? (selected.textAlignX ?? selectedDefaultAlign.x)
             : null,
         textAlignY:
-          selected && isBoxed(selected) && selectedDefaultAlign
+          selected && isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
             ? (selected.textAlignY ?? selectedDefaultAlign.y)
             : null,
-        textColor: isBoxed(selected) ? (selected.textColor ?? defaultTextColor(selected)) : null,
+        textColor:
+          isBoxed(selected) && selected.type !== 'image'
+            ? (selected.textColor ?? defaultTextColor(selected))
+            : null,
         fillColor:
           selectionSupportsColours && isBoxed(selected)
             ? (selected.fillColor ?? defaultFillColor(selected))
