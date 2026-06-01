@@ -639,14 +639,14 @@ export function SelectedElementSection({
     selection.textColor !== null || selection.fillColor !== null || selection.strokeColor !== null;
 
   return (
-    <div className="flex flex-col border-t border-slate-200">
-      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+    <div className="flex flex-col border-t border-slate-200 dark:border-slate-800">
+      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {heading}
       </p>
 
       {selection.shapeKind !== null ? (
         <Accordion title="Shape" open={open.shape} onToggle={() => toggle('shape')}>
-          <p className="text-[10px] font-medium text-slate-500">Change shape</p>
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Change shape</p>
           <div className="mt-1 grid grid-cols-4 gap-1">
             {(
               [
@@ -734,7 +734,7 @@ export function SelectedElementSection({
         <Accordion title="Text" open={open.text} onToggle={() => toggle('text')}>
           {selection.textSize !== null ? (
             <div className="flex flex-col gap-1">
-              <p className="text-[10px] font-medium text-slate-500">Size</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Size</p>
               <div className="grid grid-cols-4 gap-1">
                 <Tooltip title="Scale" description="Auto-fit the label to the element's size.">
                   <SizeButton
@@ -773,7 +773,7 @@ export function SelectedElementSection({
           ) : null}
           {selection.textBold !== null ? (
             <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
-              <p className="text-[10px] font-medium text-slate-500">Style</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Style</p>
               <div className="grid grid-cols-4 gap-1">
                 <Tooltip block title="Bold" description="Make the label bold.">
                   <SizeButton
@@ -812,7 +812,9 @@ export function SelectedElementSection({
           ) : null}
           {selection.textAlignX !== null && selection.textAlignY !== null ? (
             <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
-              <p className="text-[10px] font-medium text-slate-500">Alignment</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Alignment
+              </p>
               <AlignmentGrid
                 alignX={selection.textAlignX}
                 alignY={selection.textAlignY}
@@ -822,7 +824,7 @@ export function SelectedElementSection({
           ) : null}
           {selection.padding !== null ? (
             <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
-              <p className="text-[10px] font-medium text-slate-500">Padding</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Padding</p>
               <div className="grid grid-cols-4 gap-1">
                 {(['none', 'sm', 'md', 'lg'] as const).map((p) => (
                   <Tooltip
@@ -896,7 +898,7 @@ export function SelectedElementSection({
       selection.borderStyle !== null &&
       selection.borderRadius !== null ? (
         <Accordion title="Border" open={open.border} onToggle={() => toggle('border')}>
-          <p className="text-[10px] font-medium text-slate-500">Strength</p>
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Strength</p>
           <div className="mt-1 grid grid-cols-5 gap-1">
             {(['none', 'thin', 'medium', 'thick', 'extra-thick'] as const).map((value) => (
               <Tooltip
@@ -957,7 +959,9 @@ export function SelectedElementSection({
         <Accordion title="Pointer" open={open.pointer} onToggle={() => toggle('pointer')}>
           {selection.arrowThickness !== null ? (
             <>
-              <p className="text-[10px] font-medium text-slate-500">Thickness</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Thickness
+              </p>
               <div className="mt-1 grid grid-cols-4 gap-1">
                 {(
                   [
@@ -986,7 +990,9 @@ export function SelectedElementSection({
           ) : null}
           {selection.arrowStyle !== null ? (
             <>
-              <p className="text-[10px] font-medium text-slate-500">Line style</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Line style
+              </p>
               <div className="mt-1 grid grid-cols-3 gap-1">
                 {(
                   [
@@ -1018,7 +1024,9 @@ export function SelectedElementSection({
           ) : null}
           {selection.arrowStrokeStyle !== null ? (
             <>
-              <p className="text-[10px] font-medium text-slate-500">Line pattern</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Line pattern
+              </p>
               <div className="mt-1 grid grid-cols-3 gap-1">
                 {(['solid', 'dashed', 'dotted'] as const).map((value) => (
                   <Tooltip
@@ -1039,7 +1047,7 @@ export function SelectedElementSection({
               <div className="my-2 h-px bg-slate-100" />
             </>
           ) : null}
-          <p className="text-[10px] font-medium text-slate-500">
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Pick which end(s) of the arrow have a pointer.
           </p>
           <div className="mt-1 grid grid-cols-4 gap-1">
@@ -1085,7 +1093,9 @@ export function SelectedElementSection({
           {selection.arrowheadSize !== null && selection.arrowEnds !== 'none' ? (
             <>
               <div className="my-2 h-px bg-slate-100" />
-              <p className="text-[10px] font-medium text-slate-500">Arrowhead size</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Arrowhead size
+              </p>
               <div className="mt-1 grid grid-cols-4 gap-1">
                 {(
                   [
@@ -1692,8 +1702,8 @@ export function TabSection({
   const patternsList = useShowMoreList(PATTERNS, (p) => p.id === tab.backgroundPattern);
 
   return (
-    <div className="flex flex-col border-t border-slate-200">
-      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+    <div className="flex flex-col border-t border-slate-200 dark:border-slate-800">
+      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         Current Tab
       </p>
       <Accordion title="Theme" open={open.theme} onToggle={() => toggle('theme')}>
@@ -1798,7 +1808,7 @@ export function TabSection({
         </div>
         <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium text-slate-500">Opacity</p>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Opacity</p>
             <span className="text-[10px] font-medium text-slate-500">
               {Math.round(tab.backgroundOpacity * 100)}%
             </span>
@@ -1816,7 +1826,7 @@ export function TabSection({
       </Accordion>
       {tab.onExportTab || tab.onImportTab ? (
         <Accordion title="Import / Export" open={open.file} onToggle={() => toggle('file')}>
-          <p className="text-[10px] font-medium text-slate-500">
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Bring a tab in from disk or export this one as Markdown, PDF, PNG, or .json.
           </p>
           <div className="mt-1 flex items-stretch gap-1.5">
@@ -1854,7 +1864,7 @@ export function TabSection({
       ) : null}
       {tab.onAutoAlign ? (
         <Accordion title="Cleanup" open={open.cleanup} onToggle={() => toggle('cleanup')}>
-          <p className="text-[10px] font-medium text-slate-500">
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Snap every element on this tab to the canvas grid so near-aligned shapes line up exactly
             and minor dimension drift collapses. Undoable.
           </p>
@@ -1959,12 +1969,12 @@ function Accordion({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-slate-100 first:border-t-0">
+    <div className="border-t border-slate-100 first:border-t-0 dark:border-slate-800">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60"
       >
         <span>{title}</span>
         <svg

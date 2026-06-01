@@ -85,7 +85,7 @@ export function ActivityPanel({
           <UndoRedoButton label="Redo" disabled={!canRedo} onClick={onRedo} icon={<RedoIcon />} />
         </div>
 
-        <div className="h-px bg-slate-100" />
+        <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
         {/* Entries area sized to ~8 rows; anything beyond scrolls
             inside the area so the panel stays predictable on long
@@ -104,7 +104,7 @@ export function ActivityPanel({
               ))}
             </ul>
           ) : entries.length === 0 ? (
-            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-xs text-slate-500">
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
               No edits yet — start drawing.
             </p>
           ) : (
@@ -122,7 +122,7 @@ export function ActivityPanel({
           )}
         </div>
 
-        <div className="border-t border-slate-100 pt-2">
+        <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
           <Tooltip
             block
             title="Clear Activity"
@@ -222,7 +222,7 @@ function ActivityRow({
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50"
+        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
       >
         <Tooltip title={entry.participantName} description="Made this change.">
           <span
@@ -232,8 +232,10 @@ function ActivityRow({
           />
         </Tooltip>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-slate-800">{entry.summary}</p>
-          <p className="truncate text-[10px] text-slate-500">
+          <p className="truncate text-xs font-medium text-slate-800 dark:text-slate-100">
+            {entry.summary}
+          </p>
+          <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
             {entry.participantName} · {relative}
           </p>
         </div>

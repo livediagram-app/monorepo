@@ -117,7 +117,7 @@ export function SelectionPopover({
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto absolute z-20 flex animate-fade-in items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+      className="pointer-events-auto absolute z-20 flex animate-fade-in items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
       style={{
         left: baseLeft + adjust.x,
         top: baseTop + adjust.y,
@@ -167,8 +167,8 @@ export function SelectionPopover({
               aria-pressed={linkedTabId !== null}
               className={
                 linkedTabId
-                  ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
-                  : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+                  ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+                  : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
               }
             >
               <LinkIcon />
@@ -261,8 +261,8 @@ export function SelectionPopover({
           aria-pressed={locked}
           className={
             locked
-              ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
-              : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+              ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+              : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
           }
         >
           <LockIcon closed={locked} />
@@ -276,7 +276,7 @@ export function SelectionPopover({
           type="button"
           onClick={onDelete}
           aria-label="Delete"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
         >
           <TrashIcon />
         </button>
@@ -286,7 +286,7 @@ export function SelectionPopover({
 }
 
 function Divider() {
-  return <div aria-hidden className="mx-0.5 h-6 w-px shrink-0 bg-slate-200" />;
+  return <div aria-hidden className="mx-0.5 h-6 w-px shrink-0 bg-slate-200 dark:bg-slate-700" />;
 }
 
 function PopoverButton({
@@ -314,8 +314,8 @@ function PopoverButton({
         aria-pressed={active ? true : undefined}
         className={
           active
-            ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
-            : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+            ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+            : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
         }
       >
         {children}

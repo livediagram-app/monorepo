@@ -21,6 +21,7 @@ import { useFolders } from '@/hooks/useFolders';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { MenuItem, PortalMenu } from '@/components/PortalMenu';
+import { SearchPanel } from '@/components/SearchPanel';
 import { InlineRenameInput } from '@/components/InlineRenameInput';
 import {
   ChevronIcon,
@@ -102,6 +103,7 @@ export default function ExplorerPage() {
   const moveAnchorRef = useRef<HTMLElement | null>(null);
   // FAB popover: "+ New diagram" / "+ New folder".
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const fabRef = useRef<HTMLButtonElement>(null);
   // What the tree highlights + right pane shows. Defaults to "All
   // diagrams" (the root) so the first impression is the full library
@@ -465,6 +467,18 @@ export default function ExplorerPage() {
         >
           <div className="sticky top-20 rounded-xl border border-slate-200 bg-white px-2 py-3 shadow-sm">
             <SidebarSectionLabel first>Hi {clerkDisplayName ?? 'there'}</SidebarSectionLabel>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-left text-xs text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+            >
+              <SearchSidebarIcon />
+              <span className="flex-1 truncate">Search...</span>
+              <kbd className="rounded border border-slate-200 px-1 text-[9px] font-medium text-slate-400">
+                Esc
+              </kbd>
+            </button>
+            <div className="my-1.5 h-px bg-slate-100" aria-hidden />
             <SidebarRow
               icon={<ClockIcon />}
               label="Recent"
@@ -642,7 +656,39 @@ export default function ExplorerPage() {
           ))}
         </PortalMenu>
       ) : null}
+      {searchOpen ? (
+        <SearchPanel
+          diagrams={diagrams.map((d) => ({ id: d.id, name: d.name }))}
+          folders={folders.map((f) => ({ id: f.id, name: f.name }))}
+          onSelectDiagram={(id) => {
+            window.location.assign(`/live/diagram/${id}`);
+          }}
+          onSelectFolder={(id) => {
+            setSelected({ kind: 'folder', id });
+            setSearchOpen(false);
+          }}
+          onClose={() => setSearchOpen(false)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function SearchSidebarIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <circle cx="7" cy="7" r="4" />
+      <path d="M10 10l3.5 3.5" />
+    </svg>
   );
 }
 

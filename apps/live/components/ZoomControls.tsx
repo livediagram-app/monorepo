@@ -22,7 +22,7 @@ export function ZoomControls({
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/5"
+      className="pointer-events-auto flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
     >
       <Tooltip title="Zoom out" description="Zoom out by 10%.">
         <IconButton onClick={onZoomOut} label="Zoom out">
@@ -44,7 +44,7 @@ export function ZoomControls({
           type="button"
           onClick={onReset}
           aria-label="Reset zoom to 100%"
-          className="flex h-9 min-w-[3.5rem] items-center justify-center rounded-md px-2 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+          className="flex h-9 min-w-[3.5rem] items-center justify-center rounded-md px-2 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           {percent}%
         </button>
@@ -73,13 +73,13 @@ export function ZoomControls({
           </svg>
         </IconButton>
       </Tooltip>
-      <div className="mx-0.5 h-6 w-px bg-slate-200" aria-hidden />
+      <div className="mx-0.5 h-6 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
       <Tooltip title="Fit to screen" description="Pan and zoom so everything on the tab fits.">
         <button
           type="button"
           onClick={onFitToScreen}
           aria-label="Fit to screen"
-          className="flex h-9 items-center rounded-md px-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+          className="flex h-9 items-center rounded-md px-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           Fit
         </button>
@@ -102,7 +102,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+      className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
     >
       {children}
     </button>
