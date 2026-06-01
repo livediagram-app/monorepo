@@ -808,7 +808,13 @@ function renderLabel(
   onCancelEdit: () => void,
 ) {
   const isSticky = element.type === 'sticky';
-  const placeholder = element.type === 'text' ? 'Text' : isSticky ? 'Note' : 'Label';
+  // Shape elements don't carry a placeholder during edit. The user
+  // is already mid-double-click on a visible shape, so the empty
+  // input doesn't need "Label" filler nudging them; the surrounding
+  // shape silhouette communicates context already. Sticky notes
+  // and standalone text elements DO get a placeholder because their
+  // pre-edit affordance is just an empty rectangle / nothing.
+  const placeholder = element.type === 'text' ? 'Text' : isSticky ? 'Note' : '';
 
   if (isEditing) {
     if (isSticky) {

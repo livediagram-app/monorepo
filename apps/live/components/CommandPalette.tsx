@@ -115,6 +115,15 @@ export type TabSectionControls = {
   onExportTab?: () => void;
   onImportTab?: () => void;
   importError?: string | null;
+  // "Auto align" pass: snaps every element's position + dimensions
+  // to the 10px grid so almost-aligned shapes become exactly aligned
+  // and minor size drift collapses. See lib/auto-align.ts. The
+  // accordion is hidden when the callback is missing so the picker
+  // / welcome surfaces don't sprout it.
+  onAutoAlign?: () => void;
+  // True when the active tab has at least one boxed element. When
+  // false the button is disabled, the action would be a no-op.
+  canAutoAlign?: boolean;
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser';
@@ -1619,7 +1628,12 @@ function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   );
 }
 
-export type TabAccordionState = { theme: boolean; canvas: boolean; file: boolean };
+export type TabAccordionState = {
+  theme: boolean;
+  canvas: boolean;
+  file: boolean;
+  cleanup: boolean;
+};
 
 export function TabSection({
   tab,
@@ -1633,7 +1647,12 @@ export function TabSection({
   // Mutually exclusive (matches SelectedElementSection).
   const toggle = (key: keyof TabAccordionState) =>
     setOpen((prev) => {
-      const closed: TabAccordionState = { theme: false, canvas: false, file: false };
+      const closed: TabAccordionState = {
+        theme: false,
+        canvas: false,
+        file: false,
+        cleanup: false,
+      };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
     });
@@ -1805,7 +1824,58 @@ export function TabSection({
           ) : null}
         </Accordion>
       ) : null}
+      {tab.onAutoAlign ? (
+        <Accordion title="Cleanup" open={open.cleanup} onToggle={() => toggle('cleanup')}>
+          <p className="text-[10px] font-medium text-slate-500">
+            Snap every element on this tab to the canvas grid so near-aligned shapes line up exactly
+            and minor dimension drift collapses. Undoable.
+          </p>
+          <div className="mt-1 flex items-stretch gap-1.5">
+            <Tooltip
+              title="Auto align"
+              description="Snap positions and sizes to the canvas grid."
+              block
+            >
+              <button
+                type="button"
+                onClick={tab.onAutoAlign}
+                disabled={!tab.canAutoAlign}
+                className={
+                  tab.canAutoAlign
+                    ? 'inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700'
+                    : 'inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-400'
+                }
+              >
+                <AutoAlignIcon />
+                Auto align
+              </button>
+            </Tooltip>
+          </div>
+        </Accordion>
+      ) : null}
     </div>
+  );
+}
+
+function AutoAlignIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {/* Two rectangles snapped to a common edge — the icon language
+          for "align" used by most drawing tools. */}
+      <rect x="2.5" y="3" width="5" height="4" rx="0.6" />
+      <rect x="2.5" y="9" width="9" height="4" rx="0.6" />
+      <path d="M2.5 14.5h11" />
+    </svg>
   );
 }
 

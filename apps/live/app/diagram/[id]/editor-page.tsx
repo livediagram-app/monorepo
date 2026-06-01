@@ -69,6 +69,7 @@ import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
+import { autoAlignElements } from '@/lib/auto-align';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
@@ -186,7 +187,8 @@ export default function LivePage() {
     theme: boolean;
     canvas: boolean;
     file: boolean;
-  }>({ theme: false, canvas: false, file: false });
+    cleanup: boolean;
+  }>({ theme: false, canvas: false, file: false, cleanup: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -1581,12 +1583,12 @@ export default function LivePage() {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: true, canvas: false, file: false });
+      setTabAccordionsOpen({ theme: true, canvas: false, file: false, cleanup: false });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: false, canvas: true, file: false });
+      setTabAccordionsOpen({ theme: false, canvas: true, file: false, cleanup: false });
     }
   };
 
@@ -2311,6 +2313,18 @@ export default function LivePage() {
     commit(() => []);
     setSelectedId(null);
     setEditingId(null);
+  };
+
+  // "Auto align" cleanup pass. Snaps every element's position and
+  // dimensions to the canvas grid; the pure helper lives in
+  // lib/auto-align.ts so it's reasoned about + tested in isolation.
+  // Goes through `commit` so the operation is undoable and the
+  // activity log captures it like any other edit.
+  const autoAlignTab = () => {
+    if (editsBlocked) return;
+    if (activeTab.elements.length === 0) return;
+    commit((els) => autoAlignElements(els));
+    emitTabMeta(activeId, 'Auto-aligned tab');
   };
 
   const setBackgroundPattern = (pattern: BackgroundPattern) => {
@@ -3487,6 +3501,8 @@ export default function LivePage() {
           hydrated && !anyWelcomeOpen && !isReadOnly ? () => void importTabFromFile() : undefined
         }
         importError={importError}
+        onAutoAlign={hydrated && !anyWelcomeOpen && !isReadOnly ? autoAlignTab : undefined}
+        canAutoAlign={activeTab.elements.length > 0 && !activeTabLocked}
         onSetBackgroundPattern={setBackgroundPattern}
         onSetBackgroundColor={setBackgroundColor}
         onSetBackgroundOpacity={setBackgroundOpacity}

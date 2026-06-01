@@ -150,10 +150,10 @@ function SharedBadge({ shareable }: { shareable: boolean }) {
         className={
           shareable
             ? 'inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200'
-            : 'inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rose-700 ring-1 ring-rose-200'
+            : 'inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200'
         }
       >
-        <span aria-hidden className={shareable ? 'text-emerald-500' : 'text-rose-500'}>
+        <span aria-hidden className={shareable ? 'text-emerald-500' : 'text-amber-500'}>
           {shareable ? <SharedDotIcon /> : <PrivateDotIcon />}
         </span>
         {shareable ? 'Shared' : 'Private'}

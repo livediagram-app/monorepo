@@ -262,6 +262,10 @@ type CanvasProps = {
   onExportTab?: () => void;
   onImportTab?: () => void;
   importError?: string | null;
+  // "Auto align" cleanup pass on the current tab's elements. See
+  // CommandPalette's Cleanup accordion + lib/auto-align.ts.
+  onAutoAlign?: () => void;
+  canAutoAlign?: boolean;
   onSetPatternColor: (color: string) => void;
   onToggleAspectLock: () => void;
   onDuplicateConnect: (direction: 'right' | 'below' | 'left' | 'above') => void;
@@ -415,6 +419,8 @@ export function Canvas(props: CanvasProps) {
     onExportTab,
     onImportTab,
     importError,
+    onAutoAlign,
+    canAutoAlign,
     onSetBackgroundPattern,
     onSetBackgroundColor,
     onSetBackgroundOpacity,
@@ -788,6 +794,8 @@ export function Canvas(props: CanvasProps) {
     onExportTab,
     onImportTab,
     importError,
+    onAutoAlign,
+    canAutoAlign,
   };
 
   // Colour for the link / comment badges. The active theme's
