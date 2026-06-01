@@ -159,9 +159,9 @@ Undo-able actions: adding/deleting any element, label commits, lock toggle, laye
 
 Not in history: selection, edit mode entry, palette position/minimize state, format-painter mode.
 
-The add buttons are split into three labelled accordions in the palette: **Shapes** (open by default; the most common entry point on a fresh canvas), **Tools** (collapsed), **Devices** (collapsed). Only one accordion is open at a time so the palette stays compact; clicking another header closes the current. The canvas-tool toggle (Pan / Select / Laser) sits above the accordions as a permanent row, since those are mode switches rather than element adds.
+The palette is laid out top-to-bottom as: canvas-tool toggle (Pan / Select / Laser) → general shape row (always visible) → **Tools** accordion (collapsed by default) → **Devices** accordion (collapsed by default). Tools and Devices are mutually exclusive: opening one closes the other so the palette stays compact. Shapes are NOT folded behind an accordion because they're the most common entry point on every fresh canvas and tucking them behind a collapsible header buries a click for no payoff.
 
-**Shapes** accordion (general shapes):
+**Shapes row** (general shapes, always visible):
 
 - **Square** — adds a 120×120 square node to the active tab.
 - **Circle** — adds a 120×120 circle node to the active tab.

@@ -143,20 +143,21 @@ function OpenPalette({
 }: CommandPaletteProps) {
   // The Selected Element / Current Tab sections moved out into the
   // ContextPanel (bottom-right, above zoom). The palette now hosts
-  // the canvas-tool toggle plus three accordions of add buttons:
-  // Shapes (open by default, the most common entry point on a fresh
-  // canvas), Tools (text + arrow + sticky), Devices (the wireframing
-  // device frames). Mutually exclusive: opening one closes the
-  // others, same as the SelectedElementSection's pattern, so the
-  // palette stays compact.
+  // the canvas-tool toggle row at the top, the general Shapes row
+  // (always visible: the most common entry point on every fresh
+  // canvas), and two collapsible accordions below for situational
+  // adds: Tools (text + arrow + sticky) and Devices (wireframing
+  // device frames). Mutually exclusive: opening Tools closes
+  // Devices and vice versa, same pattern as the
+  // SelectedElementSection's accordions, so the palette stays
+  // compact.
   const [paletteOpen, setPaletteOpen] = useState({
-    shapes: true,
     tools: false,
     devices: false,
   });
-  const togglePalette = (key: 'shapes' | 'tools' | 'devices') =>
+  const togglePalette = (key: 'tools' | 'devices') =>
     setPaletteOpen((prev) => {
-      const closed = { shapes: false, tools: false, devices: false };
+      const closed = { tools: false, devices: false };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
     });
@@ -206,11 +207,13 @@ function OpenPalette({
           </ToolButton>
         </Tooltip>
       </div>
-      <Accordion title="Shapes" open={paletteOpen.shapes} onToggle={() => togglePalette('shapes')}>
-        {/* Shape primitives. Wraps to a second row once the palette
-            runs out of horizontal room. Ordered by frequency /
-            familiarity: primitive geometry first, then flowchart-
-            vocabulary shapes. */}
+      {/* Shapes are always visible above the accordions: they're the
+          most common entry point on every fresh canvas and tucking
+          them behind a collapsible header buried a click for no
+          payoff. Tools and Devices stay accordion'd because they're
+          situational. Ordered by frequency / familiarity: primitive
+          geometry first, then flowchart-vocabulary shapes. */}
+      <div className="border-t border-slate-100 px-3 pb-2 pt-2">
         <div className="flex flex-wrap items-center gap-1">
           <IconButton
             label="Add square"
@@ -383,7 +386,7 @@ function OpenPalette({
             </svg>
           </IconButton>
         </div>
-      </Accordion>
+      </div>
       <Accordion title="Tools" open={paletteOpen.tools} onToggle={() => togglePalette('tools')}>
         <div className="flex items-center gap-1">
           <IconButton
