@@ -25,6 +25,12 @@ type ImagePickerProps = {
   // "Add image" gesture and onSelect is responsible for placing a
   // new ImageElement.
   forElementId: string | null;
+  // The image currently attached to that element (if any). When
+  // truthy AND onRemove is provided, the picker renders a footer
+  // "Remove from element" action that detaches the image from
+  // the element without touching the gallery copy.
+  currentImageId?: string | null;
+  onRemove?: () => void;
   onSelect: (image: ImageSummary) => void;
   onClose: () => void;
 };
@@ -33,6 +39,8 @@ export function ImagePicker({
   ownerId,
   diagramId,
   forElementId: _forElementId,
+  currentImageId,
+  onRemove,
   onSelect,
   onClose,
 }: ImagePickerProps) {
@@ -260,6 +268,20 @@ export function ImagePicker({
             />
           )}
         </div>
+        {currentImageId && onRemove ? (
+          <footer className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Detaches the image from this element. The gallery copy is kept.
+            </p>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 dark:border-slate-700 dark:text-rose-300 dark:hover:bg-rose-500/15"
+            >
+              Remove from element
+            </button>
+          </footer>
+        ) : null}
       </div>
     </div>,
     document.body,

@@ -2740,6 +2740,23 @@ export default function LivePage() {
     );
     setImagePickerOpenFor(null);
   };
+  // Detach the bitmap from an image element without touching the
+  // gallery: imageId returns to null (placeholder rendering), and
+  // the natural-size fields drop so a later "Reset to natural size"
+  // doesn't snap to stale dimensions. The element's width/height
+  // stay so the user keeps the footprint they sized to.
+  const removeImageFromElement = (elementId: string) => {
+    commit((els) =>
+      els.map((el) => {
+        if (el.id !== elementId || !isBoxed(el) || el.type !== 'image') return el;
+        const { naturalWidth: _w, naturalHeight: _h, ...rest } = el;
+        void _w;
+        void _h;
+        return { ...rest, imageId: null };
+      }),
+    );
+    setImagePickerOpenFor(null);
+  };
   // Drop a new image element pre-filled with an existing gallery
   // image (skips the picker entirely). Fired from the Current Tab
   // "Images" accordion thumbnails. Sizes the placeholder to the
@@ -4193,6 +4210,17 @@ export default function LivePage() {
           ownerId={selfParticipant.id}
           diagramId={diagramId}
           forElementId={imagePickerOpenFor.forElementId}
+          currentImageId={(() => {
+            const targetId = imagePickerOpenFor.forElementId;
+            if (!targetId) return null;
+            const el = activeTab.elements.find((e) => e.id === targetId);
+            return el && isBoxed(el) && el.type === 'image' ? el.imageId : null;
+          })()}
+          onRemove={
+            imagePickerOpenFor.forElementId
+              ? () => removeImageFromElement(imagePickerOpenFor.forElementId!)
+              : undefined
+          }
           onSelect={(image) => {
             if (imagePickerOpenFor.forElementId) {
               applyImageToElement(imagePickerOpenFor.forElementId, image);

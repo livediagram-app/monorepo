@@ -122,6 +122,8 @@ New `apps/live/components/ImagePicker.tsx`, lazy-loaded via `next/dynamic` (matc
 
 The modal also surfaces the soft-cap usage as a tiny bar at the bottom ("3.2 / 100 MB used") so users see the cap before they hit it.
 
+When the picker is opened for an element that already has an attached image, a **Remove from element** action sits in the modal footer. It clears the element's `imageId` (returning the canvas back to the placeholder state) and drops `naturalWidth` / `naturalHeight` so a later "Reset to natural size" doesn't snap to stale dimensions. The gallery copy is untouched; users can re-attach the same image (or a different one) without re-uploading.
+
 ### Resize behaviour
 
 Image elements gain a "Reset to natural size" entry in the right-click context menu, which sets `width = naturalWidth, height = naturalHeight`. Aspect lock defaults to true on first paint (the user can explicitly unlock via the Shape accordion's existing aspect-lock toggle, which works on ImageElement the same way it works on shapes).
