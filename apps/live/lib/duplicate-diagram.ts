@@ -46,8 +46,15 @@ export async function duplicateDiagram(
     const newTabId = tabIdMap.get(tab.id) ?? crypto.randomUUID();
     const elements = tab.elements.map((el) => {
       if ('link' in el && el.link) {
-        const next = tabIdMap.get(el.link.tabId);
-        if (next) return { ...el, link: { ...el.link, tabId: next } };
+        // Tab / element-kind links carry a tabId that needs
+        // remapping into the duplicated tab tree. Diagram-kind
+        // links target another diagram entirely; they survive
+        // the duplication unchanged so the new diagram still
+        // navigates to the same external destination.
+        if (el.link.kind === 'tab' || el.link.kind === 'element') {
+          const next = tabIdMap.get(el.link.tabId);
+          if (next) return { ...el, link: { ...el.link, tabId: next } };
+        }
       }
       return el;
     });

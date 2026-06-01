@@ -221,8 +221,12 @@ type CanvasProps = {
   tabs: Tab[];
   currentTabId: string;
   onSetLink: (tabId: string) => void;
+  onSetDiagramLink?: (diagram: import('./TabLinkPicker').LinkPickerDiagram) => void;
+  // Up to 5 of the user's recent diagrams. Surfaced in the link
+  // picker's "Link to diagram" section.
+  recentDiagrams?: import('./TabLinkPicker').LinkPickerDiagram[];
   onClearLink: () => void;
-  onFollowLink: (tabId: string) => void;
+  onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (elementId: string) => void;
   showTemplatePicker: boolean;
   // True after the page has resolved its initial identity + diagram
@@ -403,6 +407,8 @@ export function Canvas(props: CanvasProps) {
     tabs,
     currentTabId,
     onSetLink,
+    onSetDiagramLink,
+    recentDiagrams,
     onClearLink,
     onFollowLink,
     onOpenComments,
@@ -1064,6 +1070,12 @@ export function Canvas(props: CanvasProps) {
             linkedTabId={
               selected && selected.link && selected.link.kind === 'tab' ? selected.link.tabId : null
             }
+            linkedDiagramId={
+              selected && selected.link && selected.link.kind === 'diagram'
+                ? selected.link.diagramId
+                : null
+            }
+            recentDiagrams={recentDiagrams}
             onCopyFormat={
               // Format painter is available for boxed elements (copies
               // width / height) AND arrows (copies stroke / opacity /
@@ -1077,6 +1089,7 @@ export function Canvas(props: CanvasProps) {
             onToggleLock={onToggleLockSelected}
             onDuplicate={onDuplicateSelected}
             onSetLink={onSetLink}
+            onSetDiagramLink={onSetDiagramLink}
             onClearLink={onClearLink}
             onOpenComments={selected ? () => onOpenComments(selected.id) : undefined}
             onDelete={onDeleteSelected}

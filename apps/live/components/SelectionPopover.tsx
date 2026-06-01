@@ -13,10 +13,18 @@ type SelectionPopoverProps = {
   tabs: Tab[];
   currentTabId: string;
   linkedTabId: string | null;
+  // Up to 5 of the user's most-recently-saved diagrams. Surfaces in
+  // the link picker's "Link to diagram" section. Optional; visitor
+  // sessions on a share link pass undefined so the section hides.
+  recentDiagrams?: import('./TabLinkPicker').LinkPickerDiagram[];
+  // Currently-linked diagram id when the element's link kind is
+  // 'diagram'. Drives the active highlight in the diagram section.
+  linkedDiagramId?: string | null;
   onToggleLock: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onSetLink: (tabId: string) => void;
+  onSetDiagramLink?: (diagram: import('./TabLinkPicker').LinkPickerDiagram) => void;
   onClearLink: () => void;
   onCopyFormat?: () => void;
   onGroup?: () => void;
@@ -38,10 +46,13 @@ export function SelectionPopover({
   tabs,
   currentTabId,
   linkedTabId,
+  recentDiagrams,
+  linkedDiagramId,
   onToggleLock,
   onDelete,
   onDuplicate,
   onSetLink,
+  onSetDiagramLink,
   onClearLink,
   onCopyFormat,
   onGroup,
@@ -160,10 +171,20 @@ export function SelectionPopover({
               tabs={tabs}
               currentTabId={currentTabId}
               linkedTabId={linkedTabId}
+              recentDiagrams={recentDiagrams}
+              linkedDiagramId={linkedDiagramId ?? null}
               onSelect={(id) => {
                 onSetLink(id);
                 setLinkPickerOpen(false);
               }}
+              onSelectDiagram={
+                onSetDiagramLink
+                  ? (d) => {
+                      onSetDiagramLink(d);
+                      setLinkPickerOpen(false);
+                    }
+                  : undefined
+              }
               onClear={() => {
                 onClearLink();
                 setLinkPickerOpen(false);

@@ -3,12 +3,29 @@ import { createPortal } from 'react-dom';
 import type { Tab } from '@livediagram/diagram';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
 
+// A diagram summary as the picker needs it (id + display name only).
+// Trimmed from the larger DiagramSummary so the picker doesn't pull
+// the full owner / saved-at / share fields it doesn't render.
+export type LinkPickerDiagram = { id: string; name: string };
+
 type TabLinkPickerProps = {
   anchor: HTMLElement | null;
   tabs: Tab[];
   currentTabId: string;
   linkedTabId: string | null;
+  // Up to 5 of the user's most-recently-saved diagrams (excluding
+  // the current one). Surfaces as the second section of the picker:
+  // "Link to diagram". Omit to hide the section entirely (e.g. when
+  // there's no diagram list available, like a visitor on a share
+  // link).
+  recentDiagrams?: LinkPickerDiagram[];
+  // Currently-linked diagram id (when the existing link kind is
+  // 'diagram'). Drives the active highlight in the diagram section.
+  linkedDiagramId: string | null;
   onSelect: (tabId: string) => void;
+  // Pick a diagram from the recent list. The caller is responsible
+  // for committing the link kind: 'diagram' on the element.
+  onSelectDiagram?: (diagram: LinkPickerDiagram) => void;
   onClear: () => void;
   onClose: () => void;
 };
@@ -21,7 +38,10 @@ export function TabLinkPicker({
   tabs,
   currentTabId,
   linkedTabId,
+  recentDiagrams,
+  linkedDiagramId,
   onSelect,
+  onSelectDiagram,
   onClear,
   onClose,
 }: TabLinkPickerProps) {
@@ -99,23 +119,38 @@ export function TabLinkPicker({
               }
             >
               <span className="truncate flex-1">{tab.name}</span>
-              {isActive ? (
-                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-                  <path
-                    d="M3 6l2 2 4-4"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : null}
+              {isActive ? <CheckIcon /> : null}
             </button>
           );
         })
       )}
-      {linkedTabId ? (
+      {recentDiagrams && recentDiagrams.length > 0 && onSelectDiagram ? (
+        <>
+          <div className="my-1 h-px bg-slate-100" />
+          <p className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Link to diagram
+          </p>
+          {recentDiagrams.map((d) => {
+            const isActive = d.id === linkedDiagramId;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => onSelectDiagram(d)}
+                className={
+                  isActive
+                    ? 'flex items-center gap-2 rounded-md bg-brand-100 px-2 py-1.5 text-left text-xs font-medium text-brand-700'
+                    : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 transition hover:bg-slate-100'
+                }
+              >
+                <span className="truncate flex-1">{d.name || 'Untitled diagram'}</span>
+                {isActive ? <CheckIcon /> : null}
+              </button>
+            );
+          })}
+        </>
+      ) : null}
+      {linkedTabId || linkedDiagramId ? (
         <>
           <div className="my-1 h-px bg-slate-100" />
           <button
@@ -129,5 +164,20 @@ export function TabLinkPicker({
       ) : null}
     </div>,
     document.body,
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+      <path
+        d="M3 6l2 2 4-4"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

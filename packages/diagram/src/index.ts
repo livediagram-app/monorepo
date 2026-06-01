@@ -370,12 +370,16 @@ export type Endpoint =
   | { kind: 'free'; x: number; y: number }
   | { kind: 'pinned'; elementId: ElementId; anchor: Anchor };
 
-// Cross-tab link on any element. Currently always a tab link (jumping to a
-// different tab). Element-specific linking (jump-and-focus) is in the spec
-// but not in the UI yet.
+// Cross-tab link on any element. `tab` jumps to another tab on the same
+// diagram; `diagram` navigates to a different diagram entirely (with
+// the diagram's name cached on the element so the picker / badge can
+// show it without a round-trip). Element-specific linking
+// (jump-and-focus a specific element) is in the spec but not in the
+// UI yet.
 export type ElementLink =
   | { kind: 'tab'; tabId: TabId }
-  | { kind: 'element'; tabId: TabId; elementId: ElementId };
+  | { kind: 'element'; tabId: TabId; elementId: ElementId }
+  | { kind: 'diagram'; diagramId: string; name: string };
 
 // Which endpoint(s) of an arrow get an arrowhead marker. 'to' (default)
 // is the conventional one-way arrow; 'from' flips it; 'both' makes a

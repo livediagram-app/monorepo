@@ -56,7 +56,7 @@ type BoxedElementViewProps = {
   onBeginEdit: () => void;
   onCommitLabel: (label: string) => void;
   onCancelEdit: () => void;
-  onFollowLink: (tabId: string) => void;
+  onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: () => void;
   // Select the element in response to a right-click — used to drive the
   // SelectionPopover without starting a drag.
@@ -164,7 +164,12 @@ export function BoxedElementView({
   const variant = describeVariant(element, isSelected, isMultiSelected, remoteBorderColor);
 
   const commentCount = activeCommentCount(element.commentThread);
-  const linked = element.link !== undefined && element.link.kind === 'tab';
+  // Both 'tab' and 'diagram' kinds get the "linked" badge; the
+  // follow-handler dispatches off the kind via the parent's
+  // onFollowLink callback. 'element' kind is the spec'd
+  // jump-and-focus that isn't surfaced in the UI yet.
+  const linked =
+    element.link !== undefined && (element.link.kind === 'tab' || element.link.kind === 'diagram');
 
   return (
     <div
@@ -232,9 +237,9 @@ export function BoxedElementView({
           linked={linked}
           commentCount={commentCount}
           badgeColor={badgeColor}
-          onFollowLink={() =>
-            element.link && element.link.kind === 'tab' ? onFollowLink(element.link.tabId) : null
-          }
+          onFollowLink={() => {
+            if (element.link) onFollowLink(element.link);
+          }}
           onOpenComments={onOpenComments}
         />
       ) : null}

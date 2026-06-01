@@ -2076,7 +2076,10 @@ export default function LivePage() {
           ...t,
           elements: t.elements.map((el) => {
             if (!el.link) return el;
-            if (el.link.tabId !== id) return el;
+            // Tab-level deletion cleans up links pointing at the
+            // gone tab. Diagram-kind links survive (they target
+            // another diagram entirely, unrelated to this tab).
+            if (el.link.kind === 'diagram' || el.link.tabId !== id) return el;
             const { link: _drop, ...rest } = el;
             return rest as typeof el;
           }),
@@ -2803,6 +2806,21 @@ export default function LivePage() {
     );
   };
 
+  // Pick a diagram from the link picker's "Link to diagram" section.
+  // Stores the diagram's name on the element alongside the id so the
+  // badge / picker can show the destination without a round-trip.
+  const setDiagramLinkSelected = (diagram: { id: string; name: string }) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id)
+          ? { ...el, link: { kind: 'diagram' as const, diagramId: diagram.id, name: diagram.name } }
+          : el,
+      ),
+    );
+  };
+
   const clearLinkSelected = () => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
@@ -2815,13 +2833,23 @@ export default function LivePage() {
     );
   };
 
-  const followLink = (tabId: string) => {
-    if (!tabs.some((t) => t.id === tabId)) return;
-    setActiveId(tabId);
-    setSelectedId(null);
-    setEditingId(null);
-    setFormatSourceId(null);
-    setGroupSourceId(null);
+  const followLink = (link: import('@livediagram/diagram').ElementLink) => {
+    if (link.kind === 'tab' || link.kind === 'element') {
+      if (!tabs.some((t) => t.id === link.tabId)) return;
+      setActiveId(link.tabId);
+      setSelectedId(null);
+      setEditingId(null);
+      setFormatSourceId(null);
+      setGroupSourceId(null);
+      return;
+    }
+    if (link.kind === 'diagram') {
+      // Navigate to a different diagram entirely. Same shape as
+      // openDiagram (which does a full-page load), so saves +
+      // realtime room handoff land through the normal hydration
+      // path on the destination route.
+      openDiagram(link.diagramId);
+    }
   };
 
   const setOpacitySelected = (opacity: number) => {
@@ -3493,6 +3521,11 @@ export default function LivePage() {
         tabs={tabs}
         currentTabId={activeId}
         onSetLink={setLinkSelected}
+        onSetDiagramLink={setDiagramLinkSelected}
+        recentDiagrams={diagramList
+          .filter((d) => d.id !== diagramId)
+          .slice(0, 5)
+          .map((d) => ({ id: d.id, name: d.name }))}
         onClearLink={clearLinkSelected}
         onFollowLink={followLink}
         onOpenComments={openComments}
