@@ -16,7 +16,7 @@ const mLoadDiagram = vi.mocked(apiLoadDiagram);
 const mLoadTab = vi.mocked(apiLoadTab);
 const mCreate = vi.mocked(apiCreateDiagram);
 
-// Minimal StoredDiagram-ish stub — duplicateDiagram only reads id, name, tabs.
+// Minimal Diagram-ish stub: duplicateDiagram only reads id, name, tabs.
 const sourceDiagram = (tabs: { id: string }[]) =>
   ({ id: 'src', name: 'Flow', tabs }) as Awaited<ReturnType<typeof apiLoadDiagram>>;
 

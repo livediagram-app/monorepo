@@ -21,27 +21,20 @@ import type { Participant } from './identity';
 // historically used so callers (editor-page.tsx, new/page.tsx, etc.)
 // keep their existing imports. The canonical definitions live in
 // `@livediagram/api-schema`, see that package's index.ts for the
-// shapes and per-type rationale. `RoomIncoming` and `RoomOp` are
-// imported and used internally below but no caller imports them
-// through api-client today, so they stay package-local (callers go
-// to `@livediagram/api-schema` directly when they need the wire
-// types).
+// shapes and per-type rationale. `RoomIncoming`, `RoomOp`, and
+// `RoomOutgoing` are imported and used internally below but no
+// caller imports them through api-client today, so they stay
+// package-local (callers go to `@livediagram/api-schema` directly
+// when they need the wire types).
 export type {
   ChangeLogEntry,
   ChangeLogKind,
   DiagramSummary,
   Folder,
   ImageSummary,
-  RoomOutgoing,
   ShareLink,
   ShareRole,
 };
-
-// Historical alias the live app uses for the "diagram + tab
-// summaries" payload. The wider canonical shape now includes
-// `createdAt`, which the live app simply doesn't read today — the
-// extra field costs nothing and unblocks future "created on X" UI.
-export type StoredDiagram = Diagram;
 
 // Single HTTP/WS client for the livediagram API.
 //
@@ -94,7 +87,7 @@ type ParticipantResponse = {
 };
 
 type SharedDiagramResolution = {
-  diagram: StoredDiagram;
+  diagram: Diagram;
   role: ShareRole;
 };
 
@@ -183,7 +176,7 @@ async function expectOkOr404Void(res: Response, action: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`${action} failed: ${res.status}`);
 }
 
-export async function apiLoadDiagram(ownerId: string, id: string): Promise<StoredDiagram | null> {
+export async function apiLoadDiagram(ownerId: string, id: string): Promise<Diagram | null> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, {
     headers: await apiHeaders(ownerId),
   });
@@ -328,7 +321,7 @@ function stripTemplateChosen(tab: Tab): Tab {
 export async function apiCreateDiagram(
   ownerId: string,
   d: { id: string; name: string; tabs?: Tab[] },
-): Promise<StoredDiagram> {
+): Promise<Diagram> {
   const res = await fetch(`${API_BASE}/diagrams`, {
     method: 'POST',
     headers: await apiHeaders(ownerId, { body: true }),
@@ -486,7 +479,7 @@ export async function apiCopyDiagram(
   ownerId: string,
   sourceId: string,
   opts: { name?: string; shareCode?: string | null } = {},
-): Promise<StoredDiagram> {
+): Promise<Diagram> {
   const res = await fetch(`${API_BASE}/diagrams/${sourceId}/copy`, {
     method: 'POST',
     headers: await apiHeaders(ownerId, { body: true, share: opts.shareCode ?? null }),
