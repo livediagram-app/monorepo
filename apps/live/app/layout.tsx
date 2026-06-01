@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { ClerkProvider } from '@/components/providers/ClerkProvider';
 import { ConfirmProvider } from '@/hooks/useConfirm';
+import { ToastProvider } from '@/hooks/useToast';
 import './globals.css';
 
 // The live app is the product, not a content surface. Every route
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
         <ClerkProvider>
-          <ConfirmProvider>{children}</ConfirmProvider>
+          <ToastProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </ToastProvider>
         </ClerkProvider>
       </body>
     </html>

@@ -89,6 +89,17 @@ Non-destructive everyday actions (delete an element, clear a comment, undo a str
 
 The modal supports `danger` (rose-tinted confirm button) and `neutral` variants; default is `danger` because the current call sites are all destructive. Esc cancels, Enter confirms, backdrop click cancels, focus lands on the confirm button so keyboard-only users get the same muscle memory as `window.confirm`.
 
+## Toasts
+
+Asynchronous failures that previously fell through to silent `catch` blocks (link-tab, gallery delete, image upload from a background flow) now surface through a bottom-right toast stack: `apps/live/hooks/useToast.tsx` (`ToastProvider` + `useToast`). Three tones: `error` (rose), `success` (emerald), `info` (slate). Each toast auto-dismisses after 4 seconds, can be closed early, and dedupes against an identical message already on-screen so a tight retry loop can't drown the surface.
+
+Toasts are NOT used for:
+
+- Autosave progress / failures: the EditorHeader already carries a dedicated save-status pill.
+- In-context errors that have a sensible place to live near the action (the image picker's inline "Unsupported file type" surface, the gallery's "Could not load your gallery" banner).
+
+They ARE used for actions that finish off-surface from the gesture: clicking "Add to another diagram", duplicating a diagram, or any future flow whose UI has already navigated away by the time the network call resolves.
+
 ## Out of scope (next iterations)
 
 - **Auth UI** — Clerk integration. Today the api carries owner identity in `X-Owner-Id` only.

@@ -116,6 +116,7 @@ import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useToast } from '@/hooks/useToast';
 import { autoAlignElements } from '@/lib/auto-align';
 import {
   readDiagramSettings,
@@ -449,6 +450,7 @@ export default function LivePage() {
     deleteFolder: hookDeleteFolder,
   } = useFolders(selfParticipant.id === 'self' ? null : selfParticipant.id);
   const confirm = useConfirm();
+  const toast = useToast();
   // True while the very first diagram-list fetch is in flight, so the
   // Explorer can render a skeleton instead of an empty "no diagrams"
   // state. We only flip this off — subsequent refreshes don't reset it
@@ -2243,11 +2245,16 @@ export default function LivePage() {
   const linkActiveTabTo = async (targetDiagramId: string) => {
     const source = tabs.find((t) => t.id === activeId);
     if (!source) return;
+    const targetName = diagramList.find((d) => d.id === targetDiagramId)?.name ?? 'that diagram';
     try {
       await apiLinkTab(selfParticipant.id, targetDiagramId, source.id);
+      toast.success(`Tab added to "${targetName}"`);
     } catch {
-      // Best-effort. Failures stay silent because the source
-      // diagram's autosave still drives the visible save-state pill.
+      // Previously swallowed silently: the user clicked a destination
+      // and nothing visible happened. The toast surfaces the failure
+      // without forcing a modal; refresh still runs so the source
+      // diagram's local state remains consistent with what landed.
+      toast.error(`Could not add tab to "${targetName}". Try again.`);
     }
     refreshDiagramList(selfParticipant.id);
   };
