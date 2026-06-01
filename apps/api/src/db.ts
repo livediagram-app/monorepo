@@ -1006,6 +1006,61 @@ export async function deleteImage(env: Env, id: string): Promise<void> {
   await env.DB.prepare('DELETE FROM images WHERE id = ?').bind(id).run();
 }
 
+// Build a map of imageId → list of the owner's diagrams that use it.
+// Used by the Explorer Image Gallery so the user can spot unused
+// images (empty list, safe to delete) vs. live ones (which diagrams
+// would break on delete).
+//
+// Single pass over the owner's diagrams + their joined tabs: one
+// query, then JSON-parse each tab body and walk its elements.
+// O(diagrams + tabs + elements) per call, with no per-image work.
+// Tabs that share an id across diagrams (per spec/17) get attributed
+// to every diagram that references them, which is the user-facing
+// truth.
+export async function imageUsageByOwner(
+  env: Env,
+  ownerId: string,
+): Promise<Record<string, { id: string; name: string }[]>> {
+  const rows = await env.DB.prepare(
+    `SELECT d.id AS diagram_id, d.name AS diagram_name, t.data AS tab_data
+       FROM diagrams d
+       JOIN diagram_tabs dt ON dt.diagram_id = d.id
+       JOIN tabs t ON t.id = dt.tab_id
+      WHERE d.owner_id = ?`,
+  )
+    .bind(ownerId)
+    .all<{ diagram_id: string; diagram_name: string; tab_data: string }>();
+  // diagramId → already-attributed image ids (avoids double-counting
+  // when an image is reused across multiple tabs of one diagram, or
+  // a shared tab attaches the diagram twice via the many-to-many).
+  const seen = new Map<string, Set<string>>();
+  const usage: Record<string, { id: string; name: string }[]> = {};
+  for (const row of rows.results ?? []) {
+    let tab: Tab;
+    try {
+      tab = JSON.parse(row.tab_data) as Tab;
+    } catch {
+      continue;
+    }
+    for (const el of tab.elements ?? []) {
+      if (!isBoxed(el) || el.type !== 'image') continue;
+      const imageId = (el as { imageId?: string | null }).imageId;
+      if (!imageId) continue;
+      let dedupe = seen.get(row.diagram_id);
+      if (!dedupe) {
+        dedupe = new Set();
+        seen.set(row.diagram_id, dedupe);
+      }
+      if (dedupe.has(imageId)) continue;
+      dedupe.add(imageId);
+      const list = usage[imageId] ?? [];
+      list.push({ id: row.diagram_id, name: row.diagram_name });
+      usage[imageId] = list;
+    }
+  }
+  return usage;
+}
+
 // Used by the byte-read endpoint to authorise share-code readers: a
 // visitor with a valid X-Share-Code for diagram `d` can read image
 // `id` IFF some tab on diagram `d` references that image via an

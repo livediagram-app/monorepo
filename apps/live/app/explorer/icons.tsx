@@ -151,6 +151,26 @@ export function ShareIcon() {
   );
 }
 
+export function ImageIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <circle cx="6" cy="7" r="1.2" />
+      <path d="M2.5 12l3-3 2.5 2.5L11 8l3 3" />
+    </svg>
+  );
+}
+
 export function EllipsisIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>

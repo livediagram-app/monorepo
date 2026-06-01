@@ -27,6 +27,10 @@ import { MenuItem, PortalMenu } from '@/components/PortalMenu';
 // lines from the Explorer page's initial chunk pays for itself
 // immediately on the first paint of the dashboard.
 const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) => m.SearchPanel));
+// Lazy-load GalleryPane the same way: only mounted when the user
+// picks the Image Gallery sidebar item, so the upload + delete +
+// usage view doesn't sit in the default explorer chunk.
+const GalleryPane = dynamic(() => import('@/components/GalleryPane').then((m) => m.GalleryPane));
 import { InlineRenameInput } from '@/components/InlineRenameInput';
 import {
   ChevronIcon,
@@ -36,6 +40,7 @@ import {
   EllipsisIcon,
   FolderIcon,
   HomeIcon,
+  ImageIcon,
   MenuDuplicateIcon,
   MenuFolderIcon,
   MenuPencilIcon,
@@ -54,6 +59,7 @@ type SelectedNode =
   | { kind: 'all' }
   | { kind: 'unsorted' }
   | { kind: 'shared' }
+  | { kind: 'gallery' }
   | { kind: 'folder'; id: string };
 
 // "Recent" cap. Big enough for "what was I just working on",
@@ -348,6 +354,9 @@ export default function ExplorerPage() {
     if (selected.kind === 'shared') {
       return { showUnsortedRow: false, folders: [], diagrams: [] };
     }
+    if (selected.kind === 'gallery') {
+      return { showUnsortedRow: false, folders: [], diagrams: [] };
+    }
     if (selected.kind === 'unsorted') {
       return { showUnsortedRow: false, folders: [], diagrams: unsortedDiagrams };
     }
@@ -368,6 +377,7 @@ export default function ExplorerPage() {
   const paneTitle = useMemo(() => {
     if (selected.kind === 'recent') return 'Recent';
     if (selected.kind === 'shared') return 'Shared with me';
+    if (selected.kind === 'gallery') return 'Image Gallery';
     if (selected.kind === 'all') return 'All diagrams';
     if (selected.kind === 'unsorted') return 'Unsorted';
     return folderById.get(selected.id)?.name ?? 'Folder';
@@ -381,6 +391,7 @@ export default function ExplorerPage() {
     const all: Crumb = { name: 'All diagrams', onClick: () => setSelected({ kind: 'all' }) };
     if (selected.kind === 'recent') return [{ name: 'Recent' }];
     if (selected.kind === 'shared') return [{ name: 'Shared with me' }];
+    if (selected.kind === 'gallery') return [{ name: 'Image Gallery' }];
     if (selected.kind === 'all') return [{ name: 'All diagrams' }];
     if (selected.kind === 'unsorted') return [all, { name: 'Unsorted' }];
     const chain = breadcrumb(selected.id);
@@ -528,6 +539,15 @@ export default function ExplorerPage() {
               />
             ))}
 
+            <SidebarSectionLabel>Library</SidebarSectionLabel>
+            <SidebarRow
+              icon={<ImageIcon />}
+              label="Image Gallery"
+              selected={selected.kind === 'gallery'}
+              onClick={() => setSelected({ kind: 'gallery' })}
+              depth={0}
+            />
+
             {shared.length > 0 ? (
               <>
                 <SidebarSectionLabel>Shared</SidebarSectionLabel>
@@ -550,6 +570,10 @@ export default function ExplorerPage() {
 
           {loading ? (
             <SkeletonRows />
+          ) : selected.kind === 'gallery' ? (
+            clerkUserId ? (
+              <GalleryPane ownerId={clerkUserId} />
+            ) : null
           ) : selected.kind === 'shared' ? (
             <SharedList shared={shared} onDismiss={dismissShared} />
           ) : paneContent.folders.length === 0 &&

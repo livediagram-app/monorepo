@@ -731,6 +731,25 @@ export async function apiDeleteImage(ownerId: string, imageId: string): Promise<
   await expectOkVoid(res, 'delete image');
 }
 
+// Inverse-index of which diagrams reference each owned image.
+// Backs the Explorer Image Gallery's "Used in" badge. Images that
+// aren't placed on any canvas yet are absent from the map (treat a
+// missing key as "0 uses, safe to delete"). 503 collapses to an
+// empty map so a self-host without R2 still renders an empty
+// gallery rather than a hard error.
+export async function apiImageUsage(
+  ownerId: string,
+): Promise<Record<string, { id: string; name: string }[]>> {
+  const res = await fetch(`${API_BASE}/images/usage`, {
+    headers: await apiHeaders(ownerId),
+  });
+  if (res.status === 503) return {};
+  return expectOk<{ usage: Record<string, { id: string; name: string }[]> }>(
+    res,
+    'image usage',
+  ).then((b) => b.usage);
+}
+
 // Fetch the bytes of one image (authenticated) and return a blob
 // URL the caller can stick on an `<img>`. The caller is responsible
 // for revoking the URL when the element unmounts to prevent leaks.

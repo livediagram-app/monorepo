@@ -154,6 +154,11 @@ contents.
     as a recursive tree with chevron expand/collapse and indented
     nesting. Each folder row carries an ellipsis menu with Rename,
     New subfolder, Move to folder, Delete.
+  - "Image Gallery" (under a "Library" section heading) — virtual
+    entry that opens the per-account image gallery on the right
+    pane. Always present for signed-in users (the section behind it
+    degrades to an empty state when the api worker reports 503,
+    e.g. a self-host without R2).
   - "Shared with me" — virtual entry, only present when the user
     has at least one accepted share.
 - **Right pane:**
@@ -166,6 +171,14 @@ contents.
     open the diagram.
   - "Shared with me" replaces the list with a Role + Updated table
     of accepted shares; each row is a link into the shared diagram.
+  - "Image Gallery" replaces the list with a drop-zone (upload via
+    drag, paste, or click) above a grid of thumbnails. Each tile
+    shows the file name, dimensions, byte size, a delete action,
+    and a "Used in N diagrams" badge backed by `GET /api/images/usage`
+    (see [11-api.md](11-api.md)). The badge expands inline to a
+    list of links into those diagrams so the user can spot
+    orphaned bytes that are safe to delete. Upload validation +
+    hashing share the editor's path via `apps/live/lib/upload-image.ts`.
 - **Create:** a single floating action button at the bottom-right
   opens a popover with "New diagram" and "New folder" (or "New
   subfolder" when a folder is focused). The diagrams-page FAB on the

@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { apiDeleteImage, apiListImages, apiUploadImage, type ImageSummary } from '@/lib/api-client';
+import { apiDeleteImage, apiListImages, type ImageSummary } from '@/lib/api-client';
+import {
+  UPLOAD_ACCEPT_ATTR,
+  UPLOAD_MAX_BYTES,
+  uploadImageFile,
+  ImageUploadError,
+} from '@/lib/upload-image';
 import { GalleryImageButton } from './GalleryImageButton';
 
 // Two-tab modal launched from the Image element's placeholder + the
@@ -11,10 +17,10 @@ import { GalleryImageButton } from './GalleryImageButton';
 // dimensions) and SHA-256 hashing for dedupe, then POSTs to
 // /api/images. Tab 2 (Gallery) lists every image the owner has
 // uploaded so they can reuse one without re-uploading. Spec/19.
-
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
-const MAX_BYTES = 10 * 1024 * 1024;
-const ACCEPT_ATTR = ACCEPTED_TYPES.join(',');
+//
+// Upload validation + hashing + the apiUploadImage call live in
+// lib/upload-image.ts so the Explorer Image Gallery can reuse the
+// same flow (spec/15) without duplicating the rules.
 
 type ImagePickerProps = {
   ownerId: string;
@@ -109,54 +115,12 @@ export function ImagePicker({
 
   const handleFile = async (file: File) => {
     setUploadError(null);
-    if (!ACCEPTED_TYPES.includes(file.type as (typeof ACCEPTED_TYPES)[number])) {
-      setUploadError(
-        `Unsupported file type. Use PNG, JPEG, WebP, or GIF (SVG is rejected for security).`,
-      );
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setUploadError(`Too large. Limit is ${MAX_BYTES / (1024 * 1024)} MB.`);
-      return;
-    }
-    if (file.size === 0) {
-      setUploadError('Empty file.');
-      return;
-    }
     setUploading(true);
     try {
-      const bytes = await file.arrayBuffer();
-      // SHA-256 dedupe key: the server re-verifies this against the
-      // body so a client can't poison the gallery with a fake hash.
-      const digest = await crypto.subtle.digest('SHA-256', bytes);
-      const sha = Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-      // Decode dimensions via a transient <img>. Async because the
-      // browser parses the bytes off the main thread.
-      const dims = await readImageDimensions(file);
-      if (!dims) {
-        setUploadError('Could not read image dimensions.');
-        return;
-      }
-      const { image, deduped } = await apiUploadImage(ownerId, {
-        bytes,
-        contentType: file.type,
-        sha256: sha,
-        width: dims.width,
-        height: dims.height,
-        originalName: file.name,
-      });
-      if (deduped) {
-        // Keep the picker open with a note so users understand why
-        // their upload "finished instantly"; auto-select on the
-        // next tick so onSelect doesn't fight the state update.
-        setUploadError(null);
-      }
+      const { image } = await uploadImageFile(ownerId, file);
       onSelect(image);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Upload failed.';
-      setUploadError(msg);
+      setUploadError(e instanceof ImageUploadError ? e.message : 'Upload failed.');
     } finally {
       setUploading(false);
     }
@@ -237,12 +201,12 @@ export function ImagePicker({
                   {uploading ? 'Uploading…' : 'Drop, paste, or click to choose an image'}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  PNG, JPEG, WebP, or GIF up to 10 MB
+                  PNG, JPEG, WebP, or GIF up to {UPLOAD_MAX_BYTES / (1024 * 1024)} MB
                 </p>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={ACCEPT_ATTR}
+                  accept={UPLOAD_ACCEPT_ATTR}
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
@@ -392,22 +356,6 @@ function TabButton({
       {children}
     </button>
   );
-}
-
-async function readImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve(null);
-    };
-    img.src = url;
-  });
 }
 
 function UploadIcon() {

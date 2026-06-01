@@ -7,6 +7,7 @@ import {
   deleteDiagram,
   deleteFolder,
   deleteImage,
+  imageUsageByOwner,
   deleteShareLink,
   deleteTabRow,
   diagramReferencesImage,
@@ -485,6 +486,19 @@ export default {
             originalName,
           });
           return json({ image, deduped: false });
+        }
+
+        // GET /api/images/usage: owner-only. Returns the inverse
+        // index used by the Explorer Image Gallery: imageId →
+        // [{ id, name }] for every owned diagram that references
+        // it. Empty arrays for images that aren't placed on any
+        // canvas yet (the entry simply doesn't appear in the map).
+        // See spec/15 + spec/19.
+        if (segments.length === 3 && segments[2] === 'usage' && request.method === 'GET') {
+          const owner = resolveOwner();
+          if (!owner) return missingAuth();
+          const usage = await imageUsageByOwner(env, owner);
+          return json({ usage });
         }
 
         // GET /api/images/:id: byte read. Auth: owner of the
