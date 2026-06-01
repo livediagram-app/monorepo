@@ -65,7 +65,15 @@ import { NotFound } from '@/components/NotFound';
 // helpers up front.
 const ShareDialog = dynamic(() => import('@/components/ShareDialog').then((m) => m.ShareDialog));
 import { NotePopover } from '@/components/NotePopover';
-import { SearchPanel } from '@/components/SearchPanel';
+// Lazy-load SearchPanel for the same reason as the other modals
+// (ExportTabDialog / ShareDialog / TemplatePicker / CommentThread
+// Popover): it's gated on `searchOpen`, which only flips true when
+// the user clicks the footer Search button. Most editor sessions
+// never open it. The fetch latency on first open is well under
+// 100 ms on a warm Next chunk fetch, and the panel is animated in
+// (animate-fly-up-in) so the small gap reads as the entrance, not
+// a stall.
+const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) => m.SearchPanel));
 import { ShortcutsDialog } from '@/components/ShortcutsDialog';
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';

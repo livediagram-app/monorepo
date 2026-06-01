@@ -20,8 +20,13 @@ import { clerkEnabled } from '@/lib/clerk-config';
 import { useFolders } from '@/hooks/useFolders';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
+import dynamic from 'next/dynamic';
 import { MenuItem, PortalMenu } from '@/components/PortalMenu';
-import { SearchPanel } from '@/components/SearchPanel';
+// Lazy-load SearchPanel — same rationale as the editor route: it's
+// gated on `searchOpen`, never default-rendered, and dropping ~375
+// lines from the Explorer page's initial chunk pays for itself
+// immediately on the first paint of the dashboard.
+const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) => m.SearchPanel));
 import { InlineRenameInput } from '@/components/InlineRenameInput';
 import {
   ChevronIcon,
