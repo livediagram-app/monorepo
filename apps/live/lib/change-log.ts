@@ -220,28 +220,6 @@ export function diffElements(before: Element[], after: Element[]): ChangeDiff | 
   };
 }
 
-// Build a "revert this entry" diff: a fresh ChangeDiff whose `before`
-// is the entry's `after`, and `after` is the entry's `before`. The
-// kind flips to 'revert' so the panel labels it accordingly.
-export function buildRevertDiff(entry: {
-  summary: string;
-  elementIds: string[];
-  beforeState: Record<string, unknown>;
-  afterState: Record<string, unknown>;
-}): {
-  summary: string;
-  elementIds: string[];
-  beforeState: Record<string, Element | null>;
-  afterState: Record<string, Element | null>;
-} {
-  return {
-    summary: `Reverted: ${entry.summary}`,
-    elementIds: entry.elementIds,
-    beforeState: entry.afterState as Record<string, Element | null>,
-    afterState: entry.beforeState as Record<string, Element | null>,
-  };
-}
-
 // Apply an entry's `before` payload to the current element list, so
 // the affected elements jump back to their pre-change state while
 // everything else is left alone. Adds (before=null) become deletes;
