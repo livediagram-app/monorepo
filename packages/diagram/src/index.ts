@@ -246,6 +246,13 @@ export type ShapeElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  // Optional plain-text note. Distinct from `commentThread`: one
+  // note per element, no author / timestamp / multi-message
+  // structure, just a multi-line paragraph the user can leave on
+  // any shape / text / sticky to capture private context. Empty
+  // string strips the field on commit (see `setNote` in
+  // editor-page.tsx) so persisted JSON stays clean.
+  note?: string;
   padding?: Padding;
 };
 
@@ -324,6 +331,13 @@ export type TextElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  // Optional plain-text note. Distinct from `commentThread`: one
+  // note per element, no author / timestamp / multi-message
+  // structure, just a multi-line paragraph the user can leave on
+  // any shape / text / sticky to capture private context. Empty
+  // string strips the field on commit (see `setNote` in
+  // editor-page.tsx) so persisted JSON stays clean.
+  note?: string;
   padding?: Padding;
 };
 
@@ -357,6 +371,13 @@ export type StickyElement = {
   opacity?: number; // 0..1, defaults to 1
   link?: ElementLink;
   commentThread?: CommentThread;
+  // Optional plain-text note. Distinct from `commentThread`: one
+  // note per element, no author / timestamp / multi-message
+  // structure, just a multi-line paragraph the user can leave on
+  // any shape / text / sticky to capture private context. Empty
+  // string strips the field on commit (see `setNote` in
+  // editor-page.tsx) so persisted JSON stays clean.
+  note?: string;
   padding?: Padding;
 };
 

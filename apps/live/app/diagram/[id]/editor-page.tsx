@@ -64,6 +64,7 @@ import { NotFound } from '@/components/NotFound';
 // bundle doesn't ship the dialog's 382 lines + its share-link
 // helpers up front.
 const ShareDialog = dynamic(() => import('@/components/ShareDialog').then((m) => m.ShareDialog));
+import { NotePopover } from '@/components/NotePopover';
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
@@ -270,6 +271,32 @@ export default function LivePage() {
     resolveThread,
     unresolveThread,
   } = useEditorComments({ activeId, tickTabs, selfParticipant });
+
+  // Per-element note popover state. Notes are simpler than
+  // comments: single plain-text paragraph, no author, no thread.
+  // The state machine is just an open-id; the actual text lives on
+  // `element.note?` (see packages/diagram BoxedElement schema).
+  const [noteOpenId, setNoteOpenId] = useState<string | null>(null);
+  const openNote = (elementId: string) => {
+    setNoteOpenId((cur) => (cur === elementId ? null : elementId));
+  };
+  const closeNote = () => setNoteOpenId(null);
+  const setNote = (elementId: string, next: string) => {
+    const trimmed = next.trim();
+    // Empty / whitespace-only note: drop the field entirely so
+    // persisted JSON stays clean and the badge / picker active
+    // state correctly reads "no note".
+    commit((els) =>
+      els.map((el) => {
+        if (el.id !== elementId || !isBoxed(el)) return el;
+        if (!trimmed) {
+          const { note: _drop, ...rest } = el;
+          return rest as typeof el;
+        }
+        return { ...el, note: trimmed };
+      }),
+    );
+  };
   // Every diagram in the local store. Used by the Explorer to render its
   // list. Refreshed on hydration and after we save the current diagram
   // (so the Explorer's "Your diagrams" section reflects renames + first
@@ -3529,6 +3556,7 @@ export default function LivePage() {
         onClearLink={clearLinkSelected}
         onFollowLink={followLink}
         onOpenComments={openComments}
+        onOpenNote={openNote}
         showTemplatePicker={
           (hydrated && activeTab.elements.length === 0 && activeTab.templateChosen !== true) ||
           identityOnlyScreenOpen
@@ -3607,6 +3635,20 @@ export default function LivePage() {
                 onUnresolve={() => unresolveThread(target.id)}
                 onClose={closeComments}
                 readOnly={isReadOnly}
+              />
+            );
+          })()
+        : null}
+      {noteOpenId !== null && !isReadOnly
+        ? (() => {
+            const target = activeTab.elements.find((el) => el.id === noteOpenId && isBoxed(el));
+            if (!target || !isBoxed(target)) return null;
+            return (
+              <NotePopover
+                bounds={{ x: target.x, y: target.y, width: target.width, height: target.height }}
+                initial={target.note ?? ''}
+                onCommit={(next) => setNote(target.id, next)}
+                onClose={closeNote}
               />
             );
           })()

@@ -228,6 +228,7 @@ type CanvasProps = {
   onClearLink: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (elementId: string) => void;
+  onOpenNote?: (elementId: string) => void;
   showTemplatePicker: boolean;
   // True after the page has resolved its initial identity + diagram
   // fetch. Used to suppress the empty-state card during the brief
@@ -412,6 +413,7 @@ export function Canvas(props: CanvasProps) {
     onClearLink,
     onFollowLink,
     onOpenComments,
+    onOpenNote,
     showTemplatePicker,
     hydrated,
     templatePickerMode,
@@ -1092,6 +1094,12 @@ export function Canvas(props: CanvasProps) {
             onSetDiagramLink={onSetDiagramLink}
             onClearLink={onClearLink}
             onOpenComments={selected ? () => onOpenComments(selected.id) : undefined}
+            onOpenNote={
+              selected && isBoxed(selected) && onOpenNote
+                ? () => onOpenNote(selected.id)
+                : undefined
+            }
+            hasNote={selected && isBoxed(selected) ? !!selected.note : undefined}
             onDelete={onDeleteSelected}
           />
         ) : null}

@@ -156,7 +156,7 @@ export function MovablePanel({
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
       style={style}
-      className={`pointer-events-auto absolute z-10 flex animate-pop-in ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 ${cornerClass}`}
+      className={`pointer-events-auto absolute z-10 flex animate-pop-in ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40 ${cornerClass}`}
     >
       <div
         onPointerDown={beginDrag}
@@ -181,7 +181,7 @@ export function MovablePanel({
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={onReset}
                 aria-label={`Reset ${title.toLowerCase()} position`}
-                className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden fill="none">
                   {/* A diagonal arrow tucking back into a corner — a
@@ -267,7 +267,7 @@ export function DockButton({
         onPointerDown={(e) => e.stopPropagation()}
         onClick={onClick}
         aria-label={label}
-        className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900"
+        className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
       >
         {icon}
       </button>

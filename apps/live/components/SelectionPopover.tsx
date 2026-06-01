@@ -30,6 +30,13 @@ type SelectionPopoverProps = {
   onGroup?: () => void;
   onUngroup?: () => void;
   onOpenComments?: () => void;
+  // Open the per-element note popover. Notes are a single plain-
+  // text paragraph, distinct from the threaded comments.
+  onOpenNote?: () => void;
+  // True when the selected element already has a non-empty note.
+  // Drives the note button's active-state highlight so the user
+  // can tell at a glance whether a note exists.
+  hasNote?: boolean;
 };
 
 // The plus button sits between the popover and the element edge it
@@ -58,6 +65,8 @@ export function SelectionPopover({
   onGroup,
   onUngroup,
   onOpenComments,
+  onOpenNote,
+  hasNote,
 }: SelectionPopoverProps) {
   const linkButtonRef = useRef<HTMLButtonElement>(null);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
@@ -203,6 +212,16 @@ export function SelectionPopover({
           <CommentIcon />
         </PopoverButton>
       ) : null}
+      {onOpenNote ? (
+        <PopoverButton
+          label="Note"
+          description="Attach a multi-line note to this element."
+          active={hasNote}
+          onClick={onOpenNote}
+        >
+          <NoteIcon />
+        </PopoverButton>
+      ) : null}
 
       <Divider />
 
@@ -275,11 +294,16 @@ function PopoverButton({
   description,
   onClick,
   children,
+  active,
 }: {
   label: string;
   description: string;
   onClick: () => void;
   children: React.ReactNode;
+  // True when the action has a present-state to surface (e.g. a
+  // note exists on the selected element). Lights the button up in
+  // brand colours so the user can tell at a glance.
+  active?: boolean;
 }) {
   return (
     <Tooltip title={label} description={description}>
@@ -287,7 +311,12 @@ function PopoverButton({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        aria-pressed={active ? true : undefined}
+        className={
+          active
+            ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700'
+            : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+        }
       >
         {children}
       </button>
@@ -408,6 +437,26 @@ function LockIcon({ closed }: { closed: boolean }) {
       ) : (
         <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.4-.7" />
       )}
+    </svg>
+  );
+}
+
+function NoteIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 2.5h7l3 3v8a0.5 0.5 0 0 1 -0.5 0.5h-9.5a0.5 0.5 0 0 1 -0.5 -0.5v-10.5a0.5 0.5 0 0 1 0.5 -0.5z" />
+      <path d="M10 2.5v3h3" />
+      <path d="M5.5 9h5M5.5 11.5h5" />
     </svg>
   );
 }
