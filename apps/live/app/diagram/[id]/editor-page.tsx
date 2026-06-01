@@ -65,6 +65,7 @@ import { NotFound } from '@/components/NotFound';
 // helpers up front.
 const ShareDialog = dynamic(() => import('@/components/ShareDialog').then((m) => m.ShareDialog));
 import { NotePopover } from '@/components/NotePopover';
+import { ShortcutsDialog } from '@/components/ShortcutsDialog';
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
@@ -75,6 +76,7 @@ import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
 import { useEditorBroadcast } from '@/hooks/useEditorBroadcast';
+import { useShortcutsEnabled } from '@/hooks/useShortcutsEnabled';
 import { useEditorComments } from '@/hooks/useEditorComments';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
@@ -272,6 +274,12 @@ export default function LivePage() {
     unresolveThread,
   } = useEditorComments({ activeId, tickTabs, selfParticipant });
 
+  // Keyboard-shortcut catalog modal + per-device disable toggle.
+  // The toggle gates EVERY shortcut in useEditorKeyboardShortcuts
+  // below; the modal opens from a button in the TabBar.
+  const { enabled: shortcutsEnabled, setEnabled: setShortcutsEnabled } = useShortcutsEnabled();
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
   // Per-element note popover state. Notes are simpler than
   // comments: single plain-text paragraph, no author, no thread.
   // The state machine is just an open-id; the actual text lives on
@@ -455,6 +463,16 @@ export default function LivePage() {
   // to them. Tracked in a ref because it's only ever read inside the
   // effects, not rendered.
   const loadedTabIdsRef = useRef<Set<string>>(new Set());
+  // Mirror of the ref above into reactive state, used by the JSX
+  // gate that hides the template picker until the active tab's
+  // content has actually been fetched. Without this the user sees
+  // a "pick a template" flash on every fresh tab open: hydration
+  // gives them the empty placeholder (elements.length === 0,
+  // templateChosen unset), the picker renders, then the lazy fetch
+  // resolves and the picker hides. Re-rendering on every change
+  // would be wasteful; we only update this set after a
+  // hydration / fetch lands, so the renders are bounded.
+  const [loadedTabIds, setLoadedTabIds] = useState<Set<string>>(new Set());
   // Single open room connection for the current diagram. Re-opens
   // whenever diagramId changes.
   const roomRef = useRef<ReturnType<typeof connectRoom> | null>(null);
@@ -642,6 +660,7 @@ export default function LivePage() {
             ).catch(() => null);
             if (first) placeholderTabs[0] = first;
             loadedTabIdsRef.current.add(firstSummary.id);
+            setLoadedTabIds((prev) => new Set(prev).add(firstSummary.id));
           }
           resetTabs(placeholderTabs);
           // Seed the autosave's "last saved" mirror with the hydrated
@@ -731,6 +750,7 @@ export default function LivePage() {
             );
             if (first) placeholderTabs[0] = first;
             loadedTabIdsRef.current.add(firstSummary.id);
+            setLoadedTabIds((prev) => new Set(prev).add(firstSummary.id));
           }
           resetTabs(placeholderTabs);
           // Seed the autosave's "last saved" mirror with the hydrated
@@ -1246,6 +1266,14 @@ export default function LivePage() {
         // consulted. Keep the id in the loaded-set so subsequent
         // tab switches don't refetch.
         merged = true;
+        // Mirror into reactive state so the template-picker gate
+        // can wait on this without rebuilding the ref-based dedupe
+        // logic. Suppresses the brief "pick a template" flash that
+        // used to render between hydration and the fetch landing.
+        setLoadedTabIds((prev) => {
+          if (prev.has(targetId)) return prev;
+          return new Set(prev).add(targetId);
+        });
       })
       .catch(() => {
         loadedTabIds.delete(targetId);
@@ -3302,6 +3330,7 @@ export default function LivePage() {
     deleteMultiSelected,
     undo,
     redo,
+    enabled: shortcutsEnabled,
   });
 
   if (diagramNotFound) {
@@ -3558,7 +3587,17 @@ export default function LivePage() {
         onOpenComments={openComments}
         onOpenNote={openNote}
         showTemplatePicker={
-          (hydrated && activeTab.elements.length === 0 && activeTab.templateChosen !== true) ||
+          // Wait for the active tab's content to land before
+          // deciding whether to show the picker. Otherwise the
+          // empty-elements / templateChosen-unset placeholder
+          // briefly trips the gate after hydration, causing a
+          // "pick a template" flash before the real content
+          // pops in. `loadedTabIds.has(activeId)` flips true
+          // once the lazy fetch resolves.
+          (hydrated &&
+            loadedTabIds.has(activeId) &&
+            activeTab.elements.length === 0 &&
+            activeTab.templateChosen !== true) ||
           identityOnlyScreenOpen
         }
         hydrated={hydrated}
@@ -3617,8 +3656,16 @@ export default function LivePage() {
           onReorder={reorderTabs}
           readOnly={isReadOnly}
           participantsByTab={participantsByTab}
+          onOpenShortcuts={() => setShortcutsOpen(true)}
         />
       )}
+      {shortcutsOpen ? (
+        <ShortcutsDialog
+          enabled={shortcutsEnabled}
+          onToggleEnabled={setShortcutsEnabled}
+          onClose={() => setShortcutsOpen(false)}
+        />
+      ) : null}
       {commentThreadOpenId !== null
         ? (() => {
             const target = activeTab.elements.find(

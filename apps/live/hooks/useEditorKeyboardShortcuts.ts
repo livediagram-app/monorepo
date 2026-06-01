@@ -48,6 +48,11 @@ export type EditorKeyboardShortcutsDeps = {
   // shortcut layer just invokes them unconditionally.
   undo: () => void;
   redo: () => void;
+  // Per-device disable flag. When false, every shortcut effect
+  // below short-circuits before attaching its listener. The
+  // checkbox lives in the keyboard-shortcuts modal; the storage
+  // hook is `useShortcutsEnabled`.
+  enabled: boolean;
 };
 
 export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): void {
@@ -64,10 +69,12 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     deleteMultiSelected,
     undo,
     redo,
+    enabled,
   } = deps;
 
   // Escape cancels the format-painter / group-source mode.
   useEffect(() => {
+    if (!enabled) return;
     if (formatSourceId === null && groupSourceId === null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -77,11 +84,12 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [formatSourceId, groupSourceId, setFormatSourceId, setGroupSourceId]);
+  }, [enabled, formatSourceId, groupSourceId, setFormatSourceId, setGroupSourceId]);
 
   // Delete / Backspace wipes the current selection. Multi-selection
   // wins over single, label-edit and any text-input focus bails out.
   useEffect(() => {
+    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
       // View-only: bail before preventDefault so the browser's
@@ -111,13 +119,14 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     // closures here, but listing them in deps would re-attach every
     // render. The shape mirrors the inline original's behaviour.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [multiSelectedIds, selectedId, editingId, isReadOnly]);
+  }, [enabled, multiSelectedIds, selectedId, editingId, isReadOnly]);
 
   // Cmd-Z / Ctrl-Z = undo. Cmd-Shift-Z / Ctrl-Y / Ctrl-Shift-Z =
   // redo. Bails when focus is inside an input / textarea /
   // contentEditable so a user mid-rename uses the native undo
   // for their text edit, not the diagram-level one.
   useEffect(() => {
+    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (isReadOnly) return;
       const mod = e.metaKey || e.ctrlKey;
@@ -147,5 +156,5 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     return () => window.removeEventListener('keydown', onKey);
     // Same closure-direct pattern as the Delete handler above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReadOnly]);
+  }, [enabled, isReadOnly]);
 }

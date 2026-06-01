@@ -20,6 +20,9 @@ function tabAccent(tab: Tab): string {
 }
 
 type TabBarProps = {
+  // Optional callback that pops the keyboard-shortcuts modal. Lives
+  // alongside the dark-mode toggle on the right edge of the bar.
+  onOpenShortcuts?: () => void;
   tabs: Tab[];
   activeId: string;
   // True when the active tab has at least one element. Used to enable
@@ -75,6 +78,7 @@ export function TabBar({
   onReorder,
   readOnly = false,
   participantsByTab,
+  onOpenShortcuts,
 }: TabBarProps) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -201,8 +205,42 @@ export function TabBar({
           </button>
         )}
       </div>
+      {onOpenShortcuts ? (
+        <Tooltip
+          title="Keyboard shortcuts"
+          description="See every shortcut. Toggle them off if they get in the way."
+        >
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            aria-label="Keyboard shortcuts"
+            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          >
+            <KeyboardIcon />
+          </button>
+        </Tooltip>
+      ) : null}
       <UiModeToggle />
     </div>
+  );
+}
+
+function KeyboardIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="5.5" width="16" height="10" rx="1.5" />
+      <path d="M5 9h.01M8 9h.01M11 9h.01M14 9h.01M5 12.5h10" />
+    </svg>
   );
 }
 
