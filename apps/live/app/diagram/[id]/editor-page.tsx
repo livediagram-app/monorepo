@@ -3809,6 +3809,20 @@ export default function LivePage() {
                 </ContextMenu>
               );
             }
+            // Open one of the Tab section accordions inside the Editor
+            // panel, popping the panel back if it was minimised. Keeps
+            // both menu actions ("Change Theme", "Change Canvas")
+            // routing to the existing surface rather than introducing
+            // a new picker dialog.
+            const openTabAccordion = (which: 'theme' | 'canvas') => {
+              setContextMinimized(false);
+              setTabAccordionsOpen({
+                theme: which === 'theme',
+                canvas: which === 'canvas',
+                file: false,
+                cleanup: false,
+              });
+            };
             return (
               <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
                 <MenuItem
@@ -3820,10 +3834,18 @@ export default function LivePage() {
                   }}
                 />
                 <MenuItem
-                  icon={<LayerUpIcon />}
-                  label="Fit to screen"
+                  icon={<PaletteMenuIcon />}
+                  label="Change Theme"
                   onClick={() => {
-                    fitToScreen();
+                    openTabAccordion('theme');
+                    close();
+                  }}
+                />
+                <MenuItem
+                  icon={<CanvasMenuIcon />}
+                  label="Change Canvas"
+                  onClick={() => {
+                    openTabAccordion('canvas');
                     close();
                   }}
                 />
@@ -3987,6 +4009,48 @@ function TrashMenuIcon() {
       <path d="M2.5 4h11" />
       <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
       <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
+    </svg>
+  );
+}
+
+function PaletteMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2a6 6 0 1 0 0 12 1.2 1.2 0 0 0 0-2.4 1.2 1.2 0 0 1 0-2.4h1.4A3.4 3.4 0 0 0 12.8 5.8 4 4 0 0 0 8 2z" />
+      <circle cx="5" cy="6.5" r="0.6" fill="currentColor" />
+      <circle cx="8" cy="5" r="0.6" fill="currentColor" />
+      <circle cx="11" cy="7" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function CanvasMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" />
+      <circle cx="6" cy="6" r="0.6" fill="currentColor" />
+      <circle cx="10" cy="6" r="0.6" fill="currentColor" />
+      <circle cx="6" cy="10" r="0.6" fill="currentColor" />
+      <circle cx="10" cy="10" r="0.6" fill="currentColor" />
     </svg>
   );
 }
