@@ -1,4 +1,12 @@
-import type { BackgroundPattern, Element } from '@livediagram/diagram';
+import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_PATTERN_COLOR,
+  deriveShapeColours,
+  deriveTextColorForBg,
+  type BackgroundPattern,
+  type BoxedElement,
+  type Element,
+} from '@livediagram/diagram';
 
 // A preset theme bundles a canvas backdrop (background colour + pattern +
 // pattern colour) with the default colours used for newly added boxed
@@ -351,4 +359,62 @@ export function resetThemeElement(el: Element, theme: ThemeDefinition): Element 
     return { ...el, strokeColor: theme.elementStroke ?? undefined };
   }
   return el;
+}
+
+// Colour projection for a NEWLY-added boxed element, given the
+// active tab's background + pattern colour + theme. Two-pass:
+//
+//   1. Derive colours from the tab's backdrop. A tab whose
+//      backgroundColor / patternColor stayed at the design defaults
+//      gets nothing (deriveShapeColours returns null); a customised
+//      backdrop drives the new shape's fill / stroke / text so it
+//      sits on the canvas with intentional contrast. Text elements
+//      pick up a backdrop-tuned textColor (white -> dark slate,
+//      dark -> light slate).
+//
+//   2. Apply the active theme's explicit element-fill / -stroke /
+//      -text overrides on top. The theme always wins over the
+//      backdrop-derived guess (a Slate theme on a brand-cyan
+//      backdrop should still produce Slate-coloured shapes).
+//
+// Sticky notes keep their amber palette regardless: they return
+// `{}` so the caller's spread doesn't paint over the iconic
+// yellow. Matches the rule used by recolourElementForTheme.
+//
+// Pure function, so the contract ("which colours land on a brand-
+// new element") is testable without rendering anything.
+export function deriveNewBoxedColours(
+  base: BoxedElement,
+  tab: {
+    backgroundColor?: string | null;
+    patternColor?: string | null;
+    theme?: string;
+  },
+): Partial<BoxedElement> {
+  const colours: Partial<BoxedElement> = {};
+  const bg = tab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
+  const patternColor = tab.patternColor ?? DEFAULT_PATTERN_COLOR;
+  if (base.type === 'shape') {
+    const derived = deriveShapeColours(patternColor, bg);
+    if (derived) {
+      colours.fillColor = derived.fill;
+      colours.strokeColor = derived.stroke;
+      colours.textColor = derived.text;
+    }
+  } else if (base.type === 'text') {
+    if (bg !== DEFAULT_BACKGROUND_COLOR) {
+      colours.textColor = deriveTextColorForBg(bg);
+    }
+  }
+  // Theme overrides win. Sticky stays untouched (returns colours
+  // empty for that branch).
+  const theme = getTheme(tab.theme);
+  if (base.type === 'shape') {
+    if (theme.elementFill) colours.fillColor = theme.elementFill;
+    if (theme.elementStroke) colours.strokeColor = theme.elementStroke;
+    if (theme.elementText) colours.textColor = theme.elementText;
+  } else if (base.type === 'text') {
+    if (theme.elementText) colours.textColor = theme.elementText;
+  }
+  return colours;
 }

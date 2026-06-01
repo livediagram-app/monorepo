@@ -17,8 +17,6 @@ import {
   unionBoxedBounds,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
-  deriveShapeColours,
-  deriveTextColorForBg,
   type Anchor,
   type ArrowElement,
   type BackgroundPattern,
@@ -134,6 +132,7 @@ import {
 import { applyRevert, diffElements } from '@/lib/change-log';
 import { buildTemplate, templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
 import {
+  deriveNewBoxedColours,
   getTheme,
   recolourElementForTheme,
   resetThemeElement,
@@ -1802,36 +1801,16 @@ export default function LivePage() {
       width = side;
       height = side;
     }
-    // Derive colours from the active tab when it has been recoloured, so
-    // newly added elements harmonise with the user's chosen palette instead
-    // of clashing with brand defaults. Sticky notes keep their amber palette
-    // because the yellow note is iconic.
-    const bg = activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
-    const patternColor = activeTab.patternColor ?? DEFAULT_PATTERN_COLOR;
-    const colours: Partial<BoxedElement> = {};
-    if (base.type === 'shape') {
-      const derived = deriveShapeColours(patternColor, bg);
-      if (derived) {
-        colours.fillColor = derived.fill;
-        colours.strokeColor = derived.stroke;
-        colours.textColor = derived.text;
-      }
-    } else if (base.type === 'text') {
-      if (bg !== DEFAULT_BACKGROUND_COLOR) {
-        colours.textColor = deriveTextColorForBg(bg);
-      }
-    }
-    // Preset theme overrides — explicit theme colours win over the
-    // automatic background-derived ones above, and only apply to shapes
-    // and text (sticky notes keep their amber identity).
-    const theme = getTheme(activeTab.theme);
-    if (base.type === 'shape') {
-      if (theme.elementFill) colours.fillColor = theme.elementFill;
-      if (theme.elementStroke) colours.strokeColor = theme.elementStroke;
-      if (theme.elementText) colours.textColor = theme.elementText;
-    } else if (base.type === 'text') {
-      if (theme.elementText) colours.textColor = theme.elementText;
-    }
+    // Derive colours from the active tab's backdrop + theme. The
+    // two-pass projection (background-derived then theme-override)
+    // lives in lib/themes.ts so the rule is testable in isolation
+    // and stays in sync with the other theme helpers
+    // (recolourElementForTheme etc).
+    const colours = deriveNewBoxedColours(base, {
+      backgroundColor: activeTab.backgroundColor,
+      patternColor: activeTab.patternColor,
+      theme: activeTab.theme,
+    });
     const centre = getViewportCenter();
     const el: T = {
       ...base,

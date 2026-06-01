@@ -8,6 +8,7 @@ import type {
 import { describe, expect, it } from 'vitest';
 import {
   THEMES,
+  deriveNewBoxedColours,
   getTheme,
   recolourElementForTheme,
   resetThemeElement,
@@ -338,5 +339,100 @@ describe('resetThemeElement', () => {
   it('leaves sticky notes alone so the iconic amber palette survives a reset', () => {
     const sNote: StickyElement = { id: 'n', type: 'sticky', x: 0, y: 0, width: 200, height: 200 };
     expect(resetThemeElement(sNote, theme)).toEqual(sNote);
+  });
+});
+
+describe('deriveNewBoxedColours', () => {
+  const shape: ShapeElement = {
+    id: 's',
+    type: 'shape',
+    shape: 'square',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 50,
+  };
+  const text: TextElement = {
+    id: 't',
+    type: 'text',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 30,
+    label: 'hi',
+  };
+  const sticky: StickyElement = { id: 'n', type: 'sticky', x: 0, y: 0, width: 200, height: 200 };
+
+  it('returns no colours when the backdrop is at design defaults and the theme is brand', () => {
+    // Brand theme has all three element fields null; the design-
+    // default backdrop returns null from deriveShapeColours. Net:
+    // empty projection means the shape paints with its built-in
+    // defaults (brand-50 fill etc).
+    const out = deriveNewBoxedColours(shape, { theme: 'brand' });
+    expect(out).toEqual({});
+  });
+
+  it('writes background-derived fill / stroke / text on shapes for a customised backdrop', () => {
+    const out = deriveNewBoxedColours(shape, {
+      patternColor: '#0ea5e9',
+      backgroundColor: '#f0f9ff',
+      theme: 'brand',
+    });
+    expect(typeof out.fillColor).toBe('string');
+    expect(typeof out.strokeColor).toBe('string');
+    expect(typeof out.textColor).toBe('string');
+  });
+
+  it('theme overrides win over the background-derived guess (a Slate theme stays Slate even on cyan)', () => {
+    const out = deriveNewBoxedColours(shape, {
+      patternColor: '#0ea5e9',
+      backgroundColor: '#f0f9ff',
+      theme: 'slate',
+    });
+    const slate = THEMES.find((t) => t.id === 'slate')!;
+    expect(out.fillColor).toBe(slate.elementFill);
+    expect(out.strokeColor).toBe(slate.elementStroke);
+    expect(out.textColor).toBe(slate.elementText);
+  });
+
+  it('text elements get a backdrop-tuned text colour for a dark canvas', () => {
+    const out = deriveNewBoxedColours(text, {
+      backgroundColor: '#0f172a',
+      theme: 'brand',
+    });
+    // Dark canvas + brand theme: no theme override on text, so the
+    // backdrop-derived light-on-dark text colour lands.
+    expect(typeof out.textColor).toBe('string');
+    // No fill / stroke on text elements.
+    expect((out as { fillColor?: unknown }).fillColor).toBeUndefined();
+    expect((out as { strokeColor?: unknown }).strokeColor).toBeUndefined();
+  });
+
+  it('text elements get NO override when the backdrop is the design default', () => {
+    const out = deriveNewBoxedColours(text, { theme: 'brand' });
+    expect(out).toEqual({});
+  });
+
+  it('text elements still pick up a theme text colour over the default backdrop', () => {
+    const out = deriveNewBoxedColours(text, { theme: 'slate' });
+    const slate = THEMES.find((t) => t.id === 'slate')!;
+    expect(out.textColor).toBe(slate.elementText);
+  });
+
+  it('returns NO colours for sticky notes so the iconic amber palette survives', () => {
+    expect(deriveNewBoxedColours(sticky, { theme: 'brand' })).toEqual({});
+    expect(deriveNewBoxedColours(sticky, { theme: 'slate' })).toEqual({});
+    expect(
+      deriveNewBoxedColours(sticky, {
+        patternColor: '#0ea5e9',
+        backgroundColor: '#0f172a',
+        theme: 'midnight',
+      }),
+    ).toEqual({});
+  });
+
+  it('treats undefined tab fields as design defaults (no NPE on a fresh tab)', () => {
+    expect(deriveNewBoxedColours(shape, {})).toEqual({});
+    expect(deriveNewBoxedColours(text, {})).toEqual({});
   });
 });
