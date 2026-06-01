@@ -825,5 +825,339 @@ function TemplatePreview({ kind }: { kind: TemplateKind }) {
           ))}
         </svg>
       );
+    case 'mobile-wireframe':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* Three phone silhouettes with stacked content rows. */}
+          {[6, 30, 54].map((px) => (
+            <g key={px}>
+              <rect
+                x={px}
+                y="3"
+                width="20"
+                height="44"
+                rx="2.5"
+                fill="white"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.85"
+              />
+              {/* Notch / status strip */}
+              <rect x={px + 2} y="5.5" width="16" height="1.5" rx="0.4" fill="rgb(186 230 253)" />
+              {/* Header strip */}
+              <rect
+                x={px + 2}
+                y="9"
+                width="16"
+                height="3"
+                rx="0.5"
+                fill="rgb(219 234 254)"
+                stroke="rgb(147 197 253)"
+                strokeWidth="0.4"
+              />
+              {/* Three content cards */}
+              {[15, 22, 29].map((cy) => (
+                <rect
+                  key={cy}
+                  x={px + 2}
+                  y={cy}
+                  width="16"
+                  height="5"
+                  rx="0.5"
+                  fill="white"
+                  stroke="rgb(148 163 184)"
+                  strokeWidth="0.4"
+                />
+              ))}
+              {/* Bottom tab bar */}
+              <rect
+                x={px + 2}
+                y="40"
+                width="16"
+                height="4.5"
+                rx="0.5"
+                fill="rgb(241 245 249)"
+                stroke="rgb(203 213 225)"
+                strokeWidth="0.4"
+              />
+            </g>
+          ))}
+        </svg>
+      );
+    case 'laptop-wireframe':
+      return (
+        <svg width="80" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* Laptop body trapezoid + screen with header / sidebar / content / cards. */}
+          <polygon
+            points="4,38 76,38 72,42 8,42"
+            fill="rgb(226 232 240)"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.6"
+          />
+          <rect
+            x="8"
+            y="6"
+            width="64"
+            height="32"
+            rx="1.5"
+            fill="white"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.85"
+          />
+          {/* Header strip */}
+          <rect
+            x="10"
+            y="8"
+            width="60"
+            height="4"
+            rx="0.4"
+            fill="rgb(219 234 254)"
+            stroke="rgb(147 197 253)"
+            strokeWidth="0.4"
+          />
+          <circle cx="67" cy="10" r="1.4" fill="rgb(186 230 253)" />
+          {/* Sidebar */}
+          <rect
+            x="10"
+            y="13"
+            width="14"
+            height="23"
+            rx="0.4"
+            fill="rgb(241 245 249)"
+            stroke="rgb(203 213 225)"
+            strokeWidth="0.4"
+          />
+          {[15, 19, 23, 27, 31].map((sy) => (
+            <rect
+              key={sy}
+              x="11.5"
+              y={sy}
+              width="11"
+              height="2.4"
+              rx="0.3"
+              fill="white"
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.3"
+            />
+          ))}
+          {/* Three stat cards */}
+          {[25, 39, 53].map((cx) => (
+            <rect
+              key={cx}
+              x={cx}
+              y="15"
+              width="13"
+              height="8"
+              rx="0.4"
+              fill="white"
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.4"
+            />
+          ))}
+          {/* Wider content row */}
+          <rect
+            x="25"
+            y="25"
+            width="45"
+            height="10"
+            rx="0.4"
+            fill="white"
+            stroke="rgb(148 163 184)"
+            strokeWidth="0.4"
+          />
+        </svg>
+      );
+    case 'slide-deck':
+      return (
+        <svg width="80" height="46" viewBox="0 0 80 50" aria-hidden>
+          {/* 2x2 grid of plain rectangle slides, each with a title
+              band + content bullets, joined by reading-order arrows. */}
+          {[
+            { x: 4, y: 3 },
+            { x: 42, y: 3 },
+            { x: 4, y: 26 },
+            { x: 42, y: 26 },
+          ].map((s, i) => (
+            <g key={i}>
+              <rect
+                x={s.x}
+                y={s.y}
+                width="34"
+                height="20"
+                rx="1.25"
+                fill="white"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.75"
+              />
+              {/* Heading stadium */}
+              <rect
+                x={s.x + 2.5}
+                y={s.y + 2}
+                width="29"
+                height="4"
+                rx="2"
+                fill="rgb(186 230 253)"
+                stroke="rgb(14 165 233)"
+                strokeWidth="0.4"
+              />
+              {/* Slide-specific content */}
+              {i === 0 ? (
+                <>
+                  <rect
+                    x={s.x + 4}
+                    y={s.y + 9}
+                    width="22"
+                    height="2.5"
+                    rx="0.3"
+                    fill="rgb(226 232 240)"
+                  />
+                  <rect
+                    x={s.x + 4}
+                    y={s.y + 16}
+                    width="14"
+                    height="2.5"
+                    rx="1.2"
+                    fill="rgb(186 230 253)"
+                  />
+                </>
+              ) : i === 1 ? (
+                [9, 12.5, 16].map((ry) => (
+                  <g key={ry}>
+                    <rect
+                      x={s.x + 3}
+                      y={s.y + ry}
+                      width="3"
+                      height="2.4"
+                      rx="0.3"
+                      fill="rgb(241 245 249)"
+                      stroke="rgb(148 163 184)"
+                      strokeWidth="0.3"
+                    />
+                    <rect
+                      x={s.x + 7}
+                      y={s.y + ry}
+                      width="24"
+                      height="2.4"
+                      rx="0.3"
+                      fill="white"
+                      stroke="rgb(148 163 184)"
+                      strokeWidth="0.3"
+                    />
+                  </g>
+                ))
+              ) : i === 2 ? (
+                [4, 14, 24].map((rx) => (
+                  <g key={rx}>
+                    <rect
+                      x={s.x + rx}
+                      y={s.y + 9}
+                      width="8"
+                      height="9"
+                      rx="0.5"
+                      fill="white"
+                      stroke="rgb(148 163 184)"
+                      strokeWidth="0.3"
+                    />
+                    <circle cx={s.x + rx + 4} cy={s.y + 12} r="1.4" fill="rgb(186 230 253)" />
+                  </g>
+                ))
+              ) : (
+                [9, 12.5, 16].map((ry) => (
+                  <g key={ry}>
+                    <circle
+                      cx={s.x + 4.5}
+                      cy={s.y + ry + 1.2}
+                      r="1"
+                      fill="rgb(220 252 231)"
+                      stroke="rgb(74 222 128)"
+                      strokeWidth="0.3"
+                    />
+                    <rect
+                      x={s.x + 7}
+                      y={s.y + ry}
+                      width="24"
+                      height="2.4"
+                      rx="1.2"
+                      fill="white"
+                      stroke="rgb(148 163 184)"
+                      strokeWidth="0.3"
+                    />
+                  </g>
+                ))
+              )}
+            </g>
+          ))}
+          {/* Connecting arrows showing the reading order 1 → 2 → 4 → 3. */}
+          <line x1="38" y1="13" x2="42" y2="13" stroke="rgb(100 116 139)" strokeWidth="0.7" />
+          <polygon points="42,13 40.5,12 40.5,14" fill="rgb(100 116 139)" />
+          <line x1="59" y1="23" x2="59" y2="26" stroke="rgb(100 116 139)" strokeWidth="0.7" />
+          <polygon points="59,26 58,24.5 60,24.5" fill="rgb(100 116 139)" />
+          <line x1="42" y1="36" x2="38" y2="36" stroke="rgb(100 116 139)" strokeWidth="0.7" />
+          <polygon points="38,36 39.5,35 39.5,37" fill="rgb(100 116 139)" />
+        </svg>
+      );
+    case 'flywheel':
+      return (
+        <svg width="70" height="46" viewBox="0 0 70 50" aria-hidden>
+          {/* Hub + four orbiting sector circles with curved arrows hinting at clockwise motion. */}
+          <circle
+            cx="35"
+            cy="25"
+            r="7"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          {[
+            { cx: 35, cy: 7 },
+            { cx: 53, cy: 25 },
+            { cx: 35, cy: 43 },
+            { cx: 17, cy: 25 },
+          ].map((s, i) => (
+            <circle
+              key={i}
+              cx={s.cx}
+              cy={s.cy}
+              r="5"
+              fill="white"
+              stroke="rgb(14 165 233)"
+              strokeWidth="0.9"
+            />
+          ))}
+          {/* Clockwise arrows (curved using quad paths). */}
+          <path
+            d="M 41 9 Q 50 12 51 19"
+            fill="none"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 51 31 Q 50 38 41 41"
+            fill="none"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 29 41 Q 20 38 19 31"
+            fill="none"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 19 19 Q 20 12 29 9"
+            fill="none"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+          />
+          {/* Arrowheads on the trailing end of each curve. */}
+          <polygon points="51,19 49,17 53,17" fill="rgb(100 116 139)" />
+          <polygon points="41,41 39,39 39,43" fill="rgb(100 116 139)" />
+          <polygon points="19,31 21,33 17,33" fill="rgb(100 116 139)" />
+          <polygon points="29,9 31,11 31,7" fill="rgb(100 116 139)" />
+        </svg>
+      );
   }
 }

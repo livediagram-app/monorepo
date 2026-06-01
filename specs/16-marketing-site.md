@@ -8,7 +8,7 @@ The marketing app (`apps/marketing`) is the public landing site served at `/` (e
 
 - If a feature is not built (export, teams/permissions, Pro specifics, true concurrent/CRDT editing, see [02-prototype-scope](02-prototype-scope.md)), it does **not** appear on the landing page, even softened.
 - When the editor gains or loses a feature, update the landing page in the same change. Drift between the page and the product is a bug.
-- Counts (templates, themes, shapes) must match the source of truth ([09-canvas-and-command-palette](09-canvas-and-command-palette.md), `apps/live/lib/templates.ts`, `apps/live/lib/themes.ts`). As of this spec: **15 templates** (8 default + 7 extra, including Mobile / Laptop / Slide-deck wireframes that pair with the device-frame shapes), **18 themes** (12 default + 6 extra).
+- Counts (templates, themes, shapes) must match the source of truth ([09-canvas-and-command-palette](09-canvas-and-command-palette.md), `apps/live/lib/templates.ts`, `apps/live/lib/themes.ts`). As of this spec: **16 templates** (8 default + 8 extra, including Mobile / Laptop / Slide-deck wireframes that pair with the device-frame shapes and a Flywheel momentum loop), **18 themes** (12 default + 6 extra).
 - Be honest about trade-offs where it builds trust: realtime is **last-write-wins**, not CRDT, say so rather than implying conflict-free merging.
 
 ## Structure

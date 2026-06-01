@@ -28,7 +28,11 @@ export type TemplateKind =
   // situational starters for design / product work.
   | 'mobile-wireframe'
   | 'laptop-wireframe'
-  | 'slide-deck';
+  | 'slide-deck'
+  // A growth / momentum flywheel: hub + four sectors with a clockwise
+  // arrow loop. Sits under "Show more" alongside the other strategy /
+  // wireframing starters.
+  | 'flywheel';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
@@ -122,6 +126,13 @@ export const TEMPLATES: TemplateDescriptor[] = [
     kind: 'slide-deck',
     title: 'Slide deck',
     description: 'Four blank slides in a 2 by 2 grid, like a short PowerPoint outline.',
+    extra: true,
+  },
+  {
+    kind: 'flywheel',
+    title: 'Flywheel',
+    description:
+      'A central momentum hub with four reinforcing stages and a clockwise loop of arrows.',
     extra: true,
   },
 ];
@@ -220,6 +231,8 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildLaptopWireframe(cx, cy);
     case 'slide-deck':
       return buildSlideDeck(cx, cy);
+    case 'flywheel':
+      return buildFlywheel(cx, cy);
   }
 }
 
@@ -1187,23 +1200,181 @@ function buildPyramid(cx: number, cy: number): Element[] {
 // flow between screens once the user adds connectors.
 function buildMobileWireframe(cx: number, cy: number): Element[] {
   const elements: Element[] = [];
-  const screens = ['Login', 'Feed', 'Profile'];
-  const phoneW = 100;
-  const phoneH = 190;
-  const gap = 60;
-  const totalW = screens.length * phoneW + (screens.length - 1) * gap;
+  const phoneW = 160;
+  const phoneH = 320;
+  const gap = 80;
+  const screenCount = 3;
+  const totalW = screenCount * phoneW + (screenCount - 1) * gap;
   const startX = cx - totalW / 2;
   const phoneY = cy - phoneH / 2;
-  screens.forEach((label, i) => {
-    const x = startX + i * (phoneW + gap);
-    elements.push({
+  const screenInsetX = 12;
+  const screenInsetTop = 26;
+  const screenInsetBottom = 22;
+  const innerW = phoneW - screenInsetX * 2;
+
+  // Per-screen scaffold: status strip + header band + a stack of
+  // screen-specific content blocks + a bottom tab bar. Drops users
+  // into a recognisable mobile UI shell rather than three empty
+  // device frames.
+  const buildScreen = (
+    label: 'Login' | 'Feed' | 'Profile',
+    x: number,
+  ): { phone: Element; inner: Element[] } => {
+    const phone = {
       ...createShape('phone', x, phoneY),
       width: phoneW,
       height: phoneH,
       label,
-      textSize: 'sm',
+      textSize: 'sm' as const,
+      textAlignY: 'top' as const,
+    };
+    const inner: Element[] = [];
+    const innerX = x + screenInsetX;
+    const screenTop = phoneY + screenInsetTop;
+    const tabBarH = 28;
+    const tabBarY = phoneY + phoneH - screenInsetBottom - tabBarH;
+
+    // Status strip across the top of the screen area.
+    inner.push({
+      ...createShape('square', innerX, screenTop),
+      width: innerW,
+      height: 10,
     });
+
+    if (label === 'Login') {
+      // Logo + headline, two input fields, a primary button, a
+      // small "forgot password" text strip beneath.
+      inner.push({
+        ...createShape('circle', innerX + innerW / 2 - 18, screenTop + 30),
+        width: 36,
+        height: 36,
+      });
+      inner.push({
+        ...createShape('square', innerX + 16, screenTop + 80),
+        width: innerW - 32,
+        height: 16,
+        label: 'Welcome back',
+        textSize: 'sm',
+      });
+      inner.push({
+        ...createShape('square', innerX + 8, screenTop + 116),
+        width: innerW - 16,
+        height: 26,
+        label: 'Email',
+        textSize: 'sm',
+        textAlignX: 'left',
+      });
+      inner.push({
+        ...createShape('square', innerX + 8, screenTop + 152),
+        width: innerW - 16,
+        height: 26,
+        label: 'Password',
+        textSize: 'sm',
+        textAlignX: 'left',
+      });
+      inner.push({
+        ...createShape('stadium', innerX + 8, screenTop + 196),
+        width: innerW - 16,
+        height: 30,
+        label: 'Sign in',
+        textSize: 'sm',
+      });
+      inner.push({
+        ...createShape('square', innerX + innerW / 2 - 50, screenTop + 236),
+        width: 100,
+        height: 14,
+        label: 'Forgot password?',
+        textSize: 'sm',
+      });
+    } else if (label === 'Feed') {
+      // Title strip + three stacked content cards. Each card has
+      // a thumbnail dot + two strip rows underneath. Reads as the
+      // skeleton of a content list.
+      inner.push({
+        ...createShape('square', innerX + 8, screenTop + 18),
+        width: innerW - 16,
+        height: 20,
+        label: 'Feed',
+        textSize: 'sm',
+        textAlignX: 'left',
+      });
+      [0, 1, 2].forEach((row) => {
+        const cardY = screenTop + 48 + row * 72;
+        inner.push({
+          ...createShape('square', innerX + 8, cardY),
+          width: innerW - 16,
+          height: 60,
+        });
+        inner.push({
+          ...createShape('circle', innerX + 14, cardY + 8),
+          width: 18,
+          height: 18,
+        });
+        inner.push({
+          ...createShape('square', innerX + 38, cardY + 12),
+          width: innerW - 56,
+          height: 6,
+        });
+        inner.push({
+          ...createShape('square', innerX + 38, cardY + 24),
+          width: innerW - 70,
+          height: 6,
+        });
+      });
+    } else {
+      // Profile: avatar + name + bio + three settings rows.
+      inner.push({
+        ...createShape('circle', innerX + innerW / 2 - 26, screenTop + 30),
+        width: 52,
+        height: 52,
+      });
+      inner.push({
+        ...createShape('square', innerX + 24, screenTop + 92),
+        width: innerW - 48,
+        height: 16,
+        label: 'Alex Rivera',
+        textSize: 'sm',
+      });
+      inner.push({
+        ...createShape('square', innerX + 16, screenTop + 116),
+        width: innerW - 32,
+        height: 10,
+      });
+      ['Account', 'Notifications', 'Privacy'].forEach((row, i) => {
+        inner.push({
+          ...createShape('square', innerX + 8, screenTop + 146 + i * 38),
+          width: innerW - 16,
+          height: 32,
+          label: row,
+          textSize: 'sm',
+          textAlignX: 'left',
+        });
+      });
+    }
+
+    // Bottom tab bar with three pill-shaped tabs.
+    inner.push({
+      ...createShape('square', innerX, tabBarY),
+      width: innerW,
+      height: tabBarH,
+    });
+    [0, 1, 2].forEach((i) => {
+      inner.push({
+        ...createShape('circle', innerX + 14 + i * (innerW / 3), tabBarY + 7),
+        width: 14,
+        height: 14,
+      });
+    });
+
+    return { phone, inner };
+  };
+
+  (['Login', 'Feed', 'Profile'] as const).forEach((label, i) => {
+    const x = startX + i * (phoneW + gap);
+    const { phone, inner } = buildScreen(label, x);
+    elements.push(phone, ...inner);
   });
+
   return elements;
 }
 
@@ -1214,8 +1385,8 @@ function buildMobileWireframe(cx: number, cy: number): Element[] {
 // each region without fighting the device's chrome geometry.
 function buildLaptopWireframe(cx: number, cy: number): Element[] {
   const elements: Element[] = [];
-  const laptopW = 460;
-  const laptopH = 280;
+  const laptopW = 720;
+  const laptopH = 440;
   const laptopX = cx - laptopW / 2;
   const laptopY = cy - laptopH / 2;
   elements.push({
@@ -1223,41 +1394,119 @@ function buildLaptopWireframe(cx: number, cy: number): Element[] {
     width: laptopW,
     height: laptopH,
   });
-  // The laptop's screen sits in the top ~46% of its bounding box
-  // (the keyboard base lives below). Place the content rectangles
-  // inside that screen area so they read as on-screen UI rather
-  // than floating over the keyboard.
-  const screenTop = laptopY + 14;
-  const screenLeft = laptopX + 50;
-  const screenW = laptopW - 100;
-  const screenH = laptopH * 0.46 - 18;
-  const headerH = 24;
-  const sidebarW = 80;
-  const innerGap = 6;
-  // Header strip across the top of the screen area.
+  // Screen area sits in the top ~46% of the laptop's bounding box
+  // (the keyboard base lives below). Inset by 30px on each side so
+  // the UI doesn't bleed into the bezel.
+  const screenTop = laptopY + 20;
+  const screenLeft = laptopX + 80;
+  const screenW = laptopW - 160;
+  const screenH = laptopH * 0.46 - 24;
+  const headerH = 38;
+  const sidebarW = 110;
+  const innerGap = 8;
+  const contentLeft = screenLeft + sidebarW + innerGap;
+  const contentTop = screenTop + headerH + innerGap;
+  const contentW = screenW - sidebarW - innerGap;
+  const contentH = screenH - headerH - innerGap;
+
+  // Header strip: logo (square) on the left, three nav pills in the
+  // middle, an avatar (circle) on the right.
   elements.push({
     ...createShape('square', screenLeft, screenTop),
     width: screenW,
     height: headerH,
-    label: 'Header',
+  });
+  elements.push({
+    ...createShape('square', screenLeft + 10, screenTop + 10),
+    width: 60,
+    height: 18,
+    label: 'Logo',
     textSize: 'sm',
   });
-  // Sidebar down the left.
+  ['Home', 'Projects', 'Reports'].forEach((label, i) => {
+    elements.push({
+      ...createShape('stadium', screenLeft + 90 + i * 70, screenTop + 8),
+      width: 60,
+      height: 22,
+      label,
+      textSize: 'sm',
+    });
+  });
+  elements.push({
+    ...createShape('circle', screenLeft + screenW - 32, screenTop + 7),
+    width: 24,
+    height: 24,
+  });
+
+  // Sidebar: section title strip + a vertical stack of nav rows.
   elements.push({
     ...createShape('square', screenLeft, screenTop + headerH + innerGap),
     width: sidebarW,
-    height: screenH - headerH - innerGap,
-    label: 'Sidebar',
-    textSize: 'sm',
+    height: contentH,
   });
-  // Main content area to the right of the sidebar.
+  const navItems = ['Overview', 'Customers', 'Pipeline', 'Reports', 'Settings'];
+  navItems.forEach((label, i) => {
+    elements.push({
+      ...createShape('square', screenLeft + 8, screenTop + headerH + innerGap + 12 + i * 26),
+      width: sidebarW - 16,
+      height: 20,
+      label,
+      textSize: 'sm',
+      textAlignX: 'left',
+    });
+  });
+
+  // Main content area: page title, three stat cards in a row, and a
+  // wider data card beneath.
   elements.push({
-    ...createShape('square', screenLeft + sidebarW + innerGap, screenTop + headerH + innerGap),
-    width: screenW - sidebarW - innerGap,
-    height: screenH - headerH - innerGap,
-    label: 'Content',
+    ...createShape('square', contentLeft + 12, contentTop + 10),
+    width: 220,
+    height: 22,
+    label: 'Dashboard',
     textSize: 'sm',
+    textAlignX: 'left',
   });
+  const cardGap = 10;
+  const cardW = (contentW - 24 - cardGap * 2) / 3;
+  const cardH = 70;
+  ['Active users', 'Revenue', 'Conversion'].forEach((label, i) => {
+    const cardX = contentLeft + 12 + i * (cardW + cardGap);
+    const cardY = contentTop + 44;
+    elements.push({
+      ...createShape('square', cardX, cardY),
+      width: cardW,
+      height: cardH,
+    });
+    elements.push({
+      ...createShape('square', cardX + 10, cardY + 10),
+      width: cardW - 20,
+      height: 12,
+      label,
+      textSize: 'sm',
+      textAlignX: 'left',
+    });
+    elements.push({
+      ...createShape('square', cardX + 10, cardY + 30),
+      width: cardW - 20,
+      height: 22,
+      label: '0',
+      textSize: 'md',
+      textAlignX: 'left',
+    });
+  });
+  // Wider data row card.
+  const tableY = contentTop + 124;
+  const tableH = contentTop + contentH - tableY - 12;
+  if (tableH > 24) {
+    elements.push({
+      ...createShape('square', contentLeft + 12, tableY),
+      width: contentW - 24,
+      height: tableH,
+      label: 'Recent activity',
+      textSize: 'sm',
+      textAlignY: 'top',
+    });
+  }
   return elements;
 }
 
@@ -1268,24 +1517,291 @@ function buildLaptopWireframe(cx: number, cy: number): Element[] {
 // proportions. Easy to extend (delete a slide, duplicate one).
 function buildSlideDeck(cx: number, cy: number): Element[] {
   const elements: Element[] = [];
-  const slides = ['Title', 'Agenda', 'Details', 'Next steps'];
-  const slideW = 260;
-  const slideH = 200;
-  const gap = 50;
+  const slideW = 380;
+  const slideH = 280;
+  const gap = 90;
   const totalW = 2 * slideW + gap;
   const totalH = 2 * slideH + gap;
   const startX = cx - totalW / 2;
   const startY = cy - totalH / 2;
-  slides.forEach((label, i) => {
+
+  // Each slide is a plain rectangle the user can resize / restyle.
+  // Inside, a heading band sits at the top, then slide-specific
+  // content (bullet rows, agenda items, a chart placeholder, an
+  // action list). Arrows between the slides describe the deck's
+  // reading order.
+  type SlideKind = 'title' | 'agenda' | 'content' | 'actions';
+  type Slide = {
+    kind: SlideKind;
+    heading: string;
+    bullets: string[];
+  };
+  const slides: Slide[] = [
+    {
+      kind: 'title',
+      heading: 'Q3 Roadmap',
+      bullets: ['Team kick-off · 6 Aug', 'Hosted by Alex Rivera'],
+    },
+    {
+      kind: 'agenda',
+      heading: 'Agenda',
+      bullets: ['Where we landed in Q2', 'Three Q3 bets', 'Risks + dependencies', 'Open questions'],
+    },
+    {
+      kind: 'content',
+      heading: 'Three Q3 bets',
+      bullets: ['Self-serve onboarding', 'Realtime collaboration', 'Pricing experiment'],
+    },
+    {
+      kind: 'actions',
+      heading: 'Next steps',
+      bullets: [
+        'Lock scope by Friday',
+        'Eng + design pairing',
+        'Weekly review on Tuesdays',
+        'Send recap by EOD',
+      ],
+    },
+  ];
+
+  const slideElements = slides.map((slide, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    elements.push({
-      ...createShape('monitor', startX + col * (slideW + gap), startY + row * (slideH + gap)),
+    const slideX = startX + col * (slideW + gap);
+    const slideY = startY + row * (slideH + gap);
+    // The outer slide frame: a plain square (no device shape) so the
+    // user can adjust the chrome to taste. textAlignY = top keeps any
+    // future label they add anchored at the top of the slide.
+    const frame = {
+      ...createShape('square', slideX, slideY),
       width: slideW,
       height: slideH,
+      textAlignY: 'top' as const,
+    };
+    elements.push(frame);
+
+    // Heading band: a stadium-shaped accent strip at the top of each
+    // slide so the slide title reads as a hero block. Sits inset by
+    // 16px on each side so it doesn't crowd the slide edges.
+    const headingH = 44;
+    elements.push({
+      ...createShape('stadium', slideX + 16, slideY + 16),
+      width: slideW - 32,
+      height: headingH,
+      label: slide.heading,
+      textSize: 'md',
+    });
+
+    if (slide.kind === 'title') {
+      // Subtitle row + a tag pill at the bottom for the speaker.
+      elements.push({
+        ...createShape('square', slideX + 24, slideY + 16 + headingH + 18),
+        width: slideW - 48,
+        height: 30,
+        label: slide.bullets[0]!,
+        textSize: 'sm',
+        textAlignX: 'left',
+      });
+      elements.push({
+        ...createShape('stadium', slideX + 24, slideY + slideH - 50),
+        width: 200,
+        height: 28,
+        label: slide.bullets[1]!,
+        textSize: 'sm',
+      });
+    } else if (slide.kind === 'content') {
+      // Three feature cards in a row beneath the heading.
+      const cardGap = 12;
+      const cardCount = slide.bullets.length;
+      const cardW = (slideW - 32 - cardGap * (cardCount - 1)) / cardCount;
+      const cardY = slideY + 16 + headingH + 22;
+      const cardH = slideH - (16 + headingH + 22) - 32;
+      slide.bullets.forEach((bullet, j) => {
+        const bx = slideX + 16 + j * (cardW + cardGap);
+        elements.push({
+          ...createShape('square', bx, cardY),
+          width: cardW,
+          height: cardH,
+        });
+        elements.push({
+          ...createShape('circle', bx + cardW / 2 - 16, cardY + 18),
+          width: 32,
+          height: 32,
+        });
+        elements.push({
+          ...createShape('square', bx + 10, cardY + cardH - 60),
+          width: cardW - 20,
+          height: 38,
+          label: bullet,
+          textSize: 'sm',
+        });
+      });
+    } else {
+      // Agenda + actions both render as a stack of bullet rows.
+      // Agenda uses square rows ("read more like a numbered list").
+      // Actions uses stadiums ("read like to-do pills").
+      const rowH = 28;
+      const rowGap = 10;
+      const rowsTop = slideY + 16 + headingH + 22;
+      const rowsLeft = slideX + 28;
+      const rowsW = slideW - 56;
+      slide.bullets.forEach((bullet, j) => {
+        const rowY = rowsTop + j * (rowH + rowGap);
+        if (slide.kind === 'agenda') {
+          // Small index square (1 / 2 / 3 / ...) followed by the row.
+          elements.push({
+            ...createShape('square', rowsLeft, rowY),
+            width: 28,
+            height: rowH,
+            label: `${j + 1}`,
+            textSize: 'sm',
+          });
+          elements.push({
+            ...createShape('square', rowsLeft + 36, rowY),
+            width: rowsW - 36,
+            height: rowH,
+            label: bullet,
+            textSize: 'sm',
+            textAlignX: 'left',
+          });
+        } else {
+          // Actions: checkbox circle + a stadium row.
+          elements.push({
+            ...createShape('circle', rowsLeft, rowY + 4),
+            width: rowH - 8,
+            height: rowH - 8,
+          });
+          elements.push({
+            ...createShape('stadium', rowsLeft + 32, rowY),
+            width: rowsW - 32,
+            height: rowH,
+            label: bullet,
+            textSize: 'sm',
+            textAlignX: 'left',
+          });
+        }
+      });
+    }
+    return frame;
+  });
+
+  // Connecting arrows: 1→2 (top row), 2→3 (right column, top to
+  // bottom), 3→4 (bottom row). Anchored to each frame's nearest face
+  // so the arrows visibly chain the slides in reading order.
+  elements.push(createPinnedArrow(slideElements[0]!.id, 'e', slideElements[1]!.id, 'w'));
+  elements.push(createPinnedArrow(slideElements[1]!.id, 's', slideElements[3]!.id, 'n'));
+  elements.push(createPinnedArrow(slideElements[3]!.id, 'w', slideElements[2]!.id, 'e'));
+
+  return elements;
+}
+
+// Flywheel: central hub circle + four reinforcing-stage sector
+// circles arranged at 12/3/6/9 o'clock, connected by a clockwise loop
+// of arrows. A small caption sits outside each sector with example
+// tactics. Reads as a momentum loop rather than a static four-up.
+function buildFlywheel(cx: number, cy: number): Element[] {
+  const elements: Element[] = [];
+  const hubSize = 200;
+  const sectorSize = 160;
+  const orbitRadius = 260;
+  const captionOffset = 110;
+  const captionW = 200;
+  const captionH = 50;
+
+  const hub = {
+    ...createShape('circle', cx - hubSize / 2, cy - hubSize / 2),
+    width: hubSize,
+    height: hubSize,
+    label: 'Growth flywheel',
+    textSize: 'md' as const,
+  };
+  elements.push(hub);
+
+  type SectorSpec = {
+    angleDeg: number;
+    label: string;
+    caption: string;
+    // Anchors used for the outgoing arrow to the NEXT sector and the
+    // incoming arrow from the PREVIOUS sector. Picking diagonal
+    // anchors makes the loop read as a circulation around the hub.
+    out: Anchor;
+    nextIn: Anchor;
+  };
+  // Clockwise starting at the top.
+  const sectors: SectorSpec[] = [
+    {
+      angleDeg: -90,
+      label: 'Attract',
+      caption: 'Ads, SEO, content',
+      out: 'e',
+      nextIn: 'n',
+    },
+    {
+      angleDeg: 0,
+      label: 'Engage',
+      caption: 'Demos, onboarding, support',
+      out: 's',
+      nextIn: 'e',
+    },
+    {
+      angleDeg: 90,
+      label: 'Delight',
+      caption: 'Wins, outcomes, wow moments',
+      out: 'w',
+      nextIn: 's',
+    },
+    {
+      angleDeg: 180,
+      label: 'Refer',
+      caption: 'Reviews, word of mouth, referrals',
+      out: 'n',
+      nextIn: 'w',
+    },
+  ];
+
+  const sectorElements = sectors.map(({ angleDeg, label }) => {
+    const rad = (angleDeg * Math.PI) / 180;
+    const sx = cx + Math.cos(rad) * orbitRadius - sectorSize / 2;
+    const sy = cy + Math.sin(rad) * orbitRadius - sectorSize / 2;
+    return {
+      ...createShape('circle', sx, sy),
+      width: sectorSize,
+      height: sectorSize,
       label,
-      textSize: 'lg',
+      textSize: 'md' as const,
+    };
+  });
+  elements.push(...sectorElements);
+
+  // Captions sit OUTSIDE each sector, in line with the sector's
+  // outward direction from the hub. Positioned by the same angle as
+  // the sector, just further out.
+  sectors.forEach(({ angleDeg, caption }) => {
+    const rad = (angleDeg * Math.PI) / 180;
+    const dist = orbitRadius + sectorSize / 2 + captionOffset;
+    const cxC = cx + Math.cos(rad) * dist;
+    const cyC = cy + Math.sin(rad) * dist;
+    elements.push({
+      ...createText(cxC - captionW / 2, cyC - captionH / 2),
+      width: captionW,
+      height: captionH,
+      label: caption,
+      textSize: 'sm',
     });
   });
+
+  // Clockwise arrows between adjacent sectors.
+  sectors.forEach((sector, i) => {
+    const next = sectors[(i + 1) % sectors.length]!;
+    elements.push(
+      createPinnedArrow(
+        sectorElements[i]!.id,
+        sector.out,
+        sectorElements[(i + 1) % sectors.length]!.id,
+        next.nextIn,
+      ),
+    );
+  });
+
   return elements;
 }

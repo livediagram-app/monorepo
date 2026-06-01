@@ -101,7 +101,7 @@ describe('buildTemplatedTab', () => {
 // templates.
 
 describe('wireframe templates', () => {
-  it('mobile-wireframe drops three phone screens side by side', () => {
+  it('mobile-wireframe drops three labelled phone screens with inner UI elements', () => {
     const tab = buildTemplatedTab('mobile-wireframe', 'brand', 'tab-1', 'mobile');
     const phones = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'phone');
     expect(phones).toHaveLength(3);
@@ -110,41 +110,86 @@ describe('wireframe templates', () => {
       'Feed',
       'Profile',
     ]);
-    // Should have ONLY the three phones, no incidental other elements
-    // sneaking in.
-    expect(tab.elements).toHaveLength(3);
+    // Phones aren't empty frames anymore: each screen scaffolds
+    // status bar, content, and bottom tab bar. Floor the total at
+    // well above 3 so the wireframe stays substantive even as we
+    // shuffle individual UI bits around.
+    expect(tab.elements.length).toBeGreaterThan(20);
+    // Every screen exposes at least one labelled CTA / row that the
+    // user can recognise and edit.
+    const labels = tab.elements
+      .map((el) => ('label' in el ? el.label : undefined))
+      .filter((l): l is string => Boolean(l));
+    expect(labels).toContain('Sign in');
+    expect(labels).toContain('Feed');
+    expect(labels).toContain('Account');
   });
 
-  it('laptop-wireframe drops a laptop frame plus three inner content rectangles', () => {
+  it('laptop-wireframe drops a laptop frame with header, sidebar nav, and dashboard cards', () => {
     const tab = buildTemplatedTab('laptop-wireframe', 'brand', 'tab-1', 'laptop');
     const laptops = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'laptop');
     expect(laptops).toHaveLength(1);
-    const squares = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'square');
-    expect(squares).toHaveLength(3);
-    // Header / Sidebar / Content labels on the squares.
-    const squareLabels = squares
-      .map((s) => (s as { label?: string }).label)
-      .filter((l): l is string => l !== undefined);
-    expect(squareLabels.sort()).toEqual(['Content', 'Header', 'Sidebar']);
+    // No fixed shape count — the scaffold has many small elements
+    // and that's the point. Floor it at enough to confirm we're
+    // shipping a real UI shell rather than a labelled empty frame.
+    expect(tab.elements.length).toBeGreaterThan(15);
+    const labels = tab.elements
+      .map((el) => ('label' in el ? el.label : undefined))
+      .filter((l): l is string => Boolean(l));
+    // Top-level chrome: brand logo, primary nav, dashboard heading.
+    expect(labels).toContain('Logo');
+    expect(labels).toContain('Home');
+    expect(labels).toContain('Dashboard');
+    // Sidebar nav rows.
+    expect(labels).toContain('Overview');
+    expect(labels).toContain('Settings');
+    // Stat cards.
+    expect(labels).toContain('Active users');
+    expect(labels).toContain('Revenue');
   });
 
-  it('slide-deck drops four monitor frames in a 2x2 grid', () => {
+  it('slide-deck drops four content-rich slides connected in reading order', () => {
     const tab = buildTemplatedTab('slide-deck', 'brand', 'tab-1', 'slides');
+    // The new slide-deck builds slides out of standard primitives — no
+    // device shape involved.
     const monitors = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'monitor');
-    expect(monitors).toHaveLength(4);
-    expect(monitors.map((m) => (m as { label?: string }).label)).toEqual([
-      'Title',
-      'Agenda',
-      'Details',
-      'Next steps',
-    ]);
-    // 2x2 layout check: two distinct x positions (left column,
-    // right column), two distinct y positions (top row, bottom
-    // row). Both axes have two unique values; together the
-    // monitors fill the grid (4 cells).
-    const xs = new Set(monitors.map((m) => (m as { x: number }).x));
-    const ys = new Set(monitors.map((m) => (m as { y: number }).y));
-    expect(xs.size).toBe(2);
-    expect(ys.size).toBe(2);
+    expect(monitors).toHaveLength(0);
+    // Each slide title shows up exactly once as a stadium-shaped
+    // heading band, so locating them via label is the simplest pin.
+    const stadiums = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'stadium');
+    const stadiumLabels = stadiums
+      .map((s) => (s as { label?: string }).label)
+      .filter((l): l is string => Boolean(l));
+    expect(stadiumLabels).toContain('Q3 Roadmap');
+    expect(stadiumLabels).toContain('Agenda');
+    expect(stadiumLabels).toContain('Three Q3 bets');
+    expect(stadiumLabels).toContain('Next steps');
+    // Content bullets carried through from the spec.
+    const allLabels = tab.elements
+      .map((el) => ('label' in el ? el.label : undefined))
+      .filter((l): l is string => Boolean(l));
+    expect(allLabels).toContain('Self-serve onboarding');
+    expect(allLabels).toContain('Send recap by EOD');
+    // Three arrows wire the slides together in reading order.
+    const arrows = tab.elements.filter((el) => el.type === 'arrow');
+    expect(arrows).toHaveLength(3);
+  });
+
+  it('flywheel drops a hub plus four sectors with a clockwise arrow loop', () => {
+    const tab = buildTemplatedTab('flywheel', 'brand', 'tab-1', 'fly');
+    const circles = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'circle');
+    // One hub + four sector circles.
+    expect(circles).toHaveLength(5);
+    const labels = circles
+      .map((c) => (c as { label?: string }).label)
+      .filter((l): l is string => Boolean(l));
+    expect(labels).toContain('Growth flywheel');
+    expect(labels).toContain('Attract');
+    expect(labels).toContain('Engage');
+    expect(labels).toContain('Delight');
+    expect(labels).toContain('Refer');
+    // Four arrows complete the clockwise loop.
+    const arrows = tab.elements.filter((el) => el.type === 'arrow');
+    expect(arrows).toHaveLength(4);
   });
 });
