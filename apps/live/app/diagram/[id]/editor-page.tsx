@@ -3706,7 +3706,7 @@ export default function LivePage() {
             if (!target || !isBoxed(target)) return null;
             return (
               <NotePopover
-                bounds={{ x: target.x, y: target.y, width: target.width, height: target.height }}
+                elementId={target.id}
                 initial={target.note ?? ''}
                 onCommit={(next) => setNote(target.id, next)}
                 onClose={closeNote}
