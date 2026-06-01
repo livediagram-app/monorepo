@@ -88,7 +88,7 @@ export function TemplatePicker({
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
     >
       <div
-        className={`pointer-events-auto flex max-h-[90vh] ${isIdentity ? 'w-[26rem]' : 'w-[44rem]'} max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10`}
+        className={`pointer-events-auto flex h-full w-full animate-fly-up-in flex-col bg-white sm:h-auto sm:max-h-[90vh] ${isIdentity ? 'sm:w-[26rem]' : 'sm:w-[44rem]'} sm:max-w-[92%] sm:rounded-xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4">
           <div>

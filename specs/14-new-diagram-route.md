@@ -193,6 +193,12 @@ The new route owns:
   `/live/diagram/<id>` so the user lands on the editor with a
   fresh diagram already persisted.
 
+## Responsive layout
+
+The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welcome / template / identity surface used by `/live/new` AND by per-tab template picks in the editor. On `sm:` and up it renders as a centred floating card (max 44rem for templates, 26rem for identity), with rounded corners + shadow over the canvas. On mobile (below `sm`) it fills the viewport edge-to-edge: full width, full dynamic-viewport height, no border / radius / shadow, so the user can read every row and click through without zoom. Skip + Create buttons stay reachable because the body scrolls inside the card while the header + footer remain pinned (mobile and desktop alike).
+
+This is the only welcome surface so it sets the mobile floor for the rest of the editor's panel chrome (Palette / Context / Explorer / Activity, see [07-live-app](07-live-app.md)). Those are addressed separately.
+
 ## API impact
 
 - No new endpoints. `POST /api/diagrams` already accepts an
