@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { ImageSummary } from '@livediagram/api-schema';
-import { useImageBlobUrl } from '@/hooks/useImageBlobUrl';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type {
   ArrowEnds,
@@ -33,6 +32,7 @@ import {
   BackgroundStripesIcon,
   BackgroundWavesIcon,
 } from './background-pattern-icons';
+import { GalleryImageButton } from './GalleryImageButton';
 import { MovablePanel } from './MovablePanel';
 import { ShowMoreButton } from './ShowMoreButton';
 import { Tooltip } from './Tooltip';
@@ -151,9 +151,9 @@ export type TabSectionControls = {
   // render. Empty array still renders the accordion with an empty-
   // state message so the user can see the feature exists.
   recentImages?: ImageSummary[];
-  // Used by GalleryThumb to fetch the auth-gated bitmap. Required
-  // alongside `recentImages` (the picker would otherwise have
-  // nothing to fetch with).
+  // Used by GalleryImageButton to fetch the auth-gated bitmap.
+  // Required alongside `recentImages` (the picker would otherwise
+  // have nothing to fetch with).
   imageOwnerId?: string;
   imageDiagramId?: string;
   imageShareCode?: string | null;
@@ -1741,46 +1741,6 @@ function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   );
 }
 
-// Thumb for the Recent Images accordion. Reuses useImageBlobUrl so
-// the bytes go through the same auth + revoke-on-unmount lifecycle
-// as the canvas-side ImageElementView + the picker's gallery tab.
-function GalleryThumb({
-  image,
-  ownerId,
-  diagramId,
-  shareCode,
-  onSelect,
-}: {
-  image: ImageSummary;
-  ownerId: string;
-  diagramId: string;
-  shareCode: string | null;
-  onSelect: () => void;
-}) {
-  const state = useImageBlobUrl(ownerId, image.id, { diagramId, shareCode });
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="block aspect-square w-full overflow-hidden rounded-md border border-slate-200 bg-white transition hover:border-brand-400 dark:border-slate-700 dark:hover:border-brand-500/60"
-      aria-label={`Add ${image.originalName ?? 'image'} to the canvas`}
-    >
-      {state.status === 'ready' ? (
-        <img
-          src={state.src}
-          alt={image.originalName ?? ''}
-          className="h-full w-full object-cover"
-          draggable={false}
-        />
-      ) : state.status === 'broken' ? (
-        <span className="block h-full w-full bg-rose-50 dark:bg-rose-500/15" />
-      ) : (
-        <span className="block h-full w-full animate-pulse bg-slate-100 dark:bg-slate-800" />
-      )}
-    </button>
-  );
-}
-
 export type TabAccordionState = {
   theme: boolean;
   canvas: boolean;
@@ -1994,13 +1954,14 @@ export function TabSection({
           ) : (
             <div className="mt-2 grid grid-cols-4 gap-1">
               {tab.recentImages.slice(0, 8).map((image) => (
-                <GalleryThumb
+                <GalleryImageButton
                   key={image.id}
                   image={image}
                   ownerId={tab.imageOwnerId!}
                   diagramId={tab.imageDiagramId!}
                   shareCode={tab.imageShareCode ?? null}
-                  onSelect={() => tab.onAddImageFromGallery!(image)}
+                  onClick={() => tab.onAddImageFromGallery!(image)}
+                  ariaLabel={`Add ${image.originalName ?? 'image'} to the canvas`}
                 />
               ))}
             </div>
