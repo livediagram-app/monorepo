@@ -22,7 +22,13 @@ export type TemplateKind =
   | 'venn'
   | 'journey'
   | 'fishbone'
-  | 'pyramid';
+  | 'pyramid'
+  // UI wireframes (use the device-frame shapes added in spec/09's
+  // Devices accordion). Sit under "Show more" because they're
+  // situational starters for design / product work.
+  | 'mobile-wireframe'
+  | 'laptop-wireframe'
+  | 'slide-deck';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
@@ -97,6 +103,25 @@ export const TEMPLATES: TemplateDescriptor[] = [
     kind: 'pyramid',
     title: 'Pyramid',
     description: 'Four stacked tiers — foundation at the bottom, peak on top.',
+    extra: true,
+  },
+  {
+    kind: 'mobile-wireframe',
+    title: 'Mobile wireframe',
+    description: 'Three phone screens side by side: a user-flow starter for mobile UI work.',
+    extra: true,
+  },
+  {
+    kind: 'laptop-wireframe',
+    title: 'Laptop wireframe',
+    description:
+      'A laptop frame with header, sidebar and content placeholders for desktop UI work.',
+    extra: true,
+  },
+  {
+    kind: 'slide-deck',
+    title: 'Slide deck',
+    description: 'Four blank slides in a 2 by 2 grid, like a short PowerPoint outline.',
     extra: true,
   },
 ];
@@ -189,6 +214,12 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildFishbone(cx, cy);
     case 'pyramid':
       return buildPyramid(cx, cy);
+    case 'mobile-wireframe':
+      return buildMobileWireframe(cx, cy);
+    case 'laptop-wireframe':
+      return buildLaptopWireframe(cx, cy);
+    case 'slide-deck':
+      return buildSlideDeck(cx, cy);
   }
 }
 
@@ -1145,5 +1176,116 @@ function buildPyramid(cx: number, cy: number): Element[] {
   // visually the user expects the foundation at the bottom. Reverse
   // labels on render so first array entry = top tier.
   // (Already top-down in the array above; loop just iterates.)
+  return elements;
+}
+
+// Mobile wireframe: three phone frames in a row, each labelled with a
+// screen name. Starter for the typical user-flow exercise: figure out
+// the screens you need, then draw them. Phones are 100×190 here (a
+// touch wider than the create-default 90×170 so the labels read
+// comfortably). Spacing leaves enough room between them for arrow
+// flow between screens once the user adds connectors.
+function buildMobileWireframe(cx: number, cy: number): Element[] {
+  const elements: Element[] = [];
+  const screens = ['Login', 'Feed', 'Profile'];
+  const phoneW = 100;
+  const phoneH = 190;
+  const gap = 60;
+  const totalW = screens.length * phoneW + (screens.length - 1) * gap;
+  const startX = cx - totalW / 2;
+  const phoneY = cy - phoneH / 2;
+  screens.forEach((label, i) => {
+    const x = startX + i * (phoneW + gap);
+    elements.push({
+      ...createShape('phone', x, phoneY),
+      width: phoneW,
+      height: phoneH,
+      label,
+      textSize: 'sm',
+    });
+  });
+  return elements;
+}
+
+// Laptop wireframe: a wide laptop frame with three internal
+// placeholder rectangles sketched as a header + sidebar + content
+// area. The laptop's silhouette comes from the device shape itself;
+// the inner rectangles are plain squares so the user can rename
+// each region without fighting the device's chrome geometry.
+function buildLaptopWireframe(cx: number, cy: number): Element[] {
+  const elements: Element[] = [];
+  const laptopW = 460;
+  const laptopH = 280;
+  const laptopX = cx - laptopW / 2;
+  const laptopY = cy - laptopH / 2;
+  elements.push({
+    ...createShape('laptop', laptopX, laptopY),
+    width: laptopW,
+    height: laptopH,
+  });
+  // The laptop's screen sits in the top ~46% of its bounding box
+  // (the keyboard base lives below). Place the content rectangles
+  // inside that screen area so they read as on-screen UI rather
+  // than floating over the keyboard.
+  const screenTop = laptopY + 14;
+  const screenLeft = laptopX + 50;
+  const screenW = laptopW - 100;
+  const screenH = laptopH * 0.46 - 18;
+  const headerH = 24;
+  const sidebarW = 80;
+  const innerGap = 6;
+  // Header strip across the top of the screen area.
+  elements.push({
+    ...createShape('square', screenLeft, screenTop),
+    width: screenW,
+    height: headerH,
+    label: 'Header',
+    textSize: 'sm',
+  });
+  // Sidebar down the left.
+  elements.push({
+    ...createShape('square', screenLeft, screenTop + headerH + innerGap),
+    width: sidebarW,
+    height: screenH - headerH - innerGap,
+    label: 'Sidebar',
+    textSize: 'sm',
+  });
+  // Main content area to the right of the sidebar.
+  elements.push({
+    ...createShape('square', screenLeft + sidebarW + innerGap, screenTop + headerH + innerGap),
+    width: screenW - sidebarW - innerGap,
+    height: screenH - headerH - innerGap,
+    label: 'Content',
+    textSize: 'sm',
+  });
+  return elements;
+}
+
+// Slide deck: four monitor frames in a 2 by 2 grid, each labelled
+// like a PowerPoint slide ("Title", "Agenda", etc.). The monitor
+// silhouette (rounded screen + stand) reads as a presentation slide
+// at a glance and the natural aspect ratio matches typical slide
+// proportions. Easy to extend (delete a slide, duplicate one).
+function buildSlideDeck(cx: number, cy: number): Element[] {
+  const elements: Element[] = [];
+  const slides = ['Title', 'Agenda', 'Details', 'Next steps'];
+  const slideW = 260;
+  const slideH = 200;
+  const gap = 50;
+  const totalW = 2 * slideW + gap;
+  const totalH = 2 * slideH + gap;
+  const startX = cx - totalW / 2;
+  const startY = cy - totalH / 2;
+  slides.forEach((label, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    elements.push({
+      ...createShape('monitor', startX + col * (slideW + gap), startY + row * (slideH + gap)),
+      width: slideW,
+      height: slideH,
+      label,
+      textSize: 'lg',
+    });
+  });
   return elements;
 }
