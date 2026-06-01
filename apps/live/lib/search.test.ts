@@ -1,0 +1,166 @@
+import type { Element, ShapeElement, Tab } from '@livediagram/diagram';
+import { describe, expect, it } from 'vitest';
+import { buildSearchResults, matches } from './search';
+
+const shape = (id: string, label?: string): ShapeElement => ({
+  id,
+  type: 'shape',
+  shape: 'square',
+  x: 0,
+  y: 0,
+  width: 100,
+  height: 50,
+  ...(label ? { label } : {}),
+});
+
+const tab = (id: string, name: string, elements: Element[] = []): Tab => ({ id, name, elements });
+
+describe('matches', () => {
+  it('treats an empty query as a wildcard so the panel pre-opens with everything', () => {
+    expect(matches('', 'anything')).toBe(true);
+  });
+
+  it('matches case-insensitively so "FLOW" hits "Flowchart"', () => {
+    expect(matches('FLOW', 'Flowchart')).toBe(true);
+  });
+
+  it('substring matches in the middle of a name', () => {
+    expect(matches('chart', 'Flowchart')).toBe(true);
+  });
+
+  it('returns false when the needle is not present', () => {
+    expect(matches('zzz', 'Flowchart')).toBe(false);
+  });
+});
+
+describe('buildSearchResults', () => {
+  const diagrams = [
+    { id: 'd1', name: 'Flowchart' },
+    { id: 'd2', name: 'Mind map' },
+    { id: 'd3', name: '' }, // untitled, falls back to "Untitled diagram"
+  ];
+  const folders = [
+    { id: 'f1', name: 'Projects' },
+    { id: 'f2', name: 'Personal' },
+  ];
+
+  it('orders groups: diagrams, folders, tabs, elements', () => {
+    const out = buildSearchResults({
+      query: '',
+      diagrams,
+      folders,
+      tabs: [tab('t1', 'Tab one', [shape('e1', 'thing')])],
+    });
+    expect(out.map((g) => g.key)).toEqual(['diagrams', 'folders', 'tabs', 'elements']);
+  });
+
+  it('skips groups whose matches are empty rather than rendering empty section headers', () => {
+    const out = buildSearchResults({
+      query: 'thereisnomatchanywhere',
+      diagrams,
+      folders,
+      tabs: [tab('t1', 'Tab one', [shape('e1', 'thing')])],
+    });
+    expect(out).toEqual([]);
+  });
+
+  it('falls back to "Untitled diagram" for diagrams with empty names', () => {
+    const out = buildSearchResults({
+      query: 'untitled',
+      diagrams,
+      folders: [],
+    });
+    const diagramGroup = out.find((g) => g.key === 'diagrams')!;
+    expect(diagramGroup.items).toHaveLength(1);
+    expect(diagramGroup.items[0]).toMatchObject({
+      kind: 'diagram',
+      id: 'd3',
+      name: 'Untitled diagram',
+    });
+  });
+
+  it('marks the current tab in the tabs section so the user knows where they are', () => {
+    const out = buildSearchResults({
+      query: '',
+      diagrams: [],
+      folders: [],
+      tabs: [tab('t1', 'Tab one'), tab('t2', 'Tab two')],
+      currentTabId: 't2',
+    });
+    const tabGroup = out.find((g) => g.key === 'tabs')!;
+    expect(tabGroup.items).toEqual([
+      { kind: 'tab', id: 't1', name: 'Tab one', isCurrent: false },
+      { kind: 'tab', id: 't2', name: 'Tab two', isCurrent: true },
+    ]);
+  });
+
+  it("caps diagram + folder + tab matches at 8 each so a giant library doesn't blow up the modal", () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({ id: `d${i}`, name: `Diagram ${i}` }));
+    const manyFolders = Array.from({ length: 25 }, (_, i) => ({
+      id: `f${i}`,
+      name: `Folder ${i}`,
+    }));
+    const manyTabs = Array.from({ length: 25 }, (_, i) => tab(`t${i}`, `Tab ${i}`));
+    const out = buildSearchResults({
+      query: '',
+      diagrams: many,
+      folders: manyFolders,
+      tabs: manyTabs,
+    });
+    const counts = Object.fromEntries(out.map((g) => [g.key, g.items.length]));
+    expect(counts.diagrams).toBe(8);
+    expect(counts.folders).toBe(8);
+    expect(counts.tabs).toBe(8);
+  });
+
+  it('caps element hits at 12 total across all tabs, not per-tab', () => {
+    // Each of 4 tabs has 5 labelled shapes (20 candidates); the cap
+    // should still land at exactly 12 element hits.
+    const tabs = [0, 1, 2, 3].map((ti) =>
+      tab(
+        `t${ti}`,
+        `Tab ${ti}`,
+        [0, 1, 2, 3, 4].map((ei) => shape(`t${ti}-e${ei}`, `Label ${ti}-${ei}`)),
+      ),
+    );
+    const out = buildSearchResults({ query: 'label', diagrams: [], folders: [], tabs });
+    const elementGroup = out.find((g) => g.key === 'elements');
+    expect(elementGroup?.items).toHaveLength(12);
+  });
+
+  it('drops elements whose label is empty or whitespace (no matchable content)', () => {
+    const t = tab('t1', 'Tab', [shape('e1', ''), shape('e2', '   '), shape('e3', 'real label')]);
+    const out = buildSearchResults({ query: '', diagrams: [], folders: [], tabs: [t] });
+    const elementGroup = out.find((g) => g.key === 'elements')!;
+    expect(elementGroup.items).toHaveLength(1);
+    expect(elementGroup.items[0]).toMatchObject({ elementId: 'e3', label: 'real label' });
+  });
+
+  it('omits the tabs + elements scope entirely when no tabs are supplied (explorer dashboard case)', () => {
+    const out = buildSearchResults({
+      query: '',
+      diagrams,
+      folders,
+      // tabs deliberately undefined
+    });
+    expect(out.map((g) => g.key)).toEqual(['diagrams', 'folders']);
+  });
+
+  it('reports the source tab name on element hits so users see "label on Tab name"', () => {
+    const out = buildSearchResults({
+      query: 'specific',
+      diagrams: [],
+      folders: [],
+      tabs: [tab('t1', 'Architecture', [shape('e1', 'specific component')])],
+    });
+    const elementGroup = out.find((g) => g.key === 'elements')!;
+    expect(elementGroup.items[0]).toMatchObject({
+      kind: 'element',
+      tabId: 't1',
+      tabName: 'Architecture',
+      elementId: 'e1',
+      label: 'specific component',
+      type: 'shape',
+    });
+  });
+});

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Element, Tab } from '@livediagram/diagram';
+import type { Tab } from '@livediagram/diagram';
+import { buildSearchResults, type SearchGroup, type SearchResultItem } from '@/lib/search';
 
 // Global search panel: triggered from a footer button, blurs the
 // canvas behind it, pops up near the top-centre. The scope is
@@ -37,35 +38,8 @@ type SearchPanelProps = {
   onClose: () => void;
 };
 
-type ElementHit = {
-  kind: 'element';
-  tabId: string;
-  tabName: string;
-  elementId: string;
-  label: string;
-  type: Element['type'];
-};
-
-// Single-section grouping for the rendered list.
-type Group = {
-  key: 'diagrams' | 'folders' | 'tabs' | 'elements';
-  label: string;
-  items: ResultItem[];
-};
-
-type ResultItem =
-  | { kind: 'diagram'; id: string; name: string }
-  | { kind: 'folder'; id: string; name: string }
-  | { kind: 'tab'; id: string; name: string; isCurrent: boolean }
-  | ElementHit;
-
-// Case-insensitive substring match. Stand-in for a fuzzier matcher;
-// the dataset sizes here (typical user has dozens of diagrams,
-// dozens of elements per tab) don't warrant a fuzzy index.
-function matches(needle: string, hay: string): boolean {
-  if (!needle) return true;
-  return hay.toLowerCase().includes(needle.toLowerCase());
-}
+// Result-grouping logic (matching, capping, fallbacks) lives in
+// `lib/search.ts`; the panel just renders.
 
 export function SearchPanel({
   diagrams,
@@ -98,78 +72,10 @@ export function SearchPanel({
     return () => window.removeEventListener('keydown', onKey, true);
   }, [onClose]);
 
-  const groups = useMemo<Group[]>(() => {
-    const q = query.trim();
-    const groups: Group[] = [];
-
-    const diagramMatches = diagrams
-      .filter((d) => matches(q, d.name || 'Untitled diagram'))
-      .slice(0, 8);
-    if (diagramMatches.length > 0) {
-      groups.push({
-        key: 'diagrams',
-        label: 'Diagrams',
-        items: diagramMatches.map((d) => ({
-          kind: 'diagram',
-          id: d.id,
-          name: d.name || 'Untitled diagram',
-        })),
-      });
-    }
-
-    const folderMatches = folders.filter((f) => matches(q, f.name)).slice(0, 8);
-    if (folderMatches.length > 0) {
-      groups.push({
-        key: 'folders',
-        label: 'Folders',
-        items: folderMatches.map((f) => ({ kind: 'folder', id: f.id, name: f.name })),
-      });
-    }
-
-    if (tabs && tabs.length > 0) {
-      const tabMatches = tabs.filter((t) => matches(q, t.name)).slice(0, 8);
-      if (tabMatches.length > 0) {
-        groups.push({
-          key: 'tabs',
-          label: 'Tabs',
-          items: tabMatches.map((t) => ({
-            kind: 'tab',
-            id: t.id,
-            name: t.name,
-            isCurrent: t.id === currentTabId,
-          })),
-        });
-      }
-
-      // Element scope: walk every tab's elements, match on label.
-      // Elements without a label get filtered out (the user typed
-      // SOMETHING, so blanks aren't matchable). Cap at 12 hits so
-      // a runaway match doesn't blow up the modal height.
-      const elementMatches: ElementHit[] = [];
-      for (const t of tabs) {
-        for (const el of t.elements) {
-          const label = ('label' in el && typeof el.label === 'string' && el.label.trim()) || '';
-          if (!label) continue;
-          if (!matches(q, label)) continue;
-          elementMatches.push({
-            kind: 'element',
-            tabId: t.id,
-            tabName: t.name,
-            elementId: el.id,
-            label,
-            type: el.type,
-          });
-          if (elementMatches.length >= 12) break;
-        }
-        if (elementMatches.length >= 12) break;
-      }
-      if (elementMatches.length > 0) {
-        groups.push({ key: 'elements', label: 'Elements', items: elementMatches });
-      }
-    }
-
-    return groups;
-  }, [query, diagrams, folders, tabs, currentTabId]);
+  const groups = useMemo<SearchGroup[]>(
+    () => buildSearchResults({ query, diagrams, folders, tabs, currentTabId }),
+    [query, diagrams, folders, tabs, currentTabId],
+  );
 
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -179,7 +85,7 @@ export function SearchPanel({
     setActiveIndex(0);
   }, [query]);
 
-  const handleSelect = (item: ResultItem) => {
+  const handleSelect = (item: SearchResultItem) => {
     if (item.kind === 'diagram') onSelectDiagram(item.id);
     else if (item.kind === 'folder' && onSelectFolder) onSelectFolder(item.id);
     else if (item.kind === 'tab' && onSelectTab) onSelectTab(item.id);
@@ -292,7 +198,7 @@ export function SearchPanel({
   );
 }
 
-function SearchResultIcon({ item }: { item: ResultItem }) {
+function SearchResultIcon({ item }: { item: SearchResultItem }) {
   // Compact glyph per result kind so users can scan the list by
   // shape without reading labels.
   const stroke = 'currentColor';
