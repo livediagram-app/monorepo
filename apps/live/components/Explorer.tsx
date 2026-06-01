@@ -147,6 +147,20 @@ export function Explorer({
   // has lots of diagrams. The header badge surfaces the count even
   // when the list isn't visible.
   const [recentOpen, setRecentOpen] = useState(defaultRecentOpen);
+  // Auto-open Recent the first time `defaultRecentOpen` flips true.
+  // The /new page passes `defaultRecentOpen={diagramList.length > 0}`,
+  // but diagramList only populates after the API roundtrip, so the
+  // initial useState fires with `false` and Recent stays closed.
+  // Watching the prop with a one-shot guard means a returning user
+  // sees their library expanded the moment it loads, while a manual
+  // close later sticks (the ref blocks re-opens).
+  const autoOpenedRecentRef = useRef(defaultRecentOpen);
+  useEffect(() => {
+    if (defaultRecentOpen && !autoOpenedRecentRef.current) {
+      autoOpenedRecentRef.current = true;
+      setRecentOpen(true);
+    }
+  }, [defaultRecentOpen]);
   const [foldersOpen, setFoldersOpen] = useState(false);
   // Expansion state for each folder node + Unsorted (keyed by
   // folder id, or the literal 'unsorted' for the synthetic bucket).

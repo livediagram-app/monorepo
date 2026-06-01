@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 
@@ -153,6 +154,7 @@ export default function FaqPage() {
         // root layout's hardening (see apps/marketing/app/layout.tsx).
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD).replace(/</g, '\\u003c') }}
       />
+      <BreadcrumbJsonLd name="FAQ" path="/faq" />
       <Header />
       <main className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

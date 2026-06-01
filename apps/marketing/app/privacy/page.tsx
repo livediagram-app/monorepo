@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" lastUpdated="31 May 2026">
+    <LegalPage title="Privacy Policy" path="/privacy" lastUpdated="31 May 2026">
       <p>
         livediagram is built to need as little of your data as possible, and the whole codebase is
         public so you can check that for yourself. This policy explains what the hosted service at{' '}

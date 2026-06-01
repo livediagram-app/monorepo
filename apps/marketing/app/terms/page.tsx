@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" lastUpdated="31 May 2026">
+    <LegalPage title="Terms of Service" path="/terms" lastUpdated="31 May 2026">
       <p>
         These terms cover your use of the hosted livediagram service at{' '}
         <strong>livediagram.app</strong> (the &ldquo;Service&rdquo;), operated by the livediagram
