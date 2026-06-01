@@ -1832,11 +1832,17 @@ export default function LivePage() {
     };
     // Single commit that both adds the element and marks the template
     // picker as dismissed for this tab (if it was still showing).
+    const before = activeTab.elements;
+    const after = [...before, el];
     commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId ? { ...t, elements: [...t.elements, el], templateChosen: true } : t,
-      ),
+      ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
     );
+    // Activity-log the add. commit() (the element-only setter) does
+    // this on every change; addBoxed bypasses commit because it also
+    // touches templateChosen on the tab, so the emitChange call has
+    // to be repeated here. Without it, palette adds never appear in
+    // the Activity panel.
+    emitChange(activeId, before, after);
     setSelectedId(el.id);
   };
 
@@ -2687,11 +2693,16 @@ export default function LivePage() {
       arrowEnds: 'none',
       ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
     };
+    const before = activeTab.elements;
+    const after = [...before, arrow];
     commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId ? { ...t, elements: [...t.elements, arrow], templateChosen: true } : t,
-      ),
+      ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
     );
+    // Same activity-log emit as addBoxed: commit() does this for
+    // element-only commits, but this path also touches
+    // templateChosen on the tab so we use commitTabs and emit
+    // explicitly.
+    emitChange(activeId, before, after);
     setSelectedId(arrow.id);
   };
 
