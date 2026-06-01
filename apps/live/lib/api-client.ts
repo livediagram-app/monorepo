@@ -443,12 +443,32 @@ export async function apiDeleteDiagram(ownerId: string, id: string): Promise<voi
   await expectOkOr404Void(res, 'delete diagram');
 }
 
-export async function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
-  const res = await fetch(`${API_BASE}/diagrams`, {
-    headers: await apiHeaders(ownerId),
-  });
-  const { diagrams } = await expectOk<ListResponse>(res, 'list');
-  return diagrams;
+// In-flight list-diagrams calls keyed by ownerId. /explorer, /new,
+// and the editor route all mount surfaces that call apiListDiagrams
+// for the signed-in user, often within the same task tick. Each
+// mount in StrictMode dev also double-invokes its effect. Without
+// the dedupe a single signed-in page open produces 4+ concurrent
+// GET /diagrams hits; with it, identical concurrent calls share
+// one network request and resolve from the same promise. Same
+// pattern as inFlightTabLoads further up.
+const inFlightListDiagrams = new Map<string, Promise<DiagramSummary[]>>();
+
+export function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
+  const existing = inFlightListDiagrams.get(ownerId);
+  if (existing) return existing;
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/diagrams`, {
+        headers: await apiHeaders(ownerId),
+      });
+      const { diagrams } = await expectOk<ListResponse>(res, 'list');
+      return diagrams;
+    } finally {
+      inFlightListDiagrams.delete(ownerId);
+    }
+  })();
+  inFlightListDiagrams.set(ownerId, request);
+  return request;
 }
 
 // ---------------------------------------------------------------------
