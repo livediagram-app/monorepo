@@ -40,10 +40,53 @@ export const metadata: Metadata = {
   },
 };
 
+// JSON-LD structured data, see spec/16-marketing-site.md "SEO and
+// metadata". Two schemas under one @graph: WebSite for brand-name
+// search results, SoftwareApplication for "diagramming tool"
+// category browse. Both restate facts already on the page; the
+// free-tier offer is truthful (the hosted product is currently
+// free to use).
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: DESCRIPTION,
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${SITE_URL}/#app`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: DESCRIPTION,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+  ],
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 text-slate-800 antialiased">{children}</body>
+      <body className="bg-slate-50 text-slate-800 antialiased">
+        <script
+          type="application/ld+json"
+          // The JSON is serialised at build time (static export), so
+          // dangerouslySetInnerHTML is safe here. JSON.stringify
+          // escapes </ to prevent script-tag injection, the only
+          // attack vector for embedded JSON-LD.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, '\\u003c') }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
