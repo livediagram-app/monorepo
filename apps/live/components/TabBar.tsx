@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Tab } from '@livediagram/diagram';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
+import { useUiMode } from '@/hooks/useUiMode';
 import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
 import { ParticipantAvatar } from './ParticipantAvatar';
@@ -81,9 +82,9 @@ export function TabBar({
   const [overId, setOverId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3">
+    <div className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
       <span
-        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
         aria-hidden
       >
         <TabsLabelIcon />
@@ -194,13 +195,76 @@ export function TabBar({
             type="button"
             onClick={onAdd}
             aria-label="Add tab"
-            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-lg leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-lg leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           >
             +
           </button>
         )}
       </div>
+      <UiModeToggle />
     </div>
+  );
+}
+
+// UI light / dark mode toggle, pinned to the right edge of the
+// TabBar. Distinct from the per-tab diagram theme grid (Palette →
+// Theme accordion): this only flips editor chrome, not the canvas.
+// Spec/07 "UI light / dark mode" documents the full surface.
+function UiModeToggle() {
+  const { mode, toggle } = useUiMode();
+  const isDark = mode === 'dark';
+  return (
+    <Tooltip
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      description="Flips the editor chrome. Diagram canvas themes are unaffected."
+    >
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-pressed={isDark}
+        className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+      >
+        {isDark ? <SunIcon /> : <MoonIcon />}
+      </button>
+    </Tooltip>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7Z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="3" />
+      <path d="M8 1.5v1.5M8 13v1.5M1.5 8h1.5M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" />
+    </svg>
   );
 }
 

@@ -58,7 +58,7 @@ export function EditorHeader({
     // overflows the header bounds downward) was getting hidden
     // behind the canvas — siblings without explicit z-index stack in
     // document order and the canvas wins.
-    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4">
+    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
       <div className="flex w-48 items-center">
         <Brand href="/" size="md" accentColor={brandAccent} />
       </div>

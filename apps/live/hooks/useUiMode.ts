@@ -1,0 +1,60 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+// UI chrome mode (light / dark). Distinct from the per-tab diagram
+// theme (apps/live/lib/themes.ts): the diagram theme recolours
+// CANVAS content, this flag recolours editor CHROME around it.
+// Persists to localStorage so a refresh keeps the user's pick.
+//
+// Default is light. We deliberately do NOT auto-detect
+// prefers-color-scheme on first load: the toggle is opt-in so the
+// choice belongs to the user, not the OS. (Spec/07 documents the
+// reasoning.)
+
+export type UiMode = 'light' | 'dark';
+
+const STORAGE_KEY = 'livediagram:v2:ui-mode';
+
+function read(): UiMode {
+  if (typeof window === 'undefined') return 'light';
+  return window.localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+}
+
+function apply(mode: UiMode) {
+  if (typeof document === 'undefined') return;
+  const html = document.documentElement;
+  if (mode === 'dark') html.classList.add('dark');
+  else html.classList.remove('dark');
+}
+
+export function useUiMode(): { mode: UiMode; toggle: () => void } {
+  // Mirror the stored value to React state so toggling re-renders
+  // the toggle button's icon. The SSR initial pass returns 'light'
+  // (no window); the post-mount effect below reconciles to the
+  // real stored value if it differs.
+  const [mode, setMode] = useState<UiMode>('light');
+
+  useEffect(() => {
+    const stored = read();
+    setMode(stored);
+    apply(stored);
+  }, []);
+
+  const toggle = () => {
+    setMode((prev) => {
+      const next: UiMode = prev === 'dark' ? 'light' : 'dark';
+      try {
+        window.localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // Storage quota / private browsing — fall back to in-memory
+        // only. The toggle still visibly works; the choice just
+        // doesn't survive a reload.
+      }
+      apply(next);
+      return next;
+    });
+  };
+
+  return { mode, toggle };
+}

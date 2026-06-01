@@ -1,3 +1,9 @@
+/* UI light / dark mode. The class-selector variant means
+ * `dark:bg-slate-900` (etc.) lights up when documentElement carries
+ * `.dark`, regardless of the user's OS prefers-color-scheme. See
+ * spec/07 "UI light / dark mode" for the policy. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-50: #f0f9ff;
   --color-brand-100: #e0f2fe;

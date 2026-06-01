@@ -42,6 +42,12 @@ export type EditorKeyboardShortcutsDeps = {
   // shortcut handler only invokes them when there IS one.
   deleteSelected: () => void;
   deleteMultiSelected: () => void;
+  // Undo / redo callbacks. Cmd-Z (or Ctrl-Z on non-mac) undoes;
+  // Cmd-Shift-Z (or Ctrl-Y / Ctrl-Shift-Z) redoes. The handlers
+  // already no-op when there's nothing to undo/redo, so the
+  // shortcut layer just invokes them unconditionally.
+  undo: () => void;
+  redo: () => void;
 };
 
 export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): void {
@@ -56,6 +62,8 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     isReadOnly,
     deleteSelected,
     deleteMultiSelected,
+    undo,
+    redo,
   } = deps;
 
   // Escape cancels the format-painter / group-source mode.
@@ -104,4 +112,40 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     // render. The shape mirrors the inline original's behaviour.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multiSelectedIds, selectedId, editingId, isReadOnly]);
+
+  // Cmd-Z / Ctrl-Z = undo. Cmd-Shift-Z / Ctrl-Y / Ctrl-Shift-Z =
+  // redo. Bails when focus is inside an input / textarea /
+  // contentEditable so a user mid-rename uses the native undo
+  // for their text edit, not the diagram-level one.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isReadOnly) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const target = e.target as Element | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      // Redo branches: Cmd-Shift-Z (mac convention), Ctrl-Y
+      // (Windows convention), Ctrl-Shift-Z (covers both).
+      if (key === 'y' || (key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (key === 'z') {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // Same closure-direct pattern as the Delete handler above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReadOnly]);
 }

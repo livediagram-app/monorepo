@@ -2323,8 +2323,11 @@ export default function LivePage() {
   const autoAlignTab = () => {
     if (editsBlocked) return;
     if (activeTab.elements.length === 0) return;
+    // `commit` snapshots the pre-align state (so undo restores it)
+    // AND fires emitChange for the activity log. Adding emitTabMeta
+    // on top would duplicate the entry without adding undo coverage;
+    // the diff-based summary from emitChange is the canonical line.
     commit((els) => autoAlignElements(els));
-    emitTabMeta(activeId, 'Auto-aligned tab');
   };
 
   const setBackgroundPattern = (pattern: BackgroundPattern) => {
@@ -3229,7 +3232,8 @@ export default function LivePage() {
   });
 
   // Global keyboard shortcuts (Escape cancels modes, Delete /
-  // Backspace wipes selection) live in useEditorKeyboardShortcuts.
+  // Backspace wipes selection, Cmd-Z / Cmd-Shift-Z undo / redo)
+  // live in useEditorKeyboardShortcuts.
   useEditorKeyboardShortcuts({
     formatSourceId,
     setFormatSourceId,
@@ -3241,6 +3245,8 @@ export default function LivePage() {
     isReadOnly,
     deleteSelected,
     deleteMultiSelected,
+    undo,
+    redo,
   });
 
   if (diagramNotFound) {
@@ -3254,7 +3260,7 @@ export default function LivePage() {
           onOpenShare={() => {}}
           onRename={() => {}}
         />
-        <main className="relative flex-1 bg-slate-50">
+        <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
           <NotFound
             onCreateNew={() => {
               window.location.assign(`${window.location.origin}/live/new`);

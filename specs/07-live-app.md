@@ -67,6 +67,16 @@ The live app is the product, not a content surface. Every page under `/live/*` i
 
 This complements the marketing site's SEO policy (see [16-marketing-site.md](16-marketing-site.md)): marketing is the indexable surface, the live app is explicitly off-limits to crawlers. The two policies meet at the router worker, which serves them on the same hostname but distinct paths.
 
+## UI light / dark mode
+
+The editor ships with a UI **light / dark mode** toggle, distinct from the per-tab diagram themes (`apps/live/lib/themes.ts`, see [spec/09](09-canvas-and-command-palette.md)). Diagram themes recolour CANVAS content (background, element fill / stroke / text); the UI mode recolours the editor CHROME (tab bar, editor header, panels, body backdrop) around it. The two are independent: a Slate-themed diagram still sits on a dark UI when the toggle is flipped.
+
+- The toggle lives on the right edge of the TabBar (sun / moon icon button). Hover tooltips ("Switch to dark mode" / "Switch to light mode") spell out the next state.
+- Preference persists in `localStorage` under `livediagram:v2:ui-mode` (values `'light'` / `'dark'`). Read on mount and re-applied as a `.dark` class on `documentElement` so the rest of the editor's `dark:` Tailwind variants light up.
+- Default is light. There is no auto-prefers-color-scheme detection in v1 (the toggle is explicit so the choice is the user's, not the OS's).
+- The `@custom-variant dark (&:where(.dark, .dark *))` declaration in `packages/tailwind-config/theme.css` configures Tailwind v4's `dark:` variant to use the class selector rather than the media query.
+- **Phase 1 surfaces** (covered today): body backdrop, TabBar, EditorHeader. Panel chromes (`MovablePanel`) carry the toggle's effect on the outer frame; per-panel content (Palette, Context, Explorer, Activity) light up incrementally as the `dark:` variants get added to each accordion / row. Until that's done, an open panel reads light over a dark backdrop — usable, not yet polished.
+
 ## Out of scope (next iterations)
 
 - **Auth UI** — Clerk integration. Today the api carries owner identity in `X-Owner-Id` only.
