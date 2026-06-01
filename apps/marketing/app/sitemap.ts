@@ -1,5 +1,10 @@
 import type { MetadataRoute } from 'next';
 
+// Required for `output: 'export'` (same reason as robots.ts):
+// route handlers must declare themselves fully static so Next
+// resolves them at build time, not runtime.
+export const dynamic = 'force-static';
+
 // Next.js convention: app/sitemap.ts → /sitemap.xml at build time.
 // See spec/16-marketing-site.md "SEO and metadata".
 //
