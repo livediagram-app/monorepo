@@ -285,8 +285,8 @@ function OpenPalette({
           payoff. Tools and Devices stay accordion'd because they're
           situational. Ordered by frequency / familiarity: primitive
           geometry first, then flowchart-vocabulary shapes. */}
-      <div className="border-t border-slate-100 px-3 pb-2 pt-2 dark:border-slate-800">
-        <div className="flex flex-wrap items-center gap-1">
+      <div className="border-t border-slate-100 px-2 pb-2 pt-2 sm:px-3 dark:border-slate-800">
+        <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
           <IconButton
             label="Add square"
             description="Drop a new square shape on the canvas."
