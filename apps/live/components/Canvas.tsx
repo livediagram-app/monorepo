@@ -764,8 +764,15 @@ export function Canvas(props: CanvasProps) {
         // still on the canvas" gap would never start a marquee.
         // Restrict to direct hits on `main` so element clicks (which
         // bubble up here) don't also trigger.
+        //
+        // Laser is grouped with pan here (matching the inner wrapper
+        // handler below): mid-presentation a click-drag is far more
+        // often "reposition the canvas" than "multi-select", and a
+        // pan is the safe no-op when the presenter is just steadying
+        // their hand. Without this, a laser-mode drag in the outer
+        // gap would silently draw a marquee selection box.
         if (e.target !== e.currentTarget) return;
-        const wantsPan = spaceHeldRef.current || canvasTool === 'pan';
+        const wantsPan = spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser';
         if (wantsPan) {
           setPan({
             startClientX: e.clientX,
