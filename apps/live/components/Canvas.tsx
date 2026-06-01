@@ -9,8 +9,6 @@ import {
   arrowThicknessOf,
   arrowheadSizeOf,
   arrowStyleOf,
-  DEFAULT_BACKGROUND_COLOR,
-  DEFAULT_PATTERN_COLOR,
   defaultFillColor,
   defaultPadding,
   defaultStrokeColor,
@@ -1593,6 +1591,3 @@ function starBg(stroke: string): string {
     '</svg>")'
   );
 }
-
-// re-export for callers that haven't migrated to specifying default colour.
-export { DEFAULT_BACKGROUND_COLOR, DEFAULT_PATTERN_COLOR };

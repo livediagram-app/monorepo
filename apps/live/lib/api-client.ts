@@ -10,7 +10,6 @@ import type {
   ShareLink,
   ShareRole,
   TabRecord,
-  TabSummary,
 } from '@livediagram/api-schema';
 import type { Tab } from '@livediagram/diagram';
 import { dedupeInFlight } from './dedupe';
@@ -19,19 +18,20 @@ import type { Participant } from './identity';
 // Re-export the wire-format types under the names the live app has
 // historically used so callers (editor-page.tsx, new/page.tsx, etc.)
 // keep their existing imports. The canonical definitions live in
-// `@livediagram/api-schema` — see that package's index.ts for the
-// shapes and per-type rationale.
+// `@livediagram/api-schema`, see that package's index.ts for the
+// shapes and per-type rationale. `RoomIncoming` and `RoomOp` are
+// imported and used internally below but no caller imports them
+// through api-client today, so they stay package-local (callers go
+// to `@livediagram/api-schema` directly when they need the wire
+// types).
 export type {
   ChangeLogEntry,
   ChangeLogKind,
   DiagramSummary,
   Folder,
-  RoomIncoming,
-  RoomOp,
   RoomOutgoing,
   ShareLink,
   ShareRole,
-  TabSummary,
 };
 
 // Historical alias the live app uses for the "diagram + tab
@@ -82,7 +82,6 @@ type TabResponse = { tab: TabRecord };
 type ListResponse = { diagrams: DiagramSummary[] };
 type FolderResponse = { folder: Folder };
 type FoldersResponse = { folders: Folder[] };
-type ShareResponse = { shareable: boolean; shareCode: string | null };
 type ShareLinkResponse = { link: ShareLink };
 type ShareLinksResponse = { links: ShareLink[] };
 type ChangeLogListResponse = { entries: ChangeLogEntry[] };
@@ -287,28 +286,6 @@ export async function apiDeleteShareLink(ownerId: string, id: string, code: stri
     headers: await apiHeaders(ownerId),
   });
   await expectOkOr404Void(res, 'delete share link');
-}
-
-export async function apiShareDiagram(
-  ownerId: string,
-  id: string,
-): Promise<{ shareable: boolean; shareCode: string | null }> {
-  const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
-    method: 'POST',
-    headers: await apiHeaders(ownerId, { body: true }),
-  });
-  return expectOk<ShareResponse>(res, 'share');
-}
-
-export async function apiUnshareDiagram(
-  ownerId: string,
-  id: string,
-): Promise<{ shareable: boolean; shareCode: string | null }> {
-  const res = await fetch(`${API_BASE}/diagrams/${id}/share`, {
-    method: 'DELETE',
-    headers: await apiHeaders(ownerId, { body: true }),
-  });
-  return expectOk<ShareResponse>(res, 'unshare');
 }
 
 // Persist diagram-level metadata: name (rename) and tab order. Used
