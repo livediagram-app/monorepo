@@ -43,16 +43,18 @@ export function ZoomControls({
           </svg>
         </IconButton>
       </Tooltip>
-      <Tooltip title="Reset zoom" description="Set zoom back to 100%.">
-        <button
-          type="button"
-          onClick={onReset}
-          aria-label="Reset zoom to 100%"
-          className="hidden h-9 min-w-[3.5rem] items-center justify-center rounded-md px-2 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100 sm:flex dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          {percent}%
-        </button>
-      </Tooltip>
+      <span className="hidden sm:contents">
+        <Tooltip title="Reset zoom" description="Set zoom back to 100%.">
+          <button
+            type="button"
+            onClick={onReset}
+            aria-label="Reset zoom to 100%"
+            className="flex h-9 min-w-[3.5rem] items-center justify-center rounded-md px-2 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {percent}%
+          </button>
+        </Tooltip>
+      </span>
       <Tooltip title="Zoom in" description="Zoom in by 10%.">
         <IconButton onClick={onZoomIn} label="Zoom in">
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>

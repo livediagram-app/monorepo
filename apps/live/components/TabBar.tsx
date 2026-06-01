@@ -227,31 +227,35 @@ export function TabBar({
         </Tooltip>
       ) : null}
       {onOpenShortcuts ? (
-        <Tooltip
-          title="Keyboard shortcuts"
-          description="See every shortcut. Toggle them off if they get in the way."
-        >
-          <button
-            type="button"
-            onClick={onOpenShortcuts}
-            aria-label="Keyboard shortcuts"
-            className="ml-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        <span className="hidden sm:contents">
+          <Tooltip
+            title="Keyboard shortcuts"
+            description="See every shortcut. Toggle them off if they get in the way."
           >
-            <KeyboardIcon />
-          </button>
-        </Tooltip>
+            <button
+              type="button"
+              onClick={onOpenShortcuts}
+              aria-label="Keyboard shortcuts"
+              className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <KeyboardIcon />
+            </button>
+          </Tooltip>
+        </span>
       ) : null}
       {onOpenSettings ? (
-        <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            aria-label="Diagram settings"
-            className="ml-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            <GearIcon />
-          </button>
-        </Tooltip>
+        <span className="hidden sm:contents">
+          <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              aria-label="Diagram settings"
+              className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <GearIcon />
+            </button>
+          </Tooltip>
+        </span>
       ) : null}
       <UiModeToggle />
     </div>
