@@ -22,6 +22,10 @@ export function ZoomControls({
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       className="pointer-events-auto flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
     >
       <Tooltip title="Zoom out" description="Zoom out by 10%.">

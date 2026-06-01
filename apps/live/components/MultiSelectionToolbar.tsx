@@ -28,6 +28,10 @@ export function MultiSelectionToolbar({
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       className="pointer-events-auto absolute left-1/2 top-4 z-30 flex -translate-x-1/2 animate-fade-in items-center gap-1 rounded-full border border-slate-200 bg-white py-1 pl-3 pr-1 shadow-lg shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40"
     >
       <span className="select-none pr-1 text-xs font-medium text-slate-700 dark:text-slate-200">

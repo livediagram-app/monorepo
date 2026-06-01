@@ -24,6 +24,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   anchorPosition,
+  bestAnchorTowards,
   endpointPosition,
   isBoxed,
   selectionMembers,
@@ -265,14 +266,54 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             snapDx = snap.dx;
             snapDy = snap.dy;
           }
-          tick((els) =>
-            els.map((el) => {
+          tick((els) => {
+            // First pass: translate every dragged boxed element.
+            const moved = els.map((el) => {
               if (!isBoxed(el)) return el;
               const start = drag.startBounds.get(el.id);
               if (!start) return el;
               return { ...el, x: start.x + dx + snapDx, y: start.y + dy + snapDy };
-            }),
-          );
+            });
+            // Second pass: re-pin arrow anchors so a connected arrow
+            // stays attached to the face that now reads most naturally
+            // (cardinals preferred over corners). Only touches arrows
+            // pinned to at least one dragged element; arrows entirely
+            // unrelated to the drag pass through untouched.
+            const movingIds = drag.startBounds;
+            return moved.map((el) => {
+              if (el.type !== 'arrow') return el;
+              const fromMoved = el.from.kind === 'pinned' && movingIds.has(el.from.elementId);
+              const toMoved = el.to.kind === 'pinned' && movingIds.has(el.to.elementId);
+              if (!fromMoved && !toMoved) return el;
+              let nextFrom = el.from;
+              let nextTo = el.to;
+              if (el.from.kind === 'pinned' && el.to.kind === 'pinned') {
+                const fromEnd = el.from;
+                const toEnd = el.to;
+                const fromEl = moved.find((e) => e.id === fromEnd.elementId);
+                const toEl = moved.find((e) => e.id === toEnd.elementId);
+                if (fromEl && isBoxed(fromEl) && toEl && isBoxed(toEl)) {
+                  const toCenter = {
+                    x: toEl.x + toEl.width / 2,
+                    y: toEl.y + toEl.height / 2,
+                  };
+                  const fromCenter = {
+                    x: fromEl.x + fromEl.width / 2,
+                    y: fromEl.y + fromEl.height / 2,
+                  };
+                  nextFrom = {
+                    ...fromEnd,
+                    anchor: bestAnchorTowards(fromEl, toCenter),
+                  };
+                  nextTo = {
+                    ...toEnd,
+                    anchor: bestAnchorTowards(toEl, fromCenter),
+                  };
+                }
+              }
+              return { ...el, from: nextFrom, to: nextTo };
+            });
+          });
         } else {
           // Resize branch handles BOTH single-element and group /
           // multi resizes uniformly:

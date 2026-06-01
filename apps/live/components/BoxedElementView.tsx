@@ -58,6 +58,10 @@ type BoxedElementViewProps = {
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: () => void;
+  // Open the per-element note popover. Optional so read-only viewers
+  // (who shouldn't see a clickable badge) can omit it. When omitted
+  // the note badge does not render.
+  onOpenNote?: () => void;
   // Right-click on the element. Receives the cursor's screen-space
   // coords so the caller can anchor a context menu under it. The
   // caller is also responsible for selecting the element (the menu's
@@ -94,6 +98,7 @@ export function BoxedElementView({
   onCancelEdit,
   onFollowLink,
   onOpenComments,
+  onOpenNote,
   onContextSelect,
   remoteSelectors,
   badgeColor,
@@ -233,16 +238,18 @@ export function BoxedElementView({
         <RemoteSelectorsStrip zoom={zoom} selectors={remoteSelectors} />
       ) : null}
 
-      {linked || commentCount > 0 ? (
+      {linked || commentCount > 0 || (element.note && onOpenNote) ? (
         <BadgeStrip
           zoom={zoom}
           linked={linked}
           commentCount={commentCount}
+          hasNote={!!element.note && !!onOpenNote}
           badgeColor={badgeColor}
           onFollowLink={() => {
             if (element.link) onFollowLink(element.link);
           }}
           onOpenComments={onOpenComments}
+          onOpenNote={onOpenNote}
         />
       ) : null}
 
@@ -575,17 +582,26 @@ function BadgeStrip({
   zoom,
   linked,
   commentCount,
+  hasNote,
   badgeColor,
   onFollowLink,
   onOpenComments,
+  onOpenNote,
 }: {
   zoom: number;
   linked: boolean;
   commentCount: number;
+  hasNote: boolean;
   badgeColor: string;
   onFollowLink: () => void;
   onOpenComments: () => void;
+  onOpenNote?: () => void;
 }) {
+  // Order (LTR inside the flex strip, which is anchored to the top-
+  // right of the element): link, note, comment. Comment sits at the
+  // far right because it's the highest-traffic affordance: an
+  // unresolved comment count needs the most visible perch. Note sits
+  // to its left, link to the far left.
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
@@ -595,6 +611,11 @@ function BadgeStrip({
       {linked ? (
         <BadgeButton label="Follow link" color={badgeColor} onClick={onFollowLink}>
           <LinkBadgeIcon />
+        </BadgeButton>
+      ) : null}
+      {hasNote && onOpenNote ? (
+        <BadgeButton label="Open note" color={badgeColor} onClick={onOpenNote}>
+          <NoteBadgeIcon />
         </BadgeButton>
       ) : null}
       {commentCount > 0 ? (
@@ -611,6 +632,26 @@ function BadgeStrip({
         </BadgeButton>
       ) : null}
     </div>
+  );
+}
+
+function NoteBadgeIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 2.5h7l3 3v8a0.5 0.5 0 0 1 -0.5 0.5h-9.5a0.5 0.5 0 0 1 -0.5 -0.5v-10.5a0.5 0.5 0 0 1 0.5 -0.5z" />
+      <path d="M10 2.5v3h3" />
+      <path d="M5.5 9h5M5.5 11.5h5" />
+    </svg>
   );
 }
 

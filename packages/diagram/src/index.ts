@@ -879,6 +879,35 @@ export function anchorPosition(element: BoxedElement, anchor: Anchor): Point {
   }
 }
 
+// Pick the anchor on `element` that faces `towards` most naturally.
+// Used during drag to keep an arrow visually attached as one of its
+// connected elements moves: e.g. if A's arrow ends at B's west side,
+// and the user drags B to be above and right of A, the arrow's
+// endpoint should re-pin to B's south-west or south so the line
+// still arrives at a sensible face.
+//
+// Biased toward cardinals (n / e / s / w): if either axis dominates
+// the direction by 2x or more, we pick the matching cardinal even
+// though the corner anchor is geometrically closer. Cardinals read
+// as the "middle of a side", which the user has explicitly preferred
+// over corners.
+export function bestAnchorTowards(element: BoxedElement, towards: Point): Anchor {
+  const cx = element.x + element.width / 2;
+  const cy = element.y + element.height / 2;
+  const dx = towards.x - cx;
+  const dy = towards.y - cy;
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  // Cardinal-dominant zones: one axis at least 2x the other.
+  if (ax >= 2 * ay) return dx >= 0 ? 'e' : 'w';
+  if (ay >= 2 * ax) return dy >= 0 ? 's' : 'n';
+  // Diagonal: pick the corner matching the quadrant.
+  if (dx >= 0 && dy >= 0) return 'se';
+  if (dx >= 0 && dy < 0) return 'ne';
+  if (dx < 0 && dy >= 0) return 'sw';
+  return 'nw';
+}
+
 export function endpointPosition(endpoint: Endpoint, elements: Element[]): Point {
   if (endpoint.kind === 'free') return { x: endpoint.x, y: endpoint.y };
   const target = elements.find((el) => el.id === endpoint.elementId);

@@ -35,6 +35,7 @@ import dynamic from 'next/dynamic';
 import { Canvas } from '@/components/Canvas';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
 import { MenuItem } from '@/components/PortalMenu';
+import { TabLinkPicker } from '@/components/TabLinkPicker';
 // Lazy-load CommentThreadPopover for the same reason as
 // ExportTabDialog / ShareDialog: it's gated on commentThreadOpenId
 // (right-click an element, pick Comments), most sessions never
@@ -311,6 +312,24 @@ export default function LivePage() {
     | null
   >(null);
   const closeContextMenu = () => setContextMenu(null);
+
+  // Link-to-tab picker state. Lives at the page level (rather than
+  // inside SelectionPopover, where the toolbar button used to host
+  // it) so the right-click context menu can open it without having
+  // to reach across components. The element id drives the anchor:
+  // the picker's portal positions itself relative to the matching
+  // [data-element-id] DOM node so it stays attached when the canvas
+  // pans / zooms, same trick as NotePopover.
+  const [linkPickerOpenForId, setLinkPickerOpenForId] = useState<string | null>(null);
+  const [linkPickerAnchorEl, setLinkPickerAnchorEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (linkPickerOpenForId === null) {
+      setLinkPickerAnchorEl(null);
+      return;
+    }
+    const el = document.querySelector(`[data-element-id="${linkPickerOpenForId}"]`);
+    setLinkPickerAnchorEl(el instanceof HTMLElement ? el : null);
+  }, [linkPickerOpenForId]);
   const openNote = (elementId: string) => {
     setNoteOpenId((cur) => (cur === elementId ? null : elementId));
   };
@@ -3592,16 +3611,6 @@ export default function LivePage() {
         onSetBorderStroke={setBorderStrokeSelected}
         onSetBorderStyle={setBorderStyleSelected}
         onSetBorderRadius={setBorderRadiusSelected}
-        onDuplicateSelected={duplicateSelected}
-        tabs={tabs}
-        currentTabId={activeId}
-        onSetLink={setLinkSelected}
-        onSetDiagramLink={setDiagramLinkSelected}
-        recentDiagrams={diagramList
-          .filter((d) => d.id !== diagramId)
-          .slice(0, 5)
-          .map((d) => ({ id: d.id, name: d.name }))}
-        onClearLink={clearLinkSelected}
         onFollowLink={followLink}
         onOpenComments={openComments}
         onOpenNote={openNote}
@@ -3747,7 +3756,6 @@ export default function LivePage() {
               const target = activeTab.elements.find((el) => el.id === contextMenu.elementId);
               if (!target) return null;
               const boxed = isBoxed(target);
-              const isLocked = boxed && target.locked === true;
               return (
                 <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
                   <MenuItem
@@ -3758,6 +3766,17 @@ export default function LivePage() {
                       close();
                     }}
                   />
+                  {tabs.length > 1 ? (
+                    <MenuItem
+                      icon={<LinkMenuIcon />}
+                      label={target.link ? 'Edit link' : 'Link to tab'}
+                      onClick={() => {
+                        setLinkPickerOpenForId(target.id);
+                        close();
+                      }}
+                    />
+                  ) : null}
+                  <ContextMenuDivider />
                   <MenuItem
                     icon={<LayerUpIcon />}
                     label="Bring to front"
@@ -3774,6 +3793,7 @@ export default function LivePage() {
                       close();
                     }}
                   />
+                  <ContextMenuDivider />
                   {boxed ? (
                     <MenuItem
                       icon={<NoteMenuIcon />}
@@ -3789,25 +3809,6 @@ export default function LivePage() {
                     label="Comment"
                     onClick={() => {
                       openComments(target.id);
-                      close();
-                    }}
-                  />
-                  <ContextMenuDivider />
-                  <MenuItem
-                    icon={<LockMenuIcon />}
-                    label={isLocked ? 'Unlock' : 'Lock'}
-                    onClick={() => {
-                      toggleLockSelected();
-                      close();
-                    }}
-                  />
-                  <ContextMenuDivider />
-                  <MenuItem
-                    icon={<TrashMenuIcon />}
-                    label="Delete"
-                    danger
-                    onClick={() => {
-                      deleteSelected();
                       close();
                     }}
                   />
@@ -3856,7 +3857,7 @@ export default function LivePage() {
                 />
                 <ContextMenuDivider />
                 <MenuItem
-                  icon={<DuplicateMenuIcon />}
+                  icon={<SquareMenuIcon />}
                   label="Add square"
                   onClick={() => {
                     addShape('square');
@@ -3864,7 +3865,7 @@ export default function LivePage() {
                   }}
                 />
                 <MenuItem
-                  icon={<DuplicateMenuIcon />}
+                  icon={<CircleMenuIcon />}
                   label="Add circle"
                   onClick={() => {
                     addShape('circle');
@@ -3872,7 +3873,7 @@ export default function LivePage() {
                   }}
                 />
                 <MenuItem
-                  icon={<DuplicateMenuIcon />}
+                  icon={<StickyMenuIcon />}
                   label="Add sticky"
                   onClick={() => {
                     addSticky();
@@ -3883,6 +3884,38 @@ export default function LivePage() {
             );
           })()
         : null}
+      {linkPickerOpenForId !== null && linkPickerAnchorEl && tabs.length > 1 && !isReadOnly ? (
+        <TabLinkPicker
+          anchor={linkPickerAnchorEl}
+          tabs={tabs}
+          currentTabId={activeId}
+          linkedTabId={(() => {
+            const el = activeTab.elements.find((e) => e.id === linkPickerOpenForId);
+            return el && el.link && el.link.kind === 'tab' ? el.link.tabId : null;
+          })()}
+          linkedDiagramId={(() => {
+            const el = activeTab.elements.find((e) => e.id === linkPickerOpenForId);
+            return el && el.link && el.link.kind === 'diagram' ? el.link.diagramId : null;
+          })()}
+          recentDiagrams={diagramList
+            .filter((d) => d.id !== diagramId)
+            .slice(0, 5)
+            .map((d) => ({ id: d.id, name: d.name }))}
+          onSelect={(tabId) => {
+            setLinkSelected(tabId);
+            setLinkPickerOpenForId(null);
+          }}
+          onSelectDiagram={(d) => {
+            setDiagramLinkSelected(d);
+            setLinkPickerOpenForId(null);
+          }}
+          onClear={() => {
+            clearLinkSelected();
+            setLinkPickerOpenForId(null);
+          }}
+          onClose={() => setLinkPickerOpenForId(null)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -3979,7 +4012,7 @@ function CommentMenuIcon() {
   );
 }
 
-function LockMenuIcon() {
+function LinkMenuIcon() {
   return (
     <svg
       width="12"
@@ -3987,18 +4020,51 @@ function LockMenuIcon() {
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <rect x="3" y="7.5" width="10" height="6.5" rx="1.25" />
-      <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.5 0v2.5" />
+      <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
+      <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
+      <line x1="6" y1="10" x2="10" y2="6" />
     </svg>
   );
 }
 
-function TrashMenuIcon() {
+function SquareMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden
+    >
+      <rect x="3" y="3" width="10" height="10" rx="1.5" />
+    </svg>
+  );
+}
+
+function CircleMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="5" />
+    </svg>
+  );
+}
+
+function StickyMenuIcon() {
   return (
     <svg
       width="12"
@@ -4007,13 +4073,11 @@ function TrashMenuIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M2.5 4h11" />
-      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
-      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
+      <path d="M3 3h10v7l-3 3H3z" />
+      <path d="M13 10h-3v3" />
     </svg>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   anchorPosition,
+  bestAnchorTowards,
   bringManyToFront,
   bringToFront,
   elementBounds,
@@ -103,6 +104,39 @@ describe('snapToAnchor', () => {
       to: { kind: 'free', x: 10, y: 10 },
     };
     expect(snapToAnchor({ x: 0, y: 0 }, [arrow], 10)).toBeNull();
+  });
+});
+
+describe('bestAnchorTowards', () => {
+  // A 100x80 box centred at (60, 60). Used for every directional case
+  // so the test names read like a compass.
+  const box = shape('a', { x: 10, y: 20, width: 100, height: 80 });
+
+  it('picks the east cardinal when the target is purely to the right', () => {
+    expect(bestAnchorTowards(box, { x: 300, y: 60 })).toBe('e');
+  });
+  it('picks the west cardinal when the target is purely to the left', () => {
+    expect(bestAnchorTowards(box, { x: -300, y: 60 })).toBe('w');
+  });
+  it('picks the south cardinal when the target is purely below', () => {
+    expect(bestAnchorTowards(box, { x: 60, y: 400 })).toBe('s');
+  });
+  it('picks the north cardinal when the target is purely above', () => {
+    expect(bestAnchorTowards(box, { x: 60, y: -400 })).toBe('n');
+  });
+  it('still picks east when horizontal dominates by 2x (cardinal bias)', () => {
+    // dx=200, dy=80: 2x ratio exactly, so cardinal wins over the corner.
+    expect(bestAnchorTowards(box, { x: 260, y: 140 })).toBe('e');
+  });
+  it('picks the south-east corner when the target is diagonal-ish', () => {
+    // dx=100, dy=100: same magnitude on both axes, neither dominates,
+    // so we fall through to the corner.
+    expect(bestAnchorTowards(box, { x: 160, y: 160 })).toBe('se');
+  });
+  it('picks each quadrant corner for the four diagonal directions', () => {
+    expect(bestAnchorTowards(box, { x: 160, y: -40 })).toBe('ne');
+    expect(bestAnchorTowards(box, { x: -40, y: 160 })).toBe('sw');
+    expect(bestAnchorTowards(box, { x: -40, y: -40 })).toBe('nw');
   });
 });
 

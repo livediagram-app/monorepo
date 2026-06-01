@@ -24,7 +24,6 @@ import {
   type BackgroundPattern,
   type Element,
   type ShapeKind,
-  type Tab,
   type TextAlignX,
   type TextAlignY,
   type TextSize,
@@ -46,7 +45,6 @@ import { MultiSelectionToolbar } from './MultiSelectionToolbar';
 import { ModeBanner } from './ModeBanner';
 import { PlusButton } from './PlusButton';
 import { SelectionPopover } from './SelectionPopover';
-import type { LinkPickerDiagram } from './TabLinkPicker';
 // Lazy-load TemplatePicker (1163 lines + its theme / share helpers)
 // the same way ExportTabDialog + ShareDialog already are. The picker
 // is gated on `showTemplatePicker`, which is false for the common
@@ -227,15 +225,6 @@ type CanvasProps = {
   onSetBorderStroke: (value: import('@livediagram/diagram').BorderStroke) => void;
   onSetBorderStyle: (value: import('@livediagram/diagram').BorderStyle) => void;
   onSetBorderRadius: (value: import('@livediagram/diagram').BorderRadius) => void;
-  onDuplicateSelected: () => void;
-  tabs: Tab[];
-  currentTabId: string;
-  onSetLink: (tabId: string) => void;
-  onSetDiagramLink?: (diagram: LinkPickerDiagram) => void;
-  // Up to 5 of the user's recent diagrams. Surfaced in the link
-  // picker's "Link to diagram" section.
-  recentDiagrams?: LinkPickerDiagram[];
-  onClearLink: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (elementId: string) => void;
   onOpenNote?: (elementId: string) => void;
@@ -419,13 +408,6 @@ export function Canvas(props: CanvasProps) {
     onSetBorderStroke,
     onSetBorderStyle,
     onSetBorderRadius,
-    onDuplicateSelected,
-    tabs,
-    currentTabId,
-    onSetLink,
-    onSetDiagramLink,
-    recentDiagrams,
-    onClearLink,
     onFollowLink,
     onOpenComments,
     onOpenNote,
@@ -1028,6 +1010,7 @@ export function Canvas(props: CanvasProps) {
               onCancelEdit={onCancelEdit}
               onFollowLink={onFollowLink}
               onOpenComments={() => onOpenComments(element.id)}
+              onOpenNote={onOpenNote ? () => onOpenNote(element.id) : undefined}
               onContextSelect={(sx, sy) => {
                 onSelect(element.id);
                 onElementContextMenu?.(element.id, sx, sy);
@@ -1094,17 +1077,6 @@ export function Canvas(props: CanvasProps) {
             canvasOffset={viewportOffset}
             zoom={viewportZoom}
             locked={selectedLocked}
-            tabs={tabs}
-            currentTabId={currentTabId}
-            linkedTabId={
-              selected && selected.link && selected.link.kind === 'tab' ? selected.link.tabId : null
-            }
-            linkedDiagramId={
-              selected && selected.link && selected.link.kind === 'diagram'
-                ? selected.link.diagramId
-                : null
-            }
-            recentDiagrams={recentDiagrams}
             onCopyFormat={
               // Format painter is available for boxed elements (copies
               // width / height) AND arrows (copies stroke / opacity /
@@ -1116,10 +1088,6 @@ export function Canvas(props: CanvasProps) {
             onGroup={selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
             onUngroup={selectedIsGrouped ? onUngroup : undefined}
             onToggleLock={onToggleLockSelected}
-            onDuplicate={onDuplicateSelected}
-            onSetLink={onSetLink}
-            onSetDiagramLink={onSetDiagramLink}
-            onClearLink={onClearLink}
             onOpenComments={selected ? () => onOpenComments(selected.id) : undefined}
             onOpenNote={
               selected && isBoxed(selected) && onOpenNote
@@ -1389,7 +1357,13 @@ export function Canvas(props: CanvasProps) {
               // Collapsed Activity dock pairs the expand button with
               // inline Undo / Redo so common history actions don't
               // require reopening the panel.
-              <div className="pointer-events-auto flex animate-pop-in items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40">
+              <div
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="pointer-events-auto flex animate-pop-in items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40"
+              >
                 <Tooltip title="Open Tab Activity" description="Expand the Tab Activity panel.">
                   <button
                     type="button"

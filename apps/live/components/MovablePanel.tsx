@@ -155,6 +155,14 @@ export function MovablePanel({
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
+      onContextMenu={(e) => {
+        // Swallow the right-click so it doesn't bubble to the canvas
+        // (which would open the tab-level context menu underneath
+        // this panel). Also stops the native browser menu inside
+        // panels, which would feel out of place in editor chrome.
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       style={style}
       className={`pointer-events-auto absolute z-10 flex animate-pop-in ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40 ${cornerClass}`}
     >
@@ -265,6 +273,10 @@ export function DockButton({
       <button
         type="button"
         onPointerDown={(e) => e.stopPropagation()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         onClick={onClick}
         aria-label={label}
         className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"

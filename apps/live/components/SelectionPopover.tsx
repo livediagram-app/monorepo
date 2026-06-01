@@ -1,6 +1,4 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { Tab } from '@livediagram/diagram';
-import { TabLinkPicker, type LinkPickerDiagram } from './TabLinkPicker';
 import { Tooltip } from './Tooltip';
 
 type Bounds = { x: number; y: number; width: number; height: number };
@@ -10,22 +8,8 @@ type SelectionPopoverProps = {
   canvasOffset: { x: number; y: number };
   zoom: number;
   locked: boolean;
-  tabs: Tab[];
-  currentTabId: string;
-  linkedTabId: string | null;
-  // Up to 5 of the user's most-recently-saved diagrams. Surfaces in
-  // the link picker's "Link to diagram" section. Optional; visitor
-  // sessions on a share link pass undefined so the section hides.
-  recentDiagrams?: LinkPickerDiagram[];
-  // Currently-linked diagram id when the element's link kind is
-  // 'diagram'. Drives the active highlight in the diagram section.
-  linkedDiagramId?: string | null;
   onToggleLock: () => void;
   onDelete: () => void;
-  onDuplicate: () => void;
-  onSetLink: (tabId: string) => void;
-  onSetDiagramLink?: (diagram: LinkPickerDiagram) => void;
-  onClearLink: () => void;
   onCopyFormat?: () => void;
   onGroup?: () => void;
   onUngroup?: () => void;
@@ -44,8 +28,8 @@ type SelectionPopoverProps = {
 };
 
 // The plus button sits between the popover and the element edge it
-// belongs to. Bumped to 48 px so the plus has clear breathing room
-// — at 36 px the popover crowded it and felt visually cramped.
+// belongs to. Bumped to 48 px so the plus has clear breathing room:
+// at 36 px the popover crowded it and felt visually cramped.
 const GAP = 48;
 const EDGE_MARGIN = 8;
 
@@ -54,17 +38,8 @@ export function SelectionPopover({
   canvasOffset,
   zoom,
   locked,
-  tabs,
-  currentTabId,
-  linkedTabId,
-  recentDiagrams,
-  linkedDiagramId,
   onToggleLock,
   onDelete,
-  onDuplicate,
-  onSetLink,
-  onSetDiagramLink,
-  onClearLink,
   onCopyFormat,
   onGroup,
   onUngroup,
@@ -74,8 +49,6 @@ export function SelectionPopover({
   onOpenContextMenu,
 }: SelectionPopoverProps) {
   const ellipsisRef = useRef<HTMLButtonElement>(null);
-  const linkButtonRef = useRef<HTMLButtonElement>(null);
-  const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   // Prefer above by default. After mount we measure and flip to
@@ -123,6 +96,10 @@ export function SelectionPopover({
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       className="pointer-events-auto absolute z-20 flex animate-fade-in items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
       style={{
         left: baseLeft + adjust.x,
@@ -159,81 +136,26 @@ export function SelectionPopover({
         </>
       ) : null}
 
-      {/* Group: copy / duplicate the element itself. */}
+      {/* Copy formatting stays on the toolbar because the format
+          painter is a stateful gesture (click + click-to-apply) that
+          reads naturally as a dedicated button. Duplicate moved into
+          the context menu, since its action is one-shot and the
+          toolbar was getting crowded once notes + comments + ellipsis
+          were added. */}
       {onCopyFormat ? (
-        <PopoverButton
-          label="Copy formatting"
-          description="Apply this size to the next click."
-          onClick={onCopyFormat}
-        >
-          <PaintbrushIcon />
-        </PopoverButton>
-      ) : null}
-      <PopoverButton
-        label="Duplicate"
-        description="Duplicate this element (arrows skipped)."
-        onClick={onDuplicate}
-      >
-        <DuplicateIcon />
-      </PopoverButton>
-
-      <Divider />
-
-      {/* Group: relationships (links to other tabs, grouping with other
-          elements). The link-to-tab button is suppressed when the
-          diagram only has one tab — there's nowhere to link to, so
-          the button would be a dead end. Re-appears as soon as a
-          second tab is added. */}
-      {tabs.length > 1 ? (
         <>
-          <Tooltip
-            title={linkedTabId ? 'Edit link' : 'Link to tab'}
-            description={linkedTabId ? 'Edit or clear the link.' : 'Pick a tab to link to.'}
+          <PopoverButton
+            label="Copy formatting"
+            description="Apply this size to the next click."
+            onClick={onCopyFormat}
           >
-            <button
-              ref={linkButtonRef}
-              type="button"
-              onClick={() => setLinkPickerOpen((v) => !v)}
-              aria-label={linkedTabId ? 'Edit link' : 'Link to tab'}
-              aria-pressed={linkedTabId !== null}
-              className={
-                linkedTabId
-                  ? 'flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
-                  : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
-              }
-            >
-              <LinkIcon />
-            </button>
-          </Tooltip>
-          {linkPickerOpen ? (
-            <TabLinkPicker
-              anchor={linkButtonRef.current}
-              tabs={tabs}
-              currentTabId={currentTabId}
-              linkedTabId={linkedTabId}
-              recentDiagrams={recentDiagrams}
-              linkedDiagramId={linkedDiagramId ?? null}
-              onSelect={(id) => {
-                onSetLink(id);
-                setLinkPickerOpen(false);
-              }}
-              onSelectDiagram={
-                onSetDiagramLink
-                  ? (d) => {
-                      onSetDiagramLink(d);
-                      setLinkPickerOpen(false);
-                    }
-                  : undefined
-              }
-              onClear={() => {
-                onClearLink();
-                setLinkPickerOpen(false);
-              }}
-              onClose={() => setLinkPickerOpen(false)}
-            />
-          ) : null}
+            <PaintbrushIcon />
+          </PopoverButton>
+
+          <Divider />
         </>
       ) : null}
+
       {onOpenComments ? (
         <PopoverButton
           label="Comments"
@@ -361,44 +283,6 @@ function EllipsisIcon() {
       <circle cx="4" cy="8" r="1.4" fill="currentColor" />
       <circle cx="8" cy="8" r="1.4" fill="currentColor" />
       <circle cx="12" cy="8" r="1.4" fill="currentColor" />
-    </svg>
-  );
-}
-
-function DuplicateIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
-      <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
-    </svg>
-  );
-}
-
-function LinkIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M7 4.5l1.5-1.5a3.25 3.25 0 0 1 4.6 4.6L11 9.5" />
-      <path d="M9 11.5l-1.5 1.5a3.25 3.25 0 0 1-4.6-4.6L5 7" />
-      <line x1="6" y1="10" x2="10" y2="6" />
     </svg>
   );
 }
