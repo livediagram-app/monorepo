@@ -479,9 +479,6 @@ export default function ExplorerPage() {
             >
               <SearchSidebarIcon />
               <span className="flex-1 truncate">Search...</span>
-              <kbd className="rounded border border-slate-200 px-1 text-[9px] font-medium text-slate-400">
-                Esc
-              </kbd>
             </button>
             <div className="my-4 h-px bg-slate-100" aria-hidden />
             <SidebarRow
