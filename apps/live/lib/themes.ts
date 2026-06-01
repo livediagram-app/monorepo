@@ -1,4 +1,4 @@
-import type { BackgroundPattern } from '@livediagram/diagram';
+import type { BackgroundPattern, Element } from '@livediagram/diagram';
 
 // A preset theme bundles a canvas backdrop (background colour + pattern +
 // pattern colour) with the default colours used for newly added boxed
@@ -247,4 +247,36 @@ export const THEMES: ThemeDefinition[] = [
 export function getTheme(id: string | undefined): ThemeDefinition {
   const found = THEMES.find((t) => t.id === id);
   return found ?? THEMES[0]!;
+}
+
+// Apply a theme's element-colour overrides to a single Element,
+// returning a new element with the theme's fill / stroke / text
+// fields written when present, and untouched otherwise. Sticky notes
+// keep their amber identity (the yellow note is iconic) regardless
+// of theme, matching the rule `addBoxed` applies to ad-hoc sticky
+// creation. Used by both the /live/new template path (templates.ts)
+// and the in-editor "Browse templates" picker (editor-page.tsx) so
+// the two paths can't drift, e.g. by accidentally omitting arrows.
+export function recolourElementForTheme(el: Element, theme: ThemeDefinition): Element {
+  if (el.type === 'shape') {
+    return {
+      ...el,
+      ...(theme.elementFill ? { fillColor: theme.elementFill } : {}),
+      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
+      ...(theme.elementText ? { textColor: theme.elementText } : {}),
+    };
+  }
+  if (el.type === 'text') {
+    return {
+      ...el,
+      ...(theme.elementText ? { textColor: theme.elementText } : {}),
+    };
+  }
+  if (el.type === 'arrow') {
+    return {
+      ...el,
+      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
+    };
+  }
+  return el;
 }

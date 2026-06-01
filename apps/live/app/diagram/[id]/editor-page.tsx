@@ -110,7 +110,7 @@ import {
 } from '@/lib/api-client';
 import { applyRevert, diffElements } from '@/lib/change-log';
 import { buildTemplate, templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
-import { getTheme, THEMES, type ThemeId } from '@/lib/themes';
+import { getTheme, recolourElementForTheme, THEMES, type ThemeId } from '@/lib/themes';
 
 function createTab(name: string): Tab {
   return { id: crypto.randomUUID(), name, elements: [] };
@@ -2368,25 +2368,16 @@ export default function LivePage() {
     // than the hard-coded brand defaults from `buildTemplate`. Sticky
     // notes (Retrospective) keep their amber identity — same rule
     // `addBoxed` applies to ad-hoc sticky creation.
+    // Shared recolour helper so the in-editor template picker
+    // can't drift from the /live/new path (`buildTemplatedTab` in
+    // lib/templates.ts uses the same function). The previous
+    // inline copy here omitted the arrow case, so arrows in
+    // mindmap / flowchart / flywheel templates picked from inside
+    // the editor stayed brand-blue instead of inheriting the
+    // theme's stroke colour.
     const elements = !theme
       ? rawElements
-      : rawElements.map((el) => {
-          if (el.type === 'shape') {
-            return {
-              ...el,
-              ...(theme.elementFill ? { fillColor: theme.elementFill } : {}),
-              ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
-              ...(theme.elementText ? { textColor: theme.elementText } : {}),
-            };
-          }
-          if (el.type === 'text') {
-            return {
-              ...el,
-              ...(theme.elementText ? { textColor: theme.elementText } : {}),
-            };
-          }
-          return el;
-        });
+      : rawElements.map((el) => recolourElementForTheme(el, theme));
     commitTabs((ts) =>
       ts.map((t) =>
         t.id === activeId

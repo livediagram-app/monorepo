@@ -8,7 +8,7 @@ import {
   type Element,
   type Tab,
 } from '@livediagram/diagram';
-import { getTheme, type ThemeId } from './themes';
+import { getTheme, recolourElementForTheme, type ThemeId } from './themes';
 
 export type TemplateKind =
   | 'blank'
@@ -161,29 +161,7 @@ export function buildTemplatedTab(
 ): Tab {
   const theme = getTheme(themeId);
   const rawElements = buildTemplate(kind, 0, 0);
-  const elements = rawElements.map((el) => {
-    if (el.type === 'shape') {
-      return {
-        ...el,
-        ...(theme.elementFill ? { fillColor: theme.elementFill } : {}),
-        ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
-        ...(theme.elementText ? { textColor: theme.elementText } : {}),
-      };
-    }
-    if (el.type === 'text') {
-      return {
-        ...el,
-        ...(theme.elementText ? { textColor: theme.elementText } : {}),
-      };
-    }
-    if (el.type === 'arrow') {
-      return {
-        ...el,
-        ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
-      };
-    }
-    return el;
-  });
+  const elements = rawElements.map((el) => recolourElementForTheme(el, theme));
   return {
     id: tabId,
     name: tabName,
