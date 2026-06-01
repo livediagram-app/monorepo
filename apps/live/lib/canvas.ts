@@ -51,8 +51,8 @@ export type DragState =
     }
   | {
       // Whole-arrow translation. Only fires for arrows with both
-      // endpoints `kind: 'free'` — pinned endpoints stay anchored to
-      // their elements, so there's nothing to drag.
+      // endpoints `kind: 'free'` (pinned endpoints stay anchored to
+      // their elements, so there's nothing to drag).
       kind: 'arrow-translate';
       arrowId: string;
       startClientX: number;
@@ -61,6 +61,30 @@ export type DragState =
       startFromY: number;
       startToX: number;
       startToY: number;
+    }
+  | {
+      // Curve-handle drag: the user grabbed the small handle that
+      // sits on a curved arrow's quadratic Bezier control point and
+      // is moving it. We capture the chord midpoint + the existing
+      // offset at gesture start so the on-move handler can compute
+      // a fresh offset from the current pointer position regardless
+      // of where the user originally grabbed.
+      kind: 'arrow-curve';
+      arrowId: string;
+      startClientX: number;
+      startClientY: number;
+      // Chord midpoint at the start of the drag, in canvas coords.
+      // Captured here rather than recomputed on every move so the
+      // gesture survives the endpoints moving mid-drag (eg. another
+      // user nudges a connected element).
+      startMidX: number;
+      startMidY: number;
+      // Pointer-to-control offset captured at the moment the user
+      // grabbed the handle. Lets the move handler compute the new
+      // control point as `pointer + (control - pointer at start)`,
+      // so the handle stays exactly under the cursor.
+      grabDx: number;
+      grabDy: number;
     };
 
 // Given a shape's bounds at gesture start, project the current pointer

@@ -441,6 +441,16 @@ export type ArrowElement = {
   // 'angled' renders the connector as an axis-aligned L-shape with
   // a single right-angle bend. See `arrowStyleOf`.
   arrowStyle?: ArrowStyle;
+  // Optional override for the curve control point. Stored as a
+  // delta from the chord midpoint (canvas coords) so the curve
+  // translates with the arrow when an endpoint moves: the chord
+  // midpoint shifts, the offset stays the same, and the user's
+  // chosen bow direction + magnitude is preserved. Only consulted
+  // when `arrowStyle === 'curved'`; the auto perpendicular bow is
+  // used whenever this field is absent so existing curved arrows
+  // render unchanged. Setting it back to undefined "resets" the
+  // curve to its default shape.
+  curveOffset?: { dx: number; dy: number };
   // Optional label rendered next to the arrow's midpoint. Empty /
   // missing → no label is drawn. Double-click on the arrow opens an
   // inline editor for this field. Placement is computed at render
@@ -510,37 +520,58 @@ export function arrowStyleOf(arrow: ArrowElement): ArrowStyle {
   return arrow.arrowStyle ?? DEFAULT_ARROW_STYLE;
 }
 
+// The quadratic-Bezier control point a curved arrow uses. When
+// `curveOffset` is set, the user has dragged the curve handle and
+// the control point is `chordMidpoint + curveOffset`. When unset,
+// the historical auto-bow applies (¼-chord-length perpendicular to
+// the chord). Exposed as its own helper so the renderer + the
+// curve drag handle agree on the same point.
+export function curveControlPoint(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  curveOffset?: { dx: number; dy: number },
+): { x: number; y: number } {
+  const mx = (from.x + to.x) / 2;
+  const my = (from.y + to.y) / 2;
+  if (curveOffset) return { x: mx + curveOffset.dx, y: my + curveOffset.dy };
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) return { x: mx, y: my };
+  const nx = -dy / len;
+  const ny = dx / len;
+  const offset = len * 0.25;
+  return { x: mx + nx * offset, y: my + ny * offset };
+}
+
 // Build the SVG `d` attribute for an arrow at the given resolved
-// endpoint positions. Pure geometry — no DOM dependency — so the
+// endpoint positions. Pure geometry (no DOM dependency) so the
 // editor's `<ArrowView>` and any future export / embedded-viewer
 // route can share the same line.
 //
 // Straight is a single line. Curved bows the chord perpendicular
-// to its midpoint by ¼ of its length (quadratic Bezier). Angled
-// drops one right-angle bend; the leg that runs first is chosen
-// from the from-endpoint's anchor side when available so a pinned
-// arrow leaves its element along its anchor direction.
+// to its midpoint by ¼ of its length (quadratic Bezier), or, when
+// `curveOffset` is set, runs the curve through the user-chosen
+// control point. Angled drops one right-angle bend; the leg that
+// runs first is chosen from the from-endpoint's anchor side when
+// available so a pinned arrow leaves its element along its anchor
+// direction.
 export function arrowPathD(
   style: ArrowStyle,
   from: { x: number; y: number },
   to: { x: number; y: number },
   fromEp: Endpoint,
   toEp: Endpoint,
+  curveOffset?: { dx: number; dy: number },
 ): string {
   if (style === 'straight') return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   if (style === 'curved') {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const len = Math.hypot(dx, dy);
-    if (len < 0.5) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
-    const nx = -dy / len;
-    const ny = dx / len;
-    const offset = len * 0.25;
-    const mx = (from.x + to.x) / 2;
-    const my = (from.y + to.y) / 2;
-    const cx = mx + nx * offset;
-    const cy = my + ny * offset;
-    return `M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`;
+    if (len < 0.5 && !curveOffset) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+    const c = curveControlPoint(from, to, curveOffset);
+    return `M ${from.x} ${from.y} Q ${c.x} ${c.y} ${to.x} ${to.y}`;
   }
   const horizontalFirst = angledHorizontalFirst(from, to, fromEp, toEp);
   const bx = horizontalFirst ? to.x : from.x;
@@ -558,24 +589,20 @@ export function arrowPathMidpoint(
   to: { x: number; y: number },
   fromEp: Endpoint,
   toEp: Endpoint,
+  curveOffset?: { dx: number; dy: number },
 ): { x: number; y: number } {
   if (style === 'angled') {
     const horizontalFirst = angledHorizontalFirst(from, to, fromEp, toEp);
     return horizontalFirst ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
   }
   if (style === 'curved') {
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const len = Math.hypot(dx, dy);
-    if (len < 0.5) return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
-    const nx = -dy / len;
-    const ny = dx / len;
-    const offset = len * 0.25;
-    const mx = (from.x + to.x) / 2;
-    const my = (from.y + to.y) / 2;
-    const cx = mx + nx * offset;
-    const cy = my + ny * offset;
-    return { x: 0.25 * from.x + 0.5 * cx + 0.25 * to.x, y: 0.25 * from.y + 0.5 * cy + 0.25 * to.y };
+    const c = curveControlPoint(from, to, curveOffset);
+    // t=0.5 point on the quadratic Bezier B(0.5) = 0.25*P0 + 0.5*P1
+    // + 0.25*P2.
+    return {
+      x: 0.25 * from.x + 0.5 * c.x + 0.25 * to.x,
+      y: 0.25 * from.y + 0.5 * c.y + 0.25 * to.y,
+    };
   }
   return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
 }

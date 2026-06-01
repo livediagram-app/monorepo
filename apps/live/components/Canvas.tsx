@@ -162,7 +162,7 @@ type CanvasProps = {
   >;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onActivityRowClick: (entry: ChangeLogEntry) => void;
-  onClearActivity: () => void;
+  onClearActivity?: () => void;
   saveStatus: import('./EditorHeader').SaveStatus;
   savedAt: number | null;
   currentDiagramId: string | null;
@@ -195,6 +195,7 @@ type CanvasProps = {
   onCommitLabel: (id: string, label: string) => void;
   onCancelEdit: () => void;
   onBeginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
+  onBeginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   onShiftSelect: (id: string) => void;
   onBeginFormatPainter: () => void;
@@ -378,6 +379,7 @@ export function Canvas(props: CanvasProps) {
     onCommitLabel,
     onCancelEdit,
     onBeginEndpointDrag,
+    onBeginArrowCurveDrag,
     onBeginArrowTranslate,
     onShiftSelect,
     onBeginFormatPainter,
@@ -648,7 +650,8 @@ export function Canvas(props: CanvasProps) {
     editingId !== selected.id &&
     !isPaintMode &&
     !isGroupMode &&
-    !tabLocked;
+    !tabLocked &&
+    !readOnly;
   const showHandles = (id: string) =>
     selectedIsBoxed &&
     id === selectedId &&
@@ -657,7 +660,8 @@ export function Canvas(props: CanvasProps) {
     !isPaintMode &&
     !isGroupMode &&
     !selectedLocked &&
-    !tabLocked;
+    !tabLocked &&
+    !readOnly;
   // Union-level resize handles render on the selection bounding box
   // whenever the selection covers more than one boxed element — either
   // via marquee multi-select OR clicking into a group. Multi-select
@@ -693,7 +697,8 @@ export function Canvas(props: CanvasProps) {
     !isPaintMode &&
     !isGroupMode &&
     !selectedLocked &&
-    !tabLocked;
+    !tabLocked &&
+    !readOnly;
 
   // Cached counts only. Render loops iterate `elements` directly so
   // arrows and boxed elements interleave in z-order (see render
@@ -966,6 +971,7 @@ export function Canvas(props: CanvasProps) {
                   isPaintMode={isPaintMode || isGroupMode}
                   isEditing={element.id === editingId}
                   tabLocked={tabLocked}
+                  readOnly={readOnly}
                   onSelect={(e) => {
                     // Mirror the boxed-element click semantics so arrows
                     // can be included in marquee multi-selections via
@@ -982,6 +988,7 @@ export function Canvas(props: CanvasProps) {
                   onCommitLabel={(label) => onCommitLabel(element.id, label)}
                   onCancelEdit={onCancelEdit}
                   onBeginTranslate={(e) => onBeginArrowTranslate(element.id, e)}
+                  onBeginCurveDrag={(e) => onBeginArrowCurveDrag(element.id, e)}
                 />
               </svg>
             );
@@ -1071,35 +1078,35 @@ export function Canvas(props: CanvasProps) {
           </>
         ) : null}
 
-        {showPopover && selectionBounds && !readOnly ? (
+        {showPopover && selectionBounds ? (
           <SelectionPopover
             bounds={selectionBounds}
             canvasOffset={viewportOffset}
             zoom={viewportZoom}
-            locked={selectedLocked}
+            // In view-only mode we mount the popover with just
+            // `onOpenComments`: visitors should be able to read +
+            // post comments on a diagram they don't own, but no
+            // other edit affordances apply. Every other handler
+            // becomes undefined and the matching button drops out.
+            locked={readOnly ? undefined : selectedLocked}
             onCopyFormat={
-              // Format painter is available for boxed elements (copies
-              // width / height) AND arrows (copies stroke / opacity /
-              // arrowEnds).
-              selected && (isBoxed(selected) || selected.type === 'arrow')
-                ? onBeginFormatPainter
-                : undefined
+              readOnly
+                ? undefined
+                : selected && (isBoxed(selected) || selected.type === 'arrow')
+                  ? onBeginFormatPainter
+                  : undefined
             }
-            onGroup={selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
-            onUngroup={selectedIsGrouped ? onUngroup : undefined}
-            onToggleLock={onToggleLockSelected}
+            onGroup={!readOnly && selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
+            onUngroup={!readOnly && selectedIsGrouped ? onUngroup : undefined}
+            onToggleLock={readOnly ? undefined : onToggleLockSelected}
+            onDelete={readOnly ? undefined : onDeleteSelected}
             onOpenComments={selected ? () => onOpenComments(selected.id) : undefined}
-            onOpenNote={
-              selected && isBoxed(selected) && onOpenNote
-                ? () => onOpenNote(selected.id)
-                : undefined
-            }
-            hasNote={selected && isBoxed(selected) ? !!selected.note : undefined}
-            onDelete={onDeleteSelected}
             onOpenContextMenu={
-              selected && onOpenElementContextMenu
-                ? (x, y) => onOpenElementContextMenu(selected.id, x, y)
-                : undefined
+              readOnly
+                ? undefined
+                : selected && onOpenElementContextMenu
+                  ? (x, y) => onOpenElementContextMenu(selected.id, x, y)
+                  : undefined
             }
           />
         ) : null}
@@ -1301,7 +1308,7 @@ export function Canvas(props: CanvasProps) {
         />
       )}
 
-      {welcomeOpen ? null : (
+      {welcomeOpen || readOnly ? null : (
         <ContextPanel
           position={contextPosition}
           minimized={contextMinimized}
@@ -1345,7 +1352,7 @@ export function Canvas(props: CanvasProps) {
                 onClick={onToggleMinimized}
               />
             ) : null}
-            {contextMinimized ? (
+            {contextMinimized && !readOnly ? (
               <DockButton
                 label="Open Editor"
                 description="Expand the Editor panel."

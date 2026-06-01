@@ -24,7 +24,9 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   anchorPosition,
+  arrowStyleOf,
   bestAnchorTowards,
+  curveControlPoint,
   endpointPosition,
   isBoxed,
   selectionMembers,
@@ -98,6 +100,7 @@ export type EditorDragApi = {
   beginAnchorDrag: (elementId: string, anchor: Anchor, e: ReactPointerEvent) => void;
   beginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   beginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
+  beginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
 };
 
 export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
@@ -225,6 +228,35 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       startClientY: e.clientY,
       startCanvasX: start.x,
       startCanvasY: start.y,
+    });
+  };
+
+  const beginArrowCurveDrag = (arrowId: string, e: ReactPointerEvent) => {
+    const d = depsRef.current;
+    if (d.formatSourceId !== null || d.groupSourceId !== null) return;
+    const arrow = d.activeTab.elements.find((el) => el.id === arrowId);
+    if (!arrow || arrow.type !== 'arrow') return;
+    if (arrowStyleOf(arrow) !== 'curved') return;
+    d.setSelectedId(arrowId);
+    if (arrow.locked === true || d.isReadOnly) return;
+    const from = endpointPosition(arrow.from, d.activeTab.elements);
+    const to = endpointPosition(arrow.to, d.activeTab.elements);
+    const control = curveControlPoint(from, to, arrow.curveOffset);
+    d.markCheckpoint();
+    setDrag({
+      kind: 'arrow-curve',
+      arrowId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startMidX: (from.x + to.x) / 2,
+      startMidY: (from.y + to.y) / 2,
+      // The cursor isn't always exactly on the control point at
+      // grab time (the SVG handle has a 10px hit area). Storing the
+      // cursor-to-control delta lets the move handler keep the
+      // handle anchored to where the user originally clicked,
+      // matching native drag UX.
+      grabDx: control.x - (from.x + to.x) / 2,
+      grabDy: control.y - (from.y + to.y) / 2,
     });
   };
 
@@ -380,6 +412,26 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
         return;
       }
 
+      if (drag.kind === 'arrow-curve') {
+        // The control point should sit at `pointer + grab`, where
+        // grab is the pointer-to-control delta we captured on
+        // gesture start. Translating that into a curveOffset means
+        // subtracting the chord midpoint (also captured at start so
+        // a concurrent endpoint move doesn't yank the curve).
+        const controlX = drag.startMidX + drag.grabDx + dx;
+        const controlY = drag.startMidY + drag.grabDy + dy;
+        const offsetDx = controlX - drag.startMidX;
+        const offsetDy = controlY - drag.startMidY;
+        tick((els) =>
+          els.map((el) =>
+            el.id === drag.arrowId && el.type === 'arrow'
+              ? { ...el, curveOffset: { dx: offsetDx, dy: offsetDy } }
+              : el,
+          ),
+        );
+        return;
+      }
+
       if (drag.kind === 'arrow-translate') {
         // Shift both free endpoints by the same canvas delta from
         // their captured start positions. No anchor / angle snap:
@@ -457,5 +509,12 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     };
   }, [drag]);
 
-  return { drag, beginDrag, beginAnchorDrag, beginArrowTranslate, beginEndpointDrag };
+  return {
+    drag,
+    beginDrag,
+    beginAnchorDrag,
+    beginArrowTranslate,
+    beginEndpointDrag,
+    beginArrowCurveDrag,
+  };
 }

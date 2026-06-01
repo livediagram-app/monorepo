@@ -3322,7 +3322,13 @@ export default function LivePage() {
   // `drag` itself isn't consumed in the page (Canvas pulls cursor
   // styling from `canvasTool`, not the drag state); only the four
   // begin-handlers below are passed through to Canvas as props.
-  const { beginDrag, beginAnchorDrag, beginArrowTranslate, beginEndpointDrag } = useEditorDrag({
+  const {
+    beginDrag,
+    beginAnchorDrag,
+    beginArrowTranslate,
+    beginEndpointDrag,
+    beginArrowCurveDrag,
+  } = useEditorDrag({
     activeTab,
     zoomRef,
     selectedId,
@@ -3541,7 +3547,7 @@ export default function LivePage() {
         onResetContext={() => setContextPosition(null)}
         onRevertChange={revertChange}
         onActivityRowClick={handleActivityRowClick}
-        onClearActivity={clearActivityForActiveTab}
+        onClearActivity={isReadOnly ? undefined : clearActivityForActiveTab}
         saveStatus={saveStatus}
         savedAt={savedAt}
         currentDiagramId={diagramId}
@@ -3582,6 +3588,7 @@ export default function LivePage() {
         onCancelEdit={cancelEdit}
         onBeginEndpointDrag={beginEndpointDrag}
         onBeginArrowTranslate={beginArrowTranslate}
+        onBeginArrowCurveDrag={beginArrowCurveDrag}
         onShiftSelect={toggleInMultiSelect}
         onBeginFormatPainter={beginFormatPainter}
         onCancelFormatPainter={exitFormatPainter}

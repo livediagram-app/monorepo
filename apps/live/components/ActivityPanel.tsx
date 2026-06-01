@@ -27,9 +27,11 @@ type ActivityPanelProps = {
   // accordion in the Editor panel).
   onRowClick: (entry: ChangeLogEntry) => void;
   // Wipe every audit entry for the active tab. The diagram state is
-  // untouched — only the log dies. Disabled when the list is empty
-  // so the button doesn't no-op.
-  onClearActivity: () => void;
+  // untouched (only the log dies). Disabled when the list is empty
+  // so the button doesn't no-op. Optional so view-role visitors can
+  // open the panel (to see the trail of edits) without exposing a
+  // destructive button they aren't allowed to use.
+  onClearActivity?: () => void;
   // Save state surfaced next to the panel title — moved out of the
   // footer so it sits with the related history information.
   saveStatus: SaveStatus;
@@ -122,23 +124,25 @@ export function ActivityPanel({
           )}
         </div>
 
-        <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
-          <Tooltip
-            block
-            title="Clear Activity"
-            description="Delete every entry for this tab. The diagram is untouched."
-          >
-            <button
-              type="button"
-              onClick={onClearActivity}
-              disabled={entries.length === 0}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+        {onClearActivity ? (
+          <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
+            <Tooltip
+              block
+              title="Clear Activity"
+              description="Delete every entry for this tab. The diagram is untouched."
             >
-              <TrashIcon />
-              Clear Activity
-            </button>
-          </Tooltip>
-        </div>
+              <button
+                type="button"
+                onClick={onClearActivity}
+                disabled={entries.length === 0}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <TrashIcon />
+                Clear Activity
+              </button>
+            </Tooltip>
+          </div>
+        ) : null}
       </div>
     </MovablePanel>
   );

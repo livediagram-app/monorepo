@@ -6,6 +6,7 @@ import {
   arrowPathMidpoint,
   arrowStyleOf,
   BORDER_DASH_ARRAY,
+  curveControlPoint,
   DEFAULT_BORDER_STYLE,
   defaultArrowStrokeColor,
   endpointPosition,
@@ -27,6 +28,11 @@ type ArrowViewProps = {
   // — endpoint handles disabled, body drag suppressed, double-click
   // edit suppressed. Mirrors how BoxedElementView handles it.
   tabLocked: boolean;
+  // View-only session. Suppresses every editing affordance the
+  // popover doesn't already hide: the endpoint drag handles + the
+  // curve handle. Body double-click for label edit is also blocked
+  // by isLocked (which the caller sets when readOnly is on).
+  readOnly?: boolean;
   onSelect: (e: ReactPointerEvent) => void;
   onBeginEndpointDrag: (end: ArrowEnd, e: ReactPointerEvent) => void;
   // Double-click on the arrow body fires this so the page can flip
@@ -39,6 +45,10 @@ type ArrowViewProps = {
   // to their elements so the body isn't draggable. The handler is
   // responsible for the gesture's pointer-move + pointer-up plumbing.
   onBeginTranslate?: (e: ReactPointerEvent) => void;
+  // Begin the curve drag gesture, when the arrow is curved and the
+  // selected user grabs the curve handle. Receives the original
+  // pointer event so the caller can hook up move/up listeners.
+  onBeginCurveDrag?: (e: ReactPointerEvent) => void;
 };
 
 const BRAND_600 = 'rgb(2 132 199)';
@@ -50,20 +60,28 @@ export function ArrowView({
   isPaintMode,
   isEditing,
   tabLocked,
+  readOnly = false,
   onSelect,
   onBeginEndpointDrag,
   onBeginEdit,
   onCommitLabel,
   onCancelEdit,
   onBeginTranslate,
+  onBeginCurveDrag,
 }: ArrowViewProps) {
   const isLocked = arrow.locked === true || tabLocked;
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
   const markerUrl = `url(#${arrowheadMarkerId(arrowheadSizeOf(arrow))})`;
   const style = arrowStyleOf(arrow);
-  const pathD = arrowPathD(style, from, to, arrow.from, arrow.to);
-  const midpoint = arrowPathMidpoint(style, from, to, arrow.from, arrow.to);
+  const pathD = arrowPathD(style, from, to, arrow.from, arrow.to, arrow.curveOffset);
+  const midpoint = arrowPathMidpoint(style, from, to, arrow.from, arrow.to, arrow.curveOffset);
+  // Bezier control point (only meaningful for curved arrows). The
+  // curve drag handle sits exactly on this point, not on the
+  // visual midpoint, since dragging the control point is what
+  // actually changes the curve shape (the midpoint is a derived
+  // by-product of the control point at t=0.5).
+  const curveControl = style === 'curved' ? curveControlPoint(from, to, arrow.curveOffset) : null;
   const labelText = arrow.label ?? '';
   const showLabel = isEditing || labelText.length > 0;
   const labelPos = showLabel
@@ -165,7 +183,7 @@ export function ArrowView({
         />
       ) : null}
 
-      {isSelected && !isPaintMode ? (
+      {isSelected && !isPaintMode && !readOnly ? (
         <>
           <EndpointHandle
             cx={from.x}
@@ -189,6 +207,18 @@ export function ArrowView({
               onBeginEndpointDrag('to', e);
             }}
           />
+          {curveControl && onBeginCurveDrag ? (
+            <CurveHandle
+              cx={curveControl.x}
+              cy={curveControl.y}
+              disabled={isLocked}
+              onPointerDown={(e) => {
+                if (isLocked) return;
+                e.stopPropagation();
+                onBeginCurveDrag(e);
+              }}
+            />
+          ) : null}
         </>
       ) : null}
     </g>
@@ -213,6 +243,41 @@ function EndpointHandle({ cx, cy, pinned, disabled, onPointerDown }: EndpointHan
       fill={fill}
       stroke={BRAND_600}
       strokeWidth={2}
+      onPointerDown={onPointerDown}
+      style={{
+        pointerEvents: 'all',
+        cursor: disabled ? 'default' : 'grab',
+      }}
+    />
+  );
+}
+
+// Curve drag handle. Visually distinct from the endpoint handles
+// (square + smaller) so the user can tell at a glance which one
+// moves an endpoint and which one bends the curve. Sits on the
+// quadratic Bezier control point.
+function CurveHandle({
+  cx,
+  cy,
+  disabled,
+  onPointerDown,
+}: {
+  cx: number;
+  cy: number;
+  disabled: boolean;
+  onPointerDown: (e: ReactPointerEvent) => void;
+}) {
+  const size = 10;
+  return (
+    <rect
+      x={cx - size / 2}
+      y={cy - size / 2}
+      width={size}
+      height={size}
+      fill="white"
+      stroke={BRAND_600}
+      strokeWidth={2}
+      rx={2}
       onPointerDown={onPointerDown}
       style={{
         pointerEvents: 'all',
