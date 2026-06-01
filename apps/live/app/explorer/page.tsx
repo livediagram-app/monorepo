@@ -914,7 +914,7 @@ function SidebarFolderSubtree({
                 setMenuOpen((o) => !o);
               }}
               aria-label={`Menu for ${folder.name}`}
-              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-700"
+              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
             >
               <EllipsisIcon />
             </button>
@@ -1209,7 +1209,7 @@ function FolderRow({
             setMenuOpen((o) => !o);
           }}
           aria-label={`Menu for ${folder.name}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-700"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
         >
           <EllipsisIcon />
         </button>
@@ -1287,7 +1287,7 @@ function DiagramRow({
             setMenuOpen((o) => !o);
           }}
           aria-label={`Menu for ${diagram.name}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-700"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
         >
           <EllipsisIcon />
         </button>
@@ -1434,7 +1434,7 @@ function SharedList({
               type="button"
               onClick={() => onDismiss(s.id)}
               aria-label="Dismiss"
-              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-700"
+              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
             >
               <CloseIcon />
             </button>
