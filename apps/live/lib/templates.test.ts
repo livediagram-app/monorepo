@@ -90,3 +90,61 @@ describe('buildTemplatedTab', () => {
     }
   });
 });
+
+// Wireframe templates that pair with the device-frame shapes
+// (browser / monitor / laptop / phone / tablet). Each test pins
+// the template's structural fingerprint, so a future change to the
+// template's element count or shape choices either updates these
+// expectations or fails CI loudly. None of the runtime helpers
+// (theme recolouring, mindmap opacity, etc.) need to be exercised
+// again here, they're covered above against the blank + flowchart
+// templates.
+
+describe('wireframe templates', () => {
+  it('mobile-wireframe drops three phone screens side by side', () => {
+    const tab = buildTemplatedTab('mobile-wireframe', 'brand', 'tab-1', 'mobile');
+    const phones = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'phone');
+    expect(phones).toHaveLength(3);
+    expect(phones.map((p) => (p as { label?: string }).label)).toEqual([
+      'Login',
+      'Feed',
+      'Profile',
+    ]);
+    // Should have ONLY the three phones, no incidental other elements
+    // sneaking in.
+    expect(tab.elements).toHaveLength(3);
+  });
+
+  it('laptop-wireframe drops a laptop frame plus three inner content rectangles', () => {
+    const tab = buildTemplatedTab('laptop-wireframe', 'brand', 'tab-1', 'laptop');
+    const laptops = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'laptop');
+    expect(laptops).toHaveLength(1);
+    const squares = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'square');
+    expect(squares).toHaveLength(3);
+    // Header / Sidebar / Content labels on the squares.
+    const squareLabels = squares
+      .map((s) => (s as { label?: string }).label)
+      .filter((l): l is string => l !== undefined);
+    expect(squareLabels.sort()).toEqual(['Content', 'Header', 'Sidebar']);
+  });
+
+  it('slide-deck drops four monitor frames in a 2x2 grid', () => {
+    const tab = buildTemplatedTab('slide-deck', 'brand', 'tab-1', 'slides');
+    const monitors = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'monitor');
+    expect(monitors).toHaveLength(4);
+    expect(monitors.map((m) => (m as { label?: string }).label)).toEqual([
+      'Title',
+      'Agenda',
+      'Details',
+      'Next steps',
+    ]);
+    // 2x2 layout check: two distinct x positions (left column,
+    // right column), two distinct y positions (top row, bottom
+    // row). Both axes have two unique values; together the
+    // monitors fill the grid (4 cells).
+    const xs = new Set(monitors.map((m) => (m as { x: number }).x));
+    const ys = new Set(monitors.map((m) => (m as { y: number }).y));
+    expect(xs.size).toBe(2);
+    expect(ys.size).toBe(2);
+  });
+});
