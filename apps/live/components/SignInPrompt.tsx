@@ -50,8 +50,8 @@ function SignInPromptEnabled() {
   if (!isLoaded || isSignedIn) return null;
   return (
     <PromptShell
-      title="Sign in to keep your diagrams"
-      body="A free account syncs your diagrams across devices."
+      title="Sign in to keep your content"
+      body="A free account keeps your diagrams and content across sessions and devices."
       action={
         <Link
           href="/sign-in/"
