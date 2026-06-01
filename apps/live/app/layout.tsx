@@ -3,9 +3,19 @@ import type { ReactNode } from 'react';
 import { ClerkProvider } from '@/components/providers/ClerkProvider';
 import './globals.css';
 
+// The live app is the product, not a content surface. Every route
+// under /live/* is either a signed-in workspace carrying private
+// user data, an auth flow that's worthless to crawlers, or the
+// welcome flow that needs runtime identity to mean anything.
+// `noindex, nofollow` at the root layout cascades through every
+// nested page in the static export. See spec/07 "SEO and indexing".
 export const metadata: Metadata = {
   title: 'livediagram',
   description: 'Build diagrams and mindmaps. Multiplayer canvas.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 // ClerkProvider wraps everything so `useAuth` / `useSignIn` / `useSignUp`

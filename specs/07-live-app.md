@@ -55,6 +55,18 @@ Three regions stacked vertically, filling the viewport:
 - Folders in the Explorer (see [15-folders.md](15-folders.md)).
 - Themed templates (chosen on the new-diagram route).
 
+## SEO and indexing
+
+The live app is the product, not a content surface. Every page under `/live/*` is one of:
+
+- A signed-in workspace (`/explorer`, `/diagram/[id]`) carrying private user data that must not appear in search results.
+- An auth flow (`/sign-in`, `/get-started`, `/sso-callback`) that's worthless to crawlers and pointless to index.
+- The new-diagram welcome flow (`/new`) that needs the user's runtime identity to mean anything.
+
+`apps/live/app/layout.tsx` declares `robots: { index: false, follow: false }` in the root metadata so every route under `/live/*` inherits the directive. Cascades correctly through the static-export pages: each rendered HTML head carries `<meta name="robots" content="noindex,nofollow">`.
+
+This complements the marketing site's SEO policy (see [16-marketing-site.md](16-marketing-site.md)): marketing is the indexable surface, the live app is explicitly off-limits to crawlers. The two policies meet at the router worker, which serves them on the same hostname but distinct paths.
+
 ## Out of scope (next iterations)
 
 - **Auth UI** — Clerk integration. Today the api carries owner identity in `X-Owner-Id` only.
