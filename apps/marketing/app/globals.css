@@ -266,6 +266,21 @@
     stroke: #16a34a;
   }
 }
+/* the themed (first) card tints its canvas in step with the recolour, so the
+   whole surface shifts palette, not just the shapes. */
+.hero-theme-canvas {
+  animation: hero-theme-canvas 16s ease-in-out infinite;
+}
+@keyframes hero-theme-canvas {
+  0%,
+  40% {
+    background-color: #eff6ff;
+  }
+  48%,
+  100% {
+    background-color: #f0fdf4;
+  }
+}
 
 /* rename a box: cross-fade two labels around the midpoint */
 .hero-text-out {
@@ -361,6 +376,131 @@
   92%,
   100% {
     opacity: 0;
+  }
+}
+
+/* Hero two-card stage. Two editor windows ride a track; each card is 50% of
+   the track, so translating ±25% centres one card while its neighbour peeks
+   ~half on the opposite side. The track position is state-driven (the active
+   card, advanced on a timer or by a click); this transition animates the
+   slide between the two. The centred card plays its build keyframes; the
+   peeking card renders settled (.hero-static, below). */
+.hero-track {
+  transition: transform 0.6s ease;
+  will-change: transform;
+}
+/* Settled, non-animating frame for the peeking card: same end-state as the
+   reduced-motion fallback, so the off-centre window reads as a finished
+   preview rather than mid-build. */
+.hero-static .hero-pop1,
+.hero-static .hero-pop2,
+.hero-static .hero-pop3,
+.hero-static .hero-pop4,
+.hero-static .hero-pop5,
+.hero-static .hero-line1,
+.hero-static .hero-line2,
+.hero-static .hero-line3,
+.hero-static .hero-line4,
+.hero-static .hero-theme,
+.hero-static .hero-text-in,
+.hero-static .hero-comment {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  stroke-dashoffset: 0;
+}
+.hero-static .hero-text-out {
+  animation: none;
+  opacity: 0;
+}
+
+/* Mind-map laser pointer. After the map builds, a glowing rose laser draws a
+   ring around one node, then the pointer moves to another node and rings it.
+   Only rendered on the active (centred) card, on the same 16s loop as the
+   build, starting at ~50% so the map is already drawn. */
+.hero-laser-ring {
+  fill: none;
+  stroke: #f43f5e;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 360;
+  filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.85));
+}
+.hero-laser-a {
+  animation: hero-laser-a 16s ease-in-out infinite;
+}
+.hero-laser-b {
+  animation: hero-laser-b 16s ease-in-out infinite;
+}
+@keyframes hero-laser-a {
+  0%,
+  50% {
+    stroke-dashoffset: 360;
+    opacity: 0;
+  }
+  52% {
+    opacity: 1;
+  }
+  64% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  72%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes hero-laser-b {
+  0%,
+  70% {
+    stroke-dashoffset: 360;
+    opacity: 0;
+  }
+  72% {
+    opacity: 1;
+  }
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  92%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+.hero-laser-dot {
+  fill: #f43f5e;
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.9));
+  animation: hero-laser-dot 16s ease-in-out infinite;
+}
+@keyframes hero-laser-dot {
+  0%,
+  49% {
+    opacity: 0;
+    transform: translate(150px, 60px);
+  }
+  52%,
+  64% {
+    opacity: 1;
+    transform: translate(150px, 60px);
+  }
+  70%,
+  86% {
+    opacity: 1;
+    transform: translate(450px, 220px);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translate(450px, 220px);
   }
 }
 
@@ -895,6 +1035,22 @@
   animation: fa-ripple 2.4s ease-out infinite;
 }
 
+/* one-shot entrance for the use-case carousel's featured card; replays on
+   selection change via a React key remount (components/UseCaseCarousel). */
+@keyframes uc-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.uc-pop {
+  animation: uc-pop 0.35s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-pop1,
   .hero-pop2,
@@ -919,6 +1075,17 @@
     animation: none;
     opacity: 0;
   }
+  /* the laser pointer (mind-map card) stays hidden */
+  .hero-laser-a,
+  .hero-laser-b,
+  .hero-laser-dot {
+    animation: none;
+    opacity: 0;
+  }
+  /* the themed canvas holds its settled tint */
+  .hero-theme-canvas {
+    animation: none;
+  }
 
   .fa-pop,
   .fa-draw,
@@ -940,7 +1107,8 @@
   .fa-swap-a,
   .fa-on,
   .fa-fade,
-  .fa-ripple {
+  .fa-ripple,
+  .uc-pop {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

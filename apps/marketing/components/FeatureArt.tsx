@@ -1696,3 +1696,307 @@ export function AccountSyncArt() {
     </Frame>
   );
 }
+
+/* ──────────────── Section: search / images / shortcuts / dark ──────────
+ * Cards for the newer editor surfaces. Same vocabulary + shared fa-*
+ * timing classes as everything above, no bespoke keyframes. */
+
+// Global search: the modal floats over the (blurred) canvas, a query is
+// typed, and grouped results stream in with the first one highlighted, like
+// the real SearchPanel (diagram / folder / tab / element scopes).
+export function SearchArt() {
+  const rows = [
+    { kind: 'diagram', name: 'Q3 Architecture', active: true, meta: '' },
+    { kind: 'tab', name: 'Auth flow', active: false, meta: 'tab' },
+    { kind: 'element', name: 'Auth service', active: false, meta: 'on Backend' },
+  ];
+  return (
+    <Frame canvas>
+      <div className="fa-fade absolute left-1/2 top-2 w-[84%] -translate-x-1/2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+        <div className="flex items-center gap-1.5 border-b border-slate-100 px-2 py-1.5">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          >
+            <circle cx="7" cy="7" r="4" />
+            <path d="M10 10l3.5 3.5" />
+          </svg>
+          <span className="text-[8px] font-medium text-slate-600">auth</span>
+          <kbd className="ml-auto rounded bg-slate-100 px-1 py-0.5 text-[7px] font-medium text-slate-400">
+            Esc
+          </kbd>
+        </div>
+        <div className="py-0.5">
+          {rows.map((r, i) => (
+            <div
+              key={r.name}
+              className={
+                'fa-pop flex items-center gap-1.5 px-2 py-1 text-[8px] ' +
+                (r.active ? 'bg-brand-100 font-medium text-brand-800' : 'text-slate-600')
+              }
+              style={{ animationDelay: `${0.5 + i * 0.3}s` }}
+            >
+              <SearchGlyph kind={r.kind} />
+              <span className="min-w-0 flex-1 truncate">{r.name}</span>
+              {r.meta ? <span className="text-[7px] text-slate-400">{r.meta}</span> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function SearchGlyph({ kind }: { kind: string }) {
+  const common = {
+    width: 9,
+    height: 9,
+    viewBox: '0 0 16 16',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.6,
+    'aria-hidden': true,
+  } as const;
+  if (kind === 'diagram')
+    return (
+      <svg {...common}>
+        <rect x="3" y="3" width="10" height="10" rx="1.5" />
+      </svg>
+    );
+  if (kind === 'tab')
+    return (
+      <svg {...common}>
+        <path d="M2.5 6.5h4l1-2h6v9h-11z" strokeLinejoin="round" />
+      </svg>
+    );
+  return (
+    <svg {...common}>
+      <circle cx="8" cy="8" r="4" />
+    </svg>
+  );
+}
+
+// Images on the canvas: a placed image element (a framed photo) sits selected
+// on the dot-grid, and the per-owner gallery strip on the right cycles a
+// brand highlight to say "reuse one without re-uploading" (spec/19).
+export function ImagesArt() {
+  const thumbs = [
+    { sky: '#e0f2fe', hill: '#7dd3fc' },
+    { sky: '#fce7f3', hill: '#f9a8d4' },
+    { sky: '#ede9fe', hill: '#c4b5fd' },
+  ];
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* image element placed on the canvas */}
+        <rect
+          x="18"
+          y="20"
+          width="98"
+          height="58"
+          rx="4"
+          fill="#fff"
+          stroke={BLUE_STROKE}
+          strokeWidth="2"
+        />
+        <clipPath id="li-img-clip">
+          <rect x="20" y="22" width="94" height="54" rx="3" />
+        </clipPath>
+        <g clipPath="url(#li-img-clip)">
+          <rect x="20" y="22" width="94" height="54" fill="#e0f2fe" />
+          <circle cx="44" cy="40" r="9" fill="#fcd34d" />
+          <path d="M20 76 L52 46 L74 70 L92 52 L114 76 Z" fill="#7dd3fc" />
+          <path d="M20 76 L60 58 L114 76 Z" fill="#38bdf8" />
+        </g>
+        {/* selection ring + corner handles */}
+        <rect
+          className="fa-pulse"
+          x="14"
+          y="16"
+          width="106"
+          height="66"
+          rx="6"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="1.5"
+        />
+        {(
+          [
+            [18, 20],
+            [116, 20],
+            [18, 78],
+            [116, 78],
+          ] as const
+        ).map(([cx, cy], i) => (
+          <rect
+            key={i}
+            x={cx - 2.5}
+            y={cy - 2.5}
+            width="5"
+            height="5"
+            rx="1"
+            fill="#fff"
+            stroke={SKY}
+            strokeWidth="1.2"
+          />
+        ))}
+        {/* gallery strip: reuse from your uploads */}
+        {thumbs.map((t, i) => (
+          <g key={i} transform={`translate(150 ${14 + i * 24})`}>
+            <rect
+              x="0"
+              y="0"
+              width="52"
+              height="20"
+              rx="2.5"
+              fill="#fff"
+              stroke="#cbd5e1"
+              strokeWidth="1"
+            />
+            <rect x="2" y="2" width="48" height="16" rx="1.5" fill={t.sky} />
+            <path d="M2 18 L18 9 L30 16 L40 10 L50 18 Z" fill={t.hill} />
+            <rect
+              className="fa-hl"
+              x="-2"
+              y="-2"
+              width="56"
+              height="24"
+              rx="4"
+              fill="none"
+              stroke={SKY}
+              strokeWidth="1.8"
+              style={{ animationDelay: `${i * 2}s` }}
+            />
+          </g>
+        ))}
+      </svg>
+      <span className="absolute left-2 top-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        drag · drop · paste
+      </span>
+    </Frame>
+  );
+}
+
+// Keyboard shortcuts: the catalogue from ShortcutsDialog (kbd chips per row)
+// plus the per-device enable toggle. One row's keys pulse to read as a press.
+export function ShortcutsArt() {
+  const rows = [
+    { label: 'Undo', keys: ['⌘', 'Z'], live: true },
+    { label: 'Redo', keys: ['⌘', '⇧', 'Z'], live: false },
+    { label: 'Delete selection', keys: ['Del'], live: false },
+  ];
+  return (
+    <Frame>
+      <div className="flex h-full flex-col justify-center gap-1 px-3">
+        <p className="text-[8px] font-semibold text-slate-700">Keyboard shortcuts</p>
+        {rows.map((r) => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between gap-2 text-[8px] text-slate-600"
+          >
+            <span className="truncate">{r.label}</span>
+            <span className="flex items-center gap-0.5">
+              {r.keys.map((k, ki) => (
+                <kbd
+                  key={ki}
+                  className={
+                    (r.live ? 'fa-pulse ' : '') +
+                    'inline-flex min-w-[13px] items-center justify-center rounded border border-slate-200 bg-slate-50 px-1 py-0.5 text-[7px] font-medium text-slate-500'
+                  }
+                >
+                  {k}
+                </kbd>
+              ))}
+            </span>
+          </div>
+        ))}
+        <div className="mt-0.5 flex items-center justify-between">
+          <span className="text-[7px] text-slate-400">On this device</span>
+          <span className="relative inline-flex h-3 w-6 items-center rounded-full bg-brand-500">
+            <span className="absolute right-0.5 h-2.5 w-2.5 rounded-full bg-white shadow" />
+          </span>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+// Light / dark mode: the same mini-editor crossfades from light to dark while
+// the sun/moon toggle slides, mirroring the editor's UI theme switch.
+export function DarkModeArt() {
+  return (
+    <Frame>
+      <div className="fa-on absolute inset-0 p-2">
+        <MiniEditorMock dark={false} />
+      </div>
+      <div className="fa-off absolute inset-0 p-2">
+        <MiniEditorMock dark />
+      </div>
+      <span className="absolute bottom-1.5 right-2 inline-flex h-4 w-8 items-center rounded-full bg-slate-200 shadow-sm">
+        <span className="fa-off absolute inset-0 rounded-full bg-slate-700" />
+        <span className="fa-knob relative z-10 ml-0.5 h-3 w-3 rounded-full bg-white shadow" />
+      </span>
+    </Frame>
+  );
+}
+
+function MiniEditorMock({ dark }: { dark: boolean }) {
+  const panel = dark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white';
+  const bar = dark ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50';
+  const dot = dark ? 'bg-slate-600' : 'bg-slate-300';
+  const shapeFill = dark ? '#0c4a6e' : BLUE_FILL;
+  const grid = dark ? '#1e293b' : '#d8dee8';
+  return (
+    <div className={'flex h-full w-full flex-col overflow-hidden rounded-md border ' + panel}>
+      <div className={'flex items-center gap-1 border-b px-1.5 py-1 ' + bar}>
+        <span className={'h-1.5 w-1.5 rounded-full ' + dot} />
+        <span className={'h-1.5 w-1.5 rounded-full ' + dot} />
+        <span className={'ml-auto h-1.5 w-6 rounded ' + dot} />
+      </div>
+      <div
+        className="relative flex-1"
+        style={{
+          backgroundImage: `radial-gradient(circle at center, ${grid} 1px, transparent 1px)`,
+          backgroundSize: '11px 11px',
+        }}
+      >
+        <svg viewBox="0 0 120 38" className="absolute inset-0 h-full w-full">
+          <rect
+            x="14"
+            y="11"
+            width="34"
+            height="16"
+            rx="4"
+            fill={shapeFill}
+            stroke={BLUE_STROKE}
+            strokeWidth="2"
+          />
+          <rect
+            x="72"
+            y="13"
+            width="34"
+            height="16"
+            rx="4"
+            fill={shapeFill}
+            stroke={BLUE_STROKE}
+            strokeWidth="2"
+          />
+          <line
+            x1="48"
+            y1="19"
+            x2="72"
+            y2="21"
+            stroke={BLUE_STROKE}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}

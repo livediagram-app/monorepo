@@ -4,11 +4,13 @@ import {
   AnyDeviceArt,
   AutosaveArt,
   CommentsArt,
+  DarkModeArt,
   DepthArt,
   EasyStartArt,
   FoldersArt,
   FormatPainterArt,
   GroupArt,
+  ImagesArt,
   LaserArt,
   LockArt,
   MarqueeArt,
@@ -20,8 +22,10 @@ import {
   RealtimeArt,
   RefreshArt,
   RevokeArt,
+  SearchArt,
   SelectionGlowArt,
   ShareLinksArt,
+  ShortcutsArt,
   TabCopyArt,
   TabLockArt,
   TabReorderArt,
@@ -30,12 +34,12 @@ import {
   ThemesArt,
   UndoRedoArt,
   UnlimitedTabsArt,
-  WireframeArt,
 } from '@/components/FeatureArt';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { FeatureGrid, Section } from '@/components/Section';
+import { UseCaseCarousel } from '@/components/UseCaseCarousel';
 
 export default function LandingPage() {
   return (
@@ -88,10 +92,10 @@ export default function LandingPage() {
                   'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
               },
               {
-                art: <WireframeArt />,
-                title: 'Wireframe any UI',
+                art: <ShortcutsArt />,
+                title: 'Keyboard shortcuts',
                 description:
-                  'Drop browser, monitor, laptop, phone, and tablet frames straight from the palette. Pair them with the mobile, laptop, and slide-deck templates to sketch flows for any surface in minutes.',
+                  'The moves you repeat have keys: undo and redo, delete, multi-select, and space-drag to pan. A built-in cheat sheet lists them all, and you can switch them off per device.',
               },
             ]}
           />
@@ -188,6 +192,12 @@ export default function LandingPage() {
                 description:
                   'File diagrams into nested folders in the explorer. Recent diagrams stay one click away; everything else lives where you put it.',
               },
+              {
+                art: <DarkModeArt />,
+                title: 'Light or dark, your call',
+                description:
+                  'Flip the whole editor to a dark theme with one toggle. Toolbars, panels, dialogs, and menus all come along, and the choice sticks per device. The canvas stays crisp either way.',
+              },
             ]}
           />
         </Section>
@@ -271,15 +281,40 @@ export default function LandingPage() {
                 description:
                   'Sign in for free and your diagrams follow you. Open the same ones on your laptop, tablet, or phone, always up to date.',
               },
+              {
+                art: <SearchArt />,
+                title: 'Find anything, fast',
+                description:
+                  'Open search and jump straight to any diagram, folder, tab, or element by name. Matches group as you type, and Enter lands you on the first hit.',
+              },
             ]}
           />
         </Section>
 
         <Section
+          id="versatile"
+          title="As versatile as your ideas"
+          description="A diagram is rarely just boxes and arrows. Bring in the real thing: drop images straight onto the canvas and reuse them across every diagram you make."
+          variant="tinted"
+        >
+          <FeatureGrid
+            items={[
+              {
+                art: <ImagesArt />,
+                title: 'Images on the canvas',
+                description:
+                  'Drag, drop, or paste a PNG, JPEG, WebP, or GIF straight onto the canvas. Resize and arrange it like any other element. Everything you add lands in your own gallery, ready to reuse in any diagram without uploading twice.',
+              },
+            ]}
+          />
+        </Section>
+
+        <UseCaseCarousel />
+
+        <Section
           id="foundations"
           title="Open source. Self-hostable. No lock-in."
           description="MIT-licensed. Static frontend + Cloudflare Workers backend. Run it on your own account in an afternoon. Or use the hosted version, your call."
-          variant="tinted"
         >
           <FeatureGrid
             items={[
@@ -308,7 +343,7 @@ export default function LandingPage() {
         <section id="get-started" className="border-t border-slate-200/70 bg-brand-500">
           <div className="mx-auto max-w-6xl px-6 py-20 text-center sm:py-24">
             <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              It&rsquo;s time to start
+              Time to start
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-brand-50">
               No sign-up wall. No credit card. The editor opens in your browser and remembers the
