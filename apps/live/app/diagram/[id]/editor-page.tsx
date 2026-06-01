@@ -89,7 +89,15 @@ import { NotePopover } from '@/components/NotePopover';
 // (animate-fly-up-in) so the small gap reads as the entrance, not
 // a stall.
 const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) => m.SearchPanel));
-import { ShortcutsDialog } from '@/components/ShortcutsDialog';
+// Lazy-load ShortcutsDialog for the same reason as ExportTabDialog
+// and ShareDialog: it mounts only when the user clicks the
+// keyboard-shortcut button in the footer, and most editor sessions
+// never open it. Hoisting the 138-line dialog plus its full
+// shortcut table into its own chunk means the editor's initial
+// bundle doesn't ship them up front.
+const ShortcutsDialog = dynamic(() =>
+  import('@/components/ShortcutsDialog').then((m) => m.ShortcutsDialog),
+);
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
