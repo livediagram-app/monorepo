@@ -1,0 +1,118 @@
+import { describe, expect, it } from 'vitest';
+import type { Comment, Element, ShapeElement } from '@livediagram/diagram';
+import { rewriteCommentAuthors } from './comments';
+import type { ParticipantDTO } from './types';
+
+// Server-side comment-author rewrite is a security boundary: the
+// client's request body's authorName / authorColor on any comment
+// must NOT win over the server-trusted participant record (for
+// brand-new comments) or the stored values (for existing comments).
+// These tests pin the three branches and the noop edge cases so the
+// PUT-tab handler stays safe through future refactors.
+
+function mkShape(id: string, comments: Comment[]): ShapeElement {
+  return {
+    id,
+    type: 'shape',
+    shape: 'square',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    commentThread: { comments, resolved: false },
+  };
+}
+
+function mkComment(id: string, authorName: string, authorColor: string, text = 't'): Comment {
+  return { id, text, createdAt: 1, authorName, authorColor };
+}
+
+const writer: ParticipantDTO = {
+  id: 'writer-id',
+  name: 'Server Writer',
+  color: '#0ea5e9',
+  createdAt: 0,
+};
+
+describe('rewriteCommentAuthors', () => {
+  it('passes elements without a commentThread through unchanged', () => {
+    const el: Element = {
+      id: 'a',
+      type: 'shape',
+      shape: 'square',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+    };
+    const result = rewriteCommentAuthors([el], [], writer);
+    expect(result).toEqual([el]);
+  });
+
+  it('passes elements with an empty commentThread through unchanged', () => {
+    const el = mkShape('a', []);
+    const result = rewriteCommentAuthors([el], [], writer);
+    expect(result[0]).toBe(el);
+  });
+
+  it('overwrites author fields on a brand-new comment with the writer', () => {
+    const next = mkShape('a', [mkComment('c1', 'CLIENT LIE', '#ff0000')]);
+    const result = rewriteCommentAuthors([next], [], writer);
+    const out = (result[0] as ShapeElement).commentThread!.comments[0]!;
+    expect(out.authorName).toBe('Server Writer');
+    expect(out.authorColor).toBe('#0ea5e9');
+    expect(out.id).toBe('c1');
+    expect(out.text).toBe('t');
+  });
+
+  it('preserves the original author of an existing comment even when the body claims otherwise', () => {
+    const prev = mkShape('a', [mkComment('c1', 'Original Author', '#10b981')]);
+    const next = mkShape('a', [mkComment('c1', 'HACKED', '#ff0000')]);
+    const result = rewriteCommentAuthors([next], [prev], writer);
+    const out = (result[0] as ShapeElement).commentThread!.comments[0]!;
+    expect(out.authorName).toBe('Original Author');
+    expect(out.authorColor).toBe('#10b981');
+  });
+
+  it('mixes preserved (existing) and rewritten (new) comments in the same thread', () => {
+    const prev = mkShape('a', [mkComment('c1', 'Original', '#10b981')]);
+    const next = mkShape('a', [
+      mkComment('c1', 'HACKED', '#ff0000'),
+      mkComment('c2', 'CLIENT LIE', '#ff0000'),
+    ]);
+    const [out] = rewriteCommentAuthors([next], [prev], writer) as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorName).toBe('Original');
+    expect(out.commentThread!.comments[0]!.authorColor).toBe('#10b981');
+    expect(out.commentThread!.comments[1]!.authorName).toBe('Server Writer');
+    expect(out.commentThread!.comments[1]!.authorColor).toBe('#0ea5e9');
+  });
+
+  it('preserves the comment text and other fields while rewriting author fields', () => {
+    const next = mkShape('a', [mkComment('c1', 'lie', '#ff0000', 'visible body')]);
+    const [out] = rewriteCommentAuthors([next], [], writer) as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.text).toBe('visible body');
+    expect(out.commentThread!.comments[0]!.createdAt).toBe(1);
+  });
+
+  it('keeps preservation scoped by id, not by element: a comment that moves elements still keeps its original author', () => {
+    // Comment c1 was on element a in the prior tab. The new tab
+    // somehow has it on element b (impossible via normal UI, but
+    // models the rule: id wins, not parent). Author still locked.
+    const prev = mkShape('a', [mkComment('c1', 'Original', '#10b981')]);
+    const next = mkShape('b', [mkComment('c1', 'HACKED', '#ff0000')]);
+    const [out] = rewriteCommentAuthors([next], [prev], writer) as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorName).toBe('Original');
+  });
+
+  it('returns new array references so the caller can detect a rewrite (no mutation in place)', () => {
+    const next = mkShape('a', [mkComment('c1', 'lie', '#ff0000')]);
+    const result = rewriteCommentAuthors([next], [], writer);
+    expect(result[0]).not.toBe(next);
+    expect((result[0] as ShapeElement).commentThread).not.toBe(next.commentThread);
+    expect((result[0] as ShapeElement).commentThread!.comments[0]).not.toBe(
+      next.commentThread!.comments[0],
+    );
+    // Original element untouched.
+    expect(next.commentThread!.comments[0]!.authorName).toBe('lie');
+  });
+});
