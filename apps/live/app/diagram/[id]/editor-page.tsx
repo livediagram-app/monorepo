@@ -67,6 +67,7 @@ import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
+import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
 import {
   nextFreeColor,
@@ -3311,49 +3312,20 @@ export default function LivePage() {
     markCheckpoint,
   });
 
-  useEffect(() => {
-    if (formatSourceId === null && groupSourceId === null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setFormatSourceId(null);
-        setGroupSourceId(null);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [formatSourceId, groupSourceId]);
-
-  // Global Delete / Backspace handler — wipes the current selection
-  // (multi-select first, then falls back to single). Suppressed while a
-  // label is being edited or focus is in any text input, so typing in a
-  // text element doesn't blow away the element you're editing.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      // A view-only session never deletes; bail before preventDefault so a
-      // viewer's Backspace still triggers browser-back as usual.
-      if (isReadOnly) return;
-      const target = e.target as Element | null;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
-        return;
-      }
-      if (editingId !== null) return;
-      if (multiSelectedIds.size > 0) {
-        e.preventDefault();
-        deleteMultiSelected();
-      } else if (selectedId !== null) {
-        e.preventDefault();
-        deleteSelected();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [multiSelectedIds, selectedId, editingId]);
+  // Global keyboard shortcuts (Escape cancels modes, Delete /
+  // Backspace wipes selection) live in useEditorKeyboardShortcuts.
+  useEditorKeyboardShortcuts({
+    formatSourceId,
+    setFormatSourceId,
+    groupSourceId,
+    setGroupSourceId,
+    selectedId,
+    multiSelectedIds,
+    editingId,
+    isReadOnly,
+    deleteSelected,
+    deleteMultiSelected,
+  });
 
   if (diagramNotFound) {
     return (
