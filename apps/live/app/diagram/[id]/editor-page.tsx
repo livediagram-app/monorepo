@@ -3705,34 +3705,23 @@ export default function LivePage() {
 
   return (
     <div className="flex h-dvh flex-col">
-      {/* Mobile: drop the EditorHeader so the canvas + Palette
-          banner + TabBar fill the entire viewport. The diagram
-          title, Share button, and AuthControls are desktop-only
-          chrome; mobile users get to the full chrome via the
-          Explorer dock button (which already routes to the
-          explorer route on mobile). `hidden sm:contents` keeps
-          the desktop layout exactly as before by letting the
-          EditorHeader render as a direct flex child of the
-          outer column. */}
-      <div className="hidden sm:contents">
-        <EditorHeader
-          diagramName={diagramName}
-          hideTitle={anyWelcomeOpen}
-          showShare={isOwner && hydrated && !anyWelcomeOpen}
-          shareable={diagramShareable}
-          // Visitors see "Make a copy" instead of "Share" — same slot,
-          // different action. Hidden during the welcome flow so the
-          // first-paint chrome stays minimal, and during hydration so
-          // we don't render the button before we know whether the user
-          // is the owner.
-          onMakeCopy={!isOwner && hydrated && !anyWelcomeOpen && diagramId ? makeCopy : undefined}
-          copying={copying}
-          readOnly={isReadOnly}
-          brandAccent={getTheme(activeTab.theme).elementStroke ?? undefined}
-          onOpenShare={() => setShareDialogOpen(true)}
-          onRename={setDiagramName}
-        />
-      </div>
+      <EditorHeader
+        diagramName={diagramName}
+        hideTitle={anyWelcomeOpen}
+        showShare={isOwner && hydrated && !anyWelcomeOpen}
+        shareable={diagramShareable}
+        // Visitors see "Make a copy" instead of "Share": same slot,
+        // different action. Hidden during the welcome flow so the
+        // first-paint chrome stays minimal, and during hydration so
+        // we don't render the button before we know whether the user
+        // is the owner.
+        onMakeCopy={!isOwner && hydrated && !anyWelcomeOpen && diagramId ? makeCopy : undefined}
+        copying={copying}
+        readOnly={isReadOnly}
+        brandAccent={getTheme(activeTab.theme).elementStroke ?? undefined}
+        onOpenShare={() => setShareDialogOpen(true)}
+        onRename={setDiagramName}
+      />
       {exportOpen ? (
         <ExportTabDialog
           tab={activeTab}
