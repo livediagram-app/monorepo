@@ -7,7 +7,6 @@ import {
   createShape,
   createSticky,
   createText,
-  duplicateBoxed,
   duplicateGroupedElements,
   type ArrowElement,
   type CommentThread,
@@ -68,17 +67,6 @@ describe('arrow factories', () => {
     const a = createPinnedArrow('a', 'e', 'b', 'w');
     expect(a.from).toEqual({ kind: 'pinned', elementId: 'a', anchor: 'e' });
     expect(a.to).toEqual({ kind: 'pinned', elementId: 'b', anchor: 'w' });
-  });
-});
-
-describe('duplicateBoxed', () => {
-  it('copies with a fresh id and an offset position', () => {
-    const original = createShape('square', 10, 10);
-    const copy = duplicateBoxed(original, 5, -3);
-    expect(copy.id).not.toBe(original.id);
-    expect(copy).toMatchObject({ x: 15, y: 7, shape: 'square' });
-    // Original is untouched.
-    expect(original).toMatchObject({ x: 10, y: 10 });
   });
 });
 

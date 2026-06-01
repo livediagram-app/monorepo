@@ -285,8 +285,6 @@ export const BORDER_RADIUS_PX: Record<BorderRadius, number> = {
   lg: 24,
 };
 
-export const DEFAULT_BORDER_RADIUS: BorderRadius = 'sm';
-
 // --- Text ------------------------------------------------------------------
 
 export type TextElement = {
@@ -434,7 +432,7 @@ export type ImageElement = {
 
 export type Anchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
-export const ALL_ANCHORS: Anchor[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+const ALL_ANCHORS: Anchor[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
 export type Endpoint =
   | { kind: 'free'; x: number; y: number }
@@ -564,7 +562,7 @@ export function arrowheadSizeOf(arrow: ArrowElement): ArrowheadSize {
 // as a named preset so the renderer can swap geometries without
 // touching the data model.
 export type ArrowStyle = 'straight' | 'curved' | 'angled';
-export const DEFAULT_ARROW_STYLE: ArrowStyle = 'straight';
+const DEFAULT_ARROW_STYLE: ArrowStyle = 'straight';
 export function arrowStyleOf(arrow: ArrowElement): ArrowStyle {
   return arrow.arrowStyle ?? DEFAULT_ARROW_STYLE;
 }
@@ -896,11 +894,6 @@ export function createPinnedArrow(
     from: { kind: 'pinned', elementId: fromId, anchor: fromAnchor },
     to: { kind: 'pinned', elementId: toId, anchor: toAnchor },
   };
-}
-
-// Duplicate a boxed element with a new id and a position offset.
-export function duplicateBoxed<T extends BoxedElement>(element: T, dx: number, dy: number): T {
-  return { ...element, id: crypto.randomUUID(), x: element.x + dx, y: element.y + dy };
 }
 
 // Duplicate every element whose id is in `ids`:
