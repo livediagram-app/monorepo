@@ -33,7 +33,7 @@ export async function duplicateDiagram(
   const src = await apiLoadDiagram(ownerId, sourceId).catch(() => null);
   if (!src) return undefined;
   const fullTabs = await Promise.all(
-    src.tabs.map((t) => apiLoadTab(ownerId, src.id, t.id).catch(() => null)),
+    src.tabs.map((t) => apiLoadTab(ownerId, src.id, t.id, null).catch(() => null)),
   );
   // Build the old → new tab-id map from the source's declared tab
   // list, not from the loaded payloads — a missing tab fetch

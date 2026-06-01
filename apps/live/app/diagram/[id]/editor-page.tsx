@@ -748,7 +748,9 @@ export default function LivePage() {
           }));
           const firstSummary = fetched.tabs[0];
           if (firstSummary) {
-            const first = await apiLoadTab(self.id, fetched.id, firstSummary.id).catch(() => null);
+            const first = await apiLoadTab(self.id, fetched.id, firstSummary.id, null).catch(
+              () => null,
+            );
             if (first) placeholderTabs[0] = first;
             loadedTabIdsRef.current.add(firstSummary.id);
           }

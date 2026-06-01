@@ -180,6 +180,45 @@ async function expectOkOr404Void(res: Response, action: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`${action} failed: ${res.status}`);
 }
 
+// Collapse concurrent identical calls into a single in-flight
+// promise. The wrapped function keeps its original signature; the
+// `keyOf` function derives a string identity from its arguments
+// so different argument shapes don't share entries (e.g. one
+// ownerId never blocks a different ownerId's request).
+//
+// Why this exists: React Strict Mode dev double-invokes effects,
+// and the editor / new / explorer routes each mount surfaces that
+// kick off the same list / load endpoints on first paint. Without
+// dedup a signed-in user opening a route produces 2 to 6
+// concurrent fetches for the same data. With it, the second + nth
+// callers receive the in-flight promise the first one started,
+// and the entry self-cleans in a finally so the next round-trip
+// is fresh.
+//
+// Only safe for endpoints whose response is purely a function of
+// the arguments (idempotent GETs). Writes / mutations stay
+// un-deduped to keep their semantics obvious.
+function dedupeInFlight<TArgs extends readonly unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  keyOf: (...args: TArgs) => string,
+): (...args: TArgs) => Promise<TResult> {
+  const inFlight = new Map<string, Promise<TResult>>();
+  return (...args: TArgs): Promise<TResult> => {
+    const key = keyOf(...args);
+    const existing = inFlight.get(key);
+    if (existing) return existing;
+    const request = (async (): Promise<TResult> => {
+      try {
+        return await fn(...args);
+      } finally {
+        inFlight.delete(key);
+      }
+    })();
+    inFlight.set(key, request);
+    return request;
+  };
+}
+
 export async function apiLoadDiagram(ownerId: string, id: string): Promise<StoredDiagram | null> {
   const res = await fetch(`${API_BASE}/diagrams/${id}`, {
     headers: await apiHeaders(ownerId),
@@ -361,46 +400,31 @@ export async function apiCreateDiagram(
   return diagram;
 }
 
-// In-flight tab loads, keyed by ownerId+diagramId+tabId+shareCode.
-// StrictMode double-invokes the lazy-load effect in dev, which
-// otherwise produces a duplicate GET for the same tab on every
-// mount. Returning the shared promise collapses the duplicates
-// into a single network request without changing the calling
-// shape.
-const inFlightTabLoads = new Map<string, Promise<Tab | null>>();
-
 // Full tab payload, including elements + per-tab metadata. Pulled
 // lazily when the user opens a tab; the diagram-summary fetch only
 // carries TabSummary rows.
-export function apiLoadTab(
+async function _apiLoadTab(
   ownerId: string,
   diagramId: string,
   tabId: string,
-  shareCode: string | null = null,
+  shareCode: string | null,
 ): Promise<Tab | null> {
-  const key = `${ownerId}␟${diagramId}␟${tabId}␟${shareCode ?? ''}`;
-  const existing = inFlightTabLoads.get(key);
-  if (existing) return existing;
-  const request = (async (): Promise<Tab | null> => {
-    try {
-      const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
-        headers: await apiHeaders(ownerId, { share: shareCode }),
-      });
-      const body = await expectOkOrNull<TabResponse>(res, 'load tab');
-      if (!body) return null;
-      const { tab } = body;
-      const { diagramId: _did, orderIndex: _oi, updatedAt: _ua, ...clientTab } = tab;
-      void _did;
-      void _oi;
-      void _ua;
-      return clientTab;
-    } finally {
-      inFlightTabLoads.delete(key);
-    }
-  })();
-  inFlightTabLoads.set(key, request);
-  return request;
+  const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tabId}`, {
+    headers: await apiHeaders(ownerId, { share: shareCode }),
+  });
+  const body = await expectOkOrNull<TabResponse>(res, 'load tab');
+  if (!body) return null;
+  const { tab } = body;
+  const { diagramId: _did, orderIndex: _oi, updatedAt: _ua, ...clientTab } = tab;
+  void _did;
+  void _oi;
+  void _ua;
+  return clientTab;
 }
+export const apiLoadTab = dedupeInFlight(
+  _apiLoadTab,
+  (ownerId, diagramId, tabId, shareCode) => `${ownerId}␟${diagramId}␟${tabId}␟${shareCode ?? ''}`,
+);
 
 // Upsert a single tab. The active edit path — autosave hits this
 // instead of shipping every tab on every keystroke.
@@ -443,33 +467,14 @@ export async function apiDeleteDiagram(ownerId: string, id: string): Promise<voi
   await expectOkOr404Void(res, 'delete diagram');
 }
 
-// In-flight list-diagrams calls keyed by ownerId. /explorer, /new,
-// and the editor route all mount surfaces that call apiListDiagrams
-// for the signed-in user, often within the same task tick. Each
-// mount in StrictMode dev also double-invokes its effect. Without
-// the dedupe a single signed-in page open produces 4+ concurrent
-// GET /diagrams hits; with it, identical concurrent calls share
-// one network request and resolve from the same promise. Same
-// pattern as inFlightTabLoads further up.
-const inFlightListDiagrams = new Map<string, Promise<DiagramSummary[]>>();
-
-export function apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
-  const existing = inFlightListDiagrams.get(ownerId);
-  if (existing) return existing;
-  const request = (async () => {
-    try {
-      const res = await fetch(`${API_BASE}/diagrams`, {
-        headers: await apiHeaders(ownerId),
-      });
-      const { diagrams } = await expectOk<ListResponse>(res, 'list');
-      return diagrams;
-    } finally {
-      inFlightListDiagrams.delete(ownerId);
-    }
-  })();
-  inFlightListDiagrams.set(ownerId, request);
-  return request;
+async function _apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
+  const res = await fetch(`${API_BASE}/diagrams`, {
+    headers: await apiHeaders(ownerId),
+  });
+  const { diagrams } = await expectOk<ListResponse>(res, 'list');
+  return diagrams;
 }
+export const apiListDiagrams = dedupeInFlight(_apiListDiagrams, (ownerId) => ownerId);
 
 // ---------------------------------------------------------------------
 // shared_with — "Shared with you" (migration 0010)
@@ -491,11 +496,14 @@ export type SharedWithItem = {
 // List diagrams that have been shared with this owner (i.e. the
 // owner previously opened a share link for them and was identified
 // to the api at the time). Returns newest-interaction-first.
-export async function apiListSharedWith(ownerId: string): Promise<SharedWithItem[]> {
+// Same dedupe rationale as apiListDiagrams: editor + /new +
+// /explorer all mount surfaces that fire this on first paint.
+async function _apiListSharedWith(ownerId: string): Promise<SharedWithItem[]> {
   const res = await fetch(`${API_BASE}/shared`, { headers: await apiHeaders(ownerId) });
   const { shared } = await expectOk<{ shared: SharedWithItem[] }>(res, 'list shared');
   return shared;
 }
+export const apiListSharedWith = dedupeInFlight(_apiListSharedWith, (ownerId) => ownerId);
 
 // Dismiss a single "shared with you" row.
 export async function apiDismissSharedWith(ownerId: string, diagramId: string): Promise<void> {
@@ -529,11 +537,17 @@ export async function apiCopyDiagram(
 // folders — spec/15
 // ---------------------------------------------------------------------
 
-export async function apiListFolders(ownerId: string): Promise<Folder[]> {
+// Same dedupe rationale as apiListDiagrams. useFolders runs once
+// per page surface; concurrent mounts on multi-panel pages (e.g.
+// /new shows the floating Explorer AND the welcome flow, both
+// gated on the same ownerId) would otherwise fire duplicate
+// GET /folders calls.
+async function _apiListFolders(ownerId: string): Promise<Folder[]> {
   const res = await fetch(`${API_BASE}/folders`, { headers: await apiHeaders(ownerId) });
   const { folders } = await expectOk<FoldersResponse>(res, 'list folders');
   return folders;
 }
+export const apiListFolders = dedupeInFlight(_apiListFolders, (ownerId) => ownerId);
 
 export async function apiCreateFolder(
   ownerId: string,
