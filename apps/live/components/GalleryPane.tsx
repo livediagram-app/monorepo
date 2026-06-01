@@ -1,15 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiDeleteImage, apiImageUsage, apiListImages, type ImageSummary } from '@/lib/api-client';
-import {
-  UPLOAD_ACCEPT_ATTR,
-  UPLOAD_MAX_BYTES,
-  uploadImageFile,
-  ImageUploadError,
-} from '@/lib/upload-image';
+import { ImageUploadError, uploadImageFile } from '@/lib/upload-image';
 import { useConfirm } from '@/hooks/useConfirm';
 import { GalleryImageButton } from './GalleryImageButton';
+import { ImageDropZone } from './ImageDropZone';
 
 // Image Gallery pane on the Explorer page (spec/15). Shows every
 // image the signed-in user has uploaded, with an inline "Used in"
@@ -30,10 +26,8 @@ export function GalleryPane({ ownerId }: GalleryPaneProps) {
   const [gallery, setGallery] = useState<ImageSummary[] | null>(null);
   const [usage, setUsage] = useState<Usage>({});
   const [galleryError, setGalleryError] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [dropActive, setDropActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const confirm = useConfirm();
 
   const refresh = useMemo(
@@ -59,26 +53,6 @@ export function GalleryPane({ ownerId }: GalleryPaneProps) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
-
-  const handleFile = async (file: File) => {
-    setUploadError(null);
-    setUploading(true);
-    try {
-      await uploadImageFile(ownerId, file);
-      await refresh();
-    } catch (e) {
-      setUploadError(e instanceof ImageUploadError ? e.message : 'Upload failed.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDropActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file) void handleFile(file);
-  };
 
   const handleDelete = async (image: ImageSummary) => {
     const refs = usage[image.id] ?? [];
@@ -106,44 +80,27 @@ export function GalleryPane({ ownerId }: GalleryPaneProps) {
     }
   };
 
+  const onSelectFile = async (file: File) => {
+    setUploadError(null);
+    setUploading(true);
+    try {
+      await uploadImageFile(ownerId, file);
+      await refresh();
+    } catch (e) {
+      setUploadError(e instanceof ImageUploadError ? e.message : 'Upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div>
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDropActive(true);
-        }}
-        onDragLeave={() => setDropActive(false)}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={`flex h-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed transition ${
-          dropActive
-            ? 'border-brand-400 bg-brand-50'
-            : 'border-slate-300 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/40'
-        }`}
-      >
-        <UploadIcon />
-        <p className="text-sm font-medium text-slate-700">
-          {uploading ? 'Uploading...' : 'Drop, paste, or click to upload an image'}
-        </p>
-        <p className="text-[11px] text-slate-500">
-          PNG, JPEG, WebP, or GIF up to {UPLOAD_MAX_BYTES / (1024 * 1024)} MB
-        </p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={UPLOAD_ACCEPT_ATTR}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void handleFile(file);
-            e.target.value = '';
-          }}
-        />
-      </div>
-      {uploadError ? (
-        <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{uploadError}</p>
-      ) : null}
+      <ImageDropZone
+        onSelectFile={onSelectFile}
+        uploading={uploading}
+        error={uploadError}
+        prompt="Drop, paste, or click to upload an image"
+      />
 
       <div className="mt-6">
         {galleryError ? (
@@ -251,27 +208,6 @@ function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function UploadIcon() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      className="text-slate-500"
-    >
-      <path d="M12 16V4" />
-      <path d="M7 9l5-5 5 5" />
-      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-    </svg>
-  );
 }
 
 function TrashIcon() {

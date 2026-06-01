@@ -3,14 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiDeleteImage, apiListImages, type ImageSummary } from '@/lib/api-client';
-import {
-  UPLOAD_ACCEPT_ATTR,
-  UPLOAD_MAX_BYTES,
-  uploadImageFile,
-  ImageUploadError,
-} from '@/lib/upload-image';
+import { ImageUploadError, uploadImageFile } from '@/lib/upload-image';
 import { useConfirm } from '@/hooks/useConfirm';
 import { GalleryImageButton } from './GalleryImageButton';
+import { ImageDropZone } from './ImageDropZone';
 
 // Two-tab modal launched from the Image element's placeholder + the
 // "Upload image" palette button. Tab 1 (Upload) accepts a file via
@@ -56,8 +52,6 @@ export function ImagePicker({
   const [galleryError, setGalleryError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [dropActive, setDropActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirm = useConfirm();
 
@@ -128,13 +122,6 @@ export function ImagePicker({
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDropActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file) void handleFile(file);
-  };
-
   const handleDelete = async (image: ImageSummary) => {
     const ok = await confirm({
       title: `Delete "${image.originalName ?? 'image'}"?`,
@@ -189,46 +176,14 @@ export function ImagePicker({
         </nav>
         <div className="p-4">
           {tab === 'upload' ? (
-            <>
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDropActive(true);
-                }}
-                onDragLeave={() => setDropActive(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition ${
-                  dropActive
-                    ? 'border-brand-400 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/10'
-                    : 'border-slate-300 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/10'
-                }`}
-              >
-                <UploadIcon />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {uploading ? 'Uploading…' : 'Drop, paste, or click to choose an image'}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  PNG, JPEG, WebP, or GIF up to {UPLOAD_MAX_BYTES / (1024 * 1024)} MB
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={UPLOAD_ACCEPT_ATTR}
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleFile(file);
-                    e.target.value = '';
-                  }}
-                />
-              </div>
-              {uploadError ? (
-                <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
-                  {uploadError}
-                </p>
-              ) : null}
-            </>
+            <ImageDropZone
+              onSelectFile={handleFile}
+              uploading={uploading}
+              error={uploadError}
+              prompt="Drop, paste, or click to choose an image"
+              heightClass="h-48"
+              gapClass="gap-2"
+            />
           ) : (
             <GalleryGrid
               ownerId={ownerId}
@@ -363,27 +318,6 @@ function TabButton({
     >
       {children}
     </button>
-  );
-}
-
-function UploadIcon() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      className="text-slate-500 dark:text-slate-400"
-    >
-      <path d="M12 16V4" />
-      <path d="M7 9l5-5 5 5" />
-      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-    </svg>
   );
 }
 
