@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildTemplatedTab, templateCanvasOverrides } from './templates';
+import { buildTemplatedTab } from './template-builders';
+import { templateCanvasOverrides } from './templates';
 import { getTheme } from './themes';
 
 // `buildTemplatedTab` is the seam between /live/new (the welcome

@@ -20,7 +20,8 @@ import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { getGuestSelfId, markNameConfirmed, setGuestSelfId } from '@/lib/local-identity';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
-import { buildTemplatedTab, type TemplateKind } from '@/lib/templates';
+import { buildTemplatedTab } from '@/lib/template-builders';
+import type { TemplateKind } from '@/lib/templates';
 import { getTheme, type ThemeId } from '@/lib/themes';
 
 // Dedicated welcome / create-new flow — see specs/14-new-diagram-route.md.

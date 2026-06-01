@@ -174,7 +174,7 @@ import {
   type ShareRole,
 } from '@/lib/api-client';
 import { applyRevert, diffElements } from '@/lib/change-log';
-import { buildTemplate, templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
+import { templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
 import {
   deriveNewBoxedColours,
   getTheme,
@@ -2448,7 +2448,7 @@ export default function LivePage() {
     setTemplatePickerMode('welcome');
   };
 
-  const chooseTemplate = (kind: TemplateKind, name?: string, themeId?: ThemeId) => {
+  const chooseTemplate = async (kind: TemplateKind, name?: string, themeId?: ThemeId) => {
     // Identity-only mode: the visitor is joining an existing diagram.
     // No template scaffold, no theme application — just commit the name
     // and dismiss the modal.
@@ -2468,6 +2468,11 @@ export default function LivePage() {
     confirmName();
     setTemplatePickerMode('welcome');
     const centre = getViewportCenter();
+    // Dynamic-import the heavy builders module only when the user
+    // actually picks a template. The ~1700 lines of build* code stays
+    // out of the editor's initial chunk; returning users opening an
+    // existing diagram never download it.
+    const { buildTemplate } = await import('@/lib/template-builders');
     const rawElements = buildTemplate(kind, centre.x, centre.y);
     const theme = themeId ? getTheme(themeId) : null;
     // Repaint the scaffold with the chosen theme so the Mind map circles,
