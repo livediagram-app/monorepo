@@ -155,6 +155,7 @@ import {
   apiCopyDiagram,
   apiDismissSharedWith,
   apiListDiagrams,
+  apiListImages,
   apiListSharedWith,
   apiListShareLinks,
   apiLoadDiagram,
@@ -167,6 +168,7 @@ import {
   apiSetDiagramFolder,
   connectRoom,
   type ChangeLogEntry,
+  type ImageSummary,
   type RoomHandlers,
   type ShareLink,
   type ShareRole,
@@ -241,7 +243,8 @@ export default function LivePage() {
     canvas: boolean;
     file: boolean;
     cleanup: boolean;
-  }>({ theme: false, canvas: false, file: false, cleanup: false });
+    images: boolean;
+  }>({ theme: false, canvas: false, file: false, cleanup: false, images: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -382,6 +385,18 @@ export default function LivePage() {
   const [imagePickerOpenFor, setImagePickerOpenFor] = useState<{
     forElementId: string | null;
   } | null>(null);
+
+  // Recent-images list for the Current Tab "Images" accordion
+  // (spec/19). Empty array when R2 is unbound (apiListImages
+  // returns null), or when the owner has no uploads yet. Refreshed
+  // on diagramId mount + when the picker uploads a new image so a
+  // freshly-uploaded photo appears in the accordion immediately.
+  const [recentImages, setRecentImages] = useState<ImageSummary[]>([]);
+  const refreshRecentImages = (ownerId: string) => {
+    apiListImages(ownerId)
+      .then((list) => setRecentImages(list ?? []))
+      .catch(() => setRecentImages([]));
+  };
   const [linkPickerAnchorEl, setLinkPickerAnchorEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (linkPickerOpenForId === null) {
@@ -650,6 +665,19 @@ export default function LivePage() {
   // the diagram's primary code surfaced for sharing) because a
   // diagram can have many active codes.
   const [sessionShareCode, setSessionShareCode] = useState<string | null>(null);
+
+  // Recent-images list for the Current Tab "Images" accordion
+  // (spec/19). Loads once on diagramId mount; refreshed manually
+  // by refreshRecentImages after a successful picker upload so a
+  // newly-uploaded image surfaces without a diagram reload. View-
+  // role visitors skip the fetch (the accordion is hidden for them
+  // anyway via the !isReadOnly gate at the call site).
+  useEffect(() => {
+    if (!diagramId || isReadOnly) return;
+    refreshRecentImages(selfParticipant.id);
+    // selfParticipant.id is stable for the session (set on mount).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagramId, isReadOnly]);
 
   useLayoutEffect(() => {
     if (hydrated) return;
@@ -1767,12 +1795,24 @@ export default function LivePage() {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: true, canvas: false, file: false, cleanup: false });
+      setTabAccordionsOpen({
+        theme: true,
+        canvas: false,
+        file: false,
+        cleanup: false,
+        images: false,
+      });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
       setContextMinimized(false);
-      setTabAccordionsOpen({ theme: false, canvas: true, file: false, cleanup: false });
+      setTabAccordionsOpen({
+        theme: false,
+        canvas: true,
+        file: false,
+        cleanup: false,
+        images: false,
+      });
     }
   };
 
@@ -2694,6 +2734,36 @@ export default function LivePage() {
       ),
     );
     setImagePickerOpenFor(null);
+  };
+  // Drop a new image element pre-filled with an existing gallery
+  // image (skips the picker entirely). Fired from the Current Tab
+  // "Images" accordion thumbnails. Sizes the placeholder to the
+  // image's natural aspect ratio, capped at 240 px on the larger
+  // side so it lands at a sensible canvas footprint regardless of
+  // the original resolution.
+  const addImageFromGallery = (image: {
+    id: string;
+    width: number;
+    height: number;
+    originalName?: string;
+  }) => {
+    if (editsBlocked) return;
+    const centre = getViewportCenter();
+    const max = 240;
+    const ratio = image.width / image.height;
+    const w = image.width >= image.height ? max : Math.round(max * ratio);
+    const h = image.height >= image.width ? max : Math.round(max / ratio);
+    const placed = {
+      ...createImage(centre.x - w / 2, centre.y - h / 2),
+      width: w,
+      height: h,
+      imageId: image.id,
+      naturalWidth: image.width,
+      naturalHeight: image.height,
+      alt: image.originalName,
+    };
+    commit((els) => [...els, placed]);
+    setSelectedId(placed.id);
   };
 
   // Drop a plain connector at the viewport centre. Defaults to no
@@ -3820,6 +3890,11 @@ export default function LivePage() {
         importError={importError}
         onAutoAlign={hydrated && !anyWelcomeOpen && !isReadOnly ? autoAlignTab : undefined}
         canAutoAlign={activeTab.elements.length > 0 && !activeTabLocked}
+        recentImages={!isReadOnly && diagramId ? recentImages : undefined}
+        imageOwnerId={!isReadOnly && diagramId ? selfParticipant.id : undefined}
+        imageDiagramId={!isReadOnly && diagramId ? diagramId : undefined}
+        imageShareCode={sessionShareCode}
+        onAddImageFromGallery={!isReadOnly && diagramId ? addImageFromGallery : undefined}
         onSetBackgroundPattern={setBackgroundPattern}
         onSetBackgroundColor={setBackgroundColor}
         onSetBackgroundOpacity={setBackgroundOpacity}
@@ -4008,6 +4083,7 @@ export default function LivePage() {
                 canvas: which === 'canvas',
                 file: false,
                 cleanup: false,
+                images: false,
               });
             };
             return (
@@ -4108,6 +4184,9 @@ export default function LivePage() {
             } else {
               setImagePickerOpenFor(null);
             }
+            // Refresh the Current Tab → Images accordion so the
+            // just-uploaded image surfaces without a diagram reload.
+            refreshRecentImages(selfParticipant.id);
           }}
           onClose={() => setImagePickerOpenFor(null)}
         />

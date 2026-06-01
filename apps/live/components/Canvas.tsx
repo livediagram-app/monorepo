@@ -28,6 +28,7 @@ import {
   type TextAlignY,
   type TextSize,
 } from '@livediagram/diagram';
+import type { ImageSummary } from '@livediagram/api-schema';
 import type { ArrowEnd, DragMode } from '@/lib/canvas';
 import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
@@ -289,6 +290,13 @@ type CanvasProps = {
   // CommandPalette's Cleanup accordion + lib/auto-align.ts.
   onAutoAlign?: () => void;
   canAutoAlign?: boolean;
+  // Recent-images list for the Current Tab "Images" accordion (spec/19).
+  // Forwarded through to TabSection unchanged.
+  recentImages?: ImageSummary[];
+  imageOwnerId?: string;
+  imageDiagramId?: string;
+  imageShareCode?: string | null;
+  onAddImageFromGallery?: (image: ImageSummary) => void;
   onSetPatternColor: (color: string) => void;
   onToggleAspectLock: () => void;
   onDuplicateConnect: (direction: 'right' | 'below' | 'left' | 'above') => void;
@@ -447,6 +455,11 @@ export function Canvas(props: CanvasProps) {
     importError,
     onAutoAlign,
     canAutoAlign,
+    recentImages,
+    imageOwnerId,
+    imageDiagramId,
+    imageShareCode,
+    onAddImageFromGallery,
     onSetBackgroundPattern,
     onSetBackgroundColor,
     onSetBackgroundOpacity,
@@ -844,6 +857,11 @@ export function Canvas(props: CanvasProps) {
     importError,
     onAutoAlign,
     canAutoAlign,
+    recentImages,
+    imageOwnerId,
+    imageDiagramId,
+    imageShareCode,
+    onAddImageFromGallery,
   };
 
   // Colour for the link / comment badges. The active theme's

@@ -119,6 +119,7 @@ export function ContextPanel({
     canvas: false,
     file: false,
     cleanup: false,
+    images: false,
   });
   const tabOpen = tabAccordionsOpen ?? localTabOpen;
   const setTabOpen = setTabAccordionsOpen ?? setLocalTabOpen;
@@ -146,7 +147,7 @@ export function ContextPanel({
         pointer: false,
       });
     } else {
-      setTabOpen({ theme: false, canvas: false, file: false, cleanup: false });
+      setTabOpen({ theme: false, canvas: false, file: false, cleanup: false, images: false });
     }
   }, [showingSelected, setTabOpen]);
 

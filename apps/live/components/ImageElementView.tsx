@@ -87,7 +87,14 @@ export function ImageElementView({
     // wrapper) so the parent can let lock / comment / note badges
     // overflow outside the box without being clipped, while the
     // bitmap still gets its rounded-corner clip.
-    <div className="h-full w-full overflow-hidden rounded">
+    //
+    // Always white background (no dark variant): transparent PNGs +
+    // light-content screenshots assume a white page underneath. In
+    // dark mode without this, the canvas background bleeds through
+    // any transparent areas and inverts the apparent contrast of
+    // anti-aliased edges. Image element content is independent of
+    // editor theme by convention (matches GitHub / Notion).
+    <div className="h-full w-full overflow-hidden rounded bg-white">
       <img
         src={state.src}
         alt={element.alt ?? ''}

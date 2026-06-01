@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ImageSummary } from '@livediagram/api-schema';
+import { useImageBlobUrl } from '@/hooks/useImageBlobUrl';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type {
   ArrowEnds,
@@ -143,6 +145,22 @@ export type TabSectionControls = {
   // True when the active tab has at least one boxed element. When
   // false the button is disabled, the action would be a no-op.
   canAutoAlign?: boolean;
+  // Recent-images accordion (spec/19). Optional so deployments
+  // without R2 (or view-role visitors) can omit the section: when
+  // `recentImages` is undefined, the Images accordion doesn't
+  // render. Empty array still renders the accordion with an empty-
+  // state message so the user can see the feature exists.
+  recentImages?: ImageSummary[];
+  // Used by GalleryThumb to fetch the auth-gated bitmap. Required
+  // alongside `recentImages` (the picker would otherwise have
+  // nothing to fetch with).
+  imageOwnerId?: string;
+  imageDiagramId?: string;
+  imageShareCode?: string | null;
+  // Click handler when the user picks a thumbnail. The editor adds
+  // a fresh ImageElement to the canvas, pre-filled with the chosen
+  // image's id + natural dimensions.
+  onAddImageFromGallery?: (image: ImageSummary) => void;
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser';
@@ -1723,11 +1741,52 @@ function ArrowEndsIcon({ ends }: { ends: ArrowEnds }) {
   );
 }
 
+// Thumb for the Recent Images accordion. Reuses useImageBlobUrl so
+// the bytes go through the same auth + revoke-on-unmount lifecycle
+// as the canvas-side ImageElementView + the picker's gallery tab.
+function GalleryThumb({
+  image,
+  ownerId,
+  diagramId,
+  shareCode,
+  onSelect,
+}: {
+  image: ImageSummary;
+  ownerId: string;
+  diagramId: string;
+  shareCode: string | null;
+  onSelect: () => void;
+}) {
+  const state = useImageBlobUrl(ownerId, image.id, { diagramId, shareCode });
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="block aspect-square w-full overflow-hidden rounded-md border border-slate-200 bg-white transition hover:border-brand-400 dark:border-slate-700 dark:hover:border-brand-500/60"
+      aria-label={`Add ${image.originalName ?? 'image'} to the canvas`}
+    >
+      {state.status === 'ready' ? (
+        <img
+          src={state.src}
+          alt={image.originalName ?? ''}
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
+      ) : state.status === 'broken' ? (
+        <span className="block h-full w-full bg-rose-50 dark:bg-rose-500/15" />
+      ) : (
+        <span className="block h-full w-full animate-pulse bg-slate-100 dark:bg-slate-800" />
+      )}
+    </button>
+  );
+}
+
 export type TabAccordionState = {
   theme: boolean;
   canvas: boolean;
   file: boolean;
   cleanup: boolean;
+  images: boolean;
 };
 
 export function TabSection({
@@ -1747,6 +1806,7 @@ export function TabSection({
         canvas: false,
         file: false,
         cleanup: false,
+        images: false,
       };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
@@ -1917,6 +1977,34 @@ export function TabSection({
               {tab.importError}
             </p>
           ) : null}
+        </Accordion>
+      ) : null}
+      {tab.recentImages !== undefined &&
+      tab.imageOwnerId &&
+      tab.imageDiagramId !== undefined &&
+      tab.onAddImageFromGallery ? (
+        <Accordion title="Images" open={open.images} onToggle={() => toggle('images')}>
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            Your eight most recent uploads. Click one to drop it onto the canvas.
+          </p>
+          {tab.recentImages.length === 0 ? (
+            <p className="mt-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-2 py-3 text-center text-[11px] text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
+              Nothing yet. Upload an image via the Image palette button and it'll show up here.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-4 gap-1">
+              {tab.recentImages.slice(0, 8).map((image) => (
+                <GalleryThumb
+                  key={image.id}
+                  image={image}
+                  ownerId={tab.imageOwnerId!}
+                  diagramId={tab.imageDiagramId!}
+                  shareCode={tab.imageShareCode ?? null}
+                  onSelect={() => tab.onAddImageFromGallery!(image)}
+                />
+              ))}
+            </div>
+          )}
         </Accordion>
       ) : null}
       {tab.onAutoAlign ? (
