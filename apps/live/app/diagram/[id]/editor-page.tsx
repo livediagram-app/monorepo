@@ -116,6 +116,7 @@ import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
+import { isMobileViewportSync } from '@/lib/responsive';
 import { useToast } from '@/hooks/useToast';
 import { autoAlignElements } from '@/lib/auto-align';
 import {
@@ -246,8 +247,7 @@ export default function LivePage() {
   // window.innerWidth. One-tick flash on mobile, no flash on
   // desktop. Runs once.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.innerWidth >= 640) return;
+    if (!isMobileViewportSync()) return;
     setExplorerMinimized(true);
     setContextMinimized(true);
   }, []);

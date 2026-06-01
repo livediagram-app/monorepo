@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { isMobileViewportSync } from '@/lib/responsive';
 import { Tooltip } from './Tooltip';
 
 type Bounds = { x: number; y: number; width: number; height: number };
@@ -67,10 +68,7 @@ export function SelectionPopover({
   // (and equivalently flips to "above" on mobile if there's no
   // room below). The initial value just picks the better-odds
   // starting placement per device class.
-  const [placeAbove, setPlaceAbove] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.matchMedia?.('(min-width: 640px)').matches ?? true;
-  });
+  const [placeAbove, setPlaceAbove] = useState(() => !isMobileViewportSync());
 
   const visualGap = (compact ? GAP_COMPACT : GAP_DEFAULT) / zoom;
   const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;
