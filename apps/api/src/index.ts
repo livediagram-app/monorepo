@@ -44,6 +44,7 @@ import {
 } from './db';
 import { getClerkUserId } from './auth/clerk';
 import { DiagramRoom } from './diagram-room';
+import { stripJpegMetadata } from './image-strip';
 import type { ChangeLogEntryDTO, DiagramDTO, Env, ParticipantDTO, ShareRole } from './types';
 
 export { DiagramRoom };
@@ -367,13 +368,36 @@ export default {
           }
           const sha = await sha256Hex(bytes);
           // Dedupe: same owner + same bytes returns the existing
-          // row without an R2 write.
+          // row without an R2 write. We hash the ORIGINAL bytes
+          // (matching the client-supplied SHA) so re-uploading the
+          // same file deduplicates predictably; the stored bytes
+          // below may differ from the hashed bytes when JPEG
+          // metadata is stripped.
           const existing = await findImageBySha(env, owner, sha);
           if (existing) {
             return json({ image: existing, deduped: true });
           }
+          // Strip metadata from JPEGs (EXIF GPS, camera serial,
+          // JFIF / ICC / comment markers) before writing to R2.
+          // The visible image content stays bit-identical; only
+          // the privacy-sensitive byte segments leave. PNG / WebP
+          // / GIF pass through unchanged: real-world leaks via
+          // those formats are rare and would need per-format
+          // chunk walkers. See spec/19 + image-strip.ts.
+          let storedBytes: ArrayBuffer = bytes;
+          if (sniffed === 'image/jpeg') {
+            try {
+              storedBytes = stripJpegMetadata(bytes);
+            } catch {
+              // Malformed JPEG: fail the upload rather than store
+              // the original (which would leak the metadata we're
+              // trying to remove). The user can re-export a clean
+              // copy and retry.
+              return json({ error: 'malformed-jpeg' }, { status: 415 });
+            }
+          }
           const id = crypto.randomUUID();
-          await env.IMAGES.put(id, bytes, {
+          await env.IMAGES.put(id, storedBytes, {
             httpMetadata: { contentType: sniffed },
             customMetadata: {
               ownerId: owner,
@@ -384,7 +408,7 @@ export default {
             id,
             ownerId: owner,
             contentType: sniffed,
-            byteSize: bytes.byteLength,
+            byteSize: storedBytes.byteLength,
             width,
             height,
             sha256: sha,
