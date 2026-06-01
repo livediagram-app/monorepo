@@ -1,4 +1,4 @@
-import type { Tab } from '@livediagram/diagram';
+import type { Comment, Element, Tab } from '@livediagram/diagram';
 import {
   createFolder,
   createShareLink,
@@ -182,6 +182,63 @@ function imagesUnavailable(): Response {
   return json({ error: 'images-unavailable' }, { status: 503 });
 }
 
+function rateLimited(): Response {
+  return json({ error: 'rate-limited' }, { status: 429 });
+}
+
+// Per-owner write rate limit (security audit item). Returns true
+// when the caller is over the configured cap (wrangler.toml's
+// WRITE_RATE_LIMITER binding) so the endpoint can short-circuit
+// with a 429. Falls through to "allowed" when the binding is
+// absent so self-host deployments without the feature still serve.
+async function isWriteRateLimited(env: Env, ownerId: string): Promise<boolean> {
+  if (!env.WRITE_RATE_LIMITER) return false;
+  const result = await env.WRITE_RATE_LIMITER.limit({ key: ownerId });
+  return !result.success;
+}
+
+// Rewrite newly-added comments so the author fields come from the
+// server-trusted participant record, not whatever the client
+// posted. Compares each comment's id against the prior tab's
+// comments by id: anything new is attributed to the writer (the
+// resolved owner of the PUT); anything pre-existing passes through
+// untouched. Closes the comment-author spoofing surface called out
+// in the security audit (a share-link visitor could otherwise
+// stamp another participant's name + colour onto a comment).
+function rewriteCommentAuthors(
+  nextElements: Element[],
+  prevElements: Element[],
+  writer: ParticipantDTO,
+): Element[] {
+  // Index existing comments by id so the lookup per new comment is
+  // O(1). A comment id collision across two different elements is
+  // impossible by construction (uuids) so flat indexing is safe.
+  const existingComments = new Map<string, { authorName: string; authorColor: string }>();
+  for (const el of prevElements) {
+    const thread = (el as { commentThread?: { comments?: Comment[] } }).commentThread;
+    if (!thread?.comments) continue;
+    for (const c of thread.comments) {
+      existingComments.set(c.id, { authorName: c.authorName, authorColor: c.authorColor });
+    }
+  }
+  return nextElements.map((el) => {
+    const thread = (el as { commentThread?: { comments?: Comment[] } }).commentThread;
+    if (!thread?.comments?.length) return el;
+    const sanitised = thread.comments.map((c) => {
+      const prior = existingComments.get(c.id);
+      if (prior) {
+        // Existing comment: lock author fields to whatever was
+        // stored. Stops a malicious edit-role visitor from
+        // mutating someone else's already-posted comment author.
+        return { ...c, authorName: prior.authorName, authorColor: prior.authorColor };
+      }
+      // New comment: server-authoritative author.
+      return { ...c, authorName: writer.name, authorColor: writer.color };
+    });
+    return { ...el, commentThread: { ...thread, comments: sanitised } } as Element;
+  });
+}
+
 function missingAuth(): Response {
   return badRequest('authentication required: send a valid Clerk Bearer token or X-Owner-Id');
 }
@@ -230,6 +287,19 @@ export default {
     // legacy `X-Owner-Id` header.
     const clerkUserId = await getClerkUserId(env, request);
     const resolveOwner = (): string | null => clerkUserId ?? request.headers.get('X-Owner-Id');
+
+    // Per-owner write rate limit. Gates POST / PUT / DELETE at a
+    // generous ceiling (wrangler.toml WRITE_RATE_LIMITER) so a bot
+    // pacing under Cloudflare's DDoS threshold still can't spam
+    // diagram / image creation through to D1 / R2 quota
+    // exhaustion. Reads pass through untouched. A request with no
+    // resolved owner falls back to keying on the IP-equivalent
+    // X-Owner-Id header (or the empty string when neither exists);
+    // either way one client can't burn the global quota.
+    if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
+      const key = resolveOwner() ?? request.headers.get('X-Owner-Id') ?? 'anonymous';
+      if (await isWriteRateLimited(env, key)) return rateLimited();
+    }
 
     try {
       // ---------- /api/share/<code> ----------
@@ -689,7 +759,25 @@ export default {
             // Find the existing order index; append if new.
             const existingTab = await getTab(env, id, tabId);
             const orderIndex = existingTab?.orderIndex ?? existing.tabs.length; // tabs[] is already summaries
-            await upsertTab(env, id, { ...body, id: tabId }, orderIndex);
+            // Rewrite the author fields on any newly-added comment to
+            // match the resolved owner's participant record. Without
+            // this the client can claim any authorName / authorColor
+            // and impersonate another participant in the comment
+            // thread (see the spec/04 + spec/12 security audit
+            // thread). Existing comments preserve their original
+            // authors (compared by id against the prior tab).
+            const writerParticipant = await getParticipant(env, owner);
+            const sanitised = writerParticipant
+              ? {
+                  ...body,
+                  elements: rewriteCommentAuthors(
+                    body.elements,
+                    existingTab?.elements ?? [],
+                    writerParticipant,
+                  ),
+                }
+              : body;
+            await upsertTab(env, id, { ...sanitised, id: tabId }, orderIndex);
             const tab = await getTab(env, id, tabId);
             return tab ? json({ tab }) : notFound();
           }

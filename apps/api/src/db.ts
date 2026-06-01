@@ -800,25 +800,43 @@ export async function folderMoveWouldCycle(
   return false;
 }
 
-// Wipe every row belonging to a given owner — diagrams, folders,
-// and the participant record. Called from DELETE /api/account when
-// the user opts in via the "Delete account" dialog. Cascade rules
-// take care of the dependent tables: `tabs`, `share_links`, and
-// `change_log` all FK to `diagrams.id` with ON DELETE CASCADE
-// (migrations 0003 / 0004 / 0005), so removing the diagrams rows
-// also drops the per-diagram tab content, share links, and audit
-// trail. Folders carry their own owner_id and need their own
-// DELETE. Participants are owner-less in the schema but their id
-// IS the owner id, so a single id-match delete clears the
-// display-name / colour row too.
+// Wipe every row belonging to a given owner: diagrams, folders, the
+// participant record, AND the R2 image bytes (spec/19). Called from
+// DELETE /api/account when the user opts in via the "Delete account"
+// dialog. Cascade rules take care of dependent D1 tables: `tabs`,
+// `share_links`, and `change_log` all FK to `diagrams.id` with ON
+// DELETE CASCADE (migrations 0003 / 0004 / 0005), so removing the
+// diagrams rows also drops the per-diagram tab content, share links,
+// and audit trail. Folders carry their own owner_id and need their
+// own DELETE. Participants are owner-less in the schema but their id
+// IS the owner id, so a single id-match delete clears the display-
+// name / colour row too. Images carry owner_id on their D1 row and
+// the R2 object key matches the row id, so we enumerate before the
+// D1 wipe + bulk-delete from R2 + then drop the rows.
 //
-// Returns `{ diagrams, folders }` change counts for the audit log.
-// Idempotent — re-running with the same owner id is a no-op once
-// the rows are gone.
+// Returns `{ diagrams, folders, images }` change counts for the
+// audit log. Idempotent: re-running with the same owner id is a
+// no-op once the rows are gone.
 export async function deleteAccount(
   env: Env,
   ownerId: string,
-): Promise<{ diagrams: number; folders: number }> {
+): Promise<{ diagrams: number; folders: number; images: number }> {
+  // R2 cleanup first. Enumerate the owner's image ids while the
+  // index row still exists, then delete each from R2. If R2 is
+  // unbound (self-host without R2), skip silently: the index rows
+  // come out via the DELETE FROM images below regardless. R2's
+  // batch delete takes up to 1000 keys per call which is well
+  // above any realistic per-owner gallery cap.
+  const imageRows = await env.DB.prepare('SELECT id FROM images WHERE owner_id = ?')
+    .bind(ownerId)
+    .all<{ id: string }>();
+  const imageIds = (imageRows.results ?? []).map((r) => r.id);
+  if (env.IMAGES && imageIds.length > 0) {
+    await env.IMAGES.delete(imageIds);
+  }
+  const imagesRes = await env.DB.prepare('DELETE FROM images WHERE owner_id = ?')
+    .bind(ownerId)
+    .run();
   const diagramsRes = await env.DB.prepare('DELETE FROM diagrams WHERE owner_id = ?')
     .bind(ownerId)
     .run();
@@ -829,6 +847,7 @@ export async function deleteAccount(
   return {
     diagrams: diagramsRes.meta.changes ?? 0,
     folders: foldersRes.meta.changes ?? 0,
+    images: imagesRes.meta.changes ?? 0,
   };
 }
 

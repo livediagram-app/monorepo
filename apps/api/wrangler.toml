@@ -25,6 +25,22 @@ migrations_dir = "migrations"
 binding = "IMAGES"
 bucket_name = "livediagram-images"
 
+# Per-owner rate limiter (Cloudflare Workers Rate Limiting API).
+# Caps writes at 300 / 60s per owner: a generous ceiling for normal
+# editing (autosave + comment posts + log appends) but well below
+# what a malicious bot would push through. The api worker calls
+# `env.WRITE_RATE_LIMITER.limit({ key })` at the top of every write
+# endpoint; over-limit requests get a 429. Namespace ids are
+# arbitrary local identifiers (Cloudflare scopes by binding name +
+# script). Self-host: when this binding is absent the rate-limit
+# helper falls through to "allow" so deployments without the
+# feature still work.
+[[unsafe.bindings]]
+name = "WRITE_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
 # Durable Object for per-diagram realtime (presence + broadcast). One
 # instance per diagram id; clients connect via WebSocket through the
 # `/api/diagrams/<id>/ws` endpoint.

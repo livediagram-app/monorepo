@@ -62,11 +62,11 @@ Owner-only routes require a resolved owner — either a verified Clerk Bearer JW
 
 **Tabs (per-tab content — see [13-per-tab-storage.md](13-per-tab-storage.md))**
 
-| Method | Path                            | Auth        | Notes                                                                            |
-| ------ | ------------------------------- | ----------- | -------------------------------------------------------------------------------- |
-| GET    | `/api/diagrams/:id/tabs/:tabId` | owner/share | Returns one tab's full payload (elements + per-tab settings).                    |
-| PUT    | `/api/diagrams/:id/tabs/:tabId` | owner/share | Replaces the tab's body. Body is the `Tab` shape.                                |
-| DELETE | `/api/diagrams/:id/tabs/:tabId` | owner/share | Drops the tab row; the diagram's `tabIds` order is fixed up via a follow-up PUT. |
+| Method | Path                            | Auth        | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------ | ------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/diagrams/:id/tabs/:tabId` | owner/share | Returns one tab's full payload (elements + per-tab settings).                                                                                                                                                                                                                                                                                                                                                                                                               |
+| PUT    | `/api/diagrams/:id/tabs/:tabId` | owner/share | Replaces the tab's body. Body is the `Tab` shape. The handler rewrites every comment's `authorName` + `authorColor`: comments whose `id` already exists on the stored tab keep their original author fields (so an edit-role visitor can't relabel someone else's existing comment), and brand-new comments get the writer's participant record fields (so the client can't lie about authorship). The `authorName` / `authorColor` values in the request body are ignored. |
+| DELETE | `/api/diagrams/:id/tabs/:tabId` | owner/share | Drops the tab row; the diagram's `tabIds` order is fixed up via a follow-up PUT.                                                                                                                                                                                                                                                                                                                                                                                            |
 
 **Share links (multiple per diagram — see [04-auth-and-guest-access.md](04-auth-and-guest-access.md))**
 
@@ -120,9 +120,17 @@ Owner-only routes require a resolved owner — either a verified Clerk Bearer JW
 
 **Account self-delete**
 
-| Method | Path           | Auth       | Notes                                                                                                                                                                                                                                                                                                                   |
-| ------ | -------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DELETE | `/api/account` | Clerk only | Wipes every diagrams + folders row for the verified Clerk userId, plus the participant record keyed by that id. Cascades via `ON DELETE CASCADE` on `tabs`, `share_links`, `change_log`. Returns `{ deleted: { diagrams, folders } }`. Client follows up with Clerk's `user.delete()` to drop the Clerk account itself. |
+| Method | Path           | Auth       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DELETE | `/api/account` | Clerk only | Wipes every diagrams + folders + images row for the verified Clerk userId, plus the participant record keyed by that id. Before the D1 wipe the handler enumerates the owner's `images` rows and bulk-deletes those keys from the R2 `IMAGES` bucket so account-delete leaves no orphaned image bytes. Cascades via `ON DELETE CASCADE` on `tabs`, `share_links`, `change_log`. Returns `{ deleted: { diagrams, folders, images } }`. Client follows up with Clerk's `user.delete()` to drop the Clerk account itself. |
+
+## Rate limiting
+
+Every state-changing request (`POST` / `PUT` / `DELETE`) on `/api/*` passes through a per-owner cap before any handler runs. The check uses Cloudflare's Workers Rate Limiting API (the `WRITE_RATE_LIMITER` binding declared in `apps/api/wrangler.toml`); the key is the resolved owner id (Clerk userId for signed-in callers, `X-Owner-Id` for guests, the literal `"anonymous"` if neither header is set). Over-limit requests get a `429` with `{ "error": "rate-limited" }`; reads (`GET`, `OPTIONS`) are unmetered.
+
+The ceiling is set to 300 writes per 60 seconds: well above realistic editing traffic (autosave fires once per debounce window, change-log appends are rare, comments are typed by humans) but low enough to stop a bot from spamming diagram / image creation into D1 + R2 quota exhaustion.
+
+Self-host: when the `WRITE_RATE_LIMITER` binding is absent the helper short-circuits to "allow", so deployments without the feature flag still serve. The binding is a Cloudflare paid-tier capability; the open-source path stays unaffected (per [spec/03](03-open-source-and-business-model.md)).
 
 ## Realtime model
 

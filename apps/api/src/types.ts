@@ -38,4 +38,10 @@ export type Env = {
   // api worker: when unbound, the image endpoints all return 503
   // and the live app hides the Image palette entry.
   IMAGES?: R2Bucket;
+  // Cloudflare Workers Rate Limiting API binding. Caps per-owner
+  // writes (POST / PUT / DELETE) at the configured limit/period in
+  // wrangler.toml. Optional so self-host deployments without the
+  // feature flag still serve (the check helper returns "allowed"
+  // when the binding is absent).
+  WRITE_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
 };
