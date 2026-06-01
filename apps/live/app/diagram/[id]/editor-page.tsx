@@ -3548,6 +3548,11 @@ export default function LivePage() {
             ? undefined
             : (id, sx, sy) => setContextMenu({ mode: 'element', elementId: id, x: sx, y: sy })
         }
+        onOpenElementContextMenu={
+          isReadOnly
+            ? undefined
+            : (id, sx, sy) => setContextMenu({ mode: 'element', elementId: id, x: sx, y: sy })
+        }
         onCanvasContextMenu={
           isReadOnly ? undefined : (sx, sy) => setContextMenu({ mode: 'canvas', x: sx, y: sy })
         }

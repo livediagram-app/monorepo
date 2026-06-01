@@ -37,6 +37,10 @@ type SelectionPopoverProps = {
   // Drives the note button's active-state highlight so the user
   // can tell at a glance whether a note exists.
   hasNote?: boolean;
+  // Open the same context menu that a right-click on the element
+  // would open, anchored under the ellipsis button. Surfaces the
+  // full action list on touch devices that can't right-click.
+  onOpenContextMenu?: (screenX: number, screenY: number) => void;
 };
 
 // The plus button sits between the popover and the element edge it
@@ -67,7 +71,9 @@ export function SelectionPopover({
   onOpenComments,
   onOpenNote,
   hasNote,
+  onOpenContextMenu,
 }: SelectionPopoverProps) {
+  const ellipsisRef = useRef<HTMLButtonElement>(null);
   const linkButtonRef = useRef<HTMLButtonElement>(null);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -128,6 +134,31 @@ export function SelectionPopover({
         transformOrigin: placeAbove ? 'center bottom' : 'center top',
       }}
     >
+      {/* Ellipsis at the start: opens the right-click context menu
+          anchored under the button. Touch users have no native
+          right-click gesture, so this is the discoverable way to
+          reach the full action list. */}
+      {onOpenContextMenu ? (
+        <>
+          <Tooltip title="More" description="Open the element menu.">
+            <button
+              ref={ellipsisRef}
+              type="button"
+              onClick={() => {
+                const rect = ellipsisRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                onOpenContextMenu(rect.left, rect.bottom);
+              }}
+              aria-label="More actions"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <EllipsisIcon />
+            </button>
+          </Tooltip>
+          <Divider />
+        </>
+      ) : null}
+
       {/* Group: copy / duplicate the element itself. */}
       {onCopyFormat ? (
         <PopoverButton
@@ -321,6 +352,16 @@ function PopoverButton({
         {children}
       </button>
     </Tooltip>
+  );
+}
+
+function EllipsisIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+      <circle cx="4" cy="8" r="1.4" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+      <circle cx="12" cy="8" r="1.4" fill="currentColor" />
+    </svg>
   );
 }
 

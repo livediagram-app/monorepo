@@ -239,6 +239,9 @@ type CanvasProps = {
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (elementId: string) => void;
   onOpenNote?: (elementId: string) => void;
+  // Touch-friendly fallback for right-click: a SelectionPopover
+  // ellipsis button opens the same context menu under the cursor.
+  onOpenElementContextMenu?: (elementId: string, screenX: number, screenY: number) => void;
   showTemplatePicker: boolean;
   // True after the page has resolved its initial identity + diagram
   // fetch. Used to suppress the empty-state card during the brief
@@ -426,6 +429,7 @@ export function Canvas(props: CanvasProps) {
     onFollowLink,
     onOpenComments,
     onOpenNote,
+    onOpenElementContextMenu,
     showTemplatePicker,
     hydrated,
     templatePickerMode,
@@ -1124,6 +1128,11 @@ export function Canvas(props: CanvasProps) {
             }
             hasNote={selected && isBoxed(selected) ? !!selected.note : undefined}
             onDelete={onDeleteSelected}
+            onOpenContextMenu={
+              selected && onOpenElementContextMenu
+                ? (x, y) => onOpenElementContextMenu(selected.id, x, y)
+                : undefined
+            }
           />
         ) : null}
       </div>
