@@ -175,7 +175,7 @@ export function ContextPanel({
       title="Editor"
       position={position}
       defaultCorner="top-right-stacked"
-      width="w-64"
+      width="w-auto sm:w-64"
       stackBelowY={stackBelowY}
       onReset={onReset}
       onMoveTo={onMoveTo}

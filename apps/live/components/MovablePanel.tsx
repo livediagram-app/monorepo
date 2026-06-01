@@ -135,12 +135,16 @@ export function MovablePanel({
   const style: React.CSSProperties = position
     ? { left: position.x, top: position.y }
     : useDynamicStack
-      ? { right: 16, top: stackBelowY + 16 }
+      ? // Vertical only: leave the horizontal pin to a responsive
+        // className below so the stacked panel can go full-width on
+        // mobile (inset-x-2) and stay pinned to the right edge on
+        // desktop (right-4).
+        { top: stackBelowY + 16 }
       : {};
   const cornerClass = position
     ? ''
     : useDynamicStack
-      ? ''
+      ? 'inset-x-2 sm:left-auto sm:right-4'
       : defaultCorner === 'top-right'
         ? // Mobile: pin to the top of the viewport with a small
           // breathing-room margin on each side so a `w-auto sm:w-<size>`
@@ -148,7 +152,10 @@ export function MovablePanel({
           // edges. Desktop: original corner.
           'inset-x-2 top-2 sm:inset-x-auto sm:right-4 sm:top-4'
         : defaultCorner === 'top-right-stacked'
-          ? 'right-4 top-[15rem]'
+          ? // Same mobile-banner rule as `top-right` but using the
+            // static fallback top (15rem) instead of the dynamic
+            // stackBelowY (which isn't wired here).
+            'inset-x-2 top-[15rem] sm:inset-x-auto sm:right-4'
           : defaultCorner === 'bottom-left'
             ? 'bottom-4 left-4'
             : defaultCorner === 'bottom-right'
