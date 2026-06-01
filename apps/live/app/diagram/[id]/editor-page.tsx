@@ -157,6 +157,7 @@ import {
   apiListDiagrams,
   apiListImages,
   apiListSharedWith,
+  apiLinkTab,
   apiListShareLinks,
   apiLoadDiagram,
   apiLoadSelf,
@@ -2214,34 +2215,22 @@ export default function LivePage() {
     );
   };
 
-  // Copy the active tab into another diagram. Loads the destination,
-  // appends a fresh-id clone of the active tab, and PUTs it back. The
-  // source diagram is unchanged. Element ids are preserved so internal
-  // arrow endpoints and links between elements still resolve inside
-  // the new tab.
-  const copyActiveTabTo = async (targetDiagramId: string) => {
+  // Link the active tab into another of the user's diagrams (spec/17).
+  // Goes through POST /api/diagrams/<target>/tabs/<tabId>/link so the
+  // server inserts one `diagram_tabs` row pointing at the existing
+  // tab body. The previous implementation cloned the tab into a fresh
+  // row with a new id; that duplicated the content (edits on either
+  // side stayed siloed) and the menu label promised the linking
+  // behaviour the user actually wanted. After this call, edits to
+  // the tab from either diagram write to the same `tabs.data` row.
+  const linkActiveTabTo = async (targetDiagramId: string) => {
     const source = tabs.find((t) => t.id === activeId);
     if (!source) return;
-    const target = await apiLoadDiagram(selfParticipant.id, targetDiagramId).catch(() => null);
-    if (!target) return;
-    const cloned: Tab = {
-      ...source,
-      id: crypto.randomUUID(),
-      templateChosen: true,
-    };
-    // Save the new tab row + the destination's updated tab order.
-    // Two API calls in series (tab content then meta reorder) so
-    // the meta PUT sees the new tab id by the time it persists.
     try {
-      await apiSaveTab(selfParticipant.id, target.id, cloned);
-      const nextIds = [...target.tabs.map((t) => t.id), cloned.id];
-      await apiSaveDiagramMeta(selfParticipant.id, {
-        id: target.id,
-        tabIds: nextIds,
-      });
+      await apiLinkTab(selfParticipant.id, targetDiagramId, source.id);
     } catch {
-      // Best-effort. The user's own diagram autosave still drives
-      // the "Not saved" pill; failures here don't surface.
+      // Best-effort. Failures stay silent because the source
+      // diagram's autosave still drives the visible save-state pill.
     }
     refreshDiagramList(selfParticipant.id);
   };
@@ -3956,7 +3945,7 @@ export default function LivePage() {
           onDelete={deleteTab}
           onClearContent={clearTabContent}
           otherDiagrams={diagramList.filter((d) => d.id !== diagramId)}
-          onCopyTabTo={copyActiveTabTo}
+          onCopyTabTo={linkActiveTabTo}
           onToggleLockTab={toggleActiveTabLock}
           onReorder={reorderTabs}
           readOnly={isReadOnly}

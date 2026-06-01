@@ -11,6 +11,7 @@ import type {
   ShareLink,
   ShareRole,
   TabRecord,
+  TabSummary,
 } from '@livediagram/api-schema';
 import type { Tab } from '@livediagram/diagram';
 import { dedupeInFlight } from './dedupe';
@@ -381,6 +382,27 @@ export async function apiSaveTab(
     body: JSON.stringify(stripTemplateChosen(tab)),
   });
   await expectOkVoid(res, 'save tab');
+}
+
+// Link an existing tab into another of the caller's diagrams
+// (spec/17). After this returns, the tab body is shared: edits
+// from either diagram write to the same `tabs.data` row. Returns
+// the target diagram's summary view of the now-attached tab so
+// the caller can update its TabBar without a full diagram
+// refetch.
+export async function apiLinkTab(
+  ownerId: string,
+  diagramId: string,
+  tabId: string,
+): Promise<TabSummary> {
+  const res = await fetch(
+    `${API_BASE}/diagrams/${encodeURIComponent(diagramId)}/tabs/${encodeURIComponent(tabId)}/link`,
+    {
+      method: 'POST',
+      headers: await apiHeaders(ownerId),
+    },
+  );
+  return expectOk<{ tab: TabSummary }>(res, 'link tab').then((b) => b.tab);
 }
 
 export async function apiDeleteTab(

@@ -54,7 +54,9 @@ SELECT t.id, t.name, dt.order_index
 
 `PUT /api/diagrams/:id/tabs/:tabId` (tab body write) is unchanged on the surface but the implementation no longer scopes by `diagram_id` to find the row — the tab id is globally unique. The caller's permission to edit the tab is still gated by their permission on at least one diagram that contains it (owner of any containing diagram, OR an edit-role share code for any containing diagram).
 
-New endpoint (deferred, not in this commit): `POST /api/diagrams/:id/tabs/:tabId/link` — add an existing tab to this diagram. Same idempotent shape as `recordSharedAccess`: insert with `ON CONFLICT DO NOTHING`.
+`POST /api/diagrams/:id/tabs/:tabId/link` adds an existing tab into the target diagram. Idempotent: same `(diagram_id, tab_id)` pair returns 200 without duplicating the link row (`ON CONFLICT DO NOTHING`). Auth: caller must own the target diagram AND own at least one diagram that already contains the tab (so a stranger can't graft a tab they have no read access to). Returns the resulting tab summary. The TabBar's "Add to another diagram..." menu uses this endpoint; subsequent edits on either side write to the same `tabs.data` row, so changes propagate.
+
+`DELETE /api/diagrams/:id/tabs/:tabId` now removes the link row first, then drops the underlying `tabs` row only when no other `diagram_tabs` entries reference it. Unlinking a shared tab from one diagram leaves the body intact for the others.
 
 `POST /api/diagrams/:id/copy` (item #9) copies tab bodies into freshly minted tab rows — that doesn't change. The new tab rows get fresh ids and their own `diagram_tabs` entries pointing at the new diagram. Cloning vs linking is a deliberate distinction: copy = independent content, link = shared content.
 

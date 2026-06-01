@@ -7,7 +7,9 @@ import {
   deleteDiagram,
   deleteFolder,
   deleteImage,
+  diagramsContainingTab,
   imageUsageByOwner,
+  linkTabToDiagram,
   deleteShareLink,
   deleteTabRow,
   diagramReferencesImage,
@@ -799,6 +801,52 @@ export default {
             await deleteTabRow(env, id, tabId);
             return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
+        }
+
+        // /api/diagrams/<id>/tabs/<tabId>/link — owner only.
+        //   POST — add an existing tab to this diagram (spec/17).
+        // Auth: the caller must own this diagram AND own at least
+        // one diagram that already contains the tab. The second
+        // half stops a stranger from grafting a tab they have no
+        // read access to. The `existing.ownerId !== owner` guard
+        // above the dispatch (canEditDiagram on this diagram) only
+        // covers the destination side.
+        if (
+          segments.length === 6 &&
+          segments[3] === 'tabs' &&
+          segments[5] === 'link' &&
+          request.method === 'POST'
+        ) {
+          const id = segments[2]!;
+          const tabId = segments[4]!;
+          const owner = resolveOwner();
+          if (!owner) return missingAuth();
+          const existing = await getDiagram(env, id);
+          if (!existing) return notFound();
+          if (existing.ownerId !== owner) return forbidden();
+          // The tab must already live in at least one of the
+          // caller's owned diagrams. Iterating ids and looking up
+          // ownership is fine at the < 20-tab / < 1000-diagram
+          // scale we operate at; if that ever changes a single
+          // JOIN against diagrams replaces the loop.
+          const sourceIds = await diagramsContainingTab(env, tabId);
+          if (sourceIds.length === 0) return notFound();
+          let authorised = false;
+          for (const sid of sourceIds) {
+            const source = await getDiagram(env, sid);
+            if (source && source.ownerId === owner) {
+              authorised = true;
+              break;
+            }
+          }
+          if (!authorised) return forbidden();
+          await linkTabToDiagram(env, id, tabId);
+          // Return the tab summary the client uses to render the
+          // new pill in its TabBar without re-fetching the whole
+          // diagram. Pulled fresh so the order_index reflects the
+          // append we just performed.
+          const tab = await getTab(env, id, tabId);
+          return tab ? json({ tab }) : notFound();
         }
 
         // /api/diagrams/<id>/share — owner-only.

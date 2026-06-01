@@ -189,7 +189,18 @@ export async function setDiagramFolder(
 const TAB_COLS = 'id, diagram_id, name, order_index, data, updated_at';
 
 export async function getTab(env: Env, diagramId: string, tabId: string): Promise<TabDTO | null> {
-  const row = await env.DB.prepare(`SELECT ${TAB_COLS} FROM tabs WHERE id = ? AND diagram_id = ?`)
+  // Resolve via the diagram_tabs link table (spec/17) so linked
+  // tabs surface from every diagram that contains them, not just
+  // the legacy tabs.diagram_id column (which points only at the
+  // tab's original diagram). The link table also carries the
+  // per-diagram order_index, so the returned summary's position
+  // is correct for whichever diagram the caller asked about.
+  const row = await env.DB.prepare(
+    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, t.data, t.updated_at
+       FROM tabs t
+       JOIN diagram_tabs dt ON dt.tab_id = t.id
+      WHERE t.id = ? AND dt.diagram_id = ?`,
+  )
     .bind(tabId, diagramId)
     .first<TabRow>();
   return row ? rowToTab(row) : null;
@@ -236,18 +247,67 @@ export async function upsertTab(
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
 }
 
-// Remove the tab from this diagram. Today's contract still drops
-// the underlying tabs row too — once #14 + multi-diagram tabs land
-// the call gets split into "unlink from this diagram" vs "delete
-// the tab body everywhere," but for now every tab lives in exactly
-// one diagram so the two are equivalent.
+// Remove the tab from this diagram (drops the `diagram_tabs` link
+// row). The underlying `tabs` row only goes away when no other
+// diagram still references it: linked tabs (per spec/17) survive
+// an unlink from one of their containing diagrams so the body
+// stays readable from the rest. Legacy single-link tabs end up
+// fully deleted, matching the prior contract.
 export async function deleteTabRow(env: Env, diagramId: string, tabId: string): Promise<void> {
   await env.DB.prepare('DELETE FROM diagram_tabs WHERE diagram_id = ? AND tab_id = ?')
     .bind(diagramId, tabId)
     .run();
-  await env.DB.prepare('DELETE FROM tabs WHERE id = ? AND diagram_id = ?')
-    .bind(tabId, diagramId)
+  const remaining = await env.DB.prepare('SELECT COUNT(*) AS n FROM diagram_tabs WHERE tab_id = ?')
+    .bind(tabId)
+    .first<{ n: number }>();
+  if ((remaining?.n ?? 0) === 0) {
+    await env.DB.prepare('DELETE FROM tabs WHERE id = ?').bind(tabId).run();
+  }
+}
+
+// Link an existing tab into another diagram (spec/17). Inserts a
+// `diagram_tabs` row at the end of the target diagram's order,
+// idempotent on conflict so re-linking the same pair returns 200
+// without double-counting. The `tabs` row itself is untouched: the
+// tab body lives in one place and edits propagate to every diagram
+// that references it. Returns true when a fresh link was created,
+// false when the link already existed (idempotent path).
+export async function linkTabToDiagram(
+  env: Env,
+  diagramId: string,
+  tabId: string,
+): Promise<boolean> {
+  const existing = await env.DB.prepare(
+    'SELECT 1 AS present FROM diagram_tabs WHERE diagram_id = ? AND tab_id = ?',
+  )
+    .bind(diagramId, tabId)
+    .first<{ present: number }>();
+  if (existing) return false;
+  const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM diagram_tabs WHERE diagram_id = ?')
+    .bind(diagramId)
+    .first<{ n: number }>();
+  const orderIndex = count?.n ?? 0;
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT (diagram_id, tab_id) DO NOTHING`,
+  )
+    .bind(diagramId, tabId, orderIndex, now)
     .run();
+  await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
+  return true;
+}
+
+// Look up every diagram id that links the given tab. Used by the
+// link endpoint's auth check (caller must own at least one of
+// them) and would also drive a future "this tab is shared with N
+// diagrams" indicator.
+export async function diagramsContainingTab(env: Env, tabId: string): Promise<string[]> {
+  const rows = await env.DB.prepare('SELECT diagram_id FROM diagram_tabs WHERE tab_id = ?')
+    .bind(tabId)
+    .all<{ diagram_id: string }>();
+  return (rows.results ?? []).map((r) => r.diagram_id);
 }
 
 // Update tab order. Caller passes the ids in their new positions; we
