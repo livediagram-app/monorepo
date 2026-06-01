@@ -59,12 +59,18 @@ export function SelectionPopover({
   const ellipsisRef = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  // Prefer above by default. After mount we measure and flip to
-  // below only if there isn't room, checked in screen space, not
-  // canvas space, because auto-fit puts most elements at negative
-  // canvas-y, which made the old canvas-coord check always pick
-  // "below".
-  const [placeAbove, setPlaceAbove] = useState(true);
+  // Prefer above by default on desktop, below on mobile. Mobile
+  // defaults to below because the Palette pins the top-right of
+  // the viewport: an above-the-element popover near the top of
+  // the canvas would land underneath it. The layoutEffect below
+  // still flips to "below" on desktop if there's no room above
+  // (and equivalently flips to "above" on mobile if there's no
+  // room below). The initial value just picks the better-odds
+  // starting placement per device class.
+  const [placeAbove, setPlaceAbove] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia?.('(min-width: 640px)').matches ?? true;
+  });
 
   const visualGap = (compact ? GAP_COMPACT : GAP_DEFAULT) / zoom;
   const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;

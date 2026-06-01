@@ -980,7 +980,7 @@ export function Canvas(props: CanvasProps) {
           const sy = (e.clientY - rect.top) / viewportZoom;
           onCanvasDoubleClick(sx, sy);
         }}
-        className={`absolute inset-0 origin-center ${cursorClass}`}
+        className={`absolute inset-0 z-20 origin-center ${cursorClass}`}
         style={{
           // Translate is in canvas-coords (applied first); scale is centred
           // on the wrapper so zooming keeps the viewport centre stable.
