@@ -19,7 +19,7 @@ const BRAND_500 = '#0ea5e9';
 
 export function Brand({ href, size = 'md', className = '', accentColor }: BrandProps) {
   const classes =
-    `inline-flex items-center gap-1.5 ${sizeClasses[size]} text-slate-900 ${className}`.trim();
+    `inline-flex items-center gap-1.5 ${sizeClasses[size]} text-slate-900 dark:text-slate-100 ${className}`.trim();
   const accentStyle: React.CSSProperties = accentColor
     ? { color: accentColor, transition: 'color 200ms ease-out' }
     : { transition: 'color 200ms ease-out' };

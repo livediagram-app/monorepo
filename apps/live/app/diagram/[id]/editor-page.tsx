@@ -33,6 +33,8 @@ import {
 } from '@livediagram/diagram';
 import dynamic from 'next/dynamic';
 import { Canvas } from '@/components/Canvas';
+import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
+import { MenuItem } from '@/components/PortalMenu';
 // Lazy-load CommentThreadPopover for the same reason as
 // ExportTabDialog / ShareDialog: it's gated on commentThreadOpenId
 // (right-click an element, pick Comments), most sessions never
@@ -298,6 +300,17 @@ export default function LivePage() {
   // The state machine is just an open-id; the actual text lives on
   // `element.note?` (see packages/diagram BoxedElement schema).
   const [noteOpenId, setNoteOpenId] = useState<string | null>(null);
+
+  // Right-click context menu state. Tracks the cursor position + the
+  // menu's mode (element-scoped vs tab-scoped) so the page can render
+  // a single ContextMenu portal that swaps its items based on what
+  // was clicked. Null = menu closed.
+  const [contextMenu, setContextMenu] = useState<
+    | { mode: 'element'; elementId: string; x: number; y: number }
+    | { mode: 'canvas'; x: number; y: number }
+    | null
+  >(null);
+  const closeContextMenu = () => setContextMenu(null);
   const openNote = (elementId: string) => {
     setNoteOpenId((cur) => (cur === elementId ? null : elementId));
   };
@@ -3530,6 +3543,14 @@ export default function LivePage() {
           setGroupSourceId(null);
         }}
         onSelect={selectElement}
+        onElementContextMenu={
+          isReadOnly
+            ? undefined
+            : (id, sx, sy) => setContextMenu({ mode: 'element', elementId: id, x: sx, y: sy })
+        }
+        onCanvasContextMenu={
+          isReadOnly ? undefined : (sx, sy) => setContextMenu({ mode: 'canvas', x: sx, y: sy })
+        }
         onBeginDrag={beginDrag}
         onBeginAnchorDrag={beginAnchorDrag}
         onBeginEdit={beginEdit}
@@ -3714,6 +3735,276 @@ export default function LivePage() {
             );
           })()
         : null}
+      {contextMenu && !isReadOnly
+        ? (() => {
+            const close = closeContextMenu;
+            if (contextMenu.mode === 'element') {
+              const target = activeTab.elements.find((el) => el.id === contextMenu.elementId);
+              if (!target) return null;
+              const boxed = isBoxed(target);
+              const isLocked = boxed && target.locked === true;
+              return (
+                <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
+                  <MenuItem
+                    icon={<DuplicateMenuIcon />}
+                    label="Duplicate"
+                    onClick={() => {
+                      duplicateSelected();
+                      close();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<LayerUpIcon />}
+                    label="Bring to front"
+                    onClick={() => {
+                      bringSelectedToFront();
+                      close();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<LayerDownIcon />}
+                    label="Send to back"
+                    onClick={() => {
+                      sendSelectedToBack();
+                      close();
+                    }}
+                  />
+                  {boxed ? (
+                    <MenuItem
+                      icon={<NoteMenuIcon />}
+                      label={target.note ? 'Edit note' : 'Add note'}
+                      onClick={() => {
+                        openNote(target.id);
+                        close();
+                      }}
+                    />
+                  ) : null}
+                  <MenuItem
+                    icon={<CommentMenuIcon />}
+                    label="Comment"
+                    onClick={() => {
+                      openComments(target.id);
+                      close();
+                    }}
+                  />
+                  <ContextMenuDivider />
+                  <MenuItem
+                    icon={<LockMenuIcon />}
+                    label={isLocked ? 'Unlock' : 'Lock'}
+                    onClick={() => {
+                      toggleLockSelected();
+                      close();
+                    }}
+                  />
+                  <ContextMenuDivider />
+                  <MenuItem
+                    icon={<TrashMenuIcon />}
+                    label="Delete"
+                    danger
+                    onClick={() => {
+                      deleteSelected();
+                      close();
+                    }}
+                  />
+                </ContextMenu>
+              );
+            }
+            return (
+              <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
+                <MenuItem
+                  icon={<AutoAlignIcon />}
+                  label="Auto-align tab"
+                  onClick={() => {
+                    autoAlignTab();
+                    close();
+                  }}
+                />
+                <MenuItem
+                  icon={<LayerUpIcon />}
+                  label="Fit to screen"
+                  onClick={() => {
+                    fitToScreen();
+                    close();
+                  }}
+                />
+                <ContextMenuDivider />
+                <MenuItem
+                  icon={<DuplicateMenuIcon />}
+                  label="Add square"
+                  onClick={() => {
+                    addShape('square');
+                    close();
+                  }}
+                />
+                <MenuItem
+                  icon={<DuplicateMenuIcon />}
+                  label="Add circle"
+                  onClick={() => {
+                    addShape('circle');
+                    close();
+                  }}
+                />
+                <MenuItem
+                  icon={<DuplicateMenuIcon />}
+                  label="Add sticky"
+                  onClick={() => {
+                    addSticky();
+                    close();
+                  }}
+                />
+              </ContextMenu>
+            );
+          })()
+        : null}
     </div>
+  );
+}
+
+function DuplicateMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
+      <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
+    </svg>
+  );
+}
+
+function LayerUpIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="6" y="6" width="7" height="7" rx="1" fill="white" />
+    </svg>
+  );
+}
+
+function LayerDownIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="6" y="6" width="7" height="7" rx="1" />
+      <rect x="3" y="3" width="7" height="7" rx="1" fill="white" />
+    </svg>
+  );
+}
+
+function NoteMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 2.5h7l3 3v8a0.5 0.5 0 0 1 -0.5 0.5h-9.5a0.5 0.5 0 0 1 -0.5 -0.5v-10.5a0.5 0.5 0 0 1 0.5 -0.5z" />
+      <path d="M10 2.5v3h3" />
+      <path d="M5.5 9h5M5.5 11.5h5" />
+    </svg>
+  );
+}
+
+function CommentMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4v5A1.5 1.5 0 0 1 12 10.5H7l-3 2.5V10.5A1.5 1.5 0 0 1 2.5 9z" />
+    </svg>
+  );
+}
+
+function LockMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="7.5" width="10" height="6.5" rx="1.25" />
+      <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.5 0v2.5" />
+    </svg>
+  );
+}
+
+function TrashMenuIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 4h11" />
+      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
+      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
+    </svg>
+  );
+}
+
+function AutoAlignIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4h12M2 8h12M2 12h12" />
+    </svg>
   );
 }

@@ -58,9 +58,11 @@ type BoxedElementViewProps = {
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: () => void;
-  // Select the element in response to a right-click — used to drive the
-  // SelectionPopover without starting a drag.
-  onContextSelect: () => void;
+  // Right-click on the element. Receives the cursor's screen-space
+  // coords so the caller can anchor a context menu under it. The
+  // caller is also responsible for selecting the element (the menu's
+  // actions assume it is the current selection).
+  onContextSelect: (screenX: number, screenY: number) => void;
   // The colour for the link/comment badges. Comes from the active
   // tab's theme so the icons read as part of the diagram rather than
   // floating brand-blue dots on a coloured palette.
@@ -137,15 +139,15 @@ export function BoxedElementView({
     onBeginEdit();
   };
 
-  // Right-click selects the element + shows the SelectionPopover instead
-  // of the browser's default context menu. The popover surfaces every
-  // per-element action — Duplicate, Comments, Group, Lock, Delete — so
-  // it's a natural fit for the "secondary click" gesture.
+  // Right-click selects the element + asks the page to open a
+  // context menu at the cursor. The page also keeps showing the
+  // SelectionPopover (handled by the normal selection flow), so the
+  // context menu is an additional surface, not a replacement.
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isEditing) return;
-    onContextSelect();
+    onContextSelect(e.clientX, e.clientY);
   };
 
   const cursor = isPaintMode

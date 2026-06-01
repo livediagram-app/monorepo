@@ -182,6 +182,15 @@ type CanvasProps = {
   onMoveDiagramToFolder: (diagramId: string, folderId: string | null) => void;
   onDeselect: () => void;
   onSelect: (id: string) => void;
+  // Right-click on the canvas background. Receives the cursor's
+  // screen coords so the caller can open a "current tab" context
+  // menu anchored under it. Distinct from element right-clicks
+  // (those go through BoxedElementView's onContextSelect).
+  onCanvasContextMenu?: (screenX: number, screenY: number) => void;
+  // Right-click on an element. Forwarded from BoxedElementView's
+  // own context handler — the canvas selects the element and the
+  // page opens an element context menu.
+  onElementContextMenu?: (id: string, screenX: number, screenY: number) => void;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
   onBeginAnchorDrag: (id: string, anchor: Anchor, e: ReactPointerEvent) => void;
   onBeginEdit: (id: string) => void;
@@ -369,6 +378,8 @@ export function Canvas(props: CanvasProps) {
     onMoveDiagramToFolder,
     onDeselect,
     onSelect,
+    onCanvasContextMenu,
+    onElementContextMenu,
     onBeginDrag,
     onBeginAnchorDrag,
     onBeginEdit,
@@ -836,6 +847,14 @@ export function Canvas(props: CanvasProps) {
       tabIndex={-1}
       onPointerMove={handlePointerMoveCanvas}
       onPointerLeave={handlePointerLeaveCanvas}
+      onContextMenu={(e) => {
+        // BoxedElementView's onContextMenu calls e.stopPropagation()
+        // for right-clicks on elements, so we only reach here for
+        // canvas background clicks. Suppress the browser context
+        // menu and open a tab-level context menu instead.
+        e.preventDefault();
+        onCanvasContextMenu?.(e.clientX, e.clientY);
+      }}
       onPointerDown={(e) => {
         // Auto-fit on load can scale the wrapper below 1, which
         // shrinks its hit region inside `main`. Without this mirror
@@ -1005,7 +1024,10 @@ export function Canvas(props: CanvasProps) {
               onCancelEdit={onCancelEdit}
               onFollowLink={onFollowLink}
               onOpenComments={() => onOpenComments(element.id)}
-              onContextSelect={() => onSelect(element.id)}
+              onContextSelect={(sx, sy) => {
+                onSelect(element.id);
+                onElementContextMenu?.(element.id, sx, sy);
+              }}
             />
           );
         })}
