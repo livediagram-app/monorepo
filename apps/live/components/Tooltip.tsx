@@ -92,7 +92,17 @@ export function Tooltip({ title, description, block = false, children }: Tooltip
     setLayout({ left, top, placement, arrowOffset });
   }, [visible, title, description]);
 
-  const show = () => setVisible(true);
+  const show = () => {
+    // Suppress on coarse-pointer devices (phones, tablets): browsers
+    // synthesise mouseenter on tap, so without this every tap on a
+    // tooltipped button would flash the card. On touch surfaces the
+    // affordance is the icon + the tap-to-act gesture itself; the
+    // tooltip text is desktop-only chrome.
+    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) {
+      return;
+    }
+    setVisible(true);
+  };
   const hide = () => {
     setVisible(false);
     setLayout(null);

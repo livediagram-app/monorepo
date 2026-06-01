@@ -1404,12 +1404,27 @@ export function Canvas(props: CanvasProps) {
           is rendered — Palette / Zoom / History are all suppressed. */}
       <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2">
         {explorerMinimized ? (
-          <DockButton
-            label="Open Explorer"
-            description="Expand the Explorer panel back to its full size."
-            icon={<ExplorerIcon />}
-            onClick={onToggleExplorerMinimized}
-          />
+          <>
+            {/* Mobile: the floating Explorer panel overlaps the
+                canvas, so the dock button instead navigates to the
+                full-page Explorer route (/live/explorer). Desktop
+                keeps the toggle-panel behaviour. */}
+            <a
+              href="/live/explorer"
+              aria-label="Open Explorer"
+              className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900 sm:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <ExplorerIcon />
+            </a>
+            <span className="hidden sm:contents">
+              <DockButton
+                label="Open Explorer"
+                description="Expand the Explorer panel back to its full size."
+                icon={<ExplorerIcon />}
+                onClick={onToggleExplorerMinimized}
+              />
+            </span>
+          </>
         ) : null}
         {welcomeOpen ? null : (
           <>

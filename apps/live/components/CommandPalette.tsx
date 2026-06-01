@@ -237,7 +237,7 @@ function OpenPalette({
       title="Palette"
       position={position}
       defaultCorner="top-right"
-      width="w-64"
+      width="w-52 sm:w-64"
       onSize={onSize}
       onReset={onReset}
       onMoveTo={onMoveTo}
