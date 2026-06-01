@@ -3643,11 +3643,16 @@ export default function LivePage() {
           // "pick a template" flash before the real content
           // pops in. `loadedTabIds.has(activeId)` flips true
           // once the lazy fetch resolves.
-          (hydrated &&
+          //
+          // View-role visitors never see the picker: they can't
+          // commit a template anyway (every write goes through
+          // a 403), so the prompt would just be a dead-end UI.
+          !isReadOnly &&
+          ((hydrated &&
             loadedTabIds.has(activeId) &&
             activeTab.elements.length === 0 &&
             activeTab.templateChosen !== true) ||
-          identityOnlyScreenOpen
+            identityOnlyScreenOpen)
         }
         hydrated={hydrated}
         templatePickerMode={effectiveTemplatePickerMode}

@@ -1108,6 +1108,7 @@ export function Canvas(props: CanvasProps) {
                   ? (x, y) => onOpenElementContextMenu(selected.id, x, y)
                   : undefined
             }
+            compact={readOnly}
           />
         ) : null}
       </div>

@@ -25,12 +25,21 @@ type SelectionPopoverProps = {
   // would open, anchored under the ellipsis button. Surfaces the
   // full action list on touch devices that can't right-click.
   onOpenContextMenu?: (screenX: number, screenY: number) => void;
+  // Tighter gap between the popover and the element edge. Set
+  // by the view-role caller because the plus duplicate button
+  // (which sits in this gap for editor sessions) doesn't render
+  // when read-only, so the toolbar can sit closer to the element
+  // without overlapping anything.
+  compact?: boolean;
 };
 
-// The plus button sits between the popover and the element edge it
-// belongs to. Bumped to 48 px so the plus has clear breathing room:
-// at 36 px the popover crowded it and felt visually cramped.
-const GAP = 48;
+// Default gap: leave room for the plus duplicate button between
+// the popover and the element edge. Bumped to 48 px so the plus
+// has clear breathing room (at 36 px the popover crowded it and
+// felt visually cramped). `compact` callers (view-role) drop to
+// 16 px since there's no plus button to clear.
+const GAP_DEFAULT = 48;
+const GAP_COMPACT = 16;
 const EDGE_MARGIN = 8;
 
 export function SelectionPopover({
@@ -45,6 +54,7 @@ export function SelectionPopover({
   onUngroup,
   onOpenComments,
   onOpenContextMenu,
+  compact = false,
 }: SelectionPopoverProps) {
   const ellipsisRef = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -56,7 +66,7 @@ export function SelectionPopover({
   // "below".
   const [placeAbove, setPlaceAbove] = useState(true);
 
-  const visualGap = GAP / zoom;
+  const visualGap = (compact ? GAP_COMPACT : GAP_DEFAULT) / zoom;
   const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;
   const baseLeft = bounds.x + bounds.width / 2;
 
