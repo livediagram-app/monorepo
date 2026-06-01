@@ -1,6 +1,14 @@
 import type { ArrowElement } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
-import { arrowReferencesAny, MIN_SIZE, nextBounds, type ShapeBounds } from './canvas';
+import {
+  arrowReferencesAny,
+  cornerOf,
+  MIN_SIZE,
+  nextBounds,
+  unionOfBounds,
+  unionResizeMember,
+  type ShapeBounds,
+} from './canvas';
 
 const baseBounds: ShapeBounds = { x: 100, y: 200, width: 80, height: 40 };
 
@@ -120,5 +128,110 @@ describe('arrowReferencesAny', () => {
 
   it('returns false against an empty id set', () => {
     expect(arrowReferencesAny(bothPinnedArrow, new Set())).toBe(false);
+  });
+});
+
+describe('cornerOf', () => {
+  it('maps each resize mode to its diagonal corner letter', () => {
+    expect(cornerOf('resize-nw')).toBe('nw');
+    expect(cornerOf('resize-ne')).toBe('ne');
+    expect(cornerOf('resize-sw')).toBe('sw');
+    expect(cornerOf('resize-se')).toBe('se');
+  });
+
+  it('returns null for move (no corner is being pulled)', () => {
+    expect(cornerOf('move')).toBeNull();
+  });
+});
+
+describe('unionOfBounds', () => {
+  it('returns null for an empty iterable so callers can short-circuit', () => {
+    expect(unionOfBounds([])).toBeNull();
+  });
+
+  it('returns the same bounds back for a single-element union', () => {
+    const only: ShapeBounds = { x: 10, y: 20, width: 30, height: 40 };
+    expect(unionOfBounds([only])).toEqual(only);
+  });
+
+  it('takes the outermost edges across multiple disjoint bounds', () => {
+    const a: ShapeBounds = { x: 0, y: 0, width: 50, height: 30 };
+    const b: ShapeBounds = { x: 80, y: 100, width: 20, height: 40 };
+    expect(unionOfBounds([a, b])).toEqual({ x: 0, y: 0, width: 100, height: 140 });
+  });
+
+  it('survives overlapping bounds without double-counting size', () => {
+    const a: ShapeBounds = { x: 0, y: 0, width: 60, height: 60 };
+    const b: ShapeBounds = { x: 40, y: 40, width: 60, height: 60 };
+    expect(unionOfBounds([a, b])).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+  });
+});
+
+describe('unionResizeMember', () => {
+  // Union starts at (0,0) - (100,100). The two members are:
+  //   - top-left quadrant: (0,0) - (40,40)
+  //   - bottom-right quadrant: (60,60) - (100,100)
+  // so we can pin both the corner-at-anchor and the corner-far-from-anchor
+  // members at the same time and assert each one moves the right way.
+  const unionStart: ShapeBounds = { x: 0, y: 0, width: 100, height: 100 };
+  const memberAtNW: ShapeBounds = { x: 0, y: 0, width: 40, height: 40 };
+  const memberAtSE: ShapeBounds = { x: 60, y: 60, width: 40, height: 40 };
+
+  it('with SE corner drag (NW anchor fixed), scales every member outward from the NW corner', () => {
+    // Double the union: (0,0) - (200,200).
+    const unionNext: ShapeBounds = { x: 0, y: 0, width: 200, height: 200 };
+    const newNW = unionResizeMember(memberAtNW, unionStart, unionNext, 'se');
+    const newSE = unionResizeMember(memberAtSE, unionStart, unionNext, 'se');
+    // NW member sits on the anchor: position stays, size doubles.
+    expect(newNW).toEqual({ x: 0, y: 0, width: 80, height: 80 });
+    // SE member doubles in distance from the anchor AND in size.
+    expect(newSE).toEqual({ x: 120, y: 120, width: 80, height: 80 });
+  });
+
+  it('with NW corner drag (SE anchor fixed), scales every member inward toward the SE corner', () => {
+    // Halve the union from the SE side: (50,50) - (100,100).
+    const unionNext: ShapeBounds = { x: 50, y: 50, width: 50, height: 50 };
+    const newNW = unionResizeMember(memberAtNW, unionStart, unionNext, 'nw');
+    const newSE = unionResizeMember(memberAtSE, unionStart, unionNext, 'nw');
+    // NW member halves and slides toward the SE anchor.
+    expect(newNW).toEqual({ x: 50, y: 50, width: 20, height: 20 });
+    // SE member's bottom-right was AT the anchor — it stays put at the
+    // anchor and halves its size.
+    expect(newSE.x).toBeCloseTo(80);
+    expect(newSE.y).toBeCloseTo(80);
+    expect(newSE.width).toBe(MIN_SIZE);
+    expect(newSE.height).toBe(MIN_SIZE);
+  });
+
+  it('with SW corner drag (NE anchor fixed), keeps the east edge of east-side members put', () => {
+    // Pull SW down + left: (-50, 0) - (100, 150). Width grew from 100 to 150.
+    const unionNext: ShapeBounds = { x: -50, y: 0, width: 150, height: 150 };
+    const newSE = unionResizeMember(memberAtSE, unionStart, unionNext, 'sw');
+    // The east edge of memberAtSE was at x=100, which IS the anchor x.
+    // Its right edge should still land at x=100 (anchor = unionStart.x + width).
+    expect(newSE.x + newSE.width).toBeCloseTo(100);
+  });
+
+  it('with NE corner drag (SW anchor fixed), keeps the west edge of west-side members put', () => {
+    // Pull NE up + right: (0,-50) - (150, 100). Width grew 100→150.
+    const unionNext: ShapeBounds = { x: 0, y: -50, width: 150, height: 150 };
+    const newNW = unionResizeMember(memberAtNW, unionStart, unionNext, 'ne');
+    // The west edge of memberAtNW was at x=0, which IS the anchor x.
+    expect(newNW.x).toBeCloseTo(0);
+  });
+
+  it('floors each member at MIN_SIZE on collapse so tiny members survive a hard shrink', () => {
+    const tinyUnion: ShapeBounds = { x: 0, y: 0, width: 1, height: 1 };
+    const out = unionResizeMember(memberAtSE, unionStart, tinyUnion, 'nw');
+    expect(out.width).toBe(MIN_SIZE);
+    expect(out.height).toBe(MIN_SIZE);
+  });
+
+  it('handles a zero-width union without dividing by zero', () => {
+    const flat: ShapeBounds = { x: 10, y: 10, width: 0, height: 50 };
+    // sx falls back to unionNext.width / 1 so the math stays finite.
+    const out = unionResizeMember(flat, flat, { ...flat, width: 30 }, 'se');
+    expect(Number.isFinite(out.x)).toBe(true);
+    expect(Number.isFinite(out.width)).toBe(true);
   });
 });

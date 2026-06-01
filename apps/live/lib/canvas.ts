@@ -120,6 +120,78 @@ export function nextBounds(
   }
 }
 
+// Group-resize math: given the union bounding box at drag start,
+// the same union after `nextBounds` runs against the drag, and the
+// corner the user is pulling, scale a single member's start bounds
+// proportionally around the corner opposite the drag handle (the
+// fixed anchor). Width / height are floored at MIN_SIZE so tiny
+// members inside a large union don't collapse when sx / sy round
+// down hard. Pure function (no React, no element types), so it
+// stays trivially testable.
+export function unionResizeMember(
+  member: ShapeBounds,
+  unionStart: ShapeBounds,
+  unionNext: ShapeBounds,
+  corner: 'nw' | 'ne' | 'sw' | 'se',
+): ShapeBounds {
+  const sx = unionNext.width / Math.max(unionStart.width, 1);
+  const sy = unionNext.height / Math.max(unionStart.height, 1);
+  // Anchor = union corner OPPOSITE the drag handle; that point
+  // stays fixed in canvas-space throughout the resize. nextBounds
+  // already keeps it implicit on the union itself; here we mirror
+  // the arithmetic so members get repositioned around the same
+  // anchor.
+  const anchorX =
+    corner === 'sw' || corner === 'nw' ? unionStart.x + unionStart.width : unionStart.x;
+  const anchorY =
+    corner === 'ne' || corner === 'nw' ? unionStart.y + unionStart.height : unionStart.y;
+  return {
+    x: anchorX + (member.x - anchorX) * sx,
+    y: anchorY + (member.y - anchorY) * sy,
+    width: Math.max(MIN_SIZE, member.width * sx),
+    height: Math.max(MIN_SIZE, member.height * sy),
+  };
+}
+
+// Union bounding box of a Map of starts (the shape `drag.startBounds`
+// carries during a boxed-element drag). Returns null when the map is
+// empty so callers can short-circuit. Pulled out so the resize and
+// the test suite share one definition.
+export function unionOfBounds(boundsList: Iterable<ShapeBounds>): ShapeBounds | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let saw = false;
+  for (const b of boundsList) {
+    saw = true;
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.width > maxX) maxX = b.x + b.width;
+    if (b.y + b.height > maxY) maxY = b.y + b.height;
+  }
+  if (!saw) return null;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+// Map a DragMode to the corner letter, or null if the mode isn't a
+// resize. The same lookup happens in two places (the resize effect +
+// snap helpers); keeping it here avoids the parallel-table drift.
+export function cornerOf(mode: DragMode): 'nw' | 'ne' | 'sw' | 'se' | null {
+  switch (mode) {
+    case 'resize-nw':
+      return 'nw';
+    case 'resize-ne':
+      return 'ne';
+    case 'resize-sw':
+      return 'sw';
+    case 'resize-se':
+      return 'se';
+    case 'move':
+      return null;
+  }
+}
+
 // True when either of the arrow's endpoints is pinned to one of the
 // given element ids. Used by the deletion / cascading-update paths so
 // arrows attached to a removed box can be cleaned up alongside it.

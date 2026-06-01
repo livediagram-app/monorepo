@@ -75,9 +75,12 @@ import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import {
   ALIGN_SNAP_THRESHOLD,
   arrowReferencesAny,
+  cornerOf,
   MIN_SIZE,
   nextBounds,
   SNAP_THRESHOLD,
+  unionOfBounds,
+  unionResizeMember,
   type ArrowEnd,
   type DragMode,
   type DragState,
@@ -3546,13 +3549,7 @@ export default function LivePage() {
           //   if it were one element, then map every member through the
           //   same proportional scale around the anchor (corner opposite
           //   the drag handle).
-          const cornerOf = {
-            'resize-se': 'se',
-            'resize-sw': 'sw',
-            'resize-ne': 'ne',
-            'resize-nw': 'nw',
-          } as const;
-          const corner = cornerOf[drag.mode];
+          const corner = cornerOf(drag.mode);
           const memberIds = new Set(drag.startBounds.keys());
 
           if (drag.startBounds.size <= 1) {
@@ -3576,30 +3573,17 @@ export default function LivePage() {
             return;
           }
 
-          // Multi-member resize: derive union bounds and use the same
-          // nextBounds helper to compute the new union. Aspect-lock is
-          // forced on if ANY member is aspect-locked so locked figures
-          // (e.g. the actor) don't get warped by an unevenly-dragged
-          // corner. Snap is skipped for multi-resize because the
-          // primary's edges aren't load-bearing here — snapping one
-          // member's edge would push the whole group around in ways
-          // the user didn't ask for.
-          let minX = Infinity;
-          let minY = Infinity;
-          let maxX = -Infinity;
-          let maxY = -Infinity;
-          for (const b of drag.startBounds.values()) {
-            if (b.x < minX) minX = b.x;
-            if (b.y < minY) minY = b.y;
-            if (b.x + b.width > maxX) maxX = b.x + b.width;
-            if (b.y + b.height > maxY) maxY = b.y + b.height;
-          }
-          const unionStart = {
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY,
-          };
+          // Multi-member resize: derive union bounds, run them
+          // through nextBounds, and scale every member around the
+          // anchor (corner opposite the drag handle). Aspect-lock is
+          // forced on if ANY member is aspect-locked so locked
+          // figures (e.g. the actor) don't get warped by an
+          // unevenly-dragged corner. Snap is skipped for multi-resize
+          // because the primary's edges aren't load-bearing here:
+          // snapping one member's edge would push the whole group
+          // around in ways the user didn't ask for.
+          const unionStart = unionOfBounds(drag.startBounds.values());
+          if (!unionStart || !corner) return;
           const anyAspectLocked = activeTab.elements.some(
             (el) => isBoxed(el) && drag.startBounds.has(el.id) && el.aspectLocked === true,
           );
@@ -3610,32 +3594,12 @@ export default function LivePage() {
             dy,
             drag.aspectLocked || anyAspectLocked,
           );
-          // Scale factors derived from the union resize. Clamp to a
-          // minimum so dragging a handle far past the opposite corner
-          // doesn't flip / collapse members below MIN_SIZE — the union
-          // already enforces this for itself, but tiny members inside a
-          // large union can still fall under MIN_SIZE if sx/sy round
-          // down hard.
-          const sx = unionNext.width / Math.max(unionStart.width, 1);
-          const sy = unionNext.height / Math.max(unionStart.height, 1);
-          // Anchor = the union corner opposite the drag handle. That's
-          // the point that stays fixed in canvas-space throughout the
-          // resize. nextBounds keeps it implicitly; we mirror the
-          // arithmetic here so members can be repositioned around it.
-          const anchorX =
-            corner === 'sw' || corner === 'nw' ? unionStart.x + unionStart.width : unionStart.x;
-          const anchorY =
-            corner === 'ne' || corner === 'nw' ? unionStart.y + unionStart.height : unionStart.y;
           tick((els) =>
             els.map((el) => {
               if (!isBoxed(el)) return el;
               const start = drag.startBounds.get(el.id);
               if (!start) return el;
-              const newWidth = Math.max(MIN_SIZE, start.width * sx);
-              const newHeight = Math.max(MIN_SIZE, start.height * sy);
-              const newX = anchorX + (start.x - anchorX) * sx;
-              const newY = anchorY + (start.y - anchorY) * sy;
-              return { ...el, x: newX, y: newY, width: newWidth, height: newHeight };
+              return { ...el, ...unionResizeMember(start, unionStart, unionNext, corner) };
             }),
           );
         }
