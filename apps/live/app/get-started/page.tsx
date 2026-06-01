@@ -26,14 +26,11 @@ import {
   GoogleGlyph,
   messageOf,
   RedirectingCard,
+  resolvePostAuthDestination,
 } from '@/components/auth-shared';
 import { clerkEnabled, googleOAuthEnabled } from '@/lib/clerk-config';
 
 type Phase = 1 | 2;
-
-// See sign-in/page.tsx — router.replace applies the '/live' basePath
-// automatically, so the value here is the post-basePath path.
-const POST_AUTH_DEFAULT = '/';
 
 function GetStartedContent() {
   const router = useRouter();
@@ -55,9 +52,9 @@ function GetStartedContent() {
   // form renders for a frame before Clerk's own redirect fires.
   useEffect(() => {
     if (authLoaded && isSignedIn) {
-      router.replace(POST_AUTH_DEFAULT);
+      router.replace(resolvePostAuthDestination(searchParams));
     }
-  }, [authLoaded, isSignedIn, router]);
+  }, [authLoaded, isSignedIn, router, searchParams]);
 
   useEffect(() => {
     if (phase === 2) codeInputRefs.current[0]?.focus();
@@ -112,7 +109,7 @@ function GetStartedContent() {
       // verification is configured off — straight to the editor.
       if (res.status === 'complete' && res.createdSessionId) {
         await setActiveSignUp({ session: res.createdSessionId });
-        router.replace(POST_AUTH_DEFAULT);
+        router.replace(resolvePostAuthDestination(searchParams));
         return;
       }
       // Otherwise prepare the 6-digit code and advance to phase 2.
@@ -150,7 +147,7 @@ function GetStartedContent() {
       const res = await clerkSignUp.attemptEmailAddressVerification({ code });
       if (res.status === 'complete' && res.createdSessionId) {
         await setActiveSignUp({ session: res.createdSessionId });
-        router.replace(POST_AUTH_DEFAULT);
+        router.replace(resolvePostAuthDestination(searchParams));
         return;
       }
       // Clerk verified the code but isn't ready to mint a session.

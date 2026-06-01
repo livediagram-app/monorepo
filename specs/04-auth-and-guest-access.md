@@ -55,6 +55,7 @@ Four routes inside `apps/live/`:
 
 - **`/live/sign-in/`** — email-code or Google OAuth. Bounces to `/live/` (which falls through to the welcome flow per [spec/14](14-new-diagram-route.md)) on success. Already-signed-in users get redirected away.
 - **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code, or Google OAuth). Same post-auth destination.
+- **`?redirect_url=...`** — Clerk's protected-page bounce passes this query param to both routes. Both honour it via the shared `resolvePostAuthDestination` helper in `components/auth-shared.tsx`: the URL must start with `/live` and must not point back at the auth routes themselves (to avoid loops). The helper strips the `/live` prefix because `router.push` already respects the basePath. Anything missing, unsafe, or pointing at an auth route falls back to `/`. Both pages share the same logic so a user sent to sign-up from a protected page lands back there after verification, the same way they would from sign-in.
 - **`/live/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
 - **`/live/explorer/`** — standalone full-page Explorer (item #12). Signed-in only; pure-guest deployments + signed-out users see a notice card with a "Sign in" / "Back to editor" CTA. Reached from the AuthControls dropdown's "My files" item. Shows owned diagrams, folders, and the shared-with-you list in three sections — a glanceable cross-device view that the floating Explorer panel inside the editor can't be.
 

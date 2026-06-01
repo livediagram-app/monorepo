@@ -211,3 +211,40 @@ export function messageOf(err: unknown, fallback: string): string {
   if (err instanceof Error) return err.message;
   return fallback;
 }
+
+// ---------------------------------------------------------------------
+// Post-auth destination resolution
+//
+// Both sign-in and sign-up accept Clerk's protected-page bounce as
+// `?redirect_url=/live/<path>`. After verification the user should
+// land back where they came from. See spec/04 "Routes". Validation
+// rules:
+//
+//   - Must start with `/live` so an attacker can't craft an open
+//     redirect to a different origin via the query param.
+//   - Must NOT start with `/live/sign-in` or `/live/get-started`
+//     (loop guard: bouncing back to the auth page after sign-in
+//     would land in a redirect cycle).
+//   - The `/live` prefix is stripped because `router.push` already
+//     respects the basePath, so passing the full path would land on
+//     `/live/live/<...>`.
+//   - Anything missing, unsafe, or pointing back at auth falls
+//     through to POST_AUTH_DEFAULT (`/`).
+// ---------------------------------------------------------------------
+
+export const POST_AUTH_DEFAULT = '/';
+
+export function resolvePostAuthDestination(searchParams: {
+  get: (key: string) => string | null;
+}): string {
+  const redirect = searchParams.get('redirect_url');
+  const safe =
+    redirect?.startsWith('/live') &&
+    !redirect.toLowerCase().startsWith('/live/sign-in') &&
+    !redirect.toLowerCase().startsWith('/live/get-started');
+  if (safe && redirect) {
+    const stripped = redirect.replace(/^\/live/, '');
+    return stripped.length > 0 ? stripped : '/';
+  }
+  return POST_AUTH_DEFAULT;
+}
