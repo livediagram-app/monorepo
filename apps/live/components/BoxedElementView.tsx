@@ -341,25 +341,65 @@ function ShapeSvgOverlay({
           {...common}
         />
       ) : null}
-      {/* Browser: rounded outer frame + chrome separator + URL pill.
-          Themed fill paints the whole window; the chrome details
-          inherit the same stroke so they read as part of the silhouette. */}
+      {/* Browser: rounded outer frame + chrome details. Two-row
+          chrome reads as a real browser: window dots + nav buttons
+          on top, URL pill on the row below. The themed fill paints
+          the whole window; the chrome details inherit the same
+          stroke so they belong to the silhouette. */}
       {shape === 'browser' ? (
         <g>
           <rect x={1} y={1} width={98} height={98} rx={3} {...common} />
           <line
             x1={1}
-            y1={16}
+            y1={20}
             x2={99}
-            y2={16}
+            y2={20}
             stroke={stroke}
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
           />
+          {/* Three window control dots, traffic-light style. Sit at
+              the far left of the chrome row. */}
+          <circle cx={5} cy={6} r={1.6} fill={stroke} stroke="none" />
+          <circle cx={11} cy={6} r={1.6} fill={stroke} stroke="none" />
+          <circle cx={17} cy={6} r={1.6} fill={stroke} stroke="none" />
+          {/* Back / forward / reload icons. Right of the dots, left
+              of the URL pill. Short paths so they survive the
+              non-uniform scale without distorting beyond recognition. */}
+          <path
+            d="M 26 13 L 23 16 L 26 19"
+            fill="none"
+            stroke={stroke}
+            strokeWidth={1}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d="M 31 19 L 34 16 L 31 13"
+            fill="none"
+            stroke={stroke}
+            strokeWidth={1}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d="M 41 13 A 3 3 0 1 1 38 19 M 41 13 L 43 13 M 41 13 L 41 15"
+            fill="none"
+            stroke={stroke}
+            strokeWidth={1}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* URL pill on the right of the chrome row. Shorter than
+              the original (now ~38 wide vs the previous 56) to leave
+              room for the new nav icons. */}
           <rect
-            x={36}
-            y={4}
-            width={56}
+            x={47}
+            y={11}
+            width={48}
             height={9}
             rx={2}
             fill="none"
