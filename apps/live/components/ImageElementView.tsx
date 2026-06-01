@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import type { ImageElement } from '@livediagram/diagram';
-import { apiFetchImageBlobUrl } from '@/lib/api-client';
+import { useImageBlobUrl } from '@/hooks/useImageBlobUrl';
 
 // Renders the bitmap (or upload placeholder) for an ImageElement.
 // Mounted inside BoxedElementView's transformed wrapper so it picks
@@ -41,40 +40,7 @@ export function ImageElementView({
   onOpenPicker,
 }: ImageElementViewProps) {
   const { imageId } = element;
-  const [src, setSrc] = useState<string | null>(null);
-  const [broken, setBroken] = useState(false);
-
-  useEffect(() => {
-    if (!imageId) {
-      setSrc(null);
-      setBroken(false);
-      return;
-    }
-    let cancelled = false;
-    let activeUrl: string | null = null;
-    setBroken(false);
-    setSrc(null);
-    apiFetchImageBlobUrl(ownerId, imageId, { diagramId, shareCode })
-      .then((url) => {
-        if (cancelled) {
-          if (url) URL.revokeObjectURL(url);
-          return;
-        }
-        if (!url) {
-          setBroken(true);
-          return;
-        }
-        activeUrl = url;
-        setSrc(url);
-      })
-      .catch(() => {
-        if (!cancelled) setBroken(true);
-      });
-    return () => {
-      cancelled = true;
-      if (activeUrl) URL.revokeObjectURL(activeUrl);
-    };
-  }, [imageId, ownerId, diagramId, shareCode]);
+  const state = useImageBlobUrl(ownerId, imageId, { diagramId, shareCode });
 
   if (!imageId) {
     // Empty placeholder. Double-click opens the picker for editors
@@ -101,7 +67,7 @@ export function ImageElementView({
     );
   }
 
-  if (broken) {
+  if (state.status === 'broken') {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-1 rounded border border-rose-200 bg-rose-50/60 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
         <BrokenIcon />
@@ -110,15 +76,15 @@ export function ImageElementView({
     );
   }
 
-  if (!src) {
-    // Loading: keep a soft skeleton so the empty box doesn't flash
-    // as "no image".
+  if (state.status !== 'ready') {
+    // Loading skeleton: keep the empty box from flashing as "no
+    // image" while the bytes are in flight.
     return <div className="h-full w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />;
   }
 
   return (
     <img
-      src={src}
+      src={state.src}
       alt={element.alt ?? ''}
       draggable={false}
       className="block h-full w-full select-none"

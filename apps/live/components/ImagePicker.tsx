@@ -2,13 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  apiDeleteImage,
-  apiFetchImageBlobUrl,
-  apiListImages,
-  apiUploadImage,
-  type ImageSummary,
-} from '@/lib/api-client';
+import { apiDeleteImage, apiListImages, apiUploadImage, type ImageSummary } from '@/lib/api-client';
+import { useImageBlobUrl } from '@/hooks/useImageBlobUrl';
 
 // Two-tab modal launched from the Image element's placeholder + the
 // "Upload image" palette button. Tab 1 (Upload) accepts a file via
@@ -299,23 +294,7 @@ function GalleryTile({
   onSelect: () => void;
   onDelete: () => void;
 }) {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    let url: string | null = null;
-    apiFetchImageBlobUrl(ownerId, image.id, { diagramId }).then((resolved) => {
-      if (cancelled) {
-        if (resolved) URL.revokeObjectURL(resolved);
-        return;
-      }
-      url = resolved;
-      setSrc(resolved);
-    });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [ownerId, image.id, diagramId]);
+  const state = useImageBlobUrl(ownerId, image.id, { diagramId });
   return (
     <li className="group relative">
       <button
@@ -324,9 +303,9 @@ function GalleryTile({
         className="block aspect-square w-full overflow-hidden rounded-md border border-slate-200 bg-slate-50 transition hover:border-brand-400 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-brand-500/60"
         aria-label={`Use ${image.originalName ?? 'image'}`}
       >
-        {src ? (
+        {state.status === 'ready' ? (
           <img
-            src={src}
+            src={state.src}
             alt={image.originalName ?? ''}
             className="h-full w-full object-cover"
             draggable={false}
