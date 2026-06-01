@@ -3,6 +3,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -1327,7 +1328,10 @@ export default function LivePage() {
   // initials without bringing the participant blob along in every
   // `select` op. Self is filtered out — we don't need a "you're here"
   // badge on top of our own selection ring.
-  const livePresenceById = new Map(livePresence.map((p) => [p.id, p] as const));
+  const livePresenceById = useMemo(
+    () => new Map(livePresence.map((p) => [p.id, p] as const)),
+    [livePresence],
+  );
   // Group participants by the tab they're currently focused on, so
   // each TabBar entry can render the right avatar dots. Always
   // includes the local participant on their active tab — that way
@@ -1385,7 +1389,7 @@ export default function LivePage() {
   // every render and don't have to denormalise them into each `cursor`
   // op payload. Filter to the active tab so cursors of teammates
   // looking at a different tab don't bleed onto this one.
-  const remoteCursorRows = (() => {
+  const remoteCursorRows = useMemo(() => {
     const rows: { id: string; name: string; color: string; x: number; y: number }[] = [];
     for (const [id, pos] of remoteCursors) {
       if (!pos) continue;
@@ -1396,12 +1400,12 @@ export default function LivePage() {
       rows.push({ id, name: p.name, color: p.color, x: pos.x, y: pos.y });
     }
     return rows;
-  })();
+  }, [remoteCursors, livePresenceById, selfParticipant.id, activeId]);
   // Laser trails for the LaserOverlay — local first, then any peers
   // whose latest sample is on the active tab and whose participant
   // entry is still live. The overlay handles fade + cleanup; we just
   // assemble per-tab visibility here.
-  const laserTrailRows = (() => {
+  const laserTrailRows = useMemo(() => {
     const rows: {
       participantId: string;
       color: string;
@@ -1422,20 +1426,27 @@ export default function LivePage() {
       rows.push({ participantId: id, color: p.color, points: entry.points });
     }
     return rows;
-  })();
-  const remoteSelectionsByElement = new Map<
-    string,
-    { id: string; name: string; color: string }[]
-  >();
-  for (const [participantId, elementId] of remoteSelections) {
-    if (!elementId) continue;
-    if (participantId === selfParticipant.id) continue;
-    const participant = livePresenceById.get(participantId);
-    if (!participant) continue;
-    const list = remoteSelectionsByElement.get(elementId) ?? [];
-    list.push({ id: participant.id, name: participant.name, color: participant.color });
-    remoteSelectionsByElement.set(elementId, list);
-  }
+  }, [
+    localLaserTrail,
+    remoteLaserTrails,
+    livePresenceById,
+    selfParticipant.id,
+    selfParticipant.color,
+    activeId,
+  ]);
+  const remoteSelectionsByElement = useMemo(() => {
+    const out = new Map<string, { id: string; name: string; color: string }[]>();
+    for (const [participantId, elementId] of remoteSelections) {
+      if (!elementId) continue;
+      if (participantId === selfParticipant.id) continue;
+      const participant = livePresenceById.get(participantId);
+      if (!participant) continue;
+      const list = out.get(elementId) ?? [];
+      list.push({ id: participant.id, name: participant.name, color: participant.color });
+      out.set(elementId, list);
+    }
+    return out;
+  }, [remoteSelections, livePresenceById, selfParticipant.id]);
   // True only while the first-run welcome modal is up. Drives the chrome
   // hide rule (palette / explorer / dock / tab bar all suppressed so the
   // user's focus is on the modal). The Browse-templates flow uses the
