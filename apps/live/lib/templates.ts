@@ -1777,10 +1777,19 @@ function buildFlywheel(cx: number, cy: number): Element[] {
   // leaves THIS sector's `out` anchor and lands on the NEXT sector's
   // `into` anchor, so each arrow stays on the outside of the wheel
   // rather than cutting through the hub.
+  //
+  // Style: curved so the connector arcs around the outside of the
+  // wheel (a straight line between adjacent sectors cuts close to
+  // the hub at this radius), and dashed so it reads as "ongoing
+  // momentum / repeat cycle" rather than a one-shot flow.
   sectors.forEach((sector, i) => {
     const next = sectors[(i + 1) % sectors.length]!;
     const nextEl = sectorElements[(i + 1) % sectors.length]!;
-    elements.push(createPinnedArrow(sectorElements[i]!.id, sector.out, nextEl.id, next.into));
+    elements.push({
+      ...createPinnedArrow(sectorElements[i]!.id, sector.out, nextEl.id, next.into),
+      arrowStyle: 'curved',
+      strokeStyle: 'dashed',
+    });
   });
 
   return elements;

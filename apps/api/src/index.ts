@@ -61,7 +61,12 @@ const CORS_HEADERS = {
   // to JS as "Failed to fetch", which was hiding behind DELETE
   // /api/account and any other authed call from localhost:3002 →
   // localhost:8787 in dev.
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Owner-Id, X-Share-Code',
+  // Image upload uses custom X-Image-* headers (spec/19). The browser
+  // rejects the POST preflight if any header the client sends isn't
+  // in this list, which surfaces as "Failed to fetch" with no other
+  // signal, so each new header has to land here too.
+  'Access-Control-Allow-Headers':
+    'Authorization, Content-Type, X-Owner-Id, X-Share-Code, X-Image-Sha256, X-Image-Width, X-Image-Height, X-Image-Original-Name',
   'Access-Control-Max-Age': '86400',
 };
 
