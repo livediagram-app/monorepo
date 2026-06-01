@@ -2879,6 +2879,18 @@ export default function LivePage() {
     );
   };
 
+  // Line pattern (solid / dashed / dotted) on the selected arrow.
+  // Reuses the BorderStyle union shapes already carry so future
+  // pattern additions (e.g. 'long-dash') just need a single
+  // BORDER_DASH_ARRAY entry to light up both surfaces.
+  const setArrowStrokeStyleSelected = (style: BorderStyle) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeStyle: style } : el)),
+    );
+  };
+
   // Morph the selected shape into a different kind, preserving width /
   // height / label / colour overrides. Circle and diamond are 1:1
   // shapes — coming from a non-square box, snap to the larger side so
@@ -3466,6 +3478,7 @@ export default function LivePage() {
         onSetArrowThickness={setArrowThicknessSelected}
         onSetArrowheadSize={setArrowheadSizeSelected}
         onSetArrowStyle={setArrowStyleSelected}
+        onSetArrowStrokeStyle={setArrowStrokeStyleSelected}
         onSetShapeKind={setShapeKindSelected}
         onSetBorderStroke={setBorderStrokeSelected}
         onSetBorderStyle={setBorderStyleSelected}

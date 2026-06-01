@@ -40,6 +40,7 @@ const fullyStyledArrow: ArrowElement = {
   to: { kind: 'free', x: 100, y: 100 },
   strokeColor: '#0ea5e9',
   strokeWidth: 3,
+  strokeStyle: 'dashed',
   opacity: 0.5,
   arrowEnds: 'both',
   label: 'Arrow label',
@@ -104,11 +105,12 @@ describe('paintableBoxedFields', () => {
 });
 
 describe('paintableArrowFields', () => {
-  it('carries stroke, width, opacity and arrowEnds from the source arrow', () => {
+  it('carries stroke, width, pattern, opacity and arrowEnds from the source arrow', () => {
     const out = paintableArrowFields(fullyStyledArrow);
     expect(out).toEqual({
       strokeColor: '#0ea5e9',
       strokeWidth: 3,
+      strokeStyle: 'dashed',
       opacity: 0.5,
       arrowEnds: 'both',
     });

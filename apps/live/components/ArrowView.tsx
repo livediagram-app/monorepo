@@ -5,6 +5,8 @@ import {
   arrowPathD,
   arrowPathMidpoint,
   arrowStyleOf,
+  BORDER_DASH_ARRAY,
+  DEFAULT_BORDER_STYLE,
   defaultArrowStrokeColor,
   endpointPosition,
   isBoxed,
@@ -106,6 +108,12 @@ export function ArrowView({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
+        // Shared dasharray lookup with the shape Border accordion's
+        // pattern row, so "dashed" / "dotted" arrows visually match
+        // their box counterparts. Selection halo above stays solid
+        // for visibility. `null` from the lookup (solid) becomes
+        // undefined so the attribute is omitted.
+        strokeDasharray={BORDER_DASH_ARRAY[arrow.strokeStyle ?? DEFAULT_BORDER_STYLE] ?? undefined}
         markerStart={
           arrow.arrowEnds === 'from' || arrow.arrowEnds === 'both' ? markerUrl : undefined
         }

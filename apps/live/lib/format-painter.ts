@@ -50,11 +50,13 @@ export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement
 }
 
 // Arrow painter projection. Arrows don't carry text styling or
-// aspect locks, just stroke + opacity + arrowhead shape.
+// aspect locks, just stroke + opacity + arrowhead shape +
+// line-pattern preset.
 export function paintableArrowFields(source: ArrowElement): Partial<ArrowElement> {
   return stripUndefined<ArrowElement>({
     strokeColor: source.strokeColor,
     strokeWidth: source.strokeWidth,
+    strokeStyle: source.strokeStyle,
     opacity: source.opacity,
     arrowEnds: source.arrowEnds,
   });

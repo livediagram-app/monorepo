@@ -136,6 +136,7 @@ Accordion groups (rendered in this order top-to-bottom, hidden when their gate d
 - **Pointer** _(arrows only)_
   - **Line thickness** — four snapped presets (Thin / Medium / Thick / Extra-thick → 1 / 2 / 4 / 7 px on the arrow's `strokeWidth`). Snapping is one-way for display so legacy free-number widths still highlight the nearest preset.
   - **Line style** — Straight / Curved / Angled. Drives the geometry (single line / quadratic bezier bowing ¼ of the chord / axis-aligned L-elbow). See [Arrows → Data model](#data-model-2).
+  - **Line pattern** — Solid / Dashed / Dotted. Stored as `strokeStyle: BorderStyle` on the arrow (shares the union with the shape Border accordion's pattern row so future style additions, e.g. "long-dash", land on both surfaces with one schema change). The renderer maps to an SVG `strokeDasharray` via the same `BORDER_DASH_ARRAY` lookup the shape outlines use; the selection halo around a selected arrow stays solid for visibility.
   - **Arrowhead type** — Start only / End only / Both / No pointers. Stored as `arrowEnds`.
   - **Arrowhead size** — Small / Medium / Large / Extra-large (4 / 6 / 8.5 / 12 px marker size). Sits **below** Arrowhead type so the user picks whether they want a head before sizing it; hidden entirely when `arrowEnds === 'none'` (nothing to size).
 

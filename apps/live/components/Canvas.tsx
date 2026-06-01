@@ -212,6 +212,7 @@ type CanvasProps = {
   onSetArrowThickness: (thickness: import('@livediagram/diagram').ArrowThickness) => void;
   onSetArrowheadSize: (size: import('@livediagram/diagram').ArrowheadSize) => void;
   onSetArrowStyle: (style: import('@livediagram/diagram').ArrowStyle) => void;
+  onSetArrowStrokeStyle: (style: import('@livediagram/diagram').BorderStyle) => void;
   onSetShapeKind: (kind: ShapeKind) => void;
   onSetBorderStroke: (value: import('@livediagram/diagram').BorderStroke) => void;
   onSetBorderStyle: (value: import('@livediagram/diagram').BorderStyle) => void;
@@ -393,6 +394,7 @@ export function Canvas(props: CanvasProps) {
     onSetArrowThickness,
     onSetArrowheadSize,
     onSetArrowStyle,
+    onSetArrowStrokeStyle,
     onSetShapeKind,
     onSetBorderStroke,
     onSetBorderStyle,
@@ -762,6 +764,8 @@ export function Canvas(props: CanvasProps) {
         onSetArrowheadSize,
         arrowStyle: selected.type === 'arrow' ? arrowStyleOf(selected) : null,
         onSetArrowStyle,
+        arrowStrokeStyle: selected.type === 'arrow' ? (selected.strokeStyle ?? 'solid') : null,
+        onSetArrowStrokeStyle,
         shapeKind: selected.type === 'shape' ? selected.shape : null,
         onSetShapeKind,
         aspectLocked: isBoxed(selected) ? (selected.aspectLocked ?? false) : null,

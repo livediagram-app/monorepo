@@ -401,6 +401,11 @@ export type ArrowElement = {
   // the underlying field is a free number so future inputs (sliders,
   // numeric entry) work without a schema migration.
   strokeWidth?: number;
+  // Line pattern preset (solid / dashed / dotted). Shares the
+  // BorderStyle union with the shape Border accordion so a future
+  // pattern addition lands on both. Defaults to 'solid' (no
+  // dasharray) so existing arrows render unchanged.
+  strokeStyle?: BorderStyle;
   // Arrowhead size preset. Lives separately from `strokeWidth` so a
   // thin line can carry a chunky arrowhead and vice versa. Snapped
   // to a named preset for the toggle UI (see `arrowheadSizeOf`).

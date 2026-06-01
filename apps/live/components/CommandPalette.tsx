@@ -70,6 +70,11 @@ export type SelectedElementControls = {
   // an arrow.
   arrowStyle: ArrowStyle | null;
   onSetArrowStyle: (style: ArrowStyle) => void;
+  // Line pattern (solid / dashed / dotted) on the arrow stroke.
+  // Shares the BorderStyle union with the shape Border accordion's
+  // pattern row so the same icon set lights up either way.
+  arrowStrokeStyle: BorderStyle | null;
+  onSetArrowStrokeStyle: (style: BorderStyle) => void;
   // Non-null only when a shape element is selected. Drives the Shape
   // accordion's morph-into-this-kind grid.
   shapeKind: ShapeKind | null;
@@ -1004,6 +1009,29 @@ export function SelectedElementSection({
                       onClick={() => selection.onSetArrowStyle(id)}
                     >
                       <ArrowStyleIcon style={id} />
+                    </SizeButton>
+                  </Tooltip>
+                ))}
+              </div>
+              <div className="my-2 h-px bg-slate-100" />
+            </>
+          ) : null}
+          {selection.arrowStrokeStyle !== null ? (
+            <>
+              <p className="text-[10px] font-medium text-slate-500">Line pattern</p>
+              <div className="mt-1 grid grid-cols-3 gap-1">
+                {(['solid', 'dashed', 'dotted'] as const).map((value) => (
+                  <Tooltip
+                    key={value}
+                    block
+                    title={BORDER_STYLE_LABEL[value]}
+                    description={`Line pattern: ${BORDER_STYLE_LABEL[value].toLowerCase()}.`}
+                  >
+                    <SizeButton
+                      active={selection.arrowStrokeStyle === value}
+                      onClick={() => selection.onSetArrowStrokeStyle(value)}
+                    >
+                      <BorderStyleIcon value={value} />
                     </SizeButton>
                   </Tooltip>
                 ))}
