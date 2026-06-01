@@ -1,28 +1,14 @@
-import type { Metadata } from 'next';
-
 import { LegalPage } from '@/components/LegalPage';
+import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const TERMS_TITLE = 'Terms of Service · livediagram';
 const TERMS_DESCRIPTION = 'The terms that govern use of the hosted livediagram service.';
 
-export const metadata: Metadata = {
+export const metadata = subpageMetadata({
   title: TERMS_TITLE,
   description: TERMS_DESCRIPTION,
-  alternates: { canonical: '/terms' },
-  openGraph: {
-    type: 'article',
-    url: '/terms',
-    siteName: 'livediagram',
-    title: TERMS_TITLE,
-    description: TERMS_DESCRIPTION,
-    locale: 'en_GB',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: TERMS_TITLE,
-    description: TERMS_DESCRIPTION,
-  },
-};
+  path: '/terms',
+});
 
 export default function TermsPage() {
   return (

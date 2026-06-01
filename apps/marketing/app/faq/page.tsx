@@ -1,32 +1,19 @@
-import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
+import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const FAQ_TITLE = 'FAQ · livediagram';
 const FAQ_DESCRIPTION =
   'Common questions about livediagram: accounts, collaboration, pricing, and more.';
 
-export const metadata: Metadata = {
+export const metadata = subpageMetadata({
   title: FAQ_TITLE,
   description: FAQ_DESCRIPTION,
-  alternates: { canonical: '/faq' },
-  openGraph: {
-    type: 'article',
-    url: '/faq',
-    siteName: 'livediagram',
-    title: FAQ_TITLE,
-    description: FAQ_DESCRIPTION,
-    locale: 'en_GB',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: FAQ_TITLE,
-    description: FAQ_DESCRIPTION,
-  },
-};
+  path: '/faq',
+});
 
 // Each entry's `a` is what renders on the page (a ReactNode so we
 // can mix prose with anchor links). `aText` is the plain-text form

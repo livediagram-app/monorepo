@@ -1,29 +1,15 @@
-import type { Metadata } from 'next';
-
 import { LegalPage } from '@/components/LegalPage';
+import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const PRIVACY_TITLE = 'Privacy Policy · livediagram';
 const PRIVACY_DESCRIPTION =
   'What the hosted livediagram service does, and does not do, with your data.';
 
-export const metadata: Metadata = {
+export const metadata = subpageMetadata({
   title: PRIVACY_TITLE,
   description: PRIVACY_DESCRIPTION,
-  alternates: { canonical: '/privacy' },
-  openGraph: {
-    type: 'article',
-    url: '/privacy',
-    siteName: 'livediagram',
-    title: PRIVACY_TITLE,
-    description: PRIVACY_DESCRIPTION,
-    locale: 'en_GB',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: PRIVACY_TITLE,
-    description: PRIVACY_DESCRIPTION,
-  },
-};
+  path: '/privacy',
+});
 
 export default function PrivacyPage() {
   return (
