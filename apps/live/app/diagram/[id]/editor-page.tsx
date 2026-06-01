@@ -105,12 +105,22 @@ const ImagePicker = dynamic(() => import('@/components/ImagePicker').then((m) =>
 const ShortcutsDialog = dynamic(() =>
   import('@/components/ShortcutsDialog').then((m) => m.ShortcutsDialog),
 );
+// Lazy-load SettingsDialog: opens only when the user clicks the
+// footer gear (spec/20). Same lazy pattern as the other modals.
+const SettingsDialog = dynamic(() =>
+  import('@/components/SettingsDialog').then((m) => m.SettingsDialog),
+);
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { autoAlignElements } from '@/lib/auto-align';
+import {
+  readDiagramSettings,
+  writeDiagramSettings,
+  type DiagramSettings,
+} from '@/lib/diagram-settings';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
@@ -324,6 +334,20 @@ export default function LivePage() {
   // below; the modal opens from a button in the TabBar.
   const { enabled: shortcutsEnabled, setEnabled: setShortcutsEnabled } = useShortcutsEnabled();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // Per-diagram editor preference flags (spec/20). Loaded lazily
+  // once diagramId is known; mutated through the SettingsDialog and
+  // persisted to localStorage on every change. `null` while we
+  // haven't loaded yet (no diagramId or pre-effect first render),
+  // so consumers default to the "all behaviours on" baseline.
+  const [diagramSettings, setDiagramSettings] = useState<DiagramSettings>({});
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef(diagramSettings);
+  settingsRef.current = diagramSettings;
+  // Mirror the auto-rebind flag into its own ref so the drag move
+  // handler can read it without re-attaching listeners. Defaults
+  // to true (auto-rebind on) so a fresh session keeps today's UX.
+  const autoRebindArrowsRef = useRef<boolean>(diagramSettings.autoRebindArrows !== false);
+  autoRebindArrowsRef.current = diagramSettings.autoRebindArrows !== false;
 
   // Per-element note popover state. Notes are simpler than
   // comments: single plain-text paragraph, no author, no thread.
@@ -367,6 +391,7 @@ export default function LivePage() {
     const el = document.querySelector(`[data-element-id="${linkPickerOpenForId}"]`);
     setLinkPickerAnchorEl(el instanceof HTMLElement ? el : null);
   }, [linkPickerOpenForId]);
+
   const openNote = (elementId: string) => {
     setNoteOpenId((cur) => (cur === elementId ? null : elementId));
   };
@@ -593,6 +618,15 @@ export default function LivePage() {
   // header — auto-clears after 6 seconds so the user isn't stuck
   // looking at it, and gets cleared on the next import attempt.
   const [importError, setImportError] = useState<string | null>(null);
+
+  // Load the per-diagram settings (spec/20) once a diagramId is
+  // known. Pulls from localStorage; missing or unparseable entries
+  // collapse to `{}` and every flag defaults to "on" downstream.
+  useEffect(() => {
+    if (!diagramId) return;
+    setDiagramSettings(readDiagramSettings(diagramId));
+  }, [diagramId]);
+
   useEffect(() => {
     if (!importError) return;
     const id = window.setTimeout(() => setImportError(null), 6000);
@@ -3436,6 +3470,7 @@ export default function LivePage() {
     tick,
     commit,
     markCheckpoint,
+    autoRebindArrowsRef,
   });
 
   // Global keyboard shortcuts (Escape cancels modes, Delete /
@@ -3801,6 +3836,7 @@ export default function LivePage() {
           readOnly={isReadOnly}
           participantsByTab={participantsByTab}
           onOpenShortcuts={() => setShortcutsOpen(true)}
+          onOpenSettings={!isReadOnly && diagramId ? () => setSettingsOpen(true) : undefined}
           onOpenSearch={() => setSearchOpen(true)}
         />
       )}
@@ -3829,6 +3865,16 @@ export default function LivePage() {
           enabled={shortcutsEnabled}
           onToggleEnabled={setShortcutsEnabled}
           onClose={() => setShortcutsOpen(false)}
+        />
+      ) : null}
+      {settingsOpen && diagramId ? (
+        <SettingsDialog
+          settings={diagramSettings}
+          onChange={(next) => {
+            setDiagramSettings(next);
+            writeDiagramSettings(diagramId, next);
+          }}
+          onClose={() => setSettingsOpen(false)}
         />
       ) : null}
       {commentThreadOpenId !== null

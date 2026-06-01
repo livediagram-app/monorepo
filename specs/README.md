@@ -28,6 +28,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 17  | [Tab ↔ diagram many-to-many](17-tab-diagram-many-to-many.md)         | Link table so a tab can live in multiple diagrams                  |
 | 18  | [Testing](18-testing.md)                                             | Vitest across the monorepo; shared config; co-located unit tests   |
 | 19  | [Images](19-images.md)                                               | Image element + per-owner R2-backed gallery with dedupe            |
+| 20  | [Diagram settings](20-diagram-settings.md)                           | Per-diagram editor preference flags (footer settings dialog)       |
 
 ## Workflow
 

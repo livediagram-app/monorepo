@@ -23,6 +23,10 @@ type TabBarProps = {
   // Optional callback that pops the keyboard-shortcuts modal. Lives
   // alongside the dark-mode toggle on the right edge of the bar.
   onOpenShortcuts?: () => void;
+  // Optional callback that pops the per-diagram settings dialog
+  // (spec/20). The gear sits between Shortcuts and the dark-mode
+  // toggle. Hidden in view-role sessions.
+  onOpenSettings?: () => void;
   // Optional callback that pops the global search panel. The
   // button sits to the LEFT of the dark-mode toggle.
   onOpenSearch?: () => void;
@@ -82,6 +86,7 @@ export function TabBar({
   readOnly = false,
   participantsByTab,
   onOpenShortcuts,
+  onOpenSettings,
   onOpenSearch,
 }: TabBarProps) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -236,6 +241,18 @@ export function TabBar({
           </button>
         </Tooltip>
       ) : null}
+      {onOpenSettings ? (
+        <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            aria-label="Diagram settings"
+            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          >
+            <GearIcon />
+          </button>
+        </Tooltip>
+      ) : null}
       <UiModeToggle />
     </div>
   );
@@ -274,6 +291,25 @@ function KeyboardIcon() {
     >
       <rect x="2" y="5.5" width="16" height="10" rx="1.5" />
       <path d="M5 9h.01M8 9h.01M11 9h.01M14 9h.01M5 12.5h10" />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="10" cy="10" r="2.5" />
+      <path d="M10 2.5v2.5M10 15v2.5M2.5 10h2.5M15 10h2.5M4.8 4.8l1.8 1.8M13.4 13.4l1.8 1.8M4.8 15.2l1.8-1.8M13.4 6.6l1.8-1.8" />
     </svg>
   );
 }

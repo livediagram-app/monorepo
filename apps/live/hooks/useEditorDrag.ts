@@ -92,6 +92,13 @@ export type EditorDragDeps = {
   tick: (mapper: (els: Element[]) => Element[]) => void;
   commit: (mapper: (els: Element[]) => Element[]) => void;
   markCheckpoint: () => void;
+  // Per-diagram setting (spec/20) controlling whether connected
+  // arrows re-pin to the most-natural face as a box is dragged.
+  // Defaults to true; setting `false` keeps anchors frozen at
+  // whatever the user originally chose. Tracked via ref so a
+  // mid-drag toggle takes effect on the next pointermove without
+  // re-attaching listeners.
+  autoRebindArrowsRef: React.RefObject<boolean>;
 };
 
 export type EditorDragApi = {
@@ -308,9 +315,13 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             });
             // Second pass: re-pin connected arrow anchors against
             // the moved positions so an arrow stays visually
-            // attached as the user drags. Pure helper, tested in
-            // packages/diagram.
-            return rebindArrowAnchorsAfterMove(moved, drag.startBounds);
+            // attached as the user drags. Skipped when the per-
+            // diagram setting (spec/20) is off, in which case
+            // anchors stay frozen at whatever the user originally
+            // chose. Read through a ref so a mid-drag flip lands
+            // on the next pointermove without re-attaching.
+            const autoRebind = depsRef.current.autoRebindArrowsRef.current ?? true;
+            return autoRebind ? rebindArrowAnchorsAfterMove(moved, drag.startBounds) : moved;
           });
         } else {
           // Resize branch handles BOTH single-element and group /
