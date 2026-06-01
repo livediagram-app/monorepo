@@ -12,6 +12,7 @@ export type {
   TabSummary as TabSummaryDTO,
   TabRecord as TabDTO,
   Folder as FolderDTO,
+  ImageSummary,
   ParticipantRecord as ParticipantDTO,
   ParticipantPresence,
   ShareRole,
@@ -23,13 +24,18 @@ export type {
 } from '@livediagram/api-schema';
 
 // Worker bindings injected by Cloudflare at runtime. Not part of the
-// wire format — purely a server-side capability handle.
+// wire format (purely a server-side capability handle).
 export type Env = {
   DB: D1Database;
   DIAGRAM_ROOM: DurableObjectNamespace;
-  // Clerk JWKS URL — when set, the request handler verifies Bearer
+  // Clerk JWKS URL: when set, the request handler verifies Bearer
   // tokens against it via `src/auth/clerk.ts` and prefers the
   // resulting userId over `X-Owner-Id`. When unset, the worker stays
   // in pure-guest mode (X-Owner-Id only). See spec/04 + spec/11.
   CLERK_JWKS_URL?: string;
+  // R2 bucket holding image-element bytes (spec/19). Optional so
+  // self-hosters who haven't provisioned R2 can still deploy the
+  // api worker: when unbound, the image endpoints all return 503
+  // and the live app hides the Image palette entry.
+  IMAGES?: R2Bucket;
 };

@@ -144,6 +144,11 @@ type CommandPaletteProps = {
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
+  // Spawn an image placeholder + open the picker. Optional so
+  // deployments without R2 (or view-role visitors) can omit it; the
+  // Image palette entry hides when the handler is missing. See
+  // spec/19.
+  onAddImage?: () => void;
   // Drops a horizontal arrow at the viewport centre with no pointers
   // on either end by default (i.e. a plain line). Users can flip the
   // arrowEnds afterwards via the Pointer accordion.
@@ -171,6 +176,7 @@ function OpenPalette({
   onAddShape,
   onAddText,
   onAddSticky,
+  onAddImage,
   onAddArrow,
   onSize,
 }: CommandPaletteProps) {
@@ -476,6 +482,35 @@ function OpenPalette({
               />
             </svg>
           </IconButton>
+          {onAddImage ? (
+            <IconButton
+              label="Add image"
+              description="Drop an image placeholder + pick / upload a file."
+              onClick={onAddImage}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+                <rect
+                  x="2.5"
+                  y="3"
+                  width="13"
+                  height="12"
+                  rx="1.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <circle cx="7" cy="7" r="1.25" fill="currentColor" />
+                <path
+                  d="M2.5 12 L6.5 8.5 L10 11 L13 8 L15.5 10.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </IconButton>
+          ) : null}
         </div>
       </Accordion>
       <Accordion

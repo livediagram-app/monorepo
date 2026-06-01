@@ -30,6 +30,20 @@ function stripUndefined<T extends object>(o: Partial<T>): Partial<T> {
 // text-styling switch + padding. Position and identity stay on the
 // target.
 export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement> {
+  // ImageElement is a boxed element (move / resize / lock / group)
+  // but carries no colour / text / padding fields, so the painter
+  // projection is just the size + aspect lock + opacity it shares
+  // with the others. Early-return keeps the field list explicit per
+  // variant instead of leaking ImageElement's narrower shape into
+  // the shape / text / sticky branch's typings.
+  if (source.type === 'image') {
+    return stripUndefined<BoxedElement>({
+      width: source.width,
+      height: source.height,
+      aspectLocked: source.aspectLocked,
+      opacity: source.opacity,
+    });
+  }
   return stripUndefined<BoxedElement>({
     width: source.width,
     height: source.height,

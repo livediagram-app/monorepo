@@ -31,7 +31,7 @@ export type ElementItem = {
   // Element.type literal so callers can show a per-type icon.
   // 'shape' / 'text' / 'sticky' / 'arrow' line up with the boxed +
   // arrow unions in packages/diagram.
-  type: 'shape' | 'text' | 'sticky' | 'arrow';
+  type: 'shape' | 'text' | 'sticky' | 'image' | 'arrow';
 };
 
 export type SearchResultItem = DiagramItem | FolderItem | TabItem | ElementItem;

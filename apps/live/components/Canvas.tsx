@@ -116,6 +116,10 @@ type CanvasProps = {
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
   onAddSticky: () => void;
+  // Spawn an empty image placeholder + open the picker. Optional so
+  // view-role visitors / no-R2 deployments can simply omit it; the
+  // Palette's Image entry hides when missing (spec/19).
+  onAddImage?: () => void;
   onAddArrow: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -229,6 +233,16 @@ type CanvasProps = {
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (elementId: string) => void;
   onOpenNote?: (elementId: string) => void;
+  // Per-render context for image elements: identity + auth bits the
+  // ImageElementView needs to fetch bitmap bytes. Optional so the
+  // welcome / new-diagram surface (where Canvas mounts before
+  // identity / share-code are settled) can omit it.
+  imageContext?: {
+    ownerId: string;
+    diagramId: string;
+    shareCode: string | null;
+    onOpenPicker?: (elementId: string) => void;
+  };
   // Touch-friendly fallback for right-click: a SelectionPopover
   // ellipsis button opens the same context menu under the cursor.
   onOpenElementContextMenu?: (elementId: string, screenX: number, screenY: number) => void;
@@ -325,6 +339,7 @@ export function Canvas(props: CanvasProps) {
     onAddShape,
     onAddText,
     onAddSticky,
+    onAddImage,
     onAddArrow,
     onUndo,
     onRedo,
@@ -413,6 +428,7 @@ export function Canvas(props: CanvasProps) {
     onFollowLink,
     onOpenComments,
     onOpenNote,
+    imageContext,
     onOpenElementContextMenu,
     showTemplatePicker,
     hydrated,
@@ -753,10 +769,19 @@ export function Canvas(props: CanvasProps) {
         onSendToBack,
         onSetTextSize,
         onSetTextAlign,
-        textBold: isBoxed(selected) ? (selected.textBold ?? false) : null,
-        textItalic: isBoxed(selected) ? (selected.textItalic ?? false) : null,
-        textUnderline: isBoxed(selected) ? (selected.textUnderline ?? false) : null,
-        textStrikethrough: isBoxed(selected) ? (selected.textStrikethrough ?? false) : null,
+        // ImageElement is boxed but carries no inline-text fields,
+        // so the text-styling switches surface as null for images
+        // (the Editor panel hides the matching accordion rows).
+        textBold:
+          isBoxed(selected) && selected.type !== 'image' ? (selected.textBold ?? false) : null,
+        textItalic:
+          isBoxed(selected) && selected.type !== 'image' ? (selected.textItalic ?? false) : null,
+        textUnderline:
+          isBoxed(selected) && selected.type !== 'image' ? (selected.textUnderline ?? false) : null,
+        textStrikethrough:
+          isBoxed(selected) && selected.type !== 'image'
+            ? (selected.textStrikethrough ?? false)
+            : null,
         onToggleTextBold,
         onToggleTextItalic,
         onToggleTextUnderline,
@@ -1018,6 +1043,7 @@ export function Canvas(props: CanvasProps) {
               onFollowLink={onFollowLink}
               onOpenComments={() => onOpenComments(element.id)}
               onOpenNote={onOpenNote ? () => onOpenNote(element.id) : undefined}
+              imageContext={imageContext}
               onContextSelect={(sx, sy) => {
                 onSelect(element.id);
                 onElementContextMenu?.(element.id, sx, sy);
@@ -1319,6 +1345,7 @@ export function Canvas(props: CanvasProps) {
           onAddShape={onAddShape}
           onAddText={onAddText}
           onAddSticky={onAddSticky}
+          onAddImage={onAddImage}
           onAddArrow={onAddArrow}
           onSize={(size) => setPaletteHeight(size.height)}
         />

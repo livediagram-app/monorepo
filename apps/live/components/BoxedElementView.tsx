@@ -28,6 +28,7 @@ import {
   ScalingLabel,
   SingleLineLabelEditor,
 } from './element-parts';
+import { ImageElementView } from './ImageElementView';
 import { Tooltip } from './Tooltip';
 
 type BoxedElementViewProps = {
@@ -58,6 +59,17 @@ type BoxedElementViewProps = {
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: () => void;
+  // Image element context: the editor passes these so the inner
+  // ImageElementView can fetch the bitmap with the right
+  // owner / share / diagram identity (the bytes are auth-gated by
+  // the API, see spec/19). View-role visitors are still allowed to
+  // see images; they just can't upload new ones via the picker.
+  imageContext?: {
+    ownerId: string;
+    diagramId: string;
+    shareCode: string | null;
+    onOpenPicker?: (elementId: string) => void;
+  };
   // Open the per-element note popover. Optional so read-only viewers
   // (who shouldn't see a clickable badge) can omit it. When omitted
   // the note badge does not render.
@@ -99,6 +111,7 @@ export function BoxedElementView({
   onFollowLink,
   onOpenComments,
   onOpenNote,
+  imageContext,
   onContextSelect,
   remoteSelectors,
   badgeColor,
@@ -139,8 +152,17 @@ export function BoxedElementView({
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isEditing) return;
-    // Don't gate on isPaintMode here — the page-level beginEdit decides whether
-    // edit can start (it rejects during format painter, and exits group mode).
+    // Image elements double-click to open the image picker (swap /
+    // upload). They have no inline label to edit, so the editor's
+    // beginEdit branch doesn't apply. A single click stays the
+    // selection / drag gesture so the user can move + resize the
+    // placeholder freely without the picker popping up.
+    if (element.type === 'image' && imageContext?.onOpenPicker) {
+      imageContext.onOpenPicker(element.id);
+      return;
+    }
+    // Don't gate on isPaintMode here (the page-level beginEdit decides whether
+    // edit can start; it rejects during format painter, and exits group mode).
     onBeginEdit();
   };
 
@@ -220,16 +242,28 @@ export function BoxedElementView({
         />
       ) : null}
 
-      {renderLabel(
-        element,
-        label,
-        textSize,
-        alignX,
-        alignY,
-        PADDING_PX[element.padding ?? defaultPadding(element)],
-        isEditing,
-        onCommitLabel,
-        onCancelEdit,
+      {element.type === 'image' && imageContext ? (
+        <ImageElementView
+          element={element}
+          ownerId={imageContext.ownerId}
+          diagramId={imageContext.diagramId}
+          shareCode={imageContext.shareCode}
+          onOpenPicker={
+            imageContext.onOpenPicker ? () => imageContext.onOpenPicker!(element.id) : undefined
+          }
+        />
+      ) : (
+        renderLabel(
+          element,
+          label,
+          textSize,
+          alignX,
+          alignY,
+          PADDING_PX[element.padding ?? defaultPadding(element)],
+          isEditing,
+          onCommitLabel,
+          onCancelEdit,
+        )
       )}
 
       {isLocked ? <LockBadge zoom={zoom} /> : null}
@@ -838,6 +872,22 @@ function describeVariant(
           backgroundColor: element.fillColor ?? defaultFillColor(element),
           borderColor: remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element),
           borderWidth: remoteBorderColor ? remoteBorderWidth : undefined,
+        },
+      };
+    }
+    case 'image': {
+      // The image element renders its bitmap (or upload placeholder)
+      // via the dedicated ImageElementView, which slots in as the
+      // children of this wrapper. The wrapper here just contributes
+      // the selection ring + remote-selector border, with a
+      // transparent background so the bitmap shows through.
+      const ring = `${singleRing('ring-2 ring-brand-300')} ${multiRing}`.trim();
+      return {
+        className: `overflow-hidden rounded ${ring}`,
+        style: {
+          borderColor: remoteBorderColor ?? undefined,
+          borderWidth: remoteBorderColor ? remoteBorderWidth : undefined,
+          borderStyle: remoteBorderColor ? 'solid' : undefined,
         },
       };
     }

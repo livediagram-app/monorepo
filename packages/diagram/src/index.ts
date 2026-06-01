@@ -30,6 +30,8 @@ export function defaultPadding(element: BoxedElement): Padding {
       return 'none';
     case 'sticky':
       return 'md';
+    case 'image':
+      return 'none';
   }
 }
 
@@ -123,6 +125,8 @@ export function defaultTextColor(element: BoxedElement): string {
       return '#451a03'; // amber-950-ish
     case 'text':
       return '#1e293b'; // slate-800
+    case 'image':
+      return '#1e293b'; // slate-800 (only used for alt-text rendering)
   }
 }
 
@@ -142,6 +146,8 @@ export function defaultFillColor(element: BoxedElement): string {
       return '#fef3c7'; // amber-100
     case 'text':
       return 'transparent';
+    case 'image':
+      return 'transparent';
   }
 }
 
@@ -152,6 +158,8 @@ export function defaultStrokeColor(element: BoxedElement): string {
     case 'sticky':
       return '#fde68a'; // amber-200
     case 'text':
+      return 'transparent';
+    case 'image':
       return 'transparent';
   }
 }
@@ -357,6 +365,69 @@ export type StickyElement = {
   // editor-page.tsx) so persisted JSON stays clean.
   note?: string;
   padding?: Padding;
+};
+
+// --- Images ---------------------------------------------------------------
+
+// See specs/19-images.md. A boxed element that renders user-uploaded
+// image bytes inside its bounding box. The bytes themselves live in
+// R2 (server-side); the element carries only the opaque id the API
+// resolves to a `GET /api/images/<id>` URL, so the diagram payload
+// stays small + a future "delete from gallery" can break the
+// reference without rewriting every diagram.
+export type ImageElement = {
+  id: ElementId;
+  type: 'image';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  // R2 object key for the uploaded bytes. Null when the user has
+  // dropped a placeholder but not yet picked an image: the canvas
+  // renders the dashed empty-state thumbnail in that case.
+  imageId: string | null;
+  // Captured at upload from the file's natural dimensions. Drives
+  // the aspect-lock default + the "Reset to natural size" context-
+  // menu action; the element's own width/height drive layout.
+  naturalWidth?: number;
+  naturalHeight?: number;
+  // Optional alt text (accessibility + future export-to-markdown).
+  // Aliases as the element's `label` so the surrounding "boxed
+  // element has a label" code paths (change log, Markdown export,
+  // search index) all see the alt text without needing an
+  // ImageElement-specific branch.
+  alt?: string;
+  // Shared boxed-element fields. ImageElement doesn't render text
+  // or borders inside the image (the bitmap fills the box), but the
+  // shape / sticky / text variants do, and a wide swath of code
+  // (change log, format painter, Markdown / canvas export, Editor
+  // panel state plumbing in Canvas.tsx) reads these fields off
+  // every BoxedElement. Declaring them here as always-undefined
+  // optionals keeps the TS union ergonomic without forcing every
+  // call site to gate on `el.type !== 'image'`. Setting them on an
+  // image is a no-op visually (the renderer ignores them).
+  label?: string;
+  textSize?: TextSize;
+  textAlignX?: TextAlignX;
+  textAlignY?: TextAlignY;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textStrikethrough?: boolean;
+  textColor?: string;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: BorderStroke;
+  strokeStyle?: BorderStyle;
+  borderRadius?: BorderRadius;
+  padding?: Padding;
+  locked?: boolean;
+  groupId?: ElementId;
+  aspectLocked?: boolean;
+  opacity?: number;
+  link?: ElementLink;
+  commentThread?: CommentThread;
+  note?: string;
 };
 
 // --- Arrows ----------------------------------------------------------------
@@ -608,7 +679,7 @@ function angledHorizontalFirst(
 
 // --- Element union ---------------------------------------------------------
 
-export type BoxedElement = ShapeElement | TextElement | StickyElement;
+export type BoxedElement = ShapeElement | TextElement | StickyElement | ImageElement;
 export type Element = BoxedElement | ArrowElement;
 
 export type Tab = {
@@ -689,7 +760,12 @@ export function activeCommentCount(thread: CommentThread | undefined): number {
 // --- Type guards -----------------------------------------------------------
 
 export function isBoxed(element: Element): element is BoxedElement {
-  return element.type === 'shape' || element.type === 'text' || element.type === 'sticky';
+  return (
+    element.type === 'shape' ||
+    element.type === 'text' ||
+    element.type === 'sticky' ||
+    element.type === 'image'
+  );
 }
 
 // --- Factories -------------------------------------------------------------
@@ -777,6 +853,25 @@ export function createSticky(x: number, y: number): StickyElement {
     width: 200,
     height: 200,
     textSize: 'md',
+  };
+}
+
+// Spawns an image element in the empty-state (placeholder) shape. The
+// imageId stays null until the user picks an image from the picker;
+// the renderer shows the upload affordance in the meantime.
+export function createImage(x: number, y: number): ImageElement {
+  return {
+    id: crypto.randomUUID(),
+    type: 'image',
+    x,
+    y,
+    width: 200,
+    height: 150,
+    imageId: null,
+    // Aspect-lock default: once a real image lands, the lock keeps
+    // its width:height ratio. Holding Shift while resizing the
+    // corner handle breaks it via the existing aspect-lock toggle.
+    aspectLocked: true,
   };
 }
 

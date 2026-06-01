@@ -182,6 +182,32 @@ function renderTabToCanvas(tab: Tab, opts: { scale?: number } = {}): HTMLCanvasE
 }
 
 function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
+  // Image elements can't draw their bitmap into a static SVG / PNG
+  // export without an async pre-load step; v1 of the export pipeline
+  // is pure-sync so we render a simple placeholder rectangle marking
+  // the image's bounds instead. The user still sees the image's
+  // position + size, with a label naming the alt text when set.
+  if (el.type === 'image') {
+    ctx.save();
+    ctx.globalAlpha = el.opacity ?? 1;
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#94a3b8'; // slate-400
+    ctx.fillStyle = '#f1f5f9'; // slate-100
+    ctx.setLineDash([4, 4]);
+    const r = 6;
+    roundedRect(ctx, el.x, el.y, el.width, el.height, r);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#64748b'; // slate-500
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = el.alt ?? 'Image';
+    ctx.fillText(label, el.x + el.width / 2, el.y + el.height / 2);
+    ctx.restore();
+    return;
+  }
   const fill = el.fillColor ?? (el.type === 'sticky' ? '#fef3c7' : '#ffffff');
   const stroke = el.strokeColor ?? '#0f172a';
   const opacity = el.opacity ?? 1;

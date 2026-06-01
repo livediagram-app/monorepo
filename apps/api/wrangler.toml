@@ -13,6 +13,18 @@ database_name = "livediagram"
 database_id = "79642003-5866-4c5a-9011-7fbeb0de6b58"
 migrations_dir = "migrations"
 
+# R2 bucket holding the bytes of every uploaded image element
+# (spec/19). The binding name `IMAGES` is what `src/index.ts` reads
+# via the Env type. The bucket must be created out of band via
+# `wrangler r2 bucket create livediagram-images` (production) or
+# the dashboard. Leaving the binding absent locally puts the api
+# in "no uploads" mode: the image endpoints return 503 and the
+# editor's palette hides the Image entry. See spec/19 + spec/03
+# self-host promise.
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "livediagram-images"
+
 # Durable Object for per-diagram realtime (presence + broadcast). One
 # instance per diagram id; clients connect via WebSocket through the
 # `/api/diagrams/<id>/ws` endpoint.

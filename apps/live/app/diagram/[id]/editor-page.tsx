@@ -5,6 +5,7 @@ import {
   ARROW_THICKNESS_PX,
   bringManyToFront,
   createPinnedArrow,
+  createImage,
   createShape,
   createSticky,
   createText,
@@ -89,6 +90,12 @@ import { NotePopover } from '@/components/NotePopover';
 // (animate-fly-up-in) so the small gap reads as the entrance, not
 // a stall.
 const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) => m.SearchPanel));
+// Lazy-load ImagePicker: heavy modal that's only mounted while the
+// user is actively choosing an image. Same lazy pattern as the other
+// modals (ShareDialog, ExportTabDialog, SearchPanel) so the editor's
+// initial chunk doesn't ship the picker's gallery grid + upload
+// drop-zone until the moment they're needed.
+const ImagePicker = dynamic(() => import('@/components/ImagePicker').then((m) => m.ImagePicker));
 // Lazy-load ShortcutsDialog for the same reason as ExportTabDialog
 // and ShareDialog: it mounts only when the user clicks the
 // keyboard-shortcut button in the footer, and most editor sessions
@@ -343,6 +350,14 @@ export default function LivePage() {
   // [data-element-id] DOM node so it stays attached when the canvas
   // pans / zooms, same trick as NotePopover.
   const [linkPickerOpenForId, setLinkPickerOpenForId] = useState<string | null>(null);
+
+  // Image picker state. `null` = closed; an object = open for that
+  // element id (existing image placeholder being filled in) OR
+  // `forElementId: null` when the "Add image" gesture is fresh and
+  // the picker will place a new element on commit. See spec/19.
+  const [imagePickerOpenFor, setImagePickerOpenFor] = useState<{
+    forElementId: string | null;
+  } | null>(null);
   const [linkPickerAnchorEl, setLinkPickerAnchorEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (linkPickerOpenForId === null) {
@@ -705,7 +720,20 @@ export default function LivePage() {
       // are flagged `!isOwner` so the Share button hides.
       if (shareCodeParam) {
         const resolution = await apiLoadShared(shareCodeParam).catch(() => null);
-        if (resolution) {
+        if (!resolution) {
+          // The share code didn't resolve. Either it never existed,
+          // the owner revoked it, or the diagram was deleted while
+          // the visitor still had the link. Surface a NotFound page
+          // so the visitor sees an explicit error instead of a
+          // silent blank canvas (which used to read as "the
+          // diagram loaded but is empty").
+          setDiagramNotFound(true);
+          setHydrated(true);
+          setLoadingDiagram(false);
+          setNameConfirmed(hasConfirmedName());
+          return;
+        }
+        {
           const { diagram: fetched, role } = resolution;
           const codeForVisitor = fetched.ownerId === self.id ? null : shareCodeParam;
           // Lazy per-tab fetch (spec/13): the active tab (first in the
@@ -2590,6 +2618,50 @@ export default function LivePage() {
   const addShape = (kind: ShapeKind) => addBoxed((x, y) => createShape(kind, x, y));
   const addText = () => addBoxed((x, y) => createText(x, y));
   const addSticky = () => addBoxed((x, y) => createSticky(x, y));
+  // Drop an empty image placeholder + immediately open the picker so
+  // the user can fill it in. The picker's onSelect updates this same
+  // element's imageId (the picker remembers it via
+  // `imagePickerOpenFor.forElementId`).
+  const addImage = () => {
+    if (editsBlocked) return;
+    const centre = getViewportCenter();
+    const placeholder = createImage(centre.x - 100, centre.y - 75);
+    commit((els) => [...els, placeholder]);
+    setSelectedId(placeholder.id);
+    setImagePickerOpenFor({ forElementId: placeholder.id });
+  };
+  // Open the picker for an existing image element (the user clicked
+  // its empty placeholder or "Change image" in the context menu).
+  const openImagePickerFor = (elementId: string) => {
+    if (editsBlocked) return;
+    setImagePickerOpenFor({ forElementId: elementId });
+  };
+  // Apply the picker's selection: set imageId + natural dimensions on
+  // the target element. When the picker was opened with a fresh
+  // forElementId (from addImage), the placeholder created by
+  // addImage is the target. The element's width/height stay as the
+  // user originally placed them; naturalWidth/Height drive the
+  // aspect-lock default + the "Reset to natural size" context-menu
+  // action.
+  const applyImageToElement = (
+    elementId: string,
+    image: { id: string; width: number; height: number; originalName?: string },
+  ) => {
+    commit((els) =>
+      els.map((el) =>
+        el.id === elementId && isBoxed(el) && el.type === 'image'
+          ? {
+              ...el,
+              imageId: image.id,
+              naturalWidth: image.width,
+              naturalHeight: image.height,
+              alt: el.alt ?? image.originalName,
+            }
+          : el,
+      ),
+    );
+    setImagePickerOpenFor(null);
+  };
 
   // Drop a plain connector at the viewport centre. Defaults to no
   // pointers ('none') so the palette entry behaves like a "Line" tool;
@@ -3534,6 +3606,7 @@ export default function LivePage() {
         onAddShape={addShape}
         onAddText={addText}
         onAddSticky={addSticky}
+        onAddImage={addImage}
         onAddArrow={addArrow}
         onUndo={undo}
         onRedo={redo}
@@ -3643,6 +3716,16 @@ export default function LivePage() {
         onFollowLink={followLink}
         onOpenComments={openComments}
         onOpenNote={openNote}
+        imageContext={
+          diagramId
+            ? {
+                ownerId: selfParticipant.id,
+                diagramId,
+                shareCode: sessionShareCode,
+                onOpenPicker: isReadOnly ? undefined : openImagePickerFor,
+              }
+            : undefined
+        }
         showTemplatePicker={
           // Wait for the active tab's content to land before
           // deciding whether to show the picker. Otherwise the
@@ -3948,6 +4031,21 @@ export default function LivePage() {
             setLinkPickerOpenForId(null);
           }}
           onClose={() => setLinkPickerOpenForId(null)}
+        />
+      ) : null}
+      {imagePickerOpenFor && diagramId && !isReadOnly ? (
+        <ImagePicker
+          ownerId={selfParticipant.id}
+          diagramId={diagramId}
+          forElementId={imagePickerOpenFor.forElementId}
+          onSelect={(image) => {
+            if (imagePickerOpenFor.forElementId) {
+              applyImageToElement(imagePickerOpenFor.forElementId, image);
+            } else {
+              setImagePickerOpenFor(null);
+            }
+          }}
+          onClose={() => setImagePickerOpenFor(null)}
         />
       ) : null}
     </div>

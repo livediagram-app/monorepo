@@ -390,8 +390,12 @@ export function deriveNewBoxedColours(
     patternColor?: string | null;
     theme?: string;
   },
-): Partial<BoxedElement> {
-  const colours: Partial<BoxedElement> = {};
+): { fillColor?: string; strokeColor?: string; textColor?: string } {
+  // Narrow return: only the three fields common to shape / sticky /
+  // text, never anything from ImageElement (which has no colour
+  // fields, see spec/19). Callers spread the result onto any boxed
+  // element; the missing-from-Image fields are no-ops at that point.
+  const colours: { fillColor?: string; strokeColor?: string; textColor?: string } = {};
   const bg = tab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
   const patternColor = tab.patternColor ?? DEFAULT_PATTERN_COLOR;
   if (base.type === 'shape') {

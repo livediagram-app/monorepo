@@ -6,17 +6,22 @@ import {
   deleteChangeLogForTab,
   deleteDiagram,
   deleteFolder,
+  deleteImage,
   deleteShareLink,
   deleteTabRow,
+  diagramReferencesImage,
+  findImageBySha,
   folderMoveWouldCycle,
   generateShareCode,
   getDiagram,
   getDiagramByShareCode,
   getFolder,
+  getImage,
   getParticipant,
   getShareLink,
   getTab,
   insertChangeLogEntry,
+  insertImage,
   listChangeLog,
   copyDiagram,
   deleteAccount,
@@ -24,6 +29,7 @@ import {
   dropSharedAccess,
   listDiagramsByOwner,
   listFoldersByOwner,
+  listImagesByOwner,
   listSharedWith,
   migrateOwnerId,
   listShareLinks,
@@ -92,6 +98,84 @@ function forbidden(): Response {
 // which now misdirects signed-in users debugging an auth failure to
 // look at the wrong header. The new message names both legitimate
 // identity sources so the caller can tell which one they're missing.
+// --- Image upload helpers (spec/19) --------------------------------------
+
+// Accepted content types for image uploads. Drives the picker's error
+// copy via the 415 response body too, so a new format only has to be
+// added in one place. SVG is deliberately absent: serving user-
+// uploaded SVG would be an XSS / SSRF surface (inline <script>,
+// foreignObject, external xlink:href refs).
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
+type AcceptedImageType = (typeof ACCEPTED_IMAGE_TYPES)[number];
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB, see spec/19.
+
+// Magic-number sniffing: a malicious client could send Content-Type:
+// image/png with an SVG body, slipping the XSS surface in through
+// the front door. Match the first bytes against the format's signature
+// so the content-type header is independently verified.
+function sniffImageType(buf: Uint8Array): AcceptedImageType | null {
+  if (buf.length < 12) return null;
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47 &&
+    buf[4] === 0x0d &&
+    buf[5] === 0x0a &&
+    buf[6] === 0x1a &&
+    buf[7] === 0x0a
+  ) {
+    return 'image/png';
+  }
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  // GIF: "GIF87a" or "GIF89a"
+  if (
+    buf[0] === 0x47 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x38 &&
+    (buf[4] === 0x37 || buf[4] === 0x39) &&
+    buf[5] === 0x61
+  ) {
+    return 'image/gif';
+  }
+  // WebP: "RIFF" .... "WEBP"
+  if (
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x45 &&
+    buf[10] === 0x42 &&
+    buf[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
+  return null;
+}
+
+function bytesToHex(buf: Uint8Array): string {
+  let out = '';
+  for (let i = 0; i < buf.length; i++) {
+    const v = buf[i]!;
+    out += (v < 16 ? '0' : '') + v.toString(16);
+  }
+  return out;
+}
+
+async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return bytesToHex(new Uint8Array(digest));
+}
+
+function imagesUnavailable(): Response {
+  return json({ error: 'images-unavailable' }, { status: 503 });
+}
+
 function missingAuth(): Response {
   return badRequest('authentication required: send a valid Clerk Bearer token or X-Owner-Id');
 }
@@ -208,6 +292,171 @@ export default {
             return json({ ok: true });
           }
         }
+      }
+
+      // ---------- /api/images (spec/19) ----------
+      // Per-owner gallery + dedup'd upload + auth-gated byte read.
+      // When the R2 binding is absent (self-host without R2), every
+      // endpoint returns 503 so the live app can hide the feature
+      // without falling through to a generic 500.
+      if (segments[1] === 'images') {
+        if (!env.IMAGES) return imagesUnavailable();
+
+        // GET /api/images: gallery list. Owner only.
+        if (segments.length === 2 && request.method === 'GET') {
+          const owner = resolveOwner();
+          if (!owner) return missingAuth();
+          const images = await listImagesByOwner(env, owner);
+          return json({ images });
+        }
+
+        // POST /api/images: upload + dedupe. Body: raw image bytes.
+        // Owner only. Server sniffs magic bytes against the
+        // declared Content-Type so a forged header can't slip an
+        // SVG / arbitrary file through. SHA-256 + dimensions come
+        // in via headers; the server independently verifies the
+        // SHA before trusting it (the dedupe key has to be the
+        // body's real hash, not whatever the client claimed).
+        if (segments.length === 2 && request.method === 'POST') {
+          const owner = resolveOwner();
+          if (!owner) return missingAuth();
+          const declaredType = (request.headers.get('Content-Type') ?? '').toLowerCase();
+          if (!ACCEPTED_IMAGE_TYPES.includes(declaredType as AcceptedImageType)) {
+            return json(
+              {
+                error: 'unsupported-type',
+                acceptedTypes: ACCEPTED_IMAGE_TYPES,
+              },
+              { status: 415 },
+            );
+          }
+          const declaredLen = Number(request.headers.get('Content-Length') ?? '0');
+          if (!Number.isFinite(declaredLen) || declaredLen <= 0) {
+            return badRequest('missing or invalid Content-Length');
+          }
+          if (declaredLen > MAX_IMAGE_BYTES) {
+            return json({ error: 'file-too-large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
+          }
+          const width = Number(request.headers.get('X-Image-Width') ?? '0');
+          const height = Number(request.headers.get('X-Image-Height') ?? '0');
+          if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+            return badRequest('missing or invalid X-Image-Width / X-Image-Height');
+          }
+          const originalName = request.headers.get('X-Image-Original-Name');
+          const bytes = await request.arrayBuffer();
+          if (bytes.byteLength > MAX_IMAGE_BYTES) {
+            // Defence-in-depth: Content-Length is client-supplied
+            // and could lie. Re-check after the buffer has fully
+            // landed.
+            return json({ error: 'file-too-large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
+          }
+          const sniffed = sniffImageType(new Uint8Array(bytes.slice(0, 16)));
+          if (!sniffed || sniffed !== declaredType) {
+            return json(
+              {
+                error: 'unsupported-type',
+                acceptedTypes: ACCEPTED_IMAGE_TYPES,
+              },
+              { status: 415 },
+            );
+          }
+          const sha = await sha256Hex(bytes);
+          // Dedupe: same owner + same bytes returns the existing
+          // row without an R2 write.
+          const existing = await findImageBySha(env, owner, sha);
+          if (existing) {
+            return json({ image: existing, deduped: true });
+          }
+          const id = crypto.randomUUID();
+          await env.IMAGES.put(id, bytes, {
+            httpMetadata: { contentType: sniffed },
+            customMetadata: {
+              ownerId: owner,
+              originalName: originalName ?? '',
+            },
+          });
+          const image = await insertImage(env, {
+            id,
+            ownerId: owner,
+            contentType: sniffed,
+            byteSize: bytes.byteLength,
+            width,
+            height,
+            sha256: sha,
+            originalName,
+          });
+          return json({ image, deduped: false });
+        }
+
+        // GET /api/images/:id: byte read. Auth: owner of the
+        // image, OR caller has read access to the diagram named
+        // by `?d=<diagramId>` (owner or X-Share-Code) AND that
+        // diagram references this image.
+        if (segments.length === 3 && request.method === 'GET') {
+          const imageId = segments[2]!;
+          const meta = await getImage(env, imageId);
+          if (!meta) return notFound();
+          const callerOwner = resolveOwner();
+          let allowed = callerOwner === meta.ownerId;
+          if (!allowed) {
+            const d = url.searchParams.get('d');
+            if (d) {
+              // Reader must be able to read diagram `d` (owner OR
+              // a valid share code that resolves to it), AND that
+              // diagram must actually use this image. The image's
+              // own owner doesn't have to be the share-code's
+              // owner: if a diagram references an image owned by
+              // a different owner (only happens via Copy-Diagram
+              // in v1), the share recipient can still load it.
+              const diagram = await getDiagram(env, d);
+              if (diagram) {
+                let diagramReadable = callerOwner === diagram.ownerId;
+                if (!diagramReadable) {
+                  const shareCode = request.headers.get('X-Share-Code');
+                  if (shareCode) {
+                    const link = await getShareLink(env, shareCode);
+                    diagramReadable = !!link && link.diagramId === d;
+                  }
+                }
+                if (diagramReadable) {
+                  allowed = await diagramReferencesImage(env, d, imageId);
+                }
+              }
+            }
+          }
+          if (!allowed) return notFound();
+          const object = await env.IMAGES.get(imageId);
+          if (!object) return notFound();
+          const headers = new Headers(CORS_HEADERS);
+          headers.set(
+            'Content-Type',
+            object.httpMetadata?.contentType ?? 'application/octet-stream',
+          );
+          // Private cache: each authorised viewer caches their own
+          // copy on disk. No shared-CDN leak. The id is content-
+          // addressed so cached bytes stay valid for the lifetime
+          // of the row.
+          headers.set('Cache-Control', 'private, max-age=86400');
+          return new Response(object.body, { headers });
+        }
+
+        // DELETE /api/images/:id: gallery delete. Owner only.
+        // Removes the R2 object + the D1 row. Existing references
+        // on diagrams stay; the renderer falls back to a broken-
+        // image placeholder.
+        if (segments.length === 3 && request.method === 'DELETE') {
+          const imageId = segments[2]!;
+          const owner = resolveOwner();
+          if (!owner) return missingAuth();
+          const meta = await getImage(env, imageId);
+          if (!meta) return json({ ok: true });
+          if (meta.ownerId !== owner) return forbidden();
+          await env.IMAGES.delete(imageId);
+          await deleteImage(env, imageId);
+          return json({ ok: true });
+        }
+
+        return notFound();
       }
 
       // ---------- /api/diagrams ----------
