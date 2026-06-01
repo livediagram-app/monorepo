@@ -66,6 +66,7 @@ import { ShareDialog } from '@/components/ShareDialog';
 import { TabBar } from '@/components/TabBar';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
+import { trimLaserBuffer } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import {
@@ -134,22 +135,6 @@ function createTab(name: string): Tab {
 // that. Imported from the hook directly so the two stacks can't
 // drift (was a literal mirror of `3` here, which is the kind of
 // duplication a future HISTORY_LIMIT bump would silently break).
-
-// Bound a laser-trail buffer in both dimensions: cap at 60 points and
-// drop any sample older than LASER_BUFFER_TTL_MS. Called on every
-// append (local broadcast + remote receive), so even a flood from a
-// misbehaving peer can't grow the buffer without bound. The overlay
-// has its own (shorter) fade window — LIFETIME_MS — so points
-// between LIFETIME_MS and TTL_MS are buffered but render at 0
-// opacity, protecting against frame jitter at the fade boundary.
-const LASER_BUFFER_TTL_MS = 1500;
-function trimLaserBuffer(
-  points: { x: number; y: number; t: number }[],
-): { x: number; y: number; t: number }[] {
-  const cutoff = performance.now() - LASER_BUFFER_TTL_MS;
-  const fresh = points.filter((p) => p.t >= cutoff);
-  return fresh.length > 60 ? fresh.slice(fresh.length - 60) : fresh;
-}
 
 export default function LivePage() {
   const initialTabs: Tab[] = [createTab('Tab 1')];
