@@ -425,21 +425,22 @@ export default function ExplorerPage() {
     newSubfolder: () => void createFolder(f.id),
     move: () => openMovePickerForFolder(f.id, anchor),
     delete: () => {
-      // Mirror the server's ON DELETE SET NULL locally: any diagram
-      // sitting in this folder (or any descendant of it) returns to
-      // Unsorted. The useFolders hook already re-parents descendant
-      // folders, but it doesn't touch diagrams — so without this
-      // sweep, locally-cached diagrams hold a folderId pointing at a
-      // row that no longer exists until the next list refresh.
-      const dropped = descendantSet(f.id);
-      setDiagrams((prev) =>
-        prev.map((d) => (d.folderId && dropped.has(d.folderId) ? { ...d, folderId: null } : d)),
-      );
+      // Mirror what the server actually does (apps/api/src/db.ts
+      // deleteFolder): only direct children get re-parented or
+      // null-folder-ed. Subfolders of f become root-level (handled
+      // inside useFolders.deleteFolder); diagrams directly inside
+      // f fall to Unsorted; diagrams inside subfolders stay where
+      // they are (their parent folder still exists, it just moved
+      // to root). The earlier code descended the whole subtree
+      // and over-collapsed grandchildren into Unsorted, diverging
+      // from server state until the next list refresh.
+      setDiagrams((prev) => prev.map((d) => (d.folderId === f.id ? { ...d, folderId: null } : d)));
       deleteFolder(f.id);
-      // If the currently-selected node is the one being deleted (or
-      // a descendant of it), promote selection back to "All diagrams"
-      // so the right pane doesn't keep pointing at a phantom folder.
-      if (selected.kind === 'folder' && dropped.has(selected.id)) {
+      // Only bounce selection if the deleted folder itself was
+      // focused. Descendants survive the delete (they're now root
+      // folders), so a B-was-selected, delete-A flow should keep
+      // B selected.
+      if (selected.kind === 'folder' && selected.id === f.id) {
         setSelected({ kind: 'all' });
       }
     },
