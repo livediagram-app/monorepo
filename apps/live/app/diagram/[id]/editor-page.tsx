@@ -2618,17 +2618,16 @@ export default function LivePage() {
   const addShape = (kind: ShapeKind) => addBoxed((x, y) => createShape(kind, x, y));
   const addText = () => addBoxed((x, y) => createText(x, y));
   const addSticky = () => addBoxed((x, y) => createSticky(x, y));
-  // Drop an empty image placeholder + immediately open the picker so
-  // the user can fill it in. The picker's onSelect updates this same
-  // element's imageId (the picker remembers it via
-  // `imagePickerOpenFor.forElementId`).
+  // Drop an empty image placeholder at the viewport centre. The
+  // picker only opens via double-click on the placeholder (or
+  // "Change image" in the context menu), so the user can position
+  // and resize the empty box without the modal popping up first.
   const addImage = () => {
     if (editsBlocked) return;
     const centre = getViewportCenter();
     const placeholder = createImage(centre.x - 100, centre.y - 75);
     commit((els) => [...els, placeholder]);
     setSelectedId(placeholder.id);
-    setImagePickerOpenFor({ forElementId: placeholder.id });
   };
   // Open the picker for an existing image element (the user clicked
   // its empty placeholder or "Change image" in the context menu).
