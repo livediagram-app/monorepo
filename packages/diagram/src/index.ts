@@ -3,9 +3,15 @@
 // handles diagram data. See specs/05-diagram-structure.md and
 // specs/09-canvas-and-command-palette.md.
 
-export type DiagramId = string;
-export type TabId = string;
-export type ElementId = string;
+// Documentary type aliases for ids that internal helpers thread
+// around. Not exported because no caller outside this package
+// imports them by name (they all just use plain `string`); keeping
+// them internal lets the public surface stay focused on the rich
+// element + tab types below without trailing along three trivial
+// `string` aliases.
+type DiagramId = string;
+type TabId = string;
+type ElementId = string;
 
 // --- Shared boxed-element fields ------------------------------------------
 
