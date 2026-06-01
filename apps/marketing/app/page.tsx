@@ -30,6 +30,7 @@ import {
   ThemesArt,
   UndoRedoArt,
   UnlimitedTabsArt,
+  WireframeArt,
 } from '@/components/FeatureArt';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
@@ -76,15 +77,21 @@ export default function LandingPage() {
               },
               {
                 art: <TemplatesArt />,
-                title: 'Twelve starter templates',
+                title: 'Sixteen starter templates',
                 description:
-                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, and Pyramid. Pick one, edit it, or start blank.',
+                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, Pyramid, Flywheel, and Mobile / Laptop / Slide-deck wireframes. Pick one, edit it, or start blank.',
               },
               {
                 art: <ThemesArt />,
                 title: 'Eighteen preset themes',
                 description:
                   'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
+              },
+              {
+                art: <WireframeArt />,
+                title: 'Wireframe any UI',
+                description:
+                  'Drop browser, monitor, laptop, phone, and tablet frames straight from the palette. Pair them with the mobile, laptop, and slide-deck templates to sketch flows for any surface in minutes.',
               },
             ]}
           />

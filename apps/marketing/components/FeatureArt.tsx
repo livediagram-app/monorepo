@@ -124,6 +124,153 @@ export function TemplatesArt() {
   );
 }
 
+// Wireframe / device-frame illustration. Echoes the editor's new
+// device shapes (browser / monitor / laptop / phone / tablet) and the
+// wireframe starter templates: a phone silhouette with stacked UI
+// rows + a browser silhouette next to it. The brand-blue glow cycles
+// between the two so the card reads as "sketch UI for any
+// surface".
+export function WireframeArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* Browser frame on the left. */}
+        <g>
+          <rect
+            x="14"
+            y="14"
+            width="110"
+            height="70"
+            rx="4"
+            fill="#ffffff"
+            stroke={BLUE_STROKE}
+            strokeWidth="1.6"
+          />
+          <line x1="14" y1="25" x2="124" y2="25" stroke={BLUE_STROKE} strokeWidth="0.8" />
+          <circle cx="20" cy="19.5" r="1.4" fill={BLUE_STROKE} />
+          <circle cx="25" cy="19.5" r="1.4" fill={BLUE_STROKE} />
+          <circle cx="30" cy="19.5" r="1.4" fill={BLUE_STROKE} />
+          <rect
+            x="46"
+            y="17"
+            width="72"
+            height="5"
+            rx="2.5"
+            fill="none"
+            stroke={BLUE_STROKE}
+            strokeWidth="0.7"
+          />
+          {/* Page content blocks */}
+          <rect
+            x="22"
+            y="32"
+            width="40"
+            height="22"
+            rx="1.5"
+            fill={BLUE_FILL}
+            stroke={BLUE_STROKE}
+            strokeWidth="0.7"
+          />
+          <rect
+            x="66"
+            y="32"
+            width="50"
+            height="22"
+            rx="1.5"
+            fill="#ffffff"
+            stroke={BLUE_STROKE}
+            strokeWidth="0.7"
+          />
+          <rect
+            x="22"
+            y="58"
+            width="94"
+            height="20"
+            rx="1.5"
+            fill="#ffffff"
+            stroke={BLUE_STROKE}
+            strokeWidth="0.7"
+          />
+        </g>
+        {/* Phone frame on the right. */}
+        <g>
+          <rect
+            x="142"
+            y="10"
+            width="48"
+            height="80"
+            rx="7"
+            fill="#ffffff"
+            stroke={BLUE_STROKE}
+            strokeWidth="1.6"
+          />
+          <rect x="148" y="18" width="36" height="3" rx="1" fill={BLUE_FILL} />
+          <rect
+            x="148"
+            y="26"
+            width="36"
+            height="6"
+            rx="1"
+            fill={BLUE_FILL}
+            stroke={BLUE_STROKE}
+            strokeWidth="0.5"
+          />
+          {[36, 46, 56].map((y) => (
+            <rect
+              key={y}
+              x="148"
+              y={y}
+              width="36"
+              height="7"
+              rx="1"
+              fill="#ffffff"
+              stroke={BLUE_STROKE}
+              strokeWidth="0.5"
+            />
+          ))}
+          <rect
+            x="148"
+            y="78"
+            width="36"
+            height="6"
+            rx="1"
+            fill={BLUE_FILL}
+            stroke={BLUE_STROKE}
+            strokeWidth="0.5"
+          />
+        </g>
+        {/* Hand-off glow that pulses between the two frames. */}
+        <rect
+          className="fa-hl"
+          x="12"
+          y="12"
+          width="114"
+          height="74"
+          rx="6"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+        />
+        <rect
+          className="fa-hl"
+          x="140"
+          y="8"
+          width="52"
+          height="84"
+          rx="9"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+          style={{ animationDelay: '2s' }}
+        />
+      </svg>
+      <span className="absolute bottom-1.5 right-2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        wireframe-ready
+      </span>
+    </Frame>
+  );
+}
+
 export function ThemesArt() {
   return (
     <Frame>

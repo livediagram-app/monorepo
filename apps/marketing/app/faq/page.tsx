@@ -44,7 +44,7 @@ const FAQS: { q: string; a: ReactNode; aText?: string }[] = [
   },
   {
     q: 'What can I make with it?',
-    a: 'Flowcharts, mind maps, org charts, retrospectives, kanban boards, SWOT grids, timelines, and more. Twelve starter templates and eighteen themes get you going in seconds.',
+    a: 'Flowcharts, mind maps, org charts, retrospectives, kanban boards, SWOT grids, timelines, flywheels, and UI wireframes for browser, laptop, phone and tablet screens. Sixteen starter templates and eighteen themes get you going in seconds.',
   },
   {
     q: 'Can I work on a diagram with my team?',
@@ -72,7 +72,7 @@ const FAQS: { q: string; a: ReactNode; aText?: string }[] = [
   },
   {
     q: 'Can I export my diagrams?',
-    a: 'Not yet. For now your diagrams live in your account and are shared via links. Image and file export is on the roadmap.',
+    a: 'Yes. Each tab can be exported as Markdown, PDF, PNG, or a portable .json file you can import into another diagram. The same Import / Export accordion in the Palette covers both directions.',
   },
   {
     q: 'Where is my data stored, and do you track me?',
