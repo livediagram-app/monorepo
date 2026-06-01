@@ -36,7 +36,14 @@ import {
 } from '@livediagram/diagram';
 import dynamic from 'next/dynamic';
 import { Canvas } from '@/components/Canvas';
-import { CommentThreadPopover } from '@/components/CommentThreadPopover';
+// Lazy-load CommentThreadPopover for the same reason as
+// ExportTabDialog / ShareDialog: it's gated on commentThreadOpenId
+// (right-click an element, pick Comments), most sessions never
+// open it, and the 305-line popover + its emoji / mention helpers
+// don't belong in the editor's initial chunk.
+const CommentThreadPopover = dynamic(() =>
+  import('@/components/CommentThreadPopover').then((m) => m.CommentThreadPopover),
+);
 import { DiagramLoading } from '@/components/DiagramLoading';
 import { EditorHeader, type SaveStatus } from '@/components/EditorHeader';
 
