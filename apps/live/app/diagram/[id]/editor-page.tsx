@@ -3478,18 +3478,28 @@ export default function LivePage() {
     );
     setEditingId(null);
     // While the diagram is still on its default name, mirror the label of
-    // the very first element of the very first tab into the diagram title
-    // — typing on the welcome rectangle is a strong signal of intent.
-    // Once the user has explicitly named the diagram (or named it via
-    // another path), we stop tracking.
+    // the very first element of the very first tab into the diagram title:
+    // typing on the welcome rectangle is a strong signal of intent. Once
+    // the user has explicitly named the diagram (or named it via another
+    // path), we stop tracking.
+    const trimmed = label.trim();
     if (diagramName === 'Untitled diagram') {
       const firstTab = tabs[0];
       const firstEl = firstTab?.elements[0];
       if (firstEl && firstEl.id === elementId) {
-        const trimmed = label.trim();
         if (trimmed && trimmed !== 'Blank Diagram') {
           setDiagramName(trimmed);
         }
+      }
+    }
+    // Parallel auto-rename for the active tab while its name still matches
+    // the default `Tab N` pattern: the first element's label becomes the
+    // tab name. Fires at most once per tab (any non-default name stops the
+    // gate, including the auto-renamed value itself). See spec/05.
+    if (trimmed && /^Tab \d+$/.test(activeTab.name)) {
+      const firstEl = activeTab.elements[0];
+      if (firstEl && firstEl.id === elementId) {
+        commitTabs((ts) => ts.map((t) => (t.id === activeTab.id ? { ...t, name: trimmed } : t)));
       }
     }
   };

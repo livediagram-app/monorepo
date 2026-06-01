@@ -19,6 +19,7 @@ Diagram
 - Each tab has its own independent canvas — elements, layout, theme, background pattern, optional lock state.
 - Tabs are **ordered**; users can drag-reorder them in the tab bar.
 - A tab has a name (default `"Tab 1"`, `"Tab 2"`, etc.) and is renameable.
+- **Auto-rename on first edit.** While a tab still has its default name (matching `^Tab \d+$`), editing the label of its first element renames the tab to that label. The rename only fires once: as soon as the tab name diverges from the default pattern (auto-rename or manual rename), subsequent label edits leave the tab name alone. This mirrors the diagram-name auto-fill from the default `Untitled diagram`.
 
 ## Cross-tab links
 
