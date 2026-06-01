@@ -10,21 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isBoxed, unionBoxedBounds, type Tab } from '@livediagram/diagram';
-
-// Padding (in canvas-space pixels) kept between the elements'
-// bounding box and the viewport edges when fit-to-screen runs. 60
-// matches the previous hard-coded value in editor-page.tsx.
-const FIT_TO_SCREEN_PADDING = 60;
-
-// Zoom clamps for fit-to-screen. The 5x ceiling stops tiny diagrams
-// (one square in the corner) from blowing up to "where am I" sizes;
-// the 0.1 floor stops a massive scaffold from shrinking past the
-// "I can see it" threshold. Cap at 1.0 too so fit-to-screen never
-// magnifies past 100% (the user can manually zoom further if they
-// want).
-const FIT_TO_SCREEN_MIN = 0.1;
-const FIT_TO_SCREEN_MAX = 5;
-const FIT_TO_SCREEN_MAX_AT_FIT = 1;
+import { computeFitToScreen, computeViewportCenter } from '@/lib/viewport';
 
 // Breakpoint at which we initialise the viewport at 30% zoom rather
 // than 100%, so a mobile visitor lands on a usable overview instead
@@ -86,11 +72,8 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
   const getViewportCenter = useCallback(() => {
     const rect = canvasMainRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
-    return {
-      x: rect.width / 2 - viewportOffset.x,
-      y: rect.height / 2 - viewportOffset.y,
-    };
-  }, [viewportOffset.x, viewportOffset.y]);
+    return computeViewportCenter(rect, viewportOffset);
+  }, [viewportOffset]);
 
   const fitToScreen = useCallback(() => {
     const rect = canvasMainRef.current?.getBoundingClientRect();
@@ -104,20 +87,9 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
     }
     const bbox = unionBoxedBounds(activeTab.elements, boxedIds);
     if (!bbox) return;
-    const zoom = Math.max(
-      FIT_TO_SCREEN_MIN,
-      Math.min(
-        FIT_TO_SCREEN_MAX,
-        (rect.width - 2 * FIT_TO_SCREEN_PADDING) / Math.max(1, bbox.width),
-        (rect.height - 2 * FIT_TO_SCREEN_PADDING) / Math.max(1, bbox.height),
-        FIT_TO_SCREEN_MAX_AT_FIT,
-      ),
-    );
+    const { zoom, offset } = computeFitToScreen(rect, bbox);
     setViewportZoom(zoom);
-    setViewportOffset({
-      x: rect.width / 2 - (bbox.x + bbox.width / 2),
-      y: rect.height / 2 - (bbox.y + bbox.height / 2),
-    });
+    setViewportOffset(offset);
   }, []);
 
   return {
