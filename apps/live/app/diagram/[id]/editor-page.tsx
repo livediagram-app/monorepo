@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ARROW_THICKNESS_PX,
   bringManyToFront,
-  createComment,
   createPinnedArrow,
   createShape,
   createSticky,
@@ -74,6 +73,7 @@ import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
 import { useEditorBroadcast } from '@/hooks/useEditorBroadcast';
+import { useEditorComments } from '@/hooks/useEditorComments';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
@@ -254,10 +254,20 @@ export default function LivePage() {
     color: '#0ea5e9',
     status: 'online',
   });
-  // ID of the element whose comment thread popover is currently open.
-  // Comment mutations bypass the history hook (so typing a comment then
-  // Ctrl+Z doesn't unexpectedly wipe it).
-  const [commentThreadOpenId, setCommentThreadOpenId] = useState<string | null>(null);
+  // Comment-thread state + handlers. The open-id drives the
+  // dynamic <CommentThreadPopover> JSX gate further down; the
+  // action callbacks bind to the selection popover + the popover
+  // itself. Mutations bypass the history hook (no Ctrl+Z eats a
+  // half-typed comment), see apps/live/hooks/useEditorComments.ts.
+  const {
+    commentThreadOpenId,
+    openComments,
+    closeComments,
+    addComment,
+    deleteComment,
+    resolveThread,
+    unresolveThread,
+  } = useEditorComments({ activeId, tickTabs, selfParticipant });
   // Every diagram in the local store. Used by the Explorer to render its
   // list. Refreshed on hydration and after we save the current diagram
   // (so the Explorer's "Your diagrams" section reflects renames + first
@@ -1963,64 +1973,10 @@ export default function LivePage() {
     if (newId) openDiagram(newId);
   };
 
-  // Comment mutations live outside the history hook (per the comment on
-  // `commentThreadOpenId`). They all funnel through `tickTabs`, which
-  // updates the present tab list without pushing a snapshot to `past`.
-  const updateThread = (
-    elementId: string,
-    fn: (
-      thread: import('@livediagram/diagram').CommentThread | undefined,
-    ) => import('@livediagram/diagram').CommentThread | undefined,
-  ) => {
-    tickTabs((ts) =>
-      ts.map((t) =>
-        t.id !== activeId
-          ? t
-          : {
-              ...t,
-              elements: t.elements.map((el) => {
-                if (el.id !== elementId || !isBoxed(el)) return el;
-                const next = fn(el.commentThread);
-                if (!next) {
-                  const { commentThread: _drop, ...rest } = el;
-                  return rest as typeof el;
-                }
-                return { ...el, commentThread: next };
-              }),
-            },
-      ),
-    );
-  };
-
-  const openComments = (elementId: string) => {
-    setCommentThreadOpenId((cur) => (cur === elementId ? null : elementId));
-  };
-  const closeComments = () => setCommentThreadOpenId(null);
-  const addComment = (elementId: string, text: string) => {
-    updateThread(elementId, (thread) => ({
-      comments: [
-        ...(thread?.comments ?? []),
-        createComment(text, { name: selfParticipant.name, color: selfParticipant.color }),
-      ],
-      // Adding a comment unresolves a resolved thread — the new message
-      // is itself a signal that the conversation isn't done.
-      resolved: false,
-    }));
-  };
-  const deleteComment = (elementId: string, commentId: string) => {
-    updateThread(elementId, (thread) => {
-      if (!thread) return undefined;
-      const remaining = thread.comments.filter((c) => c.id !== commentId);
-      if (remaining.length === 0) return undefined;
-      return { ...thread, comments: remaining };
-    });
-  };
-  const resolveThread = (elementId: string) => {
-    updateThread(elementId, (thread) => (thread ? { ...thread, resolved: true } : undefined));
-  };
-  const unresolveThread = (elementId: string) => {
-    updateThread(elementId, (thread) => (thread ? { ...thread, resolved: false } : undefined));
-  };
+  // Comment-thread handlers live in useEditorComments (declared
+  // earlier in the component, where tickTabs / selfParticipant are
+  // in scope). See apps/live/hooks/useEditorComments.ts for the
+  // history-bypass policy.
 
   // Flip the active tab's locked flag. Emits a tab-meta entry so the
   // toggle shows up in the Activity panel alongside theme / background
