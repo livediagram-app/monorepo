@@ -23,7 +23,9 @@ export function Hero() {
             Start drawing
           </a>
         </div>
-        <p className="mt-4 text-sm text-slate-500">No sign-up. The canvas opens straight away.</p>
+        <p className="mt-4 text-sm text-slate-500">
+          No sign-up required. The canvas opens straight away.
+        </p>
 
         <HeroIllustration />
       </div>

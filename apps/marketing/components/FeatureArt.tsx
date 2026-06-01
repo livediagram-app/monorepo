@@ -2000,3 +2000,265 @@ function MiniEditorMock({ dark }: { dark: boolean }) {
     </div>
   );
 }
+
+/* ──────────────── Section: versatility (shapes / notes / borders /
+ * backdrops). Breadth-of-canvas cards, same vocabulary + shared fa-*
+ * timing as the rest. */
+
+// The shape library: ten core shapes plus the five device frames, a
+// brand-highlight cycling across the palette like the real Shapes /
+// Devices accordions.
+export function ShapesArt() {
+  const glyphs = [
+    'square',
+    'circle',
+    'diamond',
+    'hexagon',
+    'browser',
+    'phone',
+    'tablet',
+    'cylinder',
+  ];
+  return (
+    <Frame>
+      <div className="flex h-full flex-col justify-center gap-1.5 px-3">
+        <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-500">
+          Shapes · Devices
+        </p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {glyphs.map((g, i) => (
+            <span
+              key={g}
+              className="relative flex h-7 items-center justify-center rounded border border-slate-200 bg-white text-slate-500"
+            >
+              <span
+                className="fa-hl pointer-events-none absolute inset-0 rounded ring-2 ring-brand-500"
+                style={{ animationDelay: `${i * 0.7}s` }}
+              />
+              <ShapeGlyph kind={g} />
+            </span>
+          ))}
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function ShapeGlyph({ kind }: { kind: string }) {
+  const c = {
+    width: 15,
+    height: 15,
+    viewBox: '0 0 16 16',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.4,
+    'aria-hidden': true,
+  } as const;
+  switch (kind) {
+    case 'square':
+      return (
+        <svg {...c}>
+          <rect x="3" y="3" width="10" height="10" rx="2" />
+        </svg>
+      );
+    case 'circle':
+      return (
+        <svg {...c}>
+          <circle cx="8" cy="8" r="5" />
+        </svg>
+      );
+    case 'diamond':
+      return (
+        <svg {...c}>
+          <polygon points="8,3 13,8 8,13 3,8" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'hexagon':
+      return (
+        <svg {...c}>
+          <polygon points="4,3 11,3 14,8 11,13 4,13 1,8" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'cylinder':
+      return (
+        <svg {...c}>
+          <path d="M3 5 L3 12 A5 1.5 0 0 0 13 12 L13 5" strokeLinejoin="round" />
+          <ellipse cx="8" cy="5" rx="5" ry="1.5" />
+        </svg>
+      );
+    case 'browser':
+      return (
+        <svg {...c}>
+          <rect x="2" y="3" width="12" height="10" rx="1.5" />
+          <line x1="2" y1="6" x2="14" y2="6" />
+          <circle cx="4" cy="4.5" r="0.5" fill="currentColor" />
+          <circle cx="5.8" cy="4.5" r="0.5" fill="currentColor" />
+        </svg>
+      );
+    case 'phone':
+      return (
+        <svg {...c}>
+          <rect x="5" y="2" width="6" height="12" rx="1.5" />
+          <line x1="7" y1="3.4" x2="9" y2="3.4" />
+        </svg>
+      );
+    case 'tablet':
+      return (
+        <svg {...c}>
+          <rect x="3.5" y="2.5" width="9" height="11" rx="1.5" />
+          <circle cx="8" cy="12" r="0.5" fill="currentColor" />
+        </svg>
+      );
+  }
+  return null;
+}
+
+// Per-element notes: a note pinned to a shape, its card fading in like the
+// real NotePopover.
+export function NotesArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        <rect
+          x="22"
+          y="36"
+          width="64"
+          height="32"
+          rx="6"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="2"
+        />
+      </svg>
+      {/* note badge on the element */}
+      <span className="absolute left-[34%] top-6 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-white shadow">
+        <span className="fa-pulse absolute inset-0 rounded-full bg-amber-400" />
+        <span className="relative">
+          <NoteIcon />
+        </span>
+      </span>
+      {/* note card */}
+      <div className="fa-fade absolute right-2 top-3 w-[52%] rounded-md border border-amber-200 bg-amber-50 p-1.5 shadow-md">
+        <div className="flex items-center gap-1 text-[7px] font-semibold text-amber-700">
+          <NoteIcon /> Note
+        </div>
+        <div className="mt-1 h-1.5 w-full rounded bg-amber-200/80" />
+        <div className="mt-0.5 h-1.5 w-3/4 rounded bg-amber-200/80" />
+      </div>
+    </Frame>
+  );
+}
+
+function NoteIcon() {
+  return (
+    <svg
+      width="8"
+      height="8"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <path d="M3 2.5 H13 V13.5 H3 Z" strokeLinejoin="round" />
+      <path d="M5.5 6 H10.5 M5.5 9 H9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Border styling: three shapes showing solid / dashed / dotted strokes with
+// increasing corner radius, the brand highlight cycling between them.
+export function BorderStyleArt() {
+  const variants = [
+    { dash: undefined as string | undefined, rx: 4 },
+    { dash: '6 4', rx: 14 },
+    { dash: '0.5 4', rx: 22 },
+  ];
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {variants.map((v, i) => {
+          const x = 18 + i * 68;
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y="32"
+                width="52"
+                height="32"
+                rx={v.rx}
+                fill={BLUE_FILL}
+                stroke={BLUE_STROKE}
+                strokeWidth="2.5"
+                strokeDasharray={v.dash}
+                strokeLinecap="round"
+              />
+              <rect
+                className="fa-hl"
+                x={x - 4}
+                y="28"
+                width="60"
+                height="40"
+                rx={v.rx + 4}
+                fill="none"
+                stroke={SKY}
+                strokeWidth="1.5"
+                style={{ animationDelay: `${i * 2}s` }}
+              />
+            </g>
+          );
+        })}
+      </svg>
+      <span className="absolute bottom-1.5 right-2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        solid · dashed · dotted
+      </span>
+    </Frame>
+  );
+}
+
+// Canvas backdrop: four background patterns in a picker, the brand highlight
+// cycling to say "swap the canvas backdrop".
+export function CanvasBackdropArt() {
+  const pats: { key: string; bg: string; size: string }[] = [
+    {
+      key: 'grid',
+      bg: 'linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px)',
+      size: '9px 9px',
+    },
+    {
+      key: 'lines',
+      bg: 'repeating-linear-gradient(0deg, #cbd5e1 0 1px, transparent 1px 9px)',
+      size: 'auto',
+    },
+    {
+      key: 'crosshatch',
+      bg: 'repeating-linear-gradient(45deg, #cbd5e1 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, #cbd5e1 0 1px, transparent 1px 8px)',
+      size: 'auto',
+    },
+    {
+      key: 'dots',
+      bg: 'radial-gradient(#cbd5e1 1.2px, transparent 1.2px)',
+      size: '9px 9px',
+    },
+  ];
+  return (
+    <Frame>
+      <div className="flex h-full items-center justify-center gap-2 px-3">
+        {pats.map((p, i) => (
+          <div
+            key={p.key}
+            className="relative h-16 w-1/4 overflow-hidden rounded border border-slate-200 bg-white"
+          >
+            <span
+              className="absolute inset-0"
+              style={{ backgroundImage: p.bg, backgroundSize: p.size }}
+            />
+            <span
+              className="fa-hl pointer-events-none absolute inset-0 rounded ring-2 ring-brand-500"
+              style={{ animationDelay: `${i * 1.5}s` }}
+            />
+          </div>
+        ))}
+      </div>
+    </Frame>
+  );
+}

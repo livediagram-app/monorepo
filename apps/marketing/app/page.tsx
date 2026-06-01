@@ -3,6 +3,8 @@ import {
   ActivityArt,
   AnyDeviceArt,
   AutosaveArt,
+  BorderStyleArt,
+  CanvasBackdropArt,
   CommentsArt,
   DarkModeArt,
   DepthArt,
@@ -12,6 +14,7 @@ import {
   GroupArt,
   ImagesArt,
   LaserArt,
+  NotesArt,
   LockArt,
   MarqueeArt,
   MitArt,
@@ -24,6 +27,7 @@ import {
   RevokeArt,
   SearchArt,
   SelectionGlowArt,
+  ShapesArt,
   ShareLinksArt,
   ShortcutsArt,
   TabCopyArt,
@@ -154,6 +158,8 @@ export default function LandingPage() {
             ]}
           />
         </Section>
+
+        <UseCaseCarousel />
 
         <Section
           id="refine"
@@ -294,7 +300,7 @@ export default function LandingPage() {
         <Section
           id="versatile"
           title="As versatile as your ideas"
-          description="A diagram is rarely just boxes and arrows. Bring in the real thing: drop images straight onto the canvas and reuse them across every diagram you make."
+          description="A diagram is rarely just boxes and arrows. Reach for the right shape, dress it your way, pin a note, set the backdrop, and drop in real images. The canvas bends to whatever you're making."
           variant="tinted"
         >
           <FeatureGrid
@@ -305,11 +311,33 @@ export default function LandingPage() {
                 description:
                   'Drag, drop, or paste a PNG, JPEG, WebP, or GIF straight onto the canvas. Resize and arrange it like any other element. Everything you add lands in your own gallery, ready to reuse in any diagram without uploading twice.',
               },
+              {
+                art: <ShapesArt />,
+                title: 'A shape for everything',
+                description:
+                  'Ten core shapes plus browser, monitor, laptop, phone, and tablet frames, all one click from the palette. Sketch a flowchart one minute and a screen the next.',
+              },
+              {
+                art: <NotesArt />,
+                title: 'Notes on any element',
+                description:
+                  'Pin a note to any shape for the context that should not clutter the canvas. It travels with the element and opens when you need it.',
+              },
+              {
+                art: <BorderStyleArt />,
+                title: 'Style every border',
+                description:
+                  'Set border strength, switch between solid, dashed, and dotted, and round the corners as much or as little as the shape calls for.',
+              },
+              {
+                art: <CanvasBackdropArt />,
+                title: 'Set the canvas backdrop',
+                description:
+                  'Switch the canvas background between a dozen backdrops, from grid and lines to crosshatch, waves, and stars, or none at all. Each theme picks a fitting default.',
+              },
             ]}
           />
         </Section>
-
-        <UseCaseCarousel />
 
         <Section
           id="foundations"

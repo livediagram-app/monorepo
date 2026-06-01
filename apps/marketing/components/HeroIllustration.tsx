@@ -310,7 +310,9 @@ function EditorWindow({
             ))}
             <span className="px-1 text-base leading-none text-slate-400">+</span>
           </div>
-          <div className="ml-auto flex items-center gap-1 text-slate-400">
+          {/* Toolbelt: hidden on mobile (it clashes with the tabs in the
+              narrower windows), shown from sm up. */}
+          <div className="ml-auto hidden items-center gap-1 text-slate-400 sm:flex">
             <ToolGlyph kind="search" />
             <ToolGlyph kind="keys" />
             <ToolGlyph kind="gear" />
