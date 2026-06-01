@@ -186,8 +186,6 @@ export async function setDiagramFolder(
 
 // --- Tabs (one row per tab) ----------------------------------------------
 
-const TAB_COLS = 'id, diagram_id, name, order_index, data, updated_at';
-
 export async function getTab(env: Env, diagramId: string, tabId: string): Promise<TabDTO | null> {
   // Resolve via the diagram_tabs link table (spec/17) so linked
   // tabs surface from every diagram that contains them, not just
