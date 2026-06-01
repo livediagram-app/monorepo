@@ -33,7 +33,7 @@ import type { ArrowEnd, DragMode } from '@/lib/canvas';
 import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
 import { BoxedElementView } from './BoxedElementView';
-import { CommandPalette, type SelectedElementControls } from './CommandPalette';
+import { CommandPalette, type CanvasTool, type SelectedElementControls } from './CommandPalette';
 import { UnionResizeHandles } from './element-parts';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
 import { ContextIcon, ContextPanel } from './ContextPanel';
@@ -82,8 +82,8 @@ type CanvasProps = {
   selectedId: string | null;
   multiSelectedIds: Set<string>;
   onSelectMarquee: (ids: Set<string>) => void;
-  canvasTool: import('./CommandPalette').CanvasTool;
-  onSetCanvasTool: (tool: import('./CommandPalette').CanvasTool) => void;
+  canvasTool: CanvasTool;
+  onSetCanvasTool: (tool: CanvasTool) => void;
   // Map of elementId -> remote participants currently focused on that
   // element. Drives a small badge ring on each element so participants
   // can see in real time what others are working on.
