@@ -199,11 +199,20 @@ export const apiLoadDiagram = dedupeInFlight(_apiLoadDiagram, (ownerId, id) => `
 
 // Resolve a share code to a full diagram + the role granted by that
 // code. Visitors landing on `/live/diagram/shared?s=<code>` use
-// this; revoked codes return 404 from the API. Deduped by code so
-// Strict Mode's double-invoke doesn't fire two share lookups for
-// the same visitor.
-async function _apiLoadShared(code: string): Promise<SharedDiagramResolution | null> {
-  const res = await fetch(`${API_BASE}/share/${code}`);
+// this; revoked codes return 404 from the API. Deduped by `${code}|
+// ${ownerId}` so Strict Mode's double-invoke doesn't fire two share
+// lookups for the same visitor, while a different visitor on the
+// same code still gets its own lookup. The visitor's ownerId is
+// passed so the api worker can recognise them and record the visit
+// into shared_with; without it the worker can't identify the
+// visitor and the "Shared with you" list stays empty.
+async function _apiLoadShared(
+  code: string,
+  ownerId: string,
+): Promise<SharedDiagramResolution | null> {
+  const res = await fetch(`${API_BASE}/share/${code}`, {
+    headers: await apiHeaders(ownerId, { share: null }),
+  });
   const body = await expectOkOrNull<DiagramResponse & { role?: ShareRole }>(res, 'load shared');
   if (!body) return null;
   return {
@@ -211,7 +220,10 @@ async function _apiLoadShared(code: string): Promise<SharedDiagramResolution | n
     role: body.role === 'view' ? 'view' : 'edit',
   };
 }
-export const apiLoadShared = dedupeInFlight(_apiLoadShared, (code) => code);
+export const apiLoadShared = dedupeInFlight(
+  _apiLoadShared,
+  (code, ownerId) => `${code}|${ownerId}`,
+);
 
 // ---------------------------------------------------------------------
 // Change log (per-diagram audit) — see specs/12-activity-and-audit.md

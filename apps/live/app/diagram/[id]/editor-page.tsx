@@ -715,7 +715,11 @@ export default function LivePage() {
       // arrivals get full diagram data via the share-code endpoint and
       // are flagged `!isOwner` so the Share button hides.
       if (shareCodeParam) {
-        const resolution = await apiLoadShared(shareCodeParam).catch(() => null);
+        // Pass the visitor's owner id so the api worker can record
+        // their visit into shared_with — without it the server can't
+        // identify the visitor and the "Shared with you" list stays
+        // empty forever.
+        const resolution = await apiLoadShared(shareCodeParam, self.id).catch(() => null);
         if (!resolution) {
           // The share code didn't resolve. Either it never existed,
           // the owner revoked it, or the diagram was deleted while
