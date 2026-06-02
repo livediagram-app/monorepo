@@ -116,7 +116,6 @@ import { HISTORY_LIMIT, useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
-import { isMobileViewportSync } from '@/lib/responsive';
 import { useToast } from '@/hooks/useToast';
 import { autoAlignElements } from '@/lib/auto-align';
 import {
@@ -228,7 +227,6 @@ export default function LivePage() {
   // exist).
   const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
   const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
-  const [explorerMinimized, setExplorerMinimized] = useState(false);
   // Editor / Context panel (Selected Element + Current Tab). Sits
   // under the Palette by default.
   const [contextPosition, setContextPosition] = useState<{ x: number; y: number } | null>(null);
@@ -239,19 +237,6 @@ export default function LivePage() {
   // visible accordion. See the spec/09 "Collapse to banner" section.
   const [editorExpandSignal, setEditorExpandSignal] = useState(0);
   const requestEditorOpen = () => setEditorExpandSignal((n) => n + 1);
-  // Mobile-default minimisation used to apply to both Editor and
-  // Explorer here. The Editor now uses the banner-collapse mechanism
-  // on MovablePanel (spec/09 "Collapse to banner") so it doesn't
-  // need to start hidden via the dock; the collapsed banner is the
-  // mobile-default shape. Explorer is hidden entirely on mobile via
-  // the panel's render guard (spec/07): mobile users reach it from
-  // the profile menu instead. Effect kept (not useState initialiser)
-  // so the static-export build hydrates without a window-driven
-  // mismatch.
-  useEffect(() => {
-    if (!isMobileViewportSync()) return;
-    setExplorerMinimized(true);
-  }, []);
   // Tab-section accordion state lifted here so the Activity row
   // click handler can pop the matching accordion (e.g. clicking a
   // "Changed theme to X" entry opens the Theme accordion).
@@ -3656,7 +3641,6 @@ export default function LivePage() {
           />
           <Explorer
             position={explorerPosition}
-            minimized={explorerMinimized}
             diagrams={diagramList}
             folders={folders}
             loading={diagramListLoading}
@@ -3669,7 +3653,6 @@ export default function LivePage() {
             }
             currentDiagramId={null}
             onMoveTo={(x, y) => setExplorerPosition({ x, y })}
-            onToggleMinimized={() => setExplorerMinimized((v) => !v)}
             onReset={() => setExplorerPosition(null)}
             onOpenDiagram={openDiagram}
             onNewDiagram={newDiagram}
@@ -3778,7 +3761,6 @@ export default function LivePage() {
         groupSourceId={groupSourceId}
         palettePosition={palettePosition}
         explorerPosition={explorerPosition}
-        explorerMinimized={explorerMinimized}
         canUndo={canUndo && !activeTabLocked}
         canRedo={canRedo && !activeTabLocked}
         onAddShape={addShape}
@@ -3791,7 +3773,6 @@ export default function LivePage() {
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
         onResetPalette={() => setPalettePosition(null)}
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
-        onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
         onResetExplorer={() => setExplorerPosition(null)}
         diagramList={diagramList}
         folders={folders}

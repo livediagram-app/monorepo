@@ -60,7 +60,6 @@ type SharedItem = {
 
 type ExplorerProps = {
   position: { x: number; y: number } | null;
-  minimized: boolean;
   // Every diagram known to the local store. Current diagram is marked
   // active; clicking any other navigates to it (preserving the
   // current's state via the auto-save).
@@ -89,7 +88,6 @@ type ExplorerProps = {
   loading: boolean;
   currentDiagramId: string | null;
   onMoveTo: (x: number, y: number) => void;
-  onToggleMinimized: () => void;
   onReset: () => void;
   onOpenDiagram: (id: string, shareCode?: string) => void;
   // Optional so consumers that have nowhere to mint a new diagram
@@ -117,13 +115,11 @@ type ExplorerProps = {
 // default. Symmetric to the Palette in shape and behaviour.
 export function Explorer({
   position,
-  minimized,
   diagrams,
   folders,
   loading,
   currentDiagramId,
   onMoveTo,
-  onToggleMinimized,
   onReset,
   onOpenDiagram,
   onNewDiagram,
@@ -219,7 +215,6 @@ export function Explorer({
     : undefined;
 
   if (hideOnMobile) return null;
-  if (minimized) return null;
 
   const current = currentDiagramId
     ? (diagrams.find((d) => d.id === currentDiagramId) ?? null)
@@ -297,7 +292,6 @@ export function Explorer({
       width="w-64"
       onReset={onReset}
       onMoveTo={onMoveTo}
-      onMinimize={onToggleMinimized}
       collapsible
     >
       <div className="flex flex-col gap-2.5 px-3 pb-3 pt-1">

@@ -78,7 +78,6 @@ export default function NewDiagramPage() {
   const [sharedDiagrams, setSharedDiagrams] = useState<SharedWithItem[]>([]);
   const [diagramListLoading, setDiagramListLoading] = useState(true);
   const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
-  const [explorerMinimized, setExplorerMinimized] = useState(false);
 
   useLayoutEffect(() => {
     // Wait for Clerk to settle so a signed-in user gets the Clerk
@@ -269,7 +268,6 @@ export default function NewDiagramPage() {
             already in the new-diagram flow. */}
         <Explorer
           position={explorerPosition}
-          minimized={explorerMinimized}
           diagrams={diagramList}
           folders={folders}
           loading={diagramListLoading}
@@ -291,7 +289,6 @@ export default function NewDiagramPage() {
           }
           currentDiagramId={null}
           onMoveTo={(x, y) => setExplorerPosition({ x, y })}
-          onToggleMinimized={() => setExplorerMinimized((v) => !v)}
           onReset={() => setExplorerPosition(null)}
           onOpenDiagram={openDiagram}
           onDeleteDiagram={deleteDiagram}

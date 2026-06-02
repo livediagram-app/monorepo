@@ -111,7 +111,6 @@ type CanvasProps = {
   groupSourceId: string | null;
   palettePosition: { x: number; y: number } | null;
   explorerPosition: { x: number; y: number } | null;
-  explorerMinimized: boolean;
   canUndo: boolean;
   canRedo: boolean;
   onAddShape: (kind: ShapeKind) => void;
@@ -127,7 +126,6 @@ type CanvasProps = {
   onMovePalette: (x: number, y: number) => void;
   onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
-  onToggleExplorerMinimized: () => void;
   onResetExplorer: () => void;
   diagramList: { id: string; name: string; folderId: string | null; savedAt: number }[];
   folders: { id: string; parentId: string | null; name: string }[];
@@ -341,7 +339,6 @@ export function Canvas(props: CanvasProps) {
     groupSourceId,
     palettePosition,
     explorerPosition,
-    explorerMinimized,
     canUndo,
     canRedo,
     onAddShape,
@@ -354,7 +351,6 @@ export function Canvas(props: CanvasProps) {
     onMovePalette,
     onResetPalette,
     onMoveExplorer,
-    onToggleExplorerMinimized,
     onResetExplorer,
     diagramList,
     folders,
@@ -1351,7 +1347,6 @@ export function Canvas(props: CanvasProps) {
           and lives outside the diagram's controls. */}
       <Explorer
         position={explorerPosition}
-        minimized={explorerMinimized}
         diagrams={diagramList}
         folders={folders}
         loading={diagramListLoading}
@@ -1360,7 +1355,6 @@ export function Canvas(props: CanvasProps) {
         onOpenFullExplorer={onOpenFullExplorer}
         currentDiagramId={currentDiagramId}
         onMoveTo={onMoveExplorer}
-        onToggleMinimized={onToggleExplorerMinimized}
         onReset={onResetExplorer}
         onOpenDiagram={onOpenDiagram}
         onNewDiagram={onNewDiagram}
