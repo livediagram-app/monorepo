@@ -1497,7 +1497,20 @@ export default function LivePage() {
       // reads "Active just now".
       { ...selfParticipant, status: 'online', lastActiveAt: now },
     ]);
-    for (const [id, tabId] of remoteTabFocus) {
+    // Build a local view of "who's on which tab" that defaults any
+    // joiner whose tab-focus op hasn't arrived yet to the first tab
+    // (every visitor lands on tabs[0] by default unless they came in
+    // via a tab hash). Without this fallback a new joiner's avatar
+    // is invisible until they switch tabs once, even though their
+    // presence row already arrived. We derive a fresh Map rather
+    // than mutating `remoteTabFocus` state from a render callback.
+    const defaultTabId = tabs[0]?.id ?? activeId;
+    const tabFocus = new Map<string, string>(remoteTabFocus);
+    for (const p of livePresence) {
+      if (p.id === selfParticipant.id) continue;
+      if (!tabFocus.has(p.id)) tabFocus.set(p.id, defaultTabId);
+    }
+    for (const [id, tabId] of tabFocus) {
       if (id === selfParticipant.id) continue;
       const p = livePresenceById.get(id);
       if (!p) continue;
