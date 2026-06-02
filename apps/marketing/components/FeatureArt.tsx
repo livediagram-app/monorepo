@@ -813,7 +813,7 @@ export function NoTrackingArt() {
           className="fa-fade text-[8px] font-medium text-slate-500"
           style={{ animationDelay: '0.4s' }}
         >
-          0 trackers · no telemetry
+          0 third-party trackers
         </span>
       </div>
     </Frame>

@@ -2,6 +2,15 @@ name = "livediagram-api"
 main = "src/index.ts"
 compatibility_date = "2026-05-29"
 
+# Plain (non-secret) vars. TELEMETRY_ENABLED gates the anonymous,
+# first-party product analytics + the public /telemetry dashboard
+# (spec/22). "true" turns it on; anything else (or absent) keeps it
+# fully off, which is the self-host / OSS-fork default, so a fork
+# never ingests or serves analytics unless it opts in. Not a secret,
+# so it lives here in the open.
+[vars]
+TELEMETRY_ENABLED = "true"
+
 # D1 database holding diagrams + participants. The local binding name
 # (`DB`) is what `src/db.ts` reads via the Env type. The `database_name`
 # is the Cloudflare-side name (must be created via `wrangler d1 create
@@ -40,6 +49,20 @@ name = "WRITE_RATE_LIMITER"
 type = "ratelimit"
 namespace_id = "1001"
 simple = { limit = 300, period = 60 }
+
+# Per-IP limiter for the anonymous telemetry ingest (POST /api/events,
+# spec/22). Separate namespace from the write limiter so abuse of the
+# public events endpoint can never eat into a user's diagram-write
+# budget. 120 batches / 60s per IP is generous for a real editor
+# session (which flushes a handful of batches a minute) while bounding
+# how fast one source can flood D1 / inflate the public dashboard.
+# Keyed on CF-Connecting-IP in src/index.ts. Absent binding → the
+# helper allows, so self-host still works.
+[[unsafe.bindings]]
+name = "EVENTS_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 120, period = 60 }
 
 # Durable Object for per-diagram realtime (presence + broadcast). One
 # instance per diagram id; clients connect via WebSocket through the

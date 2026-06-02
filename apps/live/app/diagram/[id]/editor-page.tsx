@@ -144,6 +144,7 @@ import {
   type DiagramSettings,
 } from '@/lib/diagram-settings';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
+import { track, titleCaseType } from '@/lib/telemetry';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
 import { useActivityLogDebounce } from '@/hooks/useActivityLogDebounce';
@@ -901,6 +902,12 @@ export default function LivePage() {
           const isOwnerVisit = fetched.ownerId === self.id;
           if (!isOwnerVisit && !hasConfirmedName()) {
             setTemplatePickerMode('identity');
+          }
+          // Telemetry (spec/22): a visitor joined a shared diagram.
+          // Owners opening their own share URL don't count as a join.
+          // `type` is the share role (Edit / View), a preset.
+          if (!isOwnerVisit) {
+            track('Diagram', 'Joined', role === 'edit' ? 'Edit' : 'View');
           }
         }
       } else if (id) {
@@ -2397,6 +2404,9 @@ export default function LivePage() {
       setShareLinks((prev) => [...prev, link]);
       setDiagramShareable(true);
       setDiagramShareCode((prev) => prev ?? link.code);
+      // Telemetry (spec/22): a share link was created. `type` is the
+      // role (Edit / View) — a preset, never user content.
+      track('Diagram', 'Shared', role === 'edit' ? 'Edit' : 'View');
     } catch {
       // Network glitch — leave state alone. A real app would toast.
     }
@@ -2639,9 +2649,20 @@ export default function LivePage() {
 
   // --- Element CRUD --------------------------------------------------------
 
-  const addShape = (kind: ShapeKind) => addBoxed((x, y) => createShape(kind, x, y));
-  const addText = () => addBoxed((x, y) => createText(x, y));
-  const addSticky = () => addBoxed((x, y) => createSticky(x, y));
+  const addShape = (kind: ShapeKind) => {
+    addBoxed((x, y) => createShape(kind, x, y));
+    // Telemetry (spec/22): element added; `type` is the shape kind
+    // (a preset enum, e.g. "Square"), never user content.
+    track('Element', 'Added', titleCaseType(kind));
+  };
+  const addText = () => {
+    addBoxed((x, y) => createText(x, y));
+    track('Element', 'Added', 'Text');
+  };
+  const addSticky = () => {
+    addBoxed((x, y) => createSticky(x, y));
+    track('Element', 'Added', 'Sticky');
+  };
   // Drop an empty image placeholder at the viewport centre. The
   // picker only opens via double-click on the placeholder (or
   // "Change image" in the context menu), so the user can position

@@ -53,7 +53,7 @@ export type {
 // for create-time `owner_id`. There's no auth gate yet; this is the
 // hook that Clerk will replace in the post-prototype phase.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 
 // WebSocket counterpart of API_BASE. Converts http(s):// to ws(s):// for
 // absolute bases; for the same-origin default it builds from

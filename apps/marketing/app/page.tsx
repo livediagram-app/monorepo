@@ -373,7 +373,7 @@ export default function LandingPage() {
                 art: <NoTrackingArt />,
                 title: 'No tracking pixels',
                 description:
-                  'The repo is public. There are no SDK calls home, no analytics secrets baked in, no hidden telemetry. What you see is what runs.',
+                  'No third-party analytics, no ad pixels, no SDK calls home. The only usage data is anonymous, first-party product events, and they are public: see exactly what we measure on the telemetry page.',
               },
             ]}
           />

@@ -68,12 +68,14 @@ const FAQS: { q: string; a: ReactNode; aText?: string }[] = [
     a: (
       <>
         Your diagrams are stored in our database on Cloudflare. There are no tracking pixels, no
-        advertising, and no third-party analytics. See the <a href="/privacy">privacy policy</a> for
+        advertising, and no third-party analytics. We do record anonymous, first-party usage (which
+        features get used, never your content or name), and show it openly on our{' '}
+        <a href="/telemetry">telemetry page</a>. See the <a href="/privacy">privacy policy</a> for
         the details.
       </>
     ),
     aText:
-      'Your diagrams are stored in our database on Cloudflare. There are no tracking pixels, no advertising, and no third-party analytics. See the privacy policy for the details.',
+      'Your diagrams are stored in our database on Cloudflare. There are no tracking pixels, no advertising, and no third-party analytics. We do record anonymous, first-party usage (which features get used, never your content or name), shown openly on our telemetry page. See the privacy policy for the details.',
   },
   {
     q: 'Can I self-host livediagram?',

@@ -8,13 +8,14 @@ A small Cloudflare Worker that fronts the apex domain (`livediagram.app`) and ro
 
 ## Routing table
 
-| Path               | Forwards to                      |
-| ------------------ | -------------------------------- |
-| `/api`, `/api/*`   | api worker (`apps/api`)          |
-| `/live`, `/live/*` | live app (`apps/live`)           |
-| everything else    | marketing app (`apps/marketing`) |
+| Path                         | Forwards to                      |
+| ---------------------------- | -------------------------------- |
+| `/api`, `/api/*`             | api worker (`apps/api`)          |
+| `/live`, `/live/*`           | live app (`apps/live`)           |
+| `/telemetry`, `/telemetry/*` | telemetry app (`apps/telemetry`) |
+| everything else              | marketing app (`apps/marketing`) |
 
-The router **does** rewrite the path for `/live/*` requests: the `/live` prefix is stripped before forwarding so the live worker sees `/`, `/some-path` etc. This is because Next.js's `basePath` option rewrites URL references inside the HTML/JS bundles but does **not** shift the actual file layout — the static export still places `index.html`, `_next/`, and `404.html` at the root of `out/`. The router translates the public URL space (with `/live` prefix) to the live worker's internal URL space (no prefix).
+The router **does** rewrite the path for `/live/*` and `/telemetry/*` requests: the prefix is stripped before forwarding so the downstream worker sees `/`, `/some-path` etc. This is because Next.js's `basePath` option rewrites URL references inside the HTML/JS bundles but does **not** shift the actual file layout — the static export still places `index.html`, `_next/`, and `404.html` at the root of `out/`. The router translates the public URL space (with the prefix) to the worker's internal URL space (no prefix). Both basePath apps share one `forwardStripped()` helper. The telemetry app is the public transparency dashboard (see [22-telemetry](22-telemetry.md)).
 
 `/api/*` is forwarded **as-is** — no prefix stripping. The api worker expects to see the full `/api/...` path and dispatches its routes from there.
 

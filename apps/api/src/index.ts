@@ -1,5 +1,5 @@
 import type { Tab } from '@livediagram/diagram';
-import { sha256Hex } from '@livediagram/api-schema';
+import { sha256Hex, isValidTelemetryEvent, type TelemetrySummary } from '@livediagram/api-schema';
 import { canEditDiagram, canReadDiagram } from './auth/diagram-access';
 import { rewriteCommentAuthors } from './comments';
 import {
@@ -28,7 +28,9 @@ import {
   getTab,
   insertChangeLogEntry,
   insertImage,
+  insertTelemetryEvents,
   listChangeLog,
+  telemetryCountsSince,
   copyDiagram,
   deleteAccount,
   deleteOldChangeLogEntries,
@@ -118,12 +120,113 @@ export default {
     // resolved owner falls back to keying on the IP-equivalent
     // X-Owner-Id header (or the empty string when neither exists);
     // either way one client can't burn the global quota.
-    if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
+    // Telemetry ingest (/api/events) is deliberately exempt: it's
+    // anonymous, high-frequency, and must never compete with a user's
+    // real diagram writes for the per-owner write budget (spec/22).
+    // Client-side batching keeps its volume low instead.
+    const isWrite =
+      request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE';
+    if (isWrite && url.pathname !== '/api/events') {
       const key = resolveOwner() ?? request.headers.get('X-Owner-Id') ?? 'anonymous';
       if (await isWriteRateLimited(env, key)) return rateLimited();
     }
 
     try {
+      // ---------- /api/events ----------
+      // Anonymous telemetry ingest (spec/22). Batched POST of
+      // { events: TelemetryEvent[] }. No auth, no stored identity: only
+      // the closed-vocabulary three-field events (validated here) reach
+      // D1, with a server-stamped ts. Off unless TELEMETRY_ENABLED, so
+      // OSS forks ingest nothing by default. Always 204 — telemetry must
+      // never surface an error to the caller.
+      if (segments[1] === 'events' && segments.length === 2) {
+        if (request.method !== 'POST') return notFound();
+        const noop = new Response(null, { status: 204, headers: CORS_HEADERS });
+        if (env.TELEMETRY_ENABLED !== 'true') return noop;
+        // Abuse controls (spec/22). The endpoint is anonymous +
+        // unauthenticated, so guard it WITHOUT identifying users:
+        //   (1) Same-origin only — drop a request whose Origin header is
+        //       present and isn't this site. Stops casual cross-origin /
+        //       drive-by posting; spoofable by curl, which (2) then
+        //       catches.
+        //   (2) Per-IP rate limit keyed on CF-Connecting-IP (which the
+        //       client can't forge, unlike X-Owner-Id). A SEPARATE
+        //       limiter from the diagram write limiter, so it never
+        //       touches real users; the IP is a transient key, never
+        //       stored. Both degrade to "allow" when unconfigured, so
+        //       self-host / OSS forks still work. Cloudflare's edge DDoS
+        //       + an optional WAF rate-limit rule on /api/events sit in
+        //       front of all this (see spec/22). Always 204 — telemetry
+        //       must never surface an error.
+        const origin = request.headers.get('Origin');
+        if (origin && origin !== url.origin) return noop;
+        if (env.EVENTS_RATE_LIMITER) {
+          const ip = request.headers.get('CF-Connecting-IP') ?? 'anonymous';
+          const { success } = await env.EVENTS_RATE_LIMITER.limit({ key: ip });
+          if (!success) return noop;
+        }
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return noop;
+        }
+        const raw = (body as { events?: unknown }).events;
+        if (!Array.isArray(raw)) return noop;
+        // Validate against the shared schema and cap the batch so one
+        // request can't bulk-insert. Unknown categories/actions/types
+        // are dropped, never stored.
+        const valid = raw.filter(isValidTelemetryEvent).slice(0, 100);
+        await insertTelemetryEvents(
+          env,
+          valid.map((e) => ({ category: e.category, action: e.action, type: e.type ?? null })),
+          Date.now(),
+        );
+        return noop;
+      }
+
+      // ---------- /api/telemetry/summary ----------
+      // Public dashboard data (spec/22). Grouped counts for three FIXED
+      // windows — today (since UTC midnight), last 7 days, last 30 days
+      // — so the queries stay simple and the response is cacheable. No
+      // custom ranges. Edge-cached so a public traffic spike never
+      // hammers D1. Off unless TELEMETRY_ENABLED.
+      if (segments[1] === 'telemetry' && segments[2] === 'summary' && segments.length === 3) {
+        if (request.method !== 'GET') return notFound();
+        if (env.TELEMETRY_ENABLED !== 'true') return json({ enabled: false });
+        const cache = caches.default;
+        const cacheKey = new Request(url.toString());
+        const hit = await cache.match(cacheKey);
+        if (hit) return hit;
+
+        const now = Date.now();
+        const day = 24 * 60 * 60 * 1000;
+        const d = new Date(now);
+        const midnightUtc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        const [today, last7, last30] = await Promise.all([
+          telemetryCountsSince(env, midnightUtc),
+          telemetryCountsSince(env, now - 7 * day),
+          telemetryCountsSince(env, now - 30 * day),
+        ]);
+        const toWindow = (rows: typeof today) => ({
+          total: rows.reduce((sum, r) => sum + r.count, 0),
+          rows,
+        });
+        const summary: TelemetrySummary = {
+          enabled: true,
+          generatedAt: now,
+          windows: { today: toWindow(today), last7: toWindow(last7), last30: toWindow(last30) },
+        };
+        const res = json(summary);
+        // A few minutes of edge + browser cache. Fixed windows mean the
+        // body only drifts on the next ingest, so staleness is bounded
+        // and acceptable for a usage dashboard. Awaited (the worker's
+        // fetch signature has no ctx.waitUntil) so the put completes.
+        res.headers.set('Cache-Control', 'public, max-age=300');
+        await cache.put(cacheKey, res.clone());
+        return res;
+      }
+
       // ---------- /api/share/<code> ----------
       // Resolve a share code to its diagram + role. Used by visitors
       // landing on /live/diagram/shared?s=<code>. Returns 404 if the

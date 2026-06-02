@@ -44,4 +44,16 @@ export type Env = {
   // feature flag still serve (the check helper returns "allowed"
   // when the binding is absent).
   WRITE_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
+  // Per-IP limiter for the anonymous telemetry ingest (spec/22),
+  // SEPARATE from WRITE_RATE_LIMITER so it never competes with users'
+  // real diagram writes. Keyed on CF-Connecting-IP. Optional: absent
+  // (self-host) falls through to "allow", same as the write limiter.
+  EVENTS_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
+  // Telemetry on/off switch (spec/22). Authoritative: gates both
+  // POST /api/events and GET /api/telemetry/summary. A plain
+  // wrangler.toml [vars] string; only the literal "true" enables it.
+  // Absent/anything-else keeps telemetry fully off — the self-host
+  // default, so OSS forks never ingest or serve analytics unless they
+  // opt in.
+  TELEMETRY_ENABLED?: string;
 };

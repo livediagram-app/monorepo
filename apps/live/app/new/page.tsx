@@ -18,6 +18,7 @@ import {
 } from '@/lib/api-client';
 import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
+import { track } from '@/lib/telemetry';
 import { ensureGuestSelfId, markNameConfirmed } from '@/lib/local-identity';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { buildTemplatedTab } from '@/lib/template-builders';
@@ -167,6 +168,9 @@ export default function NewDiagramPage() {
       // Network glitch — the editor route's autosave will retry on
       // the first edit. Navigation continues either way.
     });
+    // Anonymous telemetry (spec/22): a diagram was created. No id or
+    // name is sent — just the event.
+    track('Diagram', 'Created');
     // Folder context from the URL: /live/new?folder=<id> lets the
     // explorer's FAB drop a fresh diagram straight into the folder
     // the user was browsing. Done as a follow-up PUT rather than

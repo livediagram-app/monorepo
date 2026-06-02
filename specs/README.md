@@ -30,6 +30,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 19  | [Images](19-images.md)                                               | Image element + per-owner R2-backed gallery with dedupe            |
 | 20  | [Diagram settings](20-diagram-settings.md)                           | Per-diagram editor preference flags (footer settings dialog)       |
 | 21  | [Comparison pages](21-comparison-pages.md)                           | `/alternatives/<tool>` SEO pages (Miro, XMind, Excalidraw, …)      |
+| 22  | [Telemetry](22-telemetry.md)                                         | Anonymous first-party events in D1 + public `/telemetry` dashboard |
 
 ## Workflow
 

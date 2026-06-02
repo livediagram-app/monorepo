@@ -1,4 +1,5 @@
 import { isBoxed, type Tab } from '@livediagram/diagram';
+import type { TelemetryCount } from '@livediagram/api-schema';
 import { rowToChangeLog, type ChangeLogRow } from './change-log-row';
 import { rowToShareLink, type ShareLinkRow } from './share-link-row';
 import type {
@@ -1115,4 +1116,36 @@ export async function diagramReferencesImage(
     }
   }
   return false;
+}
+
+// --- Telemetry (spec/22) ---------------------------------------------
+// Anonymous events: the events table stores only the three-field
+// vocabulary + a server-stamped timestamp. No owner / IP column.
+
+export async function insertTelemetryEvents(
+  env: Env,
+  events: { category: string; action: string; type: string | null }[],
+  ts: number,
+): Promise<void> {
+  if (events.length === 0) return;
+  const stmt = env.DB.prepare(
+    'INSERT INTO events (category, action, type, ts) VALUES (?, ?, ?, ?)',
+  );
+  await env.DB.batch(events.map((e) => stmt.bind(e.category, e.action, e.type, ts)));
+}
+
+// Grouped counts for every event at or after `since` (ms epoch). One
+// row per (category, action, type). Drives the dashboard's fixed
+// windows; the events_ts_idx covers the range filter.
+export async function telemetryCountsSince(env: Env, since: number): Promise<TelemetryCount[]> {
+  const result = await env.DB.prepare(
+    `SELECT category, action, type, COUNT(*) AS count
+       FROM events
+      WHERE ts >= ?
+      GROUP BY category, action, type
+      ORDER BY count DESC`,
+  )
+    .bind(since)
+    .all<TelemetryCount>();
+  return result.results ?? [];
 }

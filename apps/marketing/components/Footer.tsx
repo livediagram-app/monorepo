@@ -25,6 +25,9 @@ export function Footer() {
           <a href="/privacy" className="hover:text-slate-900">
             Privacy
           </a>
+          <a href="/telemetry" className="hover:text-slate-900">
+            Telemetry
+          </a>
           <a href="mailto:hello@livediagram.app" className="hover:text-slate-900">
             Contact
           </a>

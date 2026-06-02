@@ -50,8 +50,23 @@ export default function PrivacyPage() {
       <h2>What we do not do</h2>
       <p>
         We do not use tracking pixels, advertising, or third-party analytics SDKs. We do not sell
-        your data, and we do not build advertising profiles. There is no hidden telemetry. The
-        repository is public, so what runs is what you can read.
+        your data, and we do not build advertising profiles. The repository is public, so what runs
+        is what you can read.
+      </p>
+
+      <h2>Anonymous product analytics</h2>
+      <p>
+        To understand which features actually help, we record anonymous, first-party product events,
+        for example &ldquo;a diagram was created&rdquo; or &ldquo;a square was added&rdquo;. Each
+        event is just three fixed labels: a category, an action, and an optional type like
+        &ldquo;Square&rdquo; or &ldquo;Edit&rdquo;. They never include anything that identifies you
+        or your work: no names, no diagram or element content, no account id, no IP address.
+      </p>
+      <p>
+        We collect this ourselves, store it in our own database, and use no third-party analytics
+        vendors. The data is never sold or shared, and the only place it goes beyond our own use is
+        our public <a href="/telemetry">telemetry dashboard</a>, where you can see exactly the same
+        anonymous totals we do.
       </p>
 
       <h2>Cookies and local storage</h2>
