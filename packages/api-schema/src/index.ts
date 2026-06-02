@@ -40,6 +40,14 @@ export type Diagram = {
   folderId: string | null;
   savedAt: number;
   createdAt: number;
+  // Owner's display name + avatar colour, joined server-side from the
+  // participants table so visitors can render "Owner: <name>" without
+  // waiting for the owner to come online in the realtime room. Null
+  // when the owner has no participant row yet (e.g. Clerk-authed
+  // owners who never set a name on a diagram); the UI falls back to
+  // hiding the badge in that case.
+  ownerName: string | null;
+  ownerColor: string | null;
 };
 
 // Lightweight list projection — drops `tabs` so listing 100 diagrams

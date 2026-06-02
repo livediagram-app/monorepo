@@ -1125,18 +1125,11 @@ export default function TelemetryDashboard() {
             ))}
           </div>
 
-          <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
-            <p className="text-sm font-medium uppercase tracking-wide text-slate-400">
-              Total events
-            </p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight text-slate-900">
-              {(window?.total ?? 0).toLocaleString()}
-            </p>
-          </div>
-
           {/* Window-comparison strip: read all three windows at once
-              without flipping the toggle. */}
-          <div className="mt-6">
+              without flipping the toggle. Replaces the standalone
+              "Total events" headline above — that number is one of
+              the three cards here. */}
+          <div className="mt-8">
             <WindowStrip
               today={summary.windows.today.total}
               last7={summary.windows.last7.total}

@@ -95,6 +95,12 @@ async function listTabSummariesFor(env: Env, diagramId: string): Promise<TabSumm
 }
 
 async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
+  // Join owner participant info onto the response so visitors can
+  // render "Owner: <name>" without waiting for the owner to come
+  // online in the realtime room. Null when the owner has no
+  // participant row yet (e.g. a Clerk-authed owner who's never set a
+  // name on a diagram); the UI hides the badge in that case.
+  const ownerParticipant = await getParticipant(env, row.owner_id);
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -105,6 +111,8 @@ async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
     folderId: row.folder_id,
     savedAt: row.saved_at,
     createdAt: row.created_at,
+    ownerName: ownerParticipant?.name ?? null,
+    ownerColor: ownerParticipant?.color ?? null,
   };
 }
 
@@ -162,7 +170,14 @@ export async function listDiagramsByOwner(env: Env, ownerId: string): Promise<Di
 // timestamps. Tabs live in their own table now (see upsertTab /
 // reorderTabs / deleteTab). Used both by the new metadata-only PUT
 // /diagrams/:id and by the create endpoint.
-export async function upsertDiagramMeta(env: Env, d: Omit<DiagramDTO, 'tabs'>): Promise<void> {
+// Write-side meta upsert. Read-derived fields (`tabs`, `ownerName`,
+// `ownerColor`) are pruned from the input shape since none of them
+// are stored on the diagrams row directly — tabs live in their own
+// table, owner info comes via a participants join on read.
+export async function upsertDiagramMeta(
+  env: Env,
+  d: Omit<DiagramDTO, 'tabs' | 'ownerName' | 'ownerColor'>,
+): Promise<void> {
   // `shareCode` is intentionally absent from the INSERT — it now
   // lives only in share_links. The DTO field is read-only (derived
   // via subquery on selects).
