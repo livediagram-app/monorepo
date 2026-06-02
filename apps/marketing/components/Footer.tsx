@@ -12,7 +12,7 @@ export function Footer() {
             Diagrams and mindmaps for teams who think together.
           </p>
         </div>
-        <div className="flex items-center gap-6 text-sm text-slate-500">
+        <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-slate-500">
           <a href="/alternatives" className="hover:text-slate-900">
             Compare
           </a>
@@ -28,7 +28,7 @@ export function Footer() {
           <a href="mailto:hello@livediagram.app" className="hover:text-slate-900">
             Contact
           </a>
-        </div>
+        </nav>
       </div>
       <div className="border-t border-slate-100">
         <div className="mx-auto flex max-w-6xl flex-col gap-1.5 px-6 py-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
