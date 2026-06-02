@@ -69,6 +69,20 @@ type MovablePanelProps = {
   // pixels, applied as an inline `top` so it wins over the Tailwind
   // mobile class without disturbing the `sm:top-4` desktop class.
   mobileTopOverridePx?: number;
+  // When true the panel is forced expanded and tap-to-collapse on
+  // mobile is disabled. Used while the user is renaming a child row
+  // or working through a confirm modal — collapsing in the middle of
+  // those flows hides the rename input / the diagram context for the
+  // modal, which is disorienting on a phone. Caller tracks the
+  // "in-flight" state and flips this on for the duration.
+  lockOpen?: boolean;
+  // CSS selector for DOM nodes that should be treated as inside the
+  // panel even if they live outside `ref` (e.g. portal-mounted
+  // submenus rendered to document.body). Without this, tapping an
+  // ellipsis-menu item inside the panel body would count as a tap
+  // OUTSIDE the panel and trigger the mobile auto-collapse, which
+  // hides the rename input the same tap is about to mount.
+  outsideExceptSelector?: string;
   // When true the panel can collapse to a banner (title row only)
   // via its header button, on both mobile and desktop. The button's
   // icon flips between dash (collapse) and plus (expand) so the
@@ -108,6 +122,8 @@ export function MovablePanel({
   stackBelowY,
   onSize,
   mobileTopOverridePx,
+  lockOpen = false,
+  outsideExceptSelector,
   collapsible = false,
   expandSignal,
   children,
@@ -201,7 +217,11 @@ export function MovablePanel({
       setCollapsed(false);
       return;
     }
-    if (collapsible && e.pointerType === 'touch') {
+    // Tap-to-collapse on mobile, except while the parent has locked
+    // the panel open (rename input live, confirm modal in flight) —
+    // those flows need the body visible regardless of the user's
+    // tap location.
+    if (collapsible && e.pointerType === 'touch' && !lockOpen) {
       e.stopPropagation();
       setCollapsed(true);
       return;
@@ -231,15 +251,21 @@ export function MovablePanel({
   }, [collapsible, expandSignal]);
 
   // Outside-tap auto-close. Active only while the banner is
-  // expanded on mobile, the matchMedia gate skips the listener on
-  // desktop where the user is in control of when to close.
+  // expanded on mobile; the matchMedia gate skips the listener on
+  // desktop where the user is in control of when to close. Also
+  // disabled while the parent has locked the panel open — the
+  // outside-tap is most often a child portal-menu item (Rename,
+  // Delete) and treating that as "user wants to dismiss the
+  // panel" hides the rename input the same tap is about to mount.
   useClickOutside(
     ref,
     () => setCollapsed(true),
     collapsible &&
       !collapsed &&
+      !lockOpen &&
       typeof window !== 'undefined' &&
       !window.matchMedia?.(`(min-width: ${MOBILE_BREAKPOINT_PX}px)`).matches,
+    outsideExceptSelector,
   );
 
   // When stackBelowY is provided and we're still at the default

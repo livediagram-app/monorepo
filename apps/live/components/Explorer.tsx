@@ -273,6 +273,14 @@ export function Explorer({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onSize={onSize}
+      // Mobile auto-collapse fires on any tap outside the panel's
+      // DOM. Ellipsis menus (PortalMenu, role="menu") and confirm
+      // modals (ConfirmDialog, role="dialog") render via React
+      // portals into document.body, so a tap on "Rename" or "Delete"
+      // counts as outside and would collapse the panel just as the
+      // rename input is about to mount. Treat both ARIA roles as
+      // "inside" so the user can finish the action they started.
+      outsideExceptSelector='[role="menu"],[role="dialog"]'
       collapsible
     >
       <div className="flex flex-col gap-2.5 px-3 pb-3 pt-1">

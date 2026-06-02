@@ -28,6 +28,14 @@ export function useClickOutside<T extends HTMLElement>(
   ref: RefObject<T | null>,
   onOutside: (event: PointerEvent) => void,
   enabled: boolean = true,
+  // Optional CSS selector. Targets matching `closest(insideSelector)`
+  // are treated as inside even if they aren't a DOM descendant of
+  // `ref`. Lets a callee whitelist portal-mounted children (an
+  // ellipsis menu's PortalMenu lives under document.body, so the
+  // ref.contains() check above misses it; whitelisting via
+  // `data-prevent-outside-close` keeps the menu's items from
+  // triggering the panel's own dismissal).
+  insideSelector?: string,
 ): void {
   const cbRef = useRef(onOutside);
   useEffect(() => {
@@ -41,9 +49,16 @@ export function useClickOutside<T extends HTMLElement>(
       const node = ref.current;
       if (!node) return;
       if (e.target instanceof Node && node.contains(e.target)) return;
+      if (
+        insideSelector &&
+        e.target instanceof Element &&
+        e.target.closest(insideSelector) !== null
+      ) {
+        return;
+      }
       cbRef.current(e);
     };
     window.addEventListener('pointerdown', handler, true);
     return () => window.removeEventListener('pointerdown', handler, true);
-  }, [enabled, ref]);
+  }, [enabled, ref, insideSelector]);
 }
