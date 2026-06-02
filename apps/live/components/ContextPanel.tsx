@@ -201,24 +201,3 @@ export function ContextPanel({
     </MovablePanel>
   );
 }
-
-// Icon used by the dock button when the Context panel is minimised.
-// Lines + a focus dot — reads as "the thing you've focused on".
-export function ContextIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3.5" y="3.5" width="13" height="13" rx="2" />
-      <path d="M7 8.5h6M7 12h4" />
-    </svg>
-  );
-}

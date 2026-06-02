@@ -8,11 +8,6 @@
 // standalone-page set) overlap in concept but their SVG paths /
 // dimensions diverge in ways that would defeat a shared library
 // today, so a merger waits until a real third caller forces it.
-//
-// `ExplorerIcon` and `PaletteIcon` stay in Explorer.tsx because
-// Canvas.tsx imports them from there as a stable public surface
-// (the toolbar glyphs that toggle the panels). Moving them would
-// break the import path for no payoff.
 
 export function SharedDiagramIcon() {
   return (
