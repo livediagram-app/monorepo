@@ -50,65 +50,20 @@ import { getClerkUserId } from './auth/clerk';
 import { DiagramRoom } from './diagram-room';
 import { ACCEPTED_IMAGE_TYPES, type AcceptedImageType, sniffImageType } from './image-sniff';
 import { stripJpegMetadata } from './image-strip';
+import {
+  badRequest,
+  CORS_HEADERS,
+  forbidden,
+  imagesUnavailable,
+  json,
+  missingAuth,
+  notFound,
+  rateLimited,
+} from './responses';
 import type { ChangeLogEntryDTO, DiagramDTO, Env, ParticipantDTO, ShareRole } from './types';
 
 export { DiagramRoom };
 
-// CORS for the browser. Live app runs at the same hostname as the API
-// (router stitches them together) so this is mostly a safety net for
-// local dev where origins may differ. Headers list is the minimum the
-// live app sends today.
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  // `Authorization` carries the Clerk Bearer token (Stage 2 hybrid
-  // auth — spec/04, spec/11). Without it in the allow-list every
-  // signed-in cross-origin request fails the preflight and surfaces
-  // to JS as "Failed to fetch", which was hiding behind DELETE
-  // /api/account and any other authed call from localhost:3002 →
-  // localhost:8787 in dev.
-  // Image upload uses custom X-Image-* headers (spec/19). The browser
-  // rejects the POST preflight if any header the client sends isn't
-  // in this list, which surfaces as "Failed to fetch" with no other
-  // signal, so each new header has to land here too.
-  'Access-Control-Allow-Headers':
-    'Authorization, Content-Type, X-Owner-Id, X-Share-Code, X-Image-Sha256, X-Image-Width, X-Image-Height, X-Image-Original-Name',
-  'Access-Control-Max-Age': '86400',
-};
-
-function json(body: unknown, init: ResponseInit = {}): Response {
-  const headers = new Headers(init.headers);
-  headers.set('Content-Type', 'application/json');
-  for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
-  return new Response(JSON.stringify(body), { ...init, headers });
-}
-
-function notFound(): Response {
-  return json({ error: 'not_found' }, { status: 404 });
-}
-
-function badRequest(msg: string): Response {
-  return json({ error: 'bad_request', message: msg }, { status: 400 });
-}
-
-function forbidden(): Response {
-  return json({ error: 'forbidden' }, { status: 403 });
-}
-
-// Returned whenever `resolveOwner()` yields null on a mutation /
-// owner-scoped read. Owner can be null for two reasons under hybrid
-// auth (spec/04):
-//
-//   1. Pure-guest path with no `X-Owner-Id` header sent.
-//   2. A Bearer token was sent but verification failed silently
-//      (expired, invalid signature, JWKS unreachable, etc.) —
-//      `getClerkUserId` returns null on any error so the guest path
-//      still serves.
-//
-// Pre-Clerk this used to be a flat "missing X-Owner-Id" message,
-// which now misdirects signed-in users debugging an auth failure to
-// look at the wrong header. The new message names both legitimate
-// identity sources so the caller can tell which one they're missing.
 // --- Image upload helpers (spec/19) --------------------------------------
 
 // Accepted content types for image uploads. Drives the picker's error
@@ -132,14 +87,6 @@ async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
   return bytesToHex(new Uint8Array(digest));
 }
 
-function imagesUnavailable(): Response {
-  return json({ error: 'images-unavailable' }, { status: 503 });
-}
-
-function rateLimited(): Response {
-  return json({ error: 'rate-limited' }, { status: 429 });
-}
-
 // Per-owner write rate limit (security audit item). Returns true
 // when the caller is over the configured cap (wrangler.toml's
 // WRITE_RATE_LIMITER binding) so the endpoint can short-circuit
@@ -149,10 +96,6 @@ async function isWriteRateLimited(env: Env, ownerId: string): Promise<boolean> {
   if (!env.WRITE_RATE_LIMITER) return false;
   const result = await env.WRITE_RATE_LIMITER.limit({ key: ownerId });
   return !result.success;
-}
-
-function missingAuth(): Response {
-  return badRequest('authentication required: send a valid Clerk Bearer token or X-Owner-Id');
 }
 
 function shareCodeOf(request: Request): string | null {
