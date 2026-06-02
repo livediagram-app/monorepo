@@ -6,6 +6,7 @@ import { useUiMode } from '@/hooks/useUiMode';
 import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
 import { PencilIcon, TrashIcon } from './explorer-icons';
+import { FileExportIcon, FileImportIcon } from './palette-icons';
 import { MenuItem } from './PortalMenu';
 import { ParticipantAvatar } from './ParticipantAvatar';
 import { Tooltip } from './Tooltip';
@@ -48,6 +49,11 @@ type TabBarProps = {
   // through the active tab's ellipsis menu (used to live in the
   // Palette's Content accordion).
   onClearContent: () => void;
+  // Active-tab import / export. Surfaced in the ellipsis menu (moved
+  // out of the Palette's Import/Export accordion so the per-tab actions
+  // all live in one place).
+  onImportTab: () => void;
+  onExportTab: () => void;
   // The user's other diagrams (excluding the current one). Drives the
   // "Add to another diagram" submenu in the tab ellipsis.
   otherDiagrams: { id: string; name: string }[];
@@ -89,6 +95,8 @@ export function TabBar({
   onDuplicate,
   onDelete,
   onClearContent,
+  onImportTab,
+  onExportTab,
   otherDiagrams,
   onCopyTabTo,
   onToggleLockTab,
@@ -200,6 +208,14 @@ export function TabBar({
                   }}
                   onClearContent={() => {
                     onClearContent();
+                    setMenuFor(null);
+                  }}
+                  onImport={() => {
+                    onImportTab();
+                    setMenuFor(null);
+                  }}
+                  onExport={() => {
+                    onExportTab();
                     setMenuFor(null);
                   }}
                   onCopyTo={async (targetId) => {
@@ -445,6 +461,8 @@ function EllipsisMenuButton({
   onRename,
   onDuplicate,
   onClearContent,
+  onImport,
+  onExport,
   onCopyTo,
   onToggleLock,
   onDelete,
@@ -459,6 +477,8 @@ function EllipsisMenuButton({
   onRename: () => void;
   onDuplicate: () => void;
   onClearContent: () => void;
+  onImport: () => void;
+  onExport: () => void;
   onCopyTo: (targetDiagramId: string) => void;
   onToggleLock: () => void;
   onDelete: () => void;
@@ -487,6 +507,8 @@ function EllipsisMenuButton({
           onRename={onRename}
           onDuplicate={onDuplicate}
           onClearContent={onClearContent}
+          onImport={onImport}
+          onExport={onExport}
           onCopyTo={onCopyTo}
           onToggleLock={onToggleLock}
           locked={locked}
@@ -506,6 +528,8 @@ function PortalMenu({
   onRename,
   onDuplicate,
   onClearContent,
+  onImport,
+  onExport,
   onCopyTo,
   onToggleLock,
   locked,
@@ -519,6 +543,8 @@ function PortalMenu({
   onRename: () => void;
   onDuplicate: () => void;
   onClearContent: () => void;
+  onImport: () => void;
+  onExport: () => void;
   onCopyTo: (targetDiagramId: string) => void;
   onToggleLock: () => void;
   locked: boolean;
@@ -617,6 +643,8 @@ function PortalMenu({
             onClick={onClearContent}
             disabled={!canClearContent}
           />
+          <MenuItem icon={<FileImportIcon />} label="Import…" onClick={onImport} />
+          <MenuItem icon={<FileExportIcon />} label="Export…" onClick={onExport} />
           <MenuItem
             icon={<TrashIcon />}
             label="Delete"

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { ImageSummary } from '@livediagram/api-schema';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type {
   ArrowEnds,
@@ -32,7 +31,6 @@ import {
   BackgroundStripesIcon,
   BackgroundWavesIcon,
 } from './background-pattern-icons';
-import { GalleryImageButton } from './GalleryImageButton';
 import { MovablePanel } from './MovablePanel';
 import {
   AlignIcon,
@@ -46,8 +44,6 @@ import {
   BorderStyleIcon,
   BringToFrontIcon,
   DotsIcon,
-  FileExportIcon,
-  FileImportIcon,
   ItalicIcon,
   LaserIcon,
   NonePaddingIcon,
@@ -157,38 +153,19 @@ export type TabSectionControls = {
   // customs. Surfaces as a "Reset elements to theme" button under
   // the theme grid.
   onResetElementsToTheme: () => void;
-  // File I/O — moved from the editor header into the Current Tab
-  // section so theme / canvas / file controls all live in the same
-  // panel. Both optional so callers without the routing wired (e.g.
-  // welcome-flow surfaces) can omit them.
-  onExportTab?: () => void;
-  onImportTab?: () => void;
+  // Surfaces the "import .json failed" message that used to live
+  // inside the now-removed Import/Export accordion. The error itself
+  // still originates from the TabBar's ellipsis-menu Import action;
+  // we just render the inline note here when one's pending.
   importError?: string | null;
   // "Auto align" pass: snaps every element's position + dimensions
   // to the 10px grid so almost-aligned shapes become exactly aligned
-  // and minor size drift collapses. See lib/auto-align.ts. The
-  // accordion is hidden when the callback is missing so the picker
-  // / welcome surfaces don't sprout it.
+  // and minor size drift collapses. See lib/auto-align.ts. Lives in
+  // the renamed "Assistant" accordion now. Hidden when missing.
   onAutoAlign?: () => void;
   // True when the active tab has at least one boxed element. When
   // false the button is disabled, the action would be a no-op.
   canAutoAlign?: boolean;
-  // Recent-images accordion (spec/19). Optional so deployments
-  // without R2 (or view-role visitors) can omit the section: when
-  // `recentImages` is undefined, the Images accordion doesn't
-  // render. Empty array still renders the accordion with an empty-
-  // state message so the user can see the feature exists.
-  recentImages?: ImageSummary[];
-  // Used by GalleryImageButton to fetch the auth-gated bitmap.
-  // Required alongside `recentImages` (the picker would otherwise
-  // have nothing to fetch with).
-  imageOwnerId?: string;
-  imageDiagramId?: string;
-  imageShareCode?: string | null;
-  // Click handler when the user picks a thumbnail. The editor adds
-  // a fresh ImageElement to the canvas, pre-filled with the chosen
-  // image's id + natural dimensions.
-  onAddImageFromGallery?: (image: ImageSummary) => void;
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser';
@@ -1306,9 +1283,7 @@ function ToggleSwitch({
 export type TabAccordionState = {
   theme: boolean;
   canvas: boolean;
-  file: boolean;
   cleanup: boolean;
-  images: boolean;
 };
 
 export function TabSection({
@@ -1326,9 +1301,7 @@ export function TabSection({
       const closed: TabAccordionState = {
         theme: false,
         canvas: false,
-        file: false,
         cleanup: false,
-        images: false,
       };
       if (prev[key]) return closed;
       return { ...closed, [key]: true };
@@ -1463,75 +1436,13 @@ export function TabSection({
           />
         </div>
       </Accordion>
-      {tab.onExportTab || tab.onImportTab ? (
-        <Accordion title="Import / Export" open={open.file} onToggle={() => toggle('file')}>
-          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-            Bring a tab in from disk or export this one as Markdown, PDF, PNG, or .json.
-          </p>
-          <div className="mt-1 flex items-stretch gap-1.5">
-            {tab.onImportTab ? (
-              <Tooltip title="Import tab" description="Drop a .json tab into this diagram." block>
-                <button
-                  type="button"
-                  onClick={tab.onImportTab}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15 dark:hover:text-brand-200"
-                >
-                  <FileImportIcon />
-                  Import
-                </button>
-              </Tooltip>
-            ) : null}
-            {tab.onExportTab ? (
-              <Tooltip title="Export tab" description="Save as Markdown, PDF, PNG, or .json." block>
-                <button
-                  type="button"
-                  onClick={tab.onExportTab}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15 dark:hover:text-brand-200"
-                >
-                  <FileExportIcon />
-                  Export
-                </button>
-              </Tooltip>
-            ) : null}
-          </div>
-          {tab.importError ? (
-            <p className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700">
-              {tab.importError}
-            </p>
-          ) : null}
-        </Accordion>
-      ) : null}
-      {tab.recentImages !== undefined &&
-      tab.imageOwnerId &&
-      tab.imageDiagramId !== undefined &&
-      tab.onAddImageFromGallery ? (
-        <Accordion title="Images" open={open.images} onToggle={() => toggle('images')}>
-          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-            Your eight most recent uploads. Click one to drop it onto the canvas.
-          </p>
-          {tab.recentImages.length === 0 ? (
-            <p className="mt-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-2 py-3 text-center text-[11px] text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
-              Nothing yet. Upload an image via the Image palette button and it'll show up here.
-            </p>
-          ) : (
-            <div className="mt-2 grid grid-cols-4 gap-1">
-              {tab.recentImages.slice(0, 8).map((image) => (
-                <GalleryImageButton
-                  key={image.id}
-                  image={image}
-                  ownerId={tab.imageOwnerId!}
-                  diagramId={tab.imageDiagramId!}
-                  shareCode={tab.imageShareCode ?? null}
-                  onClick={() => tab.onAddImageFromGallery!(image)}
-                  ariaLabel={`Add ${image.originalName ?? 'image'} to the canvas`}
-                />
-              ))}
-            </div>
-          )}
-        </Accordion>
+      {tab.importError ? (
+        <p className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700">
+          {tab.importError}
+        </p>
       ) : null}
       {tab.onAutoAlign ? (
-        <Accordion title="Cleanup" open={open.cleanup} onToggle={() => toggle('cleanup')}>
+        <Accordion title="Assistant" open={open.cleanup} onToggle={() => toggle('cleanup')}>
           <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Snap every element on this tab to the canvas grid so near-aligned shapes line up exactly
             and minor dimension drift collapses. Undoable.

@@ -246,10 +246,8 @@ export default function LivePage() {
   const [tabAccordionsOpen, setTabAccordionsOpen] = useState<{
     theme: boolean;
     canvas: boolean;
-    file: boolean;
     cleanup: boolean;
-    images: boolean;
-  }>({ theme: false, canvas: false, file: false, cleanup: false, images: false });
+  }>({ theme: false, canvas: false, cleanup: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -1734,9 +1732,7 @@ export default function LivePage() {
       setTabAccordionsOpen({
         theme: true,
         canvas: false,
-        file: false,
         cleanup: false,
-        images: false,
       });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
@@ -1745,9 +1741,7 @@ export default function LivePage() {
       setTabAccordionsOpen({
         theme: false,
         canvas: true,
-        file: false,
         cleanup: false,
-        images: false,
       });
     }
   };
@@ -2311,9 +2305,7 @@ export default function LivePage() {
     setTabAccordionsOpen({
       theme: which === 'theme',
       canvas: which === 'canvas',
-      file: false,
       cleanup: false,
-      images: false,
     });
   };
 
@@ -2356,7 +2348,6 @@ export default function LivePage() {
   // that state or its six handlers — see useEditorImages + spec/19.
   const {
     imagePickerOpenFor,
-    recentImages,
     imageContext,
     addImage,
     addImageFromGallery,
@@ -3008,15 +2999,9 @@ export default function LivePage() {
         tabThemeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
         onSetTheme={setTheme}
         onResetElementsToTheme={resetElementsToTheme}
-        onExportTab={hydrated && !anyWelcomeOpen ? () => setExportOpen(true) : undefined}
-        onImportTab={
-          hydrated && !anyWelcomeOpen && !isReadOnly ? () => void importTabFromFile() : undefined
-        }
         importError={importError}
         onAutoAlign={hydrated && !anyWelcomeOpen && !isReadOnly ? autoAlignTab : undefined}
         canAutoAlign={activeTab.elements.length > 0 && !activeTabLocked}
-        recentImages={!isReadOnly && diagramId ? recentImages : undefined}
-        imageOwnerId={!isReadOnly && diagramId ? selfParticipant.id : undefined}
         imageDiagramId={!isReadOnly && diagramId ? diagramId : undefined}
         imageShareCode={sessionShareCode}
         onAddImageFromGallery={!isReadOnly && diagramId ? addImageFromGallery : undefined}
@@ -3048,6 +3033,8 @@ export default function LivePage() {
           onDuplicate={duplicateTab}
           onDelete={deleteTab}
           onClearContent={clearTabContent}
+          onImportTab={() => void importTabFromFile()}
+          onExportTab={() => setExportOpen(true)}
           otherDiagrams={diagramList.filter((d) => d.id !== diagramId)}
           onCopyTabTo={linkActiveTabTo}
           onToggleLockTab={toggleActiveTabLock}
