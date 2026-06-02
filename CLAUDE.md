@@ -13,6 +13,17 @@ Workflow:
 - Reference specs by filename in PRs and discussions.
 - If specs and code disagree, that's a bug — usually the spec is right; if not, fix the spec first.
 
+## Keep docs and the README current
+
+The root [`README.md`](README.md) and the [`docs/`](docs/) folder (`architecture.md`, `contributing.md`, `local-development.md`, `self-hosting.md`, `what-is-livediagram.md`) are developer- and user-facing documentation, distinct from the product specs in `specs/`.
+
+Treat them as part of the change, not an afterthought:
+
+- After any change, check whether it makes the README or a `docs/` file **incorrect** (commands, ports, file paths, env vars, app/package names, architecture, deploy steps) or **lacking key information** (a new app, package, env var, command, route, or workflow that a reader would now expect to find). If so, update the affected doc in the **same change** as the code.
+- Adding or removing an app, package, env var, command, route, or build/deploy step is a strong signal that `README.md`, `docs/architecture.md`, `docs/local-development.md`, and `docs/self-hosting.md` may need a matching edit.
+- Don't let docs drift: an out-of-date doc is worse than a missing one. If you can't fully update it now, note the gap explicitly rather than leaving a confidently wrong instruction.
+- Specs (`specs/`) remain the source of truth for product decisions; `docs/` explains how to understand, run, and contribute to the code. Keep both honest.
+
 ## Repo layout
 
 ```
