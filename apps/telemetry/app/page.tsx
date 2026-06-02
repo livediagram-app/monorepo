@@ -57,6 +57,142 @@ function eventLabel(row: TelemetryCount): string {
   return row.type ? `${row.action} · ${row.type}` : row.action;
 }
 
+// Short plain-language explanation for a single event row, shown as
+// a native browser tooltip on hover so a curious visitor doesn't have
+// to read the editor source to understand what each verb means. The
+// rules are layered: try the most specific match first (category +
+// action + type), then category + action, then category, then a
+// generic action-only sentence as the safety net. The dashboard never
+// surfaces a row whose strings aren't already validated against the
+// closed vocabulary (spec/22), so unknown branches really are unusual.
+function eventExplanation(category: string, action: string, type: string | null): string {
+  // Category + action + type (the most user-recognisable combos).
+  if (category === 'Element' && action === 'Added' && type) {
+    return `Someone dropped a ${type.toLowerCase()} onto the canvas.`;
+  }
+  if (category === 'Diagram' && action === 'Exported' && type) {
+    return `Someone exported a tab as ${type}.`;
+  }
+  if (category === 'Diagram' && action === 'Shared' && type) {
+    return `Someone generated a ${type.toLowerCase()}-role share link for a diagram.`;
+  }
+  if (category === 'Diagram' && action === 'Joined' && type) {
+    return `Someone opened a diagram via a ${type.toLowerCase()}-role share link.`;
+  }
+  if (category === 'Element' && action === 'Linked' && type) {
+    return `Someone linked an element to another ${type.toLowerCase()}.`;
+  }
+  if (category === 'Element' && action === 'Reordered' && type) {
+    return type === 'Front'
+      ? 'Someone sent an element to the front of the stack.'
+      : 'Someone sent an element to the back of the stack.';
+  }
+  if (category === 'Element' && action === 'Changed' && type === 'FormatPainter') {
+    return 'Someone used the format painter to copy a style from one element onto another.';
+  }
+  if (category === 'Tab' && action === 'Imported' && type) {
+    return `Someone imported a tab from a ${type} file.`;
+  }
+  if (category === 'Theme' && action === 'Changed' && type) {
+    return `Someone switched a tab to the ${type} theme.`;
+  }
+  if (category === 'Canvas' && action === 'Changed' && type) {
+    return `Someone switched a tab's background pattern to ${type}.`;
+  }
+  if (category === 'Canvas' && action === 'Zoomed' && type) {
+    if (type === 'In') return 'Someone tapped the zoom-in button.';
+    if (type === 'Out') return 'Someone tapped the zoom-out button.';
+    if (type === 'Fit') return 'Someone tapped "Fit to screen".';
+    if (type === 'Reset') return 'Someone reset the zoom to 100%.';
+  }
+  if (category === 'Template' && action === 'Used' && type) {
+    return `Someone started a fresh tab from the ${type} template.`;
+  }
+  if (category === 'Search' && action === 'Selected' && type) {
+    return `Someone picked a ${type.toLowerCase()} match from the global search results.`;
+  }
+  if (category === 'UI' && action === 'Toggled' && type) {
+    return `Someone switched the editor chrome to ${type.toLowerCase()} mode.`;
+  }
+  if (category === 'UI' && action === 'Opened' && type) {
+    if (type === 'Settings') return 'Someone opened the Settings dialog.';
+    if (type === 'Shortcuts') return 'Someone opened the keyboard-shortcuts dialog.';
+    if (type === 'Share') return 'Someone opened the Share dialog.';
+    if (type === 'Activity') return 'Someone expanded the Activity panel.';
+  }
+  if (category === 'UI' && action === 'Closed' && type === 'Welcome') {
+    return 'Someone dismissed the first-run welcome modal.';
+  }
+  if (category === 'UI' && action === 'Copied' && type === 'ShareLink') {
+    return 'Someone copied a share link to the clipboard.';
+  }
+
+  // Category + action.
+  if (category === 'Diagram') {
+    if (action === 'Created') return 'A brand-new diagram was created.';
+    if (action === 'Duplicated') return 'A diagram was duplicated into a new one.';
+    if (action === 'Deleted') return 'A diagram was deleted.';
+    if (action === 'Renamed') return 'A diagram was renamed.';
+    if (action === 'Moved') return 'A diagram was moved into (or out of) a folder.';
+    if (action === 'Undone') return 'Someone hit Undo on a diagram edit.';
+    if (action === 'Redone') return 'Someone hit Redo on a diagram edit.';
+    if (action === 'Reverted')
+      return 'Someone reverted a single change from the diagram activity log.';
+  }
+  if (category === 'Element') {
+    if (action === 'Deleted') return 'An element was removed from the canvas.';
+    if (action === 'Duplicated') return 'An element was duplicated.';
+    if (action === 'Grouped') return 'A multi-selection was grouped.';
+    if (action === 'Ungrouped') return 'A group was disbanded back into individual elements.';
+    if (action === 'Locked') return "An element's lock was turned on (no edits allowed).";
+    if (action === 'Unlocked') return "An element's lock was turned off (edits resume).";
+    if (action === 'Unlinked') return 'Someone cleared the link off an element.';
+  }
+  if (category === 'Tab') {
+    if (action === 'Created') return 'A new tab was added to a diagram.';
+    if (action === 'Deleted') return 'A tab was removed from a diagram.';
+    if (action === 'Duplicated') return 'A tab was duplicated.';
+    if (action === 'Renamed') return 'A tab was renamed.';
+    if (action === 'Locked') return 'A tab was locked (read-only).';
+    if (action === 'Unlocked') return 'A tab was unlocked (edits resume).';
+    if (action === 'Linked') return 'A tab was linked into another diagram.';
+    if (action === 'Reordered') return 'Someone dragged a tab to a new position.';
+    if (action === 'Aligned') return 'Someone tapped "Auto align" to snap a tab to the grid.';
+    if (action === 'Cleared') return "A tab's content was wiped.";
+  }
+  if (category === 'Comment') {
+    if (action === 'Added') return 'A comment was added to an element thread.';
+    if (action === 'Deleted') return 'A comment was removed from a thread.';
+    if (action === 'Resolved') return 'A comment thread was marked resolved.';
+    if (action === 'Unresolved') return 'A resolved comment thread was reopened.';
+    if (action === 'Opened') return 'Someone opened the comment popover on an element.';
+  }
+  if (category === 'Note') {
+    if (action === 'Added') return 'A note was added to an element (first non-empty save).';
+    if (action === 'Changed') return "An existing note's text was edited.";
+    if (action === 'Deleted') return 'A note was cleared from an element.';
+    if (action === 'Opened') return 'Someone opened the note popover on an element.';
+  }
+  if (category === 'Search') {
+    if (action === 'Opened') return 'The global search panel was opened.';
+    if (action === 'Searched') return 'A query was typed into search (one emit per session).';
+  }
+  if (category === 'Folder') {
+    if (action === 'Created') return 'A new folder was created in the diagram explorer.';
+    if (action === 'Renamed') return 'A folder was renamed.';
+    if (action === 'Deleted') return 'A folder was deleted (contained diagrams move to Unsorted).';
+    if (action === 'Moved') return 'A folder was re-parented under another folder (or the root).';
+  }
+  if (category === 'Session') {
+    if (action === 'SignedIn') return 'A visitor just completed sign-in via Clerk.';
+    if (action === 'SignedUp') return 'A visitor just completed sign-up via Clerk.';
+    if (action === 'SignedOut') return 'A visitor just signed out.';
+  }
+
+  // Generic fallback.
+  return `One occurrence of ${eventLabel({ category, action, type, count: 0 })}.`;
+}
+
 // Dispatcher that picks a 14x14 inline SVG glyph for a row. Resolution
 // order: (1) type-specific (a known shape kind, dialog target, etc.);
 // (2) action-specific (Deleted -> trash regardless of category); (3)
@@ -702,6 +838,17 @@ export default function TelemetryDashboard() {
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [active, setActive] = useState<TelemetryWindowKey>('last7');
+  // Category accordions: closed by default so a fresh visitor scans
+  // categories first and drills into the one they're curious about.
+  // Keyed by category name so the state survives a window switch.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggleCategory = (category: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -788,46 +935,80 @@ export default function TelemetryDashboard() {
             <p className="mt-8 text-slate-500">No events recorded in this window yet.</p>
           ) : (
             <div className="mt-8 grid gap-6 sm:grid-cols-2">
-              {groups.map((group) => (
-                <div
-                  key={group.category}
-                  className="rounded-xl border border-slate-200 bg-white p-5"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-base font-semibold text-slate-900">{group.category}</h2>
-                    <span className="text-sm font-medium text-slate-400">
-                      {group.subtotal.toLocaleString()}
-                    </span>
+              {groups.map((group) => {
+                const isOpen = expanded.has(group.category);
+                return (
+                  <div
+                    key={group.category}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(group.category)}
+                      aria-expanded={isOpen}
+                      className="flex w-full items-baseline justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+                    >
+                      <span className="flex items-baseline gap-2">
+                        <span
+                          aria-hidden
+                          className={
+                            'inline-block text-xs text-slate-400 transition-transform ' +
+                            (isOpen ? 'rotate-90' : '')
+                          }
+                        >
+                          ▶
+                        </span>
+                        <h2 className="text-base font-semibold text-slate-900">{group.category}</h2>
+                      </span>
+                      <span className="text-sm font-medium text-slate-400">
+                        {group.subtotal.toLocaleString()}
+                      </span>
+                    </button>
+                    {/* Grid-template-rows animation so the body slides
+                        open/closed rather than popping. Mirrors the
+                        MovablePanel pattern in the editor. */}
+                    <div
+                      className={
+                        'grid transition-[grid-template-rows] duration-200 ease-out ' +
+                        (isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')
+                      }
+                    >
+                      <div className="overflow-hidden">
+                        <div className="px-5 pb-5">
+                          {CATEGORY_DESCRIPTIONS[group.category] ? (
+                            <p className="text-xs leading-relaxed text-slate-500">
+                              {CATEGORY_DESCRIPTIONS[group.category]}
+                            </p>
+                          ) : null}
+                          <ul className="mt-3 divide-y divide-slate-100">
+                            {group.items.map((row) => (
+                              <li
+                                key={`${row.action}:${row.type ?? ''}`}
+                                title={eventExplanation(row.category, row.action, row.type ?? null)}
+                                className="flex items-center justify-between gap-3 py-1.5 text-sm"
+                              >
+                                <span className="flex min-w-0 flex-1 items-center gap-2 text-slate-600">
+                                  <span className="shrink-0 text-slate-400">
+                                    <EventIcon
+                                      category={row.category}
+                                      action={row.action}
+                                      type={row.type ?? null}
+                                    />
+                                  </span>
+                                  <span className="truncate">{eventLabel(row)}</span>
+                                </span>
+                                <span className="font-medium text-slate-900">
+                                  {row.count.toLocaleString()}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {CATEGORY_DESCRIPTIONS[group.category] ? (
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {CATEGORY_DESCRIPTIONS[group.category]}
-                    </p>
-                  ) : null}
-                  <ul className="mt-3 divide-y divide-slate-100">
-                    {group.items.map((row) => (
-                      <li
-                        key={`${row.action}:${row.type ?? ''}`}
-                        className="flex items-center justify-between gap-3 py-1.5 text-sm"
-                      >
-                        <span className="flex min-w-0 flex-1 items-center gap-2 text-slate-600">
-                          <span className="shrink-0 text-slate-400">
-                            <EventIcon
-                              category={row.category}
-                              action={row.action}
-                              type={row.type ?? null}
-                            />
-                          </span>
-                          <span className="truncate">{eventLabel(row)}</span>
-                        </span>
-                        <span className="font-medium text-slate-900">
-                          {row.count.toLocaleString()}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
