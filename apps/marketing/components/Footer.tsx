@@ -28,6 +28,9 @@ export function Footer() {
           <a href="/telemetry" className="hover:text-slate-900">
             Telemetry
           </a>
+          <a href="/status" className="hover:text-slate-900">
+            Status
+          </a>
           <a href="mailto:hello@livediagram.app" className="hover:text-slate-900">
             Contact
           </a>
