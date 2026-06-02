@@ -525,16 +525,20 @@ export default {
             if (!owner) return missingAuth();
             const source = await getDiagram(env, id);
             if (!source) return notFound();
-            // Authorisation: any of the three valid paths above.
-            // The share-code check mirrors canEditDiagram's logic;
-            // we don't need full edit role for a read-then-copy
-            // (view-role visitors can also fork their own copy).
-            const code = shareCodeOf(request);
-            let allowed = source.ownerId === owner;
-            if (!allowed && code) {
-              const link = await getShareLink(env, code);
-              if (link && link.diagramId === id) allowed = true;
-            }
+            // Authorisation: any of (a) owner, (b) holder of any
+            // share code (view or edit) for this diagram, (c)
+            // visitor with an active shared_with row for the source.
+            // The owner + share-code legs are exactly canReadDiagram
+            // (view-role visitors can fork their own copy, so this
+            // is a read check, not an edit check). The third leg is
+            // copy-specific so it stays inline.
+            let allowed = await canReadDiagram(
+              env,
+              id,
+              owner,
+              shareCodeOf(request),
+              source.ownerId,
+            );
             if (!allowed) {
               const sharedRows = await listSharedWith(env, owner);
               if (sharedRows.some((s) => s.id === id)) allowed = true;
