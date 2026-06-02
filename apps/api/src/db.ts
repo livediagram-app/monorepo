@@ -1,5 +1,6 @@
 import { isBoxed, type Tab } from '@livediagram/diagram';
 import { rowToChangeLog, type ChangeLogRow } from './change-log-row';
+import { rowToShareLink, type ShareLinkRow } from './share-link-row';
 import type {
   ChangeLogEntryDTO,
   DiagramDTO,
@@ -445,24 +446,10 @@ export function generateShareCode(length = 8): string {
 }
 
 // ---------------------------------------------------------------------
-// share_links — per-diagram, per-role short codes (migration 0003)
+// share_links (per-diagram, per-role short codes, migration 0003).
+// Row shape + role normalisation live in share-link-row.ts so the
+// defensive mapper has its own test surface.
 // ---------------------------------------------------------------------
-
-type ShareLinkRow = {
-  code: string;
-  diagram_id: string;
-  role: string;
-  created_at: number;
-};
-
-function rowToShareLink(row: ShareLinkRow): ShareLinkDTO {
-  return {
-    code: row.code,
-    diagramId: row.diagram_id,
-    role: row.role === 'view' ? 'view' : 'edit',
-    createdAt: row.created_at,
-  };
-}
 
 export async function listShareLinks(env: Env, diagramId: string): Promise<ShareLinkDTO[]> {
   const result = await env.DB.prepare(
