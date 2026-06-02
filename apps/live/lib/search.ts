@@ -16,13 +16,20 @@ const FOLDER_LIMIT = 8;
 const TAB_LIMIT = 8;
 const ELEMENT_LIMIT = 12;
 
-export type SearchInputDiagram = { id: string; name: string };
-export type SearchInputFolder = { id: string; name: string };
+// Internal-only input shapes for the diagram + folder match inputs.
+// Both have the same {id, name} shape but stay distinct so a future
+// schema change to one doesn't silently propagate to the other.
+type SearchInputDiagram = { id: string; name: string };
+type SearchInputFolder = { id: string; name: string };
 
 export type DiagramItem = { kind: 'diagram'; id: string; name: string };
 export type FolderItem = { kind: 'folder'; id: string; name: string };
-export type TabItem = { kind: 'tab'; id: string; name: string; isCurrent: boolean };
-export type ElementItem = {
+// `TabItem` + `ElementItem` are union members of the exported
+// `SearchResultItem`. Callers narrow via the `kind` discriminator
+// rather than importing the individual variants by name, so the
+// member types stay package-local.
+type TabItem = { kind: 'tab'; id: string; name: string; isCurrent: boolean };
+type ElementItem = {
   kind: 'element';
   tabId: string;
   tabName: string;
@@ -42,7 +49,10 @@ export type SearchGroup = {
   items: SearchResultItem[];
 };
 
-export type SearchInput = {
+// `buildSearchResults`' parameter type. Local because callers (the
+// SearchPanel) pass an object literal; TypeScript infers the shape
+// from the function signature without needing the named type.
+type SearchInput = {
   query: string;
   diagrams: SearchInputDiagram[];
   folders: SearchInputFolder[];
