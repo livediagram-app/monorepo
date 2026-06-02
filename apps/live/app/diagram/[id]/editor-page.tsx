@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ARROW_THICKNESS_PX,
   bringManyToFront,
   createPinnedArrow,
-  createImage,
   createShape,
   createSticky,
   createText,
@@ -153,6 +152,7 @@ import { useEditorBroadcast } from '@/hooks/useEditorBroadcast';
 import { useShortcutsEnabled } from '@/hooks/useShortcutsEnabled';
 import { useEditorComments } from '@/hooks/useEditorComments';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
+import { useEditorImages } from '@/hooks/useEditorImages';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
 import {
@@ -175,7 +175,6 @@ import {
   apiCopyDiagram,
   apiDismissSharedWith,
   apiListDiagrams,
-  apiListImages,
   apiListSharedWith,
   apiLinkTab,
   apiListShareLinks,
@@ -189,7 +188,6 @@ import {
   apiSetDiagramFolder,
   connectRoom,
   type ChangeLogEntry,
-  type ImageSummary,
   type RoomHandlers,
   type ShareLink,
   type ShareRole,
@@ -403,25 +401,10 @@ export default function LivePage() {
   // pans / zooms, same trick as NotePopover.
   const [linkPickerOpenForId, setLinkPickerOpenForId] = useState<string | null>(null);
 
-  // Image picker state. `null` = closed; an object = open for that
-  // element id (existing image placeholder being filled in) OR
-  // `forElementId: null` when the "Add image" gesture is fresh and
-  // the picker will place a new element on commit. See spec/19.
-  const [imagePickerOpenFor, setImagePickerOpenFor] = useState<{
-    forElementId: string | null;
-  } | null>(null);
-
-  // Recent-images list for the Current Tab "Images" accordion
-  // (spec/19). Empty array when R2 is unbound (apiListImages
-  // returns null), or when the owner has no uploads yet. Refreshed
-  // on diagramId mount + when the picker uploads a new image so a
-  // freshly-uploaded photo appears in the accordion immediately.
-  const [recentImages, setRecentImages] = useState<ImageSummary[]>([]);
-  const refreshRecentImages = (ownerId: string) => {
-    apiListImages(ownerId)
-      .then((list) => setRecentImages(list ?? []))
-      .catch(() => setRecentImages([]));
-  };
+  // Image picker state, the recent-images list, and every image
+  // placement / fill handler live in useEditorImages (spec/19). The
+  // hook is invoked further down, after its deps (commit,
+  // getViewportCenter, editsBlocked, ...) exist.
   const [linkPickerAnchorEl, setLinkPickerAnchorEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (linkPickerOpenForId === null) {
@@ -692,19 +675,6 @@ export default function LivePage() {
   // the diagram's primary code surfaced for sharing) because a
   // diagram can have many active codes.
   const [sessionShareCode, setSessionShareCode] = useState<string | null>(null);
-
-  // Recent-images list for the Current Tab "Images" accordion
-  // (spec/19). Loads once on diagramId mount; refreshed manually
-  // by refreshRecentImages after a successful picker upload so a
-  // newly-uploaded image surfaces without a diagram reload. View-
-  // role visitors skip the fetch (the accordion is hidden for them
-  // anyway via the !isReadOnly gate at the call site).
-  useEffect(() => {
-    if (!diagramId || isReadOnly) return;
-    refreshRecentImages(selfParticipant.id);
-    // selfParticipant.id is stable for the session (set on mount).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagramId, isReadOnly]);
 
   useLayoutEffect(() => {
     if (hydrated) return;
@@ -2647,6 +2617,30 @@ export default function LivePage() {
     scheduleTabMetaLog('patternColor', `Changed pattern colour to ${color}`);
   };
 
+  // Image domain (picker state, recent-images list, placement + fill
+  // handlers). Lives in its own hook so the page no longer carries
+  // that state or its six handlers — see useEditorImages + spec/19.
+  const {
+    imagePickerOpenFor,
+    recentImages,
+    imageContext,
+    addImage,
+    addImageFromGallery,
+    applyImageToElement,
+    removeImageFromElement,
+    refreshRecentImages,
+    closeImagePicker,
+  } = useEditorImages({
+    editsBlocked,
+    isReadOnly,
+    getViewportCenter,
+    commit,
+    setSelectedId,
+    diagramId,
+    ownerId: selfParticipant.id,
+    sessionShareCode,
+  });
+
   // --- Element CRUD --------------------------------------------------------
 
   const addShape = (kind: ShapeKind) => {
@@ -2662,121 +2656,6 @@ export default function LivePage() {
   const addSticky = () => {
     addBoxed((x, y) => createSticky(x, y));
     track('Element', 'Added', 'Sticky');
-  };
-  // Drop an empty image placeholder at the viewport centre. The
-  // picker only opens via double-click on the placeholder (or
-  // "Change image" in the context menu), so the user can position
-  // and resize the empty box without the modal popping up first.
-  const addImage = () => {
-    if (editsBlocked) return;
-    const centre = getViewportCenter();
-    const placeholder = createImage(centre.x - 100, centre.y - 75);
-    commit((els) => [...els, placeholder]);
-    setSelectedId(placeholder.id);
-  };
-  // Open the picker for an existing image element (the user clicked
-  // its empty placeholder or "Change image" in the context menu).
-  // useCallback so the function identity stays stable across
-  // renders: the imageContext object below references it, and
-  // BoxedElementView is memoised on imageContext identity (a fresh
-  // arrow per render would invalidate the memo for every image
-  // element on the active tab).
-  const openImagePickerFor = useCallback(
-    (elementId: string) => {
-      if (editsBlocked) return;
-      setImagePickerOpenFor({ forElementId: elementId });
-    },
-    [editsBlocked],
-  );
-  // Memoised so BoxedElementView's React.memo (commit e8e34f9)
-  // doesn't see a fresh object identity every editor-page render.
-  // Without this the parent passed a new object literal each time,
-  // invalidating the memo for every image element on the active
-  // tab whenever any unrelated state moved.
-  const imageContext = useMemo(
-    () =>
-      diagramId
-        ? {
-            ownerId: selfParticipant.id,
-            diagramId,
-            shareCode: sessionShareCode,
-            onOpenPicker: isReadOnly ? undefined : openImagePickerFor,
-          }
-        : undefined,
-    [diagramId, selfParticipant.id, sessionShareCode, isReadOnly, openImagePickerFor],
-  );
-  // Apply the picker's selection: set imageId + natural dimensions on
-  // the target element. When the picker was opened with a fresh
-  // forElementId (from addImage), the placeholder created by
-  // addImage is the target. The element's width/height stay as the
-  // user originally placed them; naturalWidth/Height drive the
-  // aspect-lock default + the "Reset to natural size" context-menu
-  // action.
-  const applyImageToElement = (
-    elementId: string,
-    image: { id: string; width: number; height: number; originalName?: string },
-  ) => {
-    commit((els) =>
-      els.map((el) =>
-        el.id === elementId && isBoxed(el) && el.type === 'image'
-          ? {
-              ...el,
-              imageId: image.id,
-              naturalWidth: image.width,
-              naturalHeight: image.height,
-              alt: el.alt ?? image.originalName,
-            }
-          : el,
-      ),
-    );
-    setImagePickerOpenFor(null);
-  };
-  // Detach the bitmap from an image element without touching the
-  // gallery: imageId returns to null (placeholder rendering), and
-  // the natural-size fields drop so a later "Reset to natural size"
-  // doesn't snap to stale dimensions. The element's width/height
-  // stay so the user keeps the footprint they sized to.
-  const removeImageFromElement = (elementId: string) => {
-    commit((els) =>
-      els.map((el) => {
-        if (el.id !== elementId || !isBoxed(el) || el.type !== 'image') return el;
-        const { naturalWidth: _w, naturalHeight: _h, ...rest } = el;
-        void _w;
-        void _h;
-        return { ...rest, imageId: null };
-      }),
-    );
-    setImagePickerOpenFor(null);
-  };
-  // Drop a new image element pre-filled with an existing gallery
-  // image (skips the picker entirely). Fired from the Current Tab
-  // "Images" accordion thumbnails. Sizes the placeholder to the
-  // image's natural aspect ratio, capped at 240 px on the larger
-  // side so it lands at a sensible canvas footprint regardless of
-  // the original resolution.
-  const addImageFromGallery = (image: {
-    id: string;
-    width: number;
-    height: number;
-    originalName?: string;
-  }) => {
-    if (editsBlocked) return;
-    const centre = getViewportCenter();
-    const max = 240;
-    const ratio = image.width / image.height;
-    const w = image.width >= image.height ? max : Math.round(max * ratio);
-    const h = image.height >= image.width ? max : Math.round(max / ratio);
-    const placed = {
-      ...createImage(centre.x - w / 2, centre.y - h / 2),
-      width: w,
-      height: h,
-      imageId: image.id,
-      naturalWidth: image.width,
-      naturalHeight: image.height,
-      alt: image.originalName,
-    };
-    commit((els) => [...els, placed]);
-    setSelectedId(placed.id);
   };
 
   // Drop a plain connector at the viewport centre. Defaults to no
@@ -4201,13 +4080,13 @@ export default function LivePage() {
             if (imagePickerOpenFor.forElementId) {
               applyImageToElement(imagePickerOpenFor.forElementId, image);
             } else {
-              setImagePickerOpenFor(null);
+              closeImagePicker();
             }
             // Refresh the Current Tab → Images accordion so the
             // just-uploaded image surfaces without a diagram reload.
             refreshRecentImages(selfParticipant.id);
           }}
-          onClose={() => setImagePickerOpenFor(null)}
+          onClose={closeImagePicker}
         />
       ) : null}
     </div>
