@@ -25,9 +25,10 @@ type TabBarProps = {
   // Optional callback that pops the keyboard-shortcuts modal. Lives
   // alongside the dark-mode toggle on the right edge of the bar.
   onOpenShortcuts?: () => void;
-  // Optional callback that pops the per-diagram settings dialog
+  // Optional callback that pops the user-preferences dialog
   // (spec/20). The gear sits between Shortcuts and the dark-mode
-  // toggle. Hidden in view-role sessions.
+  // toggle. Available in every role: even view-role visitors can
+  // adjust their own browser-local preferences.
   onOpenSettings?: () => void;
   // Optional callback that pops the global search panel. The
   // button sits to the LEFT of the dark-mode toggle.

@@ -21,6 +21,11 @@
 
 import type { TelemetryAction, TelemetryCategory, TelemetryEvent } from '@livediagram/api-schema';
 import { API_BASE } from './api-client';
+import {
+  PREFERENCES_CHANGED_EVENT,
+  readUserPreferences,
+  STORAGE_KEY as PREFS_STORAGE_KEY,
+} from './user-preferences';
 
 const ENABLED = process.env.NEXT_PUBLIC_TELEMETRY_ENABLED === 'true';
 const FLUSH_DELAY_MS = 10_000;
@@ -29,6 +34,31 @@ const MAX_BUFFER = 25;
 let buffer: TelemetryEvent[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let listenersAttached = false;
+
+// User-preference opt-out (spec/20). Cached so the hot path doesn't
+// hit localStorage on every track() call (some events fire in bursts:
+// undo/redo, zoom). Invalidated by the same-tab
+// `livediagram:preferences-changed` event the writer dispatches, or
+// by the browser's native `storage` event for cross-tab updates.
+// `null` means "not yet read; consult localStorage on next track".
+let cachedOptIn: boolean | null = null;
+
+function readOptIn(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Missing / undefined `telemetryEnabled` === true (default on).
+  return readUserPreferences().telemetryEnabled !== false;
+}
+
+function ensurePreferenceListeners(): void {
+  if (typeof window === 'undefined') return;
+  const invalidate = () => {
+    cachedOptIn = null;
+  };
+  window.addEventListener(PREFERENCES_CHANGED_EVENT, invalidate);
+  window.addEventListener('storage', (e) => {
+    if (e.key === PREFS_STORAGE_KEY) invalidate();
+  });
+}
 
 function flush(useBeacon = false): void {
   if (buffer.length === 0) return;
@@ -74,6 +104,11 @@ function ensureListeners(): void {
 
 export function track(category: TelemetryCategory, action: TelemetryAction, type?: string): void {
   if (!ENABLED || typeof window === 'undefined') return;
+  if (cachedOptIn === null) {
+    cachedOptIn = readOptIn();
+    ensurePreferenceListeners();
+  }
+  if (!cachedOptIn) return;
   buffer.push({ category, action, type: type ?? null });
   ensureListeners();
   if (buffer.length >= MAX_BUFFER) {

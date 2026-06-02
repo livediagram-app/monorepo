@@ -2,16 +2,18 @@
 
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { DiagramSettings } from '@/lib/diagram-settings';
+import type { UserPreferences } from '@/lib/user-preferences';
 
-// Per-diagram preference dialog (spec/20). Launched from the
-// settings gear in the TabBar footer. Each row is a toggle bound
-// to a single flag in DiagramSettings; the editor owns the state
-// and persists it via the diagram-settings helpers.
+// Per-user preference dialog (spec/20). Launched from the settings
+// gear in the TabBar footer. Each row is a toggle bound to a single
+// flag in UserPreferences; the editor owns the state and persists it
+// via the user-preferences helpers. Settings travel with the user
+// (device-scoped localStorage), not with the diagram, so flipping a
+// flag applies the next time they open any diagram.
 
 type SettingsDialogProps = {
-  settings: DiagramSettings;
-  onChange: (next: DiagramSettings) => void;
+  settings: UserPreferences;
+  onChange: (next: UserPreferences) => void;
   onClose: () => void;
 };
 
@@ -27,6 +29,7 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
   if (typeof document === 'undefined') return null;
 
   const autoRebind = settings.autoRebindArrows !== false;
+  const telemetryOn = settings.telemetryEnabled !== false;
 
   return createPortal(
     <div
@@ -42,13 +45,11 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
     >
       <div
         role="dialog"
-        aria-label="Diagram settings"
+        aria-label="Settings"
         className="flex w-[480px] max-w-[calc(100%-2rem)] flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
       >
         <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            Diagram settings
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Settings</h2>
           <button
             type="button"
             onClick={onClose}
@@ -65,10 +66,16 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
             checked={autoRebind}
             onChange={(v) => onChange({ ...settings, autoRebindArrows: v })}
           />
+          <ToggleRow
+            label="Send anonymous usage events"
+            description="Sends the small, first-party events listed on /telemetry (no user content, no third-party trackers) so we can see which features actually help. Turn off to keep everything you do strictly on your device."
+            checked={telemetryOn}
+            onChange={(v) => onChange({ ...settings, telemetryEnabled: v })}
+          />
         </div>
         <footer className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
           <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            Settings are stored per diagram on this device.
+            Settings are stored on this device and apply to every diagram you open.
           </p>
         </footer>
       </div>
