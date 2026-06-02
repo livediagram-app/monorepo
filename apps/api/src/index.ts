@@ -344,14 +344,22 @@ export default {
               // in v1), the share recipient can still load it.
               const diagram = await getDiagram(env, d);
               if (diagram) {
-                let diagramReadable = callerOwner === diagram.ownerId;
-                if (!diagramReadable) {
-                  const shareCode = request.headers.get('X-Share-Code');
-                  if (shareCode) {
-                    const link = await getShareLink(env, shareCode);
-                    diagramReadable = !!link && link.diagramId === d;
-                  }
-                }
+                // canReadDiagram (owner OR any valid share code
+                // mapping to this diagram, see auth/diagram-access.ts)
+                // is the same access policy spelled out inline here
+                // before commit 069b785 / 5527329 extracted it.
+                // Reusing the helper keeps the image-read auth in
+                // step with the tab-read auth automatically: a
+                // future tightening of the share-code check (e.g.
+                // explicit expiry, IP throttling) lands once and
+                // both routes follow.
+                const diagramReadable = await canReadDiagram(
+                  env,
+                  d,
+                  callerOwner,
+                  shareCodeOf(request),
+                  diagram.ownerId,
+                );
                 if (diagramReadable) {
                   allowed = await diagramReferencesImage(env, d, imageId);
                 }
