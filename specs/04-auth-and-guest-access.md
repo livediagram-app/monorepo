@@ -38,16 +38,15 @@ The two paths coexist forever. A signed-in user can hand a share link to a guest
 
 ## Capability matrix
 
-| Capability                  | Guest                         | Authenticated                                                       |
-| --------------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Editing the canvas          | ✓                             | ✓                                                                   |
-| Persistence                 | ✓ (per-browser, not per-user) | ✓ (per-account, syncs across devices)                               |
-| Open a share link as viewer | ✓                             | ✓                                                                   |
-| Open a share link as editor | ✓                             | ✓                                                                   |
-| Mint a new share link       | ✓                             | ✓                                                                   |
-| Real-time presence          | ✓ on shared sessions          | ✓                                                                   |
-| Team workspaces             | —                             | ✓ (future)                                                          |
-| Pro features                | —                             | ✓ (when Pro lands — see [03](03-open-source-and-business-model.md)) |
+| Capability                  | Guest                         | Authenticated                         |
+| --------------------------- | ----------------------------- | ------------------------------------- |
+| Editing the canvas          | ✓                             | ✓                                     |
+| Persistence                 | ✓ (per-browser, not per-user) | ✓ (per-account, syncs across devices) |
+| Open a share link as viewer | ✓                             | ✓                                     |
+| Open a share link as editor | ✓                             | ✓                                     |
+| Mint a new share link       | ✓                             | ✓                                     |
+| Real-time presence          | ✓ on shared sessions          | ✓                                     |
+| Team workspaces             | —                             | ✓ (future)                            |
 
 ## Auth surface
 

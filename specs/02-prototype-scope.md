@@ -29,7 +29,7 @@ The editor never touches `localStorage` for diagrams — `apps/live/lib/api-clie
 
 These are the meaningful gaps between today and "full product":
 
-- **Payments + email** — Stripe (Pro subscription) and Resend (transactional mail) per [03](03-open-source-and-business-model.md).
+- **Transactional email** (Resend), for share notifications and account flows.
 - **Operational transform / CRDT** — realtime is LWW; concurrent edits on the same element clobber.
 - **Multi-user permissions beyond share links** — today a diagram is either private or shared via a link with role. No teams, no per-user grants.
 
@@ -39,5 +39,5 @@ These were called out at prototype time and still apply:
 
 - **Static-only frontends.** Next.js apps use `output: 'export'`. No SSR, no Node runtime, no Next.js API routes. Server logic goes in the api worker.
 - **Reuse over duplication** ([CLAUDE.md](../CLAUDE.md#core-principle-reuse-over-duplication)). Shared types, UI primitives, configs, and the diagram data model live in `packages/`, never copy-pasted across apps.
-- **Self-hostable.** The OSS core never depends on a SaaS endpoint at runtime. Pro features are cleanly separable from the core.
+- **Self-hostable.** The OSS core can run fully without any external SaaS dependency. Clerk auth is optional (see [04](04-auth-and-guest-access.md)); when it isn't configured, the worker and the live frontend degrade to pure-guest mode and the editor remains fully usable. There is no paid tier and no plan to introduce one (see [03](03-open-source-and-business-model.md)).
 - **No secrets in source** — see [06-secrets-policy.md](06-secrets-policy.md).

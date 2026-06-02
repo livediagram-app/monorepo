@@ -19,6 +19,16 @@ pnpm install
 
 This installs every workspace at once.
 
+## Apply the local database migrations (once, before first `pnpm dev`)
+
+`wrangler dev` does NOT auto-apply migrations: a fresh local D1 starts empty. Run this once after cloning, and again whenever a new migration lands under `apps/api/migrations/`:
+
+```sh
+pnpm --filter @livediagram/api db:migrate:local
+```
+
+It applies every SQL file in `apps/api/migrations/` to the local SQLite file Wrangler keeps at `apps/api/.wrangler/state/v3/d1/`. The production deploy runs the equivalent `db:migrate:remote` step automatically in CI (see [Self-hosting](self-hosting.md)).
+
 ## Run everything
 
 ```sh

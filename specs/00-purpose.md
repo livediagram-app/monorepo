@@ -38,6 +38,6 @@ Most teams currently bounce between tools that are either single-player (Lucidch
 
 ## How it ships
 
-livediagram is **open source** (MIT) and also runs as a **hosted product** with a free tier and a Pro subscription. Anyone can self-host the entire codebase; the hosted version is the easy default. See [03-open-source-and-business-model.md](03-open-source-and-business-model.md).
+livediagram is **open source** (MIT) and also runs as a **hosted product**, free for everyone, no paid tier. Anyone can self-host the entire codebase; the hosted version is the easy default. See [03-open-source-and-business-model.md](03-open-source-and-business-model.md).
 
 The canvas is **always available without signing in** — a visitor can build a real diagram before being asked to create an account. Auth (Clerk) unlocks sync, sharing, and collaboration on top of that. See [04-auth-and-guest-access.md](04-auth-and-guest-access.md).

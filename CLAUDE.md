@@ -38,24 +38,24 @@ Workspaces are managed with **pnpm** (`pnpm-workspace.yaml`). Tasks are orchestr
 The frontend-only prototype phase ended when the API app landed (see [spec/02](specs/02-prototype-scope.md) and [spec/11](specs/11-api.md)). Today the editor talks to a Cloudflare Worker API backed by D1 (durable diagram storage) + Durable Objects (per-diagram realtime room). `apps/live/lib/api-client.ts` is the single persistence boundary; the editor never reads or writes `localStorage` for diagrams.
 
 - **Built:** the canvas editor (shapes, arrows of every style, marquee + multi-select, groups, format painter, comments, links, themed templates, folders), the api worker (REST + share links + change log + Durable Object realtime room with cursor/select/log ops), per-tab storage.
-- **Still ahead:** Resend (transactional email), Stripe (Pro subscription), multi-user team permissions, operational-transform / CRDT edits.
+- **Still ahead:** Resend (transactional email), multi-user team permissions, operational-transform / CRDT edits.
 
-## Open source + commercial
+## Open source
 
 See [specs/03-open-source-and-business-model.md](specs/03-open-source-and-business-model.md).
 
 - The codebase is **MIT-licensed** and **publicly viewable**. Anyone can self-host.
-- A hosted version with a **Pro subscription** runs alongside (benefits TBD).
-- Don't add code that breaks self-hosting (no required SaaS calls, no license checks gating the core editor).
-- Pro features should be cleanly separable from the OSS core.
+- A free hosted version runs alongside at livediagram.app. **No paid tier and no plan to introduce one.**
+- Don't add code that breaks self-hosting (no required SaaS calls, no license checks gating the core editor). Clerk auth is optional: when unset the api worker and live frontend degrade to pure-guest mode.
+- No "Pro features" flags, no billing integration. If we ship it, every user gets it.
 
 ## Secrets policy
 
 See [specs/06-secrets-policy.md](specs/06-secrets-policy.md). **Repo is public — no secrets in source. Ever.**
 
 - All secrets via env vars: `.env.local` (gitignored) for dev, `wrangler secret put` for Workers, dashboard env vars for Pages.
-- Client bundles only carry values explicitly prefixed `NEXT_PUBLIC_*` and only when documented as publishable (e.g. Clerk publishable key, Stripe publishable key).
-- Server-only secrets (Clerk secret key, Stripe secret key, Resend, D1 access) never appear in client code.
+- Client bundles only carry values explicitly prefixed `NEXT_PUBLIC_*` and only when documented as publishable (e.g. Clerk publishable key).
+- Server-only secrets (Clerk secret key, Resend, D1 access) never appear in client code.
 - Each app/worker that needs env vars ships a `.env.example` documenting what's required.
 
 ## Auth model
@@ -65,7 +65,7 @@ See [specs/04-auth-and-guest-access.md](specs/04-auth-and-guest-access.md).
 - **The canvas always works without signing in.** Friction-free engagement is the acquisition strategy. Never put a sign-in wall in front of the editor.
 - **Hybrid identity** — the api accepts two equivalent ways of identifying the owner of a request:
   - **Guest path**: a per-browser participant id (`livediagram:v2:self-id` in `localStorage`) carried as `X-Owner-Id`. Default for unsigned visitors. Full feature set (persistence, share links, real-time collab).
-  - **Authed path**: a Clerk session JWT in `Authorization: Bearer <token>`. The api worker verifies via `CLERK_JWKS_URL` (`apps/api/src/auth/clerk.ts`) and uses the `sub` claim as the owner id. Required for per-account sync, future team workspaces, and Pro billing.
+  - **Authed path**: a Clerk session JWT in `Authorization: Bearer <token>`. The api worker verifies via `CLERK_JWKS_URL` (`apps/api/src/auth/clerk.ts`) and uses the `sub` claim as the owner id. Required for per-account sync and future team workspaces.
 - The two paths coexist forever — a signed-in user can still hand a share link to a guest who edits without auth.
 - Sign-in lives at `/live/sign-in/` and sign-up at `/live/get-started/` (custom UI; email-code or Google OAuth). On sign-up, guest diagrams migrate from the localStorage id to the Clerk user id via `POST /api/migrate`.
 
@@ -96,9 +96,8 @@ What the product runs on. Items marked ✗ haven't shipped yet — see "What's b
 - **Routing edge:** Cloudflare Workers (the router app) — ✓
 - **Database:** Cloudflare D1 (via the api worker only) — ✓
 - **Realtime:** Cloudflare Durable Objects (per-diagram room) — ✓
-- **Auth:** Clerk — ✓ (frontend ClerkProvider; api worker JWT verification + hybrid `X-Owner-Id` fallback in progress)
+- **Auth:** Clerk (optional), ✓ (frontend ClerkProvider; api worker JWT verification + hybrid `X-Owner-Id` fallback)
 - **Email:** Resend — ✗
-- **Payments:** Stripe — ✗
 
 ## Naming conventions
 

@@ -25,14 +25,13 @@ Required by the CI/CD pipeline (see [10-deployment.md](10-deployment.md)):
 | `CF_API_TOKEN`  | Cloudflare API token scoped to the account that owns the workers. Required permissions: Workers Scripts:Edit, D1:Edit, Workers Routes:Edit, Account Settings:Read, User Details:Read. Full list in [10-deployment.md](10-deployment.md). |
 | `CF_ACCOUNT_ID` | Cloudflare account ID (not a secret per se, but kept in the same store).                                                                                                                                                                 |
 
-Future Pro/Cloud features will add: `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY` and any D1 binding tokens. All same rules: never in source, never in `wrangler.toml`.
+Future cloud features may add: `CLERK_SECRET_KEY` (if backend Clerk Admin API calls become needed) and `RESEND_API_KEY` (transactional email, see [02](02-prototype-scope.md)). Same rules either way: never in source, never in `wrangler.toml`.
 
 ## What is "safe to publish" client-side
 
 Some keys are designed to be public; they go in `NEXT_PUBLIC_*` vars and end up in the bundle:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk publishable key.
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key.
 - Public URLs (`NEXT_PUBLIC_API_URL`, etc.).
 
 If a value's documentation calls it "public", "publishable", or "client", it's fine for client bundles.
@@ -41,9 +40,8 @@ If a value's documentation calls it "public", "publishable", or "client", it's f
 
 Never imported in client code, never bundled into the static export:
 
-- Clerk **secret** key.
-- Stripe **secret** key.
-- Resend API key.
+- Clerk **secret** key (if added later).
+- Resend API key (if email work lands).
 - D1 database access (always via a Worker; the browser never holds DB credentials).
 - Any signing / encryption key.
 
@@ -63,7 +61,7 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 
 ## If a secret leaks
 
-1. **Rotate immediately** in the relevant provider (Clerk, Stripe, Cloudflare, etc.).
+1. **Rotate immediately** in the relevant provider (Clerk, Cloudflare, etc.).
 2. Update the secret in the env-var store (`wrangler secret put`, Pages dashboard).
 3. Force-push and `git filter-repo` are **not** sufficient — rotation comes first because Git history is forever public.
 4. Open a tracking note in specs (or wherever incidents live, TBD) to document what leaked, when, and what was rotated.

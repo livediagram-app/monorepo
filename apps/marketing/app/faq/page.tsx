@@ -8,7 +8,7 @@ import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const FAQ_TITLE = 'FAQ · livediagram';
 const FAQ_DESCRIPTION =
-  'Common questions about livediagram: accounts, collaboration, pricing, and more.';
+  'Common questions about livediagram: accounts, collaboration, self-hosting, and more.';
 
 export const metadata = subpageMetadata({
   title: FAQ_TITLE,
@@ -29,7 +29,7 @@ const FAQS: { q: string; a: ReactNode; aText?: string }[] = [
   },
   {
     q: 'Is it free?',
-    a: 'Yes. The editor is free to use today, and the whole project is open source under the MIT license, so you can also run your own copy at no cost.',
+    a: 'Yes. The editor is free to use, with no paid tier and no plan to introduce one. The whole project is open source under the MIT license, so you can also run your own copy at no cost.',
   },
   {
     q: 'What can I make with it?',

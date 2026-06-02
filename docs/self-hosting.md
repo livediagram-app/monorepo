@@ -17,8 +17,8 @@ This guide is the practical path: provision Cloudflare resources, configure secr
 
 What you do NOT need:
 
-- Clerk: auth is optional. Without it, every user is a guest (a per-browser id stored in `localStorage`, carried as `X-Owner-Id`).
-- Stripe / Resend / any other SaaS: the OSS core never calls out.
+- Clerk: auth is optional. Without it, every user is a guest (a per-browser id stored in `localStorage`, carried as `X-Owner-Id`). With Clerk configured, the api worker reaches `CLERK_JWKS_URL` to verify Bearer tokens; that's the only outbound SaaS dependency, and only on the auth path.
+- Any other SaaS: no Stripe (no paid tier), no Resend (transactional email isn't built yet), no analytics vendor. The telemetry endpoint is first-party only and off by default.
 - A separate database host: D1 covers everything.
 
 ## One-time Cloudflare setup

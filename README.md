@@ -41,4 +41,4 @@ The whole stack runs on Cloudflare Workers (Static Assets for the Next.js apps).
 
 ## License
 
-[MIT](LICENSE). Anyone can self-host. A hosted Pro tier runs alongside ([`specs/03`](specs/03-open-source-and-business-model.md)); the OSS core never depends on a SaaS endpoint at runtime, and Pro features are cleanly separable.
+[MIT](LICENSE). Anyone can self-host. A free hosted version runs alongside at [livediagram.app](https://livediagram.app); there's **no paid tier and no plan to introduce one** ([`specs/03`](specs/03-open-source-and-business-model.md)). The OSS core has one optional SaaS dependency (Clerk for auth) and runs fully without it.

@@ -1,8 +1,8 @@
 'use client';
 
 // Sign-up page. Simplified port of MT's apps/dashboard/app/get-started
-// page — livediagram has no teams, no Pro tier yet, no theme picker,
-// so the MT phase model collapses to two:
+// page: livediagram has no teams and no paid tier, so the MT phase
+// model collapses to two:
 //
 //   Phase 1 — register: first name + last name + email (or Google OAuth)
 //   Phase 2 — verify: 6-digit email code → redirect to editor
