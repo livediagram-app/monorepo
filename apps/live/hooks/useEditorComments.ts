@@ -22,7 +22,7 @@
 import { useState } from 'react';
 import { createComment, isBoxed, type CommentThread, type Tab } from '@livediagram/diagram';
 
-export type EditorCommentsDeps = {
+type EditorCommentsDeps = {
   // The tab id every mutation targets. Comments are tab-scoped:
   // switching tabs while a thread is open keeps the popover up
   // (matches the previous inline behaviour), but the mutator
@@ -38,7 +38,7 @@ export type EditorCommentsDeps = {
   selfParticipant: { name: string; color: string };
 };
 
-export type EditorCommentsApi = {
+type EditorCommentsApi = {
   commentThreadOpenId: string | null;
   // Toggle open / closed: clicking the same id again closes the
   // popover (matches the existing behaviour).

@@ -22,7 +22,7 @@
 
 import { useEffect } from 'react';
 
-export type EditorKeyboardShortcutsDeps = {
+type EditorKeyboardShortcutsDeps = {
   // Modal-interaction state. Escape clears whichever is active.
   formatSourceId: string | null;
   setFormatSourceId: (v: string | null) => void;

@@ -27,7 +27,7 @@ import type { Element, Tab } from '@livediagram/diagram';
 
 const ACTIVITY_LOG_DEBOUNCE_MS = 500;
 
-export type ActivityLogDebounceDeps = {
+type ActivityLogDebounceDeps = {
   // Emit a single element-diff entry. The diff helper inside takes
   // the before / after arrays and writes the user-friendly summary.
   emitChange: (tabId: string, before: Element[], after: Element[]) => void;
@@ -45,7 +45,7 @@ export type ActivityLogDebounceDeps = {
   activeTabElements: Element[];
 };
 
-export type ActivityLogDebounceApi = {
+type ActivityLogDebounceApi = {
   scheduleTabMetaLog: (key: string, summary: string) => void;
   scheduleElementChangeLog: (key: string) => void;
 };

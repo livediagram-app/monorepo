@@ -22,11 +22,11 @@ const MOBILE_BREAKPOINT_PX = 768;
 const MOBILE_DEFAULT_ZOOM = 0.6;
 const DESKTOP_DEFAULT_ZOOM = 1;
 
-export type EditorViewportDeps = {
+type EditorViewportDeps = {
   activeTab: Tab;
 };
 
-export type EditorViewportApi = {
+type EditorViewportApi = {
   // Pan offset in canvas-coords. The canvas wrapper applies
   // `translate(viewportOffset.x, viewportOffset.y) scale(zoom)`.
   viewportOffset: { x: number; y: number };

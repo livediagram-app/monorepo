@@ -69,7 +69,7 @@ export function historyReset(h: History, tabs: Tab[] | ((prev: Tab[]) => Tab[]))
   return { past: [], present: next, future: [] };
 }
 
-export type DiagramHistory = {
+type DiagramHistory = {
   tabs: Tab[];
   canUndo: boolean;
   canRedo: boolean;

@@ -58,7 +58,7 @@ import {
 // Bundled into one object so the hook signature doesn't sprout
 // positional arguments as more inputs land; tracked via a ref so the
 // move-effect doesn't re-attach listeners on every parent render.
-export type EditorDragDeps = {
+type EditorDragDeps = {
   // The tab whose elements are being dragged. We read its elements
   // array on every move and write back through `tick` / `commit`.
   activeTab: Tab;
@@ -101,7 +101,7 @@ export type EditorDragDeps = {
   autoRebindArrowsRef: React.RefObject<boolean>;
 };
 
-export type EditorDragApi = {
+type EditorDragApi = {
   drag: DragState | null;
   beginDrag: (elementId: string, mode: DragMode, e: ReactPointerEvent) => void;
   beginAnchorDrag: (elementId: string, anchor: Anchor, e: ReactPointerEvent) => void;

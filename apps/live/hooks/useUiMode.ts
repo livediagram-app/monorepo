@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 // choice belongs to the user, not the OS. (Spec/07 documents the
 // reasoning.)
 
-export type UiMode = 'light' | 'dark';
+type UiMode = 'light' | 'dark';
 
 const STORAGE_KEY = 'livediagram:v2:ui-mode';
 

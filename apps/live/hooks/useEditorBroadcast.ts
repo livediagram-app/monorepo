@@ -21,7 +21,7 @@ const BROADCAST_THROTTLE_MS = 33;
 // (close, listeners) is read elsewhere in editor-page.
 type RoomHandle = { send: (msg: RoomOutgoing) => void };
 
-export type EditorBroadcastDeps = {
+type EditorBroadcastDeps = {
   // Ref carrying the live WS room handle (null before connect, null
   // after close). The hook reads through .current on every
   // broadcast so a reconnect doesn't require re-rendering the page.
@@ -42,7 +42,7 @@ export type EditorBroadcastDeps = {
   canvasTool: 'pan' | 'select' | 'laser';
 };
 
-export type EditorBroadcastApi = {
+type EditorBroadcastApi = {
   // Send the local cursor position (canvas-coords) to the room.
   // Pass `null` when the pointer leaves the canvas so peers can
   // hide the indicator.

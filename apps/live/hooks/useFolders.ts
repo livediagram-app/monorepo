@@ -30,7 +30,7 @@ import {
 // `refresh()` (or pass `autoLoad: true` for the common case where
 // you want the list fetched as soon as ownership is known).
 
-export type UseFoldersResult = {
+type UseFoldersResult = {
   folders: Folder[];
   setFolders: React.Dispatch<React.SetStateAction<Folder[]>>;
   // True while the initial folders fetch is in flight. Distinct
