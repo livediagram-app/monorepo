@@ -162,6 +162,7 @@ import {
   type RoomHandlers,
   type ShareLink,
   type ShareRole,
+  type SharedWithItem,
 } from '@/lib/api-client';
 import { applyRevert } from '@/lib/change-log';
 import { templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
@@ -399,9 +400,7 @@ export default function LivePage() {
   // Explorer's "Shared with you" accordion. Fetched alongside the
   // owned-diagram list and refreshed when the owner opens a new
   // share link in this tab.
-  const [sharedDiagrams, setSharedDiagrams] = useState<
-    { id: string; name: string; savedAt: number; role: 'edit' | 'view'; shareCode: string }[]
-  >([]);
+  const [sharedDiagrams, setSharedDiagrams] = useState<SharedWithItem[]>([]);
   // Per-diagram audit log surfaced in the Activity Panel. Newest first.
   // Hydrated from the API for existing diagrams; appended to on every
   // commit. See specs/12-activity-and-audit.md.

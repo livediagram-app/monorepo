@@ -163,6 +163,8 @@ type CanvasProps = {
     savedAt: number;
     role: 'edit' | 'view';
     shareCode: string;
+    ownerName: string | null;
+    ownerColor: string | null;
   }[];
   onDismissShared?: (diagramId: string) => void;
   // Navigate to the standalone full-page Explorer. Forwarded into

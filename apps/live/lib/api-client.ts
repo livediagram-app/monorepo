@@ -479,6 +479,13 @@ export type SharedWithItem = {
   // land on the owner-only diagram path and 404. Server-side
   // filtering drops rows whose share was revoked entirely.
   shareCode: string;
+  // Owner's display name + avatar colour, joined server-side from
+  // the participants table. Nullable because Clerk-authed owners
+  // don't always have a participant row (they show up after their
+  // first share / hello). The UI renders an "Unknown owner"
+  // placeholder when null.
+  ownerName: string | null;
+  ownerColor: string | null;
 };
 
 // List diagrams that have been shared with this owner (i.e. the

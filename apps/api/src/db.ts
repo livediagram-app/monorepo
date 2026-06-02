@@ -550,7 +550,17 @@ export async function recordSharedAccess(
 export async function listSharedWith(
   env: Env,
   ownerId: string,
-): Promise<{ id: string; name: string; savedAt: number; role: ShareRole; shareCode: string }[]> {
+): Promise<
+  {
+    id: string;
+    name: string;
+    savedAt: number;
+    role: ShareRole;
+    shareCode: string;
+    ownerName: string | null;
+    ownerColor: string | null;
+  }[]
+> {
   const res = await env.DB.prepare(
     `SELECT d.id, d.name, d.saved_at, s.role,
             (SELECT code
@@ -558,9 +568,12 @@ export async function listSharedWith(
               WHERE share_links.diagram_id = d.id
                 AND share_links.role = s.role
               ORDER BY share_links.created_at ASC
-              LIMIT 1) AS share_code
+              LIMIT 1) AS share_code,
+            p.name  AS owner_name,
+            p.color AS owner_color
        FROM shared_with s
        JOIN diagrams d ON d.id = s.diagram_id
+       LEFT JOIN participants p ON p.id = d.owner_id
       WHERE s.owner_id = ?
         AND d.shareable = 1
       ORDER BY s.last_seen DESC`,
@@ -572,6 +585,8 @@ export async function listSharedWith(
       saved_at: number;
       role: ShareRole;
       share_code: string | null;
+      owner_name: string | null;
+      owner_color: string | null;
     }>();
   return (res.results ?? [])
     .filter((r) => r.share_code !== null)
@@ -581,6 +596,8 @@ export async function listSharedWith(
       savedAt: r.saved_at,
       role: r.role,
       shareCode: r.share_code as string,
+      ownerName: r.owner_name,
+      ownerColor: r.owner_color,
     }));
 }
 

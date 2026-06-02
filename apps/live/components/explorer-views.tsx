@@ -67,6 +67,13 @@ export type SharedItem = {
   // row click can navigate to `/live/diagram/<id>?s=<code>`, which
   // is the only path a non-owner can actually open the diagram on.
   shareCode: string;
+  // Owner's display name + avatar colour for the "shared by"
+  // attribution. Null when the owner has no participant row (e.g.
+  // Clerk-authed owners who haven't opened the diagram with a
+  // chosen name yet). UI falls back to "Unknown owner" in that
+  // case so the row still reads.
+  ownerName: string | null;
+  ownerColor: string | null;
 };
 
 // Recursive folder node in the panel's tree. Renders its label +
@@ -486,9 +493,19 @@ export function SharedRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-medium">{item.name}</span>
-          <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">
-            {item.role === 'edit' ? 'Edit · ' : 'View · '}
-            Updated {relative}
+          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[10px] text-slate-500 dark:text-slate-400">
+            {/* Owner avatar dot + name; falls back to a neutral
+                badge when the owner has no participant row yet. */}
+            <span
+              aria-hidden
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: item.ownerColor ?? '#94a3b8' }}
+            />
+            <span className="truncate">{item.ownerName ?? 'Unknown owner'}</span>
+            <span aria-hidden>·</span>
+            <span className="shrink-0">{item.role === 'edit' ? 'Edit' : 'View'}</span>
+            <span aria-hidden>·</span>
+            <span className="shrink-0">Updated {relative}</span>
           </span>
         </span>
       </button>

@@ -400,7 +400,10 @@ export function Explorer({
             />
             {sharedOpen ? (
               <ul className="flex flex-col gap-0.5">
-                {shared.map((s) => (
+                {/* Cap at 5 most recent so the side panel stays
+                    compact; the full list lives on /live/explorer
+                    (linked from the "See all" row below). */}
+                {shared.slice(0, 5).map((s) => (
                   <SharedRow
                     key={s.id}
                     item={s}
@@ -409,6 +412,17 @@ export function Explorer({
                     onDismiss={onDismissShared ? () => onDismissShared(s.id) : undefined}
                   />
                 ))}
+                {shared.length > 5 && onOpenFullExplorer ? (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={onOpenFullExplorer}
+                      className="w-full rounded-md px-2 py-1 text-left text-[11px] font-medium text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-500/15"
+                    >
+                      See all {shared.length} in the explorer
+                    </button>
+                  </li>
+                ) : null}
               </ul>
             ) : null}
           </div>
