@@ -129,7 +129,14 @@ export function setTokenProvider(provider: TokenProvider | null): void {
   currentTokenProvider = provider;
 }
 
-async function apiHeaders(
+// Exported for direct testing of the hybrid identity gate (spec/04):
+// Bearer token wins when present, X-Owner-Id is the fallback, and the
+// two MUST NOT coexist on a single request (an api worker that sees
+// both would derive owner from the JWT and silently ignore the header
+// , which is fine for happy paths but leaves a confusing footprint in
+// audit logs). Internal callers still get the same return type, so
+// the export is additive.
+export async function apiHeaders(
   ownerId: string,
   opts: { share?: string | null; body?: boolean } = {},
 ): Promise<HeadersInit> {
