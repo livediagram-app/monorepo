@@ -50,7 +50,14 @@ import {
   StickyMenuIcon,
 } from '@/components/context-menu-icons';
 import { MenuItem } from '@/components/PortalMenu';
-import { TabLinkPicker } from '@/components/TabLinkPicker';
+// Lazy-load TabLinkPicker: only mounts when `linkPickerOpenForId`
+// is set (the user clicked the link icon on a selected element).
+// Most sessions never open it. Same lazy pattern as the dialogs
+// below, the picker's tab-grid + diagram-grid stays out of the
+// initial chunk.
+const TabLinkPicker = dynamic(() =>
+  import('@/components/TabLinkPicker').then((m) => m.TabLinkPicker),
+);
 // Lazy-load CommentThreadPopover for the same reason as
 // ExportTabDialog / ShareDialog: it's gated on commentThreadOpenId
 // (right-click an element, pick Comments), most sessions never
@@ -80,7 +87,12 @@ import { NotFound } from '@/components/NotFound';
 // bundle doesn't ship the dialog's 382 lines + its share-link
 // helpers up front.
 const ShareDialog = dynamic(() => import('@/components/ShareDialog').then((m) => m.ShareDialog));
-import { NotePopover } from '@/components/NotePopover';
+// Lazy-load NotePopover: only mounts when `noteOpenId !== null`,
+// which the user only triggers by right-clicking an element and
+// picking "Add note" / "Edit note". Same pattern as the dialogs
+// above so the editor's initial chunk doesn't ship the popover's
+// auto-resize textarea + close-on-escape wiring up front.
+const NotePopover = dynamic(() => import('@/components/NotePopover').then((m) => m.NotePopover));
 // Lazy-load SearchPanel for the same reason as the other modals
 // (ExportTabDialog / ShareDialog / TemplatePicker / CommentThread
 // Popover): it's gated on `searchOpen`, which only flips true when
