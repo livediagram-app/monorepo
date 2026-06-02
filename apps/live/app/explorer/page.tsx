@@ -135,10 +135,6 @@ export default function ExplorerPage() {
   // collapsed (Windows Explorer pattern).
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set<string>());
 
-  useEffect(() => {
-    document.title = 'Explorer | livediagram';
-  }, []);
-
   const refresh = useCallback(
     async (ownerId: string) => {
       setLoading(true);
