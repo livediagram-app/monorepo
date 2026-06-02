@@ -227,23 +227,18 @@ export default function LivePage() {
   // `applyFormatFromSource` and the rest of the drag dependencies
   // exist).
   const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
-  const [paletteMinimized, setPaletteMinimized] = useState(false);
   const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
   const [explorerMinimized, setExplorerMinimized] = useState(false);
   // Editor / Context panel (Selected Element + Current Tab). Sits
   // under the Palette by default.
   const [contextPosition, setContextPosition] = useState<{ x: number; y: number } | null>(null);
-  const [contextMinimized, setContextMinimized] = useState(false);
   // Counter bumped whenever an external action wants the Editor banner
   // expanded (Activity row navigation, tab-context-menu Change Theme /
   // Canvas). MovablePanel watches this and resets its local collapsed
   // state to false on each change, so navigation always lands on a
   // visible accordion. See the spec/09 "Collapse to banner" section.
   const [editorExpandSignal, setEditorExpandSignal] = useState(0);
-  const requestEditorOpen = () => {
-    setContextMinimized(false);
-    setEditorExpandSignal((n) => n + 1);
-  };
+  const requestEditorOpen = () => setEditorExpandSignal((n) => n + 1);
   // Mobile-default minimisation used to apply to both Editor and
   // Explorer here. The Editor now uses the banner-collapse mechanism
   // on MovablePanel (spec/09 "Collapse to banner") so it doesn't
@@ -3782,7 +3777,6 @@ export default function LivePage() {
         formatSourceId={formatSourceId}
         groupSourceId={groupSourceId}
         palettePosition={palettePosition}
-        paletteMinimized={paletteMinimized}
         explorerPosition={explorerPosition}
         explorerMinimized={explorerMinimized}
         canUndo={canUndo && !activeTabLocked}
@@ -3795,7 +3789,6 @@ export default function LivePage() {
         onUndo={undo}
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
-        onToggleMinimized={() => setPaletteMinimized((v) => !v)}
         onResetPalette={() => setPalettePosition(null)}
         onMoveExplorer={(x, y) => setExplorerPosition({ x, y })}
         onToggleExplorerMinimized={() => setExplorerMinimized((v) => !v)}
@@ -3818,12 +3811,10 @@ export default function LivePage() {
         onToggleActivityMinimized={() => setActivityMinimized((v) => !v)}
         onResetActivity={() => setActivityPosition(null)}
         contextPosition={contextPosition}
-        contextMinimized={contextMinimized}
         tabAccordionsOpen={tabAccordionsOpen}
         setTabAccordionsOpen={setTabAccordionsOpen}
         editorExpandSignal={editorExpandSignal}
         onMoveContext={(x, y) => setContextPosition({ x, y })}
-        onToggleContextMinimized={() => setContextMinimized((v) => !v)}
         onResetContext={() => setContextPosition(null)}
         onRevertChange={revertChange}
         onActivityRowClick={handleActivityRowClick}

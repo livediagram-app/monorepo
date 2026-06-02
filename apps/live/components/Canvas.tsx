@@ -110,7 +110,6 @@ type CanvasProps = {
   formatSourceId: string | null;
   groupSourceId: string | null;
   palettePosition: { x: number; y: number } | null;
-  paletteMinimized: boolean;
   explorerPosition: { x: number; y: number } | null;
   explorerMinimized: boolean;
   canUndo: boolean;
@@ -126,7 +125,6 @@ type CanvasProps = {
   onUndo: () => void;
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
-  onToggleMinimized: () => void;
   onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onToggleExplorerMinimized: () => void;
@@ -155,9 +153,7 @@ type CanvasProps = {
   onToggleActivityMinimized: () => void;
   onResetActivity: () => void;
   contextPosition: { x: number; y: number } | null;
-  contextMinimized: boolean;
   onMoveContext: (x: number, y: number) => void;
-  onToggleContextMinimized: () => void;
   onResetContext: () => void;
   // Lifted accordion state for the Editor panel's Current Tab
   // section so external triggers (Activity row click) can pop the
@@ -344,7 +340,6 @@ export function Canvas(props: CanvasProps) {
     formatSourceId,
     groupSourceId,
     palettePosition,
-    paletteMinimized,
     explorerPosition,
     explorerMinimized,
     canUndo,
@@ -357,7 +352,6 @@ export function Canvas(props: CanvasProps) {
     onUndo,
     onRedo,
     onMovePalette,
-    onToggleMinimized,
     onResetPalette,
     onMoveExplorer,
     onToggleExplorerMinimized,
@@ -376,12 +370,10 @@ export function Canvas(props: CanvasProps) {
     onToggleActivityMinimized,
     onResetActivity,
     contextPosition,
-    contextMinimized,
     tabAccordionsOpen,
     editorExpandSignal,
     setTabAccordionsOpen,
     onMoveContext,
-    onToggleContextMinimized,
     onResetContext,
     onRevertChange,
     onActivityRowClick,
@@ -1402,11 +1394,9 @@ export function Canvas(props: CanvasProps) {
       {welcomeOpen || readOnly ? null : (
         <CommandPalette
           position={palettePosition}
-          minimized={paletteMinimized}
           canvasTool={canvasTool}
           onSetCanvasTool={onSetCanvasTool}
           onMoveTo={onMovePalette}
-          onToggleMinimized={onToggleMinimized}
           onReset={onResetPalette}
           onAddShape={onAddShape}
           onAddText={onAddText}
@@ -1420,7 +1410,6 @@ export function Canvas(props: CanvasProps) {
       {welcomeOpen || readOnly ? null : (
         <ContextPanel
           position={contextPosition}
-          minimized={contextMinimized}
           selection={paletteSelection}
           selectionScope={selectionScope}
           tab={tabSection}
@@ -1428,14 +1417,13 @@ export function Canvas(props: CanvasProps) {
           setTabAccordionsOpen={setTabAccordionsOpen}
           expandSignal={editorExpandSignal}
           onMoveTo={onMoveContext}
-          onToggleMinimized={onToggleContextMinimized}
           onReset={onResetContext}
           // Palette's bottom edge: its top corner (top-4 = 16) plus
           // its measured height. ContextPanel adds another 16px gap.
           // When paletteHeight is 0 (first paint, before the observer
           // fires) MovablePanel falls back to its legacy static
           // top-[15rem] so the panel never lands at 0,0.
-          stackBelowY={paletteMinimized || paletteHeight === 0 ? undefined : 16 + paletteHeight}
+          stackBelowY={paletteHeight === 0 ? undefined : 16 + paletteHeight}
         />
       )}
 

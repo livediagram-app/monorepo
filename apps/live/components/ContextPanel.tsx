@@ -57,7 +57,6 @@ function useAutoCloseAfterIdle(
 
 type ContextPanelProps = {
   position: { x: number; y: number } | null;
-  minimized: boolean;
   selection: SelectedElementControls | null;
   // 'single' / 'multi' / 'group' — drives the section heading
   // ("Selected Element" / "Selected Elements" / "Selected Group").
@@ -72,7 +71,6 @@ type ContextPanelProps = {
   tabAccordionsOpen?: TabAccordionState;
   setTabAccordionsOpen?: React.Dispatch<React.SetStateAction<TabAccordionState>>;
   onMoveTo: (x: number, y: number) => void;
-  onToggleMinimized: () => void;
   onReset: () => void;
   // Bottom-y of the panel this one should stack under (the Palette).
   // When set and the user hasn't dragged this panel anywhere yet, the
@@ -97,14 +95,12 @@ type ContextPanelProps = {
 // bottom-right corner so it sits above the zoom controls.
 export function ContextPanel({
   position,
-  minimized,
   selection,
   selectionScope = 'single',
   tab,
   tabAccordionsOpen,
   setTabAccordionsOpen,
   onMoveTo,
-  onToggleMinimized,
   onReset,
   stackBelowY,
   expandSignal,
@@ -178,7 +174,6 @@ export function ContextPanel({
     );
   }, [selection, selectedAccordionsOpen, tab, tabOpen, setTabOpen, selectionScope]);
 
-  if (minimized) return null;
   return (
     <MovablePanel
       title="Editor"
@@ -188,7 +183,6 @@ export function ContextPanel({
       stackBelowY={stackBelowY}
       onReset={onReset}
       onMoveTo={onMoveTo}
-      onMinimize={onToggleMinimized}
       collapsible
       expandSignal={expandSignal}
     >

@@ -33,7 +33,10 @@ type MovablePanelProps = {
   // so the panel snaps back to its default corner.
   onReset?: () => void;
   onMoveTo: (x: number, y: number) => void;
-  onMinimize: () => void;
+  // Optional: only called by the legacy dock-button minimise path
+  // (the Activity panel still uses it). Collapsible panels manage
+  // their own banner state internally and never invoke this.
+  onMinimize?: () => void;
   // When set AND the panel is at its default corner (position is null)
   // AND defaultCorner is 'top-right-stacked', the panel's top is
   // computed as `stackBelowY + 16` (16 = gap-4) instead of the
@@ -325,7 +328,7 @@ export function MovablePanel({
                   setCollapsed((v) => !v);
                   return;
                 }
-                onMinimize();
+                onMinimize?.();
               }}
               aria-label={
                 collapsible

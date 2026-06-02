@@ -167,11 +167,9 @@ export type CanvasTool = 'pan' | 'select' | 'laser';
 
 type CommandPaletteProps = {
   position: { x: number; y: number } | null;
-  minimized: boolean;
   canvasTool: CanvasTool;
   onSetCanvasTool: (tool: CanvasTool) => void;
   onMoveTo: (x: number, y: number) => void;
-  onToggleMinimized: () => void;
   onReset: () => void;
   onAddShape: (kind: ShapeKind) => void;
   onAddText: () => void;
@@ -192,18 +190,11 @@ type CommandPaletteProps = {
   onSize?: (size: { width: number; height: number }) => void;
 };
 
-export function CommandPalette(props: CommandPaletteProps) {
-  // Minimised state is rendered by Canvas's bottom dock — see DockButton.
-  if (props.minimized) return null;
-  return <OpenPalette {...props} />;
-}
-
-function OpenPalette({
+export function CommandPalette({
   position,
   canvasTool,
   onSetCanvasTool,
   onMoveTo,
-  onToggleMinimized,
   onReset,
   onAddShape,
   onAddText,
@@ -241,7 +232,6 @@ function OpenPalette({
       onSize={onSize}
       onReset={onReset}
       onMoveTo={onMoveTo}
-      onMinimize={onToggleMinimized}
       collapsible
     >
       {/* Canvas tool toggle (Pan / Select / Laser). Lives above the
