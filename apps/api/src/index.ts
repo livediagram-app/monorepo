@@ -1,6 +1,7 @@
 import type { Tab } from '@livediagram/diagram';
 import { sha256Hex, isValidTelemetryEvent, type TelemetrySummary } from '@livediagram/api-schema';
 import { canEditDiagram, canReadDiagram } from './auth/diagram-access';
+import { parseChangeLogEntryBody } from './change-log-body';
 import { rewriteCommentAuthors } from './comments';
 import {
   createFolder,
@@ -870,32 +871,8 @@ export default {
           }
           if (request.method === 'POST') {
             const body = (await request.json()) as Partial<ChangeLogEntryDTO>;
-            if (
-              !body.id ||
-              !body.participantId ||
-              !body.participantName ||
-              !body.participantColor ||
-              !body.kind ||
-              !body.summary ||
-              !Array.isArray(body.elementIds) ||
-              typeof body.beforeState !== 'object' ||
-              typeof body.afterState !== 'object'
-            ) {
-              return badRequest('missing change_log fields');
-            }
-            const entry: ChangeLogEntryDTO = {
-              id: body.id,
-              tabId: body.tabId ?? null,
-              participantId: body.participantId,
-              participantName: body.participantName,
-              participantColor: body.participantColor,
-              kind: body.kind,
-              summary: body.summary,
-              elementIds: body.elementIds,
-              beforeState: (body.beforeState ?? {}) as Record<string, unknown>,
-              afterState: (body.afterState ?? {}) as Record<string, unknown>,
-              createdAt: body.createdAt ?? Date.now(),
-            };
+            const entry = parseChangeLogEntryBody(body);
+            if (!entry) return badRequest('missing change_log fields');
             await insertChangeLogEntry(env, entry);
             return json({ entry }, { status: 201 });
           }
