@@ -55,6 +55,23 @@ export function clearGuestSelfId(): void {
   safeLocalStorage()?.removeItem(KEYS.selfId);
 }
 
+// Read the existing guest id, or mint + persist a fresh one. The
+// editor / new-diagram / explorer routes all need this exact "find
+// or create" gesture as the X-Owner-Id fallback for signed-out
+// visitors, and the inline `getGuestSelfId() ?? randomUUID() +
+// setGuestSelfId()` chunk was duplicated at every call site. SSR-
+// safe via `safeLocalStorage`: when storage is unavailable
+// (no window, private mode, storage disabled) the mint still
+// runs and returns a one-shot UUID, the call site just won't
+// see it survive a reload.
+export function ensureGuestSelfId(): string {
+  const stored = getGuestSelfId();
+  if (stored) return stored;
+  const fresh = crypto.randomUUID();
+  setGuestSelfId(fresh);
+  return fresh;
+}
+
 export function hasConfirmedName(): boolean {
   return safeLocalStorage()?.getItem(KEYS.nameConfirmed) === '1';
 }

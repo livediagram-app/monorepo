@@ -16,7 +16,7 @@ import {
   type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
-import { getGuestSelfId, setGuestSelfId } from '@/lib/local-identity';
+import { ensureGuestSelfId } from '@/lib/local-identity';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
@@ -89,28 +89,14 @@ const INDENT_STEP = 16;
 // folder in the tree or double-clicking a folder row drills in.
 export default function ExplorerPage() {
   const { authLoaded, clerkUserId, clerkDisplayName } = useClerkApiBootstrap();
-  // Guest fallback id, mirroring the new/page.tsx pattern: a signed-in
-  // user gets `clerkUserId`, a guest gets the existing localStorage id
-  // or a freshly-minted UUID on first visit so the FAB's "+ New folder"
-  // path has a real owner to send to the api. Null until Clerk has
+  // Owner id resolution mirrors new/page.tsx + editor-page.tsx: a
+  // signed-in user is keyed by Clerk userId, a guest is keyed by the
+  // localStorage UUID (minted on first visit). Null until Clerk has
   // settled so a signed-in user never momentarily reads a guest id.
-  const [guestId, setGuestId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!authLoaded) return;
-    if (clerkUserId) {
-      setGuestId(null);
-      return;
-    }
-    const stored = getGuestSelfId();
-    if (stored) {
-      setGuestId(stored);
-      return;
-    }
-    const fresh = crypto.randomUUID();
-    setGuestSelfId(fresh);
-    setGuestId(fresh);
+  const ownerId: string | null = useMemo(() => {
+    if (!authLoaded) return null;
+    return clerkUserId ?? ensureGuestSelfId();
   }, [authLoaded, clerkUserId]);
-  const ownerId: string | null = clerkUserId ?? guestId;
   const [diagrams, setDiagrams] = useState<DiagramItem[]>([]);
   const {
     folders,

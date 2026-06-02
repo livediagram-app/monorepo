@@ -18,7 +18,7 @@ import {
 } from '@/lib/api-client';
 import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
-import { getGuestSelfId, markNameConfirmed, setGuestSelfId } from '@/lib/local-identity';
+import { ensureGuestSelfId, markNameConfirmed } from '@/lib/local-identity';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { buildTemplatedTab } from '@/lib/template-builders';
 import type { TemplateKind } from '@/lib/templates';
@@ -84,18 +84,7 @@ export default function NewDiagramPage() {
     // Wait for Clerk to settle so a signed-in user gets the Clerk
     // userId, not a freshly-minted guest UUID.
     if (!authLoaded) return;
-    let selfId: string;
-    if (clerkUserId) {
-      selfId = clerkUserId;
-    } else {
-      const stored = getGuestSelfId();
-      if (stored) {
-        selfId = stored;
-      } else {
-        selfId = crypto.randomUUID();
-        setGuestSelfId(selfId);
-      }
-    }
+    const selfId = clerkUserId ?? ensureGuestSelfId();
     const local: Participant = {
       id: selfId,
       name: randomName(),

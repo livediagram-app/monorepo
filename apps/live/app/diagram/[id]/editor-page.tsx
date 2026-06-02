@@ -140,12 +140,7 @@ import {
   statusFromIdleMs,
   type Participant,
 } from '@/lib/identity';
-import {
-  getGuestSelfId,
-  hasConfirmedName,
-  markNameConfirmed,
-  setGuestSelfId,
-} from '@/lib/local-identity';
+import { ensureGuestSelfId, hasConfirmedName, markNameConfirmed } from '@/lib/local-identity';
 import {
   apiAppendChangeLogEntry,
   apiCreateShareLink,
@@ -756,18 +751,7 @@ export default function LivePage() {
       // to the localStorage guest UUID (minted on first visit and
       // persisted forever, so a guest's diagrams survive page
       // reloads).
-      let selfId: string;
-      if (clerkUserId) {
-        selfId = clerkUserId;
-      } else {
-        const stored = getGuestSelfId();
-        if (stored) {
-          selfId = stored;
-        } else {
-          selfId = crypto.randomUUID();
-          setGuestSelfId(selfId);
-        }
-      }
+      const selfId = clerkUserId ?? ensureGuestSelfId();
       const storedSelf = await apiLoadSelf(selfId).catch(() => null);
       // Signed-in users always use their Clerk-known name on the
       // participant record. For a brand-new participant (no
