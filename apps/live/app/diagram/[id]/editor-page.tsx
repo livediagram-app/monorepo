@@ -19,22 +19,7 @@ import {
 } from '@livediagram/diagram';
 import dynamic from 'next/dynamic';
 import { Canvas } from '@/components/Canvas';
-import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
-import {
-  AutoAlignIcon,
-  CanvasMenuIcon,
-  CircleMenuIcon,
-  CommentMenuIcon,
-  DuplicateMenuIcon,
-  LayerDownIcon,
-  LayerUpIcon,
-  LinkMenuIcon,
-  NoteMenuIcon,
-  PaletteMenuIcon,
-  SquareMenuIcon,
-  StickyMenuIcon,
-} from '@/components/context-menu-icons';
-import { MenuItem } from '@/components/PortalMenu';
+import { EditorContextMenu, type EditorContextMenuState } from '@/components/EditorContextMenu';
 // Lazy-load TabLinkPicker: only mounts when `linkPickerOpenForId`
 // is set (the user clicked the link icon on a selected element).
 // Most sessions never open it. Same lazy pattern as the dialogs
@@ -371,11 +356,7 @@ export default function LivePage() {
   // menu's mode (element-scoped vs tab-scoped) so the page can render
   // a single ContextMenu portal that swaps its items based on what
   // was clicked. Null = menu closed.
-  const [contextMenu, setContextMenu] = useState<
-    | { mode: 'element'; elementId: string; x: number; y: number }
-    | { mode: 'canvas'; x: number; y: number }
-    | null
-  >(null);
+  const [contextMenu, setContextMenu] = useState<EditorContextMenuState | null>(null);
   const closeContextMenu = () => setContextMenu(null);
 
   // Link-to-tab picker state. Lives at the page level (rather than
@@ -2483,6 +2464,21 @@ export default function LivePage() {
     commit((els) => autoAlignElements(els));
   };
 
+  // Open one of the Tab section accordions inside the Editor panel,
+  // popping the panel back if it was minimised. Both context-menu
+  // actions ("Change Theme", "Change Canvas") route here rather than
+  // introducing a new picker dialog.
+  const openTabAccordion = (which: 'theme' | 'canvas') => {
+    requestEditorOpen();
+    setTabAccordionsOpen({
+      theme: which === 'theme',
+      canvas: which === 'canvas',
+      file: false,
+      cleanup: false,
+      images: false,
+    });
+  };
+
   const setBackgroundPattern = (pattern: BackgroundPattern) => {
     if (editsBlocked) return;
     commitTabs((ts) =>
@@ -3362,143 +3358,25 @@ export default function LivePage() {
             );
           })()
         : null}
-      {contextMenu && !isReadOnly
-        ? (() => {
-            const close = closeContextMenu;
-            if (contextMenu.mode === 'element') {
-              const target = activeTab.elements.find((el) => el.id === contextMenu.elementId);
-              if (!target) return null;
-              const boxed = isBoxed(target);
-              return (
-                <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
-                  <MenuItem
-                    icon={<DuplicateMenuIcon />}
-                    label="Duplicate"
-                    onClick={() => {
-                      duplicateSelected();
-                      close();
-                    }}
-                  />
-                  {tabs.length > 1 ? (
-                    <MenuItem
-                      icon={<LinkMenuIcon />}
-                      label={target.link ? 'Edit link' : 'Link Element'}
-                      onClick={() => {
-                        setLinkPickerOpenForId(target.id);
-                        close();
-                      }}
-                    />
-                  ) : null}
-                  <ContextMenuDivider />
-                  <MenuItem
-                    icon={<LayerUpIcon />}
-                    label="Bring to front"
-                    onClick={() => {
-                      bringSelectedToFront();
-                      close();
-                    }}
-                  />
-                  <MenuItem
-                    icon={<LayerDownIcon />}
-                    label="Send to back"
-                    onClick={() => {
-                      sendSelectedToBack();
-                      close();
-                    }}
-                  />
-                  <ContextMenuDivider />
-                  {boxed ? (
-                    <MenuItem
-                      icon={<NoteMenuIcon />}
-                      label={target.note ? 'Edit note' : 'Add note'}
-                      onClick={() => {
-                        openNote(target.id);
-                        close();
-                      }}
-                    />
-                  ) : null}
-                  <MenuItem
-                    icon={<CommentMenuIcon />}
-                    label="Comment"
-                    onClick={() => {
-                      openComments(target.id);
-                      close();
-                    }}
-                  />
-                </ContextMenu>
-              );
-            }
-            // Open one of the Tab section accordions inside the Editor
-            // panel, popping the panel back if it was minimised. Keeps
-            // both menu actions ("Change Theme", "Change Canvas")
-            // routing to the existing surface rather than introducing
-            // a new picker dialog.
-            const openTabAccordion = (which: 'theme' | 'canvas') => {
-              requestEditorOpen();
-              setTabAccordionsOpen({
-                theme: which === 'theme',
-                canvas: which === 'canvas',
-                file: false,
-                cleanup: false,
-                images: false,
-              });
-            };
-            return (
-              <ContextMenu position={{ x: contextMenu.x, y: contextMenu.y }} onClose={close}>
-                <MenuItem
-                  icon={<PaletteMenuIcon />}
-                  label="Change Theme"
-                  onClick={() => {
-                    openTabAccordion('theme');
-                    close();
-                  }}
-                />
-                <MenuItem
-                  icon={<CanvasMenuIcon />}
-                  label="Change Canvas"
-                  onClick={() => {
-                    openTabAccordion('canvas');
-                    close();
-                  }}
-                />
-                <ContextMenuDivider />
-                <MenuItem
-                  icon={<AutoAlignIcon />}
-                  label="Auto-align tab"
-                  onClick={() => {
-                    autoAlignTab();
-                    close();
-                  }}
-                />
-                <ContextMenuDivider />
-                <MenuItem
-                  icon={<SquareMenuIcon />}
-                  label="Add square"
-                  onClick={() => {
-                    addShape('square');
-                    close();
-                  }}
-                />
-                <MenuItem
-                  icon={<CircleMenuIcon />}
-                  label="Add circle"
-                  onClick={() => {
-                    addShape('circle');
-                    close();
-                  }}
-                />
-                <MenuItem
-                  icon={<StickyMenuIcon />}
-                  label="Add sticky"
-                  onClick={() => {
-                    addSticky();
-                    close();
-                  }}
-                />
-              </ContextMenu>
-            );
-          })()
-        : null}
+      {contextMenu && !isReadOnly ? (
+        <EditorContextMenu
+          menu={contextMenu}
+          elements={activeTab.elements}
+          tabCount={tabs.length}
+          onClose={closeContextMenu}
+          onDuplicate={duplicateSelected}
+          onLinkElement={setLinkPickerOpenForId}
+          onBringToFront={bringSelectedToFront}
+          onSendToBack={sendSelectedToBack}
+          onOpenNote={openNote}
+          onOpenComments={openComments}
+          onChangeTheme={() => openTabAccordion('theme')}
+          onChangeCanvas={() => openTabAccordion('canvas')}
+          onAutoAlign={autoAlignTab}
+          onAddShape={addShape}
+          onAddSticky={addSticky}
+        />
+      ) : null}
       {linkPickerOpenForId !== null && linkPickerAnchorEl && tabs.length > 1 && !isReadOnly ? (
         <TabLinkPicker
           anchor={linkPickerAnchorEl}
