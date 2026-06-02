@@ -16,7 +16,6 @@ import {
   defaultTextAlign,
   defaultTextColor,
   elementBounds,
-  endpointPosition,
   isBoxed,
   selectionMembers,
   supportsColours,
@@ -41,6 +40,7 @@ import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel
 import { ContextPanel } from './ContextPanel';
 import { Explorer } from './Explorer';
 import { LaserOverlay } from './LaserOverlay';
+import { useCanvasPanAndMarquee } from '@/hooks/useCanvasPanAndMarquee';
 import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
 import { DockButton } from './MovablePanel';
@@ -483,147 +483,20 @@ export function Canvas(props: CanvasProps) {
   // top-2 (mobile) or top-4 (desktop).
   const [paletteBottomY, setPaletteBottomY] = useState<number>(0);
 
-  const [pan, setPan] = useState<{
-    startClientX: number;
-    startClientY: number;
-    startOffsetX: number;
-    startOffsetY: number;
-    movedRef: { current: boolean };
-  } | null>(null);
-
-  // Marquee box-select state. Stored in client (screen) coords; only
-  // converted to canvas coords on release for the intersection test.
-  const [marquee, setMarquee] = useState<{
-    startX: number;
-    startY: number;
-    currentX: number;
-    currentY: number;
-  } | null>(null);
-
-  // Held-Space modifier turns canvas drag into a pan instead of a marquee
-  // (same vocabulary as Figma / Excalidraw). Tracked via a ref so the
-  // pointerdown handler always sees the current value without re-binding.
-  const spaceHeldRef = useRef(false);
-  useEffect(() => {
-    const isTypingTarget = (t: EventTarget | null) =>
-      t instanceof HTMLInputElement ||
-      t instanceof HTMLTextAreaElement ||
-      (t instanceof HTMLElement && t.isContentEditable);
-    const down = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
-      if (isTypingTarget(e.target)) return;
-      // Stop the page from scroll-jumping while space is held over the
-      // canvas. Doesn't affect inputs because we return above for those.
-      e.preventDefault();
-      spaceHeldRef.current = true;
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
-      spaceHeldRef.current = false;
-    };
-    document.addEventListener('keydown', down);
-    document.addEventListener('keyup', up);
-    return () => {
-      document.removeEventListener('keydown', down);
-      document.removeEventListener('keyup', up);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!pan) return;
-    const onMove = (e: PointerEvent) => {
-      // Pan offset is stored in canvas-coords; mouse delta is screen-coords.
-      // Divide by zoom so a 100px screen drag = 100/zoom canvas-pixels pan.
-      const dx = (e.clientX - pan.startClientX) / viewportZoom;
-      const dy = (e.clientY - pan.startClientY) / viewportZoom;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) pan.movedRef.current = true;
-      setViewportOffset({ x: pan.startOffsetX + dx, y: pan.startOffsetY + dy });
-    };
-    const onUp = () => {
-      if (!pan.movedRef.current) onDeselect();
-      setPan(null);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, [pan, onDeselect, setViewportOffset, viewportZoom]);
-
-  // Marquee drag: track the current pointer position and, on release,
-  // convert the screen-coord rect to canvas coords and test each boxed
-  // element's bounding box for intersection. Sub-4-pixel marquees are
-  // treated as plain clicks (just deselect).
-  useEffect(() => {
-    if (!marquee) return;
-    const onMove = (e: PointerEvent) => {
-      setMarquee((m) => (m ? { ...m, currentX: e.clientX, currentY: e.clientY } : null));
-    };
-    const onUp = () => {
-      const m = marquee;
-      if (!m) return;
-      const dragWidth = Math.abs(m.currentX - m.startX);
-      const dragHeight = Math.abs(m.currentY - m.startY);
-      if (dragWidth < 4 && dragHeight < 4) {
-        onDeselect();
-        setMarquee(null);
-        return;
-      }
-      const wrapper = wrapperRef.current;
-      if (wrapper) {
-        const rect = wrapper.getBoundingClientRect();
-        // Wrapper has `transform: scale(z) translate(ox, oy)` with
-        // origin: center. getBoundingClientRect returns the
-        // post-transform box, which ALREADY accounts for the
-        // translate. Working through the matrix:
-        //   screen.x = rect.left + z * cx
-        // so the inverse is just (screen.x - rect.left) / z — no
-        // extra `- ox`. The old version subtracted the offset on
-        // top of the rect that already had it baked in, throwing
-        // intersection bounds off by the pan amount and making the
-        // marquee silently miss every element on a panned canvas.
-        const toCanvasX = (sx: number) => (sx - rect.left) / viewportZoom;
-        const toCanvasY = (sy: number) => (sy - rect.top) / viewportZoom;
-        const minX = Math.min(toCanvasX(m.startX), toCanvasX(m.currentX));
-        const maxX = Math.max(toCanvasX(m.startX), toCanvasX(m.currentX));
-        const minY = Math.min(toCanvasY(m.startY), toCanvasY(m.currentY));
-        const maxY = Math.max(toCanvasY(m.startY), toCanvasY(m.currentY));
-        const hits = new Set<string>();
-        for (const el of elements) {
-          if (el.type === 'arrow') {
-            // Arrow AABB: bounds of the (from, to) segment. Good
-            // enough for marquee inclusion — connecting two selected
-            // shapes always intersects the marquee they sit inside,
-            // and lone arrows are caught when their bbox overlaps.
-            const from = endpointPosition(el.from, elements);
-            const to = endpointPosition(el.to, elements);
-            const aMinX = Math.min(from.x, to.x);
-            const aMaxX = Math.max(from.x, to.x);
-            const aMinY = Math.min(from.y, to.y);
-            const aMaxY = Math.max(from.y, to.y);
-            if (aMinX < maxX && aMaxX > minX && aMinY < maxY && aMaxY > minY) {
-              hits.add(el.id);
-            }
-            continue;
-          }
-          if (!isBoxed(el)) continue;
-          // Standard rect-rect intersection test (open intervals).
-          if (el.x < maxX && el.x + el.width > minX && el.y < maxY && el.y + el.height > minY) {
-            hits.add(el.id);
-          }
-        }
-        onSelectMarquee(hits);
-      }
-      setMarquee(null);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, [marquee, elements, viewportZoom, viewportOffset, onSelectMarquee, onDeselect]);
+  // Pan + marquee + held-Space machinery lives in
+  // useCanvasPanAndMarquee. The hook owns the pointerdown / move
+  // / up listeners and the rect-vs-element marquee intersection,
+  // exposes pan / marquee state + setters back so the canvas's
+  // own pointerdown handlers can drive it, and exposes the
+  // spaceHeldRef the pointerdown reads to decide pan vs marquee.
+  const { pan, setPan, marquee, setMarquee, spaceHeldRef } = useCanvasPanAndMarquee({
+    viewportZoom,
+    setViewportOffset,
+    elements,
+    wrapperRef,
+    onDeselect,
+    onSelectMarquee,
+  });
 
   const zoomStep = 0.1;
   const clampZoom = (z: number) => Math.max(0.1, Math.min(5, z));
