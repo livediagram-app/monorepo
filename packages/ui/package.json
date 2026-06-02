@@ -14,11 +14,13 @@
     "clean": "rm -rf node_modules .turbo"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@livediagram/eslint-config": "workspace:*",
     "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
     "eslint": "^9.17.0",
     "typescript": "^5.7.2"
   }

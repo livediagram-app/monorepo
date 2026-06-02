@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Brand } from '@livediagram/ui';
+import { Brand, Tooltip } from '@livediagram/ui';
 import type { TelemetryCount, TelemetrySummary, TelemetryWindowKey } from '@livediagram/api-schema';
 
 // Same origin as the editor + api under the router (livediagram.app).
@@ -981,30 +981,33 @@ function TopNLeaderboard({ rows, n = 10 }: { rows: TelemetryCount[]; n?: number 
       </p>
       <ul className="mt-3 flex flex-col gap-2">
         {sorted.map((row) => (
-          <li
+          <Tooltip
             key={`${row.category}:${row.action}:${row.type ?? ''}`}
-            title={eventExplanation(row.category, row.action, row.type ?? null)}
-            className="flex items-center gap-2 text-sm"
+            title={`${row.category} · ${eventLabel(row)}`}
+            description={eventExplanation(row.category, row.action, row.type ?? null)}
+            block
           >
-            <span className="shrink-0 text-slate-400">
-              <EventIcon category={row.category} action={row.action} type={row.type ?? null} />
-            </span>
-            <span className="w-32 shrink-0 truncate text-slate-600">
-              {row.category} · {eventLabel(row)}
-            </span>
-            <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-              <span
-                className="absolute inset-y-0 left-0 rounded-full"
-                style={{
-                  width: `${(row.count / top) * 100}%`,
-                  backgroundColor: categoryColor(row.category),
-                }}
-              />
-            </span>
-            <span className="w-12 shrink-0 text-right font-medium text-slate-900">
-              {row.count.toLocaleString()}
-            </span>
-          </li>
+            <li className="flex w-full items-center gap-2 text-sm">
+              <span className="shrink-0 text-slate-400">
+                <EventIcon category={row.category} action={row.action} type={row.type ?? null} />
+              </span>
+              <span className="w-32 shrink-0 truncate text-slate-600">
+                {row.category} · {eventLabel(row)}
+              </span>
+              <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <span
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{
+                    width: `${(row.count / top) * 100}%`,
+                    backgroundColor: categoryColor(row.category),
+                  }}
+                />
+              </span>
+              <span className="w-12 shrink-0 text-right font-medium text-slate-900">
+                {row.count.toLocaleString()}
+              </span>
+            </li>
+          </Tooltip>
         ))}
       </ul>
     </div>
@@ -1222,46 +1225,49 @@ export default function TelemetryDashboard() {
                             {group.items.map((row) => {
                               const share = group.subtotal > 0 ? row.count / group.subtotal : 0;
                               return (
-                                <li
+                                <Tooltip
                                   key={`${row.action}:${row.type ?? ''}`}
-                                  title={eventExplanation(
+                                  title={eventLabel(row)}
+                                  description={eventExplanation(
                                     row.category,
                                     row.action,
                                     row.type ?? null,
                                   )}
-                                  className="py-1.5 text-sm"
+                                  block
                                 >
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="flex min-w-0 flex-1 items-center gap-2 text-slate-600">
-                                      <span className="shrink-0 text-slate-400">
-                                        <EventIcon
-                                          category={row.category}
-                                          action={row.action}
-                                          type={row.type ?? null}
-                                        />
+                                  <li className="block w-full py-1.5 text-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span className="flex min-w-0 flex-1 items-center gap-2 text-slate-600">
+                                        <span className="shrink-0 text-slate-400">
+                                          <EventIcon
+                                            category={row.category}
+                                            action={row.action}
+                                            type={row.type ?? null}
+                                          />
+                                        </span>
+                                        <span className="truncate">{eventLabel(row)}</span>
                                       </span>
-                                      <span className="truncate">{eventLabel(row)}</span>
-                                    </span>
-                                    <span className="font-medium text-slate-900">
-                                      {row.count.toLocaleString()}
-                                    </span>
-                                  </div>
-                                  {/* Inline share bar: row's share of
-                                      the category's subtotal. Same
-                                      data the count above carries,
-                                      visualised so the dominant rows
-                                      stand out without scanning the
-                                      numbers. */}
-                                  <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-100">
-                                    <div
-                                      className="h-full rounded-full"
-                                      style={{
-                                        width: `${share * 100}%`,
-                                        backgroundColor: categoryColor(group.category),
-                                      }}
-                                    />
-                                  </div>
-                                </li>
+                                      <span className="font-medium text-slate-900">
+                                        {row.count.toLocaleString()}
+                                      </span>
+                                    </div>
+                                    {/* Inline share bar: row's share of
+                                        the category's subtotal. Same
+                                        data the count above carries,
+                                        visualised so the dominant rows
+                                        stand out without scanning the
+                                        numbers. */}
+                                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                                      <div
+                                        className="h-full rounded-full"
+                                        style={{
+                                          width: `${share * 100}%`,
+                                          backgroundColor: categoryColor(group.category),
+                                        }}
+                                      />
+                                    </div>
+                                  </li>
+                                </Tooltip>
                               );
                             })}
                           </ul>

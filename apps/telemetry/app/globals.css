@@ -2,6 +2,23 @@
 @import '@livediagram/tailwind-config';
 
 /* Scan the shared UI package so utility classes used only inside its
- * components (e.g. the <Brand> mark) are generated here too. Tailwind
- * v4 skips node_modules, where the workspace package is symlinked. */
+ * components (e.g. the <Brand> mark + <Tooltip> card) are generated
+ * here too. Tailwind v4 skips node_modules, where the workspace
+ * package is symlinked. */
 @source '../../../packages/ui/src';
+
+/* Animation token + keyframes used by the shared Tooltip card so it
+ * fades in cleanly on the dashboard the same way it does in the
+ * editor. Kept in sync with apps/live/app/globals.css. */
+@theme {
+  --animate-fade-in: fade-in 260ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
