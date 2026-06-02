@@ -1,0 +1,839 @@
+'use client';
+
+// Presentational primitives for the Explorer page (spec/15). Lifted
+// out of page.tsx so the route file can focus on data flow
+// (state, effects, api calls) rather than 800 lines of pure render
+// markup. Every export here is a stateless or near-stateless React
+// component that takes its data and callbacks via props: no module-
+// level state, no api calls. The page wires them together.
+
+import Link from 'next/link';
+import { useRef, useState } from 'react';
+import type { Folder, SharedWithItem } from '@/lib/api-client';
+import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
+import { InlineRenameInput } from '@/components/InlineRenameInput';
+import { MenuItem, PortalMenu } from '@/components/PortalMenu';
+import {
+  ChevronIcon,
+  CloseIcon,
+  DiagramIcon,
+  EllipsisIcon,
+  FolderIcon,
+  MenuDuplicateIcon,
+  MenuFolderIcon,
+  MenuPencilIcon,
+  MenuTrashIcon,
+  PlusIcon,
+} from './icons';
+
+// Shared shapes between the page (which owns the data) and the
+// view primitives (which render it). Lifted here, not into a third
+// `types.ts`, because every consumer of these types also reaches
+// for one of the view components.
+export type DiagramItem = { id: string; name: string; folderId: string | null; savedAt: number };
+
+// What the sidebar tree highlights and what the right pane shows.
+// "Special" nodes (`recent`, `all`, `shared`) are virtual buckets
+// with no folder row behind them; `folder` is a real owned folder.
+export type SelectedNode =
+  | { kind: 'recent' }
+  | { kind: 'all' }
+  | { kind: 'unsorted' }
+  | { kind: 'shared' }
+  | { kind: 'gallery' }
+  | { kind: 'folder'; id: string };
+
+// Indent step per tree level. Matches the Windows Explorer visual
+// of a chevron + folder glyph + name with each child nudged in.
+const INDENT_STEP = 16;
+
+export function SearchSidebarIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <circle cx="7" cy="7" r="4" />
+      <path d="M10 10l3.5 3.5" />
+    </svg>
+  );
+}
+
+// ---------- Sidebar tree primitives -------------------------------
+
+export function SidebarSectionLabel({
+  children,
+  first,
+}: {
+  children: React.ReactNode;
+  // `first` skips the inter-section gap on the topmost label so the
+  // sidebar box has matching breathing room above the first label and
+  // below the last row. Without this the top reads as too padded.
+  first?: boolean;
+}) {
+  return (
+    <div
+      className={`px-2 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${
+        first ? '' : 'mt-5 pt-1'
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// One sidebar row. Re-used for the "Recent", "All diagrams", and
+// "Shared with me" special entries. Folder rows wrap this via
+// SidebarFolderSubtree so they get chevron + recursive rendering.
+export function SidebarRow({
+  icon,
+  label,
+  selected,
+  onClick,
+  depth,
+  badge,
+  hasChildren,
+  expanded,
+  onToggleExpand,
+  trailing,
+  renaming,
+}: {
+  icon: React.ReactNode;
+  label: React.ReactNode;
+  selected: boolean;
+  onClick: () => void;
+  depth: number;
+  badge?: number;
+  hasChildren?: boolean;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
+  trailing?: React.ReactNode;
+  // When true, the label area renders as a plain div instead of a
+  // <button>, so a child <input> (e.g. inline rename) can take focus
+  // without the parent button intercepting it. An input nested inside
+  // a button is invalid HTML and browsers steal the input's focus.
+  renaming?: boolean;
+}) {
+  const labelClass = `flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left text-xs ${
+    selected ? 'font-semibold text-brand-700' : 'text-slate-700'
+  }`;
+  const labelInner = (
+    <>
+      <span className="shrink-0 text-slate-400">{icon}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {badge !== undefined ? (
+        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+          {badge}
+        </span>
+      ) : null}
+    </>
+  );
+  return (
+    <div
+      className={`group flex items-center gap-1 rounded-md px-1 ${selected ? 'bg-brand-50' : 'hover:bg-slate-100'}`}
+      style={{ paddingLeft: depth * INDENT_STEP + 4 }}
+    >
+      <button
+        type="button"
+        onClick={onToggleExpand}
+        aria-label={expanded ? 'Collapse' : 'Expand'}
+        className={`flex h-5 w-5 shrink-0 items-center justify-center text-slate-400 transition ${
+          hasChildren ? 'hover:text-slate-700' : 'invisible'
+        }`}
+        disabled={!hasChildren || !onToggleExpand}
+      >
+        {hasChildren ? <ChevronIcon open={!!expanded} /> : null}
+      </button>
+      {renaming ? (
+        <div className={labelClass}>{labelInner}</div>
+      ) : (
+        <button type="button" onClick={onClick} className={labelClass}>
+          {labelInner}
+        </button>
+      )}
+      {trailing}
+    </div>
+  );
+}
+
+// Recursive folder subtree in the sidebar. Each row is a SidebarRow
+// with the chevron / folder icon, and children render at +1 depth
+// when expanded.
+export function SidebarFolderSubtree({
+  folder,
+  depth,
+  expanded,
+  onToggleExpand,
+  selected,
+  onSelect,
+  childrenByParent,
+  renamingFolderId,
+  onCommitRenameFolder,
+  onCancelRenameFolder,
+  folderActions,
+}: {
+  folder: Folder;
+  depth: number;
+  expanded: Set<string>;
+  onToggleExpand: (id: string) => void;
+  selected: SelectedNode;
+  onSelect: (id: string) => void;
+  childrenByParent: Map<string | null, Folder[]>;
+  renamingFolderId: string | null;
+  onCommitRenameFolder: (id: string, name: string) => void;
+  onCancelRenameFolder: () => void;
+  folderActions: (
+    f: Folder,
+    anchor: HTMLElement | null,
+  ) => {
+    rename: () => void;
+    newSubfolder: () => void;
+    move: () => void;
+    delete: () => void;
+  };
+}) {
+  const kids = childrenByParent.get(folder.id) ?? [];
+  const hasKids = kids.length > 0;
+  const isOpen = expanded.has(folder.id);
+  const isSelected = selected.kind === 'folder' && selected.id === folder.id;
+  const renaming = renamingFolderId === folder.id;
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+
+  const labelNode = renaming ? (
+    <InlineRenameInput
+      initial={folder.name}
+      onCommit={(name) => onCommitRenameFolder(folder.id, name)}
+      onCancel={onCancelRenameFolder}
+      className="rounded border border-brand-300 bg-white px-1 py-0 text-xs"
+    />
+  ) : (
+    folder.name
+  );
+
+  return (
+    <>
+      <SidebarRow
+        icon={<FolderIcon open={isOpen} />}
+        label={labelNode}
+        selected={isSelected}
+        onClick={() => onSelect(folder.id)}
+        depth={depth}
+        hasChildren={hasKids}
+        expanded={isOpen}
+        onToggleExpand={() => onToggleExpand(folder.id)}
+        renaming={renaming}
+        trailing={
+          renaming ? null : (
+            <button
+              ref={menuRef}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen((o) => !o);
+              }}
+              aria-label={`Menu for ${folder.name}`}
+              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+            >
+              <EllipsisIcon />
+            </button>
+          )
+        }
+      />
+      {menuOpen ? (
+        <PortalMenu anchor={menuRef.current} placement="below" onClose={() => setMenuOpen(false)}>
+          <FolderMenuItems
+            actions={folderActions(folder, menuRef.current)}
+            close={() => setMenuOpen(false)}
+          />
+        </PortalMenu>
+      ) : null}
+      {isOpen
+        ? kids.map((k) => (
+            <SidebarFolderSubtree
+              key={k.id}
+              folder={k}
+              depth={depth + 1}
+              expanded={expanded}
+              onToggleExpand={onToggleExpand}
+              selected={selected}
+              onSelect={onSelect}
+              childrenByParent={childrenByParent}
+              renamingFolderId={renamingFolderId}
+              onCommitRenameFolder={onCommitRenameFolder}
+              onCancelRenameFolder={onCancelRenameFolder}
+              folderActions={folderActions}
+            />
+          ))
+        : null}
+    </>
+  );
+}
+
+// ---------- Right pane primitives ---------------------------------
+
+export function PaneHeader({
+  title,
+  crumbs,
+}: {
+  title: string;
+  crumbs: { name: string; onClick?: () => void }[];
+}) {
+  // A single-item breadcrumb is just the page title in a second
+  // place: visually noisy and provides no navigation. Show only
+  // when there are actual parents to click back to.
+  const showCrumbs = crumbs.length >= 2;
+  return (
+    <div className="mb-4">
+      <h1 className="mb-2 truncate text-2xl font-semibold tracking-tight text-slate-900">
+        {title}
+      </h1>
+      {showCrumbs ? (
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 shadow-sm"
+        >
+          {crumbs.map((c, i) => {
+            const isLast = i === crumbs.length - 1;
+            return (
+              <span key={`${c.name}-${i}`} className="flex items-center">
+                {i > 0 ? (
+                  <span aria-hidden className="px-1 text-slate-300">
+                    ›
+                  </span>
+                ) : null}
+                {c.onClick && !isLast ? (
+                  <button
+                    type="button"
+                    onClick={c.onClick}
+                    className="rounded px-1.5 py-0.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    {c.name}
+                  </button>
+                ) : (
+                  <span className="rounded px-1.5 py-0.5 font-medium text-slate-900">{c.name}</span>
+                )}
+              </span>
+            );
+          })}
+        </nav>
+      ) : null}
+    </div>
+  );
+}
+
+export function ListView({
+  folders,
+  diagrams,
+  showUnsortedRow,
+  unsortedCount,
+  onOpenUnsorted,
+  onOpenFolder,
+  onCommitRenameFolder,
+  onCancelRenameFolder,
+  renamingFolderId,
+  renamingDiagramId,
+  onCommitRenameDiagram,
+  onCancelRenameDiagram,
+  folderActions,
+  onStartRenameDiagram,
+  onDuplicateDiagram,
+  onDeleteDiagram,
+  onMoveDiagram,
+  childrenCount,
+  diagramsCount,
+}: {
+  folders: Folder[];
+  diagrams: DiagramItem[];
+  // True on the "All diagrams" view: the synthetic Unsorted row
+  // renders at the very top so the root has the same "folder row
+  // per child" feel as any non-root folder. The row is only
+  // surfaced when there's something to put in it (unsortedCount > 0)
+  // to avoid showing an empty folder by default.
+  showUnsortedRow: boolean;
+  unsortedCount: number;
+  onOpenUnsorted: () => void;
+  onOpenFolder: (id: string) => void;
+  onCommitRenameFolder: (id: string, name: string) => void;
+  onCancelRenameFolder: () => void;
+  renamingFolderId: string | null;
+  renamingDiagramId: string | null;
+  onCommitRenameDiagram: (id: string, name: string) => void;
+  onCancelRenameDiagram: () => void;
+  folderActions: (
+    f: Folder,
+    anchor: HTMLElement | null,
+  ) => {
+    rename: () => void;
+    newSubfolder: () => void;
+    move: () => void;
+    delete: () => void;
+  };
+  onStartRenameDiagram: (id: string) => void;
+  onDuplicateDiagram: (id: string) => void;
+  onDeleteDiagram: (id: string) => void;
+  onMoveDiagram: (id: string, anchor: HTMLElement | null) => void;
+  childrenCount: (id: string) => number;
+  diagramsCount: (id: string) => number;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="grid grid-cols-[1fr_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span>Name</span>
+        <span>Updated</span>
+        <span aria-hidden></span>
+      </div>
+      <ul className="divide-y divide-slate-100">
+        {showUnsortedRow ? <UnsortedRow count={unsortedCount} onOpen={onOpenUnsorted} /> : null}
+        {folders.map((f) => (
+          <FolderRow
+            key={f.id}
+            folder={f}
+            renaming={renamingFolderId === f.id}
+            childCount={childrenCount(f.id) + diagramsCount(f.id)}
+            onOpen={() => onOpenFolder(f.id)}
+            onCommitRename={(name) => onCommitRenameFolder(f.id, name)}
+            onCancelRename={onCancelRenameFolder}
+            getActionsForAnchor={(anchor) => folderActions(f, anchor)}
+          />
+        ))}
+        {diagrams.map((d) => (
+          <DiagramRow
+            key={d.id}
+            diagram={d}
+            renaming={renamingDiagramId === d.id}
+            onStartRename={() => onStartRenameDiagram(d.id)}
+            onCommitRename={(name) => onCommitRenameDiagram(d.id, name)}
+            onCancelRename={onCancelRenameDiagram}
+            onDuplicate={() => onDuplicateDiagram(d.id)}
+            onDelete={() => onDeleteDiagram(d.id)}
+            onMove={(anchor) => onMoveDiagram(d.id, anchor)}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Synthetic "Unsorted" folder row for the All-diagrams list view.
+// Looks like a regular folder row (folder glyph + name + child
+// count) but has no rename / move / new-subfolder / delete actions
+// because the row isn't backed by a folders table entry: Unsorted
+// is the absence of a parent. Clicking drills into the Unsorted
+// pseudo-folder which lists every diagram with folder_id IS NULL.
+export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+      <button
+        type="button"
+        onDoubleClick={onOpen}
+        onClick={onOpen}
+        className="flex min-w-0 items-center gap-2 text-left"
+      >
+        <span className="shrink-0 text-slate-400">
+          <FolderIcon open={false} />
+        </span>
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+          Unsorted
+        </span>
+        {count > 0 ? (
+          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+            {count}
+          </span>
+        ) : null}
+      </button>
+      <span className="text-[11px] uppercase tracking-wider text-slate-400">—</span>
+      <span aria-hidden />
+    </li>
+  );
+}
+
+export function FolderRow({
+  folder,
+  renaming,
+  childCount,
+  onOpen,
+  onCommitRename,
+  onCancelRename,
+  getActionsForAnchor,
+}: {
+  folder: Folder;
+  renaming: boolean;
+  childCount: number;
+  onOpen: () => void;
+  onCommitRename: (name: string) => void;
+  onCancelRename: () => void;
+  getActionsForAnchor: (anchor: HTMLElement | null) => {
+    rename: () => void;
+    newSubfolder: () => void;
+    move: () => void;
+    delete: () => void;
+  };
+}) {
+  useRelativeTimeTick();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+
+  // When renaming, the label area is a plain div so the <input>
+  // inside it isn't nested in a <button> (which steals focus).
+  const labelInner = (
+    <>
+      <span className="shrink-0 text-amber-500">
+        <FolderIcon open={false} />
+      </span>
+      {renaming ? (
+        <InlineRenameInput
+          initial={folder.name}
+          onCommit={onCommitRename}
+          onCancel={onCancelRename}
+          className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+        />
+      ) : (
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+          {folder.name}
+        </span>
+      )}
+      {childCount > 0 ? (
+        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+          {childCount}
+        </span>
+      ) : null}
+    </>
+  );
+  return (
+    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+      {renaming ? (
+        <div className="flex min-w-0 items-center gap-2">{labelInner}</div>
+      ) : (
+        <button
+          type="button"
+          onDoubleClick={onOpen}
+          onClick={onOpen}
+          className="flex min-w-0 items-center gap-2 text-left"
+        >
+          {labelInner}
+        </button>
+      )}
+      <span className="text-[11px] uppercase tracking-wider text-slate-400">
+        {formatRelativeTime(Date.now() - folder.updatedAt)}
+      </span>
+      {renaming ? (
+        <span />
+      ) : (
+        <button
+          ref={menuRef}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((o) => !o);
+          }}
+          aria-label={`Menu for ${folder.name}`}
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+        >
+          <EllipsisIcon />
+        </button>
+      )}
+      {menuOpen ? (
+        <PortalMenu anchor={menuRef.current} placement="below" onClose={() => setMenuOpen(false)}>
+          <FolderMenuItems
+            actions={getActionsForAnchor(menuRef.current)}
+            close={() => setMenuOpen(false)}
+          />
+        </PortalMenu>
+      ) : null}
+    </li>
+  );
+}
+
+export function DiagramRow({
+  diagram,
+  renaming,
+  onStartRename,
+  onCommitRename,
+  onCancelRename,
+  onDuplicate,
+  onDelete,
+  onMove,
+}: {
+  diagram: DiagramItem;
+  renaming: boolean;
+  onStartRename: () => void;
+  onCommitRename: (name: string) => void;
+  onCancelRename: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onMove: (anchor: HTMLElement | null) => void;
+}) {
+  useRelativeTimeTick();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+
+  const titleNode = renaming ? (
+    <InlineRenameInput
+      initial={diagram.name}
+      onCommit={onCommitRename}
+      onCancel={onCancelRename}
+      className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+    />
+  ) : (
+    <Link
+      href={`/diagram/${diagram.id}`}
+      className="truncate text-sm font-medium text-slate-900 transition hover:text-brand-700"
+    >
+      {diagram.name}
+    </Link>
+  );
+
+  return (
+    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-slate-400">
+          <DiagramIcon />
+        </span>
+        {titleNode}
+      </span>
+      <span className="text-[11px] uppercase tracking-wider text-slate-400">
+        {formatRelativeTime(Date.now() - diagram.savedAt)}
+      </span>
+      {renaming ? (
+        <span />
+      ) : (
+        <button
+          ref={menuRef}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((o) => !o);
+          }}
+          aria-label={`Menu for ${diagram.name}`}
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+        >
+          <EllipsisIcon />
+        </button>
+      )}
+      {menuOpen ? (
+        <PortalMenu anchor={menuRef.current} placement="below" onClose={() => setMenuOpen(false)}>
+          <MenuItem
+            icon={<MenuPencilIcon />}
+            label="Rename"
+            onClick={() => {
+              onStartRename();
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuDuplicateIcon />}
+            label="Duplicate"
+            onClick={() => {
+              onDuplicate();
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuFolderIcon />}
+            label="Move to folder…"
+            onClick={() => {
+              onMove(menuRef.current);
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<MenuTrashIcon />}
+            label="Delete"
+            danger
+            onClick={() => {
+              onDelete();
+              setMenuOpen(false);
+            }}
+          />
+        </PortalMenu>
+      ) : null}
+    </li>
+  );
+}
+
+export function FolderMenuItems({
+  actions,
+  close,
+}: {
+  actions: {
+    rename: () => void;
+    newSubfolder: () => void;
+    move: () => void;
+    delete: () => void;
+  };
+  close: () => void;
+}) {
+  return (
+    <>
+      <MenuItem
+        icon={<MenuPencilIcon />}
+        label="Rename"
+        onClick={() => {
+          actions.rename();
+          close();
+        }}
+      />
+      <MenuItem
+        icon={<PlusIcon />}
+        label="New subfolder"
+        onClick={() => {
+          actions.newSubfolder();
+          close();
+        }}
+      />
+      <MenuItem
+        icon={<MenuFolderIcon />}
+        label="Move to folder…"
+        onClick={() => {
+          actions.move();
+          close();
+        }}
+      />
+      <MenuItem
+        icon={<MenuTrashIcon />}
+        label="Delete"
+        danger
+        onClick={() => {
+          actions.delete();
+          close();
+        }}
+      />
+    </>
+  );
+}
+
+export function SharedList({
+  shared,
+  onDismiss,
+}: {
+  shared: SharedWithItem[];
+  onDismiss: (id: string) => void;
+}) {
+  useRelativeTimeTick();
+  if (shared.length === 0) {
+    return (
+      <EmptyPane
+        selected={{ kind: 'shared' }}
+        onCreateDiagram={() => window.location.assign('/live/new')}
+        onCreateFolder={() => {}}
+      />
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span>Name</span>
+        <span>Role</span>
+        <span>Updated</span>
+        <span aria-hidden></span>
+      </div>
+      <ul className="divide-y divide-slate-100">
+        {shared.map((s) => (
+          <li
+            key={s.id}
+            className="group grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50"
+          >
+            <Link
+              href={`/diagram/${s.id}?s=${encodeURIComponent(s.shareCode)}`}
+              className="flex min-w-0 items-center gap-2 truncate text-sm font-medium text-slate-900 hover:text-brand-700"
+            >
+              <span className="shrink-0 text-slate-400">
+                <DiagramIcon />
+              </span>
+              <span className="truncate">{s.name}</span>
+            </Link>
+            <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+              {s.role === 'edit' ? 'Edit' : 'View'}
+            </span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-400">
+              {formatRelativeTime(Date.now() - s.savedAt)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onDismiss(s.id)}
+              aria-label="Dismiss"
+              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
+            >
+              <CloseIcon />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ---------- States: empty / loading / unauthenticated -------------
+
+export function EmptyPane({
+  selected,
+  onCreateDiagram,
+  onCreateFolder,
+}: {
+  selected: SelectedNode;
+  onCreateDiagram: () => void;
+  onCreateFolder: () => void;
+}) {
+  const inFolder = selected.kind === 'folder';
+  const isRecent = selected.kind === 'recent';
+  const isShared = selected.kind === 'shared';
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+      <p className="text-sm text-slate-500">
+        {isRecent
+          ? "Nothing here yet. Diagrams you've opened will show up here."
+          : isShared
+            ? "No-one's shared a diagram with you yet."
+            : inFolder
+              ? 'This folder is empty.'
+              : 'No diagrams yet.'}
+      </p>
+      {isShared ? null : (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCreateDiagram}
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-brand-600"
+          >
+            <PlusIcon />
+            New diagram
+          </button>
+          {!isRecent ? (
+            <button
+              type="button"
+              onClick={onCreateFolder}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              <PlusIcon />
+              {inFolder ? 'New subfolder' : 'New folder'}
+            </button>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SkeletonRows() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <ul className="divide-y divide-slate-100">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="flex items-center gap-3 px-4 py-3">
+            <span className="h-4 w-4 animate-pulse rounded bg-slate-200" />
+            <span className="h-4 flex-1 animate-pulse rounded bg-slate-200" />
+            <span className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
