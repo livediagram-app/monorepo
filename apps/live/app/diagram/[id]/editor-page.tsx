@@ -618,6 +618,14 @@ export default function LivePage() {
   // the diagram's primary code surfaced for sharing) because a
   // diagram can have many active codes.
   const [sessionShareCode, setSessionShareCode] = useState<string | null>(null);
+  // Mirror into a ref so the room-message handler (registered once
+  // when the WebSocket opens) can read the LATEST value without
+  // re-registering on every change. Specifically, the share-revoked
+  // op handler checks "is the revoked code mine?" and needs the
+  // up-to-date sessionShareCode rather than the value captured at
+  // mount.
+  const sessionShareCodeRef = useRef(sessionShareCode);
+  sessionShareCodeRef.current = sessionShareCode;
 
   useLayoutEffect(() => {
     if (hydrated) return;
@@ -1287,6 +1295,16 @@ export default function LivePage() {
           });
         } else if (op.kind === 'log-remove') {
           setChangeLog((prev) => prev.filter((e) => e.id !== op.entryId));
+        } else if (op.kind === 'share-revoked') {
+          // Owner revoked a share link. If our session is hydrated
+          // against that exact code, the diagram is no longer ours
+          // to read; hard-redirect to the explorer so we don't sit
+          // on stale state. The check is per-client: an owner who
+          // revoked their own outbound link to a different visitor
+          // keeps their session.
+          if (sessionShareCodeRef.current && sessionShareCodeRef.current === op.code) {
+            window.location.assign('/live/');
+          }
         }
       },
     };

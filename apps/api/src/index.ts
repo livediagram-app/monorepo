@@ -866,6 +866,20 @@ export default {
 
           if (request.method === 'DELETE') {
             await deleteShareLink(env, code);
+            // Tell every connected peer in this diagram's room that
+            // the code just got revoked so any viewer / editor who
+            // hydrated with `X-Share-Code: <code>` can hard-redirect
+            // instead of continuing to read a diagram they no longer
+            // have access to. Fire-and-forget: the persistence above
+            // is the authoritative revoke, the broadcast is UX.
+            const stub = env.DIAGRAM_ROOM.get(env.DIAGRAM_ROOM.idFromName(id));
+            stub
+              .fetch('https://room/broadcast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ op: { kind: 'share-revoked', code } }),
+              })
+              .catch(() => {});
             return new Response(null, { status: 204, headers: CORS_HEADERS });
           }
         }

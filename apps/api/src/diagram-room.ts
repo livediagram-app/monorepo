@@ -24,6 +24,27 @@ export class DiagramRoom implements DurableObject {
   }
 
   async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    // Internal fan-out endpoint, called by the api worker after a
+    // privileged action that every connected client should learn
+    // about immediately (e.g. share-link revocation). Not exposed
+    // publicly: the worker stubs the DO via `env.DIAGRAM_ROOM.get(...)
+    // .fetch(...)`, which never traverses Cloudflare's edge, so the
+    // path is implicitly internal. Body is `{ op: RoomOp }` and the
+    // op gets broadcast with a synthetic `from: 'system'` so the
+    // frontend handler can distinguish it from a peer's op.
+    if (request.method === 'POST' && url.pathname === '/broadcast') {
+      let body: unknown;
+      try {
+        body = await request.json();
+      } catch {
+        return new Response('bad json', { status: 400 });
+      }
+      const op = (body as { op?: unknown }).op;
+      if (!op) return new Response('missing op', { status: 400 });
+      this.broadcastSystemOp(op);
+      return new Response(null, { status: 204 });
+    }
     if (request.headers.get('Upgrade') !== 'websocket') {
       return new Response('Expected WebSocket', { status: 426 });
     }
@@ -35,6 +56,22 @@ export class DiagramRoom implements DurableObject {
     const server = pair[1]!;
     this.handleSession(server);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  // Fan an op out to every connected client without a sender. Used
+  // for server-originated events (share-link revoked, owner-side
+  // forced disconnects). Senders aren't excluded because the
+  // originator is the worker itself, not any of the connected peers.
+  broadcastSystemOp(op: unknown): void {
+    const payload: ServerMessage = { kind: 'op', from: 'system', op };
+    const serialized = JSON.stringify(payload);
+    for (const ws of this.sessions.keys()) {
+      try {
+        ws.send(serialized);
+      } catch {
+        this.sessions.delete(ws);
+      }
+    }
   }
 
   handleSession(ws: WebSocket): void {

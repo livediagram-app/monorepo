@@ -252,7 +252,14 @@ export type RoomOp =
   // participant buffer and fade the trail out over ~1 s — see
   // LaserOverlay. The active tab id scopes the rendering so peers on
   // a different tab don't see the laser.
-  | { kind: 'laser'; tabId: string; x: number; y: number };
+  | { kind: 'laser'; tabId: string; x: number; y: number }
+  // A share link was revoked by the diagram owner. Every connected
+  // peer using that share code (the `X-Share-Code` they handed in to
+  // hydrate) should hard-redirect to a "share revoked" surface so
+  // they don't continue to read or hold open a stale connection.
+  // Carries only the revoked code; viewers compare against their own
+  // sessionShareCode and act only if it matches.
+  | { kind: 'share-revoked'; code: string };
 
 // Client-side narrowings of `ClientMessage` / `ServerMessage` that
 // pin `op` to `RoomOp` for type-safe send/receive in the editor.
