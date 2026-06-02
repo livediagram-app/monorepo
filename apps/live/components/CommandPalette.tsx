@@ -698,7 +698,7 @@ export function SelectedElementSection({
 
   return (
     <div className="flex flex-col border-t border-slate-200 dark:border-slate-800">
-      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-200">
         {heading}
       </p>
 
@@ -773,7 +773,7 @@ export function SelectedElementSection({
           </Tooltip>
         </div>
         <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
-        <p className="text-[10px] font-medium text-slate-500">Opacity</p>
+        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">Opacity</p>
         <div className="mt-1 flex items-center gap-2">
           <input
             type="range"
@@ -976,7 +976,7 @@ export function SelectedElementSection({
               </Tooltip>
             ))}
           </div>
-          <p className="mt-3 text-[10px] font-medium text-slate-500">Pattern</p>
+          <p className="mt-3 text-[10px] font-medium text-slate-500 dark:text-slate-300">Pattern</p>
           <div className="mt-1 grid grid-cols-3 gap-1">
             {(['solid', 'dashed', 'dotted'] as const).map((value) => (
               <Tooltip
@@ -994,7 +994,7 @@ export function SelectedElementSection({
               </Tooltip>
             ))}
           </div>
-          <p className="mt-3 text-[10px] font-medium text-slate-500">Radius</p>
+          <p className="mt-3 text-[10px] font-medium text-slate-500 dark:text-slate-300">Radius</p>
           <div className="mt-1 grid grid-cols-4 gap-1">
             {(['none', 'sm', 'md', 'lg'] as const).map((value) => (
               <Tooltip
@@ -1771,11 +1771,11 @@ export function TabSection({
 
   return (
     <div className="flex flex-col border-t border-slate-200 dark:border-slate-800">
-      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-200">
         Current Tab
       </p>
       <Accordion title="Theme" open={open.theme} onToggle={() => toggle('theme')}>
-        <p className="text-[10px] font-medium text-slate-500">
+        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
           Sets the canvas backdrop and recolours every element on this tab to match the theme
           (sticky notes keep their amber palette).
         </p>
@@ -1838,7 +1838,7 @@ export function TabSection({
         </Tooltip>
       </Accordion>
       <Accordion title="Canvas" open={open.canvas} onToggle={() => toggle('canvas')}>
-        <p className="text-[10px] font-medium text-slate-500">Pattern</p>
+        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">Pattern</p>
         <div className="mt-1 grid grid-cols-3 gap-1">
           {patternsList.visible.map((p) => (
             <Tooltip key={p.id} title={p.label} description={p.description}>
@@ -1877,7 +1877,7 @@ export function TabSection({
         <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Opacity</p>
-            <span className="text-[10px] font-medium text-slate-500">
+            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
               {Math.round(tab.backgroundOpacity * 100)}%
             </span>
           </div>

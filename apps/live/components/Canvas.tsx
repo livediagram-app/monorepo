@@ -922,8 +922,13 @@ export function Canvas(props: CanvasProps) {
         // the presenter mode entirely on phones / tablets.
         if (e.target !== e.currentTarget) return;
         const laserOnTouch = canvasTool === 'laser' && e.pointerType === 'touch';
-        const wantsPan =
-          !laserOnTouch && (spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser');
+        // Touch + Laser is a pure draw gesture: no pan, no marquee.
+        // pointermove on <main> keeps broadcasting laser samples via
+        // onCanvasPointerMove. Without this short-circuit the drag
+        // would fall into the marquee branch below and paint a
+        // selection rectangle while the user is presenting.
+        if (laserOnTouch) return;
+        const wantsPan = spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser';
         if (wantsPan) {
           setPan({
             startClientX: e.clientX,
@@ -968,9 +973,12 @@ export function Canvas(props: CanvasProps) {
           //    the dot in canvas-coords.
           //  - Select tool → drag draws a marquee for multi-select.
           const laserOnTouch = canvasTool === 'laser' && e.pointerType === 'touch';
-          const wantsPan =
-            !laserOnTouch &&
-            (spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser');
+          // Touch + Laser: pure draw, no pan, no marquee. Falls
+          // through so pointermove on <main> can keep broadcasting
+          // laser samples. See the outer handler above for the
+          // matching short-circuit.
+          if (laserOnTouch) return;
+          const wantsPan = spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser';
           if (wantsPan) {
             setPan({
               startClientX: e.clientX,

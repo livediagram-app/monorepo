@@ -279,7 +279,7 @@ export function MovablePanel({
         onPointerDown={beginDrag}
         className={`flex items-center justify-between gap-2 rounded-t-lg px-2 pt-2 pb-1.5 ${drag ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
-        <span className="select-none text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span className="select-none text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-200">
           {title}
         </span>
         {headerExtra ? (
@@ -292,13 +292,18 @@ export function MovablePanel({
         ) : null}
         <div className="flex items-center gap-0.5">
           {onReset ? (
+            // Hidden on mobile: drag-to-move isn't available on touch
+            // (the title row is repurposed as a tap-to-collapse target,
+            // see beginDrag above), so a reset-position affordance has
+            // nothing to reset. The button reappears on `sm:` and up
+            // where dragging the title row pans the panel.
             <Tooltip title="Reset position" description="Snap back to the default corner.">
               <button
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={onReset}
                 aria-label={`Reset ${title.toLowerCase()} position`}
-                className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                className="hidden h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 sm:flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden fill="none">
                   {/* A diagonal arrow tucking back into a corner — a
@@ -361,7 +366,7 @@ export function MovablePanel({
                     : `Collapse ${title.toLowerCase()}`
                   : `Minimize ${title.toLowerCase()}`
               }
-              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
             >
               {collapsible && collapsed ? (
                 // Plus glyph: expand the body. Same 12 x 12 grid as
