@@ -230,7 +230,7 @@ export function FolderNode({
             }}
             aria-label="Folder menu"
             aria-expanded={menuOpen}
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 ${
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 opacity-100 transition hover:bg-slate-200/70 hover:text-slate-700 sm:opacity-0 sm:group-hover:opacity-100 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 ${
               menuOpen ? 'opacity-100' : ''
             }`}
           >
@@ -510,7 +510,7 @@ export function SharedRow({
         </span>
       </button>
       {onDismiss ? (
-        <div className="absolute right-1.5 top-1.5 hidden group-hover:block group-focus-within:block">
+        <div className="absolute right-1.5 top-1.5 block sm:hidden sm:group-hover:block sm:group-focus-within:block">
           <Tooltip title="Remove" description="Drop this from your Shared list.">
             <button
               type="button"
@@ -699,7 +699,7 @@ export function DiagramRow({
           }}
           aria-label="Diagram menu"
           aria-expanded={menuOpen}
-          className={`mr-1 flex w-6 shrink-0 items-center justify-center self-center rounded text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 ${
+          className={`mr-1 flex w-6 shrink-0 items-center justify-center self-center rounded text-slate-400 opacity-100 transition hover:bg-slate-200/70 hover:text-slate-700 sm:opacity-0 sm:group-hover:opacity-100 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 ${
             menuOpen ? 'opacity-100' : ''
           }`}
         >

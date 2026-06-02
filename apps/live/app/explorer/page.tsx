@@ -281,8 +281,16 @@ export default function ExplorerPage() {
     if (list) setDiagrams(list);
   };
 
-  const dismissShared = (diagramId: string) => {
+  const dismissShared = async (diagramId: string) => {
     if (!ownerId) return;
+    const target = shared.find((s) => s.id === diagramId);
+    const ok = await confirm({
+      title: `Remove "${target?.name || 'this diagram'}" from your Shared list?`,
+      message:
+        "It'll vanish from your Shared with you list. You can still open it again from the share link the owner gave you, and that re-adds it here.",
+      confirmLabel: 'Remove',
+    });
+    if (!ok) return;
     setShared((prev) => prev.filter((s) => s.id !== diagramId));
     void apiDismissSharedWith(ownerId, diagramId).catch(() => {});
   };

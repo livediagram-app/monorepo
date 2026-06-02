@@ -515,7 +515,15 @@ export default function LivePage() {
       .then((items) => setSharedDiagrams(items))
       .catch(() => {});
   };
-  const dismissSharedDiagram = (diagramId: string) => {
+  const dismissSharedDiagram = async (diagramId: string) => {
+    const target = sharedDiagrams.find((d) => d.id === diagramId);
+    const ok = await confirm({
+      title: `Remove "${target?.name || 'this diagram'}" from your Shared list?`,
+      message:
+        "It'll vanish from your Shared with you list. You can still open it again from the share link the owner gave you, and that re-adds it here.",
+      confirmLabel: 'Remove',
+    });
+    if (!ok) return;
     setSharedDiagrams((prev) => prev.filter((d) => d.id !== diagramId));
     void apiDismissSharedWith(selfParticipant.id, diagramId).catch(() => {});
   };
