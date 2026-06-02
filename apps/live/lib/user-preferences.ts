@@ -11,6 +11,8 @@
 // their own `localStorage.setItem` (like `lib/telemetry.ts`'s
 // in-memory gate cache) still refresh promptly.
 
+import { readLocalStorageSafe, writeLocalStorageSafe } from './local-storage-safe';
+
 export type UserPreferences = {
   // When `false`, the editor skips the auto arrow-rebind pass on
   // move (spec/19's `rebindArrowAnchorsAfterMove` in
@@ -32,10 +34,9 @@ export const PREFERENCES_CHANGED_EVENT = 'livediagram:preferences-changed';
 // the call site spread it without nulls, and field-level `?? true`
 // defaults handle every flag uniformly.
 export function readUserPreferences(): UserPreferences {
-  if (typeof window === 'undefined' || !window.localStorage) return {};
+  const raw = readLocalStorageSafe(STORAGE_KEY);
+  if (!raw) return {};
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (typeof parsed !== 'object' || parsed === null) return {};
     // Keep unknown keys: forward-compat for future-versioned flags
@@ -53,11 +54,8 @@ export function readUserPreferences(): UserPreferences {
 // fires so in-process listeners refresh without polling. The
 // browser handles cross-tab via its native `storage` event.
 export function writeUserPreferences(prefs: UserPreferences): void {
-  if (typeof window === 'undefined' || !window.localStorage) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  writeLocalStorageSafe(STORAGE_KEY, JSON.stringify(prefs));
+  if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event(PREFERENCES_CHANGED_EVENT));
-  } catch {
-    // Silent: localStorage write failures don't surface in v1.
   }
 }

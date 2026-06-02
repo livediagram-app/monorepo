@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { readLocalStorageSafe, writeLocalStorageSafe } from '@/lib/local-storage-safe';
 
 // Per-device toggle that disables ALL editor keyboard shortcuts
 // (Cmd-Z undo, Delete to wipe selection, Escape to cancel modes,
@@ -16,10 +17,9 @@ import { useEffect, useState } from 'react';
 const STORAGE_KEY = 'livediagram:v2:shortcuts-enabled';
 
 function read(): boolean {
-  if (typeof window === 'undefined') return true;
   // Stored as the literal string 'false' when disabled; absent or
   // any other value (including the default) is treated as enabled.
-  return window.localStorage.getItem(STORAGE_KEY) !== 'false';
+  return readLocalStorageSafe(STORAGE_KEY) !== 'false';
 }
 
 export function useShortcutsEnabled(): { enabled: boolean; setEnabled: (next: boolean) => void } {
@@ -30,11 +30,7 @@ export function useShortcutsEnabled(): { enabled: boolean; setEnabled: (next: bo
   }, []);
 
   const setEnabled = (next: boolean) => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next ? 'true' : 'false');
-    } catch {
-      // Storage quota / private browsing: in-memory only.
-    }
+    writeLocalStorageSafe(STORAGE_KEY, next ? 'true' : 'false');
     setLocalEnabled(next);
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { readLocalStorageSafe, writeLocalStorageSafe } from '@/lib/local-storage-safe';
 import { track } from '@/lib/telemetry';
 
 // UI chrome mode (light / dark). Distinct from the per-tab diagram
@@ -18,8 +19,7 @@ type UiMode = 'light' | 'dark';
 const STORAGE_KEY = 'livediagram:v2:ui-mode';
 
 function read(): UiMode {
-  if (typeof window === 'undefined') return 'light';
-  return window.localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+  return readLocalStorageSafe(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
 }
 
 function apply(mode: UiMode) {
@@ -51,13 +51,7 @@ export function useUiMode(): { mode: UiMode; toggle: () => void } {
     // is fine here: toggle is a single button click, never a rapid
     // race, so there's no stale-state risk.
     const next: UiMode = mode === 'dark' ? 'light' : 'dark';
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // Storage quota / private browsing — fall back to in-memory
-      // only. The toggle still visibly works; the choice just
-      // doesn't survive a reload.
-    }
+    writeLocalStorageSafe(STORAGE_KEY, next);
     apply(next);
     setMode(next);
     track('UI', 'Toggled', next === 'dark' ? 'Dark' : 'Light');
