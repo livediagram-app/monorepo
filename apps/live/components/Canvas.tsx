@@ -44,7 +44,15 @@ import { useCanvasPanAndMarquee } from '@/hooks/useCanvasPanAndMarquee';
 import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
 import { DockButton } from './MovablePanel';
-import { MultiSelectionToolbar } from './MultiSelectionToolbar';
+// Lazy-load MultiSelectionToolbar: only mounts when the user has
+// drag-marquee'd two or more elements. Most sessions never trigger
+// it (single-element edits dominate), so deferring the 172-line
+// toolbar + its icon set keeps the editor's initial chunk lean.
+// Same pattern as the editor's other gated modals (NotePopover,
+// TabLinkPicker, etc.).
+const MultiSelectionToolbar = dynamic(() =>
+  import('./MultiSelectionToolbar').then((m) => m.MultiSelectionToolbar),
+);
 import { ModeBanner } from './ModeBanner';
 import { PlusButton } from './PlusButton';
 import { SelectionPopover } from './SelectionPopover';
