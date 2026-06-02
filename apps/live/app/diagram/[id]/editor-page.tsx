@@ -153,6 +153,7 @@ import { useShortcutsEnabled } from '@/hooks/useShortcutsEnabled';
 import { useEditorComments } from '@/hooks/useEditorComments';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
 import { useEditorImages } from '@/hooks/useEditorImages';
+import { useEditorNotes } from '@/hooks/useEditorNotes';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
 import {
@@ -375,11 +376,9 @@ export default function LivePage() {
   const autoRebindArrowsRef = useRef<boolean>(diagramSettings.autoRebindArrows !== false);
   autoRebindArrowsRef.current = diagramSettings.autoRebindArrows !== false;
 
-  // Per-element note popover state. Notes are simpler than
-  // comments: single plain-text paragraph, no author, no thread.
-  // The state machine is just an open-id; the actual text lives on
-  // `element.note?` (see packages/diagram BoxedElement schema).
-  const [noteOpenId, setNoteOpenId] = useState<string | null>(null);
+  // Per-element note popover (state + open/close/setNote handlers)
+  // lives in useEditorNotes. Invoked further down, after `commit`
+  // exists.
 
   // Right-click context menu state. Tracks the cursor position + the
   // menu's mode (element-scoped vs tab-scoped) so the page can render
@@ -415,26 +414,6 @@ export default function LivePage() {
     setLinkPickerAnchorEl(el instanceof HTMLElement ? el : null);
   }, [linkPickerOpenForId]);
 
-  const openNote = (elementId: string) => {
-    setNoteOpenId((cur) => (cur === elementId ? null : elementId));
-  };
-  const closeNote = () => setNoteOpenId(null);
-  const setNote = (elementId: string, next: string) => {
-    const trimmed = next.trim();
-    // Empty / whitespace-only note: drop the field entirely so
-    // persisted JSON stays clean and the badge / picker active
-    // state correctly reads "no note".
-    commit((els) =>
-      els.map((el) => {
-        if (el.id !== elementId || !isBoxed(el)) return el;
-        if (!trimmed) {
-          const { note: _drop, ...rest } = el;
-          return rest as typeof el;
-        }
-        return { ...el, note: trimmed };
-      }),
-    );
-  };
   // Every diagram in the local store. Used by the Explorer to render its
   // list. Refreshed on hydration and after we save the current diagram
   // (so the Explorer's "Your diagrams" section reflects renames + first
@@ -2640,6 +2619,11 @@ export default function LivePage() {
     ownerId: selfParticipant.id,
     sessionShareCode,
   });
+
+  // Per-element note popover (single plain-text paragraph; see
+  // packages/diagram BoxedElement.note). State + handlers in
+  // useEditorNotes.
+  const { noteOpenId, openNote, closeNote, setNote } = useEditorNotes({ commit });
 
   // --- Element CRUD --------------------------------------------------------
 
