@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
+import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel } from './MovablePanel';
 import { MenuItem, PortalMenu } from './PortalMenu';
 import { InlineRenameInput } from './InlineRenameInput';
@@ -138,6 +139,23 @@ export function Explorer({
   onOpenFullExplorer,
   defaultRecentOpen = false,
 }: ExplorerProps) {
+  // Mobile viewport ⇒ render nothing. Mobile users reach the
+  // Explorer from the AuthControls "Explorer" menu item (spec/07)
+  // instead, freeing the small canvas of the floating panel and
+  // its bottom-dock entry point. Tracked in state + a media-query
+  // listener so a desktop → mobile resize / device-rotate flips
+  // the panel without a page reload. Initial value reads sync so
+  // the static-export build doesn't paint a desktop-shaped panel
+  // a tick before the effect runs.
+  const [hideOnMobile, setHideOnMobile] = useState(isMobileViewportSync);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia?.(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`);
+    if (!mq) return;
+    const onChange = () => setHideOnMobile(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const [sharedOpen, setSharedOpen] = useState(false);
   // Re-render every 30s so the "Updated X ago" strings stay fresh
   // while the panel is open. Cheap when the panel is minimised (this
@@ -200,6 +218,7 @@ export function Explorer({
       }
     : undefined;
 
+  if (hideOnMobile) return null;
   if (minimized) return null;
 
   const current = currentDiagramId
@@ -279,6 +298,7 @@ export function Explorer({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
+      collapsible
     >
       <div className="flex flex-col gap-2.5 px-3 pb-3 pt-1">
         {onNewDiagram ? (

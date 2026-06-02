@@ -26,7 +26,7 @@ The header has a **collapse button** to the right of the `PALETTE` label. Clicki
 - **Mobile** (touch viewports below the `sm:` breakpoint, 640 px): the palette starts **collapsed by default** so a small viewport opens to the canvas, not the chrome. Tapping anywhere on the title row expands the body; tapping anywhere outside the panel (canvas, an element, a different floating panel) collapses it again so a presenter doesn't have to find the button after every interaction.
 - **Desktop** (`sm:` and up): the palette starts expanded. The collapse button toggles to the same banner mode the mobile user sees. There is no outside-tap auto-close on desktop, the user is in control of when to re-open.
 
-The dock-button mechanism the Palette used to share with the Explorer (square button at the bottom of the canvas, next to the zoom controls) is no longer wired for the Palette: the banner stays in the corner where the user expects it. Other panels (Explorer, Activity, Editor) still dock via their own minimise paths, see those sections.
+The dock-button mechanism the Palette used to share with the Explorer (square button at the bottom of the canvas, next to the zoom controls) is no longer wired for the Palette or the Editor (ContextPanel): both share the banner-collapse behaviour via the `MovablePanel` `collapsible` prop. Activity still docks via its own minimise path, see that section.
 
 ## Explorer panel
 

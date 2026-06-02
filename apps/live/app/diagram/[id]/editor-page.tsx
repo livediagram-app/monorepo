@@ -239,17 +239,28 @@ export default function LivePage() {
   // under the Palette by default.
   const [contextPosition, setContextPosition] = useState<{ x: number; y: number } | null>(null);
   const [contextMinimized, setContextMinimized] = useState(false);
-  // On mobile the floating panels (Editor / Explorer) overlap each
-  // other and the canvas. Start them minimised to docks so a tap
-  // promotes one to the screen at a time. Done in an effect (not
-  // the useState initialiser) so the static-export build doesn't
-  // hydrate a tree that disagrees with the server pass over
-  // window.innerWidth. One-tick flash on mobile, no flash on
-  // desktop. Runs once.
+  // Counter bumped whenever an external action wants the Editor banner
+  // expanded (Activity row navigation, tab-context-menu Change Theme /
+  // Canvas). MovablePanel watches this and resets its local collapsed
+  // state to false on each change, so navigation always lands on a
+  // visible accordion. See the spec/09 "Collapse to banner" section.
+  const [editorExpandSignal, setEditorExpandSignal] = useState(0);
+  const requestEditorOpen = () => {
+    setContextMinimized(false);
+    setEditorExpandSignal((n) => n + 1);
+  };
+  // Mobile-default minimisation used to apply to both Editor and
+  // Explorer here. The Editor now uses the banner-collapse mechanism
+  // on MovablePanel (spec/09 "Collapse to banner") so it doesn't
+  // need to start hidden via the dock; the collapsed banner is the
+  // mobile-default shape. Explorer is hidden entirely on mobile via
+  // the panel's render guard (spec/07): mobile users reach it from
+  // the profile menu instead. Effect kept (not useState initialiser)
+  // so the static-export build hydrates without a window-driven
+  // mismatch.
   useEffect(() => {
     if (!isMobileViewportSync()) return;
     setExplorerMinimized(true);
-    setContextMinimized(true);
   }, []);
   // Tab-section accordion state lifted here so the Activity row
   // click handler can pop the matching accordion (e.g. clicking a
@@ -1812,7 +1823,7 @@ export default function LivePage() {
     if (lower.includes('theme')) {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
-      setContextMinimized(false);
+      requestEditorOpen();
       setTabAccordionsOpen({
         theme: true,
         canvas: false,
@@ -1823,7 +1834,7 @@ export default function LivePage() {
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
       setMultiSelectedIds(new Set());
-      setContextMinimized(false);
+      requestEditorOpen();
       setTabAccordionsOpen({
         theme: false,
         canvas: true,
@@ -3826,6 +3837,7 @@ export default function LivePage() {
         contextMinimized={contextMinimized}
         tabAccordionsOpen={tabAccordionsOpen}
         setTabAccordionsOpen={setTabAccordionsOpen}
+        editorExpandSignal={editorExpandSignal}
         onMoveContext={(x, y) => setContextPosition({ x, y })}
         onToggleContextMinimized={() => setContextMinimized((v) => !v)}
         onResetContext={() => setContextPosition(null)}
@@ -4143,7 +4155,7 @@ export default function LivePage() {
             // routing to the existing surface rather than introducing
             // a new picker dialog.
             const openTabAccordion = (which: 'theme' | 'canvas') => {
-              setContextMinimized(false);
+              requestEditorOpen();
               setTabAccordionsOpen({
                 theme: which === 'theme',
                 canvas: which === 'canvas',

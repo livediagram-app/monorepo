@@ -80,6 +80,14 @@ type ContextPanelProps = {
   // legacy static top-[15rem] default, so it follows the Palette as
   // it grows / shrinks (Palette accordions open / close).
   stackBelowY?: number;
+  // Bumped by the parent whenever it wants to force the banner open
+  // (e.g. user clicked an Activity row that opens a theme accordion).
+  // The MovablePanel watches this value and resets its local collapsed
+  // state to false whenever the number changes, so navigation actions
+  // always land on a visible accordion even if the user had collapsed
+  // the panel a moment earlier. Optional so callers that don't need
+  // imperative open can omit it.
+  expandSignal?: number;
 };
 
 // Right-hand inspector — shows either the Selected Element controls
@@ -99,6 +107,7 @@ export function ContextPanel({
   onToggleMinimized,
   onReset,
   stackBelowY,
+  expandSignal,
 }: ContextPanelProps) {
   // Accordion open state lives at the panel level so it survives the
   // SelectedElement <-> Tab swap whenever the user deselects or
@@ -180,6 +189,8 @@ export function ContextPanel({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
+      collapsible
+      expandSignal={expandSignal}
     >
       {/* Wrapper ref scopes the idle-timer listeners to the panel
           body — the MovablePanel's header (drag handle) doesn't

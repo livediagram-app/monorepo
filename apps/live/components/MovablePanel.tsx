@@ -58,6 +58,13 @@ type MovablePanelProps = {
   // panels: the banner stays in the corner so the affordance is
   // always visible. See spec/09 "Collapse to banner".
   collapsible?: boolean;
+  // Counter the parent bumps whenever it wants to force the banner
+  // open (e.g. navigating to a theme accordion from an Activity row).
+  // Only meaningful with `collapsible`. On every change of this value
+  // the local collapsed state resets to false; mount value is ignored
+  // so the panel still picks its viewport-driven default on first
+  // render. Optional; callers that don't need imperative open omit it.
+  expandSignal?: number;
   children: ReactNode;
 };
 
@@ -80,6 +87,7 @@ export function MovablePanel({
   stackBelowY,
   onSize,
   collapsible = false,
+  expandSignal,
   children,
 }: MovablePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -154,6 +162,19 @@ export function MovablePanel({
     if (position === null) onMoveTo(startX, startY);
     setDrag({ startClientX: e.clientX, startClientY: e.clientY, startX, startY });
   };
+
+  // Imperative open from the parent. Whenever `expandSignal` changes
+  // (compared to the value cached in the ref) we reset the local
+  // collapsed state to false. The ref starts at the initial value so
+  // the first render doesn't fire the effect (which would override
+  // the viewport-driven mobile-default-collapsed initial state).
+  const lastExpandSignalRef = useRef(expandSignal);
+  useEffect(() => {
+    if (!collapsible) return;
+    if (expandSignal === lastExpandSignalRef.current) return;
+    lastExpandSignalRef.current = expandSignal;
+    setCollapsed(false);
+  }, [collapsible, expandSignal]);
 
   // Outside-tap auto-close. Window-level pointerdown listener: when
   // the panel is expanded on mobile AND the user taps anywhere that

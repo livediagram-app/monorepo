@@ -37,8 +37,8 @@ import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type CanvasTool, type SelectedElementControls } from './CommandPalette';
 import { UnionResizeHandles } from './element-parts';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
-import { ContextIcon, ContextPanel } from './ContextPanel';
-import { Explorer, ExplorerIcon } from './Explorer';
+import { ContextPanel } from './ContextPanel';
+import { Explorer } from './Explorer';
 import { LaserOverlay } from './LaserOverlay';
 import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
@@ -166,6 +166,10 @@ type CanvasProps = {
   setTabAccordionsOpen: React.Dispatch<
     React.SetStateAction<import('./CommandPalette').TabAccordionState>
   >;
+  // Counter bumped by editor-page whenever something external (Activity
+  // row click, tab-context-menu Change Theme/Canvas) wants the Editor
+  // banner expanded. Forwarded through to ContextPanel → MovablePanel.
+  editorExpandSignal: number;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onActivityRowClick: (entry: ChangeLogEntry) => void;
   onClearActivity?: () => void;
@@ -374,6 +378,7 @@ export function Canvas(props: CanvasProps) {
     contextPosition,
     contextMinimized,
     tabAccordionsOpen,
+    editorExpandSignal,
     setTabAccordionsOpen,
     onMoveContext,
     onToggleContextMinimized,
@@ -1421,6 +1426,7 @@ export function Canvas(props: CanvasProps) {
           tab={tabSection}
           tabAccordionsOpen={tabAccordionsOpen}
           setTabAccordionsOpen={setTabAccordionsOpen}
+          expandSignal={editorExpandSignal}
           onMoveTo={onMoveContext}
           onToggleMinimized={onToggleContextMinimized}
           onReset={onResetContext}
@@ -1433,44 +1439,15 @@ export function Canvas(props: CanvasProps) {
         />
       )}
 
-      {/* Bottom dock. Order, left → right: minimised Explorer (if any),
-          minimised Palette (if any), Zoom controls, History controls.
-          During the welcome flow only the minimised Explorer dock button
-          is rendered — Palette / Zoom / History are all suppressed. */}
+      {/* Bottom dock. Order, left → right: Zoom controls, History
+          controls, and a minimised Activity dock when applicable.
+          The Palette + Editor are banner-collapsed in place (spec/09)
+          so they're not in the dock cluster; the Explorer is hidden
+          on mobile entirely (spec/07) and uses banner-collapse on
+          desktop, so it's also not in the dock cluster. */}
       <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2">
-        {explorerMinimized ? (
-          <>
-            {/* Mobile: the floating Explorer panel overlaps the
-                canvas, so the dock button instead navigates to the
-                full-page Explorer route (/live/explorer). Desktop
-                keeps the toggle-panel behaviour. */}
-            <a
-              href="/live/explorer"
-              aria-label="Open Explorer"
-              className="pointer-events-auto flex h-11 w-11 animate-pop-in items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-lg shadow-slate-900/5 transition hover:bg-slate-50 hover:text-slate-900 sm:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <ExplorerIcon />
-            </a>
-            <span className="hidden sm:contents">
-              <DockButton
-                label="Open Explorer"
-                description="Expand the Explorer panel back to its full size."
-                icon={<ExplorerIcon />}
-                onClick={onToggleExplorerMinimized}
-              />
-            </span>
-          </>
-        ) : null}
         {welcomeOpen ? null : (
           <>
-            {contextMinimized && !readOnly ? (
-              <DockButton
-                label="Open Editor"
-                description="Expand the Editor panel."
-                icon={<ContextIcon />}
-                onClick={onToggleContextMinimized}
-              />
-            ) : null}
             {activityMinimized ? (
               // Collapsed Activity dock: a single Open button in
               // view-role mode (visitors can still see the audit
