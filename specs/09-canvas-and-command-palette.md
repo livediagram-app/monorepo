@@ -12,18 +12,21 @@ The first row of the palette holds the canvas-tool toggles:
 
 - **Pan** (default) — drag-on-empty scrolls the canvas.
 - **Select** — drag-on-empty draws a marquee for multi-select.
-- **Laser** — presenter mode. Pointer-move emits a glowing trail in the local participant's colour that fades over ~1 s. Click-drag pans the canvas (same as Pan tool) so the presenter can reposition without switching tools — the trail keeps capturing during the pan, so peers see a sweeping laser. Other participants see the trail in real time in the sender's colour via the `laser` `RoomOp` (see [spec/11](11-api.md)). Cursor indicators broadcast as `null` while laser is active so peers see only the laser dot, not a stacked cursor + dot.
+- **Laser**: presenter mode. Pointer-move emits a glowing trail in the local participant's colour that fades over ~1 s. On a mouse, click-drag pans the canvas (same as Pan tool) so the presenter can reposition without switching tools, and the trail keeps capturing during the pan so peers see a sweeping laser. On a touch device the same drag DRAWS the laser instead of panning: touch has no hover, so a finger drag is the only way to point at things and pan-on-drag would pin the laser dot in canvas-coords (the canvas slides under the finger). Touch users pan via the Pan tool, two-finger trackpad, or zoom controls. Other participants see the trail in real time in the sender's colour via the `laser` `RoomOp` (see [spec/11](11-api.md)). Cursor indicators broadcast as `null` while laser is active so peers see only the laser dot, not a stacked cursor + dot.
 
 ### Movable
 
 - The header row is a **drag handle** — press it and drag to move the palette anywhere on the canvas. Clicking a button does not start a drag.
 - Position survives until the page reloads.
 
-### Minimizable
+### Collapse to banner
 
-- The header has a **minimize button** to the right of the `PALETTE` label.
-- When minimized, the panel collapses into a **square dock button at the bottom of the canvas**, rendered inside the same flex cluster as ZoomControls + HistoryControls (sitting immediately to the left of the zoom card). Multiple minimised panels stack left-to-right in the dock: the Explorer's dock button sits to the left of the Palette's, then Zoom, then History.
-- Clicking the dock button restores the panel to its last position (or the default top-right if it hasn't been moved).
+The header has a **collapse button** to the right of the `PALETTE` label. Clicking it hides the body (canvas-tool toggle, shape row, accordions) and leaves the title row visible as a banner in place, so the user always sees the affordance and gets canvas real-estate back. The button's icon flips from a dash (collapse) to a plus (expand) so the same slot is the entry point in both directions.
+
+- **Mobile** (touch viewports below the `sm:` breakpoint, 640 px): the palette starts **collapsed by default** so a small viewport opens to the canvas, not the chrome. Tapping anywhere on the title row expands the body; tapping anywhere outside the panel (canvas, an element, a different floating panel) collapses it again so a presenter doesn't have to find the button after every interaction.
+- **Desktop** (`sm:` and up): the palette starts expanded. The collapse button toggles to the same banner mode the mobile user sees. There is no outside-tap auto-close on desktop, the user is in control of when to re-open.
+
+The dock-button mechanism the Palette used to share with the Explorer (square button at the bottom of the canvas, next to the zoom controls) is no longer wired for the Palette: the banner stays in the corner where the user expects it. Other panels (Explorer, Activity, Editor) still dock via their own minimise paths, see those sections.
 
 ## Explorer panel
 

@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { Tooltip } from './Tooltip';
 
 type MovablePanelProps = {
@@ -47,6 +48,16 @@ type MovablePanelProps = {
   // changes. Used by the Palette to publish its height upward so the
   // ContextPanel can stack below it.
   onSize?: (size: { width: number; height: number }) => void;
+  // When true the panel can collapse to a banner (title row only)
+  // via its header button, on both mobile and desktop. The button's
+  // icon flips between dash (collapse) and plus (expand) so the
+  // same slot is the entry point in both directions. Mobile starts
+  // collapsed by default and auto-collapses on outside-tap; desktop
+  // starts expanded and stays open until the user clicks the button
+  // again. Replaces the dock-button minimise mechanism for opted-in
+  // panels: the banner stays in the corner so the affordance is
+  // always visible. See spec/09 "Collapse to banner".
+  collapsible?: boolean;
   children: ReactNode;
 };
 
@@ -68,6 +79,7 @@ export function MovablePanel({
   onMinimize,
   stackBelowY,
   onSize,
+  collapsible = false,
   children,
 }: MovablePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -77,6 +89,14 @@ export function MovablePanel({
     startX: number;
     startY: number;
   } | null>(null);
+  // Banner-collapse state. Only meaningful when `collapsible` is
+  // true. Initial value depends on the viewport: mobile users start
+  // collapsed so the canvas isn't covered by the chrome, desktop
+  // users start expanded because the palette fits in the corner
+  // without crowding the canvas. Initial value is read sync on first
+  // render via `isMobileViewportSync` so the panel paints in the
+  // right state on first mount (no expand-then-collapse flash).
+  const [collapsed, setCollapsed] = useState(() => collapsible && isMobileViewportSync());
 
   // Publish the panel's bounding box upward whenever it changes
   // (the Palette uses this so the ContextPanel can stack below).
@@ -114,6 +134,16 @@ export function MovablePanel({
   }, [drag, onMoveTo]);
 
   const beginDrag = (e: ReactPointerEvent) => {
+    // Collapsible panels treat a touch on the title row as a banner
+    // tap that toggles the body open/closed. Dragging the palette
+    // on a 375 px viewport has nowhere useful to land it anyway, so
+    // the gesture is repurposed for mobile users. Desktop mice keep
+    // dragging; desktop users use the +/- button to collapse.
+    if (collapsible && e.pointerType === 'touch') {
+      e.stopPropagation();
+      setCollapsed((v) => !v);
+      return;
+    }
     e.stopPropagation();
     const node = ref.current;
     if (!node) return;
@@ -124,6 +154,26 @@ export function MovablePanel({
     if (position === null) onMoveTo(startX, startY);
     setDrag({ startClientX: e.clientX, startClientY: e.clientY, startX, startY });
   };
+
+  // Outside-tap auto-close. Window-level pointerdown listener: when
+  // the panel is expanded on mobile AND the user taps anywhere that
+  // isn't inside this panel, collapse. Bypassed entirely on desktop
+  // (`(min-width: 640px)`) where the user is in control of when to
+  // close. Active only while expanded so a collapsed panel doesn't
+  // churn listeners on every canvas interaction.
+  useEffect(() => {
+    if (!collapsible || collapsed) return;
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia?.(`(min-width: ${MOBILE_BREAKPOINT_PX}px)`).matches) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const node = ref.current;
+      if (!node) return;
+      if (e.target instanceof Node && node.contains(e.target)) return;
+      setCollapsed(true);
+    };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => window.removeEventListener('pointerdown', onPointerDown, true);
+  }, [collapsible, collapsed]);
 
   // When stackBelowY is provided and we're still at the default
   // corner, use it as a dynamic top (above the panel sitting at
@@ -231,27 +281,77 @@ export function MovablePanel({
             </Tooltip>
           ) : null}
           <Tooltip
-            title={`Minimize ${title.toLowerCase()}`}
-            description="Collapse to a dock button."
+            title={
+              collapsible
+                ? collapsed
+                  ? `Expand ${title.toLowerCase()}`
+                  : `Collapse ${title.toLowerCase()}`
+                : `Minimize ${title.toLowerCase()}`
+            }
+            description={
+              collapsible
+                ? collapsed
+                  ? 'Show the panel body.'
+                  : 'Hide the panel body, keep the banner.'
+                : 'Collapse to a dock button.'
+            }
           >
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={onMinimize}
-              aria-label={`Minimize ${title.toLowerCase()}`}
+              onClick={() => {
+                if (collapsible) {
+                  setCollapsed((v) => !v);
+                  return;
+                }
+                onMinimize();
+              }}
+              aria-label={
+                collapsible
+                  ? collapsed
+                    ? `Expand ${title.toLowerCase()}`
+                    : `Collapse ${title.toLowerCase()}`
+                  : `Minimize ${title.toLowerCase()}`
+              }
               className="flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-                <line
-                  x1="2.5"
-                  y1="6"
-                  x2="9.5"
-                  y2="6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
+              {collapsible && collapsed ? (
+                // Plus glyph: expand the body. Same 12 x 12 grid as
+                // the dash so the button slot doesn't visually
+                // jitter when the icon flips.
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+                  <line
+                    x1="6"
+                    y1="2.5"
+                    x2="6"
+                    y2="9.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="2.5"
+                    y1="6"
+                    x2="9.5"
+                    y2="6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+                  <line
+                    x1="2.5"
+                    y1="6"
+                    x2="9.5"
+                    y2="6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
             </button>
           </Tooltip>
         </div>
@@ -259,8 +359,9 @@ export function MovablePanel({
       {/* Body. Children can use flex utilities to lay themselves out
           inside the panel's intrinsic width. Each panel handles its
           own internal scrolling so the body doesn't grow unbounded
-          on long lists. */}
-      <div className="flex flex-col">{children}</div>
+          on long lists. When `collapsible` is true the body hides
+          whenever the user has collapsed it (regardless of viewport). */}
+      <div className={`flex flex-col ${collapsible && collapsed ? 'hidden' : ''}`}>{children}</div>
     </div>
   );
 }

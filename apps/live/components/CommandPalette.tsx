@@ -242,6 +242,7 @@ function OpenPalette({
       onReset={onReset}
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
+      collapsible
     >
       {/* Canvas tool toggle (Pan / Select / Laser). Lives above the
           accordions as a permanent row because these are mode

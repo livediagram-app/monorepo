@@ -48,6 +48,17 @@ const positionClasses: Record<HandlePosition, string> = {
   se: '-bottom-1.5 -right-1.5 cursor-nwse-resize',
 };
 
+// Pseudo-element that extends each handle's pointer-capture region on
+// touch devices without altering the visual size of the white-fill
+// square. A fingertip needs roughly 44 px to land reliably (iOS HIG);
+// the visible square stays 12 px so the selection chrome doesn't get
+// clunky, but on `(pointer: coarse)` an invisible ::before pad fans
+// out 16 px on every side, giving a 44 x 44 hit target. Desktop mice
+// keep the unchanged 12 x 12 hit area, so precise corner-resize on a
+// trackpad doesn't suddenly start snagging adjacent handles.
+const HIT_PAD_CLASSES =
+  "pointer-coarse:before:absolute pointer-coarse:before:-inset-[16px] pointer-coarse:before:content-['']";
+
 type ResizeHandlesProps = {
   elementId: string;
   zoom: number;
@@ -65,7 +76,7 @@ export function ResizeHandles({ elementId, zoom, onBeginDrag }: ResizeHandlesPro
             onBeginDrag(elementId, `resize-${pos}`, e);
           }}
           style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
-          className={`absolute h-3 w-3 rounded-sm border border-brand-600 bg-white dark:border-brand-300 dark:bg-slate-900 ${positionClasses[pos]}`}
+          className={`absolute h-3 w-3 rounded-sm border border-brand-600 bg-white dark:border-brand-300 dark:bg-slate-900 ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
         />
       ))}
     </>
@@ -116,7 +127,7 @@ export function UnionResizeHandles({
             onBeginDrag(primaryId, `resize-${pos}`, e);
           }}
           style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
-          className={`pointer-events-auto absolute h-3 w-3 rounded-sm border border-brand-600 bg-white dark:border-brand-300 dark:bg-slate-900 ${positionClasses[pos]}`}
+          className={`pointer-events-auto absolute h-3 w-3 rounded-sm border border-brand-600 bg-white dark:border-brand-300 dark:bg-slate-900 ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
         />
       ))}
     </div>

@@ -38,7 +38,7 @@ import { CommandPalette, type CanvasTool, type SelectedElementControls } from '.
 import { UnionResizeHandles } from './element-parts';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
 import { ContextIcon, ContextPanel } from './ContextPanel';
-import { Explorer, ExplorerIcon, PaletteIcon } from './Explorer';
+import { Explorer, ExplorerIcon } from './Explorer';
 import { LaserOverlay } from './LaserOverlay';
 import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
@@ -912,8 +912,16 @@ export function Canvas(props: CanvasProps) {
         // pan is the safe no-op when the presenter is just steadying
         // their hand. Without this, a laser-mode drag in the outer
         // gap would silently draw a marquee selection box.
+        //
+        // Touch is the explicit exception (spec/09): a finger drag
+        // in laser mode MUST draw the laser, not pan, because touch
+        // has no hover. Pan-on-drag would pin the dot in canvas
+        // coords (the canvas slides under the finger), defeating
+        // the presenter mode entirely on phones / tablets.
         if (e.target !== e.currentTarget) return;
-        const wantsPan = spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser';
+        const laserOnTouch = canvasTool === 'laser' && e.pointerType === 'touch';
+        const wantsPan =
+          !laserOnTouch && (spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser');
         if (wantsPan) {
           setPan({
             startClientX: e.clientX,
@@ -952,8 +960,15 @@ export function Canvas(props: CanvasProps) {
           //    when the presenter is just steadying their hand. The
           //    trail keeps capturing pointer-moves throughout, so
           //    the pan reads as a sweeping laser to peers.
+          //  - Touch + Laser is the exception (spec/09): a finger
+          //    drag in laser mode draws the laser, not panning,
+          //    because touch has no hover and pan-on-drag would pin
+          //    the dot in canvas-coords.
           //  - Select tool → drag draws a marquee for multi-select.
-          const wantsPan = spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser';
+          const laserOnTouch = canvasTool === 'laser' && e.pointerType === 'touch';
+          const wantsPan =
+            !laserOnTouch &&
+            (spaceHeldRef.current || canvasTool === 'pan' || canvasTool === 'laser');
           if (wantsPan) {
             setPan({
               startClientX: e.clientX,
@@ -1448,14 +1463,6 @@ export function Canvas(props: CanvasProps) {
         ) : null}
         {welcomeOpen ? null : (
           <>
-            {paletteMinimized ? (
-              <DockButton
-                label="Open palette"
-                description="Expand the Palette."
-                icon={<PaletteIcon />}
-                onClick={onToggleMinimized}
-              />
-            ) : null}
             {contextMinimized && !readOnly ? (
               <DockButton
                 label="Open Editor"
