@@ -8,6 +8,7 @@ import {
   apiUpdateFolder,
   type Folder,
 } from '@/lib/api-client';
+import { track } from '@/lib/telemetry';
 
 // Folder state + the three mutation handlers (create / rename /
 // delete). Three pages used to inline this triplet by hand:
@@ -97,6 +98,7 @@ export function useFolders(
           parentId: input.parentId ?? null,
         });
         setFolders((prev) => [...prev, folder]);
+        track('Folder', 'Created');
         return folder;
       } catch {
         return undefined;
@@ -110,10 +112,17 @@ export function useFolders(
       if (!ownerId) return;
       const trimmed = name.trim();
       if (!trimmed) return;
+      // Read previous name from closure state (`folders`) BEFORE
+      // calling setFolders so the comparison doesn't sit inside the
+      // updater, where React strict mode in dev would double-fire
+      // the telemetry emit. There's no rapid-race risk: rename is a
+      // user blur / Enter on a text input.
+      const prevName = folders.find((f) => f.id === id)?.name.trim() ?? '';
       setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
       void apiUpdateFolder(ownerId, id, { name: trimmed }).catch(() => {});
+      if (prevName !== trimmed) track('Folder', 'Renamed');
     },
-    [ownerId],
+    [folders, ownerId],
   );
 
   const deleteFolder = useCallback(
@@ -125,6 +134,7 @@ export function useFolders(
           .map((f) => (f.parentId === id ? { ...f, parentId: null } : f)),
       );
       void apiDeleteFolder(ownerId, id).catch(() => {});
+      track('Folder', 'Deleted');
     },
     [ownerId],
   );

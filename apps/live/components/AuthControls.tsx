@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { clerkEnabled } from '@/lib/clerk-config';
+import { track } from '@/lib/telemetry';
 
 // Lazy-load the delete-account dialog. Almost every signed-in
 // session NEVER opens it (it's the destructive option at the
@@ -120,6 +121,7 @@ function AuthControlsEnabled() {
             role="menuitem"
             onClick={() => {
               setMenuOpen(false);
+              track('Session', 'SignedOut');
               // Land on the marketing landing page at `/` (router worker
               // serves marketing there). Same destination as the delete-
               // account flow — once you're signed out, the editor is

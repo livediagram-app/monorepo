@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tab } from '@livediagram/diagram';
 import { buildSearchResults, type SearchGroup, type SearchResultItem } from '@/lib/search';
+import { titleCaseType, track } from '@/lib/telemetry';
 
 // Global search panel: triggered from a footer button, blurs the
 // canvas behind it, pops up near the top-centre. The scope is
@@ -54,9 +55,17 @@ export function SearchPanel({
 }: SearchPanelProps) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchedRef = useRef(false);
+  const openedRef = useRef(false);
 
   useEffect(() => {
     inputRef.current?.focus();
+    // Guard so React strict mode's dev-only effect double-invoke
+    // doesn't double-emit Search / Opened. Focus is idempotent so
+    // it stays outside the guard.
+    if (openedRef.current) return;
+    openedRef.current = true;
+    track('Search', 'Opened');
   }, []);
 
   // Esc closes. Capture phase so the modal owns the key even when
@@ -91,6 +100,7 @@ export function SearchPanel({
     else if (item.kind === 'tab' && onSelectTab) onSelectTab(item.id);
     else if (item.kind === 'element' && onSelectElement)
       onSelectElement(item.tabId, item.elementId);
+    track('Search', 'Selected', titleCaseType(item.kind));
     onClose();
   };
 
@@ -127,7 +137,14 @@ export function SearchPanel({
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setQuery(next);
+              if (!searchedRef.current && next.trim()) {
+                searchedRef.current = true;
+                track('Search', 'Searched');
+              }
+            }}
             onKeyDown={handleInputKey}
             placeholder={
               tabs ? 'Search diagrams, folders, tabs, elements...' : 'Search diagrams, folders...'

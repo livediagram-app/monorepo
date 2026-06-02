@@ -62,11 +62,11 @@ The dashboard surfaces three fixed windows that top out at **30 days** (Last mon
   }
   // Window = { total: number; rows: { category; action; type; count }[] }
   ```
-  Cached at the edge (Cache API, a few minutes) so a public traffic spike never hammers D1. When disabled, returns `{ enabled: false }`.
+  Cached at the edge (Cache API, a few minutes) so a public traffic spike never hammers D1. When disabled, returns `{ enabled: false }`. The cache is bypassed when the worker is serving from a localhost hostname (parallel to the same-origin escape hatch), so a developer iterating on the feature sees fresh counts immediately instead of waiting out a 5-minute TTL per emit.
 
 ## On/off env var
 
-`TELEMETRY_ENABLED` (worker, `wrangler.toml [vars]`, default off) is **authoritative**: it gates both `POST /api/events` and `GET /api/telemetry/summary`. The live editor also reads `NEXT_PUBLIC_TELEMETRY_ENABLED` (baked at build) to avoid emitting at all when off — a client optimisation; the server flag is the real gate. Both absent → fully off, which is the self-host default.
+`TELEMETRY_ENABLED` (worker, `wrangler.toml [vars]`, default off) is **authoritative**: it gates both `POST /api/events` and `GET /api/telemetry/summary`. The live editor also reads `NEXT_PUBLIC_TELEMETRY_ENABLED` (baked at build) to avoid emitting at all when off — a client optimisation; the server flag is the real gate. Both absent → fully off, which is the self-host default. On top of these, each user has a per-device opt-out flag stored alongside the other user preferences (spec/20, `telemetryEnabled`, default true). When that flag is false, `track()` is a no-op for that browser regardless of the server's stance; this is the user-facing lever the landing page and `/telemetry` reference when they say "first-party, no creepy tracking".
 
 ## Abuse controls
 
@@ -85,13 +85,18 @@ A `track(category, action, type?)` helper in `apps/live/lib` buffers events and 
 
 The aim is to cover every meaningful interaction a person has with a diagram (discrete feature actions, never continuous gestures like drag/resize/pan/zoom or raw colour tweaks, which would just be noise). Current taxonomy:
 
-- **Diagram**: Created; Shared `Edit`/`View`; Joined `Edit`/`View`; Duplicated; Deleted; Exported `Markdown`/`PDF`/`PNG`/`JSON`.
-- **Element**: Added `<shape kind | Text | Sticky | Arrow | Image>`; Deleted; Duplicated; Grouped; Ungrouped; Locked; Unlocked.
-- **Tab**: Created; Deleted; Duplicated; Renamed; Locked; Unlocked; Linked.
+- **Diagram**: Created; Shared `Edit`/`View`; Joined `Edit`/`View`; Duplicated; Deleted; Exported `Markdown`/`PDF`/`PNG`/`JSON`; Renamed; Undone; Redone; Moved (to a folder, or back to Unsorted when folder=null); Reverted (single entry rolled back from the activity log).
+- **Element**: Added `<shape kind | Text | Sticky | Arrow | Image>`; Deleted; Duplicated; Grouped; Ungrouped; Locked; Unlocked; Linked; Unlinked; Reordered `Front`/`Back`; Changed `FormatPainter` (style copied from a source onto a target).
+- **Tab**: Created; Deleted; Duplicated; Renamed; Locked; Unlocked; Linked; Reordered; Imported `JSON`; Aligned; Cleared.
 - **Theme**: Changed `<theme label>`.
-- **Canvas**: Changed `<background pattern>`.
+- **Canvas**: Changed `<background pattern>`; Zoomed `In`/`Out`/`Fit`/`Reset`.
 - **Template**: Used `<template kind>`.
-- **Comment**: Added.
+- **Comment**: Added; Deleted; Resolved; Unresolved; Opened (user opened the comment popover on an element).
+- **Note**: Added (transition empty -> non-empty); Changed (existing note's text edited); Deleted (transition non-empty -> empty); Opened (user opened the note popover on an element). One Add/Change/Delete emit per save (popover commit), not per keystroke; a save that doesn't change the text emits nothing.
+- **Search**: Opened (panel mount); Searched (query first becomes non-empty in a session, debounced to one emit per panel open so per-keystroke noise stays out); Selected `Diagram`/`Folder`/`Tab`/`Element` (user picked a result, type = the result kind).
+- **UI**: Toggled `Dark`/`Light` (editor chrome mode toggle, distinct from per-tab diagram theme); Opened `Settings`/`Shortcuts`/`Share`/`Activity` (the editor's modal dialogs and the activity panel); Closed `Welcome` (user dismissed the first-run welcome modal); Copied `ShareLink` (clicked the copy button on a share link).
+- **Folder**: Created; Renamed; Deleted; Moved (re-parented under another folder, or promoted to the root when parent=null). Tracked from `useFolders` so both the editor side panel and the standalone explorer page emit identically; rename emits only when the trimmed name actually changes.
+- **Session**: SignedIn (user just completed sign-in via Clerk); SignedUp (just completed sign-up); SignedOut (just signed out). Only fires when Clerk is configured; pure-guest deploys emit nothing here.
 
 Extend by adding to the `TELEMETRY_CATEGORIES` / `TELEMETRY_ACTIONS` enums (if needed) + a one-line `track()` call at the interaction's handler. Hits / unique visits (a `Session` event per load) are deliberately not wired yet.
 

@@ -107,12 +107,14 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) => bringManyToFront(els, ids));
+    track('Element', 'Reordered', 'Front');
   };
 
   const sendSelectedToBack = () => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) => sendManyToBack(els, ids));
+    track('Element', 'Reordered', 'Back');
   };
 
   const setTextSizeSelected = (size: TextSize) => {

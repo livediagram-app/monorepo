@@ -31,6 +31,7 @@ import {
 import type { ImageSummary } from '@livediagram/api-schema';
 import type { ArrowEnd, DragMode } from '@/lib/canvas';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
+import { track } from '@/lib/telemetry';
 import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
 import { BoxedElementView } from './BoxedElementView';
@@ -517,9 +518,18 @@ export function Canvas(props: CanvasProps) {
 
   const zoomStep = 0.1;
   const clampZoom = (z: number) => Math.max(0.1, Math.min(5, z));
-  const handleZoomIn = () => setViewportZoom(clampZoom(viewportZoom + zoomStep));
-  const handleZoomOut = () => setViewportZoom(clampZoom(viewportZoom - zoomStep));
-  const handleResetZoom = () => setViewportZoom(1);
+  const handleZoomIn = () => {
+    setViewportZoom(clampZoom(viewportZoom + zoomStep));
+    track('Canvas', 'Zoomed', 'In');
+  };
+  const handleZoomOut = () => {
+    setViewportZoom(clampZoom(viewportZoom - zoomStep));
+    track('Canvas', 'Zoomed', 'Out');
+  };
+  const handleResetZoom = () => {
+    setViewportZoom(1);
+    track('Canvas', 'Zoomed', 'Reset');
+  };
 
   // Group-aware selection. `selected` is the editor's primary
   // element (single-click, group root, or first member of a marquee

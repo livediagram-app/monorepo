@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { track } from '@/lib/telemetry';
 
 // UI chrome mode (light / dark). Distinct from the per-tab diagram
 // theme (apps/live/lib/themes.ts): the diagram theme recolours
@@ -42,18 +43,24 @@ export function useUiMode(): { mode: UiMode; toggle: () => void } {
   }, []);
 
   const toggle = () => {
-    setMode((prev) => {
-      const next: UiMode = prev === 'dark' ? 'light' : 'dark';
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // Storage quota / private browsing — fall back to in-memory
-        // only. The toggle still visibly works; the choice just
-        // doesn't survive a reload.
-      }
-      apply(next);
-      return next;
-    });
+    // Side effects (localStorage, DOM class, telemetry) live OUTSIDE
+    // the setMode updater because React strict mode runs updaters
+    // twice in dev to surface impure callbacks — that double-fired
+    // the telemetry emit, double-wrote localStorage, and double-
+    // applied the DOM class. The current `mode` from render-closure
+    // is fine here: toggle is a single button click, never a rapid
+    // race, so there's no stale-state risk.
+    const next: UiMode = mode === 'dark' ? 'light' : 'dark';
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // Storage quota / private browsing — fall back to in-memory
+      // only. The toggle still visibly works; the choice just
+      // doesn't survive a reload.
+    }
+    apply(next);
+    setMode(next);
+    track('UI', 'Toggled', next === 'dark' ? 'Dark' : 'Light');
   };
 
   return { mode, toggle };

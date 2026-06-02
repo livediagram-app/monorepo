@@ -106,10 +106,10 @@ import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
 import {
-  readDiagramSettings,
-  writeDiagramSettings,
-  type DiagramSettings,
-} from '@/lib/diagram-settings';
+  readUserPreferences,
+  writeUserPreferences,
+  type UserPreferences,
+} from '@/lib/user-preferences';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { track, titleCaseType } from '@/lib/telemetry';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
@@ -169,6 +169,7 @@ import {
   deriveNewBoxedColours,
   getTheme,
   recolourElementForTheme,
+  THEMES,
   type ThemeId,
 } from '@/lib/themes';
 
@@ -341,20 +342,19 @@ export default function LivePage() {
   // below; the modal opens from a button in the TabBar.
   const { enabled: shortcutsEnabled, setEnabled: setShortcutsEnabled } = useShortcutsEnabled();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  // Per-diagram editor preference flags (spec/20). Loaded lazily
-  // once diagramId is known; mutated through the SettingsDialog and
-  // persisted to localStorage on every change. `null` while we
-  // haven't loaded yet (no diagramId or pre-effect first render),
-  // so consumers default to the "all behaviours on" baseline.
-  const [diagramSettings, setDiagramSettings] = useState<DiagramSettings>({});
+  // Per-user editor preferences (spec/20). One localStorage key,
+  // applies to every diagram the user opens from this device. Loaded
+  // on mount (not gated on diagramId, since preferences aren't
+  // diagram-scoped anymore) and mutated through the SettingsDialog.
+  const [userPreferences, setUserPreferences] = useState<UserPreferences>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsRef = useRef(diagramSettings);
-  settingsRef.current = diagramSettings;
+  const settingsRef = useRef(userPreferences);
+  settingsRef.current = userPreferences;
   // Mirror the auto-rebind flag into its own ref so the drag move
   // handler can read it without re-attaching listeners. Defaults
   // to true (auto-rebind on) so a fresh session keeps today's UX.
-  const autoRebindArrowsRef = useRef<boolean>(diagramSettings.autoRebindArrows !== false);
-  autoRebindArrowsRef.current = diagramSettings.autoRebindArrows !== false;
+  const autoRebindArrowsRef = useRef<boolean>(userPreferences.autoRebindArrows !== false);
+  autoRebindArrowsRef.current = userPreferences.autoRebindArrows !== false;
 
   // Per-element note popover (state + open/close/setNote handlers)
   // lives in useEditorNotes. Invoked further down, after `commit`
@@ -580,13 +580,14 @@ export default function LivePage() {
   // looking at it, and gets cleared on the next import attempt.
   const [importError, setImportError] = useState<string | null>(null);
 
-  // Load the per-diagram settings (spec/20) once a diagramId is
-  // known. Pulls from localStorage; missing or unparseable entries
-  // collapse to `{}` and every flag defaults to "on" downstream.
+  // Load the per-user preferences (spec/20) once on mount. The
+  // preferences are device-scoped, not diagram-scoped, so this runs
+  // independently of which diagram is open. Missing or unparseable
+  // entries collapse to `{}` and every flag defaults to "on"
+  // downstream.
   useEffect(() => {
-    if (!diagramId) return;
-    setDiagramSettings(readDiagramSettings(diagramId));
-  }, [diagramId]);
+    setUserPreferences(readUserPreferences());
+  }, []);
 
   useEffect(() => {
     if (!importError) return;
@@ -1732,6 +1733,7 @@ export default function LivePage() {
     const after = applyRevert(target.elements, entry.beforeState as Record<string, Element | null>);
     commitTabs((ts) => ts.map((t) => (t.id === entry.tabId ? { ...t, elements: after } : t)));
     if (entry.tabId !== activeId) setActiveId(entry.tabId);
+    track('Diagram', 'Reverted');
     // Drop the entry locally first so the panel updates immediately;
     // fire-and-forget the API delete.
     setChangeLog((prev) => prev.filter((e) => e.id !== entry.id));
@@ -1761,6 +1763,7 @@ export default function LivePage() {
   // — if the history is exhausted, our entry stacks stay put.
   const undo = () => {
     if (!canUndo) return;
+    track('Diagram', 'Undone');
     undoHistory();
     const { past, future } = entryHistoryRef.current;
     const popped = past[past.length - 1];
@@ -1788,6 +1791,7 @@ export default function LivePage() {
 
   const redo = () => {
     if (!canRedo) return;
+    track('Diagram', 'Redone');
     redoHistory();
     const { past, future } = entryHistoryRef.current;
     const next = future[0];
@@ -1917,6 +1921,7 @@ export default function LivePage() {
       setFormatSourceId(null);
       return;
     }
+    track('Element', 'Changed', 'FormatPainter');
     // Field projections live in lib/format-painter.ts so the list
     // of painted fields (and the rule that future additions to
     // BoxedElement / ArrowElement must be opted into the painter
@@ -2039,6 +2044,7 @@ export default function LivePage() {
   const moveDiagramToFolder = (diagramId: string, folderId: string | null) => {
     setDiagramList((prev) => prev.map((d) => (d.id === diagramId ? { ...d, folderId } : d)));
     void apiSetDiagramFolder(selfParticipant.id, diagramId, folderId).catch(() => {});
+    track('Diagram', 'Moved');
   };
 
   // Duplicate a diagram into a brand-new one. Loads the source's
@@ -2121,8 +2127,14 @@ export default function LivePage() {
   // localStorage so a returning visitor isn't re-prompted, and clears
   // the in-memory flag so the modal closes immediately.
   const confirmName = () => {
+    // Welcome / identity-only modal is dismissed by confirming the
+    // user's name. The closure check on the previous state means we
+    // only emit on the transition, not every render that re-runs
+    // this callback after the welcome flow.
+    const wasOpen = !nameConfirmed;
     markNameConfirmed();
     setNameConfirmed(true);
+    if (wasOpen) track('UI', 'Closed', 'Welcome');
   };
 
   // Share-dialog actions (create / revoke link, build the visitor URL,
@@ -2168,7 +2180,16 @@ export default function LivePage() {
       return;
     }
     // Telemetry (spec/22): a template was applied; `type` is the kind.
+    // The picker also lets the user pick a theme alongside the template,
+    // so emit Theme / Changed in the same flow that /live/new uses for
+    // its symmetric "create with a chosen theme" event.
     track('Template', 'Used', titleCaseType(kind));
+    if (themeId) {
+      const themeLabel =
+        THEMES.find((t) => t.id === themeId)?.label ??
+        themeId.charAt(0).toUpperCase() + themeId.slice(1);
+      track('Theme', 'Changed', themeLabel);
+    }
     // Templates flow: applying a template / theme to an existing tab.
     // The diagram already exists in D1; no mint required.
     if (name && name !== selfParticipant.name) {
@@ -2689,8 +2710,16 @@ export default function LivePage() {
         copying={copying}
         readOnly={isReadOnly}
         brandAccent={getTheme(activeTab.theme).elementStroke ?? undefined}
-        onOpenShare={() => setShareDialogOpen(true)}
-        onRename={setDiagramName}
+        onOpenShare={() => {
+          setShareDialogOpen(true);
+          track('UI', 'Opened', 'Share');
+        }}
+        onRename={(next) => {
+          const prev = diagramName.trim();
+          const nextTrim = next.trim();
+          setDiagramName(next);
+          if (nextTrim && nextTrim !== prev) track('Diagram', 'Renamed');
+        }}
       />
       {exportOpen ? (
         <ExportTabDialog
@@ -2727,7 +2756,10 @@ export default function LivePage() {
         mainRef={canvasMainRef}
         viewportZoom={viewportZoom}
         setViewportZoom={setViewportZoom}
-        onFitToScreen={fitToScreen}
+        onFitToScreen={() => {
+          fitToScreen();
+          track('Canvas', 'Zoomed', 'Fit');
+        }}
         viewportOffset={viewportOffset}
         setViewportOffset={setViewportOffset}
         elements={activeTab.elements}
@@ -2786,7 +2818,14 @@ export default function LivePage() {
         activityPosition={activityPosition}
         activityMinimized={activityMinimized}
         onMoveActivity={(x, y) => setActivityPosition({ x, y })}
-        onToggleActivityMinimized={() => setActivityMinimized((v) => !v)}
+        onToggleActivityMinimized={() => {
+          // Emit only the open transition (minimized -> expanded);
+          // closing isn't a feature-reach signal. The closure read is
+          // safe because this is a single user click, not a rapid
+          // race, so no stale-state risk.
+          if (activityMinimized) track('UI', 'Opened', 'Activity');
+          setActivityMinimized((v) => !v);
+        }}
         onResetActivity={() => setActivityPosition(null)}
         contextPosition={contextPosition}
         tabAccordionsOpen={tabAccordionsOpen}
@@ -2802,7 +2841,12 @@ export default function LivePage() {
         currentDiagramId={diagramId}
         onOpenDiagram={openDiagram}
         onNewDiagram={newDiagram}
-        onRenameCurrent={setDiagramName}
+        onRenameCurrent={(next) => {
+          const prev = diagramName.trim();
+          const nextTrim = next.trim();
+          setDiagramName(next);
+          if (nextTrim && nextTrim !== prev) track('Diagram', 'Renamed');
+        }}
         onDeleteDiagram={deleteDiagram}
         onDuplicateDiagram={(id) => void duplicateDiagram(id)}
         onCreateFolder={createFolder}
@@ -2951,8 +2995,17 @@ export default function LivePage() {
           onReorder={reorderTabs}
           readOnly={isReadOnly}
           participantsByTab={participantsByTab}
-          onOpenShortcuts={() => setShortcutsOpen(true)}
-          onOpenSettings={!isReadOnly && diagramId ? () => setSettingsOpen(true) : undefined}
+          onOpenShortcuts={() => {
+            setShortcutsOpen(true);
+            track('UI', 'Opened', 'Shortcuts');
+          }}
+          onOpenSettings={() => {
+            // Preferences are user-scoped, not diagram-scoped, so
+            // view-role visitors can still flip them for their own
+            // browser (e.g. opt out of telemetry).
+            setSettingsOpen(true);
+            track('UI', 'Opened', 'Settings');
+          }}
           onOpenSearch={() => setSearchOpen(true)}
         />
       )}
@@ -2983,12 +3036,12 @@ export default function LivePage() {
           onClose={() => setShortcutsOpen(false)}
         />
       ) : null}
-      {settingsOpen && diagramId ? (
+      {settingsOpen ? (
         <SettingsDialog
-          settings={diagramSettings}
+          settings={userPreferences}
           onChange={(next) => {
-            setDiagramSettings(next);
-            writeDiagramSettings(diagramId, next);
+            setUserPreferences(next);
+            writeUserPreferences(next);
           }}
           onClose={() => setSettingsOpen(false)}
         />
@@ -3007,9 +3060,18 @@ export default function LivePage() {
                   addComment(target.id, text);
                   track('Comment', 'Added');
                 }}
-                onDeleteComment={(cid) => deleteComment(target.id, cid)}
-                onResolve={() => resolveThread(target.id)}
-                onUnresolve={() => unresolveThread(target.id)}
+                onDeleteComment={(cid) => {
+                  deleteComment(target.id, cid);
+                  track('Comment', 'Deleted');
+                }}
+                onResolve={() => {
+                  resolveThread(target.id);
+                  track('Comment', 'Resolved');
+                }}
+                onUnresolve={() => {
+                  unresolveThread(target.id);
+                  track('Comment', 'Unresolved');
+                }}
                 onClose={closeComments}
                 readOnly={isReadOnly}
               />
@@ -3024,7 +3086,15 @@ export default function LivePage() {
               <NotePopover
                 elementId={target.id}
                 initial={target.note ?? ''}
-                onCommit={(next) => setNote(target.id, next)}
+                onCommit={(next) => {
+                  const prev = (target.note ?? '').trim();
+                  const nextTrim = next.trim();
+                  setNote(target.id, next);
+                  if (prev === nextTrim) return;
+                  if (!prev && nextTrim) track('Note', 'Added');
+                  else if (prev && !nextTrim) track('Note', 'Deleted');
+                  else track('Note', 'Changed');
+                }}
                 onClose={closeNote}
               />
             );
@@ -3034,7 +3104,6 @@ export default function LivePage() {
         <EditorContextMenu
           menu={contextMenu}
           elements={activeTab.elements}
-          tabCount={tabs.length}
           onClose={closeContextMenu}
           onDuplicate={duplicateSelected}
           onLinkElement={setLinkPickerOpenForId}
@@ -3049,7 +3118,7 @@ export default function LivePage() {
           onAddSticky={addSticky}
         />
       ) : null}
-      {linkPickerOpenForId !== null && linkPickerAnchorEl && tabs.length > 1 && !isReadOnly ? (
+      {linkPickerOpenForId !== null && linkPickerAnchorEl && !isReadOnly ? (
         <TabLinkPicker
           anchor={linkPickerAnchorEl}
           tabs={tabs}
@@ -3069,14 +3138,17 @@ export default function LivePage() {
           onSelect={(tabId) => {
             setLinkSelected(tabId);
             setLinkPickerOpenForId(null);
+            track('Element', 'Linked', 'Tab');
           }}
           onSelectDiagram={(d) => {
             setDiagramLinkSelected(d);
             setLinkPickerOpenForId(null);
+            track('Element', 'Linked', 'Diagram');
           }}
           onClear={() => {
             clearLinkSelected();
             setLinkPickerOpenForId(null);
+            track('Element', 'Unlinked');
           }}
           onClose={() => setLinkPickerOpenForId(null)}
         />

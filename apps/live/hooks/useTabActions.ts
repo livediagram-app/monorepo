@@ -139,6 +139,7 @@ export function useTabActions(deps: TabActionsDeps) {
     setEditingId(null);
     setFormatSourceId(null);
     setGroupSourceId(null);
+    track('Tab', 'Imported', 'JSON');
   };
 
   const toggleActiveTabLock = () => {
@@ -268,21 +269,24 @@ export function useTabActions(deps: TabActionsDeps) {
   };
 
   const reorderTabs = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    const srcIdx = tabs.findIndex((t) => t.id === sourceId);
+    const tgtIdx = tabs.findIndex((t) => t.id === targetId);
+    if (srcIdx < 0 || tgtIdx < 0) return;
     commitTabs((ts) => {
-      const srcIdx = ts.findIndex((t) => t.id === sourceId);
-      const tgtIdx = ts.findIndex((t) => t.id === targetId);
-      if (srcIdx < 0 || tgtIdx < 0 || srcIdx === tgtIdx) return ts;
       const next = [...ts];
       const [moved] = next.splice(srcIdx, 1);
       next.splice(tgtIdx, 0, moved!);
       return next;
     });
+    track('Tab', 'Reordered');
   };
 
   const clearTabContent = () => {
     commit(() => []);
     setSelectedId(null);
     setEditingId(null);
+    track('Tab', 'Cleared');
   };
 
   return {

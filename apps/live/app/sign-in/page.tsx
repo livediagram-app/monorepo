@@ -33,6 +33,7 @@ import {
   resolvePostAuthDestination,
 } from '@/components/auth-shared';
 import { clerkEnabled, googleOAuthEnabled } from '@/lib/clerk-config';
+import { track } from '@/lib/telemetry';
 
 function SignInContent() {
   const router = useRouter();
@@ -155,6 +156,7 @@ function SignInContent() {
       const res = await clerkSignIn.attemptFirstFactor({ strategy: 'email_code', code });
       if (res.status === 'complete' && res.createdSessionId) {
         await setActiveSignIn({ session: res.createdSessionId });
+        track('Session', 'SignedIn');
         router.push(resolvePostSignInDestination());
         return;
       }

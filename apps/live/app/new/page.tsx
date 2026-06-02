@@ -18,12 +18,12 @@ import {
 } from '@/lib/api-client';
 import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
-import { track } from '@/lib/telemetry';
+import { titleCaseType, track } from '@/lib/telemetry';
 import { ensureGuestSelfId, markNameConfirmed } from '@/lib/local-identity';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { buildTemplatedTab } from '@/lib/template-builders';
 import type { TemplateKind } from '@/lib/templates';
-import { getTheme, type ThemeId } from '@/lib/themes';
+import { getTheme, THEMES, type ThemeId } from '@/lib/themes';
 
 // Dedicated welcome / create-new flow — see specs/14-new-diagram-route.md.
 // Owns identity bootstrap, template + theme choice, and the actual
@@ -169,8 +169,16 @@ export default function NewDiagramPage() {
       // the first edit. Navigation continues either way.
     });
     // Anonymous telemetry (spec/22): a diagram was created. No id or
-    // name is sent — just the event.
+    // name is sent — just the event. The chosen theme is recorded
+    // alongside since the picker on this screen is the first place a
+    // theme gets set; later switches in the editor emit the same way
+    // (Theme / Changed / <label>).
     track('Diagram', 'Created');
+    const themeLabel =
+      THEMES.find((t) => t.id === themeId)?.label ??
+      themeId.charAt(0).toUpperCase() + themeId.slice(1);
+    track('Theme', 'Changed', themeLabel);
+    if (templateKind) track('Template', 'Used', titleCaseType(templateKind));
     // Folder context from the URL: /live/new?folder=<id> lets the
     // explorer's FAB drop a fresh diagram straight into the folder
     // the user was browsing. Done as a follow-up PUT rather than

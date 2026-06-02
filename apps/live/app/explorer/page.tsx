@@ -238,6 +238,7 @@ export default function ExplorerPage() {
     // a refresh after the mutation lands instead. Folder moves are
     // rare enough that one extra round-trip is fine.
     void refreshFolders();
+    track('Folder', 'Moved');
   };
 
   const renameDiagram = (id: string, name: string) => {
@@ -245,8 +246,10 @@ export default function ExplorerPage() {
     const trimmed = name.trim();
     setRenamingDiagramId(null);
     if (!trimmed) return;
+    const prevName = diagrams.find((d) => d.id === id)?.name?.trim() ?? '';
     setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, name: trimmed } : d)));
     void apiSaveDiagramMeta(ownerId, { id, name: trimmed }).catch(() => {});
+    if (trimmed !== prevName) track('Diagram', 'Renamed');
   };
 
   const deleteDiagram = async (id: string) => {
@@ -268,6 +271,7 @@ export default function ExplorerPage() {
     if (!ownerId) return;
     setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, folderId } : d)));
     void apiSetDiagramFolder(ownerId, id, folderId).catch(() => {});
+    track('Diagram', 'Moved');
   };
 
   const duplicateDiagram = async (id: string) => {

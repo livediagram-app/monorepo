@@ -292,6 +292,10 @@ export const TELEMETRY_CATEGORIES = [
   'Canvas',
   'Template',
   'Comment',
+  'Note',
+  'Search',
+  'UI',
+  'Folder',
   'Session',
 ] as const;
 export type TelemetryCategory = (typeof TELEMETRY_CATEGORIES)[number];
@@ -314,6 +318,26 @@ export const TELEMETRY_ACTIONS = [
   'Renamed',
   'Reordered',
   'Linked',
+  'Unlinked',
+  'Resolved',
+  'Unresolved',
+  'Imported',
+  'Aligned',
+  'Undone',
+  'Redone',
+  'Cleared',
+  'Opened',
+  'Searched',
+  'Selected',
+  'Toggled',
+  'Zoomed',
+  'Moved',
+  'Closed',
+  'Copied',
+  'Reverted',
+  'SignedIn',
+  'SignedUp',
+  'SignedOut',
 ] as const;
 export type TelemetryAction = (typeof TELEMETRY_ACTIONS)[number];
 

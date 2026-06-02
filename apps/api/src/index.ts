@@ -211,10 +211,19 @@ export default {
       if (segments[1] === 'telemetry' && segments[2] === 'summary' && segments.length === 3) {
         if (request.method !== 'GET') return notFound();
         if (env.TELEMETRY_ENABLED !== 'true') return json({ enabled: false });
+        // Skip the edge cache when serving from localhost: locally each
+        // event the developer fires would otherwise be invisible for up
+        // to 5 minutes, making the feature impossible to iterate on. In
+        // production the cache stays on (see below) so a traffic spike
+        // never hammers D1. Parallel to the localhost same-origin escape
+        // hatch above (spec/22).
+        const isLocalDev = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
         const cache = caches.default;
         const cacheKey = new Request(url.toString());
-        const hit = await cache.match(cacheKey);
-        if (hit) return hit;
+        if (!isLocalDev) {
+          const hit = await cache.match(cacheKey);
+          if (hit) return hit;
+        }
 
         const now = Date.now();
         const day = 24 * 60 * 60 * 1000;
@@ -235,6 +244,7 @@ export default {
           windows: { today: toWindow(today), last7: toWindow(last7), last30: toWindow(last30) },
         };
         const res = json(summary);
+        if (isLocalDev) return res;
         // A few minutes of edge + browser cache. Fixed windows mean the
         // body only drifts on the next ingest, so staleness is bounded
         // and acceptable for a usage dashboard. Awaited (the worker's

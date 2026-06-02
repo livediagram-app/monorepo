@@ -21,6 +21,7 @@
 
 import { useState } from 'react';
 import { createComment, isBoxed, type CommentThread, type Tab } from '@livediagram/diagram';
+import { track } from '@/lib/telemetry';
 
 type EditorCommentsDeps = {
   // The tab id every mutation targets. Comments are tab-scoped:
@@ -81,7 +82,13 @@ export function useEditorComments(deps: EditorCommentsDeps): EditorCommentsApi {
   };
 
   const openComments = (elementId: string) => {
+    // Closure read before the toggle so we emit only on the open
+    // transition, never on close, and never double-fire under React
+    // strict mode (which would re-run an updater-internal side
+    // effect).
+    const wasOpen = commentThreadOpenId === elementId;
     setCommentThreadOpenId((cur) => (cur === elementId ? null : elementId));
+    if (!wasOpen) track('Comment', 'Opened');
   };
   const closeComments = () => setCommentThreadOpenId(null);
 

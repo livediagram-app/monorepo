@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
 import type { ShareLink, ShareRole } from '@/lib/api-client';
+import { track } from '@/lib/telemetry';
 import { TrashIcon } from './explorer-icons';
 import { Tooltip } from './Tooltip';
 
@@ -97,6 +98,7 @@ export function ShareDialog({
       await navigator.clipboard.writeText(url);
       setCopiedCode(code);
       window.setTimeout(() => setCopiedCode(null), 1500);
+      track('UI', 'Copied', 'ShareLink');
     } catch {
       // Browsers without clipboard permission silently no-op; the
       // user can still select the input.

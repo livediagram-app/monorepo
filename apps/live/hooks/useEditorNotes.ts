@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { isBoxed, type Element } from '@livediagram/diagram';
+import { track } from '@/lib/telemetry';
 
 type EditorNotesDeps = {
   // The history-aware element mutator. Note edits push a snapshot,
@@ -23,9 +24,15 @@ export function useEditorNotes(deps: EditorNotesDeps) {
   const [noteOpenId, setNoteOpenId] = useState<string | null>(null);
 
   // Toggle open / closed: clicking the same id again closes the
-  // popover (matches the comment popover behaviour).
+  // popover (matches the comment popover behaviour). Read the
+  // current value from closure before flipping so the telemetry
+  // emit only fires on open transitions, never on close, and never
+  // double-fires under React strict mode (which would re-run an
+  // updater-internal side effect).
   const openNote = (elementId: string) => {
+    const wasOpen = noteOpenId === elementId;
     setNoteOpenId((cur) => (cur === elementId ? null : elementId));
+    if (!wasOpen) track('Note', 'Opened');
   };
   const closeNote = () => setNoteOpenId(null);
 

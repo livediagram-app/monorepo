@@ -30,6 +30,7 @@ import {
   resolvePostAuthDestination,
 } from '@/components/auth-shared';
 import { clerkEnabled, googleOAuthEnabled } from '@/lib/clerk-config';
+import { track } from '@/lib/telemetry';
 
 type Phase = 1 | 2;
 
@@ -113,6 +114,7 @@ function GetStartedContent() {
       // verification is configured off — straight to the editor.
       if (res.status === 'complete' && res.createdSessionId) {
         await setActiveSignUp({ session: res.createdSessionId });
+        track('Session', 'SignedUp');
         router.replace(resolvePostAuthDestination(searchParams));
         return;
       }
@@ -151,6 +153,7 @@ function GetStartedContent() {
       const res = await clerkSignUp.attemptEmailAddressVerification({ code });
       if (res.status === 'complete' && res.createdSessionId) {
         await setActiveSignUp({ session: res.createdSessionId });
+        track('Session', 'SignedUp');
         router.replace(resolvePostAuthDestination(searchParams));
         return;
       }

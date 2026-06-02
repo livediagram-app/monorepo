@@ -39,6 +39,7 @@ import {
   type Endpoint,
   type Tab,
 } from '@livediagram/diagram';
+import { track } from '@/lib/telemetry';
 import { getTheme } from '@/lib/themes';
 import {
   ALIGN_SNAP_THRESHOLD,
@@ -92,7 +93,7 @@ type EditorDragDeps = {
   tick: (mapper: (els: Element[]) => Element[]) => void;
   commit: (mapper: (els: Element[]) => Element[]) => void;
   markCheckpoint: () => void;
-  // Per-diagram setting (spec/20) controlling whether connected
+  // Per-user preference (spec/20) controlling whether connected
   // arrows re-pin to the most-natural face as a box is dragged.
   // Defaults to true; setting `false` keeps anchors frozen at
   // whatever the user originally chose. Tracked via ref so a
@@ -186,6 +187,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     };
     d.commit((els) => [...els, arrow]);
     d.setSelectedId(arrow.id);
+    track('Element', 'Added', 'Arrow');
     setDrag({
       kind: 'arrow-endpoint',
       arrowId: arrow.id,
@@ -316,7 +318,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             // Second pass: re-pin connected arrow anchors against
             // the moved positions so an arrow stays visually
             // attached as the user drags. Skipped when the per-
-            // diagram setting (spec/20) is off, in which case
+            // user preference (spec/20) is off, in which case
             // anchors stay frozen at whatever the user originally
             // chose. Read through a ref so a mid-drag flip lands
             // on the next pointermove without re-attaching.

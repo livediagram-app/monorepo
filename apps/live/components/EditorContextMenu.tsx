@@ -41,9 +41,6 @@ type EditorContextMenuProps = {
   // The active tab's elements — used to resolve the clicked element
   // (for the element menu) and read its link / note state.
   elements: Element[];
-  // Number of tabs open; the "Link Element" item only shows when there
-  // is more than one tab to link to.
-  tabCount: number;
   onClose: () => void;
   onDuplicate: () => void;
   onLinkElement: (elementId: string) => void;
@@ -59,7 +56,7 @@ type EditorContextMenuProps = {
 };
 
 export function EditorContextMenu(props: EditorContextMenuProps) {
-  const { menu, elements, tabCount, onClose } = props;
+  const { menu, elements, onClose } = props;
   const position = { x: menu.x, y: menu.y };
 
   if (menu.mode === 'element') {
@@ -76,16 +73,14 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             onClose();
           }}
         />
-        {tabCount > 1 ? (
-          <MenuItem
-            icon={<LinkMenuIcon />}
-            label={target.link ? 'Edit link' : 'Link Element'}
-            onClick={() => {
-              props.onLinkElement(target.id);
-              onClose();
-            }}
-          />
-        ) : null}
+        <MenuItem
+          icon={<LinkMenuIcon />}
+          label={target.link ? 'Edit link' : 'Link Element'}
+          onClick={() => {
+            props.onLinkElement(target.id);
+            onClose();
+          }}
+        />
         <ContextMenuDivider />
         <MenuItem
           icon={<LayerUpIcon />}

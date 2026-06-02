@@ -53,6 +53,7 @@ export function useTabCanvas(deps: TabCanvasDeps) {
     // on top would duplicate the entry without adding undo coverage;
     // the diff-based summary from emitChange is the canonical line.
     commit((els) => autoAlignElements(els));
+    track('Tab', 'Aligned');
   };
 
   const setBackgroundPattern = (pattern: BackgroundPattern) => {
