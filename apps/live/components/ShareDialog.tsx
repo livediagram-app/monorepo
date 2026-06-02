@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
 import type { ShareLink, ShareRole } from '@/lib/api-client';
+import { TrashIcon } from './explorer-icons';
 import { Tooltip } from './Tooltip';
 
 type ShareDialogProps = {
@@ -316,26 +317,6 @@ function CloseIcon() {
       aria-hidden
     >
       <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M2.5 4h11" />
-      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
-      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
     </svg>
   );
 }

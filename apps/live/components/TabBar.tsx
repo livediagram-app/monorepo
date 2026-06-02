@@ -5,6 +5,7 @@ import { clampToViewport } from '@/lib/clamp-to-viewport';
 import { useUiMode } from '@/hooks/useUiMode';
 import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
+import { PencilIcon, TrashIcon } from './explorer-icons';
 import { MenuItem } from './PortalMenu';
 import { ParticipantAvatar } from './ParticipantAvatar';
 import { Tooltip } from './Tooltip';
@@ -640,25 +641,6 @@ function PortalMenu({
   );
 }
 
-function PencilIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M11.5 2.5l2 2-8 8H3.5v-2z" />
-      <path d="M10 4l2 2" />
-    </svg>
-  );
-}
-
 function CopyIcon() {
   return (
     <svg
@@ -673,26 +655,6 @@ function CopyIcon() {
     >
       <rect x="3" y="3" width="8" height="8" rx="1.25" />
       <path d="M5.5 13.5h6a1 1 0 0 0 1-1v-6" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M2.5 4h11" />
-      <path d="M6 4V2.75A.75.75 0 0 1 6.75 2h2.5a.75.75 0 0 1 .75.75V4" />
-      <path d="M4 4l.7 9.1a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4" />
     </svg>
   );
 }
