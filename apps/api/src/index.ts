@@ -1,5 +1,6 @@
 import type { Tab } from '@livediagram/diagram';
 import { sha256Hex } from '@livediagram/api-schema';
+import { canEditDiagram, canReadDiagram } from './auth/diagram-access';
 import { rewriteCommentAuthors } from './comments';
 import {
   createFolder,
@@ -87,49 +88,6 @@ async function isWriteRateLimited(env: Env, ownerId: string): Promise<boolean> {
 
 function shareCodeOf(request: Request): string | null {
   return request.headers.get('X-Share-Code');
-}
-
-// True when the request is allowed to write to the given diagram —
-// either the X-Owner-Id matches the diagram's ownerId, OR the
-// caller provided an X-Share-Code that maps to an active edit-role
-// share link for this diagram. Used by the audit-log endpoints so
-// edit-role visitors can persist their own entries instead of
-// vanishing on refresh. See specs/12-activity-and-audit.md.
-async function canEditDiagram(
-  env: Env,
-  diagramId: string,
-  owner: string | null,
-  shareCode: string | null,
-  ownerId: string,
-): Promise<boolean> {
-  if (owner && owner === ownerId) return true;
-  if (!shareCode) return false;
-  const link = await getShareLink(env, shareCode);
-  if (!link) return false;
-  if (link.diagramId !== diagramId) return false;
-  return link.role === 'edit';
-}
-
-// True when the request is allowed to READ the given diagram — the
-// owner, OR ANY valid share code (view or edit) that maps to this
-// diagram. Reads must be open to view-role visitors: a view-only
-// share link exists precisely so stakeholders can see the diagram
-// (spec/04), and tab content is fetched lazily per tab (spec/13), so
-// the per-tab GET is the only path a viewer has to that content.
-// Writes still gate on canEditDiagram. Mirrors the read check the
-// image route applies (a share code for the diagram, regardless of
-// role).
-async function canReadDiagram(
-  env: Env,
-  diagramId: string,
-  owner: string | null,
-  shareCode: string | null,
-  ownerId: string,
-): Promise<boolean> {
-  if (owner && owner === ownerId) return true;
-  if (!shareCode) return false;
-  const link = await getShareLink(env, shareCode);
-  return !!link && link.diagramId === diagramId;
 }
 
 export default {
