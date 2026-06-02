@@ -946,7 +946,7 @@ export default function TelemetryDashboard() {
                       type="button"
                       onClick={() => toggleCategory(group.category)}
                       aria-expanded={isOpen}
-                      className="flex w-full items-baseline justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+                      className="flex w-full cursor-pointer items-baseline justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
                     >
                       <span className="flex items-baseline gap-2">
                         <span
