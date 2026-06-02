@@ -11,7 +11,6 @@ import { apiUploadImage, type ImageSummary } from './api-client';
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
 const MAX_BYTES = 10 * 1024 * 1024;
 
-export const UPLOAD_ACCEPTED_TYPES = ACCEPTED_TYPES;
 export const UPLOAD_ACCEPT_ATTR = ACCEPTED_TYPES.join(',');
 export const UPLOAD_MAX_BYTES = MAX_BYTES;
 
