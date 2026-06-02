@@ -9,6 +9,15 @@
 // pricing/numbers); free + open-source competitors (Excalidraw, draw.io)
 // are never implied to be paid or proprietary.
 
+// Last-revised date for the comparison set, shared by `app/sitemap.ts`
+// (drives `lastModified` for /alternatives + /alternatives/<slug>) and
+// by the alternatives pages' `subpageMetadata({ modifiedTime })`
+// (drives `article:modified_time` OG meta). Co-located with the
+// ALTERNATIVES array so revising a competitor row + bumping the date
+// lands in one diff. Bump this when adding a competitor or revising
+// any row / claim / lede.
+export const ALTERNATIVES_LAST_UPDATED = new Date('2026-06-02');
+
 export type ComparisonRow = {
   label: string;
   // Short, factual cell text. `us` = livediagram, `them` = competitor.

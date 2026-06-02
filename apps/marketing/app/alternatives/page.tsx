@@ -2,7 +2,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { JsonLd } from '@/components/JsonLd';
-import { ALTERNATIVES } from '@/lib/alternatives';
+import { ALTERNATIVES, ALTERNATIVES_LAST_UPDATED } from '@/lib/alternatives';
 import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const SITE_URL = 'https://livediagram.app';
@@ -14,6 +14,7 @@ export const metadata = subpageMetadata({
   description:
     'How livediagram stacks up against Miro, XMind, Excalidraw, draw.io, and Google Slides for diagrams. Honest, side-by-side comparisons.',
   path: '/alternatives',
+  modifiedTime: ALTERNATIVES_LAST_UPDATED,
 });
 
 // ItemList JSON-LD (see spec/16 "JSON-LD structured data", spec/21

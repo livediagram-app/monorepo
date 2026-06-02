@@ -24,9 +24,24 @@ export type SubpageMetadataInput = {
   // value of `/faq` becomes `https://livediagram.app/faq` in the
   // emitted head.
   path: `/${string}`;
+  // Last-revised date for the page's content. Surfaces as the
+  // `article:modified_time` OG meta tag (the standard companion
+  // field to `og:type=article`, which this factory always emits).
+  // Optional: pages whose content doesn't carry a tracked revision
+  // date (FAQ today) omit it, and the meta tag simply isn't
+  // emitted. The alternatives pages wire it to
+  // `ALTERNATIVES_LAST_UPDATED` from lib/alternatives.ts so the
+  // sitemap + this meta stay synchronised on one constant
+  // (spec/21).
+  modifiedTime?: Date;
 };
 
-export function subpageMetadata({ title, description, path }: SubpageMetadataInput): Metadata {
+export function subpageMetadata({
+  title,
+  description,
+  path,
+  modifiedTime,
+}: SubpageMetadataInput): Metadata {
   return {
     title,
     description,
@@ -38,6 +53,10 @@ export function subpageMetadata({ title, description, path }: SubpageMetadataInp
       title,
       description,
       locale: SUBPAGE_LOCALE,
+      // Only set when supplied: Next will simply omit the
+      // article:modified_time meta tag if `modifiedTime` is
+      // undefined, which is what FAQ / Terms / Privacy expect.
+      ...(modifiedTime ? { modifiedTime: modifiedTime.toISOString() } : {}),
     },
     twitter: {
       card: 'summary_large_image',

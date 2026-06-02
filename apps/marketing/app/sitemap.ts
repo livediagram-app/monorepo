@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { ALTERNATIVE_SLUGS } from '@/lib/alternatives';
+import { ALTERNATIVE_SLUGS, ALTERNATIVES_LAST_UPDATED } from '@/lib/alternatives';
 
 // Required for `output: 'export'` (same reason as robots.ts):
 // route handlers must declare themselves fully static so Next
@@ -29,14 +29,10 @@ export const dynamic = 'force-static';
 // the same change when revising the legal copy.
 const LEGAL_LAST_UPDATED = new Date('2026-05-31');
 
-// Same rationale for the comparison / "alternative" pages
-// (spec/21): the content lives entirely in `apps/marketing/lib/
-// alternatives.ts` and doesn't drift between builds, so claiming
-// `lastModified: now` was the same "changed daily" noise the legal
-// pages used to emit before commit 24a4def. Bump this when
-// `ALTERNATIVES` gains a new competitor or an existing entry's
-// rows / claims get revised.
-const ALTERNATIVES_LAST_UPDATED = new Date('2026-06-02');
+// ALTERNATIVES_LAST_UPDATED lives alongside the ALTERNATIVES array
+// in lib/alternatives.ts so the sitemap, the per-competitor pages'
+// article:modified_time OG meta, and the data revision all share
+// one constant. See spec/21 "Metadata".
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

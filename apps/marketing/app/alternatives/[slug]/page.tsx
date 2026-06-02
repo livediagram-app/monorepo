@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
-import { ALTERNATIVE_SLUGS, getAlternative } from '@/lib/alternatives';
+import { ALTERNATIVE_SLUGS, ALTERNATIVES_LAST_UPDATED, getAlternative } from '@/lib/alternatives';
 import { subpageMetadata } from '@/lib/subpage-metadata';
 
 // One page per competitor at /alternatives/<slug> (see
@@ -28,6 +28,7 @@ export async function generateMetadata({
     title: alt.title,
     description: alt.description,
     path: `/alternatives/${slug}`,
+    modifiedTime: ALTERNATIVES_LAST_UPDATED,
   });
 }
 

@@ -90,4 +90,33 @@ describe('subpageMetadata', () => {
     expect(a).not.toBe(b);
     expect(a.openGraph).not.toBe(b.openGraph);
   });
+
+  it('omits openGraph.modifiedTime when no modifiedTime is supplied', () => {
+    // FAQ + Terms + Privacy don't pass a date today. The factory
+    // must NOT emit an empty / "Invalid Date" string into the
+    // article:modified_time meta tag for them, which would surface
+    // a parse warning in Google Search Console.
+    const md = subpageMetadata({ title: 't', description: 'd', path: '/faq' });
+    const og = md.openGraph as Record<string, unknown> | undefined;
+    expect(og?.modifiedTime).toBeUndefined();
+  });
+
+  it('serialises modifiedTime to an ISO 8601 string for article:modified_time', () => {
+    // Next.js's metadata API takes a string (or Date) here and
+    // emits it as the `article:modified_time` OG meta. ISO 8601
+    // is what Google + Open Graph parsers expect; assertions here
+    // pin (a) the exact format, and (b) that the factory does the
+    // toISOString() conversion itself (so callers can pass a
+    // friendly Date and not worry about the wire format). See
+    // spec/21 "Metadata".
+    const date = new Date('2026-06-02T00:00:00.000Z');
+    const md = subpageMetadata({
+      title: 't',
+      description: 'd',
+      path: '/alternatives/miro',
+      modifiedTime: date,
+    });
+    const og = md.openGraph as Record<string, unknown> | undefined;
+    expect(og?.modifiedTime).toBe('2026-06-02T00:00:00.000Z');
+  });
 });

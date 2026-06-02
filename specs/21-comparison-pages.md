@@ -37,6 +37,8 @@ Each page uses the `subpageMetadata()` factory ([16](16-marketing-site.md)) for 
 
 The hub page (`/alternatives`) also emits an `ItemList` JSON-LD script alongside its `BreadcrumbList`, listing every comparison URL in display order. This is the schema.org shape for a curated index of related pages (see [16](16-marketing-site.md) "JSON-LD structured data"), built from the same `ALTERNATIVES` array, so adding a competitor updates the visible list, the sitemap, and the structured data in one place.
 
+Both the hub and the per-competitor detail pages also emit an `article:modified_time` OpenGraph meta tag (the standard `og:type=article` companion field), wired to the same `ALTERNATIVES_LAST_UPDATED` constant the sitemap reads from `lib/alternatives.ts`. This is the machine-readable freshness signal Google + social previews look at when ranking and rendering article-type pages. Keeping it pinned to one constant (alongside the comparison data) means a content revision lands in three places at once: the visible page, the sitemap's `lastModified`, and the OG `article:modified_time`.
+
 ## Initial set
 
 Miro, XMind, Excalidraw, draw.io (diagrams.net), and Google Slides (used for diagrams). Add more by appending to `lib/alternatives.ts`.
