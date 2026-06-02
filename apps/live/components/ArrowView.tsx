@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { memo, useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   ARROWHEAD_SIZE_PX,
   arrowheadSizeOf,
@@ -33,27 +33,40 @@ type ArrowViewProps = {
   // curve handle. Body double-click for label edit is also blocked
   // by isLocked (which the caller sets when readOnly is on).
   readOnly?: boolean;
-  onSelect: (e: ReactPointerEvent) => void;
-  onBeginEndpointDrag: (end: ArrowEnd, e: ReactPointerEvent) => void;
+  // Arrow-id-bearing callbacks so the parent can pass a single
+  // stable function per kind (rather than recreating per-element
+  // closures every render). The child has `arrow.id` in scope and
+  // forwards it where needed. This is what makes the React.memo
+  // wrapper around the export viable: with pre-bound callbacks,
+  // every parent render would invalidate the memo via fresh
+  // function identities.
+  onSelect: (id: string, e: ReactPointerEvent) => void;
+  onBeginEndpointDrag: (id: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   // Double-click on the arrow body fires this so the page can flip
   // the arrow into label-edit mode (mirrors boxed-element edit).
-  onBeginEdit: () => void;
-  onCommitLabel: (label: string) => void;
+  onBeginEdit: (id: string) => void;
+  onCommitLabel: (id: string, label: string) => void;
   onCancelEdit: () => void;
   // Fires when the user drags the body of a fully-floating arrow
   // (both endpoints `kind === 'free'`). Pinned arrows are anchored
   // to their elements so the body isn't draggable. The handler is
   // responsible for the gesture's pointer-move + pointer-up plumbing.
-  onBeginTranslate?: (e: ReactPointerEvent) => void;
+  onBeginTranslate?: (id: string, e: ReactPointerEvent) => void;
   // Begin the curve drag gesture, when the arrow is curved and the
   // selected user grabs the curve handle. Receives the original
   // pointer event so the caller can hook up move/up listeners.
-  onBeginCurveDrag?: (e: ReactPointerEvent) => void;
+  onBeginCurveDrag?: (id: string, e: ReactPointerEvent) => void;
 };
 
 const BRAND_600 = 'rgb(2 132 199)';
 
-export function ArrowView({
+// Wrapped in React.memo at the export below: with id-bearing
+// callbacks the parent passes a single stable function per kind
+// rather than recreating per-arrow closures every render, so
+// shallow prop equality on `arrow` + `elements` + the per-id
+// selection flags lets ArrowView skip the work when only an
+// unrelated arrow / element changed.
+function ArrowViewImpl({
   arrow,
   elements,
   isSelected,
@@ -150,17 +163,17 @@ export function ArrowView({
         strokeWidth={14}
         onPointerDown={(e) => {
           e.stopPropagation();
-          onSelect(e);
+          onSelect(arrow.id, e);
           // Translate gesture only fires when both ends are
-          // unpinned — a pinned end is anchored to its element so
-          // there's nothing meaningful to drag.
+          // unpinned (a pinned end is anchored to its element so
+          // there's nothing meaningful to drag).
           const bothFree = arrow.from.kind === 'free' && arrow.to.kind === 'free';
-          if (bothFree && !isLocked && onBeginTranslate) onBeginTranslate(e);
+          if (bothFree && !isLocked && onBeginTranslate) onBeginTranslate(arrow.id, e);
         }}
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (isLocked || isPaintMode) return;
-          onBeginEdit();
+          onBeginEdit(arrow.id);
         }}
         style={{
           pointerEvents: 'stroke',
@@ -178,7 +191,7 @@ export function ArrowView({
           text={labelText}
           color={baseStroke}
           isEditing={isEditing}
-          onCommit={onCommitLabel}
+          onCommit={(next) => onCommitLabel(arrow.id, next)}
           onCancel={onCancelEdit}
         />
       ) : null}
@@ -193,7 +206,7 @@ export function ArrowView({
             onPointerDown={(e) => {
               if (isLocked) return;
               e.stopPropagation();
-              onBeginEndpointDrag('from', e);
+              onBeginEndpointDrag(arrow.id, 'from', e);
             }}
           />
           <EndpointHandle
@@ -204,7 +217,7 @@ export function ArrowView({
             onPointerDown={(e) => {
               if (isLocked) return;
               e.stopPropagation();
-              onBeginEndpointDrag('to', e);
+              onBeginEndpointDrag(arrow.id, 'to', e);
             }}
           />
           {curveControl && onBeginCurveDrag ? (
@@ -215,7 +228,7 @@ export function ArrowView({
               onPointerDown={(e) => {
                 if (isLocked) return;
                 e.stopPropagation();
-                onBeginCurveDrag(e);
+                onBeginCurveDrag(arrow.id, e);
               }}
             />
           ) : null}
@@ -224,6 +237,13 @@ export function ArrowView({
     </g>
   );
 }
+
+// Default shallow-prop comparison is sufficient: `arrow` is
+// reference-stable across renders that don't touch it, `elements`
+// is reference-stable for the same reason (commit/commitTabs only
+// returns a new array when something actually changed), and every
+// other prop is a primitive or a stable id-bearing callback.
+export const ArrowView = memo(ArrowViewImpl);
 
 type EndpointHandleProps = {
   cx: number;

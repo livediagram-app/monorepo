@@ -897,6 +897,31 @@ export function Canvas(props: CanvasProps) {
     [onSelect, onElementContextMenu],
   );
 
+  // Stable wrapper for the arrow click flow. Same rationale as
+  // handleElementContextSelect: a per-arrow inline arrow at the
+  // call site would defeat ArrowView's memo on every render of the
+  // Canvas. Mirrors BoxedElementView's shift-modifier semantics so
+  // an arrow can join a marquee multi-selection via plain click
+  // (when one is active) or Shift-click. Reading the latest
+  // `multiSelectedIds` through a ref keeps this callback stable
+  // even as the selection set changes.
+  const multiSelectedIdsRef = useRef(multiSelectedIds);
+  useEffect(() => {
+    multiSelectedIdsRef.current = multiSelectedIds;
+  }, [multiSelectedIds]);
+  const handleArrowSelect = useCallback(
+    (id: string, e: ReactPointerEvent) => {
+      const set = multiSelectedIdsRef.current;
+      const isMember = set.has(id);
+      if (e.shiftKey || (set.size > 0 && !isMember)) {
+        onShiftSelect(id);
+        return;
+      }
+      onSelect(id);
+    },
+    [onSelect, onShiftSelect],
+  );
+
   return (
     <main
       ref={mainRef}
@@ -1060,23 +1085,13 @@ export function Canvas(props: CanvasProps) {
                   isEditing={element.id === editingId}
                   tabLocked={tabLocked}
                   readOnly={readOnly}
-                  onSelect={(e) => {
-                    // Mirror the boxed-element click semantics so arrows
-                    // can be included in marquee multi-selections via
-                    // plain click (when one is active) or Shift-click.
-                    const isMember = multiSelectedIds.has(element.id);
-                    if (e.shiftKey || (multiSelectedIds.size > 0 && !isMember)) {
-                      onShiftSelect(element.id);
-                      return;
-                    }
-                    onSelect(element.id);
-                  }}
-                  onBeginEndpointDrag={(end, e) => onBeginEndpointDrag(element.id, end, e)}
-                  onBeginEdit={() => onBeginEdit(element.id)}
-                  onCommitLabel={(label) => onCommitLabel(element.id, label)}
+                  onSelect={handleArrowSelect}
+                  onBeginEndpointDrag={onBeginEndpointDrag}
+                  onBeginEdit={onBeginEdit}
+                  onCommitLabel={onCommitLabel}
                   onCancelEdit={onCancelEdit}
-                  onBeginTranslate={(e) => onBeginArrowTranslate(element.id, e)}
-                  onBeginCurveDrag={(e) => onBeginArrowCurveDrag(element.id, e)}
+                  onBeginTranslate={onBeginArrowTranslate}
+                  onBeginCurveDrag={onBeginArrowCurveDrag}
                 />
               </svg>
             );
