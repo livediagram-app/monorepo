@@ -118,32 +118,58 @@ export function DataIsYoursArt() {
   );
 }
 
-/* Never sold or traded: a price tag with a circle-slash icon over it. */
+/* Never sold or traded: a banknote with a no-sale circle-slash
+   stamped over the top-right corner. Banknote is a proper
+   rectangle with a border, central oval (portrait area), and a
+   corner denomination so it reads as currency at thumbnail size. */
 export function NoSaleArt() {
   return (
     <DarkFrame>
       <svg viewBox="0 0 220 90" className="absolute inset-0 h-full w-full">
-        {/* Price tag */}
+        {/* Banknote */}
         <g className="fa-fade" style={{ animationDuration: '5s' }}>
-          <path
-            d="M30 60 L70 20 L130 20 L150 40 L150 70 L100 70 Z"
+          <rect
+            x="30"
+            y="22"
+            width="130"
+            height="46"
+            rx="3"
             fill={SKY_FAINT}
             stroke={SKY}
             strokeWidth="1.5"
           />
-          <circle cx="135" cy="35" r="3" fill={SKY} />
-          <text x="90" y="55" textAnchor="middle" fontSize="12" fontWeight="700" fill={SKY}>
-            $$$
+          {/* Inner border to suggest the engraved frame on real notes. */}
+          <rect
+            x="34"
+            y="26"
+            width="122"
+            height="38"
+            rx="2"
+            fill="none"
+            stroke={SKY}
+            strokeWidth="0.6"
+            opacity="0.6"
+          />
+          {/* Central portrait oval. */}
+          <ellipse cx="95" cy="45" rx="14" ry="11" fill="none" stroke={SKY} strokeWidth="1" />
+          {/* Corner denominations. */}
+          <text x="42" y="35" fontSize="9" fontWeight="700" fill={SKY}>
+            $
+          </text>
+          <text x="148" y="61" fontSize="9" fontWeight="700" fill={SKY} textAnchor="end">
+            $
           </text>
         </g>
-        {/* No-sale ring + slash stamped on top */}
+        {/* No-sale ring + slash stamped on top of the banknote's right
+            edge, deliberately overlapping so the message reads as
+            "this isn't for sale" rather than a separate icon. */}
         <g className="fa-pulse" style={{ transformOrigin: '170px 50px' }}>
-          <circle cx="170" cy="50" r="22" fill="none" stroke={ROSE} strokeWidth="4" />
+          <circle cx="170" cy="45" r="20" fill="none" stroke={ROSE} strokeWidth="4" />
           <line
-            x1="155"
-            y1="35"
-            x2="185"
-            y2="65"
+            x1="156"
+            y1="31"
+            x2="184"
+            y2="59"
             stroke={ROSE}
             strokeWidth="4"
             strokeLinecap="round"
