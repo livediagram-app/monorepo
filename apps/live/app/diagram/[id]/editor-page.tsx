@@ -138,6 +138,7 @@ import {
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { arrowReferencesAny } from '@/lib/canvas';
+import { useActivityLogDebounce } from '@/hooks/useActivityLogDebounce';
 import { useEditorBroadcast } from '@/hooks/useEditorBroadcast';
 import { useShortcutsEnabled } from '@/hooks/useShortcutsEnabled';
 import { useEditorComments } from '@/hooks/useEditorComments';
@@ -2636,68 +2637,18 @@ export default function LivePage() {
     scheduleTabMetaLog('backgroundColor', `Changed canvas colour to ${color}`);
   };
 
-  // Debounce window for slider / picker-driven activity-log entries
-  // (opacity sliders, native color pickers). Without debouncing,
-  // every tick of a continuous interaction emits its own log entry —
-  // a single tweak to a fill color through Chrome's eyedropper fills
-  // 30+ rows. 500 ms lets a fast drag collapse into one entry while
-  // still feeling responsive to discrete clicks (two clicks ≥500 ms
-  // apart stay separate entries).
-  const ACTIVITY_LOG_DEBOUNCE_MS = 500;
-
-  // Per-key debounce slots for tab-meta entries (background colour,
-  // pattern colour, background opacity, etc.). Each call resets the
-  // matching timer; on fire the latest summary is what lands.
-  const tabMetaDebounceRef = useRef<Record<string, number | undefined>>({});
-  const scheduleTabMetaLog = (key: string, summary: string) => {
-    const slots = tabMetaDebounceRef.current;
-    if (slots[key]) window.clearTimeout(slots[key]);
-    const tabId = activeId;
-    slots[key] = window.setTimeout(() => {
-      emitTabMeta(tabId, summary);
-      slots[key] = undefined;
-    }, ACTIVITY_LOG_DEBOUNCE_MS);
-  };
-
-  // Per-key debounce slots for element-level changes — captures the
-  // pre-drag elements on the first tick of a window and emits one
-  // emitChange against the post-debounce snapshot. Keys are
-  // independent so opacity + fill-color drags in parallel produce
-  // two separate entries, not a merged one.
-  const elementChangeDebounceRef = useRef<
-    Record<
-      string,
-      {
-        before: Element[] | null;
-        tabId: string | null;
-        timer: number | undefined;
-      }
-    >
-  >({});
-  const scheduleElementChangeLog = (key: string) => {
-    const slots = elementChangeDebounceRef.current;
-    if (!slots[key]) slots[key] = { before: null, tabId: null, timer: undefined };
-    const slot = slots[key];
-    if (slot.before === null) {
-      slot.before = activeTab.elements;
-      slot.tabId = activeId;
-    }
-    if (slot.timer) window.clearTimeout(slot.timer);
-    const flushTabId = slot.tabId;
-    slot.timer = window.setTimeout(() => {
-      const before = slot.before;
-      if (before && flushTabId) {
-        // `tabsRef` (mirrored above) keeps the timer's read of the
-        // post-debounce state fresh — closure-captured `tabs` would
-        // be stale by the time the timer fires.
-        const tab = tabsRef.current.find((t) => t.id === flushTabId);
-        if (tab) emitChange(flushTabId, before, tab.elements);
-      }
-      slot.before = null;
-      slot.tabId = null;
-      slot.timer = undefined;
-    }, ACTIVITY_LOG_DEBOUNCE_MS);
-  };
+  // Debounced activity-log emitters (see hooks/useActivityLogDebounce
+  // for the per-key slot machinery + the 500 ms window rationale).
+  // `scheduleTabMetaLog` handles canvas-pattern / background-colour /
+  // opacity edits, `scheduleElementChangeLog` handles fill-colour /
+  // stroke-colour / text-colour / element-opacity sliders.
+  const { scheduleTabMetaLog, scheduleElementChangeLog } = useActivityLogDebounce({
+    emitChange,
+    emitTabMeta,
+    tabsRef,
+    activeId,
+    activeTabElements: activeTab.elements,
+  });
 
   const setBackgroundOpacity = (opacity: number) => {
     if (editsBlocked) return;
