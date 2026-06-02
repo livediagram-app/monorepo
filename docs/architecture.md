@@ -1,0 +1,70 @@
+# Architecture
+
+A pnpm + Turborepo monorepo: five Cloudflare-deployed apps and seven shared packages. Everything runs on Cloudflare Workers (Static Assets for the Next.js apps); there's no Node-hosted backend.
+
+```
+apps/
+  marketing/    static landing site (Next.js export, /)
+  live/         the editor (Next.js export, /live)
+  telemetry/    public anonymous-events dashboard (Next.js export, /telemetry)
+  api/          REST + WebSocket worker (D1 + Durable Objects, /api)
+  router/       service-binding router stitching the apps under one hostname
+packages/
+  ui/             shared UI primitives (Brand, etc.)
+  diagram/        diagram data model (Tab, Element types + helpers)
+  api-schema/     wire-format DTOs the api worker emits + the live editor consumes
+  eslint-config/  shared ESLint flat config
+  prettier-config/
+  tailwind-config/shared Tailwind theme (brand palette)
+  vitest-config/  shared Vitest defaults
+specs/          product source of truth, read these before adding features
+```
+
+## The apps
+
+| App              | What runs there                                                                                                                                       | Cloudflare worker name  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `apps/marketing` | The landing site at `/`. Pure static HTML built with `next export`. Hero, feature grid, FAQ, legal, comparison pages.                                 | `livediagram-marketing` |
+| `apps/live`      | The editor at `/live/*`. Next.js static export plus a tiny path-rewrite worker that maps every `/diagram/<id>` to the same statically-built page.     | `livediagram-live`      |
+| `apps/telemetry` | A read-only dashboard at `/telemetry` that renders aggregate anonymous events from the api's D1 table.                                                | `livediagram-telemetry` |
+| `apps/api`       | The REST + WebSocket worker at `/api/*`. Holds the D1 binding and the per-diagram Durable Object realtime room. Plus the `change_log` retention cron. | `livediagram-api`       |
+| `apps/router`    | A worker that holds no business logic, only `MARKETING` / `LIVE` / `TELEMETRY` / `API` service bindings that forward by path prefix.                  | `livediagram-router`    |
+
+## The shared packages
+
+Each app pulls these in via `workspace:*`:
+
+- **`@livediagram/diagram`** owns the diagram data model: `Tab`, every `Element` type (Shape / Text / Sticky / Image / Arrow), defaults, geometry helpers, snap math, group operations. The single source of what a diagram IS.
+- **`@livediagram/api-schema`** owns the wire format between the api worker and the live editor: every request / response shape, plus the canonical `sha256Hex` used for image-upload dedupe. Adding a field on the server without updating the client used to be routine drift; the typechecker catches it now.
+- **`@livediagram/ui`** owns the cross-app UI primitives (today just `Brand`, the logo + wordmark; more arrive as common patterns emerge).
+- **`@livediagram/eslint-config`** / **`prettier-config`** / **`tailwind-config`** / **`vitest-config`** own the shared lint / format / theme / test configs so every workspace stays consistent.
+
+## Tech stack
+
+What's running:
+
+- **Frontend**: Next.js 15 with `output: 'export'`, React 19, TypeScript, Tailwind CSS 4.
+- **API**: Cloudflare Workers (vanilla `fetch` handlers, not Hono).
+- **Database**: Cloudflare D1 (SQLite-on-the-edge), accessed only via the api worker.
+- **Realtime**: Cloudflare Durable Objects, one room per diagram.
+- **Image storage**: Cloudflare R2, content-addressed by SHA-256, gated on owner + share-code reads (see [spec/19](../specs/19-images.md)).
+- **Auth** (optional): Clerk for sign-in; the api worker verifies JWTs against `CLERK_JWKS_URL` and silently degrades to pure-guest mode when the env var is unset.
+- **Routing edge**: a Cloudflare Worker stitching the apps under one hostname via service bindings.
+
+## Hard constraints
+
+The repo's shape isn't accidental. Three rules keep the stack honest:
+
+- **Static-only frontends.** Next.js apps use `output: 'export'`. No SSR, no Node runtime, no Next.js API routes. Server logic goes in the api worker. Breaking this breaks Cloudflare Pages deploys.
+- **Reuse over duplication.** Shared types, UI primitives, configs, and the diagram data model live in `packages/`, never copy-pasted across apps. If two apps need the same thing, it lives in `packages/` on first occurrence.
+- **No secrets in source.** The repo is public; secrets travel via env vars (`.env.local`), `wrangler secret put`, and GitHub Actions repo secrets. See [spec/06](../specs/06-secrets-policy.md).
+
+## Auth model in one sentence
+
+Two equivalent identity paths: an `X-Owner-Id` header (a per-browser UUID from `localStorage`) for guests, or a Clerk Bearer token (whose `sub` claim becomes the owner id) for signed-in users. The canvas always works without signing in. See [spec/04](../specs/04-auth-and-guest-access.md) for the full hybrid model and [spec/11](../specs/11-api.md) for how the api worker resolves the owner.
+
+## Deployment
+
+GitHub Actions → Cloudflare Workers, manually triggered after a green CI run. Build artefacts get uploaded once, then five parallel deploy jobs ship the workers (marketing / live / telemetry / api in parallel; router last because its service bindings need the others to exist).
+
+See [Self-hosting](self-hosting.md) for the step-by-step, and [spec/10](../specs/10-deployment.md) for the deeper deployment contract.
