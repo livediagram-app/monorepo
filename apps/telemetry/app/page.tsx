@@ -1161,17 +1161,21 @@ export default function TelemetryDashboard() {
           {groups.length === 0 ? (
             <p className="mt-8 text-slate-500">No events recorded in this window yet.</p>
           ) : (
-            // `items-start` keeps each card sized to its own content
-            // height instead of the row's tallest member — without it
-            // expanding one accordion stretched the collapsed card
-            // next to it to match.
-            <div className="mt-8 grid items-start gap-6 sm:grid-cols-2">
+            // CSS multi-column layout instead of a grid: grid rows
+            // would either (a) stretch a collapsed card to match the
+            // tallest expanded sibling, or (b) leave a big vertical
+            // gap underneath a closed card when its row-mate was
+            // expanded. Columns flow card-by-card top-to-bottom then
+            // wrap to the next column, packing tightly regardless of
+            // which accordions happen to be open. `break-inside-avoid`
+            // keeps each card whole when it crosses a column.
+            <div className="mt-8 columns-1 gap-6 sm:columns-2">
               {groups.map((group) => {
                 const isOpen = expanded.has(group.category);
                 return (
                   <div
                     key={group.category}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                    className="mb-6 break-inside-avoid overflow-hidden rounded-xl border border-slate-200 bg-white"
                   >
                     <button
                       type="button"
