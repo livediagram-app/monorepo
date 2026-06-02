@@ -493,19 +493,12 @@ export function SharedRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-medium">{item.name}</span>
-          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[10px] text-slate-500 dark:text-slate-400">
-            {/* Owner avatar dot + name; falls back to a neutral
-                badge when the owner has no participant row yet. */}
-            <span
-              aria-hidden
-              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: item.ownerColor ?? '#94a3b8' }}
-            />
-            <span className="truncate">{item.ownerName ?? 'Unknown owner'}</span>
-            <span aria-hidden>·</span>
-            <span className="shrink-0">{item.role === 'edit' ? 'Edit' : 'View'}</span>
-            <span aria-hidden>·</span>
-            <span className="shrink-0">Updated {relative}</span>
+          {/* Tight meta line: just the role + relative-time.
+              Owner attribution + "Updated" lived here before but
+              read too dense in a narrow column; role is the load-
+              bearing affordance and the timestamp grounds it. */}
+          <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">
+            {item.role === 'edit' ? 'Edit' : 'View'} · {relative}
           </span>
         </span>
       </button>
