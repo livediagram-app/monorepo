@@ -5,6 +5,7 @@ import { clampToViewport } from '@/lib/clamp-to-viewport';
 import { useUiMode } from '@/hooks/useUiMode';
 import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
+import { MenuItem } from './PortalMenu';
 import { ParticipantAvatar } from './ParticipantAvatar';
 import { Tooltip } from './Tooltip';
 
@@ -636,44 +637,6 @@ function PortalMenu({
       )}
     </div>,
     document.body,
-  );
-}
-
-function MenuItem({
-  icon,
-  label,
-  onClick,
-  danger,
-  disabled,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-  disabled?: boolean;
-}) {
-  const base =
-    'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition';
-  const tone = disabled
-    ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-    : danger
-      ? 'text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/15'
-      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800';
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} className={`${base} ${tone}`}>
-      <span
-        className={
-          disabled
-            ? 'text-slate-300 dark:text-slate-600'
-            : danger
-              ? 'text-rose-600 dark:text-rose-300'
-              : 'text-slate-400 dark:text-slate-500'
-        }
-      >
-        {icon}
-      </span>
-      <span>{label}</span>
-    </button>
   );
 }
 
