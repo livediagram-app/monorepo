@@ -11,7 +11,6 @@ import {
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   type ArrowElement,
-  type BackgroundPattern,
   type BoxedElement,
   type Element,
   type ShapeKind,
@@ -107,7 +106,6 @@ import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
-import { autoAlignElements } from '@/lib/auto-align';
 import {
   readDiagramSettings,
   writeDiagramSettings,
@@ -124,8 +122,11 @@ import { useEditorComments } from '@/hooks/useEditorComments';
 import { useEditorDrag } from '@/hooks/useEditorDrag';
 import { useEditorImages } from '@/hooks/useEditorImages';
 import { useEditorNotes } from '@/hooks/useEditorNotes';
+import { useElementLinks } from '@/hooks/useElementLinks';
 import { useElementSelectionActions } from '@/hooks/useElementSelectionActions';
 import { useElementStyle } from '@/hooks/useElementStyle';
+import { useShareLinks } from '@/hooks/useShareLinks';
+import { useTabCanvas } from '@/hooks/useTabCanvas';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
 import {
@@ -138,11 +139,9 @@ import {
 import { ensureGuestSelfId, hasConfirmedName, markNameConfirmed } from '@/lib/local-identity';
 import {
   apiAppendChangeLogEntry,
-  apiCreateShareLink,
   apiDeleteChangeLogEntry,
   apiDeleteChangeLogForTab,
   apiDeleteDiagram,
-  apiDeleteShareLink,
   apiDeleteTab,
   apiListChangeLog,
   apiCopyDiagram,
@@ -171,9 +170,6 @@ import {
   deriveNewBoxedColours,
   getTheme,
   recolourElementForTheme,
-  resetThemeElement,
-  switchThemeElement,
-  THEMES,
   type ThemeId,
 } from '@/lib/themes';
 
@@ -372,28 +368,9 @@ export default function LivePage() {
   const [contextMenu, setContextMenu] = useState<EditorContextMenuState | null>(null);
   const closeContextMenu = () => setContextMenu(null);
 
-  // Link-to-tab picker state. Lives at the page level (rather than
-  // inside SelectionPopover, where the toolbar button used to host
-  // it) so the right-click context menu can open it without having
-  // to reach across components. The element id drives the anchor:
-  // the picker's portal positions itself relative to the matching
-  // [data-element-id] DOM node so it stays attached when the canvas
-  // pans / zooms, same trick as NotePopover.
-  const [linkPickerOpenForId, setLinkPickerOpenForId] = useState<string | null>(null);
-
-  // Image picker state, the recent-images list, and every image
-  // placement / fill handler live in useEditorImages (spec/19). The
-  // hook is invoked further down, after its deps (commit,
-  // getViewportCenter, editsBlocked, ...) exist.
-  const [linkPickerAnchorEl, setLinkPickerAnchorEl] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    if (linkPickerOpenForId === null) {
-      setLinkPickerAnchorEl(null);
-      return;
-    }
-    const el = document.querySelector(`[data-element-id="${linkPickerOpenForId}"]`);
-    setLinkPickerAnchorEl(el instanceof HTMLElement ? el : null);
-  }, [linkPickerOpenForId]);
+  // Element link picker (open + anchor state) and the link read/write
+  // handlers live in useElementLinks. Invoked further down, after
+  // `openDiagram` + the selection helpers exist.
 
   // Every diagram in the local store. Used by the Explorer to render its
   // list. Refreshed on hydration and after we save the current diagram
@@ -2313,62 +2290,20 @@ export default function LivePage() {
     setNameConfirmed(true);
   };
 
-  // Save the participant's name (used from the share dialog's identity
-  // card). Mints the diagram id if this is the first share gesture so
-  // the share URL is shareable from the moment it's created.
-  const updateParticipantName = async (name: string) => {
-    if (!name) return;
-    if (name === selfParticipant.name) return;
-    const updated: Participant = { ...selfParticipant, name };
-    setSelfParticipant(updated);
-    await apiSaveSelf(updated).catch(() => {});
-  };
-
-  // Create a new share link for the current diagram with the given
-  // role. The editor route always has a real diagramId by the time
-  // the Share dialog is open — the welcome / mint-id flow now lives
-  // on /live/new (spec/14) — so this just calls the API directly.
-  const createShareLink = async (role: ShareRole) => {
-    if (!diagramId) return;
-    confirmName();
-    try {
-      const link = await apiCreateShareLink(selfParticipant.id, diagramId, role);
-      setShareLinks((prev) => [...prev, link]);
-      setDiagramShareable(true);
-      setDiagramShareCode((prev) => prev ?? link.code);
-      // Telemetry (spec/22): a share link was created. `type` is the
-      // role (Edit / View) — a preset, never user content.
-      track('Diagram', 'Shared', role === 'edit' ? 'Edit' : 'View');
-    } catch {
-      // Network glitch — leave state alone. A real app would toast.
-    }
-  };
-
-  const revokeShareLink = async (code: string) => {
-    if (!diagramId) return;
-    try {
-      await apiDeleteShareLink(selfParticipant.id, diagramId, code);
-    } catch {
-      // ignore — list refresh below reconciles if it actually went through.
-    }
-    setShareLinks((prev) => {
-      const next = prev.filter((l) => l.code !== code);
-      if (next.length === 0) {
-        setDiagramShareable(false);
-        setDiagramShareCode(null);
-      } else if (diagramShareCode === code) {
-        setDiagramShareCode(next[0]!.code);
-      }
-      return next;
-    });
-  };
-
-  // Absolute share URL helper used by the dialog. Visitor links carry
-  // the share code as a query param and land on the dedicated visitor
-  // path; the editor page reads the code there. Router stitches /live
-  // onto the app's hostname so this URL always resolves end-to-end.
-  const shareUrlFor = (code: string) =>
-    typeof window === 'undefined' ? '' : `${window.location.origin}/live/diagram/shared?s=${code}`;
+  // Share-dialog actions (create / revoke link, build the visitor URL,
+  // save the participant name). The share-link list + shareable flags
+  // stay as page state since the hydration / save effects also write
+  // them; the hook reconciles via the setters. See useShareLinks.
+  const { updateParticipantName, createShareLink, revokeShareLink, shareUrlFor } = useShareLinks({
+    diagramId,
+    selfParticipant,
+    setSelfParticipant,
+    setShareLinks,
+    setDiagramShareable,
+    setDiagramShareCode,
+    diagramShareCode,
+    confirmName,
+  });
 
   // Dismiss the template / identity modal without picking anything.
   // Welcome (first-run "New Diagram") lives on /live/new post-spec/14
@@ -2471,16 +2406,6 @@ export default function LivePage() {
   // lib/auto-align.ts so it's reasoned about + tested in isolation.
   // Goes through `commit` so the operation is undoable and the
   // activity log captures it like any other edit.
-  const autoAlignTab = () => {
-    if (editsBlocked) return;
-    if (activeTab.elements.length === 0) return;
-    // `commit` snapshots the pre-align state (so undo restores it)
-    // AND fires emitChange for the activity log. Adding emitTabMeta
-    // on top would duplicate the entry without adding undo coverage;
-    // the diff-based summary from emitChange is the canonical line.
-    commit((els) => autoAlignElements(els));
-  };
-
   // Open one of the Tab section accordions inside the Editor panel,
   // popping the panel back if it was minimised. Both context-menu
   // actions ("Change Theme", "Change Canvas") route here rather than
@@ -2496,81 +2421,6 @@ export default function LivePage() {
     });
   };
 
-  const setBackgroundPattern = (pattern: BackgroundPattern) => {
-    if (editsBlocked) return;
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, backgroundPattern: pattern } : t)),
-    );
-    emitTabMeta(activeId, `Changed canvas pattern to ${pattern}`);
-    track('Canvas', 'Changed', titleCaseType(pattern));
-  };
-
-  // Applying a theme swaps backdrop colours/pattern, records the theme
-  // id (so future element-create calls in `addBoxed` inherit the theme),
-  // AND retroactively recolours shape + text + arrow elements on the
-  // tab to match — UNLESS the user has previously set a custom colour
-  // on a specific field, in which case that field stays untouched.
-  // Heuristic for "custom": the current value differs from what the
-  // PREVIOUS theme would have set. Anything still equal to the
-  // previous theme's value (or undefined) is treated as
-  // theme-controlled and gets the new theme's value; anything else is
-  // the user's choice and survives. Sticky notes are skipped entirely
-  // — the amber palette is iconic.
-  const setTheme = (id: ThemeId) => {
-    if (editsBlocked) return;
-    const theme = getTheme(id);
-    const themeLabel =
-      THEMES.find((t) => t.id === id)?.label ?? id.charAt(0).toUpperCase() + id.slice(1);
-    emitTabMeta(activeId, `Changed theme to ${themeLabel}`);
-    track('Theme', 'Changed', themeLabel);
-    commitTabs((ts) =>
-      ts.map((t) => {
-        if (t.id !== activeId) return t;
-        const prevTheme = getTheme(t.theme);
-        // Per-field, preserve-customs walk. See `switchThemeElement`
-        // in lib/themes.ts for the rule (a field is replaced when
-        // it's unset or still matches the previous theme's value,
-        // and kept when the user has set it to something else).
-        const elements = t.elements.map((el) => switchThemeElement(el, prevTheme, theme));
-        return {
-          ...t,
-          elements,
-          theme: id,
-          backgroundColor: theme.backgroundColor,
-          backgroundPattern: theme.backgroundPattern,
-          patternColor: theme.patternColor,
-        };
-      }),
-    );
-  };
-
-  // Force-apply the current theme's element colours to every shape /
-  // text / arrow on the tab, OVERWRITING whatever's currently set —
-  // even custom per-element colours. The standalone counterpart to
-  // setTheme's preserve-customs behaviour; surfaces as a "Reset
-  // elements to theme" button under the Theme accordion.
-  const resetElementsToTheme = () => {
-    if (editsBlocked) return;
-    const theme = getTheme(activeTab.theme);
-    const themeLabel = THEMES.find((t) => t.id === activeTab.theme)?.label ?? 'theme';
-    emitTabMeta(activeId, `Reset elements to ${themeLabel}`);
-    commitTabs((ts) =>
-      ts.map((t) => {
-        if (t.id !== activeId) return t;
-        // Hard reset: blank user overrides too. See `resetThemeElement`
-        // in lib/themes.ts for the rule.
-        const elements = t.elements.map((el) => resetThemeElement(el, theme));
-        return { ...t, elements };
-      }),
-    );
-  };
-
-  const setBackgroundColor = (color: string) => {
-    if (editsBlocked) return;
-    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, backgroundColor: color } : t)));
-    scheduleTabMetaLog('backgroundColor', `Changed canvas colour to ${color}`);
-  };
-
   // Debounced activity-log emitters (see hooks/useActivityLogDebounce
   // for the per-key slot machinery + the 500 ms window rationale).
   // `scheduleTabMetaLog` handles canvas-pattern / background-colour /
@@ -2584,19 +2434,26 @@ export default function LivePage() {
     activeTabElements: activeTab.elements,
   });
 
-  const setBackgroundOpacity = (opacity: number) => {
-    if (editsBlocked) return;
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, backgroundOpacity: opacity } : t)),
-    );
-    scheduleTabMetaLog('backgroundOpacity', `Changed opacity to ${Math.round(opacity * 100)}%`);
-  };
-
-  const setPatternColor = (color: string) => {
-    if (editsBlocked) return;
-    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, patternColor: color } : t)));
-    scheduleTabMetaLog('patternColor', `Changed pattern colour to ${color}`);
-  };
+  // Tab-level appearance + layout actions (theme switch, background
+  // pattern / colour / opacity / pattern-colour, reset-to-theme,
+  // auto-align). All mutate the active tab; see useTabCanvas.
+  const {
+    autoAlignTab,
+    setBackgroundPattern,
+    setTheme,
+    resetElementsToTheme,
+    setBackgroundColor,
+    setBackgroundOpacity,
+    setPatternColor,
+  } = useTabCanvas({
+    editsBlocked,
+    activeId,
+    activeTab,
+    commit,
+    commitTabs,
+    emitTabMeta,
+    scheduleTabMetaLog,
+  });
 
   // Image domain (picker state, recent-images list, placement + fill
   // handlers). Lives in its own hook so the page no longer carries
@@ -2756,59 +2613,27 @@ export default function LivePage() {
     scheduleElementChangeLog,
   });
 
-  const setLinkSelected = (tabId: string) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) ? { ...el, link: { kind: 'tab' as const, tabId } } : el)),
-    );
-  };
-
-  // Pick a diagram from the link picker's "Link to diagram" section.
-  // Stores the diagram's name on the element alongside the id so the
-  // badge / picker can show the destination without a round-trip.
-  const setDiagramLinkSelected = (diagram: { id: string; name: string }) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id)
-          ? { ...el, link: { kind: 'diagram' as const, diagramId: diagram.id, name: diagram.name } }
-          : el,
-      ),
-    );
-  };
-
-  const clearLinkSelected = () => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) => {
-        if (!ids.has(el.id)) return el;
-        const { link: _drop, ...rest } = el;
-        return rest as typeof el;
-      }),
-    );
-  };
-
-  const followLink = (link: import('@livediagram/diagram').ElementLink) => {
-    if (link.kind === 'tab' || link.kind === 'element') {
-      if (!tabs.some((t) => t.id === link.tabId)) return;
-      setActiveId(link.tabId);
-      setSelectedId(null);
-      setEditingId(null);
-      setFormatSourceId(null);
-      setGroupSourceId(null);
-      return;
-    }
-    if (link.kind === 'diagram') {
-      // Navigate to a different diagram entirely. Same shape as
-      // openDiagram (which does a full-page load), so saves +
-      // realtime room handoff land through the normal hydration
-      // path on the destination route.
-      openDiagram(link.diagramId);
-    }
-  };
+  // Element link picker state + the link read/write/follow handlers.
+  // See useElementLinks.
+  const {
+    linkPickerOpenForId,
+    setLinkPickerOpenForId,
+    linkPickerAnchorEl,
+    setLinkSelected,
+    setDiagramLinkSelected,
+    clearLinkSelected,
+    followLink,
+  } = useElementLinks({
+    currentSelectionIds,
+    commit,
+    tabs,
+    setActiveId,
+    setSelectedId,
+    setEditingId,
+    setFormatSourceId,
+    setGroupSourceId,
+    openDiagram,
+  });
 
   const beginFormatPainter = () => {
     if (!selectedId) return;
