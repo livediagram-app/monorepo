@@ -55,6 +55,7 @@ import { LaserOverlay } from './LaserOverlay';
 import { useCanvasPanAndMarquee } from '@/hooks/useCanvasPanAndMarquee';
 import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
+import { isMobileViewportSync } from '@/lib/responsive';
 import { DockButton } from './MovablePanel';
 // Lazy-load MultiSelectionToolbar: only mounts when the user has
 // drag-marquee'd two or more elements. Most sessions never trigger
@@ -135,8 +136,13 @@ function prettyShapeLabel(kind: ShapeKind): string {
 // Banner copy per draw intent. Shape intents include the kind name
 // so the user can see which palette button they queued ("Drag to
 // draw Rectangle"); tools read in plain English ("Drag to draw an
-// arrow") because there's no kind dimension to disambiguate.
-function drawBannerMessage(intent: PendingDraw): string {
+// arrow") because there's no kind dimension to disambiguate. The
+// freehand variant carries a hint about the auto-close gesture on
+// desktop, but that parenthetical overflows the mode banner on a
+// phone-width viewport, so mobile gets the bare "Drag to draw"
+// (the gesture still auto-closes, the user just doesn't see the
+// hint until they try it).
+function drawBannerMessage(intent: PendingDraw, isMobile: boolean): string {
   switch (intent.type) {
     case 'shape':
       return `Drag to draw ${prettyShapeLabel(intent.kind)}`;
@@ -149,7 +155,7 @@ function drawBannerMessage(intent: PendingDraw): string {
     case 'arrow':
       return 'Drag to draw an arrow';
     case 'freehand':
-      return 'Drag to draw (release near the start to close)';
+      return isMobile ? 'Drag to draw' : 'Drag to draw (release near the start to close)';
   }
 }
 
@@ -1942,7 +1948,7 @@ export function Canvas(props: CanvasProps) {
               <path d="M5.5 5.5l5 5" />
             </svg>
           }
-          message={drawBannerMessage(pendingDraw)}
+          message={drawBannerMessage(pendingDraw, isMobileViewportSync())}
           onAction={onCancelDraw}
           // Pen-mode-only extras slot: the "recognise shapes" toggle.
           // Icon-only with a Tooltip (bold title + one-line
