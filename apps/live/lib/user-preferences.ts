@@ -38,6 +38,18 @@ export type UserPreferences = {
   // undefined / false === auto-place at viewport centre, the
   // historical default.
   drawToAdd?: boolean;
+  // Pencil tool's shape-recognition toggle (spec/09 Pencil
+  // subsection). When `true`, every freehand commit while the
+  // pencil banner is up runs the polyline through recogniseShape
+  // and may mint a primitive instead of a FreehandElement. The
+  // toggle ALSO lives in the pencil ModeBanner as an icon button:
+  // flipping it from the banner writes here so the preference
+  // survives across sessions, but the flag is deliberately NOT
+  // surfaced in the Settings dialog (Settings is for global
+  // editor behaviour; this is a per-tool toggle that belongs
+  // where the tool is). Missing / undefined / false === raw-
+  // sketch mode, the historical default.
+  recogniseShapes?: boolean;
 };
 
 export const STORAGE_KEY = 'livediagram:user-preferences:v1';

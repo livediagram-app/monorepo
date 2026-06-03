@@ -2649,15 +2649,17 @@ export default function LivePage() {
 
     // Shape-recognition mode: try classifying the simplified
     // polyline before falling back to FreehandElement. Threshold
-    // 0.55 is the "user probably meant this" line: forgiving
-    // enough that a wobbly hand-drawn rectangle converts cleanly,
-    // strict enough that a deliberate scribble or doodle stays a
-    // sketch. The user dropped this from 0.72 because the prior
-    // bar required almost-perfect strokes to trigger. The mode is
-    // per-pen-session (Canvas resets it when pendingDraw clears),
-    // so a stray false-convert is one Cmd+Z away and a deliberate
-    // sketch is one toggle-click away.
-    const RECOGNITION_THRESHOLD = 0.55;
+    // 0.40 leans hard toward "convert it". The bar is low on
+    // purpose: turning recognition on is an explicit opt-in (the
+    // pencil banner toggle, persisted as a user preference per
+    // spec/20), so the user has already stated they want strokes
+    // classified. False positives are one Cmd+Z away and the
+    // toggle is one click off; false negatives (a wobbly square
+    // that stayed a sketch when the user wanted a rectangle) are
+    // the more frustrating outcome, so erring toward conversion
+    // is correct. Previous values: 0.72 (too strict), 0.55 (still
+    // too strict per user feedback).
+    const RECOGNITION_THRESHOLD = 0.4;
     if (recogniseShapesMode) {
       const detected = recogniseShape(simplified);
       if (detected !== null && detected.confidence >= RECOGNITION_THRESHOLD) {
@@ -3404,6 +3406,15 @@ export default function LivePage() {
         pendingDraw={pendingDraw}
         onCommitDraw={commitDraw}
         onCommitFreehand={commitFreehand}
+        recogniseShapes={userPreferences.recogniseShapes === true}
+        onToggleRecogniseShapes={() => {
+          const next: UserPreferences = {
+            ...userPreferences,
+            recogniseShapes: userPreferences.recogniseShapes !== true,
+          };
+          setUserPreferences(next);
+          writeUserPreferences(next, selfParticipant?.id ?? null);
+        }}
         onCancelDraw={cancelDrawShape}
         onUndo={undo}
         onRedo={redo}

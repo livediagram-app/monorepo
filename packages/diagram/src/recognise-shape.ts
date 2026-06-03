@@ -21,11 +21,14 @@
 //        c. Polygon area close to the inscribed ellipse area  -> Circle
 //
 // Each branch returns a confidence in [0, 1]. The caller's threshold
-// (today 0.55 in commitFreehand) errs forgiving rather than strict:
-// the prior 0.72 bar required almost-perfect strokes to trigger and
-// felt broken to users. Turning the recognise-shape mode off is one
-// click away, so a false-positive convert is cheaper to undo than a
-// careful shape that stayed a freehand sketch.
+// (today 0.40 in commitFreehand) leans hard toward "convert it":
+// turning the recognise-shape mode on is an explicit opt-in via the
+// persisted spec/20 `recogniseShapes` preference, so the user has
+// already asked for classification. A false-positive convert is one
+// Cmd-Z away; a false negative (a wobbly square that stayed a
+// sketch) is more frustrating, so the bar is set well below the
+// detector's internal reject points. Previous values: 0.72 (too
+// strict), 0.55 (still too strict per user feedback).
 
 export type RecognisedShapeKind = 'square' | 'circle' | 'diamond' | 'line';
 
@@ -255,9 +258,9 @@ function recogniseCircle(points: Point[], bbox: ReturnType<typeof aabb>): Recogn
 // Public entry point. Returns the highest-confidence match across
 // the registered shape kinds, or null when no kind clears its
 // branch's reject threshold. Callers should compare the score to
-// their own threshold before acting (recommended: 0.72; raises
-// "the user clearly meant this" certainty without being so strict
-// that intentional shapes get missed).
+// their own threshold before acting; the editor currently uses
+// 0.40 because the mode is opt-in via the persisted spec/20
+// `recogniseShapes` preference (see the header comment).
 export function recogniseShape(points: Point[]): RecognisedShape | null {
   if (points.length < 4) return null;
   const bbox = aabb(points);

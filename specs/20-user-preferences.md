@@ -109,6 +109,16 @@ type UserPreferences = {
   // the PendingDraw discriminated union the gesture commits
   // through.
   drawToAdd?: boolean;
+  // Pencil tool's shape-recognition toggle (spec/09 Pencil
+  // subsection). When true, every freehand commit while the
+  // pencil banner is up runs through recogniseShape and may
+  // mint a primitive instead of a FreehandElement. Deliberately
+  // NOT surfaced in the Settings dialog: the flag is a per-tool
+  // toggle, set + read from the pencil ModeBanner's icon button,
+  // and Settings is reserved for global editor preferences. The
+  // toggle's state still persists here so flipping it once
+  // sticks across sessions.
+  recogniseShapes?: boolean;
 };
 ```
 
@@ -128,6 +138,10 @@ Missing key === undefined === default behaviour. Concretely:
 - `drawToAdd` undefined → drop-at-centre placement (the default).
   Setting it to `true` flips the palette into draw-to-size mode
   for every element kind.
+- `recogniseShapes` undefined → raw-sketch pencil (the default).
+  Setting it to `true` makes every pencil commit attempt
+  classification first. Flipped from the pencil ModeBanner icon
+  button rather than from the Settings dialog.
 
 Empty (or missing entirely) localStorage entry, AND no row in
 `user_preferences` for this owner, is therefore the "everything
