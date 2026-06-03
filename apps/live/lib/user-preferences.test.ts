@@ -3,13 +3,24 @@
 // individual tests stub `globalThis.window` with an in-memory
 // Storage shim when they need a real localStorage code path.
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('./api-client', () => ({
+  apiGetPreferences: vi.fn(),
+  apiPutPreferences: vi.fn(),
+}));
+
+import { apiGetPreferences, apiPutPreferences } from './api-client';
 import {
+  fetchUserPreferences,
   PREFERENCES_CHANGED_EVENT,
   readUserPreferences,
   STORAGE_KEY,
   writeUserPreferences,
 } from './user-preferences';
+
+const mockedGet = vi.mocked(apiGetPreferences);
+const mockedPut = vi.mocked(apiPutPreferences);
 
 // Minimal in-memory `Storage` polyfill. Matches the parts of the
 // Web Storage interface this module actually uses (getItem /
@@ -71,6 +82,11 @@ function mockBrowser(): { storage: Storage; events: string[]; cleanup: () => voi
 afterEach(() => {
   delete (globalThis as { window?: Window }).window;
   vi.unstubAllGlobals();
+});
+
+beforeEach(() => {
+  mockedGet.mockReset();
+  mockedPut.mockReset();
 });
 
 describe('readUserPreferences (no window)', () => {
@@ -157,6 +173,88 @@ describe('readUserPreferences (with localStorage)', () => {
     expect(events).toEqual([PREFERENCES_CHANGED_EVENT]);
     writeUserPreferences({ telemetryEnabled: true });
     expect(events).toEqual([PREFERENCES_CHANGED_EVENT, PREFERENCES_CHANGED_EVENT]);
+  });
+});
+
+// Network-sync helpers introduced in spec/20's "preferences live in D1"
+// rewrite. These cover the two interfaces the editor relies on:
+// writeUserPreferences(prefs, ownerId) firing a PUT when an owner is
+// known (and staying purely local when one isn't), and
+// fetchUserPreferences merging the server response over the cache.
+
+describe('writeUserPreferences (server sync)', () => {
+  it('fires a PUT to /api/preferences when an owner id is supplied', () => {
+    mockBrowser();
+    writeUserPreferences({ telemetryEnabled: false }, 'guest-abc');
+    expect(mockedPut).toHaveBeenCalledTimes(1);
+    expect(mockedPut).toHaveBeenCalledWith('guest-abc', { telemetryEnabled: false });
+  });
+
+  it('skips the PUT when no owner id is supplied (legacy / pre-identity callers)', () => {
+    mockBrowser();
+    writeUserPreferences({ telemetryEnabled: false });
+    expect(mockedPut).not.toHaveBeenCalled();
+  });
+
+  it('treats a null owner id the same as undefined (no PUT)', () => {
+    // Editor-page passes `selfParticipant?.id ?? null` so this branch
+    // gets hit before identity resolves on a slow network.
+    mockBrowser();
+    writeUserPreferences({ autoRebindArrows: false }, null);
+    expect(mockedPut).not.toHaveBeenCalled();
+  });
+
+  it('still writes to localStorage when the PUT path runs (cache first, sync second)', () => {
+    const { storage } = mockBrowser();
+    writeUserPreferences({ drawToAdd: true }, 'owner-1');
+    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}')).toEqual({ drawToAdd: true });
+  });
+});
+
+describe('fetchUserPreferences', () => {
+  it('returns null and leaves the cache untouched when the api call fails', async () => {
+    const { storage } = mockBrowser();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ autoRebindArrows: false }));
+    mockedGet.mockResolvedValueOnce(null);
+    const result = await fetchUserPreferences('owner-1');
+    expect(result).toBeNull();
+    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}')).toEqual({ autoRebindArrows: false });
+  });
+
+  it('merges the server response over the cache, server wins on conflict', async () => {
+    const { storage } = mockBrowser();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ autoRebindArrows: false, telemetryEnabled: true }),
+    );
+    // Server has telemetryEnabled = false (the user opted out on
+    // another device) and a new flag the cache doesn't know about.
+    mockedGet.mockResolvedValueOnce({ telemetryEnabled: false, drawToAdd: true });
+    const merged = await fetchUserPreferences('owner-1');
+    expect(merged).toEqual({
+      autoRebindArrows: false, // cache-only key preserved
+      telemetryEnabled: false, // server wins on conflict
+      drawToAdd: true, // server-only key carried in
+    });
+    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}')).toEqual({
+      autoRebindArrows: false,
+      telemetryEnabled: false,
+      drawToAdd: true,
+    });
+  });
+
+  it('fires the same-tab preferences-changed event after a successful merge', async () => {
+    const { events } = mockBrowser();
+    mockedGet.mockResolvedValueOnce({ telemetryEnabled: false });
+    await fetchUserPreferences('owner-1');
+    expect(events).toEqual([PREFERENCES_CHANGED_EVENT]);
+  });
+
+  it('does NOT fire the changed event when the fetch returned null', async () => {
+    const { events } = mockBrowser();
+    mockedGet.mockResolvedValueOnce(null);
+    await fetchUserPreferences('owner-1');
+    expect(events).toEqual([]);
   });
 });
 
