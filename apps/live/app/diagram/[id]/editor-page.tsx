@@ -20,7 +20,16 @@ import {
 } from '@livediagram/diagram';
 import dynamic from 'next/dynamic';
 import { Canvas, type PendingDraw } from '@/components/Canvas';
-import { EditorContextMenu, type EditorContextMenuState } from '@/components/EditorContextMenu';
+import { type EditorContextMenuState } from '@/components/EditorContextMenu';
+// Lazy-load EditorContextMenu: the right-click menu only renders
+// while `contextMenu` is non-null, so the menu's render tree + its
+// icon set never need to ship in the editor's initial chunk. Same
+// gate pattern as TabLinkPicker, ShortcutsDialog, etc. Visitors
+// (view-role) skip it entirely because the parent already gates on
+// `!isReadOnly`.
+const EditorContextMenu = dynamic(() =>
+  import('@/components/EditorContextMenu').then((m) => m.EditorContextMenu),
+);
 // Lazy-load TabLinkPicker: only mounts when `linkPickerOpenForId`
 // is set (the user clicked the link icon on a selected element).
 // Most sessions never open it. Same lazy pattern as the dialogs
