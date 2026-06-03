@@ -2509,15 +2509,19 @@ export default function LivePage() {
       // horizontal one centred on the start point instead so the
       // user isn't left wondering why nothing appeared.
       const isClick = Math.abs(dx) < 16 && Math.abs(dy) < 16;
+      // Stray click: lay the default 160px horizontal arrow across
+      // the click point. Real drag: use the dragged endpoints as-is.
+      // Y is always anchored at startY in both branches (a click
+      // wants a flat line, a drag's endY only matters for non-stray
+      // gestures), so it stays a plain assignment, not a ternary.
       const arrowStartX = isClick ? startX - 80 : startX;
       const arrowEndX = isClick ? startX + 80 : endX;
-      const arrowStartY = isClick ? startY : startY;
       const arrowEndY = isClick ? startY : endY;
       const theme = getTheme(activeTab.theme);
       const arrow: ArrowElement = {
         id: crypto.randomUUID(),
         type: 'arrow',
-        from: { kind: 'free', x: arrowStartX, y: arrowStartY },
+        from: { kind: 'free', x: arrowStartX, y: startY },
         to: { kind: 'free', x: arrowEndX, y: arrowEndY },
         arrowEnds: 'none',
         ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
