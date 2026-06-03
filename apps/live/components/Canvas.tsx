@@ -38,6 +38,7 @@ import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type CanvasTool, type SelectedElementControls } from './CommandPalette';
 import { UnionResizeHandles } from './element-parts';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
+import { CommentsPanel } from './CommentsPanel';
 import { ParticipantAvatar } from './ParticipantAvatar';
 import { ContextPanel } from './ContextPanel';
 import { Explorer } from './Explorer';
@@ -178,6 +179,16 @@ type CanvasProps = {
   onMoveActivity: (x: number, y: number) => void;
   onToggleActivityMinimized: () => void;
   onResetActivity: () => void;
+  // Floating Comments panel. Only mounted when commentRows is
+  // non-empty: the panel exists to list discussion that already
+  // exists, so on diagrams without it the panel stays out of the
+  // chrome entirely.
+  commentRows: import('./CommentsPanel').CommentRow[];
+  commentsPanelPosition: { x: number; y: number } | null;
+  onMoveCommentsPanel: (x: number, y: number) => void;
+  onResetCommentsPanel: () => void;
+  // Row click: editor selects the element + opens its thread popover.
+  onOpenCommentsForElement: (elementId: string) => void;
   contextPosition: { x: number; y: number } | null;
   onMoveContext: (x: number, y: number) => void;
   onResetContext: () => void;
@@ -395,6 +406,11 @@ export function Canvas(props: CanvasProps) {
     onMoveActivity,
     onToggleActivityMinimized,
     onResetActivity,
+    commentRows,
+    commentsPanelPosition,
+    onMoveCommentsPanel,
+    onResetCommentsPanel,
+    onOpenCommentsForElement,
     contextPosition,
     tabAccordionsOpen,
     editorExpandSignal,
@@ -1315,6 +1331,16 @@ export function Canvas(props: CanvasProps) {
       {/* Activity panel — per-diagram audit log + Undo/Redo. Hidden
           during the welcome flow because there's nothing to audit
           yet and Undo/Redo would target an empty history. */}
+      {!welcomeOpen && commentRows.length > 0 ? (
+        <CommentsPanel
+          position={commentsPanelPosition}
+          rows={commentRows}
+          onMoveTo={onMoveCommentsPanel}
+          onReset={onResetCommentsPanel}
+          onRowClick={onOpenCommentsForElement}
+        />
+      ) : null}
+
       {welcomeOpen ? null : (
         <ActivityPanel
           position={activityPosition}

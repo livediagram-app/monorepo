@@ -168,6 +168,7 @@ import {
 } from '@/lib/api-client';
 import { applyRevert } from '@/lib/change-log';
 import { uploadImageFile } from '@/lib/upload-image';
+import { commentRowsFromElements } from '@/components/CommentsPanel';
 import { templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
 import {
   deriveNewBoxedColours,
@@ -419,6 +420,13 @@ export default function LivePage() {
     future: [],
   });
   const [activityPosition, setActivityPosition] = useState<{ x: number; y: number } | null>(null);
+  // Comments panel position. The panel itself is only mounted when
+  // the active tab has at least one element carrying a thread,
+  // computed below via commentRowsFromElements.
+  const [commentsPanelPosition, setCommentsPanelPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   // Activity defaults to minimised: most users only want to peek at
   // it occasionally. The dock button stays visible so it's one click
   // to open.
@@ -1610,6 +1618,19 @@ export default function LivePage() {
   // whose latest sample is on the active tab and whose participant
   // entry is still live. The overlay handles fade + cleanup; we just
   // assemble per-tab visibility here.
+  // Comment-bearing element rows for the floating Comments panel.
+  // Only the boxed elements carry threads (arrows can't), so the
+  // filter walks `activeTab.elements` and routes the boxed ones
+  // through the helper. The memo keys on the element list identity
+  // so a selection / pan / zoom that doesn't touch elements skips
+  // recomputation.
+  const commentRows = useMemo(() => {
+    const boxed: BoxedElement[] = activeTab.elements.filter((el): el is BoxedElement =>
+      isBoxed(el),
+    );
+    return commentRowsFromElements(boxed);
+  }, [activeTab.elements]);
+
   const laserTrailRows = useMemo(() => {
     const rows: {
       participantId: string;
@@ -3057,6 +3078,14 @@ export default function LivePage() {
           setActivityMinimized((v) => !v);
         }}
         onResetActivity={() => setActivityPosition(null)}
+        commentRows={commentRows}
+        commentsPanelPosition={commentsPanelPosition}
+        onMoveCommentsPanel={(x, y) => setCommentsPanelPosition({ x, y })}
+        onResetCommentsPanel={() => setCommentsPanelPosition(null)}
+        onOpenCommentsForElement={(id) => {
+          setSelectedId(id);
+          openComments(id);
+        }}
         contextPosition={contextPosition}
         tabAccordionsOpen={tabAccordionsOpen}
         setTabAccordionsOpen={setTabAccordionsOpen}
