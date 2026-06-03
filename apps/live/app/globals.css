@@ -12,21 +12,37 @@
     cursor: pointer;
   }
 
-  /* iOS Safari refuses to honour `user-scalable=no` for accessibility,
-   * and `maximum-scale=1` is not always respected on focus, so the
-   * canonical fix is to ensure every focusable input is already at
-   * 16px+ on mobile. iOS only triggers focus-zoom when the focused
-   * input's effective font-size is under 16px, so this is the lever
-   * that actually works. Constrained to (max-width: 640px) so the
-   * dense desktop chrome (text-xs / text-[10px] in tabs, palette,
-   * settings dialog) keeps its design size, and applied via
-   * font-size (no !important) so explicit larger sizes still win. */
-  @media (max-width: 640px) {
-    input,
-    textarea,
-    select {
-      font-size: 16px;
-    }
+}
+
+/* iOS Safari refuses to honour `user-scalable=no` for accessibility,
+ * and `maximum-scale=1` is not always respected on focus, so the
+ * canonical fix is to ensure every focusable input is already at
+ * 16px+ on mobile. iOS only triggers focus-zoom when the focused
+ * input's effective font-size is under 16px, so this is the lever
+ * that actually works.
+ *
+ * Previously lived inside @layer base + bare element selectors
+ * (input, textarea, select). Tailwind utility classes (.text-sm,
+ * .text-xs, etc.) sit in @layer utilities, which always wins over
+ * @layer base in v4's cascade, so an input with `text-sm` kept its
+ * 14px and iOS still zoomed on focus, the bug the user hit on the
+ * EditorHeader's inline rename input.
+ *
+ * Move the rule out of @layer base and bump the selector specificity
+ * with [class] so it sits at (0,0,1,1), one notch above any pure
+ * utility-class selector (0,0,1,0). The mobile media query keeps the
+ * dense desktop chrome (text-xs / text-[10px] in tabs, palette,
+ * settings dialog) at its design size. Anything explicitly larger
+ * (text-base / text-lg) on mobile loses to this rule and forcibly
+ * drops to 16px, which is fine because 16px is already the design
+ * floor for mobile-readable text and avoiding the focus-zoom is the
+ * non-negotiable win.
+ */
+@media (max-width: 640px) {
+  input[class],
+  textarea[class],
+  select[class] {
+    font-size: 16px;
   }
 }
 

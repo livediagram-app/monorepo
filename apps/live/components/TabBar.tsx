@@ -276,18 +276,22 @@ export function TabBar({
         </span>
       ) : null}
       {onOpenSettings ? (
-        <span className="hidden sm:contents">
-          <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              aria-label="Diagram settings"
-              className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <GearIcon />
-            </button>
-          </Tooltip>
-        </span>
+        // Settings stays visible on mobile too: it's where users go
+        // to flip drawToAdd / arrow-auto-rebind / telemetry opt-out,
+        // and there's no other surface for those toggles. Keyboard
+        // shortcuts above stay hidden on mobile because they're moot
+        // on a touch device, but Settings is a real entry point on
+        // every viewport.
+        <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            aria-label="Diagram settings"
+            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          >
+            <GearIcon />
+          </button>
+        </Tooltip>
       ) : null}
       <UiModeToggle />
     </div>
