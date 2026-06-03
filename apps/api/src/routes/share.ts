@@ -67,7 +67,11 @@ export async function handleShare(ctx: RouteContext): Promise<Response> {
 // Returns a 401/403 Response when the diagram is password-protected and
 // the provided password is missing / wrong, else null (access allowed).
 // The error codes mirror what the client maps to its password gate.
-async function passwordGate(
+// Exported for the focused unit suite at routes/share.test.ts that pins
+// the status-code mapping, since SharePasswordGate distinguishes 401
+// (no password entered yet) from 403 (entered, wrong) and a swap would
+// break the gate UI silently.
+export async function passwordGate(
   env: RouteContext['env'],
   diagramId: string,
   provided: string | null,
