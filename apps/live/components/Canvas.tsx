@@ -18,6 +18,7 @@ import {
   elementBounds,
   isBoxed,
   selectionMembers,
+  snapResizeBounds,
   supportsColours,
   unionBoxedBounds,
   type Anchor,
@@ -81,6 +82,27 @@ const TemplatePicker = dynamic(() => import('./TemplatePicker').then((m) => m.Te
 // across renders.
 const EMPTY_REMOTE_SELECTORS: { id: string; name: string; color: string }[] = [];
 
+// Reused as the excludeIds argument to snapResizeBounds during draw-
+// to-size: the new element doesn't exist yet, so there's nothing to
+// exclude. A module-level frozen Set keeps the snap effect from
+// allocating a new Set on every pointermove.
+const EMPTY_ID_SET: Set<string> = new Set();
+
+// Draw-to-size intent. When user-preferences.drawToAdd is on, picking
+// any element from the palette stashes the intent here; the canvas
+// then enters a "drag to define" gesture and forwards the resolved
+// start + end points to the editor on pointer-up. Discriminated so
+// the canvas can render the right preview per intent (oval for a
+// circle shape, line for an arrow, dashed box for text / sticky /
+// image, etc.) and the editor's commit handler can mint the right
+// element type from the same gesture.
+export type PendingDraw =
+  | { type: 'shape'; kind: ShapeKind }
+  | { type: 'text' }
+  | { type: 'sticky' }
+  | { type: 'image' }
+  | { type: 'arrow' };
+
 // Title-cased shape label for the draw-to-size mode banner. Avoids the
 // "a / an" article problem by reading "Drag to draw {Rectangle}"
 // instead of "draw a rectangle / an oval". Two kinds get human-
@@ -93,6 +115,25 @@ function prettyShapeLabel(kind: ShapeKind): string {
   if (kind === 'square') return 'Rectangle';
   if (kind === 'circle') return 'Oval';
   return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+// Banner copy per draw intent. Shape intents include the kind name
+// so the user can see which palette button they queued ("Drag to
+// draw Rectangle"); tools read in plain English ("Drag to draw an
+// arrow") because there's no kind dimension to disambiguate.
+function drawBannerMessage(intent: PendingDraw): string {
+  switch (intent.type) {
+    case 'shape':
+      return `Drag to draw ${prettyShapeLabel(intent.kind)}`;
+    case 'text':
+      return 'Drag to place text';
+    case 'sticky':
+      return 'Drag to draw a sticky note';
+    case 'image':
+      return 'Drag to draw image bounds';
+    case 'arrow':
+      return 'Drag to draw an arrow';
+  }
 }
 
 // Per-shape draw-mode cursor. Returns a `cursor:` CSS value, an
@@ -195,16 +236,24 @@ type CanvasProps = {
   onAddImage?: () => void;
   onAddArrow: () => void;
   // Draw-to-size mode. When user-preferences.drawToAdd is on,
-  // picking a shape from the palette stashes the kind here; the
-  // canvas then changes its cursor to a crosshair and the next
-  // pointer-down on its surface starts a drag-to-size gesture.
-  // pointer-up calls onCommitDrawShape with the dragged bounds
-  // (canvas coords, post-floor on min size). onCancelDrawShape
-  // backs the Cancel button on the in-canvas ModeBanner (Escape
-  // calls it from the keyboard hook too).
-  pendingDrawShape: ShapeKind | null;
-  onCommitDrawShape: (kind: ShapeKind, x: number, y: number, width: number, height: number) => void;
-  onCancelDrawShape: () => void;
+  // picking any palette element (shape, text, sticky, image, arrow)
+  // stashes the intent here; the canvas then enters a drag-to-define
+  // gesture. pointer-up calls onCommitDraw with the start + end
+  // canvas-coord points (raw, no axis swap) so the editor can decide
+  // how to interpret them per intent: box intents floor to a 16px
+  // minimum and convert to top-left + width/height; the arrow intent
+  // treats the points as from / to. onCancelDraw backs the Cancel
+  // button on the in-canvas ModeBanner (Escape calls it from the
+  // keyboard hook too).
+  pendingDraw: PendingDraw | null;
+  onCommitDraw: (
+    intent: PendingDraw,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+  ) => void;
+  onCancelDraw: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
@@ -444,9 +493,9 @@ export function Canvas(props: CanvasProps) {
     onAddSticky,
     onAddImage,
     onAddArrow,
-    pendingDrawShape,
-    onCommitDrawShape,
-    onCancelDrawShape,
+    pendingDraw,
+    onCommitDraw,
+    onCancelDraw,
     onUndo,
     onRedo,
     onMovePalette,
@@ -733,7 +782,7 @@ export function Canvas(props: CanvasProps) {
   // there any arrows" to decide whether to mount the ArrowDefs.
   const arrowCount = elements.reduce((n, el) => (el.type === 'arrow' ? n + 1 : n), 0);
 
-  const cursorClass = pendingDrawShape
+  const cursorClass = pendingDraw
     ? 'cursor-crosshair'
     : pan
       ? 'cursor-grabbing'
@@ -910,11 +959,12 @@ export function Canvas(props: CanvasProps) {
   }, [multiSelectedIds]);
 
   // Draw-to-size gesture state. Set when the user starts a drag on
-  // the canvas while pendingDrawShape is set; cleared on pointer-up
-  // (either when onCommitDrawShape persists the shape or the drag
-  // was cancelled). Coords are stored as canvas coords (pre-divided
-  // by viewportZoom) so the preview rect renders in the same space
-  // as the rest of the canvas content.
+  // the canvas while pendingDraw is set; cleared on pointer-up
+  // (either when onCommitDraw persists the element or the drag was
+  // cancelled). Coords are stored as canvas coords (pre-divided by
+  // viewportZoom) so the preview renders in the same space as the
+  // rest of the canvas content. `current` is the snapped point, not
+  // the raw pointer, so preview + commit see the same number.
   const [drawDrag, setDrawDrag] = useState<{
     startX: number;
     startY: number;
@@ -923,37 +973,79 @@ export function Canvas(props: CanvasProps) {
   } | null>(null);
 
   // Window-level move + up listeners for the draw gesture. Attached
-  // only while a drag is in flight so the canvas pays nothing in
-  // the common case (idle, or in pan / marquee mode). pointermove
-  // updates the preview rectangle; pointerup converts the rect to
-  // canvas coords (already there), enforces a 16x16 minimum so a
-  // stray click still produces a sensibly-sized shape, and hands
-  // the bounds to onCommitDrawShape. Pointercancel + escape are
-  // covered separately (the keyboard hook clears pendingDrawShape).
+  // only while a drag is in flight so the canvas pays nothing in the
+  // common case (idle, or in pan / marquee mode). pointermove
+  // resolves the raw pointer, applies snap (1:1 lock on shift, edge
+  // alignment to existing elements via snapResizeBounds for box
+  // intents), and stores the snapped point so the preview tracks it.
+  // pointerup hands raw start + end to onCommitDraw and lets the
+  // editor decide how to interpret them (box vs line). Pointercancel
+  // + Escape go through the keyboard hook's onCancelDraw path.
   useEffect(() => {
-    if (!drawDrag || !pendingDrawShape) return;
+    if (!drawDrag || !pendingDraw) return;
     const wrapperEl = wrapperRef.current;
+    const isBoxIntent = pendingDraw.type !== 'arrow';
+    // Snap threshold scales inversely with zoom so the "feel" is
+    // consistent: a 6-screen-pixel halo at any zoom level, big enough
+    // to grab edges without surprise-snapping while the user is
+    // still freely placing.
+    const snapPx = 6 / viewportZoom;
     const onMove = (e: PointerEvent) => {
       const rect = wrapperEl?.getBoundingClientRect();
       if (!rect) return;
-      setDrawDrag((prev) =>
-        prev
-          ? {
-              ...prev,
-              currentX: (e.clientX - rect.left) / viewportZoom,
-              currentY: (e.clientY - rect.top) / viewportZoom,
-            }
-          : null,
-      );
+      const rawX = (e.clientX - rect.left) / viewportZoom;
+      const rawY = (e.clientY - rect.top) / viewportZoom;
+      setDrawDrag((prev) => {
+        if (!prev) return null;
+        let endX = rawX;
+        let endY = rawY;
+        // 1:1 aspect lock on shift. Mirrors Figma / Photoshop: hold
+        // shift while drawing to get a perfect square / circle.
+        // Picks the dominant axis (the one the user moved further)
+        // and matches the other to it, preserving the drag's
+        // direction so the box still grows where the cursor is.
+        if (e.shiftKey) {
+          const dx = endX - prev.startX;
+          const dy = endY - prev.startY;
+          const absMax = Math.max(Math.abs(dx), Math.abs(dy));
+          endX = prev.startX + (dx === 0 ? absMax : Math.sign(dx) * absMax);
+          endY = prev.startY + (dy === 0 ? absMax : Math.sign(dy) * absMax);
+        }
+        // Element-edge snap for box intents. Arrows skip this: their
+        // endpoints don't read as a bounding box (the natural snap
+        // there is per-end anchor pinning, handled by the existing
+        // arrow drag-handle flow after creation).
+        if (isBoxIntent) {
+          const x = Math.min(prev.startX, endX);
+          const y = Math.min(prev.startY, endY);
+          const width = Math.max(1, Math.abs(endX - prev.startX));
+          const height = Math.max(1, Math.abs(endY - prev.startY));
+          const mode: 'se' | 'sw' | 'ne' | 'nw' =
+            endX >= prev.startX
+              ? endY >= prev.startY
+                ? 'se'
+                : 'ne'
+              : endY >= prev.startY
+                ? 'sw'
+                : 'nw';
+          const snapped = snapResizeBounds(
+            { x, y, width, height },
+            mode,
+            elements,
+            EMPTY_ID_SET,
+            snapPx,
+            1,
+          );
+          endX = mode === 'se' || mode === 'ne' ? snapped.x + snapped.width : snapped.x;
+          endY = mode === 'se' || mode === 'sw' ? snapped.y + snapped.height : snapped.y;
+        }
+        return { ...prev, currentX: endX, currentY: endY };
+      });
     };
     const onUp = () => {
       setDrawDrag((prev) => {
         if (!prev) return null;
-        const x = Math.min(prev.startX, prev.currentX);
-        const y = Math.min(prev.startY, prev.currentY);
-        const width = Math.max(16, Math.abs(prev.currentX - prev.startX));
-        const height = Math.max(16, Math.abs(prev.currentY - prev.startY));
-        onCommitDrawShape(pendingDrawShape, x, y, width, height);
+        onCommitDraw(pendingDraw, prev.startX, prev.startY, prev.currentX, prev.currentY);
         return null;
       });
     };
@@ -964,7 +1056,7 @@ export function Canvas(props: CanvasProps) {
       window.removeEventListener('pointerup', onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawDrag !== null, pendingDrawShape]);
+  }, [drawDrag !== null, pendingDraw]);
 
   // Auto-focus the canvas surface on mount so clipboard paste works
   // before the user has clicked anywhere. The browser only dispatches
@@ -1016,12 +1108,12 @@ export function Canvas(props: CanvasProps) {
         // with the canvas at least once.
         const node = mainRef && 'current' in mainRef ? mainRef.current : null;
         node?.focus({ preventScroll: true });
-        // Draw-to-size intercept: when a shape is pending, this
+        // Draw-to-size intercept: when an intent is pending, this
         // pointer-down starts the size-drag instead of falling
         // through to pan / marquee. Coords convert immediately to
         // canvas coords so the rest of the gesture (the window-
         // level move + up listeners above) operates in one space.
-        if (pendingDrawShape) {
+        if (pendingDraw) {
           const rect = wrapperRef.current?.getBoundingClientRect();
           if (rect) {
             const sx = (e.clientX - rect.left) / viewportZoom;
@@ -1097,7 +1189,7 @@ export function Canvas(props: CanvasProps) {
           const node = mainRef && 'current' in mainRef ? mainRef.current : null;
           node?.focus({ preventScroll: true });
           // Draw-to-size intercept (mirror of the outer handler).
-          if (pendingDrawShape) {
+          if (pendingDraw) {
             const rect = wrapperRef.current?.getBoundingClientRect();
             if (rect) {
               const sx = (e.clientX - rect.left) / viewportZoom;
@@ -1153,18 +1245,19 @@ export function Canvas(props: CanvasProps) {
           const sy = (e.clientY - rect.top) / viewportZoom;
           onCanvasDoubleClick(sx, sy);
         }}
-        className={`absolute inset-0 origin-center touch-none ${pendingDrawShape ? '' : cursorClass}`}
+        className={`absolute inset-0 origin-center touch-none ${pendingDraw ? '' : cursorClass}`}
         style={{
           // Translate is in canvas-coords (applied first); scale is centred
           // on the wrapper so zooming keeps the viewport centre stable.
           transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
-          // Draw-mode cursor: a crosshair with a tiny outline of the
-          // shape kind in its lower-right, so the user sees what
-          // they're about to draw without looking at the banner. The
-          // inline `cursor` overrides the Tailwind cursor- class
-          // above (which we drop in this branch to avoid specificity
-          // surprises).
-          ...(pendingDrawShape ? { cursor: drawShapeCursor(pendingDrawShape) } : null),
+          // Draw-mode cursor: shape intents get a crosshair with a
+          // tiny outline of the shape kind in its lower-right, so the
+          // user sees what they're about to draw without looking at
+          // the banner. Tools (text / sticky / image / arrow) fall
+          // back to the plain crosshair, the banner carries the name.
+          ...(pendingDraw && pendingDraw.type === 'shape'
+            ? { cursor: drawShapeCursor(pendingDraw.kind) }
+            : null),
         }}
       >
         {/* Shared arrowhead defs. Multiple per-arrow <svg>s below
@@ -1451,21 +1544,56 @@ export function Canvas(props: CanvasProps) {
           The three simple kinds (square / circle / stadium) bypass
           SVG and use border-radius on the wrapping div, matching
           how BoxedElementView renders them at rest. */}
-      {drawDrag && pendingDrawShape
+      {drawDrag && pendingDraw
         ? (() => {
             const rect = wrapperRef.current?.getBoundingClientRect();
             if (!rect) return null;
+            // Arrow intent: render the drag as a line from the start
+            // point to the current point, with a small chevron-like
+            // arrowhead near the end so the user sees the direction
+            // they've drawn (the committed arrow defaults to no
+            // arrowheads; this is just preview chrome).
+            if (pendingDraw.type === 'arrow') {
+              const x1 = rect.left + drawDrag.startX * viewportZoom;
+              const y1 = rect.top + drawDrag.startY * viewportZoom;
+              const x2 = rect.left + drawDrag.currentX * viewportZoom;
+              const y2 = rect.top + drawDrag.currentY * viewportZoom;
+              return (
+                <svg
+                  aria-hidden
+                  className="pointer-events-none fixed inset-0 z-30 h-screen w-screen"
+                >
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="rgb(14, 165, 233)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                  />
+                </svg>
+              );
+            }
             const canvasMinX = Math.min(drawDrag.startX, drawDrag.currentX);
             const canvasMinY = Math.min(drawDrag.startY, drawDrag.currentY);
             const canvasW = Math.abs(drawDrag.currentX - drawDrag.startX);
             const canvasH = Math.abs(drawDrag.currentY - drawDrag.startY);
             const widthPx = Math.max(canvasW * viewportZoom, 1);
             const heightPx = Math.max(canvasH * viewportZoom, 1);
-            const usesSvg = isSvgRenderedShape(pendingDrawShape);
+            const usesSvg = pendingDraw.type === 'shape' && isSvgRenderedShape(pendingDraw.kind);
+            // Box intents: square / circle / stadium use border-
+            // radius on the wrapping div (matching the BoxedElementView
+            // at-rest treatment), every SVG-rendered shape kind
+            // delegates to ShapeSvgOverlay, and text / sticky / image
+            // fall back to a simple dashed-rect. The text + sticky
+            // + image branches use 4px corners; stickies don't get
+            // their corner-fold preview here because the preview is
+            // very small and a peeled corner just reads as noise.
             const radius =
-              pendingDrawShape === 'circle'
+              pendingDraw.type === 'shape' && pendingDraw.kind === 'circle'
                 ? '50%'
-                : pendingDrawShape === 'stadium'
+                : pendingDraw.type === 'shape' && pendingDraw.kind === 'stadium'
                   ? '9999px'
                   : '4px';
             return (
@@ -1479,9 +1607,9 @@ export function Canvas(props: CanvasProps) {
                   height: heightPx,
                 }}
               >
-                {usesSvg ? (
+                {usesSvg && pendingDraw.type === 'shape' ? (
                   <ShapeSvgOverlay
-                    shape={pendingDrawShape}
+                    shape={pendingDraw.kind}
                     fill="rgba(14, 165, 233, 0.10)"
                     stroke="rgb(14, 165, 233)"
                     strokeWidth={1.5}
@@ -1545,7 +1673,7 @@ export function Canvas(props: CanvasProps) {
         />
       ) : null}
 
-      {pendingDrawShape ? (
+      {pendingDraw ? (
         <ModeBanner
           icon={
             <svg
@@ -1562,8 +1690,8 @@ export function Canvas(props: CanvasProps) {
               <path d="M5.5 5.5l5 5" />
             </svg>
           }
-          message={`Drag to draw ${prettyShapeLabel(pendingDrawShape)}`}
-          onAction={onCancelDrawShape}
+          message={drawBannerMessage(pendingDraw)}
+          onAction={onCancelDraw}
         />
       ) : null}
 
@@ -1685,7 +1813,7 @@ export function Canvas(props: CanvasProps) {
           onAddSticky={onAddSticky}
           onAddImage={onAddImage}
           onAddArrow={onAddArrow}
-          pendingDrawShape={pendingDrawShape}
+          pendingDraw={pendingDraw}
           onSize={(size) => setPaletteBottomY(size.bottomY)}
           mobileTopOverridePx={explorerBottomY > 0 ? explorerBottomY + 4 : undefined}
         />

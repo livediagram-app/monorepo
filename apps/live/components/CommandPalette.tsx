@@ -189,12 +189,15 @@ type CommandPaletteProps = {
   // on either end by default (i.e. a plain line). Users can flip the
   // arrowEnds afterwards via the Pointer accordion.
   onAddArrow: () => void;
-  // Currently-queued draw-to-size shape kind, or null. When set, the
-  // matching shape button on the palette renders pressed so the user
-  // can see which shape will be drawn on the next canvas drag. Only
-  // populated when user-preferences.drawToAdd is on; otherwise this
-  // is always null and no button ever shows the pressed treatment.
-  pendingDrawShape?: ShapeKind | null;
+  // Currently-queued draw-to-size intent, or null. When set, the
+  // matching palette button (shape, text, sticky, image, arrow)
+  // renders pressed so the user can see what's queued for the next
+  // canvas drag. Only populated when user-preferences.drawToAdd is
+  // on; otherwise null and no button shows the pressed treatment.
+  pendingDraw?:
+    | { type: 'shape'; kind: ShapeKind }
+    | { type: 'text' | 'sticky' | 'image' | 'arrow' }
+    | null;
   // Optional callback fired with the palette's current bounding box
   // whenever it changes (via MovablePanel's ResizeObserver). Canvas
   // wires this up so the ContextPanel can stack dynamically below
@@ -217,10 +220,11 @@ export function CommandPalette({
   onAddSticky,
   onAddImage,
   onAddArrow,
-  pendingDrawShape,
+  pendingDraw,
   onSize,
   mobileTopOverridePx,
 }: CommandPaletteProps) {
+  const pendingShapeKind = pendingDraw && pendingDraw.type === 'shape' ? pendingDraw.kind : null;
   // The Selected Element / Current Tab sections moved out into the
   // ContextPanel (bottom-right, above zoom). The palette now hosts
   // the canvas-tool toggle row at the top, the general Shapes row
@@ -304,7 +308,7 @@ export function CommandPalette({
             label="Add square"
             description="Drop a new square shape on the canvas."
             onClick={() => onAddShape('square')}
-            active={pendingDrawShape === 'square'}
+            active={pendingShapeKind === 'square'}
             shortcut="R"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -324,7 +328,7 @@ export function CommandPalette({
             label="Add circle"
             description="Drop a new circle shape on the canvas."
             onClick={() => onAddShape('circle')}
-            active={pendingDrawShape === 'circle'}
+            active={pendingShapeKind === 'circle'}
             shortcut="O"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -335,7 +339,7 @@ export function CommandPalette({
             label="Add diamond"
             description="Diamond. Decision node."
             onClick={() => onAddShape('diamond')}
-            active={pendingDrawShape === 'diamond'}
+            active={pendingShapeKind === 'diamond'}
             shortcut="D"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -352,7 +356,7 @@ export function CommandPalette({
             label="Add cylinder"
             description="Cylinder. Flowchart database / storage."
             onClick={() => onAddShape('cylinder')}
-            active={pendingDrawShape === 'cylinder'}
+            active={pendingShapeKind === 'cylinder'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <path
@@ -377,7 +381,7 @@ export function CommandPalette({
             label="Add parallelogram"
             description="Parallelogram. Flowchart input / output."
             onClick={() => onAddShape('parallelogram')}
-            active={pendingDrawShape === 'parallelogram'}
+            active={pendingShapeKind === 'parallelogram'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <polygon
@@ -393,7 +397,7 @@ export function CommandPalette({
             label="Add hexagon"
             description="Hexagon. Preparation / milestone."
             onClick={() => onAddShape('hexagon')}
-            active={pendingDrawShape === 'hexagon'}
+            active={pendingShapeKind === 'hexagon'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <polygon
@@ -409,7 +413,7 @@ export function CommandPalette({
             label="Add document"
             description="Document shape. Flowchart output."
             onClick={() => onAddShape('document')}
-            active={pendingDrawShape === 'document'}
+            active={pendingShapeKind === 'document'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <path
@@ -425,7 +429,7 @@ export function CommandPalette({
             label="Add stadium"
             description="Stadium shape. Flowchart Start / End."
             onClick={() => onAddShape('stadium')}
-            active={pendingDrawShape === 'stadium'}
+            active={pendingShapeKind === 'stadium'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <rect
@@ -444,7 +448,7 @@ export function CommandPalette({
             label="Add cloud"
             description="Cloud. Networking / architecture."
             onClick={() => onAddShape('cloud')}
-            active={pendingDrawShape === 'cloud'}
+            active={pendingShapeKind === 'cloud'}
           >
             <svg
               width="18"
@@ -467,6 +471,7 @@ export function CommandPalette({
             label="Add text"
             description="Text element. Double-click to edit."
             onClick={onAddText}
+            active={pendingDraw?.type === 'text'}
             shortcut="T"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -482,6 +487,7 @@ export function CommandPalette({
             label="Add arrow"
             description="Plain connector. Add pointers in the Pointer accordion."
             onClick={onAddArrow}
+            active={pendingDraw?.type === 'arrow'}
             shortcut="A"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -500,6 +506,7 @@ export function CommandPalette({
             label="Add sticky note"
             description="Sticky note for short annotations."
             onClick={onAddSticky}
+            active={pendingDraw?.type === 'sticky'}
             shortcut="N"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -524,6 +531,7 @@ export function CommandPalette({
               label="Add image"
               description="Drop an image placeholder + pick / upload a file."
               onClick={onAddImage}
+              active={pendingDraw?.type === 'image'}
               shortcut="I"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -553,7 +561,7 @@ export function CommandPalette({
             label="Add user"
             description="User / actor. Use-case and architecture diagrams."
             onClick={() => onAddShape('actor')}
-            active={pendingDrawShape === 'actor'}
+            active={pendingShapeKind === 'actor'}
           >
             <svg
               width="18"
@@ -588,7 +596,7 @@ export function CommandPalette({
             label="Add web browser"
             description="Browser window. Wireframe a web page or a web-app screen."
             onClick={() => onAddShape('browser')}
-            active={pendingDrawShape === 'browser'}
+            active={pendingShapeKind === 'browser'}
           >
             <svg
               width="18"
@@ -608,7 +616,7 @@ export function CommandPalette({
             label="Add computer monitor"
             description="Desktop monitor with stand. Wireframe a desktop app."
             onClick={() => onAddShape('monitor')}
-            active={pendingDrawShape === 'monitor'}
+            active={pendingShapeKind === 'monitor'}
           >
             <svg
               width="18"
@@ -629,7 +637,7 @@ export function CommandPalette({
             label="Add laptop"
             description="Laptop. Screen plus keyboard base."
             onClick={() => onAddShape('laptop')}
-            active={pendingDrawShape === 'laptop'}
+            active={pendingShapeKind === 'laptop'}
           >
             <svg
               width="18"
@@ -649,7 +657,7 @@ export function CommandPalette({
             label="Add phone"
             description="Phone. Wireframe a mobile screen."
             onClick={() => onAddShape('phone')}
-            active={pendingDrawShape === 'phone'}
+            active={pendingShapeKind === 'phone'}
           >
             <svg
               width="18"
@@ -668,7 +676,7 @@ export function CommandPalette({
             label="Add tablet"
             description="Tablet. Larger than a phone, smaller than a laptop screen."
             onClick={() => onAddShape('tablet')}
-            active={pendingDrawShape === 'tablet'}
+            active={pendingShapeKind === 'tablet'}
           >
             <svg
               width="18"

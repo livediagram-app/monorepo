@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  createImage,
   createShape,
   createSticky,
   createText,
@@ -14,12 +15,11 @@ import {
   type ArrowElement,
   type BoxedElement,
   type Element,
-  type ShapeElement,
   type ShapeKind,
   type Tab,
 } from '@livediagram/diagram';
 import dynamic from 'next/dynamic';
-import { Canvas } from '@/components/Canvas';
+import { Canvas, type PendingDraw } from '@/components/Canvas';
 import { EditorContextMenu, type EditorContextMenuState } from '@/components/EditorContextMenu';
 // Lazy-load TabLinkPicker: only mounts when `linkPickerOpenForId`
 // is set (the user clicked the link icon on a selected element).
@@ -2398,6 +2398,7 @@ export default function LivePage() {
     imageContext,
     addImage,
     addImageFromGallery,
+    openImagePickerFor,
     applyImageToElement,
     removeImageFromElement,
     refreshRecentImages,
@@ -2426,64 +2427,134 @@ export default function LivePage() {
   // intercepts the next pointer-down on its surface and uses the
   // drag's bounding box for the shape's size. Escape clears the
   // pending state. See user-preferences.drawToAdd.
-  const [pendingDrawShape, setPendingDrawShape] = useState<ShapeKind | null>(null);
+  const [pendingDraw, setPendingDraw] = useState<PendingDraw | null>(null);
+
+  // Shared "enter draw mode" path for every palette add. Returns true
+  // when the gesture is queued (caller should bail), false otherwise.
+  // Clears the current selection so the selection popover doesn't
+  // float over the about-to-be-drawn rectangle, and bumps laser to
+  // pan because laser swallows pointer-down to paint trail dots and
+  // would prevent the draw drag from ever starting.
+  const beginDrawIfEnabled = (intent: PendingDraw): boolean => {
+    if (userPreferences.drawToAdd !== true) return false;
+    setSelectedId(null);
+    setMultiSelectedIds(new Set());
+    setEditingId(null);
+    if (canvasTool === 'laser') setCanvasTool('pan');
+    setPendingDraw(intent);
+    return true;
+  };
 
   const addShape = (kind: ShapeKind) => {
     if (editsBlocked) return;
-    if (userPreferences.drawToAdd === true) {
-      // Clear any existing selection so the canvas reads as a clean
-      // "pick a corner" surface: the selection popover would
-      // otherwise stick around above the about-to-be-drawn rectangle
-      // and confuse the gesture.
-      setSelectedId(null);
-      setMultiSelectedIds(new Set());
-      setEditingId(null);
-      // Laser mode swallows pointer-down to paint trail dots, which
-      // would prevent the draw-to-size drag from ever starting. Bump
-      // back to pan so the canvas accepts the gesture; select would
-      // also work but pan is the friction-free default (matches the
-      // tool you'd be in if you'd never touched the toolbar).
-      if (canvasTool === 'laser') setCanvasTool('pan');
-      setPendingDrawShape(kind);
-      return;
-    }
+    if (beginDrawIfEnabled({ type: 'shape', kind })) return;
     addBoxed((x, y) => createShape(kind, x, y));
     // Telemetry (spec/22): element added; `type` is the shape kind
     // (a preset enum, e.g. "Square"), never user content.
     track('Element', 'Added', titleCaseType(kind));
   };
 
-  // Canvas-driven commit of a draw-to-size shape. The Canvas has
-  // already converted the drag rectangle to canvas coords and
-  // enforced the minimum-size floor; we just mint the element + add
-  // it to the active tab, mirroring addShape's emit + clear flow.
-  const commitDrawShape = (
-    kind: ShapeKind,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
+  // Canvas-driven commit of a draw-to-size gesture. Canvas hands us
+  // raw start + end canvas-coord points so each intent can interpret
+  // them itself (box vs line): shape / text / sticky / image take a
+  // bounding box with a 16px floor and a centre-shift on stray
+  // clicks; arrow takes the points as from / to directly. After the
+  // mint we clear pendingDraw so the cursor / banner / palette
+  // pressed-state release together.
+  const commitDraw = (
+    intent: PendingDraw,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
   ) => {
-    if (editsBlocked) return;
-    const base = createShape(kind, x, y);
+    if (editsBlocked) {
+      setPendingDraw(null);
+      return;
+    }
+    if (intent.type === 'arrow') {
+      const dx = endX - startX;
+      const dy = endY - startY;
+      // Stray click on the canvas while pendingDraw is set: less
+      // than 16 canvas-px in either axis is treated as "I didn't
+      // really mean to draw an arrow", produce a default-sized
+      // horizontal one centred on the start point instead so the
+      // user isn't left wondering why nothing appeared.
+      const isClick = Math.abs(dx) < 16 && Math.abs(dy) < 16;
+      const arrowStartX = isClick ? startX - 80 : startX;
+      const arrowEndX = isClick ? startX + 80 : endX;
+      const arrowStartY = isClick ? startY : startY;
+      const arrowEndY = isClick ? startY : endY;
+      const theme = getTheme(activeTab.theme);
+      const arrow: ArrowElement = {
+        id: crypto.randomUUID(),
+        type: 'arrow',
+        from: { kind: 'free', x: arrowStartX, y: arrowStartY },
+        to: { kind: 'free', x: arrowEndX, y: arrowEndY },
+        arrowEnds: 'none',
+        ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
+      };
+      const before = activeTab.elements;
+      const after = [...before, arrow];
+      commitTabs((ts) =>
+        ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
+      );
+      emitChange(activeId, before, after);
+      setSelectedId(arrow.id);
+      setPendingDraw(null);
+      track('Element', 'Added', 'Arrow');
+      return;
+    }
+    const x = Math.min(startX, endX);
+    const y = Math.min(startY, endY);
+    const width = Math.max(16, Math.abs(endX - startX));
+    const height = Math.max(16, Math.abs(endY - startY));
+    const base =
+      intent.type === 'shape'
+        ? createShape(intent.kind, x, y)
+        : intent.type === 'text'
+          ? createText(x, y)
+          : intent.type === 'sticky'
+            ? createSticky(x, y)
+            : createImage(x, y);
     const colours = deriveNewBoxedColours(base, {
       backgroundColor: activeTab.backgroundColor,
       patternColor: activeTab.patternColor,
       theme: activeTab.theme,
     });
-    const shape: ShapeElement = { ...base, ...colours, x, y, width, height };
-    commit((els) => [...els, shape]);
-    setSelectedId(shape.id);
-    setPendingDrawShape(null);
-    track('Element', 'Added', titleCaseType(kind));
+    const sized = { ...base, ...colours, x, y, width, height } as typeof base;
+    commit((els) => [...els, sized]);
+    setSelectedId(sized.id);
+    setPendingDraw(null);
+    const label =
+      intent.type === 'shape'
+        ? titleCaseType(intent.kind)
+        : intent.type === 'text'
+          ? 'Text'
+          : intent.type === 'sticky'
+            ? 'Sticky'
+            : 'Image';
+    track('Element', 'Added', label);
+    // Image element specifically: opening the picker after the draw
+    // mirrors how the click-to-drop path drops a placeholder + lets
+    // the user pick a file via double-click. Skipping the picker
+    // here would leave the user with an empty box and no obvious
+    // next step.
+    if (intent.type === 'image' && openImagePickerFor) {
+      openImagePickerFor(sized.id);
+    }
   };
 
-  const cancelDrawShape = () => setPendingDrawShape(null);
+  const cancelDrawShape = () => setPendingDraw(null);
   const addText = () => {
+    if (editsBlocked) return;
+    if (beginDrawIfEnabled({ type: 'text' })) return;
     addBoxed((x, y) => createText(x, y));
     track('Element', 'Added', 'Text');
   };
   const addSticky = () => {
+    if (editsBlocked) return;
+    if (beginDrawIfEnabled({ type: 'sticky' })) return;
     addBoxed((x, y) => createSticky(x, y));
     track('Element', 'Added', 'Sticky');
   };
@@ -2495,6 +2566,7 @@ export default function LivePage() {
   // fact to pin to anchors.
   const addArrow = () => {
     if (editsBlocked) return;
+    if (beginDrawIfEnabled({ type: 'arrow' })) return;
     const centre = getViewportCenter();
     const halfLen = 80;
     const theme = getTheme(activeTab.theme);
@@ -2839,8 +2911,8 @@ export default function LivePage() {
     addSticky,
     addArrow,
     onAddImage: addImage ?? null,
-    pendingDrawShape,
-    onCancelDrawShape: cancelDrawShape,
+    pendingDraw,
+    onCancelDraw: cancelDrawShape,
     enabled: shortcutsEnabled,
   });
 
@@ -3104,9 +3176,9 @@ export default function LivePage() {
         onAddSticky={addSticky}
         onAddImage={addImage}
         onAddArrow={addArrow}
-        pendingDrawShape={pendingDrawShape}
-        onCommitDrawShape={commitDrawShape}
-        onCancelDrawShape={cancelDrawShape}
+        pendingDraw={pendingDraw}
+        onCommitDraw={commitDraw}
+        onCancelDraw={cancelDrawShape}
         onUndo={undo}
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}

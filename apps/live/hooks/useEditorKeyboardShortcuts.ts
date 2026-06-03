@@ -28,13 +28,15 @@ type EditorKeyboardShortcutsDeps = {
   setFormatSourceId: (v: string | null) => void;
   groupSourceId: string | null;
   setGroupSourceId: (v: string | null) => void;
-  // Pending draw-to-size shape kind, set when the palette was
-  // clicked under the drawToAdd user preference. Escape clears it
-  // so a user who accidentally entered draw mode (or changed their
+  // Pending draw-to-size intent, set when the palette was clicked
+  // under the drawToAdd user preference. Escape clears it so a
+  // user who accidentally entered draw mode (or changed their
   // mind) can bail before clicking on the canvas. Null when no
-  // draw is pending.
-  pendingDrawShape: string | null;
-  onCancelDrawShape: () => void;
+  // draw is pending. The hook only needs to know "is something
+  // pending" so we accept the opaque truthiness rather than the
+  // discriminated union type itself.
+  pendingDraw: unknown | null;
+  onCancelDraw: () => void;
   // Selection state. Delete / Backspace acts on whichever is
   // populated (multi wins).
   selectedId: string | null;
@@ -94,21 +96,21 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
   // one of those modes is on, so we pay nothing in the idle case.
   // The setters come through the ref so the same-render values apply.
   useEffect(() => {
-    const { formatSourceId, groupSourceId, pendingDrawShape, enabled } = liveRef.current;
+    const { formatSourceId, groupSourceId, pendingDraw, enabled } = liveRef.current;
     if (!enabled) return;
-    if (formatSourceId === null && groupSourceId === null && pendingDrawShape === null) return;
+    if (formatSourceId === null && groupSourceId === null && pendingDraw === null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         liveRef.current.setFormatSourceId(null);
         liveRef.current.setGroupSourceId(null);
-        if (liveRef.current.pendingDrawShape !== null) {
-          liveRef.current.onCancelDrawShape();
+        if (liveRef.current.pendingDraw !== null) {
+          liveRef.current.onCancelDraw();
         }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [deps.enabled, deps.formatSourceId, deps.groupSourceId, deps.pendingDrawShape]);
+  }, [deps.enabled, deps.formatSourceId, deps.groupSourceId, deps.pendingDraw]);
 
   // Everything else: Delete / Backspace, Cmd-Z / Cmd-Y / Cmd-Shift-Z,
   // Cmd-C / Cmd-V, V / H / L tool switches. One listener for the
