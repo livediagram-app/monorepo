@@ -505,12 +505,16 @@ export function CommandPalette({
               strokeLinejoin="round"
               aria-hidden
             >
-              {/* Pen nib pointing down-left, with a small notation
-                  line below to read as "draw on the canvas". Same
-                  visual language as the cursor glyph. */}
-              <path d="M11 3 L15 7 L7.5 14.5 L3 16 L4.5 11.5 Z" />
-              <path d="M11 3 L13 1" />
-              <path d="M3 16 L4.5 11.5" />
+              {/* Diagonal pencil. Body angled bottom-left to
+                  top-right, with a separated tip + eraser segment
+                  so the silhouette reads as "pencil" even at the
+                  18 px palette size. Pairs with the cursor glyph
+                  (also a diagonal nib) so the tool's two visual
+                  surfaces stay in sync. */}
+              <path d="M2 16 L6 12" />
+              <path d="M5 13 L12 6 L14 8 L7 15 Z" />
+              <path d="M12 6 L15 3 L17 5 L14 8" />
+              <path d="M2 16 L5 13" />
             </svg>
           </IconButton>
           <IconButton
