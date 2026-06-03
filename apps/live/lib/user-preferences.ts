@@ -23,6 +23,16 @@ export type UserPreferences = {
   // NEXT_PUBLIC_TELEMETRY_ENABLED gate and the api worker's
   // TELEMETRY_ENABLED gate. Missing / undefined === on.
   telemetryEnabled?: boolean;
+  // When `true`, picking a shape from the palette enters a draw
+  // mode: instead of dropping the shape at the viewport centre at
+  // a default size, the cursor changes to a crosshair and the
+  // user drags a rectangle on the canvas to define the shape's
+  // bounds. The drag's start point becomes the top-left, release
+  // sets width / height (minimum 16px on each axis so a stray
+  // click still produces a sensibly-sized shape). Missing /
+  // undefined / false === auto-place at viewport centre, the
+  // historical default.
+  drawToAdd?: boolean;
 };
 
 export const STORAGE_KEY = 'livediagram:user-preferences:v1';

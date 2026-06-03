@@ -28,6 +28,13 @@ type EditorKeyboardShortcutsDeps = {
   setFormatSourceId: (v: string | null) => void;
   groupSourceId: string | null;
   setGroupSourceId: (v: string | null) => void;
+  // Pending draw-to-size shape kind, set when the palette was
+  // clicked under the drawToAdd user preference. Escape clears it
+  // so a user who accidentally entered draw mode (or changed their
+  // mind) can bail before clicking on the canvas. Null when no
+  // draw is pending.
+  pendingDrawShape: string | null;
+  onCancelDrawShape: () => void;
   // Selection state. Delete / Backspace acts on whichever is
   // populated (multi wins).
   selectedId: string | null;
@@ -81,24 +88,27 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
   const liveRef = useRef(deps);
   liveRef.current = deps;
 
-  // Escape cancels the format-painter / group-source mode. Keeping
-  // the narrow [formatSourceId, groupSourceId] deps means the
-  // listener only attaches when one of the modes is active, so we
-  // pay nothing while the user is idle. The setters come through
-  // the ref so the same-render values apply.
+  // Escape cancels whichever transient editor mode is active:
+  // format-painter, group-source, or a pending draw-to-size shape.
+  // Keeping the narrow deps means the listener only attaches while
+  // one of those modes is on, so we pay nothing in the idle case.
+  // The setters come through the ref so the same-render values apply.
   useEffect(() => {
-    const { formatSourceId, groupSourceId, enabled } = liveRef.current;
+    const { formatSourceId, groupSourceId, pendingDrawShape, enabled } = liveRef.current;
     if (!enabled) return;
-    if (formatSourceId === null && groupSourceId === null) return;
+    if (formatSourceId === null && groupSourceId === null && pendingDrawShape === null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         liveRef.current.setFormatSourceId(null);
         liveRef.current.setGroupSourceId(null);
+        if (liveRef.current.pendingDrawShape !== null) {
+          liveRef.current.onCancelDrawShape();
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [deps.enabled, deps.formatSourceId, deps.groupSourceId]);
+  }, [deps.enabled, deps.formatSourceId, deps.groupSourceId, deps.pendingDrawShape]);
 
   // Everything else: Delete / Backspace, Cmd-Z / Cmd-Y / Cmd-Shift-Z,
   // Cmd-C / Cmd-V, V / H / L tool switches. One listener for the

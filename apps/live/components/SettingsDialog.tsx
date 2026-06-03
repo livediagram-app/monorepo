@@ -22,6 +22,7 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
 
   const autoRebind = settings.autoRebindArrows !== false;
   const telemetryOn = settings.telemetryEnabled !== false;
+  const drawToAdd = settings.drawToAdd === true;
 
   return (
     <Portal>
@@ -64,6 +65,12 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
               description="Sends the small, first-party events listed on /telemetry (no user content, no third-party trackers) so we can see which features actually help. Turn off to keep everything you do strictly on your device."
               checked={telemetryOn}
               onChange={(v) => onChange({ ...settings, telemetryEnabled: v })}
+            />
+            <ToggleRow
+              label="Draw shapes instead of dropping them"
+              description="When on, picking a shape from the palette enters a draw mode: the cursor becomes a crosshair and you drag a rectangle on the canvas to set the shape's size. Off (the default) drops every shape at the centre of your view at a preset size."
+              checked={drawToAdd}
+              onChange={(v) => onChange({ ...settings, drawToAdd: v })}
             />
           </div>
           <footer className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">

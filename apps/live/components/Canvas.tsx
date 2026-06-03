@@ -148,6 +148,16 @@ type CanvasProps = {
   // Palette's Image entry hides when missing (spec/19).
   onAddImage?: () => void;
   onAddArrow: () => void;
+  // Draw-to-size mode. When user-preferences.drawToAdd is on,
+  // picking a shape from the palette stashes the kind here; the
+  // canvas then changes its cursor to a crosshair and the next
+  // pointer-down on its surface starts a drag-to-size gesture.
+  // pointer-up calls onCommitDrawShape with the dragged bounds
+  // (canvas coords, post-floor on min size). Cancellation goes
+  // through Escape in the keyboard hook, not through the canvas,
+  // so there's no Canvas-level onCancelDrawShape.
+  pendingDrawShape: ShapeKind | null;
+  onCommitDrawShape: (kind: ShapeKind, x: number, y: number, width: number, height: number) => void;
   onUndo: () => void;
   onRedo: () => void;
   onMovePalette: (x: number, y: number) => void;
@@ -387,6 +397,8 @@ export function Canvas(props: CanvasProps) {
     onAddSticky,
     onAddImage,
     onAddArrow,
+    pendingDrawShape,
+    onCommitDrawShape,
     onUndo,
     onRedo,
     onMovePalette,
@@ -673,21 +685,23 @@ export function Canvas(props: CanvasProps) {
   // there any arrows" to decide whether to mount the ArrowDefs.
   const arrowCount = elements.reduce((n, el) => (el.type === 'arrow' ? n + 1 : n), 0);
 
-  const cursorClass = pan
-    ? 'cursor-grabbing'
-    : marquee
-      ? 'cursor-crosshair'
-      : canvasTool === 'laser' && !spaceHeldRef.current
+  const cursorClass = pendingDrawShape
+    ? 'cursor-crosshair'
+    : pan
+      ? 'cursor-grabbing'
+      : marquee
         ? 'cursor-crosshair'
-        : canvasTool === 'pan' && !spaceHeldRef.current
-          ? 'cursor-grab'
-          : canvasTool === 'select'
-            ? 'cursor-crosshair'
-            : isPaintMode
-              ? 'cursor-copy'
-              : isGroupMode
-                ? 'cursor-crosshair'
-                : 'cursor-grab';
+        : canvasTool === 'laser' && !spaceHeldRef.current
+          ? 'cursor-crosshair'
+          : canvasTool === 'pan' && !spaceHeldRef.current
+            ? 'cursor-grab'
+            : canvasTool === 'select'
+              ? 'cursor-crosshair'
+              : isPaintMode
+                ? 'cursor-copy'
+                : isGroupMode
+                  ? 'cursor-crosshair'
+                  : 'cursor-grab';
 
   const selectionSupportsColours = selected ? supportsColours(selected) : false;
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
@@ -847,6 +861,63 @@ export function Canvas(props: CanvasProps) {
     multiSelectedIdsRef.current = multiSelectedIds;
   }, [multiSelectedIds]);
 
+  // Draw-to-size gesture state. Set when the user starts a drag on
+  // the canvas while pendingDrawShape is set; cleared on pointer-up
+  // (either when onCommitDrawShape persists the shape or the drag
+  // was cancelled). Coords are stored as canvas coords (pre-divided
+  // by viewportZoom) so the preview rect renders in the same space
+  // as the rest of the canvas content.
+  const [drawDrag, setDrawDrag] = useState<{
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
+
+  // Window-level move + up listeners for the draw gesture. Attached
+  // only while a drag is in flight so the canvas pays nothing in
+  // the common case (idle, or in pan / marquee mode). pointermove
+  // updates the preview rectangle; pointerup converts the rect to
+  // canvas coords (already there), enforces a 16x16 minimum so a
+  // stray click still produces a sensibly-sized shape, and hands
+  // the bounds to onCommitDrawShape. Pointercancel + escape are
+  // covered separately (the keyboard hook clears pendingDrawShape).
+  useEffect(() => {
+    if (!drawDrag || !pendingDrawShape) return;
+    const wrapperEl = wrapperRef.current;
+    const onMove = (e: PointerEvent) => {
+      const rect = wrapperEl?.getBoundingClientRect();
+      if (!rect) return;
+      setDrawDrag((prev) =>
+        prev
+          ? {
+              ...prev,
+              currentX: (e.clientX - rect.left) / viewportZoom,
+              currentY: (e.clientY - rect.top) / viewportZoom,
+            }
+          : null,
+      );
+    };
+    const onUp = () => {
+      setDrawDrag((prev) => {
+        if (!prev) return null;
+        const x = Math.min(prev.startX, prev.currentX);
+        const y = Math.min(prev.startY, prev.currentY);
+        const width = Math.max(16, Math.abs(prev.currentX - prev.startX));
+        const height = Math.max(16, Math.abs(prev.currentY - prev.startY));
+        onCommitDrawShape(pendingDrawShape, x, y, width, height);
+        return null;
+      });
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawDrag !== null, pendingDrawShape]);
+
   // Auto-focus the canvas surface on mount so clipboard paste works
   // before the user has clicked anywhere. The browser only dispatches
   // `paste` events on a focusable element; <main> has tabIndex=-1 to
@@ -897,6 +968,20 @@ export function Canvas(props: CanvasProps) {
         // with the canvas at least once.
         const node = mainRef && 'current' in mainRef ? mainRef.current : null;
         node?.focus({ preventScroll: true });
+        // Draw-to-size intercept: when a shape is pending, this
+        // pointer-down starts the size-drag instead of falling
+        // through to pan / marquee. Coords convert immediately to
+        // canvas coords so the rest of the gesture (the window-
+        // level move + up listeners above) operates in one space.
+        if (pendingDrawShape) {
+          const rect = wrapperRef.current?.getBoundingClientRect();
+          if (rect) {
+            const sx = (e.clientX - rect.left) / viewportZoom;
+            const sy = (e.clientY - rect.top) / viewportZoom;
+            setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+            return;
+          }
+        }
         // Auto-fit on load can scale the wrapper below 1, which
         // shrinks its hit region inside `main`. Without this mirror
         // handler, clicks in the "outside the shrunken wrapper but
@@ -963,6 +1048,16 @@ export function Canvas(props: CanvasProps) {
           // currentTarget gate) still leaves the canvas focused.
           const node = mainRef && 'current' in mainRef ? mainRef.current : null;
           node?.focus({ preventScroll: true });
+          // Draw-to-size intercept (mirror of the outer handler).
+          if (pendingDrawShape) {
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            if (rect) {
+              const sx = (e.clientX - rect.left) / viewportZoom;
+              const sy = (e.clientY - rect.top) / viewportZoom;
+              setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+              return;
+            }
+          }
           // Tool decides the gesture:
           //  - Pan tool / Space / Laser tool → drag scrolls. Laser
           //    drags pan because mid-presentation a click-drag is far
@@ -1290,6 +1385,35 @@ export function Canvas(props: CanvasProps) {
           }}
         />
       ) : null}
+
+      {/* Draw-to-size preview rectangle. drawDrag holds canvas
+          coords; convert to client coords via the wrapper rect +
+          viewportZoom so the overlay aligns with the canvas content
+          under it as the user drags. Same dashed-brand styling as
+          the rest of the editor's "you're about to commit this"
+          ghosts. */}
+      {drawDrag
+        ? (() => {
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            if (!rect) return null;
+            const canvasMinX = Math.min(drawDrag.startX, drawDrag.currentX);
+            const canvasMinY = Math.min(drawDrag.startY, drawDrag.currentY);
+            const canvasW = Math.abs(drawDrag.currentX - drawDrag.startX);
+            const canvasH = Math.abs(drawDrag.currentY - drawDrag.startY);
+            return (
+              <div
+                aria-hidden
+                className="pointer-events-none fixed z-30 rounded-sm border border-dashed border-brand-500 bg-brand-500/10"
+                style={{
+                  left: rect.left + canvasMinX * viewportZoom,
+                  top: rect.top + canvasMinY * viewportZoom,
+                  width: Math.max(canvasW * viewportZoom, 1),
+                  height: Math.max(canvasH * viewportZoom, 1),
+                }}
+              />
+            );
+          })()
+        : null}
 
       {isPaintMode ? (
         <ModeBanner

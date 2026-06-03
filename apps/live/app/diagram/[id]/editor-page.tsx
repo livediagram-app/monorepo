@@ -14,6 +14,7 @@ import {
   type ArrowElement,
   type BoxedElement,
   type Element,
+  type ShapeElement,
   type ShapeKind,
   type Tab,
 } from '@livediagram/diagram';
@@ -2419,12 +2420,52 @@ export default function LivePage() {
 
   // --- Element CRUD --------------------------------------------------------
 
+  // Pending draw-to-size shape. When user-preferences.drawToAdd is
+  // on, picking a shape from the palette stashes the kind here
+  // instead of dropping it at the viewport centre; the canvas
+  // intercepts the next pointer-down on its surface and uses the
+  // drag's bounding box for the shape's size. Escape clears the
+  // pending state. See user-preferences.drawToAdd.
+  const [pendingDrawShape, setPendingDrawShape] = useState<ShapeKind | null>(null);
+
   const addShape = (kind: ShapeKind) => {
+    if (editsBlocked) return;
+    if (userPreferences.drawToAdd === true) {
+      setPendingDrawShape(kind);
+      return;
+    }
     addBoxed((x, y) => createShape(kind, x, y));
     // Telemetry (spec/22): element added; `type` is the shape kind
     // (a preset enum, e.g. "Square"), never user content.
     track('Element', 'Added', titleCaseType(kind));
   };
+
+  // Canvas-driven commit of a draw-to-size shape. The Canvas has
+  // already converted the drag rectangle to canvas coords and
+  // enforced the minimum-size floor; we just mint the element + add
+  // it to the active tab, mirroring addShape's emit + clear flow.
+  const commitDrawShape = (
+    kind: ShapeKind,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => {
+    if (editsBlocked) return;
+    const base = createShape(kind, x, y);
+    const colours = deriveNewBoxedColours(base, {
+      backgroundColor: activeTab.backgroundColor,
+      patternColor: activeTab.patternColor,
+      theme: activeTab.theme,
+    });
+    const shape: ShapeElement = { ...base, ...colours, x, y, width, height };
+    commit((els) => [...els, shape]);
+    setSelectedId(shape.id);
+    setPendingDrawShape(null);
+    track('Element', 'Added', titleCaseType(kind));
+  };
+
+  const cancelDrawShape = () => setPendingDrawShape(null);
   const addText = () => {
     addBoxed((x, y) => createText(x, y));
     track('Element', 'Added', 'Text');
@@ -2785,6 +2826,8 @@ export default function LivePage() {
     addSticky,
     addArrow,
     onAddImage: addImage ?? null,
+    pendingDrawShape,
+    onCancelDrawShape: cancelDrawShape,
     enabled: shortcutsEnabled,
   });
 
@@ -3048,6 +3091,8 @@ export default function LivePage() {
         onAddSticky={addSticky}
         onAddImage={addImage}
         onAddArrow={addArrow}
+        pendingDrawShape={pendingDrawShape}
+        onCommitDrawShape={commitDrawShape}
         onUndo={undo}
         onRedo={redo}
         onMovePalette={(x, y) => setPalettePosition({ x, y })}
