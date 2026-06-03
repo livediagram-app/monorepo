@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiCreateShareLink,
+  apiDeleteImage,
   apiDeleteShareLink,
+  apiDeleteTab,
+  apiDismissSharedWith,
   apiHeaders,
   apiLoadDiagram,
   apiSaveDiagramMeta,
@@ -241,6 +244,117 @@ describe('response helpers (observed through api callers)', () => {
       await expect(apiDeleteShareLink('owner', 'd-1', 'ABCD2345')).rejects.toThrow(
         'delete share link failed: 500',
       );
+    });
+  });
+});
+
+// Internal apiDelete helper, observed through the public callers it
+// backs. Two contracts that matter:
+//
+//   - allow404 default vs opt-out. Most DELETEs are idempotent
+//     ("remove if it exists") and tolerate 404 silently; two callers
+//     (apiDismissSharedWith, apiDeleteImage) opted in to a stricter
+//     behaviour where 404 surfaces as a real error. The helper's
+//     `allow404: false` flag preserves that distinction.
+//   - share-code forwarding. The three DELETEs that take a
+//     `shareCode` (delete tab, delete change-log-for-tab, delete
+//     change-log entry) must round-trip the code as an
+//     `X-Share-Code` request header, otherwise an edit-role
+//     visitor's revoke would 403 server-side.
+//
+// Each branch lives behind a different public function, so the cases
+// below pin both through the smallest representative caller. A
+// regression in the helper (e.g. accidentally inverting the default,
+// or dropping the share-header wire) would silently break either
+// "delete after a peer already removed it" UX or every share-role
+// write path downstream.
+describe('apiDelete (internal, via public DELETE callers)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  describe('allow404 default vs opt-out', () => {
+    it('apiDismissSharedWith (allow404:false) throws on 404', async () => {
+      // Strict mode: the caller explicitly opted out of the
+      // idempotent-delete contract, so a 404 must NOT collapse to a
+      // silent resolve. The thrown message includes the action label
+      // so the existing error toast still says something useful.
+      stubFetch(404, {});
+      await expect(apiDismissSharedWith('owner', 'diag-404')).rejects.toThrow(
+        'dismiss shared failed: 404',
+      );
+    });
+
+    it('apiDeleteImage (allow404:false) throws on 404', async () => {
+      stubFetch(404, {});
+      await expect(apiDeleteImage('owner', 'img-404')).rejects.toThrow('delete image failed: 404');
+    });
+
+    it('apiDeleteImage resolves on 200 (smoke check the happy path still works)', async () => {
+      stubFetch(200);
+      await expect(apiDeleteImage('owner', 'img-200')).resolves.toBeUndefined();
+    });
+
+    it('apiDeleteShareLink (allow404:true) STILL tolerates 404 after the refactor', async () => {
+      // Cross-check against the apiDelete extraction at a078e62:
+      // the prior expectOkOr404Void inline call path collapsed to
+      // `allow404: true` (the helper's default), so a regression to
+      // `false` here would surface as a thrown error toast in the
+      // share-revoke UI.
+      stubFetch(404, {});
+      await expect(apiDeleteShareLink('owner', 'd-1', 'CODE2345')).resolves.toBeUndefined();
+    });
+  });
+
+  describe('share-code forwarding (X-Share-Code header)', () => {
+    it('apiDeleteTab forwards a non-null shareCode as the X-Share-Code header', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response('{}', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+      await apiDeleteTab('owner', 'diag-1', 'tab-1', 'SHARE2345');
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [, init] = fetchSpy.mock.calls[0] as [unknown, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-Share-Code']).toBe('SHARE2345');
+    });
+
+    it('apiDeleteTab omits the X-Share-Code header when shareCode is null', async () => {
+      // The owner-path DELETE never wants the share-code header set
+      // (it would force the server's share-code branch instead of
+      // the simpler owner check). Skipping the field at the call
+      // site preserves that.
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response('{}', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+      await apiDeleteTab('owner', 'diag-1', 'tab-1', null);
+      const [, init] = fetchSpy.mock.calls[0] as [unknown, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-Share-Code']).toBeUndefined();
+    });
+
+    it('apiDeleteShareLink (no share-code param at all) never sets X-Share-Code', async () => {
+      // The endpoint takes the share code IN THE URL path, never
+      // in the header. The helper must not invent a share-header
+      // out of `code` (the path segment).
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response('{}', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+      await apiDeleteShareLink('owner', 'diag-1', 'CODE2345');
+      const [, init] = fetchSpy.mock.calls[0] as [unknown, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-Share-Code']).toBeUndefined();
     });
   });
 });
