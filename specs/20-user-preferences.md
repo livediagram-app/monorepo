@@ -34,10 +34,11 @@ memory state for the session.
 ```ts
 type UserPreferences = {
   // When false, the live editor skips the "re-pin connected arrow
-  // anchors as elements move" pass (spec/19 cycle, implemented in
-  // packages/diagram's `rebindArrowAnchorsAfterMove`). Defaults to
-  // true so users see the magic by default; flipping it off
-  // freezes arrow anchors at whatever the user chose at draw time.
+  // anchors as elements move" pass implemented in packages/diagram's
+  // `rebindArrowAnchorsAfterMove` (pinned in
+  // packages/diagram/src/geometry.test.ts). Defaults to true so
+  // users see the magic by default; flipping it off freezes arrow
+  // anchors at whatever the user chose at draw time.
   autoRebindArrows?: boolean;
 
   // When false, the live editor's `track()` helper is a no-op:
