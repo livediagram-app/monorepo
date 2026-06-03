@@ -2,6 +2,7 @@ import { isBoxed, type Tab } from '@livediagram/diagram';
 import type { TelemetryCount } from '@livediagram/api-schema';
 import { rowToChangeLog, type ChangeLogRow } from './change-log-row';
 import { rowToShareLink, type ShareLinkRow } from './share-link-row';
+import { rowToFolder, type FolderRow } from './folder-row';
 import { rowToTab, rowToTabSummary, type TabRow } from './tab-row';
 import type {
   ChangeLogEntryDTO,
@@ -699,26 +700,6 @@ export async function deleteOldChangeLogEntries(env: Env, cutoffMs: number): Pro
 // ---------------------------------------------------------------------
 // folders — owner-scoped, self-referential tree. See spec/15-folders.md.
 // ---------------------------------------------------------------------
-
-type FolderRow = {
-  id: string;
-  owner_id: string;
-  parent_id: string | null;
-  name: string;
-  created_at: number;
-  updated_at: number;
-};
-
-function rowToFolder(row: FolderRow): FolderDTO {
-  return {
-    id: row.id,
-    ownerId: row.owner_id,
-    parentId: row.parent_id,
-    name: row.name,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
 
 const FOLDER_COLS = 'id, owner_id, parent_id, name, created_at, updated_at';
 
