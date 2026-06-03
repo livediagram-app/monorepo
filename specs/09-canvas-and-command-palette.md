@@ -903,19 +903,28 @@ Optional alternate add-element gesture, gated on the user-preference `drawToAdd`
 - The arrow intent treats the drag's start and end points as `from` / `to` directly (a line, not a box). Stray clicks (under 16 canvas-px in both axes) fall back to the default-sized horizontal arrow centred on the click point. Element-edge snap is skipped for the arrow intent (per-end pinning still happens via the existing arrow drag-handle flow after creation).
 - Image-intent commits open the image picker after placing the element, matching the click-to-drop path.
 
-## Pen (freehand)
+## Pencil (freehand)
 
-Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pen button enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
+Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pencil button enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
 
-- A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pen button on the palette renders pressed while a draw is queued.
-- The canvas cursor swaps to a pen / nib glyph.
+- A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pencil button on the palette renders pressed while a draw is queued.
+- The canvas cursor swaps to a diagonal-pencil glyph that mirrors the palette icon.
 - During the drag the canvas samples pointer positions and renders a live preview polyline. Throttled with `requestAnimationFrame` so high-DPI / 120 Hz pointers don't push thousands of samples per second.
 - On release, the raw point sequence is run through Ramer-Douglas-Peucker simplification (tolerance scales with viewport zoom so the visible jitter is what gets smoothed, not absolute canvas pixels), then converted to a smooth Catmull-Rom cubic-bezier `d` attribute on commit. The result reads as a hand-drawn curve, not a jagged polyline.
 - **Auto-close on near-start release**: if the release point is within ~16 canvas px of the start, the path closes (last segment back to the first point) AND the commit sets `closed: true` so the SVG renderer adds `Z` + a fill. This is the "sketch a custom shape" path. Releasing anywhere else commits an open stroke (no fill).
-- A stray click (zero drag distance) does NOT commit an element. The pen is gestural, not a click-to-drop tool.
+- A stray click (zero drag distance) does NOT commit an element. The pencil is gestural, not a click-to-drop tool.
 - Stroke colour follows the tab's theme (`elementStroke`) so a freehand sketch reads as part of the diagram, not as an annotation layer. Closed paths fill with the theme's `elementFill`. Both colours are overridable per element via the Colours accordion, same as any other boxed element.
 - The element is a regular boxed element after commit: drag to move, resize handles, lock / group / format-paint / themes / comments all apply. Points are stored normalised within the bounding box so resize scales the path proportionally.
 - Telemetry: `track('Element', 'Added', 'Freehand')` on commit (closed vs open is not split out for now; spec/22's closed vocabulary is by kind only).
+
+### Shape recognition (opt-in)
+
+A sparkle / magic-wand icon button sits in the pencil `ModeBanner` (to the left of Cancel) and toggles **shape recognition** for the active pencil session. When on, the commit handler runs the simplified polyline through `recogniseShape` (`packages/diagram/src/recognise-shape.ts`) and, if the score clears a 0.72 confidence threshold, mints a real shape primitive instead of a `FreehandElement`. The toggle is per-session (resets every time the pencil banner closes) so each fresh draw-mode entry starts in raw-sketch mode and the user opts in for strokes they want classified.
+
+- Detected kinds: **rectangle / square** (axis-aligned 4-corner outline) → `ShapeElement` with kind `square`; **circle / oval** (closed curve hugging the inscribed ellipse) → `ShapeElement` with kind `circle`; **diamond** (4 corners at bbox edge midpoints) → `ShapeElement` with kind `diamond`; **line** (straight open polyline) → `ArrowElement` with `arrowEnds: 'none'`.
+- Heuristics, not template matching: each scorer measures the mean perpendicular distance from every sample to the idealised shape's edges (or to the inscribed-ellipse boundary), so the detector is rotation- and scale-tolerant without per-shape templates.
+- Confidence is in [0, 1]; the editor's 0.72 threshold errs toward keeping the user's sketch when ambiguous. Turning the mode off (one click) or undoing a wrong convert (Cmd-Z) is cheaper than a false-positive that swallowed a deliberate sketch.
+- Telemetry: a recognised commit emits `Element/Added/<Square|Circle|Diamond|Arrow>` (the dashboard reads as if the user had clicked the palette button); the unrecognised fallback emits `Element/Added/Freehand` as before. No new types in spec/22's closed vocabulary.
 
 ## Out of scope (next iterations)
 
