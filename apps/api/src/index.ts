@@ -57,6 +57,7 @@ import { getClerkUserId } from './auth/clerk';
 import { DiagramRoom } from './diagram-room';
 import { ACCEPTED_IMAGE_TYPES, type AcceptedImageType, sniffImageType } from './image-sniff';
 import { stripJpegMetadata } from './image-strip';
+import { isLocalhostPair } from './origin-check';
 import {
   badRequest,
   CORS_HEADERS,
@@ -93,21 +94,6 @@ async function isWriteRateLimited(env: Env, ownerId: string): Promise<boolean> {
 
 function shareCodeOf(request: Request): string | null {
   return request.headers.get('X-Share-Code');
-}
-
-// Dev escape hatch for the telemetry same-origin filter (spec/22):
-// allow a cross-port localhost pair (live editor :3002 posting to api
-// :8787) so local dev actually lands events in D1. Production never
-// sees a localhost origin, so this widening is dev-only in practice.
-function isLocalhostPair(origin: string, target: string): boolean {
-  try {
-    const a = new URL(origin).hostname;
-    const b = new URL(target).hostname;
-    const local = (h: string) => h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
-    return local(a) && local(b);
-  } catch {
-    return false;
-  }
 }
 
 export default {
