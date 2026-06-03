@@ -91,7 +91,15 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
         </div>
         <ul className="flex flex-col divide-y divide-slate-100 px-5 py-2 dark:divide-slate-800">
           {SHORTCUTS.map((s) => (
-            <li key={s.label} className="flex items-center justify-between gap-3 py-2 text-xs">
+            // Key by the chord (e.g. "Delete" vs "Backspace") rather
+            // than the label. Two rows share the same description
+            // (the Delete / Backspace pair, both "Delete the current
+            // selection"); using the chord makes every row's key
+            // unique and stops React's duplicate-key warning.
+            <li
+              key={s.keys.join('+')}
+              className="flex items-center justify-between gap-3 py-2 text-xs"
+            >
               <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
               <span className="flex items-center gap-1">
                 {s.keys.map((k, i) => (
