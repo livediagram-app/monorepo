@@ -2,6 +2,7 @@ import {
   AccountSyncArt,
   ActivityArt,
   AnyDeviceArt,
+  ArrowsArt,
   AutosaveArt,
   BorderStyleArt,
   CanvasBackdropArt,
@@ -17,6 +18,7 @@ import {
   NotesArt,
   LockArt,
   MarqueeArt,
+  PencilArt,
   MitArt,
   MultiplayerArt,
   NoServersArt,
@@ -97,9 +99,9 @@ export default function LandingPage() {
               },
               {
                 art: <TemplatesArt />,
-                title: 'Sixteen starter templates',
+                title: 'Seventeen starter templates',
                 description:
-                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, Pyramid, Flywheel, and Mobile / Laptop / Slide-deck wireframes. Pick one, edit it, or start blank.',
+                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, Pyramid, Flywheel, Logo design, and Mobile / Laptop / Slide-deck wireframes. Pick one, edit it, or start blank.',
               },
               {
                 art: <ThemesArt />,
@@ -111,7 +113,7 @@ export default function LandingPage() {
                 art: <ShortcutsArt />,
                 title: 'Keyboard shortcuts',
                 description:
-                  'The moves you repeat have keys: undo and redo, delete, multi-select, and space-drag to pan. A built-in cheat sheet lists them all, and you can switch them off per device.',
+                  'The moves you repeat have keys: undo and redo, delete, switch tools, and drop a shape, arrow, sticky, or text without reaching for the palette. Hold Cmd and the palette shows each key. A built-in cheat sheet lists them all, and you can switch them off per device.',
               },
             ]}
           />
@@ -329,7 +331,19 @@ export default function LandingPage() {
                 art: <ShapesArt />,
                 title: 'A shape for everything',
                 description:
-                  'Ten core shapes plus browser, monitor, laptop, phone, and tablet frames, all one click from the palette. Sketch a flowchart one minute and a screen the next.',
+                  'Ten core shapes plus browser, monitor, laptop, phone, and tablet frames. Click to drop one, or drag to draw it at the exact size you want, snapped to line up with its neighbours. A flowchart one minute, a screen the next.',
+              },
+              {
+                art: <ArrowsArt />,
+                title: 'Arrows that bend your way',
+                description:
+                  'Connect anything with straight, curved, or angled arrows. Drag the handle on a curve to reshape its bow, or on an elbow to move the bend. Set the thickness, size the arrowhead, add a label, and pin an end to a shape so it follows when things move.',
+              },
+              {
+                art: <PencilArt />,
+                title: 'Sketch freehand, or let it snap to shape',
+                description:
+                  "Grab the Pencil, or press F, and draw freehand straight on the canvas; strokes pick up the tab's theme like everything else. Switch on shape recognition and a rough rectangle, circle, diamond, or line becomes a clean shape the moment you lift the pen.",
               },
               {
                 art: <NotesArt />,

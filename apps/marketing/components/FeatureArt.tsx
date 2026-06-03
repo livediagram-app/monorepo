@@ -2068,6 +2068,175 @@ export function BorderStyleArt() {
   );
 }
 
+// Arrows: the three line styles (straight / curved / angled) stacked, with the
+// draggable middle handle shown on the curve (control point) and the elbow
+// (bend vertex). The two handles pulse to read as "grab and drag me"; straight
+// has none (nothing to bend). Mirrors the editor's arrow handle flow (spec/09).
+export function ArrowsArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        <defs>
+          <marker
+            id="li-arrowhead"
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto-start-reverse"
+          >
+            <path d="M0 0 L10 5 L0 10 z" fill={BLUE_STROKE} />
+          </marker>
+        </defs>
+        {/* straight */}
+        <line
+          x1="24"
+          y1="20"
+          x2="150"
+          y2="20"
+          stroke={BLUE_STROKE}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          markerEnd="url(#li-arrowhead)"
+        />
+        {/* curved, with a draggable control knob at the apex */}
+        <path
+          d="M24 50 Q 87 30, 150 50"
+          fill="none"
+          stroke={BLUE_STROKE}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          markerEnd="url(#li-arrowhead)"
+        />
+        <circle
+          className="fa-pulse"
+          cx="87"
+          cy="40"
+          r="6"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+        />
+        <circle cx="87" cy="40" r="3.5" fill="#fff" stroke={SKY} strokeWidth="1.5" />
+        {/* angled, with a draggable elbow knob at the bend */}
+        <path
+          d="M24 80 L96 80 L96 66 L150 66"
+          fill="none"
+          stroke={BLUE_STROKE}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          markerEnd="url(#li-arrowhead)"
+        />
+        <circle
+          className="fa-pulse"
+          cx="96"
+          cy="80"
+          r="6"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="2"
+          style={{ animationDelay: '1s' }}
+        />
+        <circle cx="96" cy="80" r="3.5" fill="#fff" stroke={SKY} strokeWidth="1.5" />
+        {/* style labels */}
+        <text x="166" y="23" fontSize="8" fontWeight="500" fill="#94a3b8">
+          straight
+        </text>
+        <text x="166" y="53" fontSize="8" fontWeight="500" fill="#94a3b8">
+          curved
+        </text>
+        <text x="166" y="69" fontSize="8" fontWeight="500" fill="#94a3b8">
+          angled
+        </text>
+      </svg>
+      <span className="absolute bottom-1.5 left-2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        drag to bend
+      </span>
+    </Frame>
+  );
+}
+
+// Pencil (freehand) + shape recognition: a hand-drawn wobbly stroke draws on
+// the left (fa-draw), an arrow points right, and the recognised clean shape
+// fades in on the right (fa-fade), under a pulsing magic-wand chip. Mirrors the
+// pencil ModeBanner's recognise toggle that mints a real primitive (spec/09).
+export function PencilArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* hand-drawn, wobbly rectangle outline being sketched */}
+        <path
+          className="fa-draw"
+          d="M22 34 C 40 30, 64 31, 78 33 C 80 44, 79 56, 77 64 C 58 66, 38 65, 23 63 C 21 52, 21 43, 22 34 Z"
+          fill="none"
+          stroke={BLUE_STROKE}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* transition arrow */}
+        <path
+          d="M96 49 H120 M115 44 L121 49 L115 54"
+          fill="none"
+          stroke="#94a3b8"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* recognised clean shape */}
+        <rect
+          className="fa-fade"
+          x="138"
+          y="32"
+          width="58"
+          height="34"
+          rx="6"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="2.5"
+        />
+      </svg>
+      {/* magic-wand recognise chip */}
+      <span className="fa-pulse absolute right-2 top-2 flex items-center gap-1 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-brand-600 shadow-sm">
+        <WandIcon /> recognise
+      </span>
+      <span className="absolute bottom-1.5 left-2 flex items-center gap-1 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        <PencilGlyph /> freehand
+      </span>
+    </Frame>
+  );
+}
+
+function WandIcon() {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke={BLUE_STROKE}
+      strokeWidth="1.5"
+    >
+      <path d="M3 13 L11 5" strokeLinecap="round" />
+      <path
+        d="M12 2 l0.7 1.8 L14.5 4.5 l-1.8 0.7 L12 7 l-0.7-1.8 L9.5 4.5 l1.8-0.7 Z"
+        fill={BLUE_STROKE}
+        stroke="none"
+      />
+    </svg>
+  );
+}
+
+function PencilGlyph() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="#64748b" strokeWidth="1.5">
+      <path d="M11 2.5 L13.5 5 L5 13.5 L2.5 13.5 L2.5 11 Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Canvas backdrop: four background patterns in a picker, the brand highlight
 // cycling to say "swap the canvas backdrop".
 export function CanvasBackdropArt() {
