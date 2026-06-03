@@ -210,6 +210,19 @@ function placeholdersFromSummaries(summaries: { id: string; name: string }[]): T
   return summaries.map((summary) => ({ id: summary.id, name: summary.name, elements: [] }));
 }
 
+// Patch one tab in a Tab[] by id, spreading `patch` over its fields.
+// Tabs whose id doesn't match are returned by reference, so callers
+// that diff by-identity (notably the autosave's `prevTabById !== t`
+// check) still skip the unchanged ones. Extracted from 8+ inline
+// `ts.map((t) => (t.id === ... ? { ...t, ... } : t))` sites that
+// were all doing the same thing; the one site that needs access to
+// the prior tab (it computes the new elements array from
+// `t.elements`) stays inline since the static-patch shape doesn't
+// fit it.
+function patchTab(ts: Tab[], id: string, patch: Partial<Tab>): Tab[] {
+  return ts.map((t) => (t.id === id ? { ...t, ...patch } : t));
+}
+
 // Activity-log past/future stacks share the cap with the
 // state-snapshot stack: we can't undo past what useDiagramHistory
 // remembers, so there's no point in tracking more log entries than
@@ -1773,7 +1786,7 @@ export default function LivePage() {
     if (editsBlocked) return;
     const before = activeTab.elements;
     const after = mapElements(before);
-    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, elements: after } : t)));
+    commitTabs((ts) => patchTab(ts, activeId, { elements: after }));
     emitChange(activeId, before, after);
   };
 
@@ -1851,12 +1864,13 @@ export default function LivePage() {
   // 'reverted' twin appended. Keeps the panel compact: a revert is a
   // cancellation of an event, not its own event.
   const revertChange = (entry: ChangeLogEntry) => {
-    if (!entry.tabId) return;
-    const target = tabs.find((t) => t.id === entry.tabId);
+    const tabId = entry.tabId;
+    if (!tabId) return;
+    const target = tabs.find((t) => t.id === tabId);
     if (!target) return;
     const after = applyRevert(target.elements, entry.beforeState as Record<string, Element | null>);
-    commitTabs((ts) => ts.map((t) => (t.id === entry.tabId ? { ...t, elements: after } : t)));
-    if (entry.tabId !== activeId) setActiveId(entry.tabId);
+    commitTabs((ts) => patchTab(ts, tabId, { elements: after }));
+    if (tabId !== activeId) setActiveId(tabId);
     track('Diagram', 'Reverted');
     // Drop the entry locally first so the panel updates immediately;
     // fire-and-forget the API delete.
@@ -1999,9 +2013,7 @@ export default function LivePage() {
     // element should sit on top.
     const before = activeTab.elements;
     const after = [el, ...before];
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
-    );
+    commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
     // Activity-log the add. commit() (the element-only setter) does
     // this on every change; addBoxed bypasses commit because it also
     // touches templateChosen on the tab, so the emitChange call has
@@ -2250,7 +2262,7 @@ export default function LivePage() {
 
   const openTemplatePicker = () => {
     setTemplatePickerMode('templates');
-    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: false } : t)));
+    commitTabs((ts) => patchTab(ts, activeId, { templateChosen: false }));
   };
 
   // Mark the participant's name as "confirmed" — they explicitly
@@ -2293,7 +2305,7 @@ export default function LivePage() {
       setTemplatePickerMode('welcome');
       return;
     }
-    commitTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, templateChosen: true } : t)));
+    commitTabs((ts) => patchTab(ts, activeId, { templateChosen: true }));
     confirmName();
     setTemplatePickerMode('welcome');
   };
@@ -2541,9 +2553,7 @@ export default function LivePage() {
       // Prepend: new elements default to the BACK of z-order
       // (see addBoxed).
       const after = [arrow, ...before];
-      commitTabs((ts) =>
-        ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
-      );
+      commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
       emitChange(activeId, before, after);
       setSelectedId(arrow.id);
       setPendingDraw(null);
@@ -2771,9 +2781,7 @@ export default function LivePage() {
     };
     const before = activeTab.elements;
     const after = [...before, arrow];
-    commitTabs((ts) =>
-      ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
-    );
+    commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
     // Same activity-log emit as addBoxed: commit() does this for
     // element-only commits, but this path also touches
     // templateChosen on the tab so we use commitTabs and emit
@@ -2948,7 +2956,7 @@ export default function LivePage() {
     if (trimmed && /^Tab \d+$/.test(activeTab.name)) {
       const firstEl = activeTab.elements[0];
       if (firstEl && firstEl.id === elementId) {
-        commitTabs((ts) => ts.map((t) => (t.id === activeTab.id ? { ...t, name: trimmed } : t)));
+        commitTabs((ts) => patchTab(ts, activeTab.id, { name: trimmed }));
       }
     }
   };
