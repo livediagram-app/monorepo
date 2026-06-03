@@ -14,8 +14,16 @@ import { buildTemplate, buildTemplatedTab } from './template-builders';
 
 // Every TemplateKind listed here. Adding a kind to templates.ts
 // without adding it here would let a new builder ship without
-// translation-invariance coverage. The exhaustiveness check below
-// (the `satisfies` line) makes that drift a typecheck failure.
+// translation-invariance coverage. The two checks below catch the
+// drift at compile time:
+//   - `satisfies readonly TemplateKind[]` guarantees every entry IS
+//     a TemplateKind (catches typos in this list).
+//   - The `MissingFromAllKinds` type computes the set of
+//     TemplateKinds NOT in ALL_KINDS; the type assertion below
+//     fails to compile when that set is non-empty.
+// The previous wording claimed `satisfies` alone enforced
+// exhaustiveness, which was wrong: `satisfies` only checks the
+// other direction. `logo-design` slipped past the check that way.
 const ALL_KINDS = [
   'blank',
   'mindmap',
@@ -33,7 +41,16 @@ const ALL_KINDS = [
   'laptop-wireframe',
   'slide-deck',
   'flywheel',
+  'logo-design',
 ] as const satisfies readonly TemplateKind[];
+
+// Real exhaustiveness check: any TemplateKind missing from
+// ALL_KINDS surfaces as a non-`never` type and the assignment
+// below stops compiling. The `void` discards the unused binding
+// without tripping the lint rule.
+type MissingFromAllKinds = Exclude<TemplateKind, (typeof ALL_KINDS)[number]>;
+const _allKindsExhaustive: [MissingFromAllKinds] extends [never] ? true : never = true;
+void _allKindsExhaustive;
 
 // Every numeric coordinate carried by an element. For boxed
 // elements (shape / text / sticky / image) that's (x, y). For
