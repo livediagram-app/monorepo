@@ -204,9 +204,7 @@ Every `Add ...` button places the new element at the **centre of the visible can
 
 If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed.
 
-Clicking a button places the new element on the active tab's canvas. For the first version, new elements are placed at a **staggered default position** (each shape offset slightly from the last) so multiple clicks don't stack on top of each other.
-
-The name "command palette" is forward-looking — it will grow into a richer set of controls (more shapes, connectors, text, search). For now, two buttons.
+Clicking a button places the new element on the active tab's canvas. New elements are placed at a **staggered default position** (each shape offset slightly from the last) so multiple clicks don't stack on top of each other. (When the user-preference `drawToAdd` is on, see the [Draw-to-size](#draw-to-size) section above, the click instead queues a drag-to-define gesture and bypasses both the centre-of-viewport placement and the staggered default.)
 
 ## Arrows
 
@@ -452,7 +450,7 @@ Animations only fire on mount, so they naturally trigger once per element. Switc
 
 - **Click a shape** to select it. Selection is visible as a thicker brand-tinted outline plus four corner handles.
 - **Click the empty canvas background** (anywhere not on a shape, palette, or popover) to deselect.
-- Only one shape can be selected at a time — multi-select is out of scope for now.
+- Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group accordion). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over.
 - Clicking the command palette never affects selection.
 
 ### Selection popover
@@ -496,7 +494,7 @@ The canvas can be **panned** to bring off-screen content into view.
 - A press-and-release of Space+drag without movement counts as a **click** and deselects, as before.
 - Double-click still drops a text element at the click position (now in the panned canvas-coordinate space).
 
-There is no pan reset / "centre on content" control yet — that's a future addition.
+The **Fit-to-screen** control (in the bottom-right `ZoomControls`) centres the viewport on the active tab's content and picks the largest zoom level that fits every element with a small margin. Empty tabs reset to (0, 0) at zoom 1. Same gesture as Figma / Excalidraw's "Zoom to fit". Also fires automatically the first time the active tab gains content (on diagram open and again on each tab switch into a non-empty tab) so a saved tab loads framed rather than at the previous session's pan / zoom.
 
 ### Touch (iOS / iPad)
 
