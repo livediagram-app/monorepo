@@ -741,6 +741,26 @@ export type SelectedAccordionState = {
   pointer: boolean;
 };
 
+// All-closed snapshot used by the three sites that reset / initialise
+// the accordion state: the ContextPanel's useState initial value, its
+// `closeAll` reducer, and SelectedElementSection's `toggle` reducer.
+// Listing every key in three places was a footgun, the most recent
+// accordion to land (`line`, in the Line / Pointer split) needed
+// three matching edits and any future addition would too.
+//
+// `as const satisfies` keeps the literal narrowed AND lets the
+// satisfies check fail at compile time if a new key shows up on
+// SelectedAccordionState without being added here.
+export const ALL_SELECTED_ACCORDIONS_CLOSED = {
+  shape: false,
+  layer: false,
+  text: false,
+  colours: false,
+  border: false,
+  line: false,
+  pointer: false,
+} as const satisfies SelectedAccordionState;
+
 export function SelectedElementSection({
   selection,
   open,
@@ -767,17 +787,8 @@ export function SelectedElementSection({
   // even when several accordion-eligible sections apply.
   const toggle = (key: keyof SelectedAccordionState) =>
     setOpen((prev) => {
-      const closed: SelectedAccordionState = {
-        shape: false,
-        layer: false,
-        text: false,
-        colours: false,
-        border: false,
-        line: false,
-        pointer: false,
-      };
-      if (prev[key]) return closed;
-      return { ...closed, [key]: true };
+      if (prev[key]) return ALL_SELECTED_ACCORDIONS_CLOSED;
+      return { ...ALL_SELECTED_ACCORDIONS_CLOSED, [key]: true };
     });
 
   const showText = selection.textSize !== null || selection.textAlignX !== null;

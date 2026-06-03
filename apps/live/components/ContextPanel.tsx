@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ALL_SELECTED_ACCORDIONS_CLOSED,
   SelectedElementSection,
   TabSection,
   type SelectedAccordionState,
@@ -114,15 +115,9 @@ export function ContextPanel({
   // SelectedElement <-> Tab swap whenever the user deselects or
   // switches elements. Without this lift, every selection change
   // collapsed the accordions and the user had to re-click in.
-  const [selectedAccordionsOpen, setSelectedAccordionsOpen] = useState<SelectedAccordionState>({
-    shape: false,
-    layer: false,
-    text: false,
-    colours: false,
-    border: false,
-    line: false,
-    pointer: false,
-  });
+  const [selectedAccordionsOpen, setSelectedAccordionsOpen] = useState<SelectedAccordionState>(
+    ALL_SELECTED_ACCORDIONS_CLOSED,
+  );
   // Local fallback for the tab-section accordion when the caller
   // doesn't lift state. Same mutual-exclusion shape.
   const [localTabOpen, setLocalTabOpen] = useState<TabAccordionState>({
@@ -147,15 +142,7 @@ export function ContextPanel({
   // mode).
   const closeAll = useCallback(() => {
     if (showingSelected) {
-      setSelectedAccordionsOpen({
-        shape: false,
-        layer: false,
-        text: false,
-        colours: false,
-        border: false,
-        line: false,
-        pointer: false,
-      });
+      setSelectedAccordionsOpen(ALL_SELECTED_ACCORDIONS_CLOSED);
     } else {
       setTabOpen({ theme: false, canvas: false, cleanup: false });
     }
