@@ -1,15 +1,20 @@
 // Global keyboard shortcuts for the editor route, lifted out of
 // editor-page.tsx so the page file stays focused on orchestration.
 //
-// The callbacks (undo, redo, deleteSelected, copy, paste, setCanvasTool)
-// are closures over editor-page state. They get fresh identity on
-// every render. The hook stashes them in a single mutable ref that
-// the keydown listeners read THROUGH, so the listener body always
-// calls the latest closure even though the effect itself only re-
-// attaches on `enabled` / `isReadOnly` changes. Without this, the
-// historical "[enabled, isReadOnly]" deps captured stale undo /
-// redo references at attach time and shortcuts that fired through
-// them silently no-op'd.
+// The callbacks (undo, redo, deleteSelected, copy, paste, setCanvasTool,
+// add*, beginEdit, etc.) and the per-render selection / isReadOnly /
+// editingId state are all closures over editor-page state, so they
+// get fresh identity on every render. The hook stashes the whole
+// deps bag in a single mutable ref that the keydown listeners read
+// THROUGH, so the listener body always sees the latest closure
+// even though the main effects only re-attach on `enabled` (one
+// extra Escape effect also keys on the transient mode flags it
+// gates on, but never on the per-render callbacks or selection).
+// Historical bug this avoids: when the listener deps included
+// `isReadOnly` + the action callbacks directly, the effect re-
+// attached on every render and captured stale undo / redo
+// references at attach time, so shortcuts fired through them
+// silently no-op'd.
 
 import { useEffect, useRef } from 'react';
 
