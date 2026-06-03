@@ -52,8 +52,8 @@ The two paths coexist forever. A signed-in user can hand a share link to a guest
 
 Four routes inside `apps/live/`:
 
-- **`/live/sign-in/`** — email-code or Google OAuth. Bounces to `/live/` (which falls through to the welcome flow per [spec/14](14-new-diagram-route.md)) on success. Already-signed-in users get redirected away.
-- **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code, or Google OAuth). Same post-auth destination.
+- **`/live/sign-in/`** — email-code, plus an optional Google OAuth button gated on `googleOAuthEnabled` (`apps/live/lib/clerk-config.ts`); the flag currently ships off so the button doesn't render, pending the Google Cloud OAuth client being configured against Clerk's redirect URI. Bounces to `/live/` (which falls through to the welcome flow per [spec/14](14-new-diagram-route.md)) on success. Already-signed-in users get redirected away.
+- **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code), with the same flag-gated Google OAuth button. Same post-auth destination.
 - **`?redirect_url=...`** — Clerk's protected-page bounce passes this query param to both routes, and BOTH the email-code AND OAuth paths honour it. Two helpers in `components/auth-shared.tsx` share the same validation (URL must start with `/live` and must not point back at the auth routes themselves, to avoid loops):
   - `resolvePostAuthDestination(searchParams)` returns a basePath-stripped path for `router.push` (email-code path). The `/live` prefix gets stripped because `router.push` already respects basePath.
   - `resolveOAuthCompleteUrl(searchParams)` returns the full-path form for Clerk's `authenticateWithRedirect({ redirectUrlComplete })` (OAuth path). Clerk navigates the browser directly, so basePath isn't applied automatically and the `/live` prefix has to stay on.
