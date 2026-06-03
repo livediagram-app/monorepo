@@ -787,11 +787,11 @@ export function EmptyPane({
   const isShared = selected.kind === 'shared';
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-      <p className="text-sm text-slate-500">
+      <p className="max-w-md text-sm text-slate-500">
         {isRecent
           ? "Nothing here yet. Diagrams you've opened will show up here."
           : isShared
-            ? "No-one's shared a diagram with you yet."
+            ? "No-one's shared a diagram with you yet. When someone sends you a share link (`livediagram.app/live/diagram/<id>?s=<code>`) and you open it, the diagram lands here so you can find it again without keeping the link bookmarked."
             : inFolder
               ? 'This folder is empty.'
               : 'No diagrams yet.'}

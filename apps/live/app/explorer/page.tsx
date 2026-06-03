@@ -558,19 +558,15 @@ export default function ExplorerPage() {
               depth={0}
             />
 
-            {shared.length > 0 ? (
-              <>
-                <SidebarSectionLabel>Shared</SidebarSectionLabel>
-                <SidebarRow
-                  icon={<ShareIcon />}
-                  label="Shared with me"
-                  selected={selected.kind === 'shared'}
-                  onClick={() => setSelected({ kind: 'shared' })}
-                  depth={0}
-                  badge={shared.length}
-                />
-              </>
-            ) : null}
+            <SidebarSectionLabel>Shared</SidebarSectionLabel>
+            <SidebarRow
+              icon={<ShareIcon />}
+              label="Shared with me"
+              selected={selected.kind === 'shared'}
+              onClick={() => setSelected({ kind: 'shared' })}
+              depth={0}
+              badge={shared.length > 0 ? shared.length : undefined}
+            />
           </div>
         </aside>
 
