@@ -94,6 +94,17 @@ type EditorKeyboardShortcutsDeps = {
   // detection; editor-page just hands it the selected-element edit
   // entry point.
   onBeginEditSelected: (elementId: string) => void;
+  // Arrow-key nudge (spec/09 Move): move the current selection by
+  // (dx, dy) canvas px. The hook decides the step (1px, or 10px with
+  // Shift) and which keys map to which axis; editor-page owns the
+  // actual element transform + undo coalescing.
+  onNudgeSelection: (dx: number, dy: number) => void;
+  // Type-to-edit (spec/09 Labels): a printable key on a single selected
+  // element opens its label editor seeded with that character. Returns
+  // true when it took over (so the listener swallows the key) and false
+  // for a non-labelable selection (image / freehand) so the tool
+  // shortcuts still fire there.
+  onTypeIntoSelected: (elementId: string, char: string) => boolean;
   // Per-device disable flag. When false, every shortcut effect
   // below short-circuits before attaching its listener. The
   // checkbox lives in the keyboard-shortcuts modal; the storage
@@ -209,6 +220,45 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       // the server will reject anyway.
       if (inText) return;
       if (live.editingId !== null) return;
+
+      // --- Arrow-key nudge (spec/09 Move) ---
+      // Move the selection 1px per press, 10px with Shift. Bails for
+      // view-role (no mutation) and when nothing is selected (so the
+      // arrows keep their default page behaviour). Placed before the
+      // letter shortcuts; arrow keys never collide with them.
+      if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+        if (live.isReadOnly) return;
+        const hasSelection = live.multiSelectedIds.size > 0 || live.selectedId !== null;
+        if (!hasSelection) return;
+        const step = e.shiftKey ? 10 : 1;
+        const dx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
+        const dy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
+        e.preventDefault();
+        live.onNudgeSelection(dx, dy);
+        return;
+      }
+
+      // --- Type-to-edit (spec/09 Labels) ---
+      // A printable key on a single selected, label-bearing element
+      // opens its label editor seeded with that character, INSTEAD of
+      // firing the tool / add shortcuts below — the user kept selecting
+      // a shape, typing, and accidentally dropping new elements. Space
+      // is excluded (it stays the pan / tap-to-edit modifier). View-role
+      // never types (so viewers keep S/P/L). A non-labelable selection
+      // returns false and falls through to the shortcuts.
+      if (
+        !live.isReadOnly &&
+        live.selectedId !== null &&
+        live.multiSelectedIds.size === 0 &&
+        key.length === 1 &&
+        key !== ' '
+      ) {
+        if (live.onTypeIntoSelected(live.selectedId, key)) {
+          e.preventDefault();
+          return;
+        }
+      }
+
       if (lower === 's') {
         e.preventDefault();
         live.setCanvasTool('select');

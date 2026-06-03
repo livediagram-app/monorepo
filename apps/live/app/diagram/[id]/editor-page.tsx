@@ -7,6 +7,7 @@ import {
   createText,
   isBoxed,
   joinGroups,
+  rebindArrowAnchorsAfterMove,
   selectionMembers,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
@@ -381,6 +382,15 @@ export default function LivePage() {
   // to true (auto-rebind on) so a fresh session keeps today's UX.
   const autoRebindArrowsRef = useRef<boolean>(userPreferences.autoRebindArrows !== false);
   autoRebindArrowsRef.current = userPreferences.autoRebindArrows !== false;
+
+  // Keyboard-nudge burst state (spec/09 Move). A run of arrow-key
+  // presses should collapse into ONE undo step, so the first press
+  // takes a history checkpoint and subsequent presses only `tick` the
+  // present; the burst closes after a short idle so the next run
+  // starts its own checkpoint. Refs (not state) because the keydown
+  // path mutates them synchronously and they must not trigger renders.
+  const nudgeBurstActiveRef = useRef(false);
+  const nudgeBurstTimerRef = useRef<number | null>(null);
 
   // Per-element note popover (state + open/close/setNote handlers)
   // lives in useEditorNotes. Invoked further down, after `commit`
@@ -2652,6 +2662,75 @@ export default function LivePage() {
 
   const cancelEdit = () => setEditingId(null);
 
+  // Keyboard nudge (spec/09 Move): shift the current selection by
+  // (dx, dy) canvas px. Mirrors a drag-move — boxed elements shift
+  // x/y, free arrow endpoints shift from/to, and pinned arrow anchors
+  // re-pick their best face (when the autoRebindArrows pref is on) via
+  // the same helper the drag uses. A run of presses coalesces into one
+  // undo step via markCheckpoint-once + tick.
+  const nudgeSelection = (dx: number, dy: number) => {
+    if (isReadOnly) return;
+    const ids =
+      multiSelectedIds.size > 0
+        ? multiSelectedIds
+        : selectedId !== null
+          ? new Set([selectedId])
+          : null;
+    if (!ids || ids.size === 0) return;
+    // Open a coalescing burst on the first press: checkpoint so undo
+    // returns to the pre-nudge state, then only tick until idle.
+    if (!nudgeBurstActiveRef.current) {
+      nudgeBurstActiveRef.current = true;
+      markCheckpoint();
+      // Telemetry (spec/22): one event per burst, not per press. `type`
+      // is a preset, never user content.
+      track('Element', 'Changed', 'Nudge');
+    }
+    if (nudgeBurstTimerRef.current !== null) window.clearTimeout(nudgeBurstTimerRef.current);
+    nudgeBurstTimerRef.current = window.setTimeout(() => {
+      nudgeBurstActiveRef.current = false;
+      nudgeBurstTimerRef.current = null;
+    }, 500);
+    const movedBoxedIds = new Set(
+      activeTab.elements.filter((el) => ids.has(el.id) && isBoxed(el)).map((el) => el.id),
+    );
+    tick((els) => {
+      const moved = els.map((el) => {
+        if (!ids.has(el.id)) return el;
+        if (isBoxed(el)) return { ...el, x: el.x + dx, y: el.y + dy };
+        if (el.type === 'arrow') {
+          const from =
+            el.from.kind === 'free'
+              ? { ...el.from, x: el.from.x + dx, y: el.from.y + dy }
+              : el.from;
+          const to = el.to.kind === 'free' ? { ...el.to, x: el.to.x + dx, y: el.to.y + dy } : el.to;
+          return { ...el, from, to };
+        }
+        return el;
+      });
+      return autoRebindArrowsRef.current
+        ? rebindArrowAnchorsAfterMove(moved, movedBoxedIds)
+        : moved;
+    });
+  };
+
+  // Type-to-edit (spec/09 Labels): a printable key on a single selected
+  // element opens its label editor seeded with that character. Returns
+  // true when it took over (so the caller swallows the key); false for
+  // a non-labelable selection (image / freehand) so the tool shortcuts
+  // still work there.
+  const typeIntoSelected = (elementId: string, char: string): boolean => {
+    if (isReadOnly) return false;
+    const el = activeTab.elements.find((e) => e.id === elementId);
+    if (!el) return false;
+    const labelable = isBoxed(el) || el.type === 'arrow';
+    if (!labelable) return false;
+    commit((els) => els.map((e) => (e.id === elementId ? { ...e, label: char } : e)));
+    setSelectedId(elementId);
+    setEditingId(elementId);
+    return true;
+  };
+
   // --- Selection + drag dispatch ------------------------------------------
 
   const selectElement = (id: string) => {
@@ -2769,6 +2848,8 @@ export default function LivePage() {
     onAddImage: addImage ?? null,
     onBeginFreehand: beginFreehand,
     onBeginEditSelected: beginEdit,
+    onNudgeSelection: nudgeSelection,
+    onTypeIntoSelected: typeIntoSelected,
     pendingDraw,
     onCancelDraw: cancelDrawShape,
     enabled: shortcutsEnabled,
