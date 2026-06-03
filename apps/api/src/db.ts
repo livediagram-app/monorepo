@@ -2,6 +2,7 @@ import { isBoxed, type Tab } from '@livediagram/diagram';
 import type { TelemetryCount } from '@livediagram/api-schema';
 import { rowToChangeLog, type ChangeLogRow } from './change-log-row';
 import { rowToShareLink, type ShareLinkRow } from './share-link-row';
+import { rowToTab, rowToTabSummary, type TabRow } from './tab-row';
 import type {
   ChangeLogEntryDTO,
   DiagramDTO,
@@ -36,43 +37,12 @@ type DiagramRow = {
 
 type SummaryRow = DiagramRow;
 
-type TabRow = {
-  id: string;
-  diagram_id: string;
-  name: string;
-  order_index: number;
-  data: string;
-  updated_at: number;
-};
-
 type ParticipantRow = {
   id: string;
   name: string;
   color: string;
   created_at: number;
 };
-
-function rowToTab(row: TabRow): TabDTO {
-  const data = JSON.parse(row.data) as Omit<Tab, 'id' | 'name'>;
-  return {
-    ...data,
-    id: row.id,
-    name: row.name,
-    diagramId: row.diagram_id,
-    orderIndex: row.order_index,
-    updatedAt: row.updated_at,
-  };
-}
-
-function rowToTabSummary(row: TabRow): TabSummaryDTO {
-  return {
-    id: row.id,
-    diagramId: row.diagram_id,
-    name: row.name,
-    orderIndex: row.order_index,
-    updatedAt: row.updated_at,
-  };
-}
 
 async function listTabSummariesFor(env: Env, diagramId: string): Promise<TabSummaryDTO[]> {
   // Read through the diagram_tabs link table (migration 0011 /
