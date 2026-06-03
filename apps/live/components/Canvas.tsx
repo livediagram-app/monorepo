@@ -110,12 +110,12 @@ export type PendingDraw =
   | { type: 'sticky' }
   | { type: 'image' }
   | { type: 'arrow' }
-  // Pen intent: the user picked the freehand tool. Unlike the box
-  // intents, this one ignores the drawToAdd preference (the pen is
-  // gestural by definition) and the gesture collects a stream of
-  // pointer samples during the drag, simplified + smoothed on
-  // release into a FreehandElement (see spec/09 Pen subsection,
-  // spec/05 FreehandElement).
+  // Pencil intent: the user picked the freehand tool. Unlike the
+  // box intents, this one ignores the drawToAdd preference (the
+  // pencil is gestural by definition) and the gesture collects a
+  // stream of pointer samples during the drag, simplified +
+  // smoothed on release into a FreehandElement (see spec/09 Pencil
+  // (freehand) subsection, spec/05 FreehandElement).
   | { type: 'freehand' };
 
 // Title-cased shape label for the draw-to-size mode banner. Avoids the

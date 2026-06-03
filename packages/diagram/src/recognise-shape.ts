@@ -1,10 +1,11 @@
-// Hand-drawn shape recognition. Takes the simplified polyline a Pen
-// tool gesture produced (post-RDP, before Catmull-Rom smoothing) and,
-// when the gesture clearly resembles a primitive, returns the matching
-// shape kind + bounding box + a 0..1 confidence score. The editor-page
-// commit handler decides whether to convert the freehand into a
-// proper shape element based on the score; see spec/09 Pen subsection
-// for the user-visible contract.
+// Hand-drawn shape recognition. Takes the simplified polyline a
+// pencil-tool gesture produced (post-RDP, before Catmull-Rom
+// smoothing) and, when the gesture clearly resembles a primitive,
+// returns the matching shape kind + bounding box + a 0..1
+// confidence score. The editor-page commit handler decides whether
+// to convert the freehand into a proper shape element based on the
+// score; see spec/09 Pencil (freehand) subsection for the user-
+// visible contract.
 //
 // Heuristics over template-matching ($1 Recognizer et al) on purpose:
 // fewer constants to tune, no templates to maintain per shape kind,

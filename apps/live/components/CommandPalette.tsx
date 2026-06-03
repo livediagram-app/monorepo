@@ -189,9 +189,10 @@ type CommandPaletteProps = {
   // on either end by default (i.e. a plain line). Users can flip the
   // arrowEnds afterwards via the Pointer accordion.
   onAddArrow: () => void;
-  // Pen tool: enters one-shot freehand draw mode. Unlike the other
-  // add-element callbacks, this never drops at the viewport centre,
-  // the pen is gestural by design. See spec/09 Pen subsection.
+  // Pencil tool: enters one-shot freehand draw mode. Unlike the
+  // other add-element callbacks, this never drops at the viewport
+  // centre, the pencil is gestural by design. See spec/09 Pencil
+  // (freehand) subsection.
   onBeginFreehand: () => void;
   // Currently-queued draw-to-size intent, or null. When set, the
   // matching palette button (shape, text, sticky, image, arrow)

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { catmullRomToBezierPath, createFreehand, simplifyPolyline } from './index';
 
-// Three pure helpers underpin the Pen tool (spec/09 Pen subsection):
+// Three pure helpers underpin the pencil tool (spec/09 Pencil
+// (freehand) subsection):
 // simplifyPolyline (Ramer-Douglas-Peucker), catmullRomToBezierPath
 // (smooth SVG `d` builder), and createFreehand (bounding box +
 // normalisation). They're called from editor-page on commit and from

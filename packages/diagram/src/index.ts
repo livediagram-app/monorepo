@@ -469,13 +469,14 @@ export type ImageElement = {
   note?: string;
 };
 
-// Freehand "pen tool" element (spec/09 Pen subsection). A polyline
-// sampled during a pointer drag, simplified + smoothed at commit,
-// rendered as an inline SVG path inside the element's bounding box.
-// Points are stored normalised into [0..1] across the box so resize
-// scales the path proportionally; `closed: true` adds the closing
-// segment + a theme fill (the "sketch a custom shape" path) when
-// the user released near where they started.
+// Freehand "pencil tool" element (spec/09 Pencil (freehand)
+// subsection). A polyline sampled during a pointer drag, simplified
+// + smoothed at commit, rendered as an inline SVG path inside the
+// element's bounding box. Points are stored normalised into [0..1]
+// across the box so resize scales the path proportionally;
+// `closed: true` adds the closing segment + a theme fill (the
+// "sketch a custom shape" path) when the user released near where
+// they started.
 export type FreehandElement = {
   id: ElementId;
   type: 'freehand';
@@ -492,10 +493,13 @@ export type FreehandElement = {
   closed: boolean;
   // Shared boxed-element fields, see ImageElement above for the
   // rationale: the union code paths (change log, format painter,
-  // export, Editor panel) all read these uniformly. Most are
-  // visually inert on a freehand (no inline label rendering yet),
-  // but persisting them keeps copy / paste / format-paint
-  // symmetrical with other boxed elements.
+  // export, Editor panel) all read these uniformly. Labels render
+  // on top of the SVG path (BoxedElementView), fill / stroke /
+  // border-width / border-style follow the Colours + Border
+  // accordions, and the rest of the bag (lock, group, opacity,
+  // link, comment, note) flows through the generic boxed-element
+  // machinery; persisting the fields keeps copy / paste /
+  // format-paint symmetrical with the other boxed kinds.
   label?: string;
   textSize?: TextSize;
   textAlignX?: TextAlignX;
@@ -1663,7 +1667,8 @@ export function ungroup(elements: Element[], groupId: ElementId): Element[] {
   });
 }
 
-// Pen-tool shape recognition (spec/09 Pen subsection's recognise
-// mode). Re-exported so callers import from the package root the
-// same way they do every other helper here.
+// Pencil-tool shape recognition (spec/09 Pencil (freehand)
+// subsection's recognise mode). Re-exported so callers import
+// from the package root the same way they do every other helper
+// here.
 export { recogniseShape, type RecognisedShape, type RecognisedShapeKind } from './recognise-shape';
