@@ -55,7 +55,7 @@ Jobs:
 5. **deploy-telemetry** — downloads `telemetry-out`, runs `pnpm exec wrangler deploy` from `apps/telemetry/` (in parallel with marketing/live/api).
 6. **deploy-router** — depends on **deploy-marketing**, **deploy-live**, **deploy-api**, and **deploy-telemetry**. Runs `pnpm exec wrangler deploy` from `apps/router/`. The router's service bindings target the four workers above, so it must deploy after they exist.
 
-`deploy-marketing`, `deploy-live`, and `deploy-api` run in parallel; `deploy-router` waits for all three.
+`deploy-marketing`, `deploy-live`, `deploy-api`, and `deploy-telemetry` run in parallel; `deploy-router` waits for all four.
 
 All five jobs use raw `pnpm exec wrangler` rather than `cloudflare/wrangler-action` — wrangler 4 ships sensible defaults and the explicit invocation makes the workflow log read 1:1 against a local run.
 
@@ -88,7 +88,7 @@ Cloudflare dashboard → any zone → right sidebar → **Account ID** (copy).
 
 ## First deploy
 
-On the first run, none of the workers exist yet. The job ordering handles this: `deploy-marketing`, `deploy-live`, and `deploy-api` run first and create those workers, then `deploy-router` runs — by which point its three service-binding targets already exist, so wrangler accepts the bindings.
+On the first run, none of the workers exist yet. The job ordering handles this: `deploy-marketing`, `deploy-live`, `deploy-api`, and `deploy-telemetry` run first and create those workers, then `deploy-router` runs, by which point its four service-binding targets already exist, so wrangler accepts the bindings.
 
 Subsequent deploys are idempotent updates.
 
