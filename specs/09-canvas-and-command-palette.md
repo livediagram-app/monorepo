@@ -905,7 +905,7 @@ Optional alternate add-element gesture, gated on the user-preference `drawToAdd`
 
 ## Pencil (freehand)
 
-Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pencil button enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
+Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pencil button, or pressing **F** (Freehand; P is taken by the Pan tool), enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
 
 - A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pencil button on the palette renders pressed while a draw is queued.
 - The canvas cursor swaps to a diagonal-pencil glyph that mirrors the palette icon.

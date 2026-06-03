@@ -2140,7 +2140,16 @@ export function Canvas(props: CanvasProps) {
           // paletteBottomY is still 0 (first paint, before the
           // observer fires) MovablePanel falls back to its legacy
           // static top-[15rem] so the panel never lands at 0,0.
-          stackBelowY={paletteBottomY === 0 ? undefined : paletteBottomY}
+          //
+          // Skipped entirely when the palette has been dragged to a
+          // custom position: the auto-stack only exists so the
+          // Editor follows the palette as the palette banner-grows
+          // or as its accordions open. Once the user manually moves
+          // the palette, the two panels are independent and the
+          // Editor stays at its own default / dragged position.
+          stackBelowY={
+            palettePosition !== null || paletteBottomY === 0 ? undefined : paletteBottomY
+          }
           onSize={(size) => setContextBottomY(size.bottomY)}
         />
       )}

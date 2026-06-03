@@ -75,6 +75,12 @@ type EditorKeyboardShortcutsDeps = {
   addSticky: () => void;
   addArrow: () => void;
   onAddImage: (() => void) | null;
+  // F enters the one-shot pencil (freehand) draw mode, mirroring the
+  // palette's Pencil button. Distinct from the element-add shortcuts
+  // above because the pencil is gestural (no element drops without a
+  // drag), but it lives next to them in the keyboard surface so the
+  // user reaches for the same row of letters for every tool.
+  onBeginFreehand: () => void;
   // Per-device disable flag. When false, every shortcut effect
   // below short-circuits before attaching its listener. The
   // checkbox lives in the keyboard-shortcuts modal; the storage
@@ -182,6 +188,7 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       //   S = Select, P = Pan, L = Laser (tools)
       //   R = Rectangle (square), O = Oval (circle), D = Diamond
       //   T = Text, N = Note (sticky), A = Arrow, I = Image
+      //   F = Freehand (Pencil — P is taken by Pan)
       // Bail on text-input focus + editing-label state so the user
       // can still type literal letters into a label or comment.
       // Element-add shortcuts also check isReadOnly so view-role
@@ -238,6 +245,11 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       if (lower === 'i' && live.onAddImage) {
         e.preventDefault();
         live.onAddImage();
+        return;
+      }
+      if (lower === 'f') {
+        e.preventDefault();
+        live.onBeginFreehand();
         return;
       }
     };

@@ -36,6 +36,7 @@ const SHORTCUTS: ShortcutRow[] = [
   { keys: ['N'], label: 'Add a sticky Note' },
   { keys: ['A'], label: 'Add an Arrow' },
   { keys: ['I'], label: 'Open the Image picker' },
+  { keys: ['F'], label: 'Switch to the Pencil (freehand) tool' },
   { keys: ['⌘', 'hold'], label: 'Reveal shortcut badges on palette buttons' },
   { keys: ['Escape'], label: 'Cancel format painter or group mode' },
   { keys: ['Shift', 'Click'], label: 'Toggle an element in the multi-selection' },

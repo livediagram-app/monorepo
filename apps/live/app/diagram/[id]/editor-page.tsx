@@ -629,8 +629,12 @@ export default function LivePage() {
   // Load the per-user preferences (spec/20) once on mount. The
   // preferences are device-scoped, not diagram-scoped, so this runs
   // independently of which diagram is open. Missing or unparseable
-  // entries collapse to `{}` and every flag defaults to "on"
-  // downstream.
+  // entries collapse to `{}`; the per-flag default then depends on
+  // the consumer's comparison: `autoRebindArrows` and
+  // `telemetryEnabled` read via `!== false` so undefined = on (the
+  // historical "everything on" default), while `drawToAdd` and
+  // `recogniseShapes` read via `=== true` so undefined = off
+  // (matches spec/20's "drop-at-centre" + "raw-sketch" defaults).
   useEffect(() => {
     setUserPreferences(readUserPreferences());
   }, []);
@@ -2726,6 +2730,7 @@ export default function LivePage() {
     addSticky,
     addArrow,
     onAddImage: addImage ?? null,
+    onBeginFreehand: beginFreehand,
     pendingDraw,
     onCancelDraw: cancelDrawShape,
     enabled: shortcutsEnabled,
