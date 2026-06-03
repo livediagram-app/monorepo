@@ -2849,6 +2849,7 @@ export default function LivePage() {
     beginArrowTranslate,
     beginEndpointDrag,
     beginArrowCurveDrag,
+    beginArrowElbowDrag,
   } = useEditorDrag({
     activeTab,
     zoomRef,
@@ -3338,6 +3339,7 @@ export default function LivePage() {
         onBeginEndpointDrag={beginEndpointDrag}
         onBeginArrowTranslate={beginArrowTranslate}
         onBeginArrowCurveDrag={beginArrowCurveDrag}
+        onBeginArrowElbowDrag={beginArrowElbowDrag}
         onShiftSelect={toggleInMultiSelect}
         onBeginFormatPainter={beginFormatPainter}
         onCancelFormatPainter={exitFormatPainter}

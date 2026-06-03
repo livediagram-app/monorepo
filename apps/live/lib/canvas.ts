@@ -85,6 +85,26 @@ export type DragState =
       // so the handle stays exactly under the cursor.
       grabDx: number;
       grabDy: number;
+    }
+  | {
+      // Elbow-handle drag: same shape as arrow-curve but for angled
+      // arrows. The user grabbed the elbow point and is dragging it
+      // to bend the arrow's right-angle break somewhere else. We
+      // capture the auto-elbow position (the corner the arrow would
+      // draw without offset) + the pointer-to-elbow grab offset so
+      // the elbow tracks the cursor with a stable grab handle.
+      kind: 'arrow-elbow';
+      arrowId: string;
+      startClientX: number;
+      startClientY: number;
+      // Auto-computed elbow corner at the start of the gesture, in
+      // canvas coords. The new elbowOffset is computed as
+      // `(currentElbow - startBaseElbow)` so the gesture survives
+      // endpoint moves the same way arrow-curve does.
+      startBaseX: number;
+      startBaseY: number;
+      grabDx: number;
+      grabDy: number;
     };
 
 // Given a shape's bounds at gesture start, project the current pointer

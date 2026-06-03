@@ -504,6 +504,15 @@ export type ArrowElement = {
   // render unchanged. Setting it back to undefined "resets" the
   // curve to its default shape.
   curveOffset?: { dx: number; dy: number };
+  // Optional override for the angled-arrow elbow position. Stored
+  // as a delta from the auto-computed elbow (the right-angle corner
+  // a default angled arrow draws at `(to.x, from.y)` or `(from.x,
+  // to.y)`). Lets the user drag the visible elbow handle to bend
+  // the arrow somewhere other than the default corner. Only
+  // consulted when `arrowStyle === 'angled'`; the auto right-angle
+  // applies when this field is absent so existing angled arrows
+  // render unchanged.
+  elbowOffset?: { dx: number; dy: number };
   // Optional label rendered next to the arrow's midpoint. Empty /
   // missing → no label is drawn. Double-click on the arrow opens an
   // inline editor for this field. Placement is computed at render
@@ -616,6 +625,7 @@ export function arrowPathD(
   fromEp: Endpoint,
   toEp: Endpoint,
   curveOffset?: { dx: number; dy: number },
+  elbowOffset?: { dx: number; dy: number },
 ): string {
   if (style === 'straight') return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   if (style === 'curved') {
@@ -626,10 +636,30 @@ export function arrowPathD(
     const c = curveControlPoint(from, to, curveOffset);
     return `M ${from.x} ${from.y} Q ${c.x} ${c.y} ${to.x} ${to.y}`;
   }
+  const elbow = angledElbow(from, to, fromEp, toEp, elbowOffset);
+  return `M ${from.x} ${from.y} L ${elbow.x} ${elbow.y} L ${to.x} ${to.y}`;
+}
+
+// Auto-computed elbow position for an angled arrow, plus any
+// user-dragged offset. The auto position is the right-angle corner
+// the renderer would draw without input: (to.x, from.y) for
+// horizontal-first, (from.x, to.y) for vertical-first. `elbowOffset`
+// (set by dragging the elbow handle, see Canvas + useEditorDrag)
+// translates the corner so the user can place the bend wherever they
+// want. The result loses strict axis-alignment when offset is set,
+// matching the "drag the bend" mental model from Lucid / draw.io.
+export function angledElbow(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  fromEp: Endpoint,
+  toEp: Endpoint,
+  elbowOffset?: { dx: number; dy: number },
+): { x: number; y: number } {
   const horizontalFirst = angledHorizontalFirst(from, to, fromEp, toEp);
-  const bx = horizontalFirst ? to.x : from.x;
-  const by = horizontalFirst ? from.y : to.y;
-  return `M ${from.x} ${from.y} L ${bx} ${by} L ${to.x} ${to.y}`;
+  const baseX = horizontalFirst ? to.x : from.x;
+  const baseY = horizontalFirst ? from.y : to.y;
+  if (!elbowOffset) return { x: baseX, y: baseY };
+  return { x: baseX + elbowOffset.dx, y: baseY + elbowOffset.dy };
 }
 
 // The point on the rendered path that a label should anchor to.
@@ -643,10 +673,10 @@ export function arrowPathMidpoint(
   fromEp: Endpoint,
   toEp: Endpoint,
   curveOffset?: { dx: number; dy: number },
+  elbowOffset?: { dx: number; dy: number },
 ): { x: number; y: number } {
   if (style === 'angled') {
-    const horizontalFirst = angledHorizontalFirst(from, to, fromEp, toEp);
-    return horizontalFirst ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
+    return angledElbow(from, to, fromEp, toEp, elbowOffset);
   }
   if (style === 'curved') {
     const c = curveControlPoint(from, to, curveOffset);

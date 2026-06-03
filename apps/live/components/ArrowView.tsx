@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   ARROWHEAD_SIZE_PX,
+  angledElbow,
   arrowheadSizeOf,
   arrowPathD,
   arrowPathMidpoint,
@@ -56,6 +57,10 @@ type ArrowViewProps = {
   // selected user grabs the curve handle. Receives the original
   // pointer event so the caller can hook up move/up listeners.
   onBeginCurveDrag?: (id: string, e: ReactPointerEvent) => void;
+  // Same shape as curve drag, but for angled arrows: the elbow
+  // handle lets the user drag the bend to a new position. Fires
+  // only when the arrow is angled and the user grabs the elbow.
+  onBeginElbowDrag?: (id: string, e: ReactPointerEvent) => void;
 };
 
 const BRAND_600 = 'rgb(2 132 199)';
@@ -81,20 +86,44 @@ function ArrowViewImpl({
   onCancelEdit,
   onBeginTranslate,
   onBeginCurveDrag,
+  onBeginElbowDrag,
 }: ArrowViewProps) {
   const isLocked = arrow.locked === true || tabLocked;
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
   const markerUrl = `url(#${arrowheadMarkerId(arrowheadSizeOf(arrow))})`;
   const style = arrowStyleOf(arrow);
-  const pathD = arrowPathD(style, from, to, arrow.from, arrow.to, arrow.curveOffset);
-  const midpoint = arrowPathMidpoint(style, from, to, arrow.from, arrow.to, arrow.curveOffset);
+  const pathD = arrowPathD(
+    style,
+    from,
+    to,
+    arrow.from,
+    arrow.to,
+    arrow.curveOffset,
+    arrow.elbowOffset,
+  );
+  const midpoint = arrowPathMidpoint(
+    style,
+    from,
+    to,
+    arrow.from,
+    arrow.to,
+    arrow.curveOffset,
+    arrow.elbowOffset,
+  );
   // Bezier control point (only meaningful for curved arrows). The
   // curve drag handle sits exactly on this point, not on the
   // visual midpoint, since dragging the control point is what
   // actually changes the curve shape (the midpoint is a derived
   // by-product of the control point at t=0.5).
   const curveControl = style === 'curved' ? curveControlPoint(from, to, arrow.curveOffset) : null;
+  // Elbow point for angled arrows. Same draggable affordance as the
+  // curve handle: drag to move the bend. The handle sits exactly on
+  // the elbow (the midpoint helper already returns this point for
+  // angled arrows, but we recompute here to keep the symmetry with
+  // curveControl explicit at the call site).
+  const elbowPoint =
+    style === 'angled' ? angledElbow(from, to, arrow.from, arrow.to, arrow.elbowOffset) : null;
   const labelText = arrow.label ?? '';
   const showLabel = isEditing || labelText.length > 0;
   const labelPos = showLabel
@@ -229,6 +258,22 @@ function ArrowViewImpl({
                 if (isLocked) return;
                 e.stopPropagation();
                 onBeginCurveDrag(arrow.id, e);
+              }}
+            />
+          ) : null}
+          {elbowPoint && onBeginElbowDrag ? (
+            // Angled-arrow elbow handle. Same affordance as the
+            // curve handle (white square, brand-600 outline) so the
+            // two read as siblings: each one bends its respective
+            // arrow style. Sits exactly on the elbow point.
+            <CurveHandle
+              cx={elbowPoint.x}
+              cy={elbowPoint.y}
+              disabled={isLocked}
+              onPointerDown={(e) => {
+                if (isLocked) return;
+                e.stopPropagation();
+                onBeginElbowDrag(arrow.id, e);
               }}
             />
           ) : null}

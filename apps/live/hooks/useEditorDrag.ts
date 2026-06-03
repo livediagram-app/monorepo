@@ -24,6 +24,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   anchorPosition,
+  angledElbow,
   arrowStyleOf,
   curveControlPoint,
   endpointPosition,
@@ -109,6 +110,7 @@ type EditorDragApi = {
   beginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   beginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   beginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
+  beginArrowElbowDrag: (arrowId: string, e: ReactPointerEvent) => void;
 };
 
 export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
@@ -269,6 +271,40 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     });
   };
 
+  // Elbow-handle drag for angled arrows. Same gesture shape as
+  // beginArrowCurveDrag but stores the auto-elbow (the corner the
+  // angled-arrow renderer would draw without offset) as the
+  // baseline. On move we compute a fresh elbowOffset as
+  // `(currentElbow - startBase)`, so the elbow lands wherever the
+  // cursor goes and the value is preserved when endpoints later
+  // move.
+  const beginArrowElbowDrag = (arrowId: string, e: ReactPointerEvent) => {
+    const d = depsRef.current;
+    if (d.formatSourceId !== null || d.groupSourceId !== null) return;
+    const arrow = d.activeTab.elements.find((el) => el.id === arrowId);
+    if (!arrow || arrow.type !== 'arrow') return;
+    if (arrowStyleOf(arrow) !== 'angled') return;
+    d.setSelectedId(arrowId);
+    if (arrow.locked === true || d.isReadOnly) return;
+    const from = endpointPosition(arrow.from, d.activeTab.elements);
+    const to = endpointPosition(arrow.to, d.activeTab.elements);
+    const baseElbow = angledElbow(from, to, arrow.from, arrow.to);
+    const currentElbow = angledElbow(from, to, arrow.from, arrow.to, arrow.elbowOffset);
+    d.markCheckpoint();
+    setDrag({
+      kind: 'arrow-elbow',
+      arrowId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startBaseX: baseElbow.x,
+      startBaseY: baseElbow.y,
+      // Pointer-to-elbow offset at grab time, same trick as
+      // beginArrowCurveDrag so the handle tracks the cursor cleanly.
+      grabDx: currentElbow.x - baseElbow.x,
+      grabDy: currentElbow.y - baseElbow.y,
+    });
+  };
+
   // Global pointer-move / pointer-up listeners. Attached once per
   // drag-start, torn down when the drag ends. Every fire reads
   // through depsRef so an external state change (zoom, selection,
@@ -422,6 +458,27 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
         return;
       }
 
+      if (drag.kind === 'arrow-elbow') {
+        // Same shape as arrow-curve, but for the angled-arrow elbow
+        // handle. The new elbow sits at `pointer + grab` (where
+        // grab is the cursor-to-elbow delta at gesture start), and
+        // we store it as a delta from the auto-elbow position so
+        // the bend survives concurrent endpoint moves the same way
+        // the curveOffset does.
+        const elbowX = drag.startBaseX + drag.grabDx + dx;
+        const elbowY = drag.startBaseY + drag.grabDy + dy;
+        const offsetDx = elbowX - drag.startBaseX;
+        const offsetDy = elbowY - drag.startBaseY;
+        tick((els) =>
+          els.map((el) =>
+            el.id === drag.arrowId && el.type === 'arrow'
+              ? { ...el, elbowOffset: { dx: offsetDx, dy: offsetDy } }
+              : el,
+          ),
+        );
+        return;
+      }
+
       if (drag.kind === 'arrow-translate') {
         // Shift both free endpoints by the same canvas delta from
         // their captured start positions. No anchor / angle snap:
@@ -506,5 +563,6 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     beginArrowTranslate,
     beginEndpointDrag,
     beginArrowCurveDrag,
+    beginArrowElbowDrag,
   };
 }

@@ -396,6 +396,7 @@ type CanvasProps = {
   onCancelEdit: () => void;
   onBeginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   onBeginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
+  onBeginArrowElbowDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   onShiftSelect: (id: string) => void;
   onBeginFormatPainter: () => void;
@@ -603,6 +604,7 @@ export function Canvas(props: CanvasProps) {
     onCancelEdit,
     onBeginEndpointDrag,
     onBeginArrowCurveDrag,
+    onBeginArrowElbowDrag,
     onBeginArrowTranslate,
     onShiftSelect,
     onBeginFormatPainter,
@@ -1383,6 +1385,7 @@ export function Canvas(props: CanvasProps) {
                   onCancelEdit={onCancelEdit}
                   onBeginTranslate={onBeginArrowTranslate}
                   onBeginCurveDrag={onBeginArrowCurveDrag}
+                  onBeginElbowDrag={onBeginArrowElbowDrag}
                 />
               </svg>
             );
