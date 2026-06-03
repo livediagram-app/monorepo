@@ -11,6 +11,23 @@
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;
   }
+
+  /* iOS Safari refuses to honour `user-scalable=no` for accessibility,
+   * and `maximum-scale=1` is not always respected on focus, so the
+   * canonical fix is to ensure every focusable input is already at
+   * 16px+ on mobile. iOS only triggers focus-zoom when the focused
+   * input's effective font-size is under 16px, so this is the lever
+   * that actually works. Constrained to (max-width: 640px) so the
+   * dense desktop chrome (text-xs / text-[10px] in tabs, palette,
+   * settings dialog) keeps its design size, and applied via
+   * font-size (no !important) so explicit larger sizes still win. */
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
 }
 
 /*
