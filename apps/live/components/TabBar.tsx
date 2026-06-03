@@ -332,6 +332,14 @@ function KeyboardIcon() {
 }
 
 function GearIcon() {
+  // Sliders silhouette (two horizontal sliders with a knob on each)
+  // instead of the cog that previously sat here. The cog's 8 spokes
+  // around a central circle read as a sun on most rendering sizes,
+  // especially in dark mode where the stroke is light, which made
+  // the Settings button look like an alternate dark-mode toggle.
+  // The sliders glyph is the standard "settings" affordance in
+  // modern UI kits (Heroicons, Lucide, Material) and reads as
+  // "settings" without ambiguity.
   return (
     <svg
       width="16"
@@ -344,8 +352,12 @@ function GearIcon() {
       strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="10" cy="10" r="2.5" />
-      <path d="M10 2.5v2.5M10 15v2.5M2.5 10h2.5M15 10h2.5M4.8 4.8l1.8 1.8M13.4 13.4l1.8 1.8M4.8 15.2l1.8-1.8M13.4 6.6l1.8-1.8" />
+      <line x1="3" y1="6" x2="11" y2="6" />
+      <line x1="16" y1="6" x2="17.5" y2="6" />
+      <circle cx="13.5" cy="6" r="2" />
+      <line x1="3" y1="14" x2="6" y2="14" />
+      <line x1="11" y1="14" x2="17.5" y2="14" />
+      <circle cx="8.5" cy="14" r="2" />
     </svg>
   );
 }
