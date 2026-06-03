@@ -2,7 +2,6 @@
 // read (spec/19).
 
 import { sha256Hex } from '@livediagram/api-schema';
-import { canReadDiagram } from '../auth/diagram-access';
 import {
   deleteImage,
   diagramReferencesImage,
@@ -24,7 +23,7 @@ import {
   missingAuth,
   notFound,
 } from '../responses';
-import { shareCodeOf, sharePasswordOf, type RouteContext } from './context';
+import { gateRead, type RouteContext } from './context';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB, see spec/19.
 
@@ -190,14 +189,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
           // future tightening of the share-code check (e.g.
           // explicit expiry, IP throttling) lands once and
           // both routes follow.
-          const diagramReadable = await canReadDiagram(
-            env,
-            d,
-            callerOwner,
-            shareCodeOf(request),
-            diagram.ownerId,
-            sharePasswordOf(request),
-          );
+          const diagramReadable = await gateRead(ctx, d, diagram.ownerId);
           if (diagramReadable) {
             allowed = await diagramReferencesImage(env, d, imageId);
           }

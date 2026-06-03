@@ -6,6 +6,7 @@
 // its segment and returns `notFound()` for sub-paths / methods it
 // doesn't recognise (preserving the original fall-through-to-404).
 
+import { canEditDiagram, canReadDiagram } from '../auth/diagram-access';
 import type { Env } from '../types';
 
 export type RouteContext = {
@@ -36,4 +37,42 @@ export function shareCodeOf(request: Request): string | null {
 // share code must, or the access gate denies password-protected diagrams.
 export function sharePasswordOf(request: Request): string | null {
   return request.headers.get('X-Share-Password');
+}
+
+// Route-side wrappers around canReadDiagram / canEditDiagram. Most
+// handler call sites need the same six args to the auth helpers
+// (env, diagramId, caller, share code, diagram owner, share
+// password); four of them (env, caller, share code, share password)
+// fall straight out of the RouteContext, so condensing them into a
+// (ctx, diagramId, diagramOwnerId) helper drops a stack of
+// repetitive 6-line invocations to 1-liners. Behaviour stays
+// identical: each helper just forwards the ctx-derived args.
+export function gateRead(
+  ctx: RouteContext,
+  diagramId: string,
+  diagramOwnerId: string,
+): Promise<boolean> {
+  return canReadDiagram(
+    ctx.env,
+    diagramId,
+    ctx.resolveOwner(),
+    shareCodeOf(ctx.request),
+    diagramOwnerId,
+    sharePasswordOf(ctx.request),
+  );
+}
+
+export function gateEdit(
+  ctx: RouteContext,
+  diagramId: string,
+  diagramOwnerId: string,
+): Promise<boolean> {
+  return canEditDiagram(
+    ctx.env,
+    diagramId,
+    ctx.resolveOwner(),
+    shareCodeOf(ctx.request),
+    diagramOwnerId,
+    sharePasswordOf(ctx.request),
+  );
 }

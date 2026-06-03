@@ -4,7 +4,6 @@
 // under a diagram id lives here.
 
 import type { Tab } from '@livediagram/diagram';
-import { canEditDiagram, canReadDiagram } from '../auth/diagram-access';
 import { parseChangeLogEntryBody } from '../change-log-body';
 import { rewriteCommentAuthors } from '../comments';
 import {
@@ -38,7 +37,7 @@ import {
 } from '../db';
 import { badRequest, CORS_HEADERS, forbidden, json, missingAuth, notFound } from '../responses';
 import type { ChangeLogEntryDTO, DiagramDTO, ShareRole } from '../types';
-import { shareCodeOf, sharePasswordOf, type RouteContext } from './context';
+import { gateEdit, gateRead, type RouteContext } from './context';
 
 export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   const { request, env, url, segments, resolveOwner } = ctx;
@@ -104,7 +103,6 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // optional, and at least one must be present.
       const body = (await request.json()) as { name?: string; tabIds?: string[] };
       const owner = resolveOwner();
-      const shareCode = shareCodeOf(request);
       if (!owner) return missingAuth();
       const existing = await getDiagram(env, id);
       const now = Date.now();
@@ -112,9 +110,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // Anyone with the diagram id could previously rewrite it.
       // We now gate on canEditDiagram so only the owner or an
       // edit-role share visitor can touch metadata.
-      const allowed = existing
-        ? await canEditDiagram(env, id, owner, shareCode, ownerId, sharePasswordOf(request))
-        : true; // create-on-first-write keeps the prior behaviour
+      const allowed = existing ? await gateEdit(ctx, id, ownerId) : true; // create-on-first-write keeps the prior behaviour
       if (!allowed) return forbidden();
       await upsertDiagramMeta(env, {
         id,
@@ -172,14 +168,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // (view-role visitors can fork their own copy, so this
       // is a read check, not an edit check). The third leg is
       // copy-specific so it stays inline.
-      let allowed = await canReadDiagram(
-        env,
-        id,
-        owner,
-        shareCodeOf(request),
-        source.ownerId,
-        sharePasswordOf(request),
-      );
+      let allowed = await gateRead(ctx, id, source.ownerId);
       if (!allowed) {
         const sharedRows = await listSharedWith(env, owner);
         if (sharedRows.some((s) => s.id === id)) allowed = true;
@@ -234,34 +223,19 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     const id = segments[2]!;
     const tabId = segments[4]!;
     const owner = resolveOwner();
-    const shareCode = shareCodeOf(request);
     if (!owner) return missingAuth();
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
 
     if (request.method === 'GET') {
-      const allowed = await canReadDiagram(
-        env,
-        id,
-        owner,
-        shareCode,
-        existing.ownerId,
-        sharePasswordOf(request),
-      );
+      const allowed = await gateRead(ctx, id, existing.ownerId);
       if (!allowed) return forbidden();
       const tab = await getTab(env, id, tabId);
       return tab ? json({ tab }) : notFound();
     }
 
     // Writes below: owner or edit-role share visitor only.
-    const allowed = await canEditDiagram(
-      env,
-      id,
-      owner,
-      shareCode,
-      existing.ownerId,
-      sharePasswordOf(request),
-    );
+    const allowed = await gateEdit(ctx, id, existing.ownerId);
     if (!allowed) return forbidden();
     if (request.method === 'PUT') {
       const body = (await request.json()) as Tab;
@@ -316,18 +290,10 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     const id = segments[2]!;
     const tabId = segments[4]!;
     const owner = resolveOwner();
-    const shareCode = shareCodeOf(request);
     if (!owner) return missingAuth();
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
-    const allowed = await canReadDiagram(
-      env,
-      id,
-      owner,
-      shareCode,
-      existing.ownerId,
-      sharePasswordOf(request),
-    );
+    const allowed = await gateRead(ctx, id, existing.ownerId);
     if (!allowed) return forbidden();
     let body: { elementId?: unknown; text?: unknown };
     try {
@@ -558,18 +524,10 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 4 && segments[3] === 'log') {
     const id = segments[2]!;
     const owner = resolveOwner();
-    const shareCode = shareCodeOf(request);
     if (!owner) return missingAuth();
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
-    const allowed = await canEditDiagram(
-      env,
-      id,
-      owner,
-      shareCode,
-      existing.ownerId,
-      sharePasswordOf(request),
-    );
+    const allowed = await gateEdit(ctx, id, existing.ownerId);
     if (!allowed) return forbidden();
 
     if (request.method === 'GET') {
@@ -593,18 +551,10 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     const id = segments[2]!;
     const entryId = segments[4]!;
     const owner = resolveOwner();
-    const shareCode = shareCodeOf(request);
     if (!owner) return missingAuth();
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
-    const allowed = await canEditDiagram(
-      env,
-      id,
-      owner,
-      shareCode,
-      existing.ownerId,
-      sharePasswordOf(request),
-    );
+    const allowed = await gateEdit(ctx, id, existing.ownerId);
     if (!allowed) return forbidden();
 
     if (request.method === 'DELETE') {
