@@ -91,20 +91,56 @@ pick it up.
 
 ## What's tested now, what's ahead
 
-- **Tested now:**
-  - `@livediagram/diagram` — diagram model helpers (`group.test.ts`,
-    `arrow-path.test.ts`).
-  - `apps/live` — canvas helpers (`lib/canvas.test.ts`), the change log
-    (`lib/change-log.test.ts`), and the diagram-history hook
-    (`hooks/useDiagramHistory.test.ts`).
+- **Tested now** (each bullet maps to one or more `*.test.ts` files in the
+  named workspace; the inventory grew well past the original list as features
+  landed, so this section captures the SHAPE of coverage rather than every
+  filename):
+  - `packages/diagram`: the diagram data model: arrow path geometry, group /
+    ungroup mutations, colour derivation, default value helpers, element
+    factories, geometry / anchor math, snap-to-element math, border presets.
+    Eight suites total, the package's logic is comprehensively covered.
+  - `apps/live/lib`: every helper in the lib layer that callers reach for,
+    including api client headers, auto-align, canvas geometry + backgrounds,
+    change-log mutations, clamp-to-viewport, dedupe, duplicate-diagram,
+    export-tab, format painter, identity, import-tab, laser buffer, local
+    identity, relative-time formatting, responsive breakpoint math, search
+    filters, template builders + the template catalogue, theme catalogue,
+    image upload validation, user preferences (the spec/20 flag set). Around
+    20 suites.
+  - `apps/live/hooks`: only the pure helpers behind `useDiagramHistory` today
+    (the `history*` functions exported from the hook file). Hook bodies need
+    `jsdom`, see "Ahead" below.
+  - `apps/live/components`: pure-logic helpers next to components, currently
+    `auth-shared.test.ts` (the auth UI's shared error message normaliser).
+    Components themselves are not tested for the same `jsdom` reason.
+  - `apps/api/src`: owner / share-code role guards (`auth/clerk`,
+    `auth/diagram-access`), every defensive row mapper that crosses D1 (the
+    `*-row.ts` modules: change-log, share-link, tab; plus the body parser in
+    `change-log-body`), the `DiagramRoom` Durable Object's security-critical
+    paths (broadcast fan-out, hello-frame role forcing, op echo guards),
+    response helpers, image MIME sniffing + stripping, comments mutation
+    helpers, the share-code generator, the SHA-256 wire-format contract from
+    `@livediagram/api-schema`, the telemetry-event validator. Around 14
+    suites.
+  - `apps/marketing/lib`: the metadata + content registries: alternatives
+    list + slug map, legal revision date, subpage metadata generator. Three
+    suites.
+
 - **Ahead:**
-  - `@livediagram/api-schema` — the DTO serialize/deserialize wire format is
-    pure and untested; a natural next target. Wire it to the shared config and
-    add round-trip tests.
-  - React component tests in `apps/live` — current hook/logic tests run fine
-    under the `node` environment; component rendering would add `jsdom` +
-    `@testing-library/react` and flip that workspace's environment to `jsdom`.
-  - Cloudflare Worker tests for `apps/api` — uses
-    `@cloudflare/vitest-pool-workers` so the D1 binding + Durable Object run in
-    a real `workerd` runtime rather than being mocked.
+  - React component + hook bodies in `apps/live`: current hook tests target
+    the pure helpers next to a hook (e.g. `historyCommit` from
+    `useDiagramHistory.ts`); the hook bodies themselves (with `useState` /
+    `useEffect`) need `jsdom` + `@testing-library/react`, which would mean
+    flipping the live workspace's environment to `jsdom` and pulling in the
+    deps. None of that is in place today.
+  - Direct tests inside `@livediagram/api-schema`: the wire-format DTOs +
+    `sha256Hex` live there but the package has no vitest harness yet (the
+    SHA-256 contract IS pinned, just from `apps/api/src/sha256.test.ts` where
+    vitest is already wired up). Adding a harness in the schema package would
+    let DTO round-trip / type-guard tests sit next to the types they cover.
+  - Worker-runtime tests for `apps/api`: the current suites run under plain
+    vitest in the `node` environment with fakes for `WebSocket` / Durable
+    Object state; a future move to `@cloudflare/vitest-pool-workers` would
+    let the D1 binding + Durable Object run in a real `workerd` runtime, but
+    that's an aspiration, not the current setup.
   - End-to-end tests are out of scope for this spec (unit tests only).
