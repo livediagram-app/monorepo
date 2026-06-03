@@ -841,9 +841,11 @@ export async function deleteAccount(
     .bind(ownerId)
     .run();
   await env.DB.prepare('DELETE FROM participants WHERE id = ?').bind(ownerId).run();
-  // user_preferences (spec/20) holds the Settings dialog state for
-  // this owner. Wipe along with everything else so a delete-account
-  // run leaves no row carrying their flags.
+  // user_preferences (spec/20) holds this owner's editor preference
+  // flags (some surfaced in the Settings dialog, some attached to
+  // per-tool surfaces like the pencil's recognise-shapes toggle).
+  // Wipe along with everything else so a delete-account run leaves
+  // no row carrying their flags.
   await env.DB.prepare('DELETE FROM user_preferences WHERE owner_id = ?').bind(ownerId).run();
   return {
     diagrams: diagramsRes.meta.changes ?? 0,

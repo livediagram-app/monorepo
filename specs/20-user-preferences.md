@@ -1,12 +1,15 @@
 # User preferences
 
 Per-user editor preference flags that toggle behaviour without
-changing diagram content. A small Settings dialog launched from
-the footer (gear button to the left of the dark-mode toggle)
-exposes them. Replaces the earlier per-diagram-settings shape:
-preferences are about the user's editor experience, not about any
-particular diagram, so they live once per account / device and
-apply everywhere.
+changing diagram content. Most are exposed through a small
+Settings dialog launched from the footer (gear button to the left
+of the dark-mode toggle); a small number are per-tool toggles
+that live next to the tool they affect (see the UI placement
+section below) rather than in Settings. Either way the
+persistence model is the same. Replaces the earlier
+per-diagram-settings shape: preferences are about the user's
+editor experience, not about any particular diagram, so they live
+once per account / device and apply everywhere.
 
 ## Where preferences live
 
@@ -149,14 +152,28 @@ on" state.
 
 ## UI placement
 
-- Settings dialog component: `apps/live/components/SettingsDialog.tsx`,
+Global preferences (auto-rebind, telemetry, draw-to-add) sit in
+the Settings dialog. Per-tool preferences (today: `recogniseShapes`
+for the pencil) sit next to the tool they affect, because
+walking the user back to a separate dialog to flip a per-tool
+behaviour is friction the tool's banner already solves.
+
+- **Settings dialog**: `apps/live/components/SettingsDialog.tsx`,
   lazy-loaded via `next/dynamic` (matches the other on-demand
-  modals: ShareDialog, ExportTabDialog, ShortcutsDialog, ImagePicker).
-- Trigger: a gear-icon button in the TabBar footer, sitting
-  between the existing Shortcuts button and the dark-mode toggle.
-  Visible in every role: view-role visitors can still flip their
-  own telemetry preference and (harmlessly) their own
+  modals: ShareDialog, ExportTabDialog, ShortcutsDialog,
+  ImagePicker). Trigger: a gear-icon button in the TabBar footer,
+  sitting between the existing Shortcuts button and the dark-mode
+  toggle. Visible in every role: view-role visitors can still
+  flip their own telemetry preference and (harmlessly) their own
   auto-rebind preference, even though they can't edit elements.
+- **Per-tool surfaces**: today only the pencil's ModeBanner (a
+  sparkle / magic-wand icon button to the left of Cancel) carries
+  the `recogniseShapes` toggle. The button reads the value from
+  the lifted `userPreferences` state in editor-page and writes
+  through `writeUserPreferences` with the resolved owner id, so
+  the round-trip is identical to a Settings dialog flip. See
+  spec/09's Shape-recognition subsection for the user-visible
+  contract.
 
 ## Read / write helpers
 
@@ -166,16 +183,24 @@ Live in `apps/live/lib/user-preferences.ts`:
   cached preferences, parsing the stored JSON and defaulting any
   missing key. Returns `{}` on parse failure (graceful). Sync,
   reads localStorage only, so the editor can use it during render.
-- `writeUserPreferences(prefs): void` serialises and writes back
-  to localStorage AND fires a non-blocking `PUT /api/preferences`
-  with the full blob. Also dispatches a
+- `writeUserPreferences(prefs, ownerId?): void` serialises and
+  writes back to localStorage AND, when `ownerId` is supplied,
+  fires a non-blocking `PUT /api/preferences` so the value
+  round-trips to D1. Also dispatches a
   `livediagram:preferences-changed` window event so same-tab
   listeners (notably `lib/telemetry.ts`) can refresh their cached
-  gate without polling.
-- `fetchUserPreferences(): Promise<UserPreferences | null>` does
-  a single `GET /api/preferences`. Returns null on failure or
-  when the api worker is unreachable. Callers use this once at
-  editor mount to reconcile with the server.
+  gate without polling. Callers without an `ownerId` (unit tests,
+  the editor before identity resolves) skip the network step and
+  still get the localStorage write; the next call with an
+  ownerId catches D1 up.
+- `fetchUserPreferences(ownerId): Promise<UserPreferences | null>`
+  does a single `GET /api/preferences` for the resolved owner,
+  merges the server's value over the localStorage cache (server
+  wins on conflict), writes the merged blob back to localStorage,
+  and dispatches `livediagram:preferences-changed`. Returns the
+  merged preferences, or null on failure / when the api worker
+  is unreachable (the caller can treat that as "stick with the
+  cache"). Called once at editor mount.
 
 Cross-tab updates are picked up via the browser's native `storage`
 event on the preferences key.
