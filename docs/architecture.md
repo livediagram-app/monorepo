@@ -18,6 +18,7 @@ packages/
   tailwind-config/shared Tailwind theme (brand palette)
   vitest-config/  shared Vitest defaults
 specs/          product source of truth, read these before adding features
+marketing/      off-site copy + media for listings and promotion (see specs/23)
 ```
 
 ## The apps

@@ -9,6 +9,7 @@ apps/        marketing site + editor + telemetry dashboard + api + router
 packages/    shared diagram model, wire-format types, UI primitives, configs
 specs/       product source of truth, read these before adding features
 docs/        practical guides for using, hosting, and contributing
+marketing/   off-site copy + media for listings and promotion (see specs/23)
 ```
 
 ## Start here
