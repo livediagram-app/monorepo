@@ -15,6 +15,13 @@ import { useEffect, useRef } from 'react';
 
 type CanvasTool = 'pan' | 'select' | 'laser';
 
+// Shape kind subset that has a dedicated palette button + single-key
+// shortcut. The wider ShapeKind union (cylinder, parallelogram,
+// stadium, devices, etc.) doesn't get one: there isn't a memorable
+// letter to spare without colliding with tools / copy / etc., and
+// the palette is one click away anyway.
+type ShortcutShape = 'square' | 'circle' | 'diamond';
+
 type EditorKeyboardShortcutsDeps = {
   // Modal-interaction state. Escape clears whichever is active.
   formatSourceId: string | null;
@@ -48,6 +55,18 @@ type EditorKeyboardShortcutsDeps = {
   // anything; selecting is harmless because the popover hides for
   // view-role).
   setCanvasTool: (t: CanvasTool) => void;
+  // Element-add callbacks. R / O / D fire addShape with the matching
+  // ShortcutShape; T / N / A fire the dedicated handlers; I opens
+  // the image picker. All five mirror their palette counterparts so
+  // the keyboard route reaches the same code path as the click route.
+  // onAddImage is nullable: pure-guest deploys without an api worker
+  // hide the palette button + null this prop, and the shortcut goes
+  // dormant to match.
+  addShape: (kind: ShortcutShape) => void;
+  addText: () => void;
+  addSticky: () => void;
+  addArrow: () => void;
+  onAddImage: (() => void) | null;
   // Per-device disable flag. When false, every shortcut effect
   // below short-circuits before attaching its listener. The
   // checkbox lives in the keyboard-shortcuts modal; the storage
@@ -146,13 +165,16 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
         return;
       }
 
-      // --- Plain key tool switches ---
-      // S = Select, P = Pan, L = Laser. Mnemonic-first bindings:
-      // each key is the first letter of the tool name, so a new
-      // user doesn't need to learn a Photoshop-era convention to
-      // get the right tool. Bail on any text-input focus so the
-      // user can still type literal "s" / "p" / "l" into an
-      // element label or comment.
+      // --- Plain key tool + element-add shortcuts ---
+      // Mnemonic-first bindings:
+      //   S = Select, P = Pan, L = Laser (tools)
+      //   R = Rectangle (square), O = Oval (circle), D = Diamond
+      //   T = Text, N = Note (sticky), A = Arrow, I = Image
+      // Bail on text-input focus + editing-label state so the user
+      // can still type literal letters into a label or comment.
+      // Element-add shortcuts also check isReadOnly so view-role
+      // visitors don't accidentally drop placeholder elements that
+      // the server will reject anyway.
       if (inText) return;
       if (live.editingId !== null) return;
       if (lower === 's') {
@@ -168,6 +190,42 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       if (lower === 'l') {
         e.preventDefault();
         live.setCanvasTool('laser');
+        return;
+      }
+      if (live.isReadOnly) return;
+      if (lower === 'r') {
+        e.preventDefault();
+        live.addShape('square');
+        return;
+      }
+      if (lower === 'o') {
+        e.preventDefault();
+        live.addShape('circle');
+        return;
+      }
+      if (lower === 'd') {
+        e.preventDefault();
+        live.addShape('diamond');
+        return;
+      }
+      if (lower === 't') {
+        e.preventDefault();
+        live.addText();
+        return;
+      }
+      if (lower === 'n') {
+        e.preventDefault();
+        live.addSticky();
+        return;
+      }
+      if (lower === 'a') {
+        e.preventDefault();
+        live.addArrow();
+        return;
+      }
+      if (lower === 'i' && live.onAddImage) {
+        e.preventDefault();
+        live.onAddImage();
         return;
       }
     };

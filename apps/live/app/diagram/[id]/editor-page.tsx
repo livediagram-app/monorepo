@@ -2759,6 +2759,11 @@ export default function LivePage() {
     copySelection,
     pasteFromClipboard,
     setCanvasTool,
+    addShape,
+    addText,
+    addSticky,
+    addArrow,
+    onAddImage: addImage ?? null,
     enabled: shortcutsEnabled,
   });
 

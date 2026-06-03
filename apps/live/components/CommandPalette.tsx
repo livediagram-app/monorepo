@@ -60,6 +60,7 @@ import {
 } from './palette-icons';
 import { ShowMoreButton } from './ShowMoreButton';
 import { Tooltip } from './Tooltip';
+import { useModKeyHeld } from '@/hooks/useModKeyHeld';
 
 export type SelectedElementControls = {
   textSize: TextSize | null;
@@ -293,6 +294,7 @@ export function CommandPalette({
             label="Add square"
             description="Drop a new square shape on the canvas."
             onClick={() => onAddShape('square')}
+            shortcut="R"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <rect
@@ -311,6 +313,7 @@ export function CommandPalette({
             label="Add circle"
             description="Drop a new circle shape on the canvas."
             onClick={() => onAddShape('circle')}
+            shortcut="O"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -320,6 +323,7 @@ export function CommandPalette({
             label="Add diamond"
             description="Diamond. Decision node."
             onClick={() => onAddShape('diamond')}
+            shortcut="D"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <polygon
@@ -444,6 +448,7 @@ export function CommandPalette({
             label="Add text"
             description="Text element. Double-click to edit."
             onClick={onAddText}
+            shortcut="T"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <path
@@ -458,6 +463,7 @@ export function CommandPalette({
             label="Add arrow"
             description="Plain connector. Add pointers in the Pointer accordion."
             onClick={onAddArrow}
+            shortcut="A"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <line
@@ -475,6 +481,7 @@ export function CommandPalette({
             label="Add sticky note"
             description="Sticky note for short annotations."
             onClick={onAddSticky}
+            shortcut="N"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <path
@@ -498,6 +505,7 @@ export function CommandPalette({
               label="Add image"
               description="Drop an image placeholder + pick / upload a file."
               onClick={onAddImage}
+              shortcut="I"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
                 <rect
@@ -1817,18 +1825,41 @@ type IconButtonProps = {
   onClick: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  // Single-key shortcut letter (e.g. "R"). Renders a corner badge
+  // whenever the user is holding Cmd/Ctrl, so the palette becomes a
+  // self-documenting cheat sheet without permanent visual clutter.
+  // The shortcut itself is bound centrally in useEditorKeyboardShortcuts;
+  // this prop is purely the visual reveal.
+  shortcut?: string;
 };
 
-function IconButton({ label, description, onClick, children, disabled }: IconButtonProps) {
+function IconButton({
+  label,
+  description,
+  onClick,
+  children,
+  disabled,
+  shortcut,
+}: IconButtonProps) {
+  const modHeld = useModKeyHeld();
+  const showBadge = !disabled && !!shortcut && modHeld;
   const button = (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
       disabled={disabled}
-      className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition enabled:hover:bg-slate-100 enabled:hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-100 dark:enabled:hover:bg-slate-800 dark:enabled:hover:text-white"
+      className="relative flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition enabled:hover:bg-slate-100 enabled:hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-100 dark:enabled:hover:bg-slate-800 dark:enabled:hover:text-white"
     >
       {children}
+      {showBadge ? (
+        <kbd
+          aria-hidden
+          className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-[3px] border border-slate-300 bg-white px-0.5 text-[8px] font-semibold uppercase leading-none text-slate-700 shadow-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+        >
+          {shortcut}
+        </kbd>
+      ) : null}
     </button>
   );
   if (disabled) return button;
