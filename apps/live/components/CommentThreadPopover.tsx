@@ -1,11 +1,12 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Portal } from './Portal';
 import type { Comment, CommentThread } from '@livediagram/diagram';
 import { initialsOf } from '@/lib/identity';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useEscape } from '@/hooks/useEscape';
+import { isMobileViewportSync } from '@/lib/responsive';
 
 type CommentThreadPopoverProps = {
   // Element this thread belongs to. The popover anchors itself by querying
@@ -50,6 +51,17 @@ export function CommentThreadPopover({
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [draft, setDraft] = useState('');
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus the composer when the popover opens, but only on desktop.
+  // On mobile, autofocus would pop the soft keyboard the instant the
+  // popover lands, hiding most of the thread + the canvas underneath
+  // it. Desktop users want to type immediately; mobile users want to
+  // read first, then tap the field deliberately to start typing.
+  useEffect(() => {
+    if (isMobileViewportSync()) return;
+    composerRef.current?.focus();
+  }, []);
 
   // Resolve the element's on-screen rect (after the canvas transform has
   // been applied), then place the popover just to the right with a small
@@ -180,6 +192,7 @@ export function CommentThreadPopover({
         {!resolved ? (
           <footer className="border-t border-slate-100 p-2 dark:border-slate-800">
             <textarea
+              ref={composerRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
