@@ -190,6 +190,25 @@ export function supportsColours(element: Element): boolean {
   );
 }
 
+// Whether the element renders a stroke thickness + dash pattern
+// (the Border accordion's strength + pattern rows). Same surface
+// is used by both the per-element setters (useElementStyle) and the
+// `paletteSelection.borderStroke / borderStyle` Canvas derivation;
+// every consumer keying off "is this element border-styleable" goes
+// through here, so a future element variant that paints a stroke
+// only needs to be added in one place (was four before this
+// predicate landed).
+//
+// Type-predicate (`element is ShapeElement | FreehandElement`) so
+// callers get TypeScript narrowing too: the `strokeWidth` / `strokeStyle`
+// fields are typed as BorderStroke / BorderStyle on these two,
+// distinct from ArrowElement's `strokeWidth: number` (raw px). A
+// non-narrowing predicate would let setters that write a BorderStroke
+// land on arrows, which TS would (correctly) reject.
+export function supportsBorder(element: Element): element is ShapeElement | FreehandElement {
+  return element.type === 'shape' || element.type === 'freehand';
+}
+
 // Default arrow stroke colour when the element has no explicit one set.
 // Picked out as a helper so the Selected Element controls can show the
 // effective colour in the swatch when no override exists.

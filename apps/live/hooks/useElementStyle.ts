@@ -22,6 +22,7 @@ import {
   bringManyToFront,
   isBoxed,
   sendManyToBack,
+  supportsBorder,
   type ArrowEnds,
   type ArrowheadSize,
   type ArrowStyle,
@@ -309,17 +310,18 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
   };
 
-  // Border-preset setters. Each writes the field on shapes + the
-  // freehand pen tool (both render the stored stroke width / style
-  // through the same renderer fields); non-supporting elements are
-  // ignored.
+  // Border-preset setters. Each writes the field on any element
+  // that `supportsBorder` accepts (today: shapes + the freehand
+  // pen tool); non-supporting elements are ignored. Routing
+  // through the shared predicate keeps the four call sites of
+  // this rule (these two setters plus the matching Canvas
+  // paletteSelection.borderStroke / borderStyle derivations) in
+  // step when a future element variant gains a border.
   const setBorderStrokeSelected = (value: BorderStroke) => {
     if (!selectedId) return;
     commit((els) =>
       els.map((el) =>
-        el.id === selectedId && (el.type === 'shape' || el.type === 'freehand')
-          ? { ...el, strokeWidth: value }
-          : el,
+        el.id === selectedId && supportsBorder(el) ? { ...el, strokeWidth: value } : el,
       ),
     );
   };
@@ -327,9 +329,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     if (!selectedId) return;
     commit((els) =>
       els.map((el) =>
-        el.id === selectedId && (el.type === 'shape' || el.type === 'freehand')
-          ? { ...el, strokeStyle: value }
-          : el,
+        el.id === selectedId && supportsBorder(el) ? { ...el, strokeStyle: value } : el,
       ),
     );
   };
