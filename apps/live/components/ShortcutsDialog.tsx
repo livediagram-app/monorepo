@@ -22,8 +22,13 @@ type ShortcutRow = {
 const SHORTCUTS: ShortcutRow[] = [
   { keys: ['⌘', 'Z'], label: 'Undo' },
   { keys: ['⌘', '⇧', 'Z'], label: 'Redo (or Ctrl-Y)' },
+  { keys: ['⌘', 'C'], label: 'Copy the current selection' },
+  { keys: ['⌘', 'V'], label: 'Paste (offset from the original, like Duplicate)' },
   { keys: ['Delete'], label: 'Delete the current selection' },
   { keys: ['Backspace'], label: 'Delete the current selection' },
+  { keys: ['V'], label: 'Switch to the Select tool' },
+  { keys: ['H'], label: 'Switch to the Pan (hand) tool' },
+  { keys: ['L'], label: 'Switch to the Laser pointer tool' },
   { keys: ['Escape'], label: 'Cancel format painter or group mode' },
   { keys: ['Shift', 'Click'], label: 'Toggle an element in the multi-selection' },
   { keys: ['Space', 'drag'], label: 'Pan the canvas (overrides the current tool)' },

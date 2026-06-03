@@ -5,6 +5,7 @@ import {
   createShape,
   createSticky,
   createText,
+  duplicateGroupedElements,
   isBoxed,
   joinGroups,
   selectionMembers,
@@ -2686,9 +2687,62 @@ export default function LivePage() {
     autoRebindArrowsRef,
   });
 
+  // Session-only clipboard for Cmd-C / Cmd-V. Lives in React state
+  // so a refresh clears it (matches every other browser's "clipboard
+  // gone on reload" expectation) but stays put across tab switches
+  // and selection changes so the user can copy in one tab, switch,
+  // and paste in another.
+  const [clipboard, setClipboard] = useState<Element[] | null>(null);
+
+  const copySelection = () => {
+    if (isReadOnly) return;
+    const idSet =
+      multiSelectedIds.size > 0
+        ? new Set(multiSelectedIds)
+        : selectedId !== null
+          ? memberIdsOf(selectedId)
+          : null;
+    if (!idSet || idSet.size === 0) return;
+    const snapshot = activeTab.elements
+      .filter((el) => idSet.has(el.id))
+      // Deep clone so a later edit to the originals doesn't bleed
+      // into a future paste.
+      .map((el) => JSON.parse(JSON.stringify(el)) as Element);
+    if (snapshot.length === 0) return;
+    setClipboard(snapshot);
+    track('Element', 'Copied');
+  };
+
+  const pasteFromClipboard = () => {
+    if (isReadOnly) return;
+    if (!clipboard || clipboard.length === 0) return;
+    const offset = 24;
+    const clipIds = new Set(clipboard.map((el) => el.id));
+    // Clipboard ids may not exist in the current tab (the source
+    // was deleted, the user pasted into a different tab, etc.).
+    // Temporarily merge them in so duplicateGroupedElements can do
+    // its id-remap + arrow-rewire. Only the freshly-minted copies
+    // get committed back, not the merged sources.
+    const existingIds = new Set(activeTab.elements.map((el) => el.id));
+    const novel = clipboard.filter((el) => !existingIds.has(el.id));
+    const merged = [...activeTab.elements, ...novel];
+    const { newElements } = duplicateGroupedElements(merged, clipIds, offset, offset);
+    if (newElements.length === 0) return;
+    commit((els) => [...els, ...newElements]);
+    if (newElements.length === 1) {
+      setSelectedId(newElements[0]!.id);
+      setMultiSelectedIds(new Set());
+    } else {
+      setSelectedId(null);
+      setMultiSelectedIds(new Set(newElements.map((el) => el.id)));
+    }
+    track('Element', 'Duplicated');
+  };
+
   // Global keyboard shortcuts (Escape cancels modes, Delete /
-  // Backspace wipes selection, Cmd-Z / Cmd-Shift-Z undo / redo)
-  // live in useEditorKeyboardShortcuts.
+  // Backspace wipes selection, Cmd-Z / Cmd-Shift-Z undo / redo,
+  // Cmd-C / Cmd-V copy / paste, V / H / L canvas-tool switch).
+  // Lives in useEditorKeyboardShortcuts.
   useEditorKeyboardShortcuts({
     formatSourceId,
     setFormatSourceId,
@@ -2702,6 +2756,9 @@ export default function LivePage() {
     deleteMultiSelected,
     undo,
     redo,
+    copySelection,
+    pasteFromClipboard,
+    setCanvasTool,
     enabled: shortcutsEnabled,
   });
 

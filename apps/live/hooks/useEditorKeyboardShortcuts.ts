@@ -1,26 +1,19 @@
 // Global keyboard shortcuts for the editor route, lifted out of
 // editor-page.tsx so the page file stays focused on orchestration.
 //
-// Two shortcuts today:
-// - Escape cancels the format-painter or group-source mode if either
-//   is active. Suppressed via the early return when neither is on so
-//   the listener isn't attached unnecessarily.
-// - Delete / Backspace wipes the current selection. Multi-selection
-//   wins over single, view-only sessions are no-op'd before
-//   preventDefault (so a viewer's Backspace still navigates the
-//   browser as usual), and any focus inside an input / textarea /
-//   contentEditable bails out so typing in a label doesn't delete
-//   the element you're typing into.
-//
-// The deps stay on the useEffect dep arrays directly (no depsRef
-// trick used by useEditorDrag / useEditorViewport): each onKey
-// closure captures the latest values at attach time, and the effect
-// re-attaches whenever any of its deps change. That's cheap because
-// keydown listeners aren't dispatch-hot in the same way pointer-move
-// is, and the closure-direct pattern is the React canon for one-shot
-// keyboard handlers.
+// The callbacks (undo, redo, deleteSelected, copy, paste, setCanvasTool)
+// are closures over editor-page state. They get fresh identity on
+// every render. The hook stashes them in a single mutable ref that
+// the keydown listeners read THROUGH, so the listener body always
+// calls the latest closure even though the effect itself only re-
+// attaches on `enabled` / `isReadOnly` changes. Without this, the
+// historical "[enabled, isReadOnly]" deps captured stale undo /
+// redo references at attach time and shortcuts that fired through
+// them silently no-op'd.
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+
+type CanvasTool = 'pan' | 'select' | 'laser';
 
 type EditorKeyboardShortcutsDeps = {
   // Modal-interaction state. Escape clears whichever is active.
@@ -34,20 +27,27 @@ type EditorKeyboardShortcutsDeps = {
   multiSelectedIds: Set<string>;
   editingId: string | null;
   // True for a view-only ('view' share role) session. Suppresses
-  // Delete / Backspace entirely (incl. preventDefault) so the
-  // browser's default behaviour for those keys stays intact.
+  // every mutator shortcut (delete, undo, redo, copy, paste) so the
+  // browser's defaults (Backspace = navigate back, Cmd-Z = browser
+  // undo) stay intact and the visitor can't desync state via
+  // shortcuts that would otherwise reach the canvas.
   isReadOnly: boolean;
-  // Action callbacks that perform the actual deletion. Both should
-  // do nothing when there's no selection (defensive), but the
-  // shortcut handler only invokes them when there IS one.
+  // Action callbacks that perform the actual mutation. Each one is
+  // a fresh closure every render: the hook reads them via a ref so
+  // the keydown listener always sees the latest version.
   deleteSelected: () => void;
   deleteMultiSelected: () => void;
-  // Undo / redo callbacks. Cmd-Z (or Ctrl-Z on non-mac) undoes;
-  // Cmd-Shift-Z (or Ctrl-Y / Ctrl-Shift-Z) redoes. The handlers
-  // already no-op when there's nothing to undo/redo, so the
-  // shortcut layer just invokes them unconditionally.
   undo: () => void;
   redo: () => void;
+  copySelection: () => void;
+  pasteFromClipboard: () => void;
+  // Canvas tool setter. V / H / L cycle through select / pan /
+  // laser. Mirrors the in-canvas tool picker so a keyboard user
+  // can switch tools without leaving home position. View-role
+  // visitors still get this (panning + lasering doesn't mutate
+  // anything; selecting is harmless because the popover hides for
+  // view-role).
+  setCanvasTool: (t: CanvasTool) => void;
   // Per-device disable flag. When false, every shortcut effect
   // below short-circuits before attaching its listener. The
   // checkbox lives in the keyboard-shortcuts modal; the storage
@@ -56,105 +56,120 @@ type EditorKeyboardShortcutsDeps = {
 };
 
 export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): void {
-  const {
-    formatSourceId,
-    setFormatSourceId,
-    groupSourceId,
-    setGroupSourceId,
-    selectedId,
-    multiSelectedIds,
-    editingId,
-    isReadOnly,
-    deleteSelected,
-    deleteMultiSelected,
-    undo,
-    redo,
-    enabled,
-  } = deps;
+  // Single mutable ref the keydown listeners read from. Repointed
+  // on every render so a stale closure can't reach an outdated
+  // callback. This is the React canon for "I want fresh references
+  // but I don't want to re-attach the listener on every render."
+  const liveRef = useRef(deps);
+  liveRef.current = deps;
 
-  // Escape cancels the format-painter / group-source mode.
+  // Escape cancels the format-painter / group-source mode. Keeping
+  // the narrow [formatSourceId, groupSourceId] deps means the
+  // listener only attaches when one of the modes is active, so we
+  // pay nothing while the user is idle. The setters come through
+  // the ref so the same-render values apply.
   useEffect(() => {
+    const { formatSourceId, groupSourceId, enabled } = liveRef.current;
     if (!enabled) return;
     if (formatSourceId === null && groupSourceId === null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setFormatSourceId(null);
-        setGroupSourceId(null);
+        liveRef.current.setFormatSourceId(null);
+        liveRef.current.setGroupSourceId(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [enabled, formatSourceId, groupSourceId, setFormatSourceId, setGroupSourceId]);
+  }, [deps.enabled, deps.formatSourceId, deps.groupSourceId]);
 
-  // Delete / Backspace wipes the current selection. Multi-selection
-  // wins over single, label-edit and any text-input focus bails out.
+  // Everything else: Delete / Backspace, Cmd-Z / Cmd-Y / Cmd-Shift-Z,
+  // Cmd-C / Cmd-V, V / H / L tool switches. One listener for the
+  // whole keyboard since they all share the typing-bailout + read-
+  // only-bailout logic.
   useEffect(() => {
-    if (!enabled) return;
+    if (!deps.enabled) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      // View-only: bail before preventDefault so the browser's
-      // default (Backspace = navigate back) still works.
-      if (isReadOnly) return;
+      const live = liveRef.current;
       const target = e.target as Element | null;
-      if (
+      const inText =
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
-        return;
-      }
-      if (editingId !== null) return;
-      if (multiSelectedIds.size > 0) {
-        e.preventDefault();
-        deleteMultiSelected();
-      } else if (selectedId !== null) {
-        e.preventDefault();
-        deleteSelected();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // deleteSelected / deleteMultiSelected are recreated on every
-    // editor-page render (closures over state); we want the latest
-    // closures here, but listing them in deps would re-attach every
-    // render. The shape mirrors the inline original's behaviour.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, multiSelectedIds, selectedId, editingId, isReadOnly]);
-
-  // Cmd-Z / Ctrl-Z = undo. Cmd-Shift-Z / Ctrl-Y / Ctrl-Shift-Z =
-  // redo. Bails when focus is inside an input / textarea /
-  // contentEditable so a user mid-rename uses the native undo
-  // for their text edit, not the diagram-level one.
-  useEffect(() => {
-    if (!enabled) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (isReadOnly) return;
+        (target instanceof HTMLElement && target.isContentEditable);
+      // Any text input gets a wide berth, except for read-only
+      // checks: even Delete / Backspace bail BEFORE preventDefault
+      // when read-only so the browser's default behaviour for
+      // those keys stays intact.
       const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      const target = e.target as Element | null;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
+      const key = e.key;
+      const lower = key.toLowerCase();
+
+      // --- Delete / Backspace ---
+      if (key === 'Delete' || key === 'Backspace') {
+        if (live.isReadOnly) return;
+        if (inText) return;
+        if (live.editingId !== null) return;
+        if (live.multiSelectedIds.size > 0) {
+          e.preventDefault();
+          live.deleteMultiSelected();
+        } else if (live.selectedId !== null) {
+          e.preventDefault();
+          live.deleteSelected();
+        }
         return;
       }
-      const key = e.key.toLowerCase();
-      // Redo branches: Cmd-Shift-Z (mac convention), Ctrl-Y
-      // (Windows convention), Ctrl-Shift-Z (covers both).
-      if (key === 'y' || (key === 'z' && e.shiftKey)) {
-        e.preventDefault();
-        redo();
+
+      // --- Cmd / Ctrl modified shortcuts ---
+      if (mod) {
+        if (inText) return;
+        if (live.isReadOnly) return;
+        // Redo: Cmd-Shift-Z, Ctrl-Y, Ctrl-Shift-Z.
+        if (lower === 'y' || (lower === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          live.redo();
+          return;
+        }
+        if (lower === 'z') {
+          e.preventDefault();
+          live.undo();
+          return;
+        }
+        if (lower === 'c') {
+          e.preventDefault();
+          live.copySelection();
+          return;
+        }
+        if (lower === 'v') {
+          e.preventDefault();
+          live.pasteFromClipboard();
+          return;
+        }
         return;
       }
-      if (key === 'z') {
+
+      // --- Plain key tool switches ---
+      // V = Select, H = Hand (Pan), L = Laser. Common canvas-app
+      // conventions (matches Figma / Excalidraw for V + H). Bail on
+      // any text-input focus so the user can still type a literal
+      // "v" / "h" / "l" into an element label or comment.
+      if (inText) return;
+      if (live.editingId !== null) return;
+      if (lower === 'v') {
         e.preventDefault();
-        undo();
+        live.setCanvasTool('select');
+        return;
+      }
+      if (lower === 'h') {
+        e.preventDefault();
+        live.setCanvasTool('pan');
+        return;
+      }
+      if (lower === 'l') {
+        e.preventDefault();
+        live.setCanvasTool('laser');
+        return;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // Same closure-direct pattern as the Delete handler above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, isReadOnly]);
+  }, [deps.enabled]);
 }
