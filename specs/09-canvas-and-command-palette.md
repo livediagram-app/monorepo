@@ -887,6 +887,20 @@ Optional alternate add-element gesture, gated on the user-preference `drawToAdd`
 - The arrow intent treats the drag's start and end points as `from` / `to` directly (a line, not a box). Stray clicks (under 16 canvas-px in both axes) fall back to the default-sized horizontal arrow centred on the click point. Element-edge snap is skipped for the arrow intent (per-end pinning still happens via the existing arrow drag-handle flow after creation).
 - Image-intent commits open the image picker after placing the element, matching the click-to-drop path.
 
+## Pen (freehand)
+
+Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pen button enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
+
+- A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pen button on the palette renders pressed while a draw is queued.
+- The canvas cursor swaps to a pen / nib glyph.
+- During the drag the canvas samples pointer positions and renders a live preview polyline. Throttled with `requestAnimationFrame` so high-DPI / 120 Hz pointers don't push thousands of samples per second.
+- On release, the raw point sequence is run through Ramer-Douglas-Peucker simplification (tolerance scales with viewport zoom so the visible jitter is what gets smoothed, not absolute canvas pixels), then converted to a smooth Catmull-Rom cubic-bezier `d` attribute on commit. The result reads as a hand-drawn curve, not a jagged polyline.
+- **Auto-close on near-start release**: if the release point is within ~16 canvas px of the start, the path closes (last segment back to the first point) AND the commit sets `closed: true` so the SVG renderer adds `Z` + a fill. This is the "sketch a custom shape" path. Releasing anywhere else commits an open stroke (no fill).
+- A stray click (zero drag distance) does NOT commit an element. The pen is gestural, not a click-to-drop tool.
+- Stroke colour follows the tab's theme (`elementStroke`) so a freehand sketch reads as part of the diagram, not as an annotation layer. Closed paths fill with the theme's `elementFill`. Both colours are overridable per element via the Colours accordion, same as any other boxed element.
+- The element is a regular boxed element after commit: drag to move, resize handles, lock / group / format-paint / themes / comments all apply. Points are stored normalised within the bounding box so resize scales the path proportionally.
+- Telemetry: `track('Element', 'Added', 'Freehand')` on commit (closed vs open is not split out for now; spec/22's closed vocabulary is by kind only).
+
 ## Out of scope (next iterations)
 
 Items still genuinely out of scope today (most of the original list has shipped — see the Editor section above):

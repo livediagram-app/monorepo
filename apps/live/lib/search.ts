@@ -36,9 +36,9 @@ type ElementItem = {
   elementId: string;
   label: string;
   // Element.type literal so callers can show a per-type icon.
-  // 'shape' / 'text' / 'sticky' / 'arrow' line up with the boxed +
-  // arrow unions in packages/diagram.
-  type: 'shape' | 'text' | 'sticky' | 'image' | 'arrow';
+  // 'shape' / 'text' / 'sticky' / 'image' / 'freehand' / 'arrow'
+  // line up with the boxed + arrow unions in packages/diagram.
+  type: 'shape' | 'text' | 'sticky' | 'image' | 'freehand' | 'arrow';
 };
 
 export type SearchResultItem = DiagramItem | FolderItem | TabItem | ElementItem;

@@ -4,6 +4,7 @@ import {
   BORDER_DASH_ARRAY,
   BORDER_RADIUS_PX,
   BORDER_STROKE_PX,
+  catmullRomToBezierPath,
   DEFAULT_BORDER_STROKE,
   DEFAULT_BORDER_STYLE,
   defaultFillColor,
@@ -14,6 +15,7 @@ import {
   PADDING_PX,
   type Anchor,
   type BoxedElement,
+  type FreehandElement,
   type ShapeKind,
   type TextSize,
 } from '@livediagram/diagram';
@@ -265,6 +267,12 @@ function BoxedElementViewImpl({
           diagramId={imageContext.diagramId}
           shareCode={imageContext.shareCode}
           canOpenPicker={!!imageContext.onOpenPicker}
+        />
+      ) : element.type === 'freehand' ? (
+        <FreehandSvg
+          element={element}
+          fill={element.fillColor ?? defaultFillColor(element)}
+          stroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
         />
       ) : (
         renderLabel(
@@ -916,6 +924,23 @@ function describeVariant(
         },
       };
     }
+    case 'freehand': {
+      // The freehand element renders its SVG path as the child
+      // content. The wrapper here just contributes the selection
+      // ring + remote-selector outline, with a transparent
+      // background so the SVG geometry is what the user sees, not
+      // a bounding rectangle. Same shape as the image case
+      // (selection-via-outline, not selection-via-border) so a
+      // dashed / dotted stroke doesn't get overridden by a box
+      // border around it.
+      const ring = `${singleRing('ring-2 ring-brand-300')} ${multiRing}`.trim();
+      return {
+        className: `${ring}`,
+        style: remoteBorderColor
+          ? { outline: `${remoteBorderWidth}px solid ${remoteBorderColor}`, outlineOffset: 2 }
+          : {},
+      };
+    }
   }
 }
 
@@ -1013,5 +1038,54 @@ function renderLabel(
       padding={padding}
       style={textStyle}
     />
+  );
+}
+
+// Renders a FreehandElement's stored polyline as a smooth SVG path.
+// Points are stored normalised into [0..1] within the element's
+// bounding box (see createFreehand), so the renderer maps them into
+// viewBox [0..100] and lets `preserveAspectRatio="none"` stretch the
+// curve when the user resizes. The stroke colour comes from theme
+// (with the per-element override), matching how other boxed elements
+// pick their accent.
+function FreehandSvg({
+  element,
+  fill,
+  stroke,
+}: {
+  element: FreehandElement;
+  fill: string;
+  stroke: string;
+}) {
+  // Map normalised points to the 100x100 viewBox before threading
+  // them through the smoothing helper. `points.length < 2` collapses
+  // to an empty path; the renderer then draws nothing, which is the
+  // right behaviour for a degenerate single-click "stroke".
+  const vbPoints = element.points.map((p) => ({ x: p.nx * 100, y: p.ny * 100 }));
+  const d = vbPoints.length < 2 ? '' : catmullRomToBezierPath(vbPoints, element.closed);
+  const dasharray = BORDER_DASH_ARRAY[element.strokeStyle ?? DEFAULT_BORDER_STYLE];
+  const widthPx = BORDER_STROKE_PX[element.strokeWidth ?? DEFAULT_BORDER_STROKE];
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden
+    >
+      {d ? (
+        <path
+          d={d}
+          // Closed paths get the fill; open strokes leave fill at
+          // none so the bounding box doesn't read as a closed shape.
+          fill={element.closed ? fill : 'none'}
+          stroke={stroke}
+          strokeWidth={widthPx}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={dasharray ?? undefined}
+          vectorEffect="non-scaling-stroke"
+        />
+      ) : null}
+    </svg>
   );
 }

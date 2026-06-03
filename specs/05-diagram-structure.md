@@ -57,14 +57,26 @@ type Tab = {
   // …plus theme, backgroundColor/Pattern/Opacity, patternColor, locked
 };
 
-// Concrete element kinds — see packages/diagram for the full shape of each:
-//   ShapeElement   (shape: square / circle / diamond / triangle / cylinder / cloud / parallelogram)
+// Concrete element kinds, see packages/diagram for the full shape of each:
+//   ShapeElement     (shape: square / circle / diamond / cylinder / parallelogram / hexagon
+//                            / document / stadium / actor / cloud / browser / monitor / laptop
+//                            / phone / tablet)
 //   TextElement
 //   StickyElement
-//   ArrowElement   (from + to Endpoints, arrowStyle, arrowheadSize, optional label)
+//   ImageElement     (boxed, references an R2-stored bitmap by imageId, see spec/19)
+//   ArrowElement     (from + to Endpoints, arrowStyle, arrowheadSize, optional label)
+//   FreehandElement  (boxed, carries a normalised polyline + optional auto-close flag for
+//                     filled custom shapes; rendered as an SVG path inside its bounding box;
+//                     see spec/09's Pen tool subsection)
 //
 // Most elements may carry `link?: ElementLink` for cross-tab navigation.
-type Element = ShapeElement | TextElement | StickyElement | ArrowElement;
+type Element =
+  | ShapeElement
+  | TextElement
+  | StickyElement
+  | ImageElement
+  | ArrowElement
+  | FreehandElement;
 
 type ElementLink =
   | { kind: 'tab'; tabId: TabId }

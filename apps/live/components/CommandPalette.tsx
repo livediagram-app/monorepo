@@ -189,6 +189,10 @@ type CommandPaletteProps = {
   // on either end by default (i.e. a plain line). Users can flip the
   // arrowEnds afterwards via the Pointer accordion.
   onAddArrow: () => void;
+  // Pen tool: enters one-shot freehand draw mode. Unlike the other
+  // add-element callbacks, this never drops at the viewport centre,
+  // the pen is gestural by design. See spec/09 Pen subsection.
+  onBeginFreehand: () => void;
   // Currently-queued draw-to-size intent, or null. When set, the
   // matching palette button (shape, text, sticky, image, arrow)
   // renders pressed so the user can see what's queued for the next
@@ -196,7 +200,7 @@ type CommandPaletteProps = {
   // on; otherwise null and no button shows the pressed treatment.
   pendingDraw?:
     | { type: 'shape'; kind: ShapeKind }
-    | { type: 'text' | 'sticky' | 'image' | 'arrow' }
+    | { type: 'text' | 'sticky' | 'image' | 'arrow' | 'freehand' }
     | null;
   // Optional callback fired with the palette's current bounding box
   // whenever it changes (via MovablePanel's ResizeObserver). Canvas
@@ -220,6 +224,7 @@ export function CommandPalette({
   onAddSticky,
   onAddImage,
   onAddArrow,
+  onBeginFreehand,
   pendingDraw,
   onSize,
   mobileTopOverridePx,
@@ -481,6 +486,31 @@ export function CommandPalette({
                 strokeWidth="2"
                 strokeLinecap="round"
               />
+            </svg>
+          </IconButton>
+          <IconButton
+            label="Pen (freehand)"
+            description="Sketch a freehand stroke. Drag to draw; release near the start to close the shape."
+            onClick={onBeginFreehand}
+            active={pendingDraw?.type === 'freehand'}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              {/* Pen nib pointing down-left, with a small notation
+                  line below to read as "draw on the canvas". Same
+                  visual language as the cursor glyph. */}
+              <path d="M11 3 L15 7 L7.5 14.5 L3 16 L4.5 11.5 Z" />
+              <path d="M11 3 L13 1" />
+              <path d="M3 16 L4.5 11.5" />
             </svg>
           </IconButton>
           <IconButton

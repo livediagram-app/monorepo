@@ -107,7 +107,14 @@ export type PendingDraw =
   | { type: 'text' }
   | { type: 'sticky' }
   | { type: 'image' }
-  | { type: 'arrow' };
+  | { type: 'arrow' }
+  // Pen intent: the user picked the freehand tool. Unlike the box
+  // intents, this one ignores the drawToAdd preference (the pen is
+  // gestural by definition) and the gesture collects a stream of
+  // pointer samples during the drag, simplified + smoothed on
+  // release into a FreehandElement (see spec/09 Pen subsection,
+  // spec/05 FreehandElement).
+  | { type: 'freehand' };
 
 // Title-cased shape label for the draw-to-size mode banner. Avoids the
 // "a / an" article problem by reading "Drag to draw {Rectangle}"
@@ -139,6 +146,8 @@ function drawBannerMessage(intent: PendingDraw): string {
       return 'Drag to draw image bounds';
     case 'arrow':
       return 'Drag to draw an arrow';
+    case 'freehand':
+      return 'Drag to draw (release near the start to close)';
   }
 }
 
@@ -196,6 +205,13 @@ function drawIntentCursor(intent: PendingDraw): string {
   if (intent.type === 'image') {
     return drawCursorFromGlyph(
       `<rect x="13" y="14" width="11" height="9" rx="1" fill="none" stroke="black" stroke-width="1.4" /><circle cx="15.5" cy="16.5" r="0.9" fill="black" /><path d="M13 21 L16 18.5 L18.5 20.5 L21 18 L24 20" stroke="black" stroke-width="1.2" stroke-linejoin="round" fill="none" />`,
+    );
+  }
+  if (intent.type === 'freehand') {
+    // Pen nib glyph: a tiny diagonal point. Reads as "drawing
+    // instrument", same as the palette button below.
+    return drawCursorFromGlyph(
+      `<path d="M14 22 L20 16 L23 19 L17 25 Z M20 16 L22 14 M14 22 L13 25" stroke="black" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none" />`,
     );
   }
   // Arrow: a tiny line with a head at the right end.
@@ -286,6 +302,7 @@ type CanvasProps = {
   // Palette's Image entry hides when missing (spec/19).
   onAddImage?: () => void;
   onAddArrow: () => void;
+  onBeginFreehand: () => void;
   // Draw-to-size mode. When user-preferences.drawToAdd is on,
   // picking any palette element (shape, text, sticky, image, arrow)
   // stashes the intent here; the canvas then enters a drag-to-define
@@ -304,6 +321,11 @@ type CanvasProps = {
     endX: number,
     endY: number,
   ) => void;
+  // Freehand commit (pen intent). Receives the raw pointer-sample
+  // polyline in canvas coords. The editor applies RDP simplification
+  // and Catmull-Rom-to-Bezier smoothing before minting the
+  // FreehandElement, both for storage size and visual smoothness.
+  onCommitFreehand: (points: { x: number; y: number }[]) => void;
   onCancelDraw: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -545,8 +567,10 @@ export function Canvas(props: CanvasProps) {
     onAddSticky,
     onAddImage,
     onAddArrow,
+    onBeginFreehand,
     pendingDraw,
     onCommitDraw,
+    onCommitFreehand,
     onCancelDraw,
     onUndo,
     onRedo,
@@ -1029,6 +1053,15 @@ export function Canvas(props: CanvasProps) {
     currentY: number;
   } | null>(null);
 
+  // Pen gesture state. The freehand intent samples pointer positions
+  // for the whole drag (one polyline) rather than start + end like
+  // the box / line intents. Stored as a flat array of canvas-coord
+  // points; appended to on every pointermove (throttled to one append
+  // per frame via requestAnimationFrame so high-DPI / 120 Hz pointers
+  // can't push thousands of samples per second through React's
+  // reconciliation). Null when no pen drag is active.
+  const [penPoints, setPenPoints] = useState<{ x: number; y: number }[] | null>(null);
+
   // Window-level move + up listeners for the draw gesture. Attached
   // only while a drag is in flight so the canvas pays nothing in the
   // common case (idle, or in pan / marquee mode). pointermove
@@ -1130,6 +1163,51 @@ export function Canvas(props: CanvasProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawDrag !== null, pendingDraw]);
 
+  // Pen-gesture sampling loop. While penPoints is non-null and the
+  // freehand intent is the active pendingDraw, accumulate pointer
+  // samples into the polyline. Pointermove writes to a local mirror
+  // and schedules ONE setPenPoints per requestAnimationFrame, so a
+  // 120 Hz pointer doesn't pump thousands of React renders. On
+  // pointerup we hand the polyline to onCommitFreehand (which
+  // simplifies + smooths it) and clear the gesture state.
+  useEffect(() => {
+    if (!penPoints || !pendingDraw || pendingDraw.type !== 'freehand') return;
+    const wrapperEl = wrapperRef.current;
+    let buffer: { x: number; y: number }[] = penPoints;
+    let rafId: number | null = null;
+    const onMove = (e: PointerEvent) => {
+      const rect = wrapperEl?.getBoundingClientRect();
+      if (!rect) return;
+      const x = (e.clientX - rect.left) / viewportZoom;
+      const y = (e.clientY - rect.top) / viewportZoom;
+      buffer = [...buffer, { x, y }];
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        setPenPoints(buffer);
+      });
+    };
+    const onUp = () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      const snapshot = buffer;
+      setPenPoints(null);
+      if (snapshot.length >= 2) {
+        onCommitFreehand(snapshot);
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [penPoints !== null, pendingDraw]);
+
   // Auto-focus the canvas surface on mount so clipboard paste works
   // before the user has clicked anywhere. The browser only dispatches
   // `paste` events on a focusable element; <main> has tabIndex=-1 to
@@ -1190,7 +1268,14 @@ export function Canvas(props: CanvasProps) {
           if (rect) {
             const sx = (e.clientX - rect.left) / viewportZoom;
             const sy = (e.clientY - rect.top) / viewportZoom;
-            setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+            if (pendingDraw.type === 'freehand') {
+              // Pen gesture: start a polyline accumulator. Subsequent
+              // pointermoves append to it via the effect below; on
+              // release the polyline is handed to onCommitFreehand.
+              setPenPoints([{ x: sx, y: sy }]);
+            } else {
+              setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+            }
             return;
           }
         }
@@ -1628,6 +1713,43 @@ export function Canvas(props: CanvasProps) {
           The three simple kinds (square / circle / stadium) bypass
           SVG and use border-radius on the wrapping div, matching
           how BoxedElementView renders them at rest. */}
+      {/* Pen-gesture live preview. While the user is drawing freehand,
+          paint the in-progress polyline as a brand-tinted stroke so
+          they can see what they're sketching. Sits on the same z-30
+          overlay layer as the draw-to-size box preview. Switches to
+          the committed FreehandSvg after release (the next render
+          tick once the new element lands in `elements`). */}
+      {penPoints && pendingDraw?.type === 'freehand' && penPoints.length >= 2
+        ? (() => {
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            if (!rect) return null;
+            // Build an SVG polyline string from the sampled canvas-
+            // coord points, converted to client coords via the
+            // wrapper rect + zoom so the overlay aligns with the
+            // canvas content.
+            const d = penPoints
+              .map(
+                (p, i) =>
+                  `${i === 0 ? 'M' : 'L'} ${rect.left + p.x * viewportZoom} ${
+                    rect.top + p.y * viewportZoom
+                  }`,
+              )
+              .join(' ');
+            return (
+              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+                <path
+                  d={d}
+                  fill="none"
+                  stroke="rgb(14, 165, 233)"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            );
+          })()
+        : null}
+
       {drawDrag && pendingDraw
         ? (() => {
             const rect = wrapperRef.current?.getBoundingClientRect();
@@ -1897,6 +2019,7 @@ export function Canvas(props: CanvasProps) {
           onAddSticky={onAddSticky}
           onAddImage={onAddImage}
           onAddArrow={onAddArrow}
+          onBeginFreehand={onBeginFreehand}
           pendingDraw={pendingDraw}
           onSize={(size) => setPaletteBottomY(size.bottomY)}
           mobileTopOverridePx={explorerBottomY > 0 ? explorerBottomY + 4 : undefined}

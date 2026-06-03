@@ -2,12 +2,14 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  createFreehand,
   createImage,
   createShape,
   createSticky,
   createText,
   duplicateGroupedElements,
   isBoxed,
+  simplifyPolyline,
   joinGroups,
   selectionMembers,
   DEFAULT_BACKGROUND_COLOR,
@@ -2578,6 +2580,68 @@ export default function LivePage() {
   };
 
   const cancelDrawShape = () => setPendingDraw(null);
+
+  // Pen tool entry. Unlike addShape / addText / etc, freehand is
+  // always gestural and doesn't drop at the viewport centre, so
+  // there's no "drop if drawToAdd is off" branch. Just queues the
+  // intent so the canvas's pen-gesture effect picks up the next
+  // drag. Clears selection like beginDrawIfEnabled does so the
+  // selection popover doesn't hover over the about-to-be-drawn
+  // stroke.
+  const beginFreehand = () => {
+    if (editsBlocked) return;
+    setSelectedId(null);
+    setMultiSelectedIds(new Set());
+    setEditingId(null);
+    if (canvasTool === 'laser') setCanvasTool('pan');
+    setPendingDraw({ type: 'freehand' });
+  };
+
+  // Canvas-driven commit for the pen gesture. Receives the raw
+  // pointer-sample polyline in canvas coords and applies:
+  //   1. Ramer-Douglas-Peucker simplification with a tolerance
+  //      that scales inversely with zoom so the visible jitter
+  //      (~1 px on screen) is what gets smoothed, not absolute
+  //      canvas pixels. At zoom 1 the tolerance is 1.2 canvas px
+  //      which removes the bulk of pointer noise without
+  //      flattening real curves.
+  //   2. Auto-close detection: if the gesture's end point is
+  //      within 16 canvas px of its start AND the polyline has
+  //      at least 4 samples (so a stray jitter near the start
+  //      doesn't trip the close), commit a closed path. Otherwise
+  //      commit an open stroke.
+  //   3. createFreehand to mint the element + commit.
+  const commitFreehand = (rawPoints: { x: number; y: number }[]) => {
+    if (editsBlocked || rawPoints.length < 2) {
+      setPendingDraw(null);
+      return;
+    }
+    const zoom = zoomRef.current ?? 1;
+    const tolerance = 1.2 / zoom;
+    const simplified = simplifyPolyline(rawPoints, tolerance);
+    if (simplified.length < 2) {
+      setPendingDraw(null);
+      return;
+    }
+    const first = simplified[0]!;
+    const last = simplified[simplified.length - 1]!;
+    const closeDist = Math.hypot(last.x - first.x, last.y - first.y);
+    const closed = simplified.length >= 4 && closeDist <= 16 / zoom;
+    const base = createFreehand(simplified, closed);
+    const theme = getTheme(activeTab.theme);
+    const elementToInsert: typeof base = {
+      ...base,
+      // Theme-aware stroke colour so a freehand sketch reads as
+      // part of the diagram. Falls back to the default in
+      // defaultStrokeColor when the theme has no override.
+      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
+      ...(closed && theme.elementFill ? { fillColor: theme.elementFill } : {}),
+    };
+    commit((els) => [...els, elementToInsert]);
+    setSelectedId(elementToInsert.id);
+    setPendingDraw(null);
+    track('Element', 'Added', 'Freehand');
+  };
   const addText = () => {
     if (editsBlocked) return;
     if (beginDrawIfEnabled({ type: 'text' })) return;
@@ -3243,8 +3307,10 @@ export default function LivePage() {
         onAddSticky={addSticky}
         onAddImage={addImage}
         onAddArrow={addArrow}
+        onBeginFreehand={beginFreehand}
         pendingDraw={pendingDraw}
         onCommitDraw={commitDraw}
+        onCommitFreehand={commitFreehand}
         onCancelDraw={cancelDrawShape}
         onUndo={undo}
         onRedo={redo}

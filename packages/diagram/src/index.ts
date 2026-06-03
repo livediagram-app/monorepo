@@ -38,6 +38,8 @@ export function defaultPadding(element: BoxedElement): Padding {
       return 'md';
     case 'image':
       return 'none';
+    case 'freehand':
+      return 'none';
   }
 }
 
@@ -133,6 +135,8 @@ export function defaultTextColor(element: BoxedElement): string {
       return '#1e293b'; // slate-800
     case 'image':
       return '#1e293b'; // slate-800 (only used for alt-text rendering)
+    case 'freehand':
+      return '#1e293b'; // slate-800 (no inline label today, future-proof)
   }
 }
 
@@ -154,6 +158,11 @@ export function defaultFillColor(element: BoxedElement): string {
       return 'transparent';
     case 'image':
       return 'transparent';
+    case 'freehand':
+      // Closed freehand paths fill with a faint brand tint to match
+      // the shape default; open paths render stroke-only so the
+      // fill is visually inert there.
+      return '#f0f9ff';
   }
 }
 
@@ -167,6 +176,8 @@ export function defaultStrokeColor(element: BoxedElement): string {
       return 'transparent';
     case 'image':
       return 'transparent';
+    case 'freehand':
+      return '#0ea5e9'; // brand-500, same accent as shapes
   }
 }
 
@@ -410,6 +421,57 @@ export type ImageElement = {
   // optionals keeps the TS union ergonomic without forcing every
   // call site to gate on `el.type !== 'image'`. Setting them on an
   // image is a no-op visually (the renderer ignores them).
+  label?: string;
+  textSize?: TextSize;
+  textAlignX?: TextAlignX;
+  textAlignY?: TextAlignY;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textStrikethrough?: boolean;
+  textColor?: string;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: BorderStroke;
+  strokeStyle?: BorderStyle;
+  borderRadius?: BorderRadius;
+  padding?: Padding;
+  locked?: boolean;
+  groupId?: ElementId;
+  aspectLocked?: boolean;
+  opacity?: number;
+  link?: ElementLink;
+  commentThread?: CommentThread;
+  note?: string;
+};
+
+// Freehand "pen tool" element (spec/09 Pen subsection). A polyline
+// sampled during a pointer drag, simplified + smoothed at commit,
+// rendered as an inline SVG path inside the element's bounding box.
+// Points are stored normalised into [0..1] across the box so resize
+// scales the path proportionally; `closed: true` adds the closing
+// segment + a theme fill (the "sketch a custom shape" path) when
+// the user released near where they started.
+export type FreehandElement = {
+  id: ElementId;
+  type: 'freehand';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  // Smoothed, normalised polyline. Each point is { nx, ny } in
+  // [0, 1] relative to the bounding box's top-left. Two values per
+  // sample (not flat-array form) so JSON shape is debuggable.
+  points: { nx: number; ny: number }[];
+  // True when the path auto-closes (release-near-start). The
+  // renderer adds `Z` + a fill; open paths render stroke-only.
+  closed: boolean;
+  // Shared boxed-element fields, see ImageElement above for the
+  // rationale: the union code paths (change log, format painter,
+  // export, Editor panel) all read these uniformly. Most are
+  // visually inert on a freehand (no inline label rendering yet),
+  // but persisting them keeps copy / paste / format-paint
+  // symmetrical with other boxed elements.
   label?: string;
   textSize?: TextSize;
   textAlignX?: TextAlignX;
@@ -713,7 +775,12 @@ function angledHorizontalFirst(
 
 // --- Element union ---------------------------------------------------------
 
-export type BoxedElement = ShapeElement | TextElement | StickyElement | ImageElement;
+export type BoxedElement =
+  | ShapeElement
+  | TextElement
+  | StickyElement
+  | ImageElement
+  | FreehandElement;
 export type Element = BoxedElement | ArrowElement;
 
 export type Tab = {
@@ -907,6 +974,178 @@ export function createImage(x: number, y: number): ImageElement {
     // corner handle breaks it via the existing aspect-lock toggle.
     aspectLocked: true,
   };
+}
+
+// Mints a freehand element from raw canvas-coord points. Caller is
+// responsible for the simplification + smoothing decision (see
+// `simplifyPolyline` and `catmullRomToBezierPath` below); this just
+// computes the bounding box and normalises the points into [0..1]
+// inside it so the saved element resizes proportionally without the
+// renderer needing the original canvas coords back. A degenerate
+// (single-point) gesture returns a 1x1 box with one normalised point
+// at the origin, which the caller can detect and reject.
+export function createFreehand(
+  rawPoints: { x: number; y: number }[],
+  closed: boolean,
+): FreehandElement {
+  if (rawPoints.length === 0) {
+    return {
+      id: crypto.randomUUID(),
+      type: 'freehand',
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+      points: [],
+      closed,
+    };
+  }
+  let minX = rawPoints[0]!.x;
+  let maxX = rawPoints[0]!.x;
+  let minY = rawPoints[0]!.y;
+  let maxY = rawPoints[0]!.y;
+  for (const p of rawPoints) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  // Pad the box by a single pixel on each side so a perfectly
+  // straight line (zero width OR zero height) still has a non-zero
+  // dimension to normalise against. Without this, dividing by 0
+  // produces NaN points and the renderer breaks.
+  const PAD = 1;
+  const width = Math.max(1, maxX - minX + PAD * 2);
+  const height = Math.max(1, maxY - minY + PAD * 2);
+  const ox = minX - PAD;
+  const oy = minY - PAD;
+  const points = rawPoints.map((p) => ({
+    nx: (p.x - ox) / width,
+    ny: (p.y - oy) / height,
+  }));
+  return {
+    id: crypto.randomUUID(),
+    type: 'freehand',
+    x: ox,
+    y: oy,
+    width,
+    height,
+    points,
+    closed,
+  };
+}
+
+// Ramer-Douglas-Peucker polyline simplification. Drops samples that
+// sit close to the straight line between their neighbours; the
+// `tolerance` is the max allowed perpendicular distance in canvas
+// pixels. Returns a new array (input untouched). Pure: no
+// randomness, no time-dependence.
+//
+// Caller passes the raw pointer samples + a tolerance scaled to
+// viewport zoom so the visible jitter is what gets smoothed, not
+// absolute canvas pixels. A short polyline (< 3 points) is returned
+// as-is, the algorithm is a no-op there.
+export function simplifyPolyline(
+  points: { x: number; y: number }[],
+  tolerance: number,
+): { x: number; y: number }[] {
+  if (points.length < 3) return points.slice();
+  const tol2 = tolerance * tolerance;
+  // Iterative RDP via an explicit stack so deep recursion can't blow
+  // the call stack on a several-thousand-sample gesture.
+  const keep = new Array<boolean>(points.length).fill(false);
+  keep[0] = true;
+  keep[points.length - 1] = true;
+  const stack: [number, number][] = [[0, points.length - 1]];
+  while (stack.length > 0) {
+    const [start, end] = stack.pop()!;
+    if (end <= start + 1) continue;
+    let maxDist2 = 0;
+    let maxIdx = start;
+    const a = points[start]!;
+    const b = points[end]!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lineLen2 = dx * dx + dy * dy;
+    for (let i = start + 1; i < end; i++) {
+      const p = points[i]!;
+      let d2: number;
+      if (lineLen2 === 0) {
+        // start == end (degenerate). Distance is just to the point.
+        const ex = p.x - a.x;
+        const ey = p.y - a.y;
+        d2 = ex * ex + ey * ey;
+      } else {
+        // Perpendicular distance from p to line a..b, squared.
+        const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lineLen2;
+        const projX = a.x + t * dx;
+        const projY = a.y + t * dy;
+        const ex = p.x - projX;
+        const ey = p.y - projY;
+        d2 = ex * ex + ey * ey;
+      }
+      if (d2 > maxDist2) {
+        maxDist2 = d2;
+        maxIdx = i;
+      }
+    }
+    if (maxDist2 > tol2) {
+      keep[maxIdx] = true;
+      stack.push([start, maxIdx]);
+      stack.push([maxIdx, end]);
+    }
+  }
+  const out: { x: number; y: number }[] = [];
+  for (let i = 0; i < points.length; i++) if (keep[i]) out.push(points[i]!);
+  return out;
+}
+
+// Catmull-Rom to cubic-Bezier SVG path. Turns a sequence of points
+// into a smooth curve passing through every one. The output is an
+// SVG `d` attribute string (M, then cubic C segments). `closed`
+// adds the closing tangent + the `Z` terminator so a filled
+// freehand reads as a continuous outline.
+//
+// Algorithm: for each segment p1..p2, compute control points from
+// the neighbouring p0 and p3 using Catmull-Rom tangents (alpha=0.5,
+// uniform tension). Endpoints reuse themselves as the missing
+// neighbour. Pure: no allocations beyond the output strings, no
+// time-dependence.
+export function catmullRomToBezierPath(
+  points: { x: number; y: number }[],
+  closed: boolean,
+): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) {
+    const p = points[0]!;
+    return `M ${p.x} ${p.y}`;
+  }
+  const n = points.length;
+  const get = (i: number): { x: number; y: number } => {
+    if (closed) return points[((i % n) + n) % n]!;
+    if (i < 0) return points[0]!;
+    if (i >= n) return points[n - 1]!;
+    return points[i]!;
+  };
+  const out: string[] = [];
+  out.push(`M ${points[0]!.x} ${points[0]!.y}`);
+  const last = closed ? n : n - 1;
+  for (let i = 0; i < last; i++) {
+    const p0 = get(i - 1);
+    const p1 = get(i);
+    const p2 = get(i + 1);
+    const p3 = get(i + 2);
+    // Catmull-Rom -> Bezier conversion (uniform / alpha = 0.5 ish).
+    // The 1/6 factor produces a smooth curve passing through p1
+    // and p2 with control points pulled from p0 and p3.
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    out.push(`C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`);
+  }
+  if (closed) out.push('Z');
+  return out.join(' ');
 }
 
 export function createArrow(fromX: number, fromY: number, toX: number, toY: number): ArrowElement {
