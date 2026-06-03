@@ -16,6 +16,7 @@ import type {
 import type { Tab } from '@livediagram/diagram';
 import { dedupeInFlight } from './dedupe';
 import type { Participant } from './identity';
+import { readLocalStorageSafe, writeLocalStorageSafe } from './local-storage-safe';
 
 // Re-export the wire-format types under the names the live app has
 // historically used so callers (editor-page.tsx, new/page.tsx, etc.)
@@ -145,6 +146,34 @@ export function setTokenProvider(provider: TokenProvider | null): void {
 let sessionSharePassword: string | null = null;
 export function setSessionSharePassword(password: string | null): void {
   sessionSharePassword = password && password.length > 0 ? password : null;
+}
+export function getSessionSharePassword(): string | null {
+  return sessionSharePassword;
+}
+
+// localStorage cache so a returning visitor on a protected diagram
+// doesn't have to retype the password every load. Keyed by share code
+// rather than diagram id because the diagram id only resolves AFTER
+// the gate is passed; the share code is what the URL carries on
+// arrival. Entry lifetime is bounded by the share code's validity:
+//   - Code revoked: apiLoadShared returns null, no cache read happens
+//     on later loads anyway (the bootstrap surfaces NotFound first).
+//   - Password rotated: the cached value comes back from the server
+//     as passwordRequired { invalid: true }, the bootstrap clears the
+//     entry, and the gate prompts the visitor afresh.
+// Threat model (spec/24) is anti-URL-guessing, not cryptographic
+// protection of user data; storing plain text mirrors what the api
+// worker already does in D1. The owner cleartext-reads it on the
+// Share dialog anyway.
+const SHARE_PASSWORD_CACHE_PREFIX = 'livediagram:share-password:';
+export function readCachedSharePassword(shareCode: string): string | null {
+  const raw = readLocalStorageSafe(`${SHARE_PASSWORD_CACHE_PREFIX}${shareCode}`);
+  return raw && raw.length > 0 ? raw : null;
+}
+export function writeCachedSharePassword(shareCode: string, password: string | null): void {
+  const key = `${SHARE_PASSWORD_CACHE_PREFIX}${shareCode}`;
+  if (password && password.length > 0) writeLocalStorageSafe(key, password);
+  else writeLocalStorageSafe(key, '');
 }
 
 // Exported for direct testing of the hybrid identity gate (spec/04):

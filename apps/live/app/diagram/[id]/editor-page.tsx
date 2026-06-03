@@ -174,7 +174,10 @@ import {
   apiAddComment,
   apiSaveTab,
   connectRoom,
+  getSessionSharePassword,
+  readCachedSharePassword,
   setSessionSharePassword,
+  writeCachedSharePassword,
   type ChangeLogEntry,
   type RoomHandlers,
   type ShareLink,
@@ -799,6 +802,14 @@ export default function LivePage() {
       // arrivals get full diagram data via the share-code endpoint and
       // are flagged `!isOwner` so the Share button hides.
       if (shareCodeParam) {
+        // Warm-cache the share password (spec/24) before the first
+        // call so a returning visitor whose password didn't change
+        // gets straight to the canvas without the gate. The seed is
+        // a no-op when the cache is empty (apiHeaders sees null and
+        // skips the X-Share-Password header), and if the server
+        // rejects the cached value we'll clear the entry below.
+        const cachedPassword = readCachedSharePassword(shareCodeParam);
+        if (cachedPassword) setSessionSharePassword(cachedPassword);
         // Pass the visitor's owner id so the api worker can record
         // their visit into shared_with — without it the server can't
         // identify the visitor and the "Shared with you" list stays
@@ -822,12 +833,26 @@ export default function LivePage() {
           // instead of hydrating. Deliberately leave `hydrated` false
           // so bumping `passwordRetry` (on submit) re-runs this effect
           // with the password now set on the session. `invalid` marks
-          // a wrong attempt so the gate can show an error.
+          // a wrong attempt so the gate can show an error. A cached
+          // password that the server just rejected goes into both
+          // buckets: clear it so we don't loop the same wrong value
+          // on the next retry, and reset the session attempt too so
+          // the gate's empty-input prompt isn't lying about what's
+          // about to be sent.
+          if (cachedPassword) {
+            writeCachedSharePassword(shareCodeParam, null);
+            setSessionSharePassword(null);
+          }
           setSharePasswordGate({ invalid: resolution.invalid });
           setLoadingDiagram(false);
           setNameConfirmed(hasConfirmedName());
           return;
         }
+        // Success path. Persist whatever password the session is
+        // currently using (cached seed OR fresh user input) so the
+        // next load skips the gate.
+        const accepted = getSessionSharePassword();
+        if (accepted) writeCachedSharePassword(shareCodeParam, accepted);
         {
           const { diagram: fetched, role } = resolution;
           const codeForVisitor = fetched.ownerId === self.id ? null : shareCodeParam;
