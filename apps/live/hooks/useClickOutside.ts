@@ -4,12 +4,15 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 // Fire `onOutside` whenever a `pointerdown` lands anywhere that
 // isn't a descendant of `ref.current`. Standard "click-outside to
-// dismiss" pattern, used by AuthControls (close the account menu)
-// and MovablePanel (collapse the mobile banner). Both consumers
-// previously open-coded a near-identical 8-line useEffect; the gap
-// between them (window+capture vs document+bubble, AuthControls'
-// `target as Node` cast vs MovablePanel's `instanceof Node` guard)
-// was an accident of order, not intent.
+// dismiss" pattern. The original two consumers were AuthControls
+// (close the account menu) and MovablePanel (collapse the mobile
+// banner), and the extraction was driven by their accidentally-
+// divergent open-coded implementations: window+capture vs
+// document+bubble, `target as Node` cast vs `instanceof Node`
+// guard, an accident of order, not intent. Today four surfaces
+// share the hook (AuthControls + MovablePanel + ShareDialog +
+// CommentThreadPopover) and any new modal / popover should reach
+// for it rather than rebuilding the listener from scratch.
 //
 // Listener is registered on `window` in the capture phase: that
 // fires before any descendant React `onClick` handlers, so we get
