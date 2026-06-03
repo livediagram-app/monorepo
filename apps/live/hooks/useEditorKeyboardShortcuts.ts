@@ -147,18 +147,20 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       }
 
       // --- Plain key tool switches ---
-      // V = Select, H = Hand (Pan), L = Laser. Common canvas-app
-      // conventions (matches Figma / Excalidraw for V + H). Bail on
-      // any text-input focus so the user can still type a literal
-      // "v" / "h" / "l" into an element label or comment.
+      // S = Select, P = Pan, L = Laser. Mnemonic-first bindings:
+      // each key is the first letter of the tool name, so a new
+      // user doesn't need to learn a Photoshop-era convention to
+      // get the right tool. Bail on any text-input focus so the
+      // user can still type literal "s" / "p" / "l" into an
+      // element label or comment.
       if (inText) return;
       if (live.editingId !== null) return;
-      if (lower === 'v') {
+      if (lower === 's') {
         e.preventDefault();
         live.setCanvasTool('select');
         return;
       }
-      if (lower === 'h') {
+      if (lower === 'p') {
         e.preventDefault();
         live.setCanvasTool('pan');
         return;
