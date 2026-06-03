@@ -489,7 +489,7 @@ export function CommandPalette({
             </svg>
           </IconButton>
           <IconButton
-            label="Pen (freehand)"
+            label="Pencil (freehand)"
             description="Sketch a freehand stroke. Drag to draw; release near the start to close the shape."
             onClick={onBeginFreehand}
             active={pendingDraw?.type === 'freehand'}
@@ -737,6 +737,7 @@ export type SelectedAccordionState = {
   text: boolean;
   colours: boolean;
   border: boolean;
+  line: boolean;
   pointer: boolean;
 };
 
@@ -772,6 +773,7 @@ export function SelectedElementSection({
         text: false,
         colours: false,
         border: false,
+        line: false,
         pointer: false,
       };
       if (prev[key]) return closed;
@@ -1101,8 +1103,11 @@ export function SelectedElementSection({
         </Accordion>
       ) : null}
 
-      {selection.arrowEnds !== null ? (
-        <Accordion title="Pointer" open={open.pointer} onToggle={() => toggle('pointer')}>
+      {selection.arrowEnds !== null &&
+      (selection.arrowThickness !== null ||
+        selection.arrowStyle !== null ||
+        selection.arrowStrokeStyle !== null) ? (
+        <Accordion title="Line" open={open.line} onToggle={() => toggle('line')}>
           {selection.arrowThickness !== null ? (
             <>
               <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
@@ -1142,7 +1147,7 @@ export function SelectedElementSection({
               <div className="mt-1 grid grid-cols-3 gap-1">
                 {(
                   [
-                    ['straight', 'Straight', 'Plain straight line — the default.'],
+                    ['straight', 'Straight', 'Plain straight line, the default.'],
                     [
                       'curved',
                       'Curved',
@@ -1190,9 +1195,13 @@ export function SelectedElementSection({
                   </Tooltip>
                 ))}
               </div>
-              <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
             </>
           ) : null}
+        </Accordion>
+      ) : null}
+
+      {selection.arrowEnds !== null ? (
+        <Accordion title="Pointer" open={open.pointer} onToggle={() => toggle('pointer')}>
           <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Pick which end(s) of the arrow have a pointer.
           </p>

@@ -120,6 +120,7 @@ export function ContextPanel({
     text: false,
     colours: false,
     border: false,
+    line: false,
     pointer: false,
   });
   // Local fallback for the tab-section accordion when the caller
@@ -152,6 +153,7 @@ export function ContextPanel({
         text: false,
         colours: false,
         border: false,
+        line: false,
         pointer: false,
       });
     } else {

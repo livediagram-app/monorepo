@@ -1988,8 +1988,15 @@ export default function LivePage() {
     };
     // Single commit that both adds the element and marks the template
     // picker as dismissed for this tab (if it was still showing).
+    // Prepend (not append) so new elements land at the BACK of the
+    // z-order: rendering is by array index, lowest first. The user
+    // observed that the previous append-default forced a manual
+    // "send to back" after most adds; "add behind existing content"
+    // is the friendlier default, and the Layer accordion's
+    // "Bring to front" still exists for the rare case where the new
+    // element should sit on top.
     const before = activeTab.elements;
-    const after = [...before, el];
+    const after = [el, ...before];
     commitTabs((ts) =>
       ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
     );
@@ -2529,7 +2536,9 @@ export default function LivePage() {
         ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
       };
       const before = activeTab.elements;
-      const after = [...before, arrow];
+      // Prepend: new elements default to the BACK of z-order
+      // (see addBoxed).
+      const after = [arrow, ...before];
       commitTabs((ts) =>
         ts.map((t) => (t.id === activeId ? { ...t, elements: after, templateChosen: true } : t)),
       );
@@ -2557,7 +2566,9 @@ export default function LivePage() {
       theme: activeTab.theme,
     });
     const sized = { ...base, ...colours, x, y, width, height } as typeof base;
-    commit((els) => [...els, sized]);
+    // Prepend so new elements default to the BACK of z-order (see
+    // addBoxed's note for the rationale).
+    commit((els) => [sized, ...els]);
     setSelectedId(sized.id);
     setPendingDraw(null);
     const label =
@@ -2637,7 +2648,8 @@ export default function LivePage() {
       ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
       ...(closed && theme.elementFill ? { fillColor: theme.elementFill } : {}),
     };
-    commit((els) => [...els, elementToInsert]);
+    // Prepend: send to back by default (see addBoxed).
+    commit((els) => [elementToInsert, ...els]);
     setSelectedId(elementToInsert.id);
     setPendingDraw(null);
     track('Element', 'Added', 'Freehand');
