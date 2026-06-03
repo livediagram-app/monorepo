@@ -204,7 +204,7 @@ Every `Add ...` button places the new element at the **centre of the visible can
 
 If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed.
 
-Clicking a button places the new element on the active tab's canvas. New elements are placed at a **staggered default position** (each shape offset slightly from the last) so multiple clicks don't stack on top of each other. (When the user-preference `drawToAdd` is on, see the [Draw-to-size](#draw-to-size) section above, the click instead queues a drag-to-define gesture and bypasses both the centre-of-viewport placement and the staggered default.)
+Multiple consecutive clicks land at the same viewport centre and stack on top of each other; the user sees the auto-selection move to the latest, so they can drag it off or undo without trial-and-error. An earlier draft of this spec promised a "staggered default position" to spread adds out, but that was never wired up and the simpler centre-then-let-the-user-move-it path turned out to be what shipped. (When the user-preference `drawToAdd` is on, see the [Draw-to-size](#draw-to-size) section below, the click instead queues a drag-to-define gesture and bypasses centre-of-viewport placement entirely.)
 
 ## Arrows
 
