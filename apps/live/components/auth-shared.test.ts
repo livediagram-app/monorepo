@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   POST_AUTH_DEFAULT,
+  messageOf,
   resolveOAuthCompleteUrl,
   resolvePostAuthDestination,
 } from './auth-shared';
@@ -124,5 +125,62 @@ describe('resolveOAuthCompleteUrl', () => {
     // default has to move in lockstep.
     expect(POST_AUTH_DEFAULT).toBe('/');
     expect(resolveOAuthCompleteUrl(params(''))).toBe('/live/');
+  });
+});
+
+// messageOf is the user-visible failure path for sign-in and
+// sign-up: every Clerk error in the two pages funnels through it
+// before reaching the inline `<p>` that explains why the form
+// didn't work. The three branches (Clerk array shape, native
+// Error, fallback string) each map to a different surface, and a
+// regression that drops to the fallback for a real Clerk error
+// would hide a useful "wrong code" / "rate limit" / "already
+// signed up" message behind a generic catch-all.
+describe('messageOf', () => {
+  it('joins a Clerk-shape errors array with ", " separators', () => {
+    const err = {
+      errors: [{ message: 'Email address is required' }, { message: 'Password is too short' }],
+    };
+    expect(messageOf(err, 'fallback')).toBe('Email address is required, Password is too short');
+  });
+
+  it('returns a single Clerk message unchanged (no leading separator)', () => {
+    const err = { errors: [{ message: 'Incorrect verification code' }] };
+    expect(messageOf(err, 'fallback')).toBe('Incorrect verification code');
+  });
+
+  it('returns the empty string when Clerk returns an empty errors array', () => {
+    // Edge: a malformed Clerk response with `errors: []`. The empty
+    // join produces "" rather than falling through to the fallback,
+    // matching the current implementation (the empty array IS the
+    // signal we matched the Clerk shape).
+    expect(messageOf({ errors: [] }, 'fallback')).toBe('');
+  });
+
+  it('falls through to the next branch when `errors` is not an array', () => {
+    // A non-Clerk object with a coincidentally-named `errors` field
+    // that isn't an array. Drops to the Error / fallback path
+    // instead of treating the bad shape as Clerk's.
+    expect(messageOf({ errors: 'oops' }, 'fallback')).toBe('fallback');
+    expect(messageOf({ errors: null }, 'fallback')).toBe('fallback');
+  });
+
+  it('returns err.message for a native Error', () => {
+    expect(messageOf(new Error('network down'), 'fallback')).toBe('network down');
+  });
+
+  it('returns err.message for a subclass of Error (TypeError)', () => {
+    expect(messageOf(new TypeError('bad arg'), 'fallback')).toBe('bad arg');
+  });
+
+  it('returns the fallback for null / undefined / primitives', () => {
+    expect(messageOf(null, 'fallback')).toBe('fallback');
+    expect(messageOf(undefined, 'fallback')).toBe('fallback');
+    expect(messageOf('a string thrown directly', 'fallback')).toBe('fallback');
+    expect(messageOf(42, 'fallback')).toBe('fallback');
+  });
+
+  it('returns the fallback for a plain object with no recognised shape', () => {
+    expect(messageOf({ unrelated: true }, 'fallback')).toBe('fallback');
   });
 });
