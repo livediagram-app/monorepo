@@ -2,6 +2,7 @@
 
 import { Portal } from './Portal';
 import { useEscape } from '@/hooks/useEscape';
+import { track } from '@/lib/telemetry';
 import type { UserPreferences } from '@/lib/user-preferences';
 
 // Per-user preference dialog (spec/20). Launched from the settings
@@ -58,19 +59,33 @@ export function SettingsDialog({ settings, onChange, onClose }: SettingsDialogPr
               label="Auto-attach arrows when elements move"
               description="Arrows connected to a shape re-pin to whichever face reads most naturally as you drag. Turn off to keep arrow anchors fixed at whatever you chose originally."
               checked={autoRebind}
-              onChange={(v) => onChange({ ...settings, autoRebindArrows: v })}
+              onChange={(v) => {
+                track('UI', 'Toggled', v ? 'AutoRebindOn' : 'AutoRebindOff');
+                onChange({ ...settings, autoRebindArrows: v });
+              }}
             />
             <ToggleRow
               label="Send anonymous usage events"
               description="Sends the small, first-party events listed on /telemetry (no user content, no third-party trackers) so we can see which features actually help. Turn off to keep everything you do strictly on your device."
               checked={telemetryOn}
-              onChange={(v) => onChange({ ...settings, telemetryEnabled: v })}
+              onChange={(v) => {
+                // Emit BEFORE writing the change: a flip to off no-ops
+                // every subsequent track() call, so the opt-out event
+                // itself has to fire first if we want any record of
+                // when users start opting out. Flips to on also fire,
+                // a quiet signal of how often people change their mind.
+                track('UI', 'Toggled', v ? 'TelemetryOn' : 'TelemetryOff');
+                onChange({ ...settings, telemetryEnabled: v });
+              }}
             />
             <ToggleRow
               label="Draw shapes instead of dropping them"
               description="When on, picking a shape from the palette enters a draw mode: the cursor becomes a crosshair and you drag a rectangle on the canvas to set the shape's size. Off (the default) drops every shape at the centre of your view at a preset size."
               checked={drawToAdd}
-              onChange={(v) => onChange({ ...settings, drawToAdd: v })}
+              onChange={(v) => {
+                track('UI', 'Toggled', v ? 'DrawToAddOn' : 'DrawToAddOff');
+                onChange({ ...settings, drawToAdd: v });
+              }}
             />
           </div>
           <footer className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
