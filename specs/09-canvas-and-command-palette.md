@@ -923,7 +923,7 @@ A sparkle / magic-wand icon button sits in the pencil `ModeBanner` (to the left 
 
 - Detected kinds: **rectangle / square** (axis-aligned 4-corner outline) → `ShapeElement` with kind `square`; **circle / oval** (closed curve hugging the inscribed ellipse) → `ShapeElement` with kind `circle`; **diamond** (4 corners at bbox edge midpoints) → `ShapeElement` with kind `diamond`; **line** (straight open polyline) → `ArrowElement` with `arrowEnds: 'none'`.
 - Heuristics, not template matching: each scorer measures the mean perpendicular distance from every sample to the idealised shape's edges (or to the inscribed-ellipse boundary), so the detector is rotation- and scale-tolerant without per-shape templates.
-- Confidence is in [0, 1]; the editor's 0.72 threshold errs toward keeping the user's sketch when ambiguous. Turning the mode off (one click) or undoing a wrong convert (Cmd-Z) is cheaper than a false-positive that swallowed a deliberate sketch.
+- Confidence is in [0, 1]; the editor's 0.55 threshold errs forgiving rather than strict. The prior 0.72 bar required almost-perfect strokes to trigger and felt broken in practice. Turning the mode off (one click) or undoing a wrong convert (Cmd-Z) is cheaper than a careful shape that stayed a freehand sketch.
 - Telemetry: a recognised commit emits `Element/Added/<Square|Circle|Diamond|Arrow>` (the dashboard reads as if the user had clicked the palette button); the unrecognised fallback emits `Element/Added/Freehand` as before. No new types in spec/22's closed vocabulary.
 
 ## Out of scope (next iterations)

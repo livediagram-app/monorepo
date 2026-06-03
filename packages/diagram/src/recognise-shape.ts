@@ -21,10 +21,11 @@
 //        c. Polygon area close to the inscribed ellipse area  -> Circle
 //
 // Each branch returns a confidence in [0, 1]. The caller's threshold
-// (today 0.72 in commitFreehand) errs toward keeping the user's
-// sketch when ambiguous: turning the recognise-shape mode off is one
-// click away, so a false-positive convert is more annoying than a
-// false-negative pass-through.
+// (today 0.55 in commitFreehand) errs forgiving rather than strict:
+// the prior 0.72 bar required almost-perfect strokes to trigger and
+// felt broken to users. Turning the recognise-shape mode off is one
+// click away, so a false-positive convert is cheaper to undo than a
+// careful shape that stayed a freehand sketch.
 
 export type RecognisedShapeKind = 'square' | 'circle' | 'diamond' | 'line';
 

@@ -2649,13 +2649,15 @@ export default function LivePage() {
 
     // Shape-recognition mode: try classifying the simplified
     // polyline before falling back to FreehandElement. Threshold
-    // 0.72 is the "user clearly meant this" line: high enough that
-    // a loose squiggle stays a sketch, low enough that a careful
-    // shape converts reliably. The mode is per-pen-session
-    // (Canvas resets it when pendingDraw clears), so a stray
-    // false-convert is one Cmd+Z away and a deliberate sketch is
-    // one toggle-click away.
-    const RECOGNITION_THRESHOLD = 0.72;
+    // 0.55 is the "user probably meant this" line: forgiving
+    // enough that a wobbly hand-drawn rectangle converts cleanly,
+    // strict enough that a deliberate scribble or doodle stays a
+    // sketch. The user dropped this from 0.72 because the prior
+    // bar required almost-perfect strokes to trigger. The mode is
+    // per-pen-session (Canvas resets it when pendingDraw clears),
+    // so a stray false-convert is one Cmd+Z away and a deliberate
+    // sketch is one toggle-click away.
+    const RECOGNITION_THRESHOLD = 0.55;
     if (recogniseShapesMode) {
       const detected = recogniseShape(simplified);
       if (detected !== null && detected.confidence >= RECOGNITION_THRESHOLD) {
