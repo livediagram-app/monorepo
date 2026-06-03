@@ -81,6 +81,14 @@ type EditorKeyboardShortcutsDeps = {
   // drag), but it lives next to them in the keyboard surface so the
   // user reaches for the same row of letters for every tool.
   onBeginFreehand: () => void;
+  // Space-tap on a single selected element drops into label edit
+  // mode (mirroring double-click on the element). Distinct from
+  // Space-drag, which the canvas hook already binds to "temporary
+  // pan": Space-down + drag pans the canvas, Space-down + Space-up
+  // (no drag in between) edits. The hook owns the tap-vs-drag
+  // detection; editor-page just hands it the selected-element edit
+  // entry point.
+  onBeginEditSelected: (elementId: string) => void;
   // Per-device disable flag. When false, every shortcut effect
   // below short-circuits before attaching its listener. The
   // checkbox lives in the keyboard-shortcuts modal; the storage
@@ -255,5 +263,64 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, [deps.enabled]);
+
+  // Space-tap on a selected element enters label edit mode. Held-
+  // Space-with-drag stays as the canvas pan modifier (see
+  // useCanvasPanAndMarquee); we distinguish a tap from a hold by
+  // watching for a pointerdown between Space-down and Space-up. If
+  // any pointerdown fires while Space is held, treat it as
+  // pan-drag and skip the edit; otherwise the keyup fires the
+  // beginEdit call. The repeat-key check stops a held Space
+  // (autorepeat) from spuriously triggering on every fired keydown.
+  useEffect(() => {
+    if (!deps.enabled) return;
+    let spaceDownAt: number | null = null;
+    let pointerDownSinceSpace = false;
+    const isTypingTarget = (t: EventTarget | null) =>
+      t instanceof HTMLInputElement ||
+      t instanceof HTMLTextAreaElement ||
+      (t instanceof HTMLElement && t.isContentEditable);
+    const onPointerDown = () => {
+      if (spaceDownAt !== null) pointerDownSinceSpace = true;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      if (e.repeat) return;
+      if (isTypingTarget(e.target)) return;
+      if (spaceDownAt === null) {
+        spaceDownAt = performance.now();
+        pointerDownSinceSpace = false;
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const heldFor = spaceDownAt !== null ? performance.now() - spaceDownAt : Infinity;
+      const wasDrag = pointerDownSinceSpace;
+      spaceDownAt = null;
+      pointerDownSinceSpace = false;
+      if (wasDrag) return;
+      if (heldFor > 600) return; // long-press with no drag is not a tap
+      const live = liveRef.current;
+      if (live.isReadOnly) return;
+      if (live.editingId !== null) return;
+      if (isTypingTarget(e.target)) return;
+      // Only act on single-element selections: multi-select Space
+      // has no well-defined "which element gets the label edit"
+      // answer, so leave the pan modifier as the only behaviour
+      // there.
+      if (live.multiSelectedIds.size > 0) return;
+      if (live.selectedId === null) return;
+      e.preventDefault();
+      live.onBeginEditSelected(live.selectedId);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+    };
   }, [deps.enabled]);
 }

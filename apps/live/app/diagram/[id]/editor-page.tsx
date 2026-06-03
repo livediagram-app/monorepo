@@ -2731,6 +2731,7 @@ export default function LivePage() {
     addArrow,
     onAddImage: addImage ?? null,
     onBeginFreehand: beginFreehand,
+    onBeginEditSelected: beginEdit,
     pendingDraw,
     onCancelDraw: cancelDrawShape,
     enabled: shortcutsEnabled,

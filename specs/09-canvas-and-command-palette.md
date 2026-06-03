@@ -845,6 +845,7 @@ The tooltip is a shared, reusable element used wherever a control needs a richer
 A shape can carry an inline **text label**.
 
 - **Double-click a shape** to enter label-edit mode. The shape's centre becomes an editable input.
+- With a single element selected, **press Space** for the same effect (keyboard equivalent of the double-click). Multi-selection Space falls through to the canvas pan modifier (see Move) since there's no obvious single label to edit; held Space + drag stays the pan modifier in every selection state.
 - Type to set or change the label.
 - Commit with **Enter** or by **clicking outside**. Cancel with **Escape**.
 - The label **auto-scales to fit the shape** — text is rendered inside an SVG whose `viewBox` is set to the text's measured bounds, with `preserveAspectRatio="xMidYMid meet"`. The text scales uniformly to fill the shape: bigger shapes get bigger text; longer labels shrink to fit.
