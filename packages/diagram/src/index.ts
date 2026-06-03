@@ -182,7 +182,12 @@ export function defaultStrokeColor(element: BoxedElement): string {
 }
 
 export function supportsColours(element: Element): boolean {
-  return element.type === 'shape' || element.type === 'sticky' || element.type === 'arrow';
+  return (
+    element.type === 'shape' ||
+    element.type === 'sticky' ||
+    element.type === 'arrow' ||
+    element.type === 'freehand'
+  );
 }
 
 // Default arrow stroke colour when the element has no explicit one set.
@@ -865,7 +870,8 @@ export function isBoxed(element: Element): element is BoxedElement {
     element.type === 'shape' ||
     element.type === 'text' ||
     element.type === 'sticky' ||
-    element.type === 'image'
+    element.type === 'image' ||
+    element.type === 'freehand'
   );
 }
 
