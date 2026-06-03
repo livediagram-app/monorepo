@@ -11,6 +11,7 @@ import {
   sendManyToBack,
   sendToBack,
   snapToAnchor,
+  supportsBorder,
   supportsColours,
   type ArrowElement,
   type Element,
@@ -253,15 +254,67 @@ describe('type predicates', () => {
     to: { kind: 'free', x: 1, y: 1 },
   };
 
-  it('isBoxed is true for shape/text/sticky and false for arrow', () => {
+  // The three element-classification predicates feed dozens of
+  // sites (resize handles, paint setters, paletteSelection field
+  // gates, marquee inclusion, elementBounds). A regression that
+  // misses a new BoxedElement variant tends to surface in
+  // confusing ways: a fresh element renders, but its setters
+  // no-op, or its bounds compute as zero, or marquee skips it.
+  // Cover the full kind matrix here so the next variant has to
+  // land in every predicate (or fail loudly) on the way in.
+
+  it('isBoxed is true for every boxed-element kind, false for arrow', () => {
     expect(isBoxed(shape('a'))).toBe(true);
+    expect(isBoxed({ ...shape('b'), type: 'text' } as Element)).toBe(true);
+    expect(isBoxed({ ...shape('c'), type: 'sticky' } as Element)).toBe(true);
+    expect(isBoxed({ ...shape('d'), type: 'image', imageId: null } as Element)).toBe(true);
+    // freehand: structurally a boxed element + a normalised polyline.
+    // The runtime guard must match the type-union membership; a recent
+    // bug left it false here and crashed elementBounds on commit.
+    expect(isBoxed({ ...shape('e'), type: 'freehand', points: [], closed: false } as Element)).toBe(
+      true,
+    );
     expect(isBoxed(arrow)).toBe(false);
   });
 
-  it('supportsColours covers shape, sticky and arrow', () => {
+  it('supportsColours covers shape, sticky, arrow, freehand; not text or image', () => {
     expect(supportsColours(shape('a'))).toBe(true);
     expect(supportsColours({ ...shape('b'), type: 'sticky' } as Element)).toBe(true);
     expect(supportsColours(arrow)).toBe(true);
-    expect(supportsColours({ ...shape('c'), type: 'text' } as Element)).toBe(false);
+    expect(
+      supportsColours({
+        ...shape('c'),
+        type: 'freehand',
+        points: [],
+        closed: false,
+      } as Element),
+    ).toBe(true);
+    // Text + image elements don't show the Colours accordion's
+    // fill / stroke swatches; the negative cases stop a future
+    // refactor that "simplifies" the predicate to `isBoxed || arrow`
+    // and silently changes the surfaced fields.
+    expect(supportsColours({ ...shape('d'), type: 'text' } as Element)).toBe(false);
+    expect(supportsColours({ ...shape('e'), type: 'image', imageId: null } as Element)).toBe(false);
+  });
+
+  it('supportsBorder is true for shape and freehand only', () => {
+    // Border-stroke + border-pattern apply to shapes and the pen
+    // tool's freehand element (both render through the same
+    // strokeWidth / strokeStyle fields). Everything else (text,
+    // sticky, image, arrow) lights up its own controls elsewhere
+    // and must NOT receive a BorderStroke / BorderStyle write.
+    expect(supportsBorder(shape('a'))).toBe(true);
+    expect(
+      supportsBorder({
+        ...shape('b'),
+        type: 'freehand',
+        points: [],
+        closed: false,
+      } as Element),
+    ).toBe(true);
+    expect(supportsBorder({ ...shape('c'), type: 'sticky' } as Element)).toBe(false);
+    expect(supportsBorder({ ...shape('d'), type: 'text' } as Element)).toBe(false);
+    expect(supportsBorder({ ...shape('e'), type: 'image', imageId: null } as Element)).toBe(false);
+    expect(supportsBorder(arrow)).toBe(false);
   });
 });
