@@ -102,7 +102,7 @@ Without these set: the api worker silently treats every request as a guest (the 
 ```sh
 pnpm test                                # everything
 pnpm --filter @livediagram/api test      # one workspace
-pnpm --filter @livediagram/live test --watch
+pnpm --filter @livediagram/live exec vitest   # watch mode while developing
 ```
 
 Tests live alongside the code they cover, as `*.test.ts` / `*.test.tsx` files. The test runner is [Vitest](https://vitest.dev) with the shared config from `@livediagram/vitest-config`. See [spec/18](../specs/18-testing.md) for the testing contract.
