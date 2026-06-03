@@ -863,7 +863,7 @@ A shape can be **locked** to prevent accidental movement or resizing.
 
 - **Press-and-drag a shape** to move it.
 - The press both selects the shape and starts the move in one gesture; on release, the shape stays at its new position.
-- The shape follows the cursor delta from where the drag began (no snapping yet).
+- The shape follows the cursor delta from where the drag began. During the drag, **edge-alignment snap** nudges the candidate position so its left / centre-x / right edges line up with any other element's left / centre-x / right edges within `ALIGN_SNAP_THRESHOLD` (6 canvas px); same for top / centre-y / bottom on the Y axis. The smallest available delta on each axis wins; the elements being dragged are excluded as snap targets so a group drag doesn't snap to itself. See `snapToAlignment` in `packages/diagram` for the helper.
 - Shapes can be placed anywhere on the canvas, including overlapping each other. No bounds.
 
 ## Resize
@@ -874,7 +874,20 @@ When a shape is selected, **four corner handles** (NW, NE, SW, SE) appear as sma
 - The corner opposite the handle stays anchored; the dragged corner follows the cursor.
 - **Minimum size is 20×20** to keep shapes pickable.
 - Resize uses the four corner handles. Free-form by default; the Shape accordion's **Lock aspect ratio** toggle constrains the W:H ratio while a resize is in progress (Circle and Diamond force the ratio regardless).
-- Mid-edge handles (N, S, E, W) are not implemented — corners only.
+- Mid-edge handles (N, S, E, W) are not implemented, corners only.
+- **Snap during resize** nudges the active edge to align with neighbour elements' edges / centres AND to match their width or height. Dimension-match means dragging a shape that's 215 px wide near another at 220 px snaps the width to exactly 220, so the user can size siblings to a shared width without pixel-fiddling. Edge-align and dimension-match compete on each axis; the smaller absolute delta wins (so a near-edge alignment beats a near-match dimension when both fall inside the threshold). Degenerate (zero-width / zero-height) elements are excluded as dimension targets. See `snapResizeBounds`.
+
+## Draw-to-size
+
+Optional alternate add-element gesture, gated on the user-preference `drawToAdd` (Settings dialog, see [spec/20](20-user-preferences.md)). When off (the default), picking a shape / tool from the palette drops the element at the viewport centre at a preset size, the historical behaviour. When on, picking a palette entry stashes an intent (shape kind, text, sticky, image, or arrow) and the next pointer-down on the canvas starts a drag-to-define gesture instead.
+
+- A top-of-canvas `ModeBanner` shows what's queued and a Cancel button; Escape cancels too.
+- The matching palette button renders with a pressed (brand-tinted) state until release.
+- Cursor: a custom inline-SVG crosshair with a small glyph of the shape / tool in the lower-right, so the user can see what's about to land without looking at the banner.
+- Picking a palette entry from laser mode auto-switches to pan so the canvas accepts the gesture (laser-mode swallows pointer-down to paint the trail).
+- Box intents (shape / text / sticky / image) compute width / height from the drag's bounding box with a 16 px floor on each axis (a stray click still produces a sensibly-sized element). The drag also passes through `snapResizeBounds` so the new element snaps to neighbour edges + dimensions the same way a resize does. **Hold Shift** to constrain to a 1:1 aspect ratio (perfect square / circle), preserving drag direction.
+- The arrow intent treats the drag's start and end points as `from` / `to` directly (a line, not a box). Stray clicks (under 16 canvas-px in both axes) fall back to the default-sized horizontal arrow centred on the click point. Element-edge snap is skipped for the arrow intent (per-end pinning still happens via the existing arrow drag-handle flow after creation).
+- Image-intent commits open the image picker after placing the element, matching the click-to-drop path.
 
 ## Out of scope (next iterations)
 
