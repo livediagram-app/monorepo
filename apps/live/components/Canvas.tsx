@@ -1227,14 +1227,25 @@ export function Canvas(props: CanvasProps) {
           });
         }
       }}
-      className="relative flex-1 touch-none select-none overflow-hidden outline-none [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent]"
-      style={tabBackgroundStyle(
-        tabBackgroundPattern,
-        viewportOffset,
-        tabBackgroundColor,
-        tabPatternColor,
-        tabBackgroundOpacity,
-      )}
+      className={`relative flex-1 touch-none select-none overflow-hidden outline-none [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] ${
+        pendingDraw ? '' : cursorClass
+      }`}
+      style={{
+        ...tabBackgroundStyle(
+          tabBackgroundPattern,
+          viewportOffset,
+          tabBackgroundColor,
+          tabPatternColor,
+          tabBackgroundOpacity,
+        ),
+        // Mirror the inner-wrapper cursor on <main>. The inner div is
+        // `absolute inset-0` but its CSS transform scales it (zoom),
+        // so when zoom is below 1 the hit area shrinks and the
+        // surrounding "letterbox" gap falls through to <main>. Without
+        // setting cursor here too, the user would see the OS default
+        // arrow in that gap while a draw-to-size intent is pending.
+        ...(pendingDraw ? { cursor: drawIntentCursor(pendingDraw) } : null),
+      }}
     >
       <div
         ref={wrapperRef}
