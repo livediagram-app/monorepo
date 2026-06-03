@@ -846,6 +846,18 @@ export function Canvas(props: CanvasProps) {
   useEffect(() => {
     multiSelectedIdsRef.current = multiSelectedIds;
   }, [multiSelectedIds]);
+
+  // Auto-focus the canvas surface on mount so clipboard paste works
+  // before the user has clicked anywhere. The browser only dispatches
+  // `paste` events on a focusable element; <main> has tabIndex=-1 to
+  // be a valid focus target, but it doesn't grab focus by itself.
+  // Without this, a freshly-loaded editor swallows Cmd/Ctrl+V silently
+  // until the first canvas click. preventScroll keeps the viewport
+  // from jumping if the page was scrolled at load time.
+  useEffect(() => {
+    const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+    node?.focus({ preventScroll: true });
+  }, [mainRef]);
   const handleArrowSelect = useCallback(
     (id: string, e: ReactPointerEvent) => {
       const set = multiSelectedIdsRef.current;
@@ -874,6 +886,17 @@ export function Canvas(props: CanvasProps) {
         onCanvasContextMenu?.(e.clientX, e.clientY);
       }}
       onPointerDown={(e) => {
+        // Focus the canvas surface so subsequent Cmd/Ctrl+V dispatches
+        // a `paste` event the editor-page-level handler can read. The
+        // browser only fires `paste` when something focusable is
+        // currently focused; tabIndex={-1} below makes <main> a valid
+        // focus target, but a click on a tabIndex=-1 element doesn't
+        // auto-focus it (mouse focus is restricted to inputs / hrefs /
+        // tabIndex>=0). Calling `.focus()` here closes that loop so
+        // clipboard-image paste works after the user has interacted
+        // with the canvas at least once.
+        const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+        node?.focus({ preventScroll: true });
         // Auto-fit on load can scale the wrapper below 1, which
         // shrinks its hit region inside `main`. Without this mirror
         // handler, clicks in the "outside the shrunken wrapper but
@@ -932,6 +955,14 @@ export function Canvas(props: CanvasProps) {
         ref={wrapperRef}
         onPointerDown={(e) => {
           if (e.target !== e.currentTarget) return;
+          // Focus the canvas surface so subsequent Cmd/Ctrl+V
+          // dispatches a paste event (see the outer pointerdown
+          // handler above for the full rationale). Same call from
+          // the inner wrapper so click-on-canvas-content (which
+          // doesn't bubble through the outer onPointerDown's
+          // currentTarget gate) still leaves the canvas focused.
+          const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+          node?.focus({ preventScroll: true });
           // Tool decides the gesture:
           //  - Pan tool / Space / Laser tool → drag scrolls. Laser
           //    drags pan because mid-presentation a click-drag is far
