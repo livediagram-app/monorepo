@@ -31,6 +31,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 20  | [User preferences](20-user-preferences.md)                         | Per-user editor preference flags (footer settings dialog)          |
 | 21  | [Comparison pages](21-comparison-pages.md)                         | `/alternatives/<tool>` SEO pages (Miro, XMind, Excalidraw, …)      |
 | 22  | [Telemetry](22-telemetry.md)                                       | Anonymous first-party events in D1 + public `/telemetry` dashboard |
+| 23  | [Marketing assets](23-marketing-assets.md)                         | `marketing/` folder: off-site copy + media for listings/promotion  |
 
 ## Workflow
 
