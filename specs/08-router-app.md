@@ -23,21 +23,22 @@ Marketing sees `/`, `/pricing`, etc., as-is — no rewriting.
 
 ## Implementation
 
-The Worker has three **service bindings** — one to each downstream app — and dispatches based on URL prefix.
+The Worker has four **service bindings**, one to each downstream app (MARKETING / LIVE / API / TELEMETRY), and dispatches based on URL prefix. The prefix-strip path is factored into a `forwardStripped()` helper shared by both basePath apps:
 
 ```ts
-// sketch — real source: apps/router/src/index.ts
+// sketch, real source: apps/router/src/index.ts
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
+      // /api/* forwards as-is; the api worker expects the full path.
       return env.API.fetch(request);
     }
     if (url.pathname === '/live' || url.pathname.startsWith('/live/')) {
-      // strip the `/live` prefix before forwarding (see above).
-      const rewritten = new URL(url.toString());
-      rewritten.pathname = url.pathname.slice('/live'.length) || '/';
-      return env.LIVE.fetch(new Request(rewritten.toString(), request));
+      return forwardStripped(request, url, '/live', env.LIVE);
+    }
+    if (url.pathname === '/telemetry' || url.pathname.startsWith('/telemetry/')) {
+      return forwardStripped(request, url, '/telemetry', env.TELEMETRY);
     }
     return env.MARKETING.fetch(request);
   },
@@ -50,14 +51,15 @@ Service bindings target deployed Workers. The downstream apps deploy as their ow
 
 The router worker is **not required for local dev**. Each app runs on its own port:
 
-| App       | Local URL                                        |
-| --------- | ------------------------------------------------ |
-| marketing | `http://localhost:3001/`                         |
-| live      | `http://localhost:3002/live` (basePath baked in) |
-| api       | `http://localhost:8787/api/...` (wrangler dev)   |
+| App       | Local URL                                             |
+| --------- | ----------------------------------------------------- |
+| marketing | `http://localhost:3001/`                              |
+| live      | `http://localhost:3002/live` (basePath baked in)      |
+| telemetry | `http://localhost:3003/telemetry` (basePath baked in) |
+| api       | `http://localhost:8787/api/...` (wrangler dev)        |
 
 Visit whichever you're working on directly. The router only matters in production where everything serves from one hostname.
 
 ## Routing infrastructure, not logic
 
-The router is **routing infrastructure**, not application logic — it holds no data and runs no business rules. That separation is non-negotiable: if you find yourself adding business logic to the router, stop, the logic belongs in a service the router forwards to (marketing, live, or api).
+The router is **routing infrastructure**, not application logic, holding no data and running no business rules. That separation is non-negotiable: if you find yourself adding business logic to the router, stop, the logic belongs in a service the router forwards to (marketing, live, telemetry, or api).
