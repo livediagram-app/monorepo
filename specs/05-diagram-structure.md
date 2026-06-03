@@ -67,7 +67,7 @@ type Tab = {
 //   ArrowElement     (from + to Endpoints, arrowStyle, arrowheadSize, optional label)
 //   FreehandElement  (boxed, carries a normalised polyline + optional auto-close flag for
 //                     filled custom shapes; rendered as an SVG path inside its bounding box;
-//                     see spec/09's Pen tool subsection)
+//                     see spec/09's Pencil (freehand) subsection)
 //
 // Most elements may carry `link?: ElementLink` for cross-tab navigation.
 type Element =
