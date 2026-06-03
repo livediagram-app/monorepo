@@ -1476,19 +1476,20 @@ export function Canvas(props: CanvasProps) {
 
       {/* SelectionPopover rides on a sibling wrapper that mirrors
           the canvas transform but lives AFTER the editor panels in
-          DOM order. Desktop (`sm:z-40`) lifts the toolbar above
-          panels (Palette, Editor / Context, Explorer) so it stays
-          visible when a selected element sits near a panel-pinned
-          corner. Mobile (`z-0`) keeps the toolbar BELOW panels:
-          the user prefers tapping a panel without the toolbar
-          fighting for the same space, and the toolbar is already
-          centred under the selected element on small screens.
+          DOM order. z-40 on every viewport: lifts the toolbar
+          above panels (Palette, Editor / Context, Explorer,
+          Activity, Zoom / ZoomControls, the TabBar footer) so it
+          stays visible whether the selected element sits near a
+          panel-pinned corner on desktop OR overlaps the bottom
+          dock on mobile. The previous mobile-only z-0 was an
+          older design choice that hid the toolbar behind chrome,
+          which made multi-select edit ops awkward on a phone.
           Diagram elements stay in the original wrapper at z-auto
           and continue to be visually covered by panels where they
           overlap. */}
       {showPopover && selectionBounds ? (
         <div
-          className="pointer-events-none absolute inset-0 z-0 origin-center sm:z-40"
+          className="pointer-events-none absolute inset-0 z-40 origin-center"
           style={{
             transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
           }}
