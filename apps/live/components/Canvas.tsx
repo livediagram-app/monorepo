@@ -1374,12 +1374,27 @@ export function Canvas(props: CanvasProps) {
           const node = mainRef && 'current' in mainRef ? mainRef.current : null;
           node?.focus({ preventScroll: true });
           // Draw-to-size intercept (mirror of the outer handler).
+          // Must branch on `freehand` the same way the outer one
+          // does: a freehand intent starts a polyline accumulator
+          // (penPoints), every other intent starts the box / line
+          // drag (drawDrag). The previous version always started a
+          // drawDrag, so a pen click landed BOTH a penPoints state
+          // (from the outer handler) AND a drawDrag (from this
+          // inner one); the drawDrag preview rendered a marquee-
+          // like box and its onUp routed the gesture into
+          // onCommitDraw, which dropped through commitDraw's
+          // ternary fallback to createImage. Three symptoms in
+          // one missing branch.
           if (pendingDraw) {
             const rect = wrapperRef.current?.getBoundingClientRect();
             if (rect) {
               const sx = (e.clientX - rect.left) / viewportZoom;
               const sy = (e.clientY - rect.top) / viewportZoom;
-              setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+              if (pendingDraw.type === 'freehand') {
+                setPenPoints([{ x: sx, y: sy }]);
+              } else {
+                setDrawDrag({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+              }
               return;
             }
           }

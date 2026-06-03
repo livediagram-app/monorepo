@@ -2548,6 +2548,15 @@ export default function LivePage() {
       track('Element', 'Added', 'Arrow');
       return;
     }
+    // Freehand never reaches commitDraw, it routes through
+    // commitFreehand (with the polyline). If a future regression
+    // mis-routes it here, bail rather than fall through the
+    // ternary into createImage and mint a phantom image element
+    // where the user expected a sketch.
+    if (intent.type === 'freehand') {
+      setPendingDraw(null);
+      return;
+    }
     const x = Math.min(startX, endX);
     const y = Math.min(startY, endY);
     const width = Math.max(16, Math.abs(endX - startX));
