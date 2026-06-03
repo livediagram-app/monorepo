@@ -18,7 +18,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 07  | [Live app](07-live-app.md)                                         | The diagram editor app at `/live`                                  |
 | 08  | [Router app](08-router-app.md)                                     | Path-based routing across apps (`/` → marketing, `/live` → editor) |
 | 09  | [Canvas + command palette](09-canvas-and-command-palette.md)       | Floating palette for adding shapes (square, circle) to the canvas  |
-| 10  | [Deployment](10-deployment.md)                                     | GitHub Actions → Cloudflare Workers pipeline for all four apps     |
+| 10  | [Deployment](10-deployment.md)                                     | GitHub Actions → Cloudflare Workers pipeline for all five apps     |
 | 11  | [API app](11-api.md)                                               | REST + WebSocket API: D1 storage + Durable Object realtime room    |
 | 12  | [Activity and audit log](12-activity-and-audit.md)                 | Per-diagram change log + Activity Panel UI + surgical revert       |
 | 13  | [Per-tab storage](13-per-tab-storage.md)                           | Split tabs into their own D1 rows so autosave scope shrinks        |
