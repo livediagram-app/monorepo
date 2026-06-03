@@ -5,11 +5,13 @@ import { useEffect, useRef } from 'react';
 // Fire `onEscape` when the user presses the Escape key. Sibling to
 // `useClickOutside`: most modal / popover surfaces in the editor
 // pair "Escape closes" with "click-outside closes", and the
-// useEffect to wire up each was being open-coded in every one. Five
-// surfaces today (SettingsDialog, ImagePicker, ShortcutsDialog,
-// SearchPanel, DeleteAccountDialog) plus three more that combine
-// Escape with a click-outside handler in the same useEffect (left
-// alone for now; splitting them is a separate concern).
+// useEffect to wire up each was being open-coded in every one.
+// Seven surfaces today (SettingsDialog, ImagePicker,
+// ShortcutsDialog, SearchPanel, DeleteAccountDialog, ShareDialog,
+// CommentThreadPopover) plus one (ContextMenu) that still combines
+// Escape with a click-outside handler in the same useEffect because
+// it also listens to the `contextmenu` event so a second right-click
+// stack-replaces the menu, which useClickOutside doesn't cover.
 //
 // Options:
 //   `enabled` (default true): when false, no listener is registered.
