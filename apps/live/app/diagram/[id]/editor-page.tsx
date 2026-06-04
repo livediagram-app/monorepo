@@ -285,7 +285,8 @@ export default function LivePage() {
     theme: boolean;
     canvas: boolean;
     cleanup: boolean;
-  }>({ theme: false, canvas: false, cleanup: false });
+    assistant: boolean;
+  }>({ theme: false, canvas: false, cleanup: false, assistant: false });
   // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
   // (drag-on-empty marquee-selects). Holding Space always pans
   // regardless. Lives in page so other components (e.g. status bar
@@ -385,13 +386,6 @@ export default function LivePage() {
   const [userPreferences, setUserPreferences] = useState<UserPreferences>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   // AI panel session visibility. Starts visible when the preference is
-  // on; the close button hides it for the session without touching the
-  // preference (user can re-show by toggling in Settings).
-  const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [aiPanelPosition, setAiPanelPosition] = useState<{ x: number; y: number } | null>(null);
-  useEffect(() => {
-    if (userPreferences.aiAssistanceEnabled) setAiPanelVisible(true);
-  }, [userPreferences.aiAssistanceEnabled]);
   // Mirror the auto-rebind flag into its own ref so the drag move
   // handler can read it without re-attaching listeners. Defaults
   // to true (auto-rebind on) so a fresh session keeps today's UX.
@@ -1960,7 +1954,7 @@ export default function LivePage() {
       setTabAccordionsOpen({
         theme: true,
         canvas: false,
-        cleanup: false,
+        cleanup: false, assistant: false,
       });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
@@ -1969,7 +1963,7 @@ export default function LivePage() {
       setTabAccordionsOpen({
         theme: false,
         canvas: true,
-        cleanup: false,
+        cleanup: false, assistant: false,
       });
     }
   };
@@ -2440,7 +2434,7 @@ export default function LivePage() {
     setTabAccordionsOpen({
       theme: which === 'theme',
       canvas: which === 'canvas',
-      cleanup: false,
+      cleanup: false, assistant: false,
     });
   };
 
@@ -3355,16 +3349,9 @@ export default function LivePage() {
         onToggleLockSelected={toggleLockSelected}
         onDeleteSelected={deleteSelected}
         onCanvasDoubleClick={handleCanvasDoubleClick}
-        aiPanel={
-          aiCapable && userPreferences.aiAssistanceEnabled && aiPanelVisible && !isReadOnly
+        aiAssistant={
+          aiCapable && userPreferences.aiAssistanceEnabled && !isReadOnly
             ? {
-                position: aiPanelPosition,
-                onMove: (x, y) => setAiPanelPosition({ x, y }),
-                onReset: () => setAiPanelPosition(null),
-                onClose: () => setAiPanelVisible(false),
-                // Always send the full tab as context so the AI
-                // doesn't produce elements that clash or go out of
-                // context. focusIds tells it which subset to act on.
                 contextElements: activeTab.elements,
                 focusIds:
                   multiSelectedIds.size > 0
@@ -3372,6 +3359,7 @@ export default function LivePage() {
                     : selectedId !== null
                       ? [selectedId]
                       : [],
+                tabName: activeTab.name,
                 onApplyElements: applyAiElements,
                 ownerId: selfParticipant.id,
               }

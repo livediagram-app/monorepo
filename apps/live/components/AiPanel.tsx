@@ -25,8 +25,8 @@ type ModeConfig = {
 const MODES: ModeConfig[] = [
   {
     id: 'generate',
-    label: 'Generate',
-    tooltip: 'Add new elements to the diagram based on your prompt.',
+    label: 'Build',
+    tooltip: 'Add or change diagram elements based on your prompt.',
     icon: <GenerateIcon />,
     suggestions: ['Login flow', 'Approval process', 'System architecture', 'Org chart', 'User journey'],
   },
@@ -280,24 +280,25 @@ export function AiPanelContent({ contextElements, focusIds, tabName, ownerId, on
       </p>
 
       {/* Prompt + send */}
-      <div className="flex gap-2 px-2 pb-2 pt-1">
+      <div className="flex flex-col gap-1.5 px-2 pb-2 pt-1">
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={PLACEHOLDERS[mode]}
-          rows={2}
+          rows={3}
           disabled={isLoading}
-          className="min-w-0 flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-800 placeholder-slate-400 outline-none transition focus:border-brand-400 focus:ring-1 focus:ring-brand-400 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-800 placeholder-slate-400 outline-none transition focus:border-brand-400 focus:ring-1 focus:ring-brand-400 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <button
           type="button"
           onClick={() => void handleSend()}
           disabled={isLoading || ownerId === 'self'}
           aria-label="Send"
-          className="flex h-8 w-8 shrink-0 self-end items-center justify-center rounded-lg bg-brand-500 text-white transition hover:bg-brand-600 disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-500 py-1.5 text-[12px] font-medium text-white transition hover:bg-brand-600 disabled:opacity-40"
         >
           {isLoading ? <Spinner small /> : <SendIcon />}
+          {isLoading ? 'Thinking…' : 'Send'}
         </button>
       </div>
     </div>

@@ -57,7 +57,6 @@ import { getTheme } from '@/lib/themes';
 import type { ChangeLogEntry } from '@/lib/api-client';
 import { isMobileViewportSync } from '@/lib/responsive';
 import { DockButton, MovablePanel } from './MovablePanel';
-import { AiPanelContent } from './AiPanel';
 // Lazy-load MultiSelectionToolbar: only mounts when the user has
 // drag-marquee'd two or more elements. Most sessions never trigger
 // it (single-element edits dominate), so deferring the 172-line
@@ -530,6 +529,7 @@ type CanvasProps = {
   // CommandPalette's Cleanup accordion + lib/auto-align.ts.
   onAutoAlign?: () => void;
   canAutoAlign?: boolean;
+  aiAssistant?: import('./CommandPalette').TabSectionControls['ai'];
   // Recent-images list for the Current Tab "Images" accordion (spec/19).
   // Forwarded through to TabSection unchanged.
   recentImages?: ImageSummary[];
@@ -543,19 +543,6 @@ type CanvasProps = {
   onToggleLockSelected: () => void;
   onDeleteSelected: () => void;
   onCanvasDoubleClick: (x: number, y: number) => void;
-  // AI Assistance panel (spec/25). Optional group so callers that
-  // haven't provisioned an OpenAI key simply omit the prop and the
-  // panel is never rendered.
-  aiPanel?: {
-    position: { x: number; y: number } | null;
-    onMove: (x: number, y: number) => void;
-    onReset: () => void;
-    onClose: () => void;
-    contextElements: Element[];
-    focusIds: string[];
-    onApplyElements: (elements: Element[], mode: 'generate' | 'clean') => void;
-    ownerId: string;
-  };
 };
 
 export function Canvas(props: CanvasProps) {
@@ -733,7 +720,7 @@ export function Canvas(props: CanvasProps) {
     onToggleLockSelected,
     onDeleteSelected,
     onCanvasDoubleClick,
-    aiPanel,
+    aiAssistant,
   } = props;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -1041,6 +1028,7 @@ export function Canvas(props: CanvasProps) {
     importError,
     onAutoAlign,
     canAutoAlign,
+    ai: aiAssistant,
     recentImages,
     imageOwnerId,
     imageDiagramId,
@@ -2078,25 +2066,6 @@ export function Canvas(props: CanvasProps) {
         </div>
       ) : null}
 
-      {!welcomeOpen && aiPanel ? (
-        <MovablePanel
-          title="AI Assistant"
-          position={aiPanel.position}
-          defaultCorner="bottom-left"
-          width="w-80"
-          collapsible
-          onReset={aiPanel.onReset}
-          onMoveTo={aiPanel.onMove}
-        >
-          <AiPanelContent
-            contextElements={aiPanel.contextElements}
-            focusIds={aiPanel.focusIds}
-            tabName={tabName}
-            ownerId={aiPanel.ownerId}
-            onApplyElements={aiPanel.onApplyElements}
-          />
-        </MovablePanel>
-      ) : null}
 
       {welcomeOpen ? null : (
         <ActivityPanel

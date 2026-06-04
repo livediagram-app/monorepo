@@ -126,11 +126,23 @@ export type TabSectionControls = {
   // "Auto align" pass: snaps every element's position + dimensions
   // to the 10px grid so almost-aligned shapes become exactly aligned
   // and minor size drift collapses. See lib/auto-align.ts. Lives in
-  // the renamed "Assistant" accordion now. Hidden when missing.
+  // the Assistant accordion. Hidden when missing.
   onAutoAlign?: () => void;
   // True when the active tab has at least one boxed element. When
   // false the button is disabled, the action would be a no-op.
   canAutoAlign?: boolean;
+  // AI Assistance (spec/25). When present the Assistant accordion
+  // renders the AI panel inline instead of as a floating panel.
+  ai?: {
+    contextElements: import('@livediagram/diagram').Element[];
+    focusIds: string[];
+    ownerId: string;
+    tabName: string;
+    onApplyElements: (
+      elements: import('@livediagram/diagram').Element[],
+      mode: 'generate' | 'clean',
+    ) => void;
+  };
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser';
