@@ -116,7 +116,7 @@ export function AiPanel({ contextElements, tabName, ownerId, onApplyElements, on
 
   return (
     <div
-      className="fixed bottom-4 left-4 z-30 flex w-72 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+      className="fixed bottom-16 left-4 z-30 flex w-72 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {/* Header */}
