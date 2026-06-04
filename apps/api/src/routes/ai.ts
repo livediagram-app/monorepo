@@ -170,6 +170,56 @@ function sanitiseElements(elements: unknown[]): unknown[] {
   });
 }
 
+// Inspect the existing elements and return a short style summary the
+// model can use to match format (shape kind, size, borderRadius, stroke
+// style). Reads the first few boxed elements and extracts consensus
+// values so new elements blend in rather than standing out.
+function extractExistingStyle(elements: unknown[]): string {
+  const boxed = elements.filter(
+    (el) =>
+      typeof el === 'object' &&
+      el !== null &&
+      (el as Record<string, unknown>).type !== 'arrow',
+  ) as Record<string, unknown>[];
+  if (boxed.length === 0) return '';
+
+  const sample = boxed.slice(0, 5);
+  const parts: string[] = [];
+
+  // Dominant shape kind
+  const shapes = sample.map((e) => e.shape).filter(Boolean);
+  if (shapes.length > 0) {
+    const dominant = shapes
+      .reduce(
+        (acc: Map<unknown, number>, s) => acc.set(s, (acc.get(s) ?? 0) + 1),
+        new Map<unknown, number>(),
+      );
+    const top = [...dominant.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (top) parts.push(`shape: "${String(top[0])}"`);
+  }
+
+  // Typical size
+  const ws = sample.map((e) => Number(e.width)).filter((n) => n > 0);
+  const hs = sample.map((e) => Number(e.height)).filter((n) => n > 0);
+  if (ws.length > 0 && hs.length > 0) {
+    const avgW = Math.round(ws.reduce((a, b) => a + b, 0) / ws.length);
+    const avgH = Math.round(hs.reduce((a, b) => a + b, 0) / hs.length);
+    parts.push(`size: ~${avgW}×${avgH}`);
+  }
+
+  // borderRadius if set
+  const radii = sample.map((e) => e.borderRadius).filter(Boolean);
+  if (radii.length > 0) parts.push(`borderRadius: "${String(radii[0])}"`);
+
+  // strokeStyle if set
+  const strokes = sample.map((e) => e.strokeStyle).filter(Boolean);
+  if (strokes.length > 0) parts.push(`strokeStyle: "${String(strokes[0])}"`);
+
+  return parts.length > 0
+    ? `Use these same values for new elements — ${parts.join(', ')}.`
+    : '';
+}
+
 export async function handleAi(ctx: RouteContext): Promise<Response> {
   const { request, env } = ctx;
 
@@ -206,10 +256,16 @@ export async function handleAi(ctx: RouteContext): Promise<Response> {
   const systemPrompt = buildSystemPrompt(mode, typeof tabName === 'string' ? tabName : '', focusIds);
   const typeHint = mode !== 'review' ? diagramTypeHint(prompt) : '';
 
+  const safe = sanitiseElements(elements);
+
+  // Summarise the visual style of existing elements so the AI can
+  // replicate it rather than inventing a different format.
+  const existingStyle = extractExistingStyle(safe);
+
   const userContent =
     mode === 'review'
-      ? `Diagram elements:\n${JSON.stringify(sanitiseElements(elements))}\n\n${prompt.trim() || 'Give general feedback.'}`
-      : `Existing diagram elements:\n${JSON.stringify(sanitiseElements(elements))}\n\n${typeHint ? `Diagram type guidance: ${typeHint}\n\n` : ''}Request: ${prompt.trim() || 'Clean up this diagram.'}`;
+      ? `Diagram elements:\n${JSON.stringify(safe)}\n\n${prompt.trim() || 'Give general feedback.'}`
+      : `Existing diagram elements:\n${JSON.stringify(safe)}\n\n${existingStyle ? `Existing element style (replicate this for new elements): ${existingStyle}\n\n` : ''}${typeHint ? `Diagram type guidance: ${typeHint}\n\n` : ''}Request: ${prompt.trim() || 'Clean up this diagram.'}`;
 
   // Clamp history to MAX_HISTORY_TURNS and sanitise roles.
   const safeHistory = history
