@@ -1185,7 +1185,7 @@ export async function apiAiStream(
   let jsonBuf = '';  // accumulated JSON tokens for mutating modes
   let reviewText = '';
   let lastCount = 0;
-  const isReview = payload.mode === 'review';
+  const isReview = payload.mode === 'review' || payload.mode === 'ask';
 
   for (;;) {
     const { done, value } = await reader.read();
