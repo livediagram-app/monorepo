@@ -3165,6 +3165,7 @@ export default function LivePage() {
           setEditingId(null);
           setFormatSourceId(null);
           setGroupSourceId(null);
+          setContextMenu(null);
         }}
         onSelect={selectElement}
         onElementContextMenu={
