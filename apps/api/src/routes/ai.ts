@@ -61,6 +61,7 @@ DESIGN RULES:
 • Add borderRadius:"sm" to most shapes for a polished look.
 • Org-chart arrows: arrowEnds:"to" (directional hierarchy, no arrowhead at parent).
 • IDs: "ai-" + 8 random hex chars (e.g. "ai-3f8a2b1c"). Must be globally unique.
+• Do NOT generate "image" or "freehand" element types — use shapes instead. For people/users always use shape "actor". For documents use shape "document". For databases use shape "cylinder".
 
 COMPREHENSIVENESS — mandatory:
 • A process/flow diagram needs at LEAST 10–15 elements.
