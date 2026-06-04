@@ -102,7 +102,7 @@ TEMPLATE / LAYOUT CONVENTIONS:
   from the hub and connect with "straight" arrows using the correct outward anchor
 • Kanban: vertical columns, text headers, sticky note cards, no arrows
 
-OUTPUT FORMAT — required for all mutating modes:
+OUTPUT FORMAT — all mutating modes must return valid JSON in this exact shape:
 {"elements":[...],"summary":"1–2 sentence description of what was produced and key design decisions."}
 `.trim();
 
