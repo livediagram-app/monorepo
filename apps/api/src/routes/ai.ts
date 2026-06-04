@@ -7,26 +7,66 @@ const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 // Hard limits to cap token spend and prevent context stuffing.
 const MAX_PROMPT_CHARS = 1000;
 const MAX_ELEMENTS = 200;
-const MAX_TOKENS_MUTATE = 4000;
+const MAX_TOKENS_MUTATE = 6000;
 const MAX_TOKENS_REVIEW = 600;
 
-// Compact schema description injected into every system prompt so the
-// model knows the valid output shape without us sending the full TS
-// source. Kept intentionally terse to save tokens.
+// Schema + design system injected into every prompt. Prescriptive
+// enough that the model produces visually correct diagrams without
+// needing additional clarification.
 const SCHEMA = `
-LIVEDIAGRAM ELEMENT SCHEMA (output only these types):
+ELEMENT TYPES:
 
-shape: {id,type:"shape",shape:ShapeKind,x,y,width,height,label?,fillColor?,strokeColor?,textColor?,strokeWidth?:"none"|"thin"|"medium"|"thick"|"extra-thick",strokeStyle?:"solid"|"dashed"|"dotted",borderRadius?:"none"|"sm"|"md"|"lg",textBold?,textItalic?,opacity?}
-ShapeKind: "square","circle","diamond","triangle","pentagon","hexagon","cylinder","parallelogram","trapezoid","plus","chevron","star","actor","process","decision","document","note","stadium","callout","pill"
+shape  — the primary building block for EVERY node, box, step, or entity.
+  {id, type:"shape", shape:ShapeKind, x, y, width, height,
+   label?, fillColor?, strokeColor?, textColor?,
+   strokeWidth?:"none"|"thin"|"medium"|"thick"|"extra-thick",
+   strokeStyle?:"solid"|"dashed"|"dotted",
+   borderRadius?:"none"|"sm"|"md"|"lg",
+   textBold?, textItalic?}
 
-text: {id,type:"text",x,y,width,height,label?,textColor?,textBold?,textItalic?}
+  ShapeKind — choose semantically:
+    "square"       → default for ALL generic boxes, steps, entities, components (USE THIS MOST)
+    "diamond"      → decisions / branch points only
+    "circle"       → start/end states, events
+    "cylinder"     → databases / storage only
+    "actor"        → UML human actors only
+    "process"      → swimlane processes
+    "document"     → documents / reports
+    "stadium"      → terminals / pills
+    "note"         → annotations / callouts
+    "parallelogram"→ input/output in flowcharts
+    (others: "triangle","pentagon","hexagon","trapezoid","plus","chevron","star","callout","pill")
 
-sticky: {id,type:"sticky",x,y,width,height,label?,fillColor?,textColor?}
+text   — ONLY for standalone headings, section labels, or captions, NEVER for nodes that should be boxes.
+  {id, type:"text", x, y, width, height, label?, textColor?, textBold?, textItalic?}
 
-arrow: {id,type:"arrow",from:Endpoint,to:Endpoint,label?,strokeColor?,arrowStyle?:"straight"|"curved"|"angled",arrowEnds?:"from"|"to"|"both"|"none",strokeStyle?:"solid"|"dashed"|"dotted"}
-Endpoint: {kind:"free",x,y} OR {kind:"pinned",elementId:string,anchor:"n"|"s"|"e"|"w"|"ne"|"nw"|"se"|"sw"}
+sticky — sticky notes / informal annotations.
+  {id, type:"sticky", x, y, width, height, label?, fillColor?, textColor?}
 
-RULES: IDs must be unique strings (prefix "ai-" + short random hex). Colors: hex #rrggbb only. Positions: 0–3000. Do NOT output image or freehand elements. Default to "square" for generic boxes/nodes unless there is a specific semantic reason to use another shape (e.g. "diamond" for decisions, "circle" for start/end states, "actor" only for UML actors, "cylinder" only for databases).
+arrow  — connections between elements. ALWAYS use pinned endpoints when connecting two shapes that exist in the diagram.
+  {id, type:"arrow", from:Endpoint, to:Endpoint, label?,
+   strokeColor?, arrowStyle?:"straight"|"curved"|"angled",
+   arrowEnds?:"from"|"to"|"both"|"none",
+   strokeStyle?:"solid"|"dashed"|"dotted"}
+  Endpoint: {kind:"pinned", elementId:string, anchor:"n"|"s"|"e"|"w"|"ne"|"nw"|"se"|"sw"}
+         OR {kind:"free", x:number, y:number}  ← only if no target element exists
+
+DESIGN RULES:
+- Use type:"shape" with shape:"square" for every node/box — NEVER substitute a bare text element where a box belongs.
+- Default node size: width:140, height:60. Vary for importance (title nodes: 160×70, small labels: 120×50).
+- Spacing: at least 40px gap between shapes. Layout left-to-right or top-to-bottom in a clean grid.
+- Colors: give shapes a light fillColor (e.g. #e0e7ff for blue, #dcfce7 for green, #fef9c3 for yellow) and a matching strokeColor one shade darker. Leave textColor unset (inherits).
+- Arrows: pin to the closest logical anchor (e.g. "e" → "w" for left-to-right flow). Add a short label on arrows only when the relationship needs clarification.
+- IDs: unique strings, prefix "ai-" + short hex (e.g. "ai-a1b2").
+- Positions: integers, 0–3000. No negative values.
+- Do NOT output image or freehand elements.
+
+EXAMPLE — a two-step flow:
+{"elements":[
+  {"id":"ai-001","type":"shape","shape":"square","x":100,"y":200,"width":140,"height":60,"label":"Step 1","fillColor":"#e0e7ff","strokeColor":"#6366f1","borderRadius":"sm"},
+  {"id":"ai-002","type":"shape","shape":"square","x":320,"y":200,"width":140,"height":60,"label":"Step 2","fillColor":"#e0e7ff","strokeColor":"#6366f1","borderRadius":"sm"},
+  {"id":"ai-003","type":"arrow","from":{"kind":"pinned","elementId":"ai-001","anchor":"e"},"to":{"kind":"pinned","elementId":"ai-002","anchor":"w"}}
+]}
 `.trim();
 
 // Security guard prepended to every system prompt. Instructs the model
