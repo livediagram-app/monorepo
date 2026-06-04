@@ -227,7 +227,7 @@ export function AiPanelContent({ contextElements, focusIds, tabName, ownerId, on
           ref={responseRef}
           className="max-h-64 min-h-[4rem] overflow-y-auto px-3 py-2 text-[12px] leading-relaxed"
         >
-          {mode === 'review' ? (
+          {mode === 'review' || mode === 'ask' ? (
             <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300">
               {reviewText}
               {status === 'loading' && <BlinkCursor />}
