@@ -414,16 +414,25 @@ export type TelemetryWindow = {
 
 export type AiMode = 'generate' | 'amend' | 'clean' | 'review';
 
+export type AiConversationTurn = { role: 'user' | 'assistant'; content: string };
+
 // Request body for POST /api/ai.
 export type AiRequest = {
   mode: AiMode;
   // Free-text instruction from the user (max 1 000 chars, enforced server-side).
   prompt: string;
-  // Elements to act on — either the selected subset or the full active
-  // tab, computed client-side before the request is sent.
+  // All elements on the active tab (full context). Server uses focusIds
+  // to tell the model which subset to act on; the rest is read-only context.
   elements: unknown[];
   // Name of the active tab, included in the system prompt for context.
   tabName: string;
+  // IDs of the currently selected elements. When non-empty the model is
+  // asked to focus its changes on these elements while treating the rest
+  // as context only. Empty / absent = act on all elements.
+  focusIds?: string[];
+  // Last N conversation turns for multi-turn context. Kept short (≤ 6
+  // turns) so the token cost stays bounded.
+  history?: AiConversationTurn[];
 };
 
 // Response body for mutating modes (generate / amend / clean).

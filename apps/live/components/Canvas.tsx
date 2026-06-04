@@ -552,6 +552,7 @@ type CanvasProps = {
     onReset: () => void;
     onClose: () => void;
     contextElements: Element[];
+    focusIds: string[];
     onApplyElements: (elements: Element[], mode: 'generate' | 'amend' | 'clean') => void;
     ownerId: string;
   };
@@ -2102,6 +2103,7 @@ export function Canvas(props: CanvasProps) {
         >
           <AiPanelContent
             contextElements={aiPanel.contextElements}
+            focusIds={aiPanel.focusIds}
             tabName={tabName}
             ownerId={aiPanel.ownerId}
             onApplyElements={aiPanel.onApplyElements}

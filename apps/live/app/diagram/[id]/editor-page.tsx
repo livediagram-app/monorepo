@@ -190,6 +190,7 @@ import {
 import { applyRevert } from '@/lib/change-log';
 import { commentRowsFromElements } from '@/components/CommentsPanel';
 import { templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
+import { autoAlignElements } from '@/lib/auto-align';
 import {
   deriveNewBoxedColours,
   getTheme,
@@ -1866,15 +1867,42 @@ export default function LivePage() {
   };
 
   // Apply AI-returned elements as a single undo block (spec/25).
-  // Generate: append all new elements. Amend / clean: replace matched
-  // IDs in place, append any genuinely new IDs from the AI.
+  // Generate: append new elements with ID deduplication so running
+  //   Generate multiple times never silently overwrites existing elements
+  //   (the AI reuses short IDs like "ai-001" across sessions).
+  // Amend / clean: replace matched IDs in place; append any new ones.
+  // Auto-align is applied to the full result so AI-generated positions
+  // are snapped to the 10px grid regardless of what the model produced.
   const applyAiElements = (elements: Element[], mode: 'generate' | 'amend' | 'clean') => {
-    commit((els) => {
-      if (mode === 'generate') return [...els, ...elements];
+    commit((existingEls) => {
+      if (mode === 'generate') {
+        const existingIds = new Set(existingEls.map((e) => e.id));
+        // Build an ID remap for any clash, then fix arrow endpoints.
+        const idMap = new Map<string, string>();
+        for (const el of elements) {
+          if (existingIds.has(el.id)) idMap.set(el.id, crypto.randomUUID());
+        }
+        const deduped: Element[] = elements.map((el) => {
+          const newId = idMap.get(el.id) ?? el.id;
+          if (el.type === 'arrow') {
+            const from =
+              el.from.kind === 'pinned' && idMap.has(el.from.elementId)
+                ? { ...el.from, elementId: idMap.get(el.from.elementId)! }
+                : el.from;
+            const to =
+              el.to.kind === 'pinned' && idMap.has(el.to.elementId)
+                ? { ...el.to, elementId: idMap.get(el.to.elementId)! }
+                : el.to;
+            return { ...el, id: newId, from, to };
+          }
+          return { ...el, id: newId };
+        });
+        return autoAlignElements([...existingEls, ...deduped]);
+      }
       const byId = new Map(elements.map((e) => [e.id, e]));
-      const updated = els.map((el) => (byId.has(el.id) ? (byId.get(el.id) as Element) : el));
-      const appended = elements.filter((e) => !els.some((ex) => ex.id === e.id));
-      return [...updated, ...appended];
+      const updated = existingEls.map((el) => (byId.has(el.id) ? (byId.get(el.id) as Element) : el));
+      const appended = elements.filter((e) => !existingEls.some((ex) => ex.id === e.id));
+      return autoAlignElements([...updated, ...appended]);
     });
   };
 
@@ -3314,12 +3342,16 @@ export default function LivePage() {
                 onMove: (x, y) => setAiPanelPosition({ x, y }),
                 onReset: () => setAiPanelPosition(null),
                 onClose: () => setAiPanelVisible(false),
-                contextElements:
+                // Always send the full tab as context so the AI
+                // doesn't produce elements that clash or go out of
+                // context. focusIds tells it which subset to act on.
+                contextElements: activeTab.elements,
+                focusIds:
                   multiSelectedIds.size > 0
-                    ? activeTab.elements.filter((el) => multiSelectedIds.has(el.id))
+                    ? [...multiSelectedIds]
                     : selectedId !== null
-                      ? activeTab.elements.filter((el) => el.id === selectedId)
-                      : activeTab.elements,
+                      ? [selectedId]
+                      : [],
                 onApplyElements: applyAiElements,
                 ownerId: selfParticipant.id,
               }
