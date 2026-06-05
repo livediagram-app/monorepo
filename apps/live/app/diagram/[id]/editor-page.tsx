@@ -964,6 +964,29 @@ export default function LivePage() {
           if (!isOwnerVisit && !hasConfirmedName()) {
             setTemplatePickerMode('identity');
           }
+          // Optimistically add the current diagram to the shared-with
+          // list so it appears in the Explorer immediately, before the
+          // refreshSharedList network round-trip completes. The server
+          // fetch will replace this with the full list; deduplicate so
+          // returning visitors don't see a duplicate row.
+          if (!isOwnerVisit) {
+            setSharedDiagrams((prev) =>
+              prev.some((d) => d.id === fetched.id)
+                ? prev
+                : [
+                    {
+                      id: fetched.id,
+                      name: fetched.name,
+                      savedAt: fetched.savedAt,
+                      role,
+                      shareCode: shareCodeParam,
+                      ownerName: fetched.ownerName ?? null,
+                      ownerColor: fetched.ownerColor ?? null,
+                    },
+                    ...prev,
+                  ],
+            );
+          }
           // Telemetry (spec/22): a visitor joined a shared diagram.
           // Owners opening their own share URL don't count as a join.
           // `type` is the share role (Edit / View), a preset.
