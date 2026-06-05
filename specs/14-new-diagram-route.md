@@ -121,7 +121,9 @@ a "Create a new diagram" CTA.
 1. User clicks **New Diagram** in the Explorer (or lands on `/live`).
 2. Browser navigates to `/live/new`.
 3. `/live/new` renders the welcome card immediately — no spinner.
-4. User picks (or skips) name + template + theme and clicks **Create**.
+4. User picks name + template + theme and clicks **Create** (the welcome
+   screen has no Skip button; the header **X** still dismisses to a blank
+   canvas).
 5. Page mints a UUID, POSTs `/api/diagrams` with the seeded tab(s),
    then `window.location.assign('/live/diagram/<id>')` to land on
    the editor with the new diagram already on the server.
@@ -195,7 +197,7 @@ The new route owns:
 
 ## Responsive layout
 
-The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welcome / template / identity surface used by `/live/new` AND by per-tab template picks in the editor. On `sm:` and up it renders as a centred floating card (max 44rem for templates, 26rem for identity), with rounded corners + shadow over the canvas. On mobile (below `sm`) it fills the viewport edge-to-edge: full width, full dynamic-viewport height, no border / radius / shadow, so the user can read every row and click through without zoom. Skip + Create buttons stay reachable because the body scrolls inside the card while the header + footer remain pinned (mobile and desktop alike).
+The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welcome / template / identity surface used by `/live/new` AND by per-tab template picks in the editor. On `sm:` and up it renders as a centred floating card (max 44rem for templates, 26rem for identity), with rounded corners + shadow over the canvas. On mobile (below `sm`) it fills the viewport edge-to-edge: full width, full dynamic-viewport height, no border / radius / shadow, so the user can read every row and click through without zoom. The footer's Create button (plus a Cancel button in the in-editor template / identity modes — the welcome screen drops it, leaving only Create and the header X) stays reachable because the body scrolls inside the card while the header + footer remain pinned (mobile and desktop alike).
 
 This is the only welcome surface so it sets the mobile floor for the rest of the editor's panel chrome (Palette / Context / Explorer / Activity, see [07-live-app](07-live-app.md)). Those are addressed separately.
 
@@ -209,8 +211,8 @@ This is the only welcome surface so it sets the mobile floor for the rest of the
 - `/live` with no params → redirects to `/live/new`, no flash.
 - `/live/new` → welcome card on first paint.
 - Pick template → Create → editor loads on `/live/diagram/<id>`.
-- Skip welcome → editor loads on `/live/diagram/<id>` with an
-  empty starter tab.
+- Dismiss welcome via the header X → editor loads on `/live/diagram/<id>`
+  with an empty starter tab (the welcome screen has no Skip button).
 - `/live/diagram/<id>` (existing) → editor hydrates as before.
 - `/live/diagram/shared?s=<code>` (visitor) → editor + identity-confirm modal.
 - NotFound CTA → goes to `/live/new`.

@@ -37,8 +37,9 @@ type TemplatePickerProps = {
   onPick: (kind: TemplateKind, name: string, themeId: ThemeId) => void;
   // Dismiss the modal without picking a template or theme. The diagram
   // gets a fresh blank canvas (no seeded rectangle, no theme override)
-  // and the empty-state card prompts the next step. Triggered by either
-  // the Skip button or the X in the header.
+  // and the empty-state card prompts the next step. Triggered by the X in
+  // the header (all modes) or the Cancel button (non-welcome modes only —
+  // the welcome screen has no Skip/Cancel, just Create + the header X).
   onSkip: () => void;
 };
 
@@ -278,13 +279,18 @@ export function TemplatePicker({
                 ? 'Other participants will see this name on your cursor and comments.'
                 : 'Existing content on this tab will be replaced.'}
           </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            {isWelcome ? 'Skip' : 'Cancel'}
-          </button>
+          {/* No Skip button on the welcome / new-diagram screen — Create is
+              the only forward action, and the header X still dismisses to a
+              blank canvas. Other modes keep their Cancel escape. */}
+          {!isWelcome ? (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => onPick(templateKind, effectiveName, themeId)}
