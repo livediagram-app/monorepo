@@ -17,7 +17,7 @@ import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { track } from '@/lib/telemetry';
 import type { useConfirm } from '@/hooks/useConfirm';
 
-type DiagramListItem = { id: string; name: string; folderId: string | null; savedAt: number };
+type DiagramListItem = { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null };
 
 type DiagramActionsDeps = {
   diagramId: string | null;

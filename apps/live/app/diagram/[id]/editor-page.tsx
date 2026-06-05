@@ -418,7 +418,7 @@ export default function LivePage() {
   // (so the Explorer's "Your diagrams" section reflects renames + first
   // saves in real time).
   const [diagramList, setDiagramList] = useState<
-    { id: string; name: string; folderId: string | null; savedAt: number }[]
+    { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null }[]
   >([]);
   // Folders for the owner — state + the mutation triple
   // (create / rename / delete) come from the shared useFolders

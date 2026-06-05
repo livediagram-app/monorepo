@@ -45,6 +45,7 @@ export type DiagramListItem = {
   name: string;
   folderId: string | null;
   savedAt: number;
+  shareCode: string | null;
 };
 
 export type FolderItem = {
@@ -644,7 +645,20 @@ export function DiagramRow({
             className="w-full rounded border border-brand-300 bg-white px-1 py-0.5 text-xs text-slate-800"
           />
         ) : (
-          <span className="truncate">{item.name}</span>
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="truncate">{item.name}</span>
+            {item.shareCode ? (
+              <span
+                title="Has a share link"
+                className={`shrink-0 ${active ? 'text-brand-600 dark:text-brand-300' : 'text-slate-400 dark:text-slate-500'}`}
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
+                  <path d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  <path d="M8 1h3v3M11 1 6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+            ) : null}
+          </span>
         )}
         <span
           className={
