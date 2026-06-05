@@ -133,7 +133,11 @@ Missing / `false` = panel hidden. Only shown in Settings when `capabilities.aiEn
 ### `useCapabilities` hook
 
 Fetches `GET /api/capabilities` once at editor mount. Returns `{ aiEnabled: boolean }`.
-On network failure defaults to `{ aiEnabled: false }` (fail-closed).
+On network failure defaults to `{ aiEnabled: false }` (fail-closed). The hook takes an
+`enabled` flag so the call is deferred while a visitor is behind a share-link password
+gate (spec/24): on a password-protected diagram, capabilities (and the server-side
+preferences sync) don't fire until the correct password is entered, so wrong attempts
+cost no extra requests.
 
 ### AI Panel
 
