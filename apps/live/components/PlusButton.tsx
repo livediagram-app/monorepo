@@ -8,8 +8,23 @@ type PlusButtonProps = {
   onClick: () => void;
 };
 
-const SIZE = 24;
-const GAP = 12;
+// Floating circular canvas controls (plus buttons, resize + rotate
+// handles) share one size + visual family so they read as a set. The
+// gap is how far, in screen px, the control sits beyond the element
+// edge; CONTROL_OFFSET is the distance from the edge to the control's
+// CENTRE (gap + half the size), which the rotate handle lines up to.
+export const FLOATING_CONTROL_SIZE = 24;
+export const FLOATING_CONTROL_GAP = 12;
+export const FLOATING_CONTROL_OFFSET = FLOATING_CONTROL_GAP + FLOATING_CONTROL_SIZE / 2;
+export const FLOATING_CONTROL_CLASS =
+  'rounded-full border border-brand-200 bg-white text-brand-600 shadow-md dark:border-brand-500/50 dark:bg-slate-900 dark:text-brand-200';
+// Shared hover treatment so every floating control lights up the same
+// way on pointer-over.
+export const FLOATING_CONTROL_HOVER_CLASS =
+  'transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 hover:shadow-lg dark:hover:border-brand-400 dark:hover:bg-slate-800 dark:hover:text-brand-100';
+
+const SIZE = FLOATING_CONTROL_SIZE;
+const GAP = FLOATING_CONTROL_GAP;
 
 const LABELS: Record<PlusPlacement, string> = {
   right: 'Duplicate to the right',
@@ -56,7 +71,7 @@ export function PlusButton({ x, y, placement, zoom, onClick }: PlusButtonProps) 
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
       aria-label={LABELS[placement]}
-      className="pointer-events-auto absolute z-20 flex animate-fade-in items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-md transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 hover:shadow-lg dark:border-brand-500/50 dark:bg-slate-900 dark:text-brand-200 dark:hover:border-brand-400 dark:hover:bg-slate-800 dark:hover:text-brand-100"
+      className={`pointer-events-auto absolute z-20 flex animate-fade-in items-center justify-center ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS}`}
       style={{
         left: x + dx,
         top: y + dy,

@@ -556,10 +556,10 @@ Both plus buttons are hidden while the element is being edited or while format-p
 
 Boxed elements paint in **array order** — earlier in the tab's `elements` array means rendered earlier (further back); later means rendered on top. Arrows always render in a single SVG layer on top of all boxed elements (this is a current rendering limitation, not a long-term design).
 
-New-element placement defaults follow a deliberate asymmetry:
+New elements always land at the **front** of the z-order:
 
-- **Palette adds** (shape / text / sticky / image / arrow / freehand, including the draw-to-size + pencil paths) **prepend** to `elements`, so the new element lands at the **back** of the z-order. "Add behind existing content" was the friendlier default once the user observed that the previous append-default forced a manual Send to Back after most adds.
-- **Paste and duplicate** **append**, so the freshly minted copies land at the **front**: the user just copied them, surfacing them on top of the source is the expected behaviour.
+- **Palette adds** (shape / text / sticky / image / arrow / freehand, including the draw-to-size + pencil paths) **append** to `elements`, so the new element lands on **top** of existing content. Surfacing a freshly added element where the user can see and immediately work with it is the expected default; the Layer accordion's **Send to back** covers the rarer case where it should sit behind. (An earlier iteration prepended palette adds to drop them at the back, but landing new content on top matches how every other editor behaves and is what users reach for.)
+- **Paste and duplicate** likewise **append**, so the freshly minted copies land at the **front**: the user just copied them, surfacing them on top of the source is the expected behaviour.
 
 The selection popover exposes:
 
@@ -567,6 +567,17 @@ The selection popover exposes:
 - **Send to Back** — moves the selected element to the start.
 
 These apply to any element type (including arrows, where they re-order among arrows).
+
+## Rotation
+
+Any boxed element (shape / text / sticky / image / freehand) can be rotated about its centre. The angle is stored as `rotation?: number` — clockwise **degrees**, normalised into `[0, 360)`; absent or `0` means unrotated. It rides in the element JSON, so copy / paste / duplicate / persistence round-trip it for free.
+
+- **Handle**: a small circular rotate handle sits just **beyond the bottom-right corner** (outside the SE resize handle so the two never overlap), shown whenever the element's resize handles are. Click-drag it to spin the element; the body still drags to move and the corner handles still resize.
+- **Pivot**: rotation is about the element's centre (`transform: rotate()` with `transform-origin: center`). Handles + anchors are children of the wrapper, so they rotate with the box. The drag reads the wrapper's bounding-rect centre at grab time and sweeps the pointer angle in screen space (rotation is conformal under the uniform canvas zoom, so screen-space angles equal canvas-space angles — no zoom/pan inversion needed).
+- **Snapping**: the angle snaps to the nearest **15°** increment (which covers 0 / 45 / 90 / 180 / …) whenever it lands within ~7° of one, so squaring a shape up is effortless. **Hold Shift** to disable the snap for fine control.
+- **Resize while rotated**: the four corner resize handles are **hidden while an element is rotated** (rotation not a multiple of 360°). The resize math runs in canvas-axis space, so dragging a corner of a spun box would make it "swim"; rotating back to 0° restores resize. The rotate handle itself stays available at any angle so a rotation is always reversible.
+- **Known limitations (current iteration)**: arrow anchors and the marquee bounding box are computed from the element's **unrotated** axis-aligned box, so an arrow pinned to a rotated shape points at the pre-rotation anchor position. Rotation-aware anchoring + resize are deferred.
+- **Telemetry**: grabbing the rotate handle emits `Element / Rotated / <kind>` (the shape kind, or the element type for text / sticky / image / freehand).
 
 ## Text element
 

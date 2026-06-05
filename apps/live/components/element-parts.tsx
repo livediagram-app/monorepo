@@ -10,6 +10,11 @@ import {
 } from 'react';
 import type { TextAlignX, TextAlignY, TextSize } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
+import {
+  FLOATING_CONTROL_CLASS,
+  FLOATING_CONTROL_GAP,
+  FLOATING_CONTROL_HOVER_CLASS,
+} from './PlusButton';
 
 // --- Lock badge ------------------------------------------------------------
 
@@ -41,11 +46,13 @@ export function LockBadge({ zoom = 1 }: { zoom?: number }) {
 
 type HandlePosition = 'nw' | 'ne' | 'sw' | 'se';
 
+// -3 (12px) offset centres a 24px (h-6) handle on the corner, the same
+// size + style as the plus buttons (FLOATING_CONTROL_CLASS).
 const positionClasses: Record<HandlePosition, string> = {
-  nw: '-top-1.5 -left-1.5 cursor-nwse-resize',
-  ne: '-top-1.5 -right-1.5 cursor-nesw-resize',
-  sw: '-bottom-1.5 -left-1.5 cursor-nesw-resize',
-  se: '-bottom-1.5 -right-1.5 cursor-nwse-resize',
+  nw: '-top-3 -left-3 cursor-nwse-resize',
+  ne: '-top-3 -right-3 cursor-nesw-resize',
+  sw: '-bottom-3 -left-3 cursor-nesw-resize',
+  se: '-bottom-3 -right-3 cursor-nwse-resize',
 };
 
 // Pseudo-element that extends each handle's pointer-capture region on
@@ -76,10 +83,84 @@ export function ResizeHandles({ elementId, zoom, onBeginDrag }: ResizeHandlesPro
             onBeginDrag(elementId, `resize-${pos}`, e);
           }}
           style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
-          className={`absolute h-3 w-3 rounded-sm border border-brand-600 bg-white dark:border-brand-300 dark:bg-slate-900 ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
+          className={`absolute h-6 w-6 opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
         />
       ))}
     </>
+  );
+}
+
+// --- Rotate handle ---------------------------------------------------------
+
+type RotateHandleProps = {
+  elementId: string;
+  zoom: number;
+  onBeginRotate: (
+    elementId: string,
+    centerClientX: number,
+    centerClientY: number,
+    e: ReactPointerEvent,
+  ) => void;
+};
+
+// Custom cursor for the rotate handle. CSS has no "rotate" cursor, so
+// we inline a small circular-arrow SVG (drawn twice: a fat white halo
+// under a dark glyph so it reads on any canvas colour) with the hotspot
+// centred at 12,12 and `grab` as the fallback.
+const ROTATE_CURSOR =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M19.5 4v4h-4' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3' stroke='%231e293b' stroke-width='2'/%3E%3Cpath d='M19.5 4v4h-4' stroke='%231e293b' stroke-width='2'/%3E%3C/svg%3E\") 12 12, grab";
+
+// A circular handle (same size + style as the plus buttons) whose
+// centre lines up with the bottom + right plus buttons: anchored at the
+// element's SE corner (left/top 100%) and nudged out by the same
+// FLOATING_CONTROL_GAP the plus buttons use, so the four edge plusses
+// and this corner handle form one tidy ring well clear of the resize
+// handles. Dragging it spins the element about its centre, which is
+// read from the wrapper's bounding rect at grab time (rotation is about
+// the centre, so that rect's centre is the pivot at any angle).
+export function RotateHandle({ elementId, zoom, onBeginRotate }: RotateHandleProps) {
+  return (
+    <div
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        const wrapper = (e.currentTarget as HTMLElement).closest('[data-element-id]');
+        const rect = wrapper?.getBoundingClientRect();
+        if (!rect) return;
+        onBeginRotate(elementId, rect.left + rect.width / 2, rect.top + rect.height / 2, e);
+      }}
+      style={{
+        left: '100%',
+        top: '100%',
+        transform: `translate(${FLOATING_CONTROL_GAP / zoom}px, ${FLOATING_CONTROL_GAP / zoom}px) scale(${1 / zoom})`,
+        transformOrigin: 'top left',
+        cursor: ROTATE_CURSOR,
+      }}
+      className={`absolute flex h-6 w-6 items-center justify-center opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${HIT_PAD_CLASSES}`}
+      aria-hidden
+    >
+      <RotateIcon />
+    </div>
+  );
+}
+
+function RotateIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+      {/* Three-quarter circular arrow — the conventional "rotate" glyph. */}
+      <path
+        d="M12.5 5.5A5 5 0 1 0 13 8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.8 2.5v3.2h-3.2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -288,19 +369,38 @@ export function FixedSizeLabel({
 type SingleLineLabelEditorProps = {
   initial: string;
   placeholder: string;
+  // The committed label's typography, threaded through so the live
+  // editor renders the text identically to how it'll look on commit
+  // (no size / weight / position jump when the user finishes typing).
+  textSize: TextSize;
   alignX: TextAlignX;
+  alignY: TextAlignY;
+  padding: number;
+  style?: LabelTextStyle;
   onCommit: (label: string) => void;
   onCancel: () => void;
   textClassName?: string;
+  // When true, place the caret at the END on focus instead of
+  // selecting all. Used by type-to-edit (spec/09 Labels), where the
+  // label was just seeded with the first typed character: select-all
+  // would let the next keystroke replace that seed, dropping the first
+  // letter. Defaults to false so normal edit (double-click / Space)
+  // keeps its select-all-then-retype behaviour.
+  cursorAtEnd?: boolean;
 };
 
 export function SingleLineLabelEditor({
   initial,
   placeholder,
+  textSize,
   alignX,
+  alignY,
+  padding,
+  style,
   onCommit,
   onCancel,
   textClassName = 'text-brand-800 placeholder:text-brand-300',
+  cursorAtEnd = false,
 }: SingleLineLabelEditorProps) {
   const [value, setValue] = useState(initial);
   const ref = useRef<HTMLInputElement>(null);
@@ -315,8 +415,17 @@ export function SingleLineLabelEditor({
     const node = ref.current;
     if (node) {
       node.focus();
-      node.select();
+      if (cursorAtEnd) {
+        const end = node.value.length;
+        node.setSelectionRange(end, end);
+      } else {
+        node.select();
+      }
     }
+    // cursorAtEnd is fixed for the lifetime of an edit session (the
+    // editor remounts per session), so reading it once on mount is
+    // correct; intentionally not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Safety net: if the editor unmounts without an explicit commit/cancel
@@ -346,27 +455,46 @@ export function SingleLineLabelEditor({
     onCancel();
   };
 
+  // Match the committed label's font size. 'scale' has no fixed px
+  // (the renderer auto-fits an SVG to the box, which a live input
+  // can't replicate), so it falls back to a sensible mid size.
+  const fontSizePx = textSize === 'scale' ? 16 : FIXED_FONT_PX[textSize];
+
+  // Mirror FixedSizeLabel's layout (flex box with the element's
+  // padding + vertical alignment) so the caret sits exactly where the
+  // committed text will. pointer-events stay off the padding so a
+  // click outside the input still falls through to the shape (commit
+  // via blur), matching the previous behaviour.
   return (
-    <input
-      ref={ref}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleCommit}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleCommit();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          handleCancel();
-        }
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-      style={{ textAlign: TEXT_ALIGN[alignX] }}
-      className={`absolute inset-1.5 w-[calc(100%-0.75rem)] bg-transparent text-base font-medium outline-none ${textClassName}`}
-    />
+    <div
+      className="pointer-events-none absolute inset-0 flex overflow-hidden"
+      style={{ alignItems: ALIGN_ITEMS[alignY], padding }}
+    >
+      <input
+        ref={ref}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleCommit();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            handleCancel();
+          }
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+        style={{
+          fontSize: `${fontSizePx}px`,
+          textAlign: TEXT_ALIGN[alignX],
+          ...labelTextStyleCss(style ?? {}),
+        }}
+        className={`pointer-events-auto w-full bg-transparent font-medium leading-tight outline-none ${textClassName}`}
+      />
+    </div>
   );
 }
 
@@ -434,6 +562,7 @@ type MultilineLabelEditorProps = {
   placeholder: string;
   textSize: TextSize;
   alignX: TextAlignX;
+  style?: LabelTextStyle;
   onCommit: (label: string) => void;
   onCancel: () => void;
   textClassName?: string;
@@ -444,6 +573,7 @@ export function MultilineLabelEditor({
   placeholder,
   textSize,
   alignX,
+  style,
   onCommit,
   onCancel,
   textClassName = '',
@@ -501,7 +631,11 @@ export function MultilineLabelEditor({
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
-      style={{ fontSize: `${MULTI_FONT_PX[textSize]}px`, textAlign: TEXT_ALIGN[alignX] }}
+      style={{
+        fontSize: `${MULTI_FONT_PX[textSize]}px`,
+        textAlign: TEXT_ALIGN[alignX],
+        ...labelTextStyleCss(style ?? {}),
+      }}
       className={`absolute inset-3 w-[calc(100%-1.5rem)] resize-none bg-transparent outline-none ${textClassName}`}
     />
   );

@@ -1,9 +1,9 @@
 'use client';
 
-// Persistence-model prompt shown inside the Explorer. Always present
-// for guest sessions so the user understands their diagrams are
-// browser-local until they sign in; rendered shape depends on what
-// the deployment supports:
+// Persistence-model prompt shown inside the Explorer. Present for guest
+// sessions so the user understands their diagrams are browser-local
+// until they sign in; rendered shape depends on what the deployment
+// supports:
 //
 //   - Clerk disabled, any session
 //        → "Diagrams are saved to this browser only — sign-in isn't
@@ -17,28 +17,72 @@
 //        → renders nothing (the user already has the account that
 //          syncs everything).
 //
+// The prompt carries a dismiss (X) so a user who's made their peace
+// with browser-local storage can reclaim the panel space; the choice
+// persists per-browser in localStorage (same degradation contract as
+// the other persisted toggles — see local-storage-safe).
+//
 // Same module-load enabled/disabled hook-swap pattern as
 // AuthControls and useClerkApiBootstrap — calling useAuth outside a
 // ClerkProvider would throw, so the disabled branch never touches
 // Clerk.
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/react';
 import Link from 'next/link';
 import { clerkEnabled } from '@/lib/clerk-config';
+import { readLocalStorageSafe, writeLocalStorageSafe } from '@/lib/local-storage-safe';
+
+const DISMISS_KEY = 'livediagram:v2:signin-prompt-dismissed';
+
+// Per-browser dismissal. Returns `null` until the first client effect
+// has read localStorage so the prompt never flashes in for a user who
+// already closed it (the initial render and the SSR/export build both
+// resolve to `null` → render nothing, then the effect settles the real
+// value). `dismiss` writes the flag and hides immediately.
+function usePromptDismissed(): { dismissed: boolean | null; dismiss: () => void } {
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+  useEffect(() => {
+    setDismissed(readLocalStorageSafe(DISMISS_KEY) === 'true');
+  }, []);
+  const dismiss = () => {
+    writeLocalStorageSafe(DISMISS_KEY, 'true');
+    setDismissed(true);
+  };
+  return { dismissed, dismiss };
+}
 
 function PromptShell({
   title,
   body,
   action,
+  onDismiss,
 }: {
   title: string;
   body: string;
   action?: React.ReactNode;
+  onDismiss: () => void;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-600">
-      <p className="font-medium text-slate-800">{title}</p>
-      <p className="mt-1 leading-relaxed text-slate-500">{body}</p>
+    <div className="relative rounded-md border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+          <path
+            d="M3 3l6 6M9 3l-6 6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      {/* pr-5 keeps the title clear of the close button. */}
+      <p className="pr-5 font-medium text-slate-800 dark:text-white">{title}</p>
+      <p className="mt-1 leading-relaxed text-slate-500 dark:text-slate-200">{body}</p>
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
@@ -46,12 +90,15 @@ function PromptShell({
 
 function SignInPromptEnabled() {
   const { isLoaded, isSignedIn } = useAuth();
-  // Wait for Clerk to settle, then hide entirely for signed-in users.
-  if (!isLoaded || isSignedIn) return null;
+  const { dismissed, dismiss } = usePromptDismissed();
+  // Wait for Clerk to settle + the dismissal read; hide entirely for
+  // signed-in users or once the user has dismissed it.
+  if (!isLoaded || isSignedIn || dismissed === null || dismissed) return null;
   return (
     <PromptShell
       title="Sign in to keep your content"
       body="A free account keeps your diagrams and content across sessions and devices."
+      onDismiss={dismiss}
       action={
         <Link
           href="/sign-in/"
@@ -65,10 +112,13 @@ function SignInPromptEnabled() {
 }
 
 function SignInPromptDisabled() {
+  const { dismissed, dismiss } = usePromptDismissed();
+  if (dismissed === null || dismissed) return null;
   return (
     <PromptShell
       title="Diagrams saved to this browser"
       body="Sign-in isn't enabled on this deployment, so diagrams stay local to this browser. Clear your storage and they're gone."
+      onDismiss={dismiss}
     />
   );
 }

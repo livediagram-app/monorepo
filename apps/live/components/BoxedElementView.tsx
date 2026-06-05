@@ -27,6 +27,7 @@ import {
   MultilineLabel,
   MultilineLabelEditor,
   ResizeHandles,
+  RotateHandle,
   ScalingLabel,
   SingleLineLabelEditor,
 } from './element-parts';
@@ -47,11 +48,21 @@ type BoxedElementViewProps = {
   // box, then click a few more" flow users expect.
   multiSelectActive?: boolean;
   isEditing: boolean;
+  // When the current edit session began via type-to-edit (spec/09), the
+  // label was seeded with the first typed char and the editor should
+  // place the caret at the end instead of selecting all.
+  editCursorAtEnd?: boolean;
   isPaintMode: boolean;
   showHandles: boolean;
   showAnchors: boolean;
   zoom: number;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
+  onBeginRotate: (
+    id: string,
+    centerClientX: number,
+    centerClientY: number,
+    e: ReactPointerEvent,
+  ) => void;
   // Shift-click on an element fires this with the element id so the
   // page can toggle membership in the marquee multi-selection.
   onShiftSelect?: (id: string) => void;
@@ -116,11 +127,13 @@ function BoxedElementViewImpl({
   isMultiSelected = false,
   multiSelectActive = false,
   isEditing,
+  editCursorAtEnd = false,
   isPaintMode,
   showHandles,
   showAnchors,
   zoom,
   onBeginDrag,
+  onBeginRotate,
   onShiftSelect,
   onBeginAnchorDrag,
   onBeginEdit,
@@ -136,6 +149,14 @@ function BoxedElementViewImpl({
   tabLocked,
 }: BoxedElementViewProps) {
   const isLocked = element.locked === true || tabLocked;
+  // Clockwise rotation about the element centre. `isRotated` gates the
+  // resize handles off while rotated: the resize math runs in canvas-
+  // axis space, so dragging a corner of a spun box would make it
+  // "swim". Rotating back to 0 restores resize. The rotate handle
+  // itself stays available at any angle so the user can always undo a
+  // rotation by dragging.
+  const rotation = element.rotation ?? 0;
+  const isRotated = rotation % 360 !== 0;
   const label = element.label ?? '';
   const textSize: TextSize = element.textSize ?? 'scale';
   const defaultAlign = defaultTextAlign(element);
@@ -233,6 +254,15 @@ function BoxedElementViewImpl({
         color: textColor,
         opacity: element.opacity ?? 1,
         ...variant.style,
+        // Spin about the centre (the wrapper already has origin-center).
+        // Handles + anchors are children, so they rotate with the box.
+        ...(isRotated ? { transform: `rotate(${rotation}deg)` } : {}),
+        // Lift the selected element (and its resize / rotate handles,
+        // which spill outside the box) above sibling elements so a
+        // handle click near a neighbour lands on the handle, not the
+        // neighbour painted on top. Stays below the plus buttons (z-20)
+        // and selection popover (z-40), which share this layer.
+        ...(showHandles ? { zIndex: 10 } : {}),
       }}
     >
       {element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
@@ -294,6 +324,7 @@ function BoxedElementViewImpl({
                 isEditing,
                 (next) => onCommitLabel(element.id, next),
                 onCancelEdit,
+                editCursorAtEnd,
               )
             : null}
         </>
@@ -308,6 +339,7 @@ function BoxedElementViewImpl({
           isEditing,
           (next) => onCommitLabel(element.id, next),
           onCancelEdit,
+          editCursorAtEnd,
         )
       )}
 
@@ -332,8 +364,12 @@ function BoxedElementViewImpl({
         />
       ) : null}
 
-      {showHandles ? (
+      {showHandles && !isRotated ? (
         <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
+      ) : null}
+
+      {showHandles ? (
+        <RotateHandle elementId={element.id} zoom={zoom} onBeginRotate={onBeginRotate} />
       ) : null}
 
       {showAnchors ? (
@@ -977,6 +1013,7 @@ function renderLabel(
   isEditing: boolean,
   onCommitLabel: (label: string) => void,
   onCancelEdit: () => void,
+  editCursorAtEnd: boolean,
 ) {
   const isSticky = element.type === 'sticky';
   // Shape elements don't carry a placeholder during edit. The user
@@ -987,6 +1024,13 @@ function renderLabel(
   // pre-edit affordance is just an empty rectangle / nothing.
   const placeholder = element.type === 'text' ? 'Text' : isSticky ? 'Note' : '';
 
+  const textStyle = {
+    bold: element.textBold,
+    italic: element.textItalic,
+    underline: element.textUnderline,
+    strikethrough: element.textStrikethrough,
+  };
+
   if (isEditing) {
     if (isSticky) {
       return (
@@ -995,34 +1039,35 @@ function renderLabel(
           placeholder={placeholder}
           textSize={textSize}
           alignX={alignX}
+          style={textStyle}
           onCommit={onCommitLabel}
           onCancel={onCancelEdit}
           textClassName="text-amber-950 placeholder:text-amber-700/50"
         />
       );
     }
+    // Only the placeholder colour is pinned; the typed text inherits
+    // the element's resolved textColor (set as `color` on the wrapper)
+    // via currentColor, so editing shows the same colour as the
+    // committed label instead of snapping to black / brand.
     const textClass =
-      element.type === 'text'
-        ? 'text-slate-800 placeholder:text-slate-400'
-        : 'text-brand-800 placeholder:text-brand-300';
+      element.type === 'text' ? 'placeholder:text-slate-400' : 'placeholder:text-brand-300';
     return (
       <SingleLineLabelEditor
         initial={label}
         placeholder={placeholder}
+        textSize={textSize}
         alignX={alignX}
+        alignY={alignY}
+        padding={padding}
+        style={textStyle}
         onCommit={onCommitLabel}
         onCancel={onCancelEdit}
         textClassName={textClass}
+        cursorAtEnd={editCursorAtEnd}
       />
     );
   }
-
-  const textStyle = {
-    bold: element.textBold,
-    italic: element.textItalic,
-    underline: element.textUnderline,
-    strikethrough: element.textStrikethrough,
-  };
 
   if (isSticky) {
     return (

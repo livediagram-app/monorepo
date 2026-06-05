@@ -103,6 +103,9 @@ export type ShapeElement = {
   borderRadius?: BorderRadius;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  // Clockwise rotation in degrees about the element's centre. Absent
+  // or 0 means unrotated. See specs/09 "Rotation".
+  rotation?: number;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -186,6 +189,9 @@ export type TextElement = {
   textColor?: string;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  // Clockwise rotation in degrees about the element's centre. Absent
+  // or 0 means unrotated. See specs/09 "Rotation".
+  rotation?: number;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -226,6 +232,9 @@ export type StickyElement = {
   textColor?: string;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
+  // Clockwise rotation in degrees about the element's centre. Absent
+  // or 0 means unrotated. See specs/09 "Rotation".
+  rotation?: number;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -296,6 +305,9 @@ export type ImageElement = {
   groupId?: ElementId;
   aspectLocked?: boolean;
   opacity?: number;
+  // Clockwise rotation in degrees about the element's centre. Absent
+  // or 0 means unrotated. See specs/09 "Rotation".
+  rotation?: number;
   link?: ElementLink;
   commentThread?: CommentThread;
   note?: string;
@@ -351,6 +363,9 @@ export type FreehandElement = {
   groupId?: ElementId;
   aspectLocked?: boolean;
   opacity?: number;
+  // Clockwise rotation in degrees about the element's centre. Absent
+  // or 0 means unrotated. See specs/09 "Rotation".
+  rotation?: number;
   link?: ElementLink;
   commentThread?: CommentThread;
   note?: string;

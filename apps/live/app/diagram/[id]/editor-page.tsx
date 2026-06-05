@@ -2144,15 +2144,13 @@ export default function LivePage() {
     };
     // Single commit that both adds the element and marks the template
     // picker as dismissed for this tab (if it was still showing).
-    // Prepend (not append) so new elements land at the BACK of the
-    // z-order: rendering is by array index, lowest first. The user
-    // observed that the previous append-default forced a manual
-    // "send to back" after most adds; "add behind existing content"
-    // is the friendlier default, and the Layer accordion's
-    // "Bring to front" still exists for the rare case where the new
-    // element should sit on top.
+    // Append (not prepend) so new elements land at the FRONT of the
+    // z-order: rendering is by array index, lowest first, so the last
+    // entry paints on top. Landing new content where the user can see
+    // and immediately work with it matches every other editor; the
+    // Layer accordion's "Send to back" covers the rarer reverse case.
     const before = activeTab.elements;
-    const after = [el, ...before];
+    const after = [...before, el];
     commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
     // Activity-log the add. commit() (the element-only setter) does
     // this on every change; addBoxed bypasses commit because it also
@@ -2847,6 +2845,7 @@ export default function LivePage() {
   // begin-handlers below are passed through to Canvas as props.
   const {
     beginDrag,
+    beginRotate,
     beginAnchorDrag,
     beginArrowTranslate,
     beginEndpointDrag,
@@ -3269,6 +3268,7 @@ export default function LivePage() {
           isReadOnly ? undefined : (sx, sy) => setContextMenu({ mode: 'canvas', x: sx, y: sy })
         }
         onBeginDrag={beginDrag}
+        onBeginRotate={beginRotate}
         onBeginAnchorDrag={beginAnchorDrag}
         onBeginEdit={beginEdit}
         onCommitLabel={commitLabel}

@@ -176,7 +176,7 @@ export function FolderNode({
   return (
     <li>
       <div
-        className={`group flex items-center gap-1 rounded-md px-1 py-1 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 ${
+        className={`group flex items-center gap-1 rounded-md px-1 py-1 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-white dark:hover:bg-slate-800 ${
           isDragOver ? 'ring-2 ring-brand-400 ring-inset bg-brand-50 dark:bg-brand-500/15' : ''
         }`}
         style={{ paddingLeft: 4 + depth * 12 }}
@@ -215,7 +215,7 @@ export function FolderNode({
             className="flex min-w-0 flex-1 items-center gap-1 truncate text-left"
           >
             <span className="truncate">{folder.name}</span>
-            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+            <span className="inline-flex h-4 min-w-[1rem] shrink-0 items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-white">
               {childCount}
             </span>
           </button>
@@ -388,7 +388,7 @@ export function UnsortedNode({
   return (
     <li>
       <div
-        className={`flex items-center gap-1 rounded-md px-1 py-1 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 ${
+        className={`flex items-center gap-1 rounded-md px-1 py-1 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-white dark:hover:bg-slate-800 ${
           isDragOver ? 'ring-2 ring-brand-400 ring-inset bg-brand-50 dark:bg-brand-500/15' : ''
         }`}
         onDragOver={onMoveDiagramToFolder ? handleDragOver : undefined}
@@ -417,8 +417,8 @@ export function UnsortedNode({
           onClick={() => onToggleExpanded('unsorted')}
           className="flex min-w-0 flex-1 items-center gap-1 truncate text-left"
         >
-          <span className="truncate italic text-slate-500 dark:text-slate-400">Unsorted</span>
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+          <span className="truncate italic text-slate-500 dark:text-white">Unsorted</span>
+          <span className="inline-flex h-4 min-w-[1rem] shrink-0 items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-white">
             {diagrams.length}
           </span>
         </button>
@@ -481,7 +481,7 @@ export function SharedRow({
         className={`flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition ${
           active
             ? 'bg-brand-50 text-brand-800 dark:bg-brand-500/15 dark:text-brand-200'
-            : 'hover:bg-slate-50 text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+            : 'hover:bg-slate-50 text-slate-700 dark:text-white dark:hover:bg-slate-800'
         }`}
       >
         <span
@@ -497,7 +497,7 @@ export function SharedRow({
               Owner attribution + "Updated" lived here before but
               read too dense in a narrow column; role is the load-
               bearing affordance and the timestamp grounds it. */}
-          <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">
+          <span className="block truncate text-[10px] text-slate-500 dark:text-white">
             {item.role === 'edit' ? 'Edit' : 'View'} · {relative}
           </span>
         </span>
@@ -548,12 +548,12 @@ export function AccordionHeader({
     // misclick onto, but the badge is purely informational and
     // doesn't need to react to a row-level toggle, so it lives
     // outside.
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 px-1 py-1">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex flex-1 items-center gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
+        className="flex flex-1 items-center gap-2 text-left"
       >
         <span
           className={`inline-block transition-transform ${open ? 'rotate-90' : 'rotate-0'}`}
@@ -561,16 +561,18 @@ export function AccordionHeader({
         >
           <ChevronIcon />
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-white">
           {label}
         </span>
+        {/* Badge sits right next to the title (not pushed to the far
+            right) so the count reads as part of the section name. */}
+        {badge !== null ? (
+          <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-white">
+            {badge}
+          </span>
+        ) : null}
       </button>
       {trailing}
-      {badge !== null ? (
-        <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-          {badge}
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -619,7 +621,7 @@ export function DiagramRow({
 
   const pillClasses = active
     ? 'group flex items-stretch rounded-md bg-brand-100 text-brand-800 dark:bg-brand-500/20 dark:text-brand-100'
-    : 'group flex items-stretch rounded-md text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800';
+    : 'group flex items-stretch rounded-md text-slate-700 transition hover:bg-slate-100 dark:text-white dark:hover:bg-slate-800';
 
   // The row's main area is a clickable <button> when not editing
   // (clicking the row opens the diagram). When editing it has to
@@ -644,17 +646,15 @@ export function DiagramRow({
         ) : (
           <span className="truncate">{item.name}</span>
         )}
-        <Tooltip title="Last updated" description={new Date(item.savedAt).toLocaleString()}>
-          <span
-            className={
-              active
-                ? 'truncate text-[10px] font-normal text-brand-700/80 dark:text-brand-200/80'
-                : 'truncate text-[10px] text-slate-400 dark:text-slate-500'
-            }
-          >
-            Updated {relative}
-          </span>
-        </Tooltip>
+        <span
+          className={
+            active
+              ? 'truncate text-[10px] font-normal text-brand-700/80 dark:text-brand-200/80'
+              : 'truncate text-[10px] text-slate-400 dark:text-white'
+          }
+        >
+          Updated {relative}
+        </span>
       </span>
     </>
   );

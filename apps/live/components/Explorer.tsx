@@ -316,7 +316,7 @@ export function Explorer({
       outsideExceptSelector='[role="menu"],[role="dialog"]'
       collapsible
     >
-      <div className="flex flex-col gap-2.5 px-3 pb-3 pt-1">
+      <div className="flex flex-col gap-2 px-2.5 pb-2.5 pt-1">
         {onNewDiagram ? (
           <button
             type="button"
@@ -329,8 +329,8 @@ export function Explorer({
         ) : null}
 
         {current ? (
-          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
-            <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
+            <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-white">
               Current Diagram
             </p>
             <ul className="flex flex-col gap-0.5 overflow-hidden">
@@ -365,7 +365,7 @@ export function Explorer({
         ) : null}
 
         {loading || recents.length > 0 ? (
-          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200/60 transition-colors hover:bg-slate-100 dark:bg-slate-800/50 dark:ring-slate-700/60 dark:hover:bg-slate-700/50">
             <AccordionHeader
               label="Recent"
               badge={loading ? null : recents.length}
@@ -432,7 +432,7 @@ export function Explorer({
             (migration 0010) — bumped every time the visitor opens
             a share link for a diagram they don't own. */}
         {shared.length > 0 ? (
-          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200/60 transition-colors hover:bg-slate-100 dark:bg-slate-800/50 dark:ring-slate-700/60 dark:hover:bg-slate-700/50">
             <AccordionHeader
               label="Shared with you"
               badge={shared.length}
@@ -477,7 +477,7 @@ export function Explorer({
             created folders also bring it back even before the
             first diagram so the create-folder action sticks. */}
         {diagrams.length === 0 && folders.length === 0 ? null : (
-          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
+          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200/60 transition-colors hover:bg-slate-100 dark:bg-slate-800/50 dark:ring-slate-700/60 dark:hover:bg-slate-700/50">
             <AccordionHeader
               label="Folders"
               badge={folders.length}
@@ -553,7 +553,7 @@ export function Explorer({
           <button
             type="button"
             onClick={onOpenFullExplorer}
-            className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15 dark:hover:text-brand-200"
+            className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15 dark:hover:text-brand-200"
           >
             <ExpandIcon />
             Open Explorer

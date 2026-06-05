@@ -152,9 +152,9 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
         ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
       };
       const before = activeTab.elements;
-      // Prepend: new elements default to the BACK of z-order
+      // Append: new elements default to the FRONT of z-order
       // (see addBoxed).
-      const after = [arrow, ...before];
+      const after = [...before, arrow];
       commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
       emitChange(activeId, before, after);
       setSelectedId(arrow.id);
@@ -189,9 +189,9 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
       theme: activeTab.theme,
     });
     const sized = { ...base, ...colours, x, y, width, height } as typeof base;
-    // Prepend so new elements default to the BACK of z-order (see
+    // Append so new elements default to the FRONT of z-order (see
     // addBoxed's note for the rationale).
-    commit((els) => [sized, ...els]);
+    commit((els) => [...els, sized]);
     setSelectedId(sized.id);
     setPendingDraw(null);
     const label =
@@ -291,7 +291,7 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
             ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
           };
           const before = activeTab.elements;
-          const after = [arrow, ...before];
+          const after = [...before, arrow];
           commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
           emitChange(activeId, before, after);
           setSelectedId(arrow.id);
@@ -317,7 +317,7 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
           width: Math.max(16, detected.bbox.width),
           height: Math.max(16, detected.bbox.height),
         };
-        commit((els) => [sized, ...els]);
+        commit((els) => [...els, sized]);
         setSelectedId(sized.id);
         setPendingDraw(null);
         track('Element', 'Added', titleCaseType(detected.kind));
@@ -339,8 +339,8 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
       ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
       ...(closed && theme.elementFill ? { fillColor: theme.elementFill } : {}),
     };
-    // Prepend: send to back by default (see addBoxed).
-    commit((els) => [elementToInsert, ...els]);
+    // Append: land on top by default (see addBoxed).
+    commit((els) => [...els, elementToInsert]);
     setSelectedId(elementToInsert.id);
     setPendingDraw(null);
     track('Element', 'Added', 'Freehand');

@@ -434,6 +434,12 @@ type CanvasProps = {
   // page opens an element context menu.
   onElementContextMenu?: (id: string, screenX: number, screenY: number) => void;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
+  onBeginRotate: (
+    id: string,
+    centerClientX: number,
+    centerClientY: number,
+    e: ReactPointerEvent,
+  ) => void;
   onBeginAnchorDrag: (id: string, anchor: Anchor, e: ReactPointerEvent) => void;
   onBeginEdit: (id: string) => void;
   onCommitLabel: (id: string, label: string) => void;
@@ -656,6 +662,7 @@ export function Canvas(props: CanvasProps) {
     onCanvasContextMenu,
     onElementContextMenu,
     onBeginDrag,
+    onBeginRotate,
     onBeginAnchorDrag,
     onBeginEdit,
     onCommitLabel,
@@ -1591,6 +1598,7 @@ export function Canvas(props: CanvasProps) {
               badgeColor={badgeColor}
               tabLocked={tabLocked}
               onBeginDrag={onBeginDrag}
+              onBeginRotate={onBeginRotate}
               onShiftSelect={onShiftSelect}
               onBeginAnchorDrag={onBeginAnchorDrag}
               onBeginEdit={onBeginEdit}

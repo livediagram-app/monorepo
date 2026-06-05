@@ -24,6 +24,9 @@ type ArrowViewProps = {
   isSelected: boolean;
   isPaintMode: boolean;
   isEditing: boolean;
+  // Type-to-edit (spec/09): caret at end instead of select-all when the
+  // label was seeded by the first typed character.
+  editCursorAtEnd?: boolean;
   // True when the whole tab is locked (toggled from the tab ellipsis
   // menu). Treated the same as a per-arrow `arrow.locked === true`
   // — endpoint handles disabled, body drag suppressed, double-click
@@ -77,6 +80,7 @@ function ArrowViewImpl({
   isSelected,
   isPaintMode,
   isEditing,
+  editCursorAtEnd = false,
   tabLocked,
   readOnly = false,
   onSelect,
@@ -220,6 +224,7 @@ function ArrowViewImpl({
           text={labelText}
           color={baseStroke}
           isEditing={isEditing}
+          cursorAtEnd={editCursorAtEnd}
           onCommit={(next) => onCommitLabel(arrow.id, next)}
           onCancel={onCancelEdit}
         />
@@ -426,6 +431,8 @@ type ArrowLabelProps = {
   text: string;
   color: string;
   isEditing: boolean;
+  // Caret at end instead of select-all on focus (type-to-edit, spec/09).
+  cursorAtEnd?: boolean;
   onCommit: (label: string) => void;
   onCancel: () => void;
 };
@@ -435,13 +442,32 @@ type ArrowLabelProps = {
 // arrow is in edit mode we render an HTML input via <foreignObject>
 // — that gives us native text-selection / IME / cursor behaviour
 // instead of reinventing it in pure SVG.
-function ArrowLabel({ x, y, text, color, isEditing, onCommit, onCancel }: ArrowLabelProps) {
+function ArrowLabel({
+  x,
+  y,
+  text,
+  color,
+  isEditing,
+  cursorAtEnd = false,
+  onCommit,
+  onCancel,
+}: ArrowLabelProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+      const node = inputRef.current;
+      node.focus();
+      if (cursorAtEnd) {
+        const end = node.value.length;
+        node.setSelectionRange(end, end);
+      } else {
+        node.select();
+      }
     }
+    // cursorAtEnd is fixed for the lifetime of an edit session, so
+    // reading it once when editing begins is correct; intentionally
+    // not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
   const size = labelSize(text);
   if (isEditing) {

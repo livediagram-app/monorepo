@@ -57,7 +57,7 @@ function ImageElementViewImpl({
     // move / resize the placeholder without spawning the modal.
     // View-role visitors see the same hint with no picker.
     const placeholderBase =
-      'flex h-full w-full flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400';
+      'flex h-full w-full flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-white';
     if (!canOpenPicker) {
       return (
         <div className={placeholderBase}>

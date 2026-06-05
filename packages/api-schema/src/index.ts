@@ -355,6 +355,7 @@ export const TELEMETRY_ACTIONS = [
   'Toggled',
   'Zoomed',
   'Moved',
+  'Rotated',
   'Closed',
   'Copied',
   'Reverted',
