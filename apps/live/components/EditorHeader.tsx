@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Brand } from '@livediagram/ui';
 import { AuthControls } from './AuthControls';
 import { Tooltip } from './Tooltip';
@@ -95,7 +96,7 @@ export function EditorHeader({
           </div>
         )}
       </div>
-      <div className="flex w-56 items-center justify-end gap-2">
+      <div className="flex w-auto items-center justify-end gap-2 sm:min-w-56">
         {onMakeCopy ? (
           <Tooltip title="Make a copy" description="Duplicate this diagram into your own files.">
             <button
@@ -136,6 +137,20 @@ export function EditorHeader({
             </button>
           </Tooltip>
         ) : null}
+        {/* Quiet utility link to the full Explorer page. Deliberately
+            ghost-styled (no border / fill) so it sits a clear notch
+            below the Share button and the AuthControls CTA in the
+            visual hierarchy. Label hides on mobile like Share's. */}
+        <Tooltip title="Explorer" description="Browse all your diagrams.">
+          <Link
+            href="/explorer"
+            aria-label="Open Explorer"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <ExplorerNavIcon />
+            <span className="hidden sm:inline">Explorer</span>
+          </Link>
+        </Tooltip>
         <AuthControls />
       </div>
     </header>
@@ -244,6 +259,26 @@ function ShareIcon() {
       <circle cx="12" cy="3.5" r="1.6" />
       <circle cx="12" cy="12.5" r="1.6" />
       <path d="M5.4 7.2l5.2-3M5.4 8.8l5.2 3" />
+    </svg>
+  );
+}
+
+function ExplorerNavIcon() {
+  // Folder glyph — mirrors the FolderIcon language used throughout the
+  // Explorer itself so the link reads as "go to your library".
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4.5C2 3.7 2.7 3 3.5 3h3l2 2h4c.8 0 1.5.7 1.5 1.5v5c0 .8-.7 1.5-1.5 1.5h-9C2.7 13 2 12.3 2 11.5v-7z" />
     </svg>
   );
 }
