@@ -16,12 +16,12 @@ the AI panel are never rendered.
 
 ## Modes
 
-| Mode         | What it does                                         | Response                                                     |
-| ------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
-| **Generate** | Appends new elements described by the prompt         | JSON `{ elements }` — new elements to append                 |
-| **Amend**    | Modifies existing elements per the prompt            | JSON `{ elements }` — full element list with changes applied |
-| **Clean**    | Fixes label typos, normalises sizes/positions/styles | JSON `{ elements }` — full element list cleaned              |
-| **Review**   | Gives textual feedback on structure and content      | `text/event-stream` SSE (streamed)                           |
+| Mode         | What it does                                                                                     | Response                                           |
+| ------------ | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| **Generate** | Adds new elements and/or modifies existing ones per the prompt (labelled **Build** in the panel) | JSON `{ elements }` — appended + replaced elements |
+| **Clean**    | Fixes label typos, normalises sizes/positions/styles                                             | JSON `{ elements }` — full element list cleaned    |
+| **Review**   | Gives textual feedback on structure and content                                                  | `text/event-stream` SSE (streamed)                 |
+| **Ask**      | Answers questions about the diagram (read-only Q&A)                                              | `text/event-stream` SSE (streamed)                 |
 
 ## Context
 
@@ -60,7 +60,7 @@ Only the **active tab** is ever in scope — other tabs are never sent.
 - For mutating modes `response_format: { type: "json_object" }` is set on the OpenAI
   request so the model can only return parseable JSON, preventing injection of arbitrary
   text through the diagram data layer.
-- Max-token caps: mutating modes 4 000, review mode 600.
+- Max-token caps: mutating modes (generate / clean) 4 000, text modes (review / ask) 600.
 
 ## API
 
@@ -82,7 +82,7 @@ Request body:
 
 ```json
 {
-  "mode": "generate" | "amend" | "clean" | "review",
+  "mode": "generate" | "clean" | "review" | "ask",
   "prompt": "string (max 1 000 chars)",
   "elements": [...],
   "tabName": "string"
@@ -92,17 +92,19 @@ Request body:
 `elements` is an `Element[]` from `@livediagram/diagram` — either the selected subset or
 the full active tab, computed client-side before the request.
 
-Response for **mutating modes** (generate / amend / clean):
+Response for **mutating modes** (generate / clean):
 
 ```json
 { "elements": [...] }
 ```
 
-- `generate`: elements to **append** (fresh IDs).
-- `amend` / `clean`: elements to **replace by ID** (same IDs as input; new IDs = append).
+- `generate`: a mix of **appended** elements (fresh IDs) and **modified** ones (existing
+  IDs, replaced in place) — the prompt decides which. This is the former separate "amend"
+  mode folded in: generate now adds, edits, or does both in one response.
+- `clean`: elements to **replace by ID** (same IDs as input; new IDs = append).
 
-Response for **review**: `Content-Type: text/event-stream`, OpenAI SSE format piped
-directly from the OpenAI API with CORS headers added.
+Response for **review** and **ask**: `Content-Type: text/event-stream`, OpenAI SSE format
+piped directly from the OpenAI API with CORS headers added.
 
 Error responses follow the standard worker envelope:
 `{ "error": "ai_not_configured" | "ai_error" | "ai_parse_error" | "off_topic" | ... }`
@@ -141,7 +143,7 @@ view-role sessions (AI mutates the diagram; guests can't persist changes they do
 
 Contains:
 
-- Mode selector (Generate / Amend / Clean / Review tabs)
+- Mode selector (Build / Ask / Review / Clean tabs; "Build" is the `generate` mode)
 - Scrollable response / status area
 - Prompt textarea + Send button (disabled while a request is in flight)
 - Close button (hides for the session without touching the preference)

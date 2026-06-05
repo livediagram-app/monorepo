@@ -113,6 +113,24 @@ The api worker's telemetry ingest (`/api/events`) is off unless `TELEMETRY_ENABL
 
 Turning telemetry on end-to-end takes BOTH the server gate above AND a build-time gate on the editor + dashboard apps. The api flag is the authoritative gate (ingest + summary refuse to serve without it), but the live editor also reads `NEXT_PUBLIC_TELEMETRY_ENABLED` at build time and skips emission entirely when it isn't `"true"`, and the telemetry dashboard does the same. So a fork that only flips the api flag will see "ingest on" but no events flow, and the dashboard stays empty. To turn it fully on, set `NEXT_PUBLIC_TELEMETRY_ENABLED=true` in your CI build env (or `apps/live/.env.production` + `apps/telemetry/.env.production`) alongside the api flag. Per-user opt-out via the Settings dialog (spec/20) still overrides both when off.
 
+## AI assistance: off by default, needs an OpenAI key
+
+The in-editor AI panel (spec/25) is hidden entirely unless the api worker has an OpenAI key. Forks that don't want it provision nothing and get zero AI surface: `GET /api/capabilities` reports `{ aiEnabled: false }`, `POST /api/ai` returns 503, and the editor never renders the toggle or panel.
+
+To turn it on, set the key as a worker secret:
+
+```bash
+pnpm --filter @livediagram/api exec wrangler secret put OPENAI_API_KEY
+```
+
+Optional knobs (all plain `[vars]` in `apps/api/wrangler.toml`, the dashboard, or `.dev.vars`):
+
+- `OPENAI_MODEL`: model name, defaults to `gpt-4o-mini`.
+- `AI_ALLOWED_ORIGINS`: comma-separated `Origin` allow-list for `POST /api/ai` (e.g. `https://your-host,http://localhost:3002`). Unset = no origin check. Matched verbatim, case-sensitive.
+- `AI_REQUIRE_CLERK`: set to `"true"` to reject the guest (`X-Owner-Id`) path on `/api/ai` only, requiring a verified Clerk JWT. Unset = guests can use AI (so a Clerk-less fork still works).
+
+The last two are the spend-DoS defence: on a public deployment they stop a third-party site from minting fresh owner ids to drain your OpenAI budget. The hosted livediagram.app sets both; a private or Clerk-less fork can leave them unset. AI is also per-user opt-in via the Settings dialog even once the key is present.
+
 ## Custom domain
 
 Add a custom-domain route to the router worker (`apps/router/wrangler.toml`) and point your DNS at Cloudflare. The router stitches all paths under one hostname:

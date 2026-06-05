@@ -28,6 +28,7 @@ The unit of value is the team, not the individual. See [spec/00](../specs/00-pur
 - **Hybrid auth**: guests get everything (full persistence keyed to a per-browser id); signed-in users (Clerk) get cross-device sync and account self-delete.
 - **Export / import**: active tab to Markdown / PDF / PNG / JSON file; import the JSON envelope back as a new tab.
 - **"Shared with you" Explorer accordion**: visitors can make their own copy of a shared diagram.
+- **AI assistance** (optional): an in-editor panel (Build / Ask / Review / Clean) that adds or edits elements from a prompt, answers questions about the active tab, and reviews structure. Off by default; needs an `OPENAI_API_KEY` on the api worker plus per-user opt-in in Settings, and is hidden entirely on forks that don't configure a key. See [spec/25](../specs/25-ai-assistance.md).
 - **Telemetry**: anonymous first-party product events stored in D1; public dashboard at `/telemetry`. No third-party analytics; no identifiers crossing the wire. Off in OSS forks unless the worker is configured for it. See [spec/22](../specs/22-telemetry.md).
 
 ## What's still ahead
