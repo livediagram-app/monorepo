@@ -29,7 +29,13 @@ import {
 // view primitives (which render it). Lifted here, not into a third
 // `types.ts`, because every consumer of these types also reaches
 // for one of the view components.
-export type DiagramItem = { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null };
+export type DiagramItem = {
+  id: string;
+  name: string;
+  folderId: string | null;
+  savedAt: number;
+  shareCode: string | null;
+};
 
 // What the sidebar tree highlights and what the right pane shows.
 // "Special" nodes (`recent`, `all`, `shared`) are virtual buckets
@@ -412,8 +418,20 @@ export function DiagramRow({
       <span className="hidden sm:block">
         {diagram.shareCode ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="2" cy="4.5" r="1.4" /><circle cx="7" cy="2" r="1.2" /><circle cx="7" cy="7" r="1.2" />
+            <svg
+              width="9"
+              height="9"
+              viewBox="0 0 9 9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="2" cy="4.5" r="1.4" />
+              <circle cx="7" cy="2" r="1.2" />
+              <circle cx="7" cy="7" r="1.2" />
               <path d="M3.2 3.8L5.9 2.5M3.2 5.2L5.9 6.5" />
             </svg>
             Shared
