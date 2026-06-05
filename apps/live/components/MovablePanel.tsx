@@ -558,9 +558,9 @@ export function MovablePanel({
           via a grid-template-rows transition so it slides open / shut
           rather than popping (`hidden` had no transition; on mobile
           the abrupt swap was hard to follow as the panel chrome
-          jumped to its new size). The inner wrapper carries
-          `overflow-hidden` so the body's intrinsic height is clipped
-          while the row track interpolates from 0fr to 1fr. */}
+          jumped to its new size). The grid child uses `overflow-y-auto`
+          so long content scrolls; `grid-rows-[0fr]` still collapses it
+          to 0px because the grid track constrains the child height. */}
       <div
         className={
           'grid transition-[grid-template-rows] duration-200 ease-out ' +
@@ -568,13 +568,11 @@ export function MovablePanel({
         }
         aria-hidden={collapsible && effectiveCollapsed ? true : undefined}
       >
-        <div className="overflow-hidden">
-          <div
-            style={bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
-            className="flex flex-col overflow-y-auto"
-          >
-            {children}
-          </div>
+        <div
+          style={bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
+          className="overflow-y-auto"
+        >
+          <div className="flex flex-col">{children}</div>
         </div>
       </div>
     </div>
