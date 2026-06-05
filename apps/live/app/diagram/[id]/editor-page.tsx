@@ -764,50 +764,48 @@ export default function LivePage() {
       const shareCodeParam = initialShareCode;
 
       // Identity comes first because every diagram fetch needs an
-      // owner id. Two ways in (spec/04): when signed in, the Clerk
-      // userId becomes the canonical participant id — same id the
-      // api worker resolves from the Bearer token, so the
-      // participant record keys match. When signed out, fall back
-      // to the localStorage guest UUID (minted on first visit and
-      // persisted forever, so a guest's diagrams survive page
-      // reloads).
-      const selfId = clerkUserId ?? ensureGuestSelfId();
-      const storedSelf = await apiLoadSelf(selfId).catch(() => null);
-      // Signed-in users always use their Clerk-known name on the
-      // participant record. For a brand-new participant (no
-      // storedSelf) this seeds the row; for an existing one we
-      // overwrite the persisted name so it stays in sync with the
-      // user's Clerk profile (rename in Clerk → rename here on next
-      // load). Guests keep the existing random placeholder so their
-      // chosen identity isn't blown away.
-      const baseSelf: Participant = storedSelf ?? {
-        id: selfId,
-        name: randomName(),
-        color: randomColor(),
-        status: 'online',
-      };
-      const self: Participant =
-        clerkUserId && clerkDisplayName
-          ? { ...baseSelf, name: clerkDisplayName, status: 'online' }
-          : { ...baseSelf, status: 'online' };
-      setSelfParticipant({ ...self, status: 'online' });
-      // Persist on first load, or when a signed-in user's Clerk
-      // display name has drifted from what we have on the server
-      // (e.g. they renamed themselves in the Clerk dashboard). The
-      // denormalised participant name we copy into change_log rows
-      // would otherwise stay stale.
-      const nameDrifted = !!(
-        storedSelf &&
-        clerkUserId &&
-        clerkDisplayName &&
-        storedSelf.name !== clerkDisplayName
-      );
-      if (!storedSelf || nameDrifted) await apiSaveSelf(self).catch(() => {});
-      // Seed the persistence guard with whatever's on the server (or
-      // what we just saved for a brand-new participant) so the
-      // post-hydration effect doesn't immediately echo the same
-      // name/color back via PUT.
-      lastPersistedSelfRef.current = { name: self.name, color: self.color };
+      // owner id. On password retries (passwordRetry > 0) we already
+      // resolved the participant on the first attempt — reuse it rather
+      // than hitting /api/participants again on every wrong guess.
+      let self: Participant;
+      if (selfParticipant.id !== 'self') {
+        // Already resolved — skip the network round-trip.
+        self = selfParticipant;
+      } else {
+        // Two ways in (spec/04): when signed in, the Clerk userId becomes
+        // the canonical participant id. When signed out, fall back to the
+        // localStorage guest UUID.
+        const selfId = clerkUserId ?? ensureGuestSelfId();
+        const storedSelf = await apiLoadSelf(selfId).catch(() => null);
+        // Signed-in users always use their Clerk-known name on the
+        // participant record. For a brand-new participant (no storedSelf)
+        // this seeds the row; for an existing one we overwrite so it stays
+        // in sync with the user's Clerk profile. Guests keep the existing
+        // random placeholder so their chosen identity isn't blown away.
+        const baseSelf: Participant = storedSelf ?? {
+          id: selfId,
+          name: randomName(),
+          color: randomColor(),
+          status: 'online',
+        };
+        self =
+          clerkUserId && clerkDisplayName
+            ? { ...baseSelf, name: clerkDisplayName, status: 'online' }
+            : { ...baseSelf, status: 'online' };
+        setSelfParticipant({ ...self, status: 'online' });
+        // Persist on first load, or when a signed-in user's Clerk display
+        // name has drifted from what we have on the server.
+        const nameDrifted = !!(
+          storedSelf &&
+          clerkUserId &&
+          clerkDisplayName &&
+          storedSelf.name !== clerkDisplayName
+        );
+        if (!storedSelf || nameDrifted) await apiSaveSelf(self).catch(() => {});
+        // Seed the persistence guard so the post-hydration effect doesn't
+        // immediately echo the same name/color back via PUT.
+        lastPersistedSelfRef.current = { name: self.name, color: self.color };
+      }
 
       // Two URL flavours: `?d=<id>` is the owner's private URL,
       // `?s=<code>` is a share URL another participant follows. Visitor
