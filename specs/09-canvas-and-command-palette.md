@@ -23,10 +23,10 @@ The first row of the palette holds the canvas-tool toggles:
 
 The header has a **collapse button** to the right of the `PALETTE` label. Clicking it hides the body (canvas-tool toggle, shape row, accordions) and leaves the title row visible as a banner in place, so the user always sees the affordance and gets canvas real-estate back. The button's icon flips from a dash (collapse) to a plus (expand) so the same slot is the entry point in both directions.
 
-- **Mobile** (touch viewports below the `sm:` breakpoint, 640 px): the palette starts **collapsed by default** so a small viewport opens to the canvas, not the chrome. Tapping anywhere on the title row expands the body; tapping anywhere outside the panel (canvas, an element, a different floating panel) collapses it again so a presenter doesn't have to find the button after every interaction.
-- **Desktop** (`sm:` and up): the palette starts expanded. The collapse button toggles to the same banner mode the mobile user sees. There is no outside-tap auto-close on desktop, the user is in control of when to re-open.
+- **Mobile** (touch viewports below the `sm:` breakpoint, 640 px): the palette does not render at its corner. It opens instead from the **mobile dock** (a top-right button row, see spec/07 "Mobile chrome") as a popover anchored to the Palette button; tapping the button again, or adding a shape / tool, closes the popover. The banner-collapse described here is the desktop mechanism.
+- **Desktop** (`sm:` and up): the palette starts expanded. The collapse button toggles to banner mode. There is no outside-tap auto-close on desktop, the user is in control of when to re-open.
 
-The dock-button mechanism the Palette used to share with the Explorer (square button at the bottom of the canvas, next to the zoom controls) is no longer wired for the Palette or the Editor (ContextPanel): both share the banner-collapse behaviour via the `MovablePanel` `collapsible` prop. Activity still docks via its own minimise path, see that section.
+On desktop the Palette and Editor (ContextPanel) collapse to a banner in place via the `MovablePanel` `collapsible` prop. On mobile they (and the Explorer) are reached from the top-right mobile dock instead (spec/07 "Mobile chrome"); the old bottom-of-canvas dock button next to the zoom controls is retired. Activity still docks via its own minimise path, see that section.
 
 ## Explorer panel
 
@@ -42,7 +42,7 @@ Sections, top to bottom:
   - **Clerk enabled, signed out**: "Sign in to keep your content" with body "A free account keeps your diagrams and content across sessions and devices." and a primary CTA linking to `/sign-in/`.
   - **Clerk enabled, signed in**: renders nothing. The signed-in user already has the account that syncs everything; the nudge would just be noise.
 
-When the user collapses the Explorer, it banner-collapses in place via the shared `MovablePanel` `collapsible` prop (same as the Palette and Editor's ContextPanel). The legacy dock-button-in-the-bottom-dock minimised state is no longer wired for any of these three panels. Activity still docks via its own minimise path, see that section.
+On desktop, collapsing the Explorer banner-collapses it in place via the shared `MovablePanel` `collapsible` prop (same as the Palette and Editor's ContextPanel). On mobile the Explorer is instead opened from the top-right mobile dock (spec/07 "Mobile chrome"), so it is no longer hidden on phones; the old bottom-of-canvas dock button is retired. Activity still docks via its own minimise path, see that section.
 
 ## Text alignment
 
