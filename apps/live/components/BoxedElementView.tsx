@@ -22,14 +22,12 @@ import type { DragMode } from '@/lib/canvas';
 import { initialsOf } from '@/lib/identity';
 import {
   FixedSizeLabel,
-  LockBadge,
   MultilineLabel,
   MultilineLabelEditor,
-  ResizeHandles,
-  RotateHandle,
   ScalingLabel,
   SingleLineLabelEditor,
-} from './element-parts';
+} from './element-labels';
+import { LockBadge, ResizeHandles, RotateHandle } from './element-parts';
 import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { Tooltip } from './Tooltip';
