@@ -42,6 +42,8 @@ Sections, top to bottom:
   - **Clerk enabled, signed out**: "Sign in to keep your content" with body "A free account keeps your diagrams and content across sessions and devices." and a primary CTA linking to `/sign-in/`.
   - **Clerk enabled, signed in**: renders nothing. The signed-in user already has the account that syncs everything; the nudge would just be noise.
 
+Diagram rows — in **Recent Diagrams** and inside folders — show a small external-link glyph beside the name when the diagram has an active share link (`shareCode` non-null, carried through from the `/api/diagrams` summary), with a "Has a share link" tooltip, so an owner can tell at a glance which of their diagrams are shared.
+
 On desktop, collapsing the Explorer banner-collapses it in place via the shared `MovablePanel` `collapsible` prop (same as the Palette and Editor's ContextPanel). On mobile the Explorer is instead opened from the top-right mobile dock (spec/07 "Mobile chrome"), so it is no longer hidden on phones; the old bottom-of-canvas dock button is retired. Activity still docks via its own minimise path, see that section.
 
 ## Text alignment
