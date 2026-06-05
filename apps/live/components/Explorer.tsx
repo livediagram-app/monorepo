@@ -214,6 +214,13 @@ export function Explorer({
     () => (currentDiagramId ? (diagrams.find((d) => d.id === currentDiagramId) ?? null) : null),
     [diagrams, currentDiagramId],
   );
+  // When the open diagram is shared (not owned), it won't appear in
+  // `diagrams`. Fall back to the shared list so the Current Diagram
+  // section still renders for visitors.
+  const currentShared = useMemo(
+    () => (!current && currentDiagramId ? (shared.find((s) => s.id === currentDiagramId) ?? null) : null),
+    [current, shared, currentDiagramId],
+  );
   // Cap the recents list at 5 so the accordion stays compact.
   const RECENT_LIMIT = 5;
   const allOthers = useMemo(
@@ -328,38 +335,48 @@ export function Explorer({
           </button>
         ) : null}
 
-        {current ? (
+        {(current ?? currentShared) ? (
           <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200/60 dark:bg-slate-800/50 dark:ring-slate-700/60">
             <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-white">
               Current Diagram
             </p>
             <ul className="flex flex-col gap-0.5 overflow-hidden">
-              <li
-                className={
-                  exitingDiagramIds.has(current.id)
-                    ? 'animate-slide-row-out overflow-hidden'
-                    : 'animate-slide-row-in overflow-hidden'
-                }
-              >
-                <DiagramRow
-                  item={current}
-                  active
-                  draggable={!!onMoveDiagramToFolder}
-                  onOpen={() => onOpenDiagram(current.id)}
-                  onRename={onRenameCurrent}
-                  onDelete={
-                    wrappedDeleteDiagram ? () => wrappedDeleteDiagram(current.id) : undefined
+              {current ? (
+                <li
+                  className={
+                    exitingDiagramIds.has(current.id)
+                      ? 'animate-slide-row-out overflow-hidden'
+                      : 'animate-slide-row-in overflow-hidden'
                   }
-                  onDuplicate={
-                    onDuplicateDiagram ? () => onDuplicateDiagram(current.id) : undefined
-                  }
-                  onMoveRequest={
-                    onMoveDiagramToFolder
-                      ? (anchor) => openMovePicker(current.id, anchor)
-                      : undefined
-                  }
-                />
-              </li>
+                >
+                  <DiagramRow
+                    item={current}
+                    active
+                    draggable={!!onMoveDiagramToFolder}
+                    onOpen={() => onOpenDiagram(current.id)}
+                    onRename={onRenameCurrent}
+                    onDelete={
+                      wrappedDeleteDiagram ? () => wrappedDeleteDiagram(current.id) : undefined
+                    }
+                    onDuplicate={
+                      onDuplicateDiagram ? () => onDuplicateDiagram(current.id) : undefined
+                    }
+                    onMoveRequest={
+                      onMoveDiagramToFolder
+                        ? (anchor) => openMovePicker(current.id, anchor)
+                        : undefined
+                    }
+                  />
+                </li>
+              ) : currentShared ? (
+                <li className="animate-slide-row-in overflow-hidden">
+                  <DiagramRow
+                    item={{ ...currentShared, folderId: null }}
+                    active
+                    onOpen={() => onOpenDiagram(currentShared.id, currentShared.shareCode)}
+                  />
+                </li>
+              ) : null}
             </ul>
           </div>
         ) : null}
