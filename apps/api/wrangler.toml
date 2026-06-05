@@ -113,6 +113,25 @@ simple = { limit = 20, period = 60 }
 # When OPENAI_API_KEY is absent the feature is entirely hidden:
 # GET /api/capabilities returns { aiEnabled: false } and POST /api/ai
 # returns 503. No UI surface appears in the live app.
+#
+# Two optional plain [vars] harden POST /api/ai against a third-party
+# site draining the operator's OpenAI budget. Both default to "off"
+# so self-host upgrades don't break:
+#
+#   - AI_ALLOWED_ORIGINS: comma-separated Origin allow-list for the
+#     endpoint. Unset = no check. Hosted livediagram.app sets this
+#     to "https://livediagram.app". Self-hosters set it to their own
+#     hostname (add "http://localhost:3002" if you want local dev to
+#     keep working). Matched verbatim against the request's Origin
+#     header, case-sensitive.
+#   - AI_REQUIRE_CLERK: when "true", POST /api/ai rejects the
+#     X-Owner-Id guest path with 401 sign_in_required. Hosted
+#     livediagram.app sets this to "true" (paired with Clerk auth).
+#     OSS self-hosters who don't run Clerk leave it unset so guests
+#     can still use AI.
+#
+# Both are plain [vars] (no secret material), set them in this file,
+# the Cloudflare dashboard, or `.dev.vars` for local testing.
 
 # CLERK_JWKS_URL is provisioned out-of-band so the value never lands
 # in the public repo (spec/06):

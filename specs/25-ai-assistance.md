@@ -34,10 +34,25 @@ Only the **active tab** is ever in scope — other tabs are never sent.
 
 ## Security
 
-- Auth required: Clerk JWT or `X-Owner-Id` (no anonymous use of the AI endpoint).
+- Auth required: Clerk JWT or `X-Owner-Id`. The hosted deployment additionally requires
+  Clerk (see `AI_REQUIRE_CLERK` below); self-hosters can accept anonymous owners by
+  leaving the flag unset.
 - Per-IP rate limiter (`AI_RATE_LIMITER` binding, 20 req/60 s). Optional — absent on
   self-host deployments falls through to "allow", matching the pattern used by
   `WRITE_RATE_LIMITER` and `EVENTS_RATE_LIMITER`.
+- Optional `Origin` allow-list (`AI_ALLOWED_ORIGINS`). When set, every `/api/ai` request
+  must carry an `Origin` header whose value matches one of the entries; otherwise the
+  worker returns `403 { error: 'origin_not_allowed' }` before reaching OpenAI. Unset =
+  no origin check (preserves the historical behaviour). The hosted deployment locks this
+  down to `https://livediagram.app`; self-hosters set it to their own hostname (plus dev
+  origins like `http://localhost:3002` if they want local dev to keep working).
+- Optional Clerk-only gate (`AI_REQUIRE_CLERK`). When set to `"true"`, `/api/ai` rejects
+  any request without a verified Clerk Bearer JWT with `401 { error: 'sign_in_required' }`;
+  the legacy `X-Owner-Id` guest path still works for every OTHER endpoint, just not for
+  AI. Unset = guests can still use AI (the default before this flag landed), preserving
+  the OSS self-host story where Clerk is optional. Combined with the origin allow-list,
+  this is the spend-DoS defence on a public deployment: a third-party site can no longer
+  drain the operator's OpenAI budget by minting fresh `X-Owner-Id` UUIDs.
 - Prompt capped at 1 000 characters server-side; element payload capped at 200 elements.
   Both prevent runaway token costs and context-window stuffing.
 - System prompt explicitly instructs the model to refuse any request unrelated to diagram
@@ -94,13 +109,17 @@ Error responses follow the standard worker envelope:
 
 ## Environment variables
 
-| Variable         | Where                 | Purpose                                         |
-| ---------------- | --------------------- | ----------------------------------------------- |
-| `OPENAI_API_KEY` | Worker secret         | Required to enable AI. Absent = feature hidden. |
-| `OPENAI_MODEL`   | Worker var (optional) | OpenAI model name. Defaults to `gpt-4o-mini`.   |
+| Variable             | Where                 | Purpose                                                                                                                                                                                                                 |
+| -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`     | Worker secret         | Required to enable AI. Absent = feature hidden.                                                                                                                                                                         |
+| `OPENAI_MODEL`       | Worker var (optional) | OpenAI model name. Defaults to `gpt-4o-mini`.                                                                                                                                                                           |
+| `AI_ALLOWED_ORIGINS` | Worker var (optional) | Comma-separated `Origin` values that may call `/api/ai`. Unset = no check. Example: `https://livediagram.app,http://localhost:3002`. Entries are matched case-sensitive against the request's `Origin` header verbatim. |
+| `AI_REQUIRE_CLERK`   | Worker var (optional) | Set to `"true"` to require a verified Clerk JWT on `/api/ai` (rejects the `X-Owner-Id` guest path with 401). Unset / any other value = guests allowed.                                                                  |
 
 Set via `wrangler secret put OPENAI_API_KEY` for production; drop into `apps/api/.dev.vars`
-for local dev (gitignored).
+for local dev (gitignored). The two `AI_*` flags are plain `[vars]` (no secret value), so
+operators can set them via `wrangler.toml`, the Cloudflare dashboard, or `.dev.vars` for
+local testing.
 
 ## Frontend
 

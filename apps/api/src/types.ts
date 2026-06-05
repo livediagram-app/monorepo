@@ -69,4 +69,18 @@ export type Env = {
   // per IP so a single client can't exhaust the OpenAI budget.
   // Optional: absent (self-host) falls through to "allow".
   AI_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
+  // Comma-separated Origin allow-list for POST /api/ai (spec/25).
+  // When set, the worker rejects 403 unless the request's Origin
+  // header exactly matches one of the entries (trimmed for
+  // whitespace). Unset = no check, matching the historical
+  // behaviour so self-host upgrades don't break. Hosted
+  // livediagram.app sets this to "https://livediagram.app".
+  AI_ALLOWED_ORIGINS?: string;
+  // When the literal string "true", POST /api/ai requires a verified
+  // Clerk Bearer JWT and rejects the X-Owner-Id guest path with 401
+  // (spec/25). Anything else (unset, "false", any other value) keeps
+  // the guest path open. Hosted livediagram.app sets this to "true";
+  // OSS self-hosters who run Clerk-less stay on the open path by
+  // default.
+  AI_REQUIRE_CLERK?: string;
 };
