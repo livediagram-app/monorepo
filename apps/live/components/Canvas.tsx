@@ -38,8 +38,9 @@ import { drawBannerMessage, drawIntentCursor, type PendingDraw } from '@/lib/dra
 import { track } from '@/lib/telemetry';
 import type { TemplateKind } from '@/lib/templates';
 import { ArrowDefs, ArrowView } from './ArrowView';
-import { BoxedElementView, ShapeSvgOverlay, isSvgRenderedShape } from './BoxedElementView';
+import { BoxedElementView } from './BoxedElementView';
 import { CommandPalette, type CanvasTool, type SelectedElementControls } from './CommandPalette';
+import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { UnionResizeHandles } from './element-parts';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
 // Lazy-load CommentsPanel: only mounts when the active tab has at
