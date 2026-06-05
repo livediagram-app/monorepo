@@ -176,10 +176,12 @@ contents.
   - Breadcrumb showing the path from "All diagrams" through every
     ancestor of the focused folder. Each segment is a button that
     jumps the focus.
-  - List view with three columns: Name, Updated, action. Direct
-    subfolders and direct diagrams render in the same list (Windows
-    Explorer pattern). Folder rows open the folder; diagram rows
-    open the diagram.
+  - List view with four columns: Name, Updated, Visibility, action.
+    The Visibility column shows a "Shared" badge on diagrams that
+    have an active share link (blank otherwise), and is hidden below
+    the mobile breakpoint to keep rows readable. Direct subfolders and
+    direct diagrams render in the same list (Windows Explorer pattern).
+    Folder rows open the folder; diagram rows open the diagram.
   - "Shared with me" replaces the list with a Role + Updated table
     of accepted shares; each row is a link into the shared diagram.
   - "Image Gallery" replaces the list with a drop-zone (upload via
