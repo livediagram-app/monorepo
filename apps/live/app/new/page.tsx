@@ -63,7 +63,13 @@ export default function NewDiagramPage() {
   // sourced from the same API the editor uses, keyed by the local
   // self id once it's available.
   const [diagramList, setDiagramList] = useState<
-    { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null }[]
+    {
+      id: string;
+      name: string;
+      folderId: string | null;
+      savedAt: number;
+      shareCode: string | null;
+    }[]
   >([]);
   // Folder state + mutations via the shared useFolders hook. The
   // ownerId is `'pending'` until the post-mount effect resolves

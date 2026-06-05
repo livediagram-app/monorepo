@@ -211,7 +211,13 @@ type CanvasProps = {
   onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onResetExplorer: () => void;
-  diagramList: { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null }[];
+  diagramList: {
+    id: string;
+    name: string;
+    folderId: string | null;
+    savedAt: number;
+    shareCode: string | null;
+  }[];
   folders: { id: string; parentId: string | null; name: string }[];
   // Shared-with-you list. Empty by default so legacy callers can
   // omit it.
