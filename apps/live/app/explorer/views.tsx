@@ -29,7 +29,13 @@ import {
 // view primitives (which render it). Lifted here, not into a third
 // `types.ts`, because every consumer of these types also reaches
 // for one of the view components.
-export type DiagramItem = { id: string; name: string; folderId: string | null; savedAt: number; shareCode: string | null };
+export type DiagramItem = {
+  id: string;
+  name: string;
+  folderId: string | null;
+  savedAt: number;
+  shareCode: string | null;
+};
 
 // What the sidebar tree highlights and what the right pane shows.
 // "Special" nodes (`recent`, `all`, `shared`) are virtual buckets
@@ -408,8 +414,18 @@ export function DiagramRow({
         {diagram.shareCode ? (
           <span title="Has a share link" className="shrink-0 text-slate-400">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden>
-              <path d="M4.5 7.5a2.5 2.5 0 0 0 3.5 0l1.5-1.5a2.5 2.5 0 0 0-3.5-3.5L5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              <path d="M7.5 4.5a2.5 2.5 0 0 0-3.5 0L2.5 6a2.5 2.5 0 0 0 3.5 3.5L7 8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              <path
+                d="M4.5 7.5a2.5 2.5 0 0 0 3.5 0l1.5-1.5a2.5 2.5 0 0 0-3.5-3.5L5 3.5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M7.5 4.5a2.5 2.5 0 0 0-3.5 0L2.5 6a2.5 2.5 0 0 0 3.5 3.5L7 8.5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
             </svg>
           </span>
         ) : null}
