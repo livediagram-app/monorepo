@@ -37,6 +37,14 @@ export function notFound(): Response {
   return json({ error: 'not_found' }, { status: 404 });
 }
 
+// 204 No Content with the CORS header set. The canonical reply for a
+// successful write that returns no body (DELETE, folder assignment,
+// etc.); replaces the `new Response(null, { status: 204, headers:
+// CORS_HEADERS })` literal that recurred across the route handlers.
+export function noContent(): Response {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export function badRequest(msg: string): Response {
   return json({ error: 'bad_request', message: msg }, { status: 400 });
 }

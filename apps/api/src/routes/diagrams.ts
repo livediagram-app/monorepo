@@ -35,24 +35,31 @@ import {
   upsertDiagramMeta,
   upsertTab,
 } from '../db';
-import { badRequest, CORS_HEADERS, forbidden, json, missingAuth, notFound } from '../responses';
+import { badRequest, forbidden, json, noContent, notFound } from '../responses';
 import type { ChangeLogEntryDTO, DiagramDTO, ShareRole } from '../types';
-import { gateEdit, gateRead, type RouteContext } from './context';
+import {
+  gateEdit,
+  gateRead,
+  requireDiagramAccess,
+  requireOwnedDiagram,
+  requireOwner,
+  type RouteContext,
+} from './context';
 
 export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
-  const { request, env, url, segments, resolveOwner } = ctx;
+  const { request, env, url, segments } = ctx;
   if (segments[1] !== 'diagrams') return notFound();
   if (segments.length === 2) {
     if (request.method === 'GET') {
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
       const diagrams = await listDiagramsByOwner(env, owner);
       return json({ diagrams });
     }
     if (request.method === 'POST') {
       const body = (await request.json()) as Partial<DiagramDTO> & { tabs?: Tab[] };
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
       if (!body.id || !body.name) {
         return badRequest('missing id/name');
       }
@@ -91,8 +98,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // this gate, any visitor with a guessed UUID could pull a
       // diagram they don't own. Mismatched owner returns 404
       // (not 403) so we don't leak the diagram's existence.
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
       const d = await getDiagram(env, id);
       return d && d.ownerId === owner ? json({ diagram: d }) : notFound();
     }
@@ -102,8 +109,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // the diagram, tabIds reorders the tabs to match. Both are
       // optional, and at least one must be present.
       const body = (await request.json()) as { name?: string; tabIds?: string[] };
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
       const existing = await getDiagram(env, id);
       const now = Date.now();
       const ownerId = existing?.ownerId ?? owner;
@@ -137,13 +144,10 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // spec/04), 404 on a missing diagram (no existence
       // leak), and 403 on a mismatched owner. Mirrors the GET
       // branch above which had this guard from the start.
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
-      const existing = await getDiagram(env, id);
-      if (!existing) return notFound();
-      if (existing.ownerId !== owner) return forbidden();
+      const existing = await requireOwnedDiagram(ctx, id);
+      if (existing instanceof Response) return existing;
       await deleteDiagram(env, id);
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 
@@ -157,8 +161,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 4 && segments[3] === 'copy') {
     const id = segments[2]!;
     if (request.method === 'POST') {
-      const owner = resolveOwner();
-      if (!owner) return missingAuth();
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
       const source = await getDiagram(env, id);
       if (!source) return notFound();
       // Authorisation: any of (a) owner, (b) holder of any
@@ -191,20 +195,17 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   // diagram pointing at a folder it can't see.
   if (segments.length === 4 && segments[3] === 'folder') {
     const id = segments[2]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    if (existing.ownerId !== owner) return forbidden();
+    const existing = await requireOwnedDiagram(ctx, id);
+    if (existing instanceof Response) return existing;
     if (request.method === 'PUT') {
       const body = (await request.json()) as { folderId?: string | null };
       const folderId = body.folderId ?? null;
       if (folderId !== null) {
         const folder = await getFolder(env, folderId);
-        if (!folder || folder.ownerId !== owner) return notFound();
+        if (!folder || folder.ownerId !== existing.ownerId) return notFound();
       }
       await setDiagramFolder(env, id, folderId);
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 
@@ -222,8 +223,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 5 && segments[3] === 'tabs') {
     const id = segments[2]!;
     const tabId = segments[4]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
+    const owner = requireOwner(ctx);
+    if (owner instanceof Response) return owner;
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
 
@@ -269,7 +270,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     }
     if (request.method === 'DELETE') {
       await deleteTabRow(env, id, tabId);
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 
@@ -289,8 +290,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   ) {
     const id = segments[2]!;
     const tabId = segments[4]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
+    const owner = requireOwner(ctx);
+    if (owner instanceof Response) return owner;
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
     const allowed = await gateRead(ctx, id, existing.ownerId);
@@ -354,8 +355,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   ) {
     const id = segments[2]!;
     const tabId = segments[4]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
+    const owner = requireOwner(ctx);
+    if (owner instanceof Response) return owner;
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
     if (existing.ownerId !== owner) return forbidden();
@@ -391,11 +392,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   //             single-code era).
   if (segments.length === 4 && segments[3] === 'share') {
     const id = segments[2]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    if (existing.ownerId !== owner) return forbidden();
+    const access = await requireOwnedDiagram(ctx, id);
+    if (access instanceof Response) return access;
 
     if (request.method === 'GET') {
       // Owner-only response, so it's safe to return the share password
@@ -426,11 +424,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   // { password: string | null }; null / empty clears it.
   if (segments.length === 4 && segments[3] === 'share-password') {
     const id = segments[2]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    if (existing.ownerId !== owner) return forbidden();
+    const access = await requireOwnedDiagram(ctx, id);
+    if (access instanceof Response) return access;
 
     if (request.method === 'PUT') {
       const body = (await request.json().catch(() => ({}))) as { password?: string | null };
@@ -446,11 +441,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 5 && segments[3] === 'share') {
     const id = segments[2]!;
     const code = segments[4]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    if (existing.ownerId !== owner) return forbidden();
+    const access = await requireOwnedDiagram(ctx, id);
+    if (access instanceof Response) return access;
 
     if (request.method === 'DELETE') {
       await deleteShareLink(env, code);
@@ -468,7 +460,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
           body: JSON.stringify({ op: { kind: 'share-revoked', code } }),
         })
         .catch(() => {});
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 
@@ -523,12 +515,8 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   // See specs/12-activity-and-audit.md.
   if (segments.length === 4 && segments[3] === 'log') {
     const id = segments[2]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    const allowed = await gateEdit(ctx, id, existing.ownerId);
-    if (!allowed) return forbidden();
+    const access = await requireDiagramAccess(ctx, id, 'edit');
+    if (access instanceof Response) return access;
 
     if (request.method === 'GET') {
       const entries = await listChangeLog(env, id);
@@ -550,16 +538,12 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 5 && segments[3] === 'log') {
     const id = segments[2]!;
     const entryId = segments[4]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    const allowed = await gateEdit(ctx, id, existing.ownerId);
-    if (!allowed) return forbidden();
+    const access = await requireDiagramAccess(ctx, id, 'edit');
+    if (access instanceof Response) return access;
 
     if (request.method === 'DELETE') {
       await deleteChangeLogEntry(env, entryId);
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 
@@ -569,15 +553,12 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 6 && segments[3] === 'log' && segments[4] === 'tab') {
     const id = segments[2]!;
     const tabId = segments[5]!;
-    const owner = resolveOwner();
-    if (!owner) return missingAuth();
-    const existing = await getDiagram(env, id);
-    if (!existing) return notFound();
-    if (existing.ownerId !== owner) return forbidden();
+    const access = await requireOwnedDiagram(ctx, id);
+    if (access instanceof Response) return access;
 
     if (request.method === 'DELETE') {
       await deleteChangeLogForTab(env, tabId);
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return noContent();
     }
   }
 

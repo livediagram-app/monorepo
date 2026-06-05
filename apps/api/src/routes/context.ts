@@ -7,7 +7,9 @@
 // doesn't recognise (preserving the original fall-through-to-404).
 
 import { canEditDiagram, canReadDiagram } from '../auth/diagram-access';
-import type { Env } from '../types';
+import { getDiagram } from '../db';
+import { forbidden, missingAuth, notFound } from '../responses';
+import type { DiagramDTO, Env } from '../types';
 
 export type RouteContext = {
   request: Request;
@@ -75,4 +77,61 @@ export function gateEdit(
     diagramOwnerId,
     sharePasswordOf(ctx.request),
   );
+}
+
+// Route-entry guards. Each resolves the caller / loads + authorises the
+// diagram and returns EITHER the value the handler needs OR the exact
+// Response it should return instead. The caller's one-liner is:
+//
+//   const owner = requireOwner(ctx);
+//   if (owner instanceof Response) return owner;
+//
+// which collapses the `const owner = resolveOwner(); if (!owner) return
+// missingAuth();` pair (and its load-and-check cousins) that every
+// owner-scoped path in diagrams.ts repeated by hand. Centralising them
+// means the authz status-code mapping (400 / 404 / 403) lives in one
+// place a reviewer can check, instead of N copies that can drift.
+
+// The resolved owner id, or the 400 to return when neither a Clerk
+// token nor X-Owner-Id identifies the caller.
+export function requireOwner(ctx: RouteContext): string | Response {
+  return ctx.resolveOwner() ?? missingAuth();
+}
+
+// Owner-only resource: resolve the caller, load the diagram, and confirm
+// the caller owns it. Returns the diagram, or 400 (no owner) / 404
+// (missing) / 403 (foreign). 404-before-403 means a foreign id can't be
+// distinguished from a missing one until ownership is proven, but once
+// the row exists a non-owner gets 403 — matching every owner-only branch
+// diagrams.ts hand-rolled (DELETE :id, /folder, /share, /share-password,
+// /share/:code, /log/tab).
+export async function requireOwnedDiagram(
+  ctx: RouteContext,
+  diagramId: string,
+): Promise<DiagramDTO | Response> {
+  const owner = ctx.resolveOwner();
+  if (!owner) return missingAuth();
+  const existing = await getDiagram(ctx.env, diagramId);
+  if (!existing) return notFound();
+  if (existing.ownerId !== owner) return forbidden();
+  return existing;
+}
+
+// Share-gated resource: resolve the caller, load the diagram, and run
+// the read- or edit-access gate (owner OR a valid share code of the
+// matching role). Returns the diagram, or 400 / 404 / 403. Used by the
+// tab-content + change-log paths where a non-owner share visitor is a
+// legitimate caller.
+export async function requireDiagramAccess(
+  ctx: RouteContext,
+  diagramId: string,
+  mode: 'read' | 'edit',
+): Promise<DiagramDTO | Response> {
+  const owner = ctx.resolveOwner();
+  if (!owner) return missingAuth();
+  const existing = await getDiagram(ctx.env, diagramId);
+  if (!existing) return notFound();
+  const allowed = await (mode === 'edit' ? gateEdit : gateRead)(ctx, diagramId, existing.ownerId);
+  if (!allowed) return forbidden();
+  return existing;
 }
