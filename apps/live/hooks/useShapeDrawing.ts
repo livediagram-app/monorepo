@@ -35,7 +35,7 @@ import {
 } from '@livediagram/diagram';
 import { deriveNewBoxedColours, getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
-import type { PendingDraw } from '@/components/Canvas';
+import type { PendingDraw } from '@/lib/draw-mode';
 
 type ShapeDrawingDeps = {
   // user-preferences.drawToAdd — gates whether palette adds queue a
