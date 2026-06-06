@@ -255,12 +255,12 @@ function BoxedElementViewImpl({
         // Spin about the centre (the wrapper already has origin-center).
         // Handles + anchors are children, so they rotate with the box.
         ...(isRotated ? { transform: `rotate(${rotation}deg)` } : {}),
-        // Lift the selected element (and its resize / rotate handles,
-        // which spill outside the box) above sibling elements so a
-        // handle click near a neighbour lands on the handle, not the
-        // neighbour painted on top. Stays below the plus buttons (z-20)
-        // and selection popover (z-40), which share this layer.
-        ...(showHandles ? { zIndex: 10 } : {}),
+        // Deliberately do NOT raise z-index on selection. Keeping the
+        // element at its natural paint order means selecting a container
+        // doesn't jump it above the content layered on top of it — users
+        // resize containers against their visible content, so hiding that
+        // content on select was worse than the rare case of a handle
+        // sitting under a neighbour painted over this element.
       }}
     >
       {element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
