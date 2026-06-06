@@ -360,13 +360,13 @@ export function MovablePanel({
     : position
       ? ''
       : useDynamicStack
-        ? 'inset-x-2 sm:left-auto sm:right-4'
+        ? 'inset-x-3 sm:left-auto sm:right-4'
         : defaultCorner === 'top-right'
-          ? 'inset-x-2 top-2 sm:inset-x-auto sm:right-4 sm:top-4'
+          ? 'inset-x-3 top-3 sm:inset-x-auto sm:right-4 sm:top-4'
           : defaultCorner === 'top-right-stacked'
-            ? 'inset-x-2 top-[15rem] sm:inset-x-auto sm:right-4'
+            ? 'inset-x-3 top-[15rem] sm:inset-x-auto sm:right-4'
             : defaultCorner === 'top-banner'
-              ? 'inset-x-2 top-2'
+              ? 'inset-x-3 top-3'
               : defaultCorner === 'bottom-left'
                 ? 'bottom-4 left-4'
                 : defaultCorner === 'bottom-right'
@@ -386,8 +386,8 @@ export function MovablePanel({
           e.preventDefault();
           e.stopPropagation();
         }}
-        style={anchor ? { top: anchor.top + 8, left: anchor.left } : { top: 50, right: 8 }}
-        className="pointer-events-auto absolute z-20 flex w-64 max-w-[calc(100vw-1rem)] cursor-default flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 transition-opacity duration-150 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40"
+        style={anchor ? { top: anchor.top + 12, left: anchor.left } : { top: 56, right: 12 }}
+        className="pointer-events-auto absolute z-20 flex w-64 max-w-[calc(100vw-2rem)] cursor-default flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 transition-opacity duration-150 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40"
       >
         {anchor ? (
           <div
