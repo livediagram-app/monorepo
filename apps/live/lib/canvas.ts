@@ -18,6 +18,11 @@ export const ALIGN_SNAP_THRESHOLD = 6;
 // again, so the resize math clamps both axes here.
 export const MIN_SIZE = 20;
 
+// Viewport zoom bounds, shared by the +/- buttons and the pinch / wheel
+// zoom so the two can never drift apart. 0.1 = 10%, 5 = 500%.
+export const ZOOM_MIN = 0.1;
+export const ZOOM_MAX = 5;
+
 // Rotation snap: dragging the rotate handle snaps to the nearest
 // 15-degree increment (which covers 0 / 45 / 90 / 180 / ...) whenever
 // the raw angle lands within ROTATION_SNAP_DEG of one, so squaring a

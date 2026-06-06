@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type RefObject } from 'react';
+import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 
 // Pinch-to-zoom on touch screens + trackpad pinch / Ctrl+scroll on desktop.
 //
@@ -18,8 +19,6 @@ import { useEffect, useRef, type RefObject } from 'react';
 // (no transform on <main> itself). Keeping focal point at screen px:
 //   tx2 = (px - wCX) * (1/z2 - 1/z1) + tx1
 
-const MIN_ZOOM = 0.1;
-const MAX_ZOOM = 5;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 type Deps = {
@@ -73,7 +72,7 @@ export function useCanvasPinchZoom(deps: Deps): Api {
       fromZoom: number,
       fromOffset: { x: number; y: number },
     ) => {
-      const clamped = clamp(newZoom, MIN_ZOOM, MAX_ZOOM);
+      const clamped = clamp(newZoom, ZOOM_MIN, ZOOM_MAX);
       const { wCX, wCY } = wrapperCenter();
       const k = 1 / clamped - 1 / fromZoom;
       depsRef.current.setViewportZoom(clamped);
@@ -128,7 +127,7 @@ export function useCanvasPinchZoom(deps: Deps): Api {
       const { viewportZoom, viewportOffset } = depsRef.current;
       // deltaY > 0 = pinch-close / scroll-down = zoom out; < 0 = zoom in.
       const factor = Math.exp(-e.deltaY / 200);
-      const newZoom = clamp(viewportZoom * factor, MIN_ZOOM, MAX_ZOOM);
+      const newZoom = clamp(viewportZoom * factor, ZOOM_MIN, ZOOM_MAX);
       zoomAtFocal(newZoom, e.clientX, e.clientY, viewportZoom, viewportOffset);
     };
 

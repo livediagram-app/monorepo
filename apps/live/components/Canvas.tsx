@@ -24,6 +24,7 @@ import {
   unionBoxedBounds,
 } from '@livediagram/diagram';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
+import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 import { drawBannerMessage, drawIntentCursor } from '@/lib/draw-mode';
 import { track } from '@/lib/telemetry';
 import { ArrowDefs, ArrowView } from './ArrowView';
@@ -350,7 +351,7 @@ export function Canvas(props: CanvasProps) {
   });
 
   const zoomStep = 0.1;
-  const clampZoom = (z: number) => Math.max(0.1, Math.min(5, z));
+  const clampZoom = (z: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
   const handleZoomIn = () => {
     setViewportZoom(clampZoom(viewportZoom + zoomStep));
     track('Canvas', 'Zoomed', 'In');
