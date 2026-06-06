@@ -77,7 +77,7 @@ export function ResizeHandles({ elementId, zoom, onBeginDrag }: ResizeHandlesPro
             onBeginDrag(elementId, `resize-${pos}`, e);
           }}
           style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
-          className={`absolute h-4 w-4 opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
+          className={`pointer-events-auto absolute h-4 w-4 opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
         />
       ))}
     </>
@@ -129,7 +129,7 @@ export function RotateHandle({ elementId, zoom, onBeginRotate }: RotateHandlePro
         transformOrigin: 'top left',
         cursor: ROTATE_CURSOR,
       }}
-      className={`absolute flex h-6 w-6 items-center justify-center opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${HIT_PAD_CLASSES}`}
+      className={`pointer-events-auto absolute flex h-6 w-6 items-center justify-center opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${HIT_PAD_CLASSES}`}
       aria-hidden
     >
       <RotateIcon />

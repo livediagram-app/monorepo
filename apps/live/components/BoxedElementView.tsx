@@ -255,12 +255,14 @@ function BoxedElementViewImpl({
         // Spin about the centre (the wrapper already has origin-center).
         // Handles + anchors are children, so they rotate with the box.
         ...(isRotated ? { transform: `rotate(${rotation}deg)` } : {}),
-        // Deliberately do NOT raise z-index on selection. Keeping the
-        // element at its natural paint order means selecting a container
-        // doesn't jump it above the content layered on top of it — users
-        // resize containers against their visible content, so hiding that
-        // content on select was worse than the rare case of a handle
-        // sitting under a neighbour painted over this element.
+        // Deliberately do NOT raise z-index on plain selection. Keeping
+        // the element at its natural paint order means selecting a
+        // container doesn't jump it above the content layered on top of
+        // it — users resize containers against their visible content.
+        // While EDITING the label, though, raise it so the text the user
+        // is typing isn't hidden behind elements painted above it. (The
+        // selection handles get lifted separately via SelectionHandles.)
+        ...(isEditing ? { zIndex: 10 } : {}),
       }}
     >
       {element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
@@ -362,41 +364,53 @@ function BoxedElementViewImpl({
         />
       ) : null}
 
-      {showHandles && !isRotated ? (
-        <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
-      ) : null}
+      {showHandles || showAnchors ? (
+        // Selection chrome (resize / rotate / arrow-anchor handles) rides
+        // in its own layer ABOVE the elements. On plain selection the
+        // element wrapper is not a stacking context, so this z-index
+        // resolves at the canvas-elements level: the handles paint above
+        // neighbouring elements WITHOUT lifting this element's own content
+        // (lifting it would re-hide a container's contents — the whole
+        // point of not raising z on select). pointer-events-none keeps the
+        // body draggable; every handle re-enables pointer events on itself.
+        <div className="pointer-events-none absolute inset-0" style={{ zIndex: 30 }}>
+          {showHandles && !isRotated ? (
+            <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
+          ) : null}
 
-      {showHandles ? (
-        <RotateHandle elementId={element.id} zoom={zoom} onBeginRotate={onBeginRotate} />
-      ) : null}
+          {showHandles ? (
+            <RotateHandle elementId={element.id} zoom={zoom} onBeginRotate={onBeginRotate} />
+          ) : null}
 
-      {showAnchors ? (
-        <>
-          <AnchorDot
-            anchor="n"
-            elementId={element.id}
-            zoom={zoom}
-            onBeginAnchorDrag={onBeginAnchorDrag}
-          />
-          <AnchorDot
-            anchor="e"
-            elementId={element.id}
-            zoom={zoom}
-            onBeginAnchorDrag={onBeginAnchorDrag}
-          />
-          <AnchorDot
-            anchor="s"
-            elementId={element.id}
-            zoom={zoom}
-            onBeginAnchorDrag={onBeginAnchorDrag}
-          />
-          <AnchorDot
-            anchor="w"
-            elementId={element.id}
-            zoom={zoom}
-            onBeginAnchorDrag={onBeginAnchorDrag}
-          />
-        </>
+          {showAnchors ? (
+            <>
+              <AnchorDot
+                anchor="n"
+                elementId={element.id}
+                zoom={zoom}
+                onBeginAnchorDrag={onBeginAnchorDrag}
+              />
+              <AnchorDot
+                anchor="e"
+                elementId={element.id}
+                zoom={zoom}
+                onBeginAnchorDrag={onBeginAnchorDrag}
+              />
+              <AnchorDot
+                anchor="s"
+                elementId={element.id}
+                zoom={zoom}
+                onBeginAnchorDrag={onBeginAnchorDrag}
+              />
+              <AnchorDot
+                anchor="w"
+                elementId={element.id}
+                zoom={zoom}
+                onBeginAnchorDrag={onBeginAnchorDrag}
+              />
+            </>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -694,7 +708,7 @@ function AnchorDot({
         // Counter-scale so the dot stays the same on-screen size at any zoom.
         transform: `translate(-50%, -50%) scale(${1 / zoom})`,
       }}
-      className="absolute h-2.5 w-2.5 cursor-crosshair rounded-full border-2 border-white bg-brand-500 shadow-sm transition"
+      className="pointer-events-auto absolute h-2.5 w-2.5 cursor-crosshair rounded-full border-2 border-white bg-brand-500 shadow-sm transition"
     />
   );
 }
