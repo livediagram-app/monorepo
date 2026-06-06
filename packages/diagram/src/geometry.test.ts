@@ -147,15 +147,15 @@ describe('bestAnchorTowards', () => {
     // dx=200, dy=80: 2x ratio exactly, so cardinal wins over the corner.
     expect(bestAnchorTowards(box, { x: 260, y: 140 })).toBe('e');
   });
-  it('picks the south-east corner when the target is diagonal-ish', () => {
-    // dx=100, dy=100: same magnitude on both axes, neither dominates,
-    // so we fall through to the corner.
-    expect(bestAnchorTowards(box, { x: 160, y: 160 })).toBe('se');
-  });
-  it('picks each quadrant corner for the four diagonal directions', () => {
-    expect(bestAnchorTowards(box, { x: 160, y: -40 })).toBe('ne');
-    expect(bestAnchorTowards(box, { x: -40, y: 160 })).toBe('sw');
-    expect(bestAnchorTowards(box, { x: -40, y: -40 })).toBe('nw');
+  it('picks the nearest edge midpoint (not a corner) for diagonal targets', () => {
+    // Auto-anchoring is cardinal-only (matching the manual anchor dots).
+    // The 100x80 box is wider than tall, so its e/w edge midpoints
+    // (110,60)/(10,60) sit closer to these diagonal points than the
+    // top/bottom ones — the closest cardinal wins.
+    expect(bestAnchorTowards(box, { x: 160, y: 160 })).toBe('e');
+    expect(bestAnchorTowards(box, { x: 160, y: -40 })).toBe('e');
+    expect(bestAnchorTowards(box, { x: -40, y: 160 })).toBe('w');
+    expect(bestAnchorTowards(box, { x: -40, y: -40 })).toBe('w');
   });
   it('accounts for rotation: a 90deg-CW box facing a target to the east picks its local north face', () => {
     // Spun 90deg clockwise, the local north edge now points east in

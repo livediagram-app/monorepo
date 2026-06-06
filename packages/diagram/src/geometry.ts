@@ -120,35 +120,29 @@ export function rebindArrowAnchorsAfterMove(
   });
 }
 
+// Pick the edge-midpoint anchor (n/e/s/w) whose actual position is
+// closest to `towards` (the other endpoint / element centre). This is
+// the auto-anchor used when an arrow's pinned end is (re)bound. It uses
+// real anchor positions rather than a centre-direction heuristic, so it
+// never picks the far edge when a nearer one faces the target — the bug
+// where a tall/offset neighbour got its bottom anchor when the top was
+// closer. Corners are intentionally not auto-chosen: the manual anchor
+// dots are cardinal-only too, and arrows read cleaner from edge middles.
+// anchorPosition already accounts for rotation, so a rotated element's
+// faces are compared in world space.
 export function bestAnchorTowards(element: BoxedElement, towards: Point): Anchor {
-  const cx = element.x + element.width / 2;
-  const cy = element.y + element.height / 2;
-  let dx = towards.x - cx;
-  let dy = towards.y - cy;
-  // Rotate the world-space direction back into the element's local
-  // frame so the chosen face is the one that, once the element is
-  // rotated, actually points at `towards` (the returned anchor name is
-  // local; anchorPosition rotates it back out to world space).
-  const rotation = element.rotation ?? 0;
-  if (rotation) {
-    const rad = (-rotation * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    const rx = dx * cos - dy * sin;
-    const ry = dx * sin + dy * cos;
-    dx = rx;
-    dy = ry;
+  const cardinals: Anchor[] = ['n', 'e', 's', 'w'];
+  let best: Anchor = 'n';
+  let bestDistSq = Infinity;
+  for (const anchor of cardinals) {
+    const p = anchorPosition(element, anchor);
+    const distSq = (p.x - towards.x) ** 2 + (p.y - towards.y) ** 2;
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq;
+      best = anchor;
+    }
   }
-  const ax = Math.abs(dx);
-  const ay = Math.abs(dy);
-  // Cardinal-dominant zones: one axis at least 2x the other.
-  if (ax >= 2 * ay) return dx >= 0 ? 'e' : 'w';
-  if (ay >= 2 * ax) return dy >= 0 ? 's' : 'n';
-  // Diagonal: pick the corner matching the quadrant.
-  if (dx >= 0 && dy >= 0) return 'se';
-  if (dx >= 0 && dy < 0) return 'ne';
-  if (dx < 0 && dy >= 0) return 'sw';
-  return 'nw';
+  return best;
 }
 
 export function endpointPosition(endpoint: Endpoint, elements: Element[]): Point {
