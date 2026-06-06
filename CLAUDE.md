@@ -94,6 +94,16 @@ See [specs/04-auth-and-guest-access.md](specs/04-auth-and-guest-access.md).
 
 When the right place for code is genuinely unclear, default to `packages/`.
 
+## Core principle: no god files, plan placement first
+
+**Decide where code belongs before you write it. Never accrete into god files.** Non-negotiable.
+
+- **Hard limit: no source file over 2000 lines.** This was earned: `apps/live/app/diagram/[id]/editor-page.tsx` was a 3,647-line god component, now split into `useEditorState.ts` (orchestration hook), `EditorView.tsx` (JSX), and `EditorContext.tsx` (context, `EditorContextValue = ReturnType<typeof useEditorState>`), with a ~130-line page shell. `Canvas.tsx` and `FeatureArt.tsx` were split the same way. Don't re-bloat them — `useEditorState.ts` and `Canvas.tsx` already sit near the limit.
+- A new dialog / page / overlay → its **own component file** (e.g. `components/ApiErrorPage.tsx`), not another branch inside an existing screen.
+- New behaviour or a slice of state → its **own hook** (`useXxx.ts`), then composed in. Editor state lives in domain slices, not piled into one hook.
+- When you add to an existing file, confirm it's the _cohesive_ home, not just the convenient one. Wire new pieces in with the smallest edit to the host file.
+- If a file is drifting toward a "kitchen sink", stop and extract — the same way duplication gets extracted on first sight (see the reuse principle above).
+
 ## Hard constraints
 
 - **All websites must be static and deployable to Cloudflare Pages.** Next.js apps use `output: 'export'` — no SSR, no Node runtime, no Next API routes (use a Cloudflare Worker), no server-required image loader.
