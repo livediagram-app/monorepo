@@ -6,8 +6,6 @@ import {
   createSticky,
   createText,
   isBoxed,
-  joinGroups,
-  selectionMembers,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   type ArrowElement,
@@ -130,7 +128,6 @@ import {
   type UserPreferences,
 } from '@/lib/user-preferences';
 import { track, titleCaseType } from '@/lib/telemetry';
-import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { useActivityLogDebounce } from '@/hooks/useActivityLogDebounce';
 import { useActivityLogEmitter } from '@/hooks/useActivityLogEmitter';
 import { useEditorBroadcast } from '@/hooks/useEditorBroadcast';
@@ -167,7 +164,7 @@ import {
 } from '@/lib/api-client';
 import { commentRowsFromElements } from '@/components/CommentsPanel';
 import { autoAlignElements } from '@/lib/auto-align';
-import { deriveNewBoxedColours, getTheme, type ThemeId } from '@/lib/themes';
+import { getTheme, type ThemeId } from '@/lib/themes';
 import { createTab, patchTab } from './editor-page-helpers';
 import { useAutosave } from './useAutosave';
 import { usePerTabLoad } from './usePerTabLoad';
@@ -175,6 +172,7 @@ import { useRoomConnection } from './useRoomConnection';
 import { useIdentityBootstrap } from './useIdentityBootstrap';
 import { useEditorHistory } from './useEditorHistory';
 import { useTemplateFlow } from './useTemplateFlow';
+import { useElementHelpers } from './useElementHelpers';
 
 // Activity-log past/future stacks share the cap with the
 // state-snapshot stack: we can't undo past what useDiagramHistory
@@ -1248,136 +1246,32 @@ export default function LivePage() {
 
   // When a boxed element is selected, new elements inherit its size so a
   // user can rapidly build a sequence of similarly-sized nodes.
-  const sizeFromSelection = (): { width: number; height: number } | null => {
-    if (!selectedId) return null;
-    const sel = activeTab.elements.find((el) => el.id === selectedId);
-    if (!sel || !isBoxed(sel)) return null;
-    return { width: sel.width, height: sel.height };
-  };
-
-  const addBoxed = <T extends BoxedElement>(make: (x: number, y: number) => T) => {
-    if (editsBlocked) return;
-    const base = make(0, 0);
-    const override = sizeFromSelection();
-    let width = override?.width ?? base.width;
-    let height = override?.height ?? base.height;
-    // Circles and diamonds are inherently 1:1 — inheriting a non-square
-    // size from the selection would squash them. Snap them back to a square
-    // using the larger inherited dimension so they stay visible.
-    if (base.type === 'shape' && (base.shape === 'circle' || base.shape === 'diamond')) {
-      const side = Math.max(width, height);
-      width = side;
-      height = side;
-    }
-    // Derive colours from the active tab's backdrop + theme. The
-    // two-pass projection (background-derived then theme-override)
-    // lives in lib/themes.ts so the rule is testable in isolation
-    // and stays in sync with the other theme helpers
-    // (recolourElementForTheme etc).
-    const colours = deriveNewBoxedColours(base, {
-      backgroundColor: activeTab.backgroundColor,
-      patternColor: activeTab.patternColor,
-      theme: activeTab.theme,
-    });
-    const centre = getViewportCenter();
-    const el: T = {
-      ...base,
-      ...colours,
-      x: centre.x - width / 2,
-      y: centre.y - height / 2,
-      width,
-      height,
-    };
-    // Single commit that both adds the element and marks the template
-    // picker as dismissed for this tab (if it was still showing).
-    // Append (not prepend) so new elements land at the FRONT of the
-    // z-order: rendering is by array index, lowest first, so the last
-    // entry paints on top. Landing new content where the user can see
-    // and immediately work with it matches every other editor; the
-    // Layer accordion's "Send to back" covers the rarer reverse case.
-    const before = activeTab.elements;
-    const after = [...before, el];
-    commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
-    // Activity-log the add. commit() (the element-only setter) does
-    // this on every change; addBoxed bypasses commit because it also
-    // touches templateChosen on the tab, so the emitChange call has
-    // to be repeated here. Without it, palette adds never appear in
-    // the Activity panel.
-    emitChange(activeId, before, after);
-    setSelectedId(el.id);
-  };
-
-  // --- Selection helpers ---------------------------------------------------
-
-  const memberIdsOf = (id: string | null): Set<string> => {
-    if (!id) return new Set();
-    return new Set(selectionMembers(activeTab.elements, id));
-  };
-
-  // Unified "what's the user editing right now?" id set. An active
-  // marquee multi-selection wins; otherwise we fall back to the
-  // single-id member-resolver (which expands a group selection
-  // into its full membership). Every editor setter that used to
-  // operate on `memberIdsOf(selectedId)` now uses this so shared
-  // controls bulk-apply across either flavour of multi-selection.
-  const currentSelectionIds = (): Set<string> => {
-    if (multiSelectedIds.size > 0) return new Set(multiSelectedIds);
-    return memberIdsOf(selectedId);
-  };
-
-  // First element in `activeTab.elements` (DOM/z-order) that's in
-  // the current selection. Used as the "primary" for toggle setters
-  // (lock, bold, etc.) — read its current value, apply the inverse
-  // to every selected element. Returns null when nothing is selected.
-  const selectionPrimary = (): Element | null => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return null;
-    return activeTab.elements.find((el) => ids.has(el.id)) ?? null;
-  };
-
-  // --- Modes ---------------------------------------------------------------
-
-  const exitFormatPainter = () => setFormatSourceId(null);
-  const exitGroupMode = () => setGroupSourceId(null);
-
-  const applyFormatFromSource = (targetId: string) => {
-    if (!formatSourceId) return;
-    const source = activeTab.elements.find((el) => el.id === formatSourceId);
-    const target = activeTab.elements.find((el) => el.id === targetId);
-    if (!source || !target || source.id === target.id) {
-      setFormatSourceId(null);
-      return;
-    }
-    track('Element', 'Changed', 'FormatPainter');
-    // Field projections live in lib/format-painter.ts so the list
-    // of painted fields (and the rule that future additions to
-    // BoxedElement / ArrowElement must be opted into the painter
-    // by hand) is one tested source of truth. Boxed-to-arrow and
-    // arrow-to-boxed paints are no-ops: the two kinds share
-    // almost no formattable fields.
-    if (isBoxed(source) && isBoxed(target)) {
-      const projection = paintableBoxedFields(source);
-      commit((els) =>
-        els.map((el) =>
-          el.id === targetId && isBoxed(el) ? ({ ...el, ...projection } as typeof el) : el,
-        ),
-      );
-    } else if (source.type === 'arrow' && target.type === 'arrow') {
-      const projection = paintableArrowFields(source);
-      commit((els) =>
-        els.map((el) =>
-          el.id === targetId && el.type === 'arrow' ? ({ ...el, ...projection } as typeof el) : el,
-        ),
-      );
-    }
-    setFormatSourceId(null);
-  };
-
-  const completeGrouping = (targetId: string) => {
-    if (!groupSourceId) return;
-    commit((els) => joinGroups(els, groupSourceId, targetId));
-    setSelectedId(targetId);
-  };
+  // Selection + placement + format/group helpers. See useElementHelpers.
+  const {
+    addBoxed,
+    memberIdsOf,
+    currentSelectionIds,
+    selectionPrimary,
+    exitFormatPainter,
+    exitGroupMode,
+    applyFormatFromSource,
+    completeGrouping,
+  } = useElementHelpers({
+    selectedId,
+    activeId,
+    activeTab,
+    editsBlocked,
+    multiSelectedIds,
+    formatSourceId,
+    groupSourceId,
+    getViewportCenter,
+    commit,
+    commitTabs,
+    emitChange,
+    setSelectedId,
+    setFormatSourceId,
+    setGroupSourceId,
+  });
 
   // --- Tab actions ---------------------------------------------------------
 
