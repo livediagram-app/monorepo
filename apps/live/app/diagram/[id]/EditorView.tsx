@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import { DEFAULT_BACKGROUND_COLOR, DEFAULT_PATTERN_COLOR, isBoxed } from '@livediagram/diagram';
 import { track } from '@/lib/telemetry';

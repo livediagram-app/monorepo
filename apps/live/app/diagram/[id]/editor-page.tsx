@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import { setSessionSharePassword } from '@/lib/api-client';
 import { EditorHeader } from '@/components/EditorHeader';
