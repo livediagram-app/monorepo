@@ -126,6 +126,7 @@ import { useRoomConnection } from './useRoomConnection';
 import { useIdentityBootstrap } from './useIdentityBootstrap';
 import { useEditorHistory } from './useEditorHistory';
 import { useTemplateFlow } from './useTemplateFlow';
+import { usePanelLayout } from './usePanelLayout';
 import { useElementHelpers } from './useElementHelpers';
 import { useElementCreation } from './useElementCreation';
 import { useSelectionEditing } from './useSelectionEditing';
@@ -168,18 +169,32 @@ export function useEditorState() {
   // hook is invoked further down (after `tick`, `commit`,
   // `applyFormatFromSource` and the rest of the drag dependencies
   // exist).
-  const [palettePosition, setPalettePosition] = useState<{ x: number; y: number } | null>(null);
-  const [explorerPosition, setExplorerPosition] = useState<{ x: number; y: number } | null>(null);
-  // Editor / Context panel (Selected Element + Current Tab). Sits
-  // under the Palette by default.
-  const [contextPosition, setContextPosition] = useState<{ x: number; y: number } | null>(null);
-  // Counter bumped whenever an external action wants the Editor banner
-  // expanded (Activity row navigation, tab-context-menu Change Theme /
-  // Canvas). MovablePanel watches this and resets its local collapsed
-  // state to false on each change, so navigation always lands on a
-  // visible accordion. See the spec/09 "Collapse to banner" section.
-  const [editorExpandSignal, setEditorExpandSignal] = useState(0);
-  const requestEditorOpen = () => setEditorExpandSignal((n) => n + 1);
+  // Floating-panel layout (positions + open/visible flags) is one
+  // cohesive slice — see usePanelLayout. requestEditorOpen bumps a
+  // counter the Editor accordion watches so external actions (Activity
+  // row navigation, tab-context-menu Change Theme / Canvas) can pop it
+  // open; the panel resets its collapsed state on each change so
+  // navigation always lands on a visible accordion (spec/09).
+  const {
+    palettePosition,
+    setPalettePosition,
+    explorerPosition,
+    setExplorerPosition,
+    contextPosition,
+    setContextPosition,
+    activityPosition,
+    setActivityPosition,
+    commentsPanelPosition,
+    setCommentsPanelPosition,
+    aiPanelPosition,
+    setAiPanelPosition,
+    aiPanelVisible,
+    setAiPanelVisible,
+    activityMinimized,
+    setActivityMinimized,
+    editorExpandSignal,
+    requestEditorOpen,
+  } = usePanelLayout();
   // Tab-section accordion state lifted here so the Activity row
   // click handler can pop the matching accordion (e.g. clicking a
   // "Changed theme to X" entry opens the Theme accordion).
@@ -294,11 +309,6 @@ export function useEditorState() {
   // diagram-scoped anymore) and mutated through the SettingsDialog.
   const [userPreferences, setUserPreferences] = useState<UserPreferences>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // AI panel session visibility. Starts visible when the preference is
-  // on; the close button hides it for the session without touching the
-  // preference (user can re-show by toggling in Settings).
-  const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [aiPanelPosition, setAiPanelPosition] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
     if (userPreferences.aiAssistanceEnabled) setAiPanelVisible(true);
   }, [userPreferences.aiAssistanceEnabled]);
@@ -374,18 +384,6 @@ export function useEditorState() {
     past: [],
     future: [],
   });
-  const [activityPosition, setActivityPosition] = useState<{ x: number; y: number } | null>(null);
-  // Comments panel position. The panel itself is only mounted when
-  // the active tab has at least one element carrying a thread,
-  // computed below via commentRowsFromElements.
-  const [commentsPanelPosition, setCommentsPanelPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  // Activity defaults to minimised: most users only want to peek at
-  // it occasionally. The dock button stays visible so it's one click
-  // to open.
-  const [activityMinimized, setActivityMinimized] = useState(true);
   // Live presence: the participants connected to this diagram's
   // Durable Object room right now. Includes ourselves once our `hello`
   // round-trips. Rendered in the editor header avatar stack.
