@@ -97,6 +97,18 @@ With these set the editor's sign-in flow at `/live/sign-in` becomes functional. 
 
 Without these set: the api worker silently treats every request as a guest (the `X-Owner-Id` header path), and the live frontend's ClerkProvider becomes a pass-through that renders the editor without any auth UI. This is the self-host default. See [spec/04](../specs/04-auth-and-guest-access.md) for the full hybrid model.
 
+## Enabling AI assistance locally (optional)
+
+The AI panel (spec/25) is hidden entirely unless the api worker has an OpenAI key. To turn it on locally:
+
+```sh
+# apps/api/.dev.vars (gitignored)
+OPENAI_API_KEY=sk-...
+# OPENAI_MODEL=gpt-4o   # optional; defaults to gpt-4o
+```
+
+Restart `pnpm dev`. `GET /api/capabilities` will start reporting `{ aiEnabled: true }`, the Settings dialog grows an "AI Assistant" toggle, and the editor surfaces the panel once the user opts in. The two spend-DoS knobs `AI_ALLOWED_ORIGINS` and `AI_REQUIRE_CLERK` are hosted-only by default; leave them unset locally so the guest path keeps working. See `apps/api/.env.example` for the full set of vars the worker reads.
+
 ## Running tests
 
 ```sh

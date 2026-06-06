@@ -7,7 +7,7 @@ apps/
   marketing/    static landing site (Next.js export, /)
   live/         the editor (Next.js export, /live)
   telemetry/    public anonymous-events dashboard (Next.js export, /telemetry)
-  api/          REST + WebSocket worker (D1 + Durable Objects, /api)
+  api/          REST + WebSocket worker (D1 + Durable Objects + R2, /api)
   router/       service-binding router stitching the apps under one hostname
 packages/
   ui/             shared UI primitives (Brand, etc.)
@@ -19,6 +19,10 @@ packages/
   vitest-config/  shared Vitest defaults
 specs/          product source of truth, read these before adding features
 marketing/      off-site copy + media for listings and promotion (see specs/23)
+  copy/         taglines, descriptions, tags, the canonical fact sheet
+  media/
+    desktop/    desktop product screenshots, captioned
+    mobile/     mobile product screenshots, captioned
 ```
 
 ## The apps
@@ -49,6 +53,7 @@ What's running:
 - **Database**: Cloudflare D1 (SQLite-on-the-edge), accessed only via the api worker.
 - **Realtime**: Cloudflare Durable Objects, one room per diagram.
 - **Image storage**: Cloudflare R2, content-addressed by SHA-256, gated on owner + share-code reads (see [spec/19](../specs/19-images.md)).
+- **AI assistance** (optional): the api worker proxies the OpenAI chat-completions API at `POST /api/ai` (modes generate / clean / review / ask), with `GET /api/capabilities` reporting whether `OPENAI_API_KEY` is configured. Hidden entirely when the key is absent so OSS forks ship without AI surface (see [spec/25](../specs/25-ai-assistance.md)).
 - **Auth** (optional): Clerk for sign-in; the api worker verifies JWTs against `CLERK_JWKS_URL` and silently degrades to pure-guest mode when the env var is unset.
 - **Routing edge**: a Cloudflare Worker stitching the apps under one hostname via service bindings.
 
@@ -66,6 +71,6 @@ Two equivalent identity paths: an `X-Owner-Id` header (a per-browser UUID from `
 
 ## Deployment
 
-GitHub Actions → Cloudflare Workers, manually triggered after a green CI run. Build artefacts get uploaded once, then five parallel deploy jobs ship the workers (marketing / live / telemetry / api in parallel; router last because its service bindings need the others to exist).
+GitHub Actions → Cloudflare Workers, manually triggered after a green CI run. Build artefacts get uploaded once, then four workers (marketing / live / telemetry / api) ship in parallel and the router deploys last because its service bindings need the others to exist.
 
 See [Self-hosting](self-hosting.md) for the step-by-step, and [spec/10](../specs/10-deployment.md) for the deeper deployment contract.

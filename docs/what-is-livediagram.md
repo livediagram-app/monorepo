@@ -25,7 +25,7 @@ The unit of value is the team, not the individual. See [spec/00](../specs/00-pur
 - **Audit log**: every change recorded per-tab; one-click revert on any entry, even after later edits.
 - **Tabs**: every diagram is a stack of tabs (link across them; copy a tab into another diagram).
 - **Folders**: nested folders in the Explorer; full-page `/live/explorer` for signed-in users.
-- **Sharing**: editor or view-only share links per diagram; revoke at any time.
+- **Sharing**: editor or view-only share links per diagram, with an optional password gate that applies to every link on the diagram; revoke individually or in bulk at any time.
 - **Hybrid auth**: guests get everything (full persistence keyed to a per-browser id); signed-in users (Clerk) get cross-device sync and account self-delete.
 - **Export / import**: active tab to Markdown / PDF / PNG / JSON file; import the JSON envelope back as a new tab.
 - **"Shared with you" Explorer accordion**: visitors can make their own copy of a shared diagram.

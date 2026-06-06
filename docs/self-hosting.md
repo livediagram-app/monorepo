@@ -111,7 +111,7 @@ See [spec/10](../specs/10-deployment.md) for the deeper deploy mechanics, includ
 
 The api worker's telemetry ingest (`/api/events`) is off unless `TELEMETRY_ENABLED=true` is set in `apps/api/wrangler.toml`. OSS forks ingest nothing by default. If you DO turn it on, the public `/telemetry` dashboard renders aggregate counts from your own D1; there's no third-party analytics involved. See [spec/22](../specs/22-telemetry.md).
 
-Turning telemetry on end-to-end takes BOTH the server gate above AND a build-time gate on the editor + dashboard apps. The api flag is the authoritative gate (ingest + summary refuse to serve without it), but the live editor also reads `NEXT_PUBLIC_TELEMETRY_ENABLED` at build time and skips emission entirely when it isn't `"true"`, and the telemetry dashboard does the same. So a fork that only flips the api flag will see "ingest on" but no events flow, and the dashboard stays empty. To turn it fully on, set `NEXT_PUBLIC_TELEMETRY_ENABLED=true` in your CI build env (or `apps/live/.env.production` + `apps/telemetry/.env.production`) alongside the api flag. Per-user opt-out via the Settings dialog (spec/20) still overrides both when off.
+Turning telemetry on end-to-end takes BOTH the server gate above AND a build-time gate on the editor. The api flag is the authoritative gate (ingest + summary refuse to serve without it), but the live editor also reads `NEXT_PUBLIC_TELEMETRY_ENABLED` at build time and skips emission entirely when it isn't `"true"`. So a fork that only flips the api flag will see "ingest on" but no events flow. To turn it fully on, set `NEXT_PUBLIC_TELEMETRY_ENABLED=true` in your CI build env (or `apps/live/.env.production`) alongside the api flag. The `/telemetry` dashboard has no client-side gate of its own: it just reads `/api/telemetry/summary`, and the api worker returns an empty `enabled: false` payload until you flip `TELEMETRY_ENABLED`. Per-user opt-out via the Settings dialog (spec/20) still overrides the editor emission when off.
 
 ## AI assistance: off by default, needs an OpenAI key
 
@@ -125,11 +125,20 @@ pnpm --filter @livediagram/api exec wrangler secret put OPENAI_API_KEY
 
 Optional knobs (all plain `[vars]` in `apps/api/wrangler.toml`, the dashboard, or `.dev.vars`):
 
-- `OPENAI_MODEL`: model name, defaults to `gpt-4o-mini`.
+- `OPENAI_MODEL`: model name, defaults to `gpt-4o`.
 - `AI_ALLOWED_ORIGINS`: comma-separated `Origin` allow-list for `POST /api/ai` (e.g. `https://your-host,http://localhost:3002`). Unset = no origin check. Matched verbatim, case-sensitive.
 - `AI_REQUIRE_CLERK`: set to `"true"` to reject the guest (`X-Owner-Id`) path on `/api/ai` only, requiring a verified Clerk JWT. Unset = guests can use AI (so a Clerk-less fork still works).
 
-The last two are the spend-DoS defence: on a public deployment they stop a third-party site from minting fresh owner ids to drain your OpenAI budget. The hosted livediagram.app sets both; a private or Clerk-less fork can leave them unset. AI is also per-user opt-in via the Settings dialog even once the key is present.
+The last two are the spend-DoS defence: on a public deployment they stop a third-party site from minting fresh owner ids to drain your OpenAI budget. The hosted livediagram.app sets both; a private or Clerk-less fork can leave them unset. Two further defences live alongside them: the `AI_RATE_LIMITER` binding (declared in `apps/api/wrangler.toml` as a Cloudflare rate-limit binding, 20 requests / 60 s per IP) caps how fast one client can drive the endpoint; absent binding falls through to "allow" so a self-host without the paid Cloudflare feature still works. AI is also per-user opt-in via the Settings dialog even once the key is present.
+
+## Per-owner image gallery caps
+
+The api worker honours two optional `[vars]` that cap how much one owner can keep in the image gallery (spec/19), surfaced as a 403 `{ error: "gallery-full", reason, limit, current }` on `POST /api/images`:
+
+- `IMAGE_MAX_PER_OWNER`: maximum image rows per owner (decimal string).
+- `IMAGE_MAX_BYTES_PER_OWNER`: maximum summed `byte_size` per owner (decimal byte count).
+
+Both default to "no limit" when unset, blank, `0`, or non-numeric, which is the OSS self-host default where the operator runs their own R2 budget. The hosted livediagram.app sets them to `100` and `104857600` (100 MB). The worker also honours an early `X-Image-Sha256` dedupe check sent by the live editor: if the header matches an existing row at `(owner, sha256)` the upload short-circuits before the body parse, the cap check, or the R2 write, so re-uploading bytes the user already has costs almost nothing.
 
 ## Custom domain
 
