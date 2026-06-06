@@ -10,12 +10,9 @@ type PlusButtonProps = {
 
 // Floating circular canvas controls (plus buttons, resize + rotate
 // handles) share one size + visual family so they read as a set. The
-// gap is how far, in screen px, the control sits beyond the element
-// edge; CONTROL_OFFSET is the distance from the edge to the control's
-// CENTRE (gap + half the size), which the rotate handle lines up to.
+// gap is how far, in screen px, the control sits beyond the element edge.
 export const FLOATING_CONTROL_SIZE = 24;
 export const FLOATING_CONTROL_GAP = 12;
-export const FLOATING_CONTROL_OFFSET = FLOATING_CONTROL_GAP + FLOATING_CONTROL_SIZE / 2;
 export const FLOATING_CONTROL_CLASS =
   'rounded-full border border-brand-200 bg-white text-brand-600 shadow-md dark:border-brand-500/50 dark:bg-slate-900 dark:text-brand-200';
 // Shared hover treatment so every floating control lights up the same

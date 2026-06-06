@@ -17,7 +17,6 @@ export type {
   ParticipantPresence,
   ShareRole,
   ShareLink as ShareLinkDTO,
-  ChangeLogKind,
   ChangeLogEntry as ChangeLogEntryDTO,
   ServerMessage,
   ClientMessage,
