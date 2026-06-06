@@ -682,6 +682,17 @@ export function useEditorState() {
     setDiagramList,
   });
 
+  // Surface a toast when an autosave fails (network / 5xx). The header
+  // pill already shows the 'error' status, but a failed save risks lost
+  // work — the kind of critical update that warrants the louder bottom-
+  // centre toast too. Fires on the transition into 'error'; the toast
+  // layer dedupes a streak of retries while one is still on screen.
+  useEffect(() => {
+    if (saveStatus === 'error') {
+      toast.error('Couldn’t save your changes — check your connection.');
+    }
+  }, [saveStatus, toast]);
+
   // Persist self only when name or color actually changed. Without
   // this guard the hydration GET → state set → effect fire chain
   // produced a useless PUT echoing the same values back to the
