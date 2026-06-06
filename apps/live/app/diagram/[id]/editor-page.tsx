@@ -203,6 +203,7 @@ import {
   createTab,
   placeholdersFromSummaries,
   patchTab,
+  resolveDiagramSession,
 } from './editor-page-helpers';
 
 // Activity-log past/future stacks share the cap with the
@@ -852,7 +853,13 @@ export default function LivePage() {
         if (accepted) writeCachedSharePassword(shareCodeParam, accepted);
         {
           const { diagram: fetched, role } = resolution;
-          const codeForVisitor = fetched.ownerId === self.id ? null : shareCodeParam;
+          const session = resolveDiagramSession({
+            diagramOwnerId: fetched.ownerId,
+            selfId: self.id,
+            shareRole: role,
+            shareCodeParam,
+          });
+          const codeForVisitor = session.sessionShareCode;
           // Lazy per-tab fetch (spec/13): the active tab (first in the
           // summaries) gets its full payload inline so the first paint
           // has real content; the rest land as placeholders and a
@@ -903,25 +910,25 @@ export default function LivePage() {
           setDiagramId(fetched.id);
           setDiagramShareable(fetched.shareable);
           setDiagramShareCode(fetched.shareCode);
-          setIsOwner(fetched.ownerId === self.id);
+          setIsOwner(session.isOwner);
           setDiagramOwnerId(fetched.ownerId);
           setDiagramOwnerName(fetched.ownerName ?? null);
           setDiagramOwnerColor(fetched.ownerColor ?? null);
-          // Visitors inherit the role from their share code. Owners
-          // overwrite this to 'edit' below.
-          setSessionRole(fetched.ownerId === self.id ? 'edit' : role);
+          // Visitors inherit the role from their share code; owners are
+          // always 'edit' (see resolveDiagramSession).
+          setSessionRole(session.sessionRole);
           // Visitor: stash the code they came in on so any log
           // writes can present it as authorisation. Owner accessing
           // via a share URL keeps null.
-          setSessionShareCode(fetched.ownerId === self.id ? null : shareCodeParam);
+          setSessionShareCode(session.sessionShareCode);
           // Visitors with an edit-role share code can read + write the
           // log too. View-only visitors get nothing from the endpoint
           // (the API gates POST/DELETE but currently still serves
           // GET when authorised; we skip the fetch so view-only
           // visitors don't even attempt it). Owner case is handled
           // in the ?d= branch below.
-          if (fetched.ownerId === self.id || role === 'edit') {
-            const codeForFetch = fetched.ownerId === self.id ? null : shareCodeParam;
+          if (session.canEditLog) {
+            const codeForFetch = session.sessionShareCode;
             apiListChangeLog(self.id, fetched.id, codeForFetch)
               .then((entries) => {
                 setChangeLog(entries);

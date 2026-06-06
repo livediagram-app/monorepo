@@ -70,3 +70,40 @@ export function computeTabSaveDiff(
   const hasChanges = changedTabs.length > 0 || orderChanged || nameChanged || deletedIds.length > 0;
   return { changedTabs, deletedIds, orderChanged, nameChanged, hasChanges };
 }
+
+// Resolve the viewer's session against a fetched diagram (spec/04 +
+// spec/11). Security-critical: it decides whether the caller is the
+// owner (always 'edit', never carries a share code) or a visitor (role
+// + share code come from the link they followed). The same
+// `ownerId === selfId` test was inlined six times in the hydration
+// path; a slip in any one (e.g. treating an owner as a visitor, or
+// keeping a visitor's code on an owner request) corrupts authorisation,
+// so it lives here once, under test.
+//
+//   - isOwner:          the diagram belongs to this session's id.
+//   - sessionRole:      owners edit; visitors inherit the link's role.
+//   - sessionShareCode: owners send none; visitors carry the code that
+//                       admitted them so write paths can authorise.
+//   - canEditLog:       owner OR edit-role visitor may read/write the
+//                       change log.
+export type DiagramSession = {
+  isOwner: boolean;
+  sessionRole: 'edit' | 'view';
+  sessionShareCode: string | null;
+  canEditLog: boolean;
+};
+
+export function resolveDiagramSession(input: {
+  diagramOwnerId: string;
+  selfId: string;
+  shareRole: 'edit' | 'view';
+  shareCodeParam: string | null;
+}): DiagramSession {
+  const isOwner = input.diagramOwnerId === input.selfId;
+  return {
+    isOwner,
+    sessionRole: isOwner ? 'edit' : input.shareRole,
+    sessionShareCode: isOwner ? null : input.shareCodeParam,
+    canEditLog: isOwner || input.shareRole === 'edit',
+  };
+}

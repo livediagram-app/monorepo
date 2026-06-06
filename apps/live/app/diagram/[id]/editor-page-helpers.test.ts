@@ -5,6 +5,7 @@ import {
   createTab,
   patchTab,
   placeholdersFromSummaries,
+  resolveDiagramSession,
 } from './editor-page-helpers';
 
 function tab(id: string, name = id, elements: Tab['elements'] = []): Tab {
@@ -131,5 +132,46 @@ describe('computeTabSaveDiff (autosave decision kernel)', () => {
     expect(diff.orderChanged).toBe(true);
     expect(diff.nameChanged).toBe(true);
     expect(diff.hasChanges).toBe(true);
+  });
+});
+
+describe('resolveDiagramSession (owner / role / share-code security)', () => {
+  it('owner: always edit, no share code, can edit the log — even when arriving via a share URL', () => {
+    const s = resolveDiagramSession({
+      diagramOwnerId: 'me',
+      selfId: 'me',
+      shareRole: 'view', // a stale view code on the owner's own URL must not downgrade them
+      shareCodeParam: 'CODE2345',
+    });
+    expect(s.isOwner).toBe(true);
+    expect(s.sessionRole).toBe('edit');
+    expect(s.sessionShareCode).toBeNull();
+    expect(s.canEditLog).toBe(true);
+  });
+
+  it('edit-role visitor: inherits edit, carries their code, can edit the log', () => {
+    const s = resolveDiagramSession({
+      diagramOwnerId: 'someone-else',
+      selfId: 'me',
+      shareRole: 'edit',
+      shareCodeParam: 'CODE2345',
+    });
+    expect(s.isOwner).toBe(false);
+    expect(s.sessionRole).toBe('edit');
+    expect(s.sessionShareCode).toBe('CODE2345');
+    expect(s.canEditLog).toBe(true);
+  });
+
+  it('view-role visitor: stays view, carries their code, CANNOT edit the log', () => {
+    const s = resolveDiagramSession({
+      diagramOwnerId: 'someone-else',
+      selfId: 'me',
+      shareRole: 'view',
+      shareCodeParam: 'CODE2345',
+    });
+    expect(s.isOwner).toBe(false);
+    expect(s.sessionRole).toBe('view');
+    expect(s.sessionShareCode).toBe('CODE2345');
+    expect(s.canEditLog).toBe(false);
   });
 });
