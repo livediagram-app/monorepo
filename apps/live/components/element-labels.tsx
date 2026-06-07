@@ -14,7 +14,7 @@
 // BoxedElementView is split here in the same change.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { TextAlignX, TextAlignY, TextSize } from '@livediagram/diagram';
+import type { BoxedElement, TextAlignX, TextAlignY, TextSize } from '@livediagram/diagram';
 
 const ALIGN_ITEMS: Record<TextAlignY, 'flex-start' | 'center' | 'flex-end'> = {
   top: 'flex-start',
@@ -439,3 +439,117 @@ export function MultilineLabelEditor({
     />
   );
 }
+
+export function renderLabel(
+  element: BoxedElement,
+  label: string,
+  textSize: TextSize,
+  alignX: import('@livediagram/diagram').TextAlignX,
+  alignY: import('@livediagram/diagram').TextAlignY,
+  padding: number,
+  isEditing: boolean,
+  onCommitLabel: (label: string) => void,
+  onCancelEdit: () => void,
+  editCursorAtEnd: boolean,
+) {
+  const isSticky = element.type === 'sticky';
+  // Shape elements don't carry a placeholder during edit. The user
+  // is already mid-double-click on a visible shape, so the empty
+  // input doesn't need "Label" filler nudging them; the surrounding
+  // shape silhouette communicates context already. Sticky notes
+  // and standalone text elements DO get a placeholder because their
+  // pre-edit affordance is just an empty rectangle / nothing.
+  const placeholder = element.type === 'text' ? 'Text' : isSticky ? 'Note' : '';
+
+  const textStyle = {
+    bold: element.textBold,
+    italic: element.textItalic,
+    underline: element.textUnderline,
+    strikethrough: element.textStrikethrough,
+  };
+
+  if (isEditing) {
+    if (isSticky) {
+      return (
+        <MultilineLabelEditor
+          initial={label}
+          placeholder={placeholder}
+          textSize={textSize}
+          alignX={alignX}
+          style={textStyle}
+          onCommit={onCommitLabel}
+          onCancel={onCancelEdit}
+          textClassName="text-amber-950 placeholder:text-amber-700/50"
+        />
+      );
+    }
+    // Only the placeholder colour is pinned; the typed text inherits
+    // the element's resolved textColor (set as `color` on the wrapper)
+    // via currentColor, so editing shows the same colour as the
+    // committed label instead of snapping to black / brand.
+    const textClass =
+      element.type === 'text' ? 'placeholder:text-slate-400' : 'placeholder:text-brand-300';
+    return (
+      <SingleLineLabelEditor
+        initial={label}
+        placeholder={placeholder}
+        textSize={textSize}
+        alignX={alignX}
+        alignY={alignY}
+        padding={padding}
+        style={textStyle}
+        onCommit={onCommitLabel}
+        onCancel={onCancelEdit}
+        textClassName={textClass}
+        cursorAtEnd={editCursorAtEnd}
+      />
+    );
+  }
+
+  if (isSticky) {
+    return (
+      <MultilineLabel
+        text={label}
+        placeholder={placeholder}
+        textSize={textSize}
+        alignX={alignX}
+        alignY={alignY}
+        padding={padding}
+        className="text-amber-950"
+        style={textStyle}
+      />
+    );
+  }
+
+  if (textSize === 'scale') {
+    if (!label) return null;
+    return (
+      <ScalingLabel
+        text={label}
+        alignX={alignX}
+        alignY={alignY}
+        padding={padding}
+        style={textStyle}
+      />
+    );
+  }
+
+  return (
+    <FixedSizeLabel
+      text={label}
+      size={textSize}
+      alignX={alignX}
+      alignY={alignY}
+      padding={padding}
+      style={textStyle}
+    />
+  );
+}
+
+// Renders a FreehandElement's stored polyline as a smooth SVG path.
+// Points are stored normalised into [0..1] within the element's
+// bounding box (see createFreehand), so the renderer maps them into
+// viewBox [0..100] and lets `preserveAspectRatio="none"` stretch the
+// curve when the user resizes. The stroke colour comes from theme
+// (with the per-element override), matching how other boxed elements
+// pick their accent.
