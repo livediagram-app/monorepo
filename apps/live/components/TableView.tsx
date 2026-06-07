@@ -5,6 +5,7 @@ import {
   defaultStrokeColor,
   defaultTextColor,
   PADDING_PX,
+  pasteIntoTable,
   removeTableColumn,
   removeTableRow,
   setTableCell,
@@ -333,6 +334,32 @@ export function TableView({
                     role="textbox"
                     tabIndex={0}
                     onPointerDown={(e) => e.stopPropagation()}
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData('text/plain');
+                      if (!text) return;
+                      const grid = text
+                        .replace(/\r/g, '')
+                        .split('\n')
+                        .map((line) => line.split('\t'));
+                      while (
+                        grid.length > 1 &&
+                        grid[grid.length - 1]!.length === 1 &&
+                        grid[grid.length - 1]![0] === ''
+                      ) {
+                        grid.pop();
+                      }
+                      const tabular = grid.length > 1 || (grid[0]?.length ?? 0) > 1;
+                      e.preventDefault();
+                      if (tabular) {
+                        // Spreadsheet / TSV paste fills + grows the grid.
+                        onCommitCells(element.id, pasteIntoTable(element, r, c, grid).cells);
+                        setEditing(null);
+                      } else {
+                        // Single value: insert as PLAIN text (strip any
+                        // pasted rich formatting).
+                        document.execCommand('insertText', false, grid[0]?.[0] ?? '');
+                      }
+                    }}
                     onBlur={() => {
                       commitCell(r, c, editorRef.current?.textContent ?? '');
                       setEditing(null);

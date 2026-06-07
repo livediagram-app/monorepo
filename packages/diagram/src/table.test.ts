@@ -4,6 +4,7 @@ import {
   addTableColumn,
   addTableRow,
   normalizeTable,
+  pasteIntoTable,
   removeTableColumn,
   removeTableRow,
   setTableCell,
@@ -89,5 +90,27 @@ describe('normalizeTable', () => {
     const next = normalizeTable(empty);
     expect(tableRowCount(next)).toBe(1);
     expect(tableColCount(next)).toBe(1);
+  });
+});
+
+describe('pasteIntoTable', () => {
+  it('overlays a grid and grows the table to fit', () => {
+    const next = pasteIntoTable(t(), 1, 1, [
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+      ['g', 'h', 'i'],
+    ]);
+    expect(tableRowCount(next)).toBe(4); // 1 + 3
+    expect(tableColCount(next)).toBe(4); // 1 + 3
+    expect(next.cells[1]![1]).toBe('a');
+    expect(next.cells[3]![3]).toBe('i');
+    expect(next.cells[0]![0]).toBe(''); // untouched
+  });
+
+  it('preserves cells outside the pasted block', () => {
+    const seeded = setTableCell(t(), 2, 2, 'keep');
+    const next = pasteIntoTable(seeded, 0, 0, [['x']]);
+    expect(next.cells[0]![0]).toBe('x');
+    expect(next.cells[2]![2]).toBe('keep');
   });
 });

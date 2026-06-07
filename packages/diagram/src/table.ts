@@ -68,3 +68,28 @@ export function removeTableColumn(t: TableElement, at?: number): TableElement {
   const colWidths = t.colWidths ? t.colWidths.filter((_, i) => i !== idx) : t.colWidths;
   return { ...t, cells, colWidths };
 }
+
+// Overlay a parsed grid (rows of cells, e.g. from a pasted TSV) onto
+// the table starting at (r0, c0), growing the table with blank cells
+// as needed so the whole paste fits. Existing cells outside the
+// pasted block are preserved.
+export function pasteIntoTable(
+  t: TableElement,
+  r0: number,
+  c0: number,
+  grid: string[][],
+): TableElement {
+  if (grid.length === 0) return t;
+  const pastedCols = Math.max(1, ...grid.map((row) => row.length));
+  const rows = Math.max(t.cells.length, r0 + grid.length);
+  const cols = Math.max(tableColCount(t), c0 + pastedCols);
+  const cells = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => {
+      const gi = r - r0;
+      const gj = c - c0;
+      const pasted = grid[gi]?.[gj];
+      return pasted ?? t.cells[r]?.[c] ?? '';
+    }),
+  );
+  return { ...t, cells };
+}
