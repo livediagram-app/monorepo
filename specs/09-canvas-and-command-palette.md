@@ -954,6 +954,8 @@ When a move or resize snap lands an element's edge or centre onto a neighbour's,
 - **Each guide spans the elements it relates.** The line runs from the minimum to the maximum extent (on the perpendicular axis) across the dragged element plus every neighbour sharing that line, so it bridges the aligned shapes rather than crossing the whole canvas.
 - **Theme-suitable + faint.** The guide colour contrasts with the tab's background (dark slate on light themes, light slate on dark themes, via `deriveTextColorForBg`) and renders as a thin, semi-transparent line, so it reads as helper chrome rather than content. It paints on the same fixed overlay layer as the marquee / draw-to-size previews, converting canvas coords to screen coords via the wrapper rect + zoom.
 - Guides are transient: they live only for the duration of the drag and clear on release. Multi-element resize doesn't snap (see above), so it shows no guides.
+- **Opt-out.** The guides are gated on the `alignmentGuides` user preference (defaults to on; see [spec/20](20-user-preferences.md)), toggled from the Settings dialog's Canvas group. Turning it off suppresses the guide lines only; the snap itself is unchanged. The flag is read through a ref during the drag so flipping it takes effect on the next pointer move.
+- **Performance.** Guides are recomputed every pointer move but the state only updates when the guide set actually changes (`sameGuides` bail-out), so the dominant no-snap frames cost nothing beyond the move itself.
 
 ## Draw-to-size
 

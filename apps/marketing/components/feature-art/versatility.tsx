@@ -385,6 +385,90 @@ function PencilGlyph() {
   );
 }
 
+// Alignment guides: as you drag a shape, faint dashed lines light up along
+// the edges and centres it shares with its neighbours, so it snaps into line
+// on a busy canvas (spec/09). Here the dragged (ringed) shape shares a left
+// edge with the shape above it (the vertical guide) and a top edge with the
+// shape to its right (the horizontal guide); both guides pulse like the real
+// overlay.
+export function AlignmentGuidesArt() {
+  return (
+    <Frame canvas>
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        {/* neighbour above — shares a left edge with the dragged shape */}
+        <rect
+          x="58"
+          y="12"
+          width="52"
+          height="22"
+          rx="5"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="2"
+        />
+        {/* neighbour to the right — shares a top edge with the dragged shape */}
+        <rect
+          x="150"
+          y="54"
+          width="44"
+          height="22"
+          rx="5"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="2"
+        />
+        {/* selection ring on the shape being dragged into line */}
+        <rect
+          x="54"
+          y="50"
+          width="60"
+          height="30"
+          rx="2"
+          fill="none"
+          stroke={SKY}
+          strokeWidth="1.5"
+        />
+        <rect
+          x="58"
+          y="54"
+          width="52"
+          height="22"
+          rx="5"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="2"
+        />
+        {/* vertical guide — the two stacked shapes' left edges line up */}
+        <line
+          className="fa-pulse"
+          x1="58"
+          y1="6"
+          x2="58"
+          y2="86"
+          stroke={SKY}
+          strokeWidth="1.3"
+          strokeDasharray="4 3"
+        />
+        {/* horizontal guide — the dragged shape + right neighbour share a top edge */}
+        <line
+          className="fa-pulse"
+          x1="44"
+          y1="54"
+          x2="200"
+          y2="54"
+          stroke={SKY}
+          strokeWidth="1.3"
+          strokeDasharray="4 3"
+          style={{ animationDelay: '0.5s' }}
+        />
+      </svg>
+      <span className="absolute bottom-1.5 right-2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
+        snaps into line
+      </span>
+    </Frame>
+  );
+}
+
 // Canvas backdrop: four background patterns in a picker, the brand highlight
 // cycling to say "swap the canvas backdrop".
 export function CanvasBackdropArt() {

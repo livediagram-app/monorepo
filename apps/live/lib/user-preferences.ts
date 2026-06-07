@@ -62,6 +62,12 @@ export type UserPreferences = {
   // mobile regardless of this setting. Missing / undefined / false ===
   // standard floating panels on desktop.
   minimalPanels?: boolean;
+  // Alignment guides (spec/09). When `false`, the editor skips the
+  // faint guide lines drawn along the edges / centres a dragged or
+  // resized element shares with its neighbours (the snap itself is
+  // unaffected; only the visual hint is suppressed). Missing /
+  // undefined === guides on, the default.
+  alignmentGuides?: boolean;
 };
 
 export const STORAGE_KEY = 'livediagram:user-preferences:v1';

@@ -302,6 +302,12 @@ export function useEditorState() {
   // to true (auto-rebind on) so a fresh session keeps today's UX.
   const autoRebindArrowsRef = useRef<boolean>(userPreferences.autoRebindArrows !== false);
   autoRebindArrowsRef.current = userPreferences.autoRebindArrows !== false;
+  // Same mirror for the alignment-guide preference so the drag move
+  // handler can gate the guide computation without re-attaching its
+  // listeners. Defaults to true (guides on) so a fresh session shows
+  // them; flipping the Settings toggle takes effect on the next move.
+  const alignmentGuidesRef = useRef<boolean>(userPreferences.alignmentGuides !== false);
+  alignmentGuidesRef.current = userPreferences.alignmentGuides !== false;
 
   // Per-element note popover (state + open/close/setNote handlers)
   // lives in useEditorNotes. Invoked further down, after `commit`
@@ -1543,6 +1549,7 @@ export function useEditorState() {
     commit,
     markCheckpoint,
     autoRebindArrowsRef,
+    alignmentGuidesRef,
     isPinchingRef,
   });
 

@@ -136,6 +136,13 @@ type UserPreferences = {
   // panels don't fit a phone viewport; the preference only changes
   // desktop behaviour. See spec/09.
   minimalPanels?: boolean;
+
+  // When false, the editor suppresses the faint alignment guide
+  // lines drawn along the edges / centres a dragged or resized
+  // element shares with its neighbours. The snap itself is
+  // unaffected; only the visual hint is hidden. Defaults to true
+  // (guides on). See spec/09's Alignment guides subsection.
+  alignmentGuides?: boolean;
 };
 ```
 
@@ -165,6 +172,9 @@ Missing key === undefined === default behaviour. Concretely:
 - `minimalPanels` undefined → floating panels on desktop (the
   default). Setting it to `true` switches desktop to the dock /
   popover layout. Mobile ignores the flag — it is always docked.
+- `alignmentGuides` undefined → guides on (the default). Setting it
+  to `false` hides the faint guide lines during a move / resize; the
+  snap behaviour itself is unchanged.
 
 Empty (or missing entirely) localStorage entry, AND no row in
 `user_preferences` for this owner, is therefore the "everything
@@ -190,8 +200,9 @@ behaviour is friction the tool's banner already solves.
   AI, Privacy) so the growing list stays scannable; only the first
   group (Canvas) is open by default and the rest start collapsed, so
   the dialog opens compact and the user expands what they need. The
-  Interface group holds `minimalPanels`, whose description notes the
-  dock layout is always on for mobile.
+  Canvas group holds `autoRebindArrows`, `drawToAdd`, and
+  `alignmentGuides`. The Interface group holds `minimalPanels`, whose
+  description notes the dock layout is always on for mobile.
 - **Per-tool surfaces**: today only the pencil's ModeBanner (a
   sparkle / magic-wand icon button to the left of Cancel) carries
   the `recogniseShapes` toggle. The button reads the value from

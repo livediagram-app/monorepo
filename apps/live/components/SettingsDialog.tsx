@@ -21,6 +21,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
   const drawToAdd = settings.drawToAdd === true;
   const aiEnabled = settings.aiAssistanceEnabled === true;
   const minimalPanels = settings.minimalPanels === true;
+  const alignmentGuides = settings.alignmentGuides !== false;
 
   return (
     <Portal>
@@ -69,6 +70,15 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                 onChange={(v) => {
                   track('UI', 'Toggled', v ? 'DrawToAddOn' : 'DrawToAddOff');
                   onChange({ ...settings, drawToAdd: v });
+                }}
+              />
+              <ToggleRow
+                label="Show alignment guides"
+                description="Draws faint lines along the edges and centres a shape shares with its neighbours as you move or resize it, so you can see why it snapped and line things up on a busy canvas. The snap still happens either way; turn this off for a bare canvas."
+                checked={alignmentGuides}
+                onChange={(v) => {
+                  track('UI', 'Toggled', v ? 'AlignmentGuidesOn' : 'AlignmentGuidesOff');
+                  onChange({ ...settings, alignmentGuides: v });
                 }}
               />
             </SettingsGroup>

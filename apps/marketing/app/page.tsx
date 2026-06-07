@@ -2,6 +2,7 @@ import {
   AccountSyncArt,
   ActivityArt,
   AiAssistArt,
+  AlignmentGuidesArt,
   AnyDeviceArt,
   ArrowsArt,
   AutosaveArt,
@@ -373,6 +374,12 @@ export default function LandingPage() {
                 title: 'Rotate to any angle',
                 description:
                   'Grab the rotate handle above a selected shape and turn it. It snaps to neat 15° steps, or hold Shift for free rotation, and pinned arrows keep tracking the shape as it turns.',
+              },
+              {
+                art: <AlignmentGuidesArt />,
+                title: 'Guides that line things up',
+                description:
+                  'Move or resize a shape and faint guide lines light up the moment an edge or centre lines up with a neighbour, so you can see exactly why it snapped and lay things out cleanly on a busy canvas. The lines match your theme and fade the instant you let go. Switch them off in Settings if you want a bare canvas.',
               },
               {
                 art: <PencilArt />,

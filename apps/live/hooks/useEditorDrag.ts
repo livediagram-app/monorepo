@@ -123,6 +123,12 @@ type EditorDragDeps = {
   // mid-drag toggle takes effect on the next pointermove without
   // re-attaching listeners.
   autoRebindArrowsRef: React.RefObject<boolean>;
+  // Per-user preference (spec/09) controlling whether the faint
+  // alignment guides are drawn during a move / resize. Defaults to
+  // true; `false` suppresses the guide lines (the snap itself is
+  // unaffected). Tracked via ref so a mid-drag toggle takes effect on
+  // the next pointermove without re-attaching listeners.
+  alignmentGuidesRef: React.RefObject<boolean>;
   // Set to true while a 2-finger pinch is active. The move handler
   // checks this and cancels any in-flight drag so a pinch-to-zoom
   // gesture that starts on an element doesn't also move it.
@@ -449,11 +455,16 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             snapDy = snap.dy;
             // Derive guides from the SNAPPED primary bounds so a line
             // only appears once the snap has aligned an edge / centre.
-            const guides = alignmentGuides(
-              { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
-              activeTab.elements,
-              memberIds,
-            );
+            // Suppressed entirely when the user has turned guides off
+            // (the snap above still applies; only the hint is hidden).
+            const guides =
+              (depsRef.current.alignmentGuidesRef.current ?? true)
+                ? alignmentGuides(
+                    { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
+                    activeTab.elements,
+                    memberIds,
+                  )
+                : [];
             setSnapGuides((prev) => (sameGuides(prev, guides) ? prev : guides));
           } else {
             setSnapGuides((prev) => (prev.length === 0 ? prev : []));
@@ -511,8 +522,12 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
                 : raw;
             // Guide off the snapped bounds (same rationale as move). A
             // constrained resize skips the snap, so guides only appear
-            // when an edge / centre genuinely lines up.
-            const guides = alignmentGuides(next, activeTab.elements, memberIds);
+            // when an edge / centre genuinely lines up. Suppressed when
+            // the user has turned alignment guides off.
+            const guides =
+              (depsRef.current.alignmentGuidesRef.current ?? true)
+                ? alignmentGuides(next, activeTab.elements, memberIds)
+                : [];
             setSnapGuides((prev) => (sameGuides(prev, guides) ? prev : guides));
             tick((els) =>
               els.map((el) => (el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el)),
