@@ -357,9 +357,31 @@ export function switchThemeElement(
   const current = el as unknown as Record<string, string | undefined>;
   const patch: Record<string, string | undefined> = {};
   for (const { element, theme: themeKey } of fields) {
+    // Tables derive their cell fill + text from the BACKDROP (cells track
+    // the canvas colour so the table blends in, only grid lines + text
+    // read), not from elementFill / elementText alone. Handle fill + text
+    // below; the generic rule would compare a backdrop-derived text colour
+    // against the old theme's `elementText` (null on light themes) and so
+    // mistake it for a user override, stranding dark text on a dark theme.
+    if (el.type === 'table' && element === 'textColor') continue;
     const value = current[element];
     patch[element] =
       value === undefined || value === prev[themeKey] ? (next[themeKey] ?? undefined) : value;
+  }
+  if (el.type === 'table') {
+    // The "on-theme" table colours, matching deriveNewBoxedColours: cells
+    // are the canvas background, text contrasts with it (an explicit
+    // elementText wins when the theme sets one). Replace each only when the
+    // current value is still the OLD theme's backdrop colour (or unset),
+    // preserving a genuine per-table override.
+    const prevText = prev.elementText ?? deriveTextColorForBg(prev.backgroundColor);
+    const nextText = next.elementText ?? deriveTextColorForBg(next.backgroundColor);
+    if (current.textColor === undefined || current.textColor === prevText) {
+      patch.textColor = nextText;
+    }
+    if (current.fillColor === undefined || current.fillColor === prev.backgroundColor) {
+      patch.fillColor = next.backgroundColor;
+    }
   }
   return { ...el, ...patch } as Element;
 }

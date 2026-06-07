@@ -4,6 +4,7 @@ import type {
   FreehandElement,
   ShapeElement,
   StickyElement,
+  TableElement,
   TextElement,
 } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
@@ -415,6 +416,44 @@ describe('switchThemeElement', () => {
     const out = switchThemeElement(f, prev, next) as FreehandElement;
     expect(out.fillColor).toBe('#ff00ff');
     expect(out.strokeColor).toBe(next.elementStroke);
+  });
+
+  // Tables track the canvas BACKDROP: cells = the canvas colour, text
+  // contrasts with it (deriveNewBoxedColours). Switching to a dark theme
+  // must re-derive both; the generic rule would compare the backdrop-
+  // derived text against the light theme's `elementText` (null), mistake
+  // it for a user override, and strand dark text on the dark theme.
+  const table = (over: Partial<TableElement> = {}): TableElement => ({
+    id: 't',
+    type: 'table',
+    x: 0,
+    y: 0,
+    width: 360,
+    height: 150,
+    cells: [
+      ['', ''],
+      ['', ''],
+    ],
+    ...over,
+  });
+
+  it('re-derives a backdrop-driven table to a dark theme (dark cells, light text)', () => {
+    const brand = getTheme('brand'); // white bg, elementText null
+    const midnight = getTheme('midnight'); // dark bg, light elementText
+    // As deriveNewBoxedColours leaves it on brand: fill = bg, text = contrast.
+    const el = table({ fillColor: brand.backgroundColor, textColor: '#1e293b' });
+    const out = switchThemeElement(el, brand, midnight) as TableElement;
+    expect(out.fillColor).toBe(midnight.backgroundColor); // cells follow the dark canvas
+    expect(out.textColor).toBe(midnight.elementText); // light, readable
+  });
+
+  it('preserves a user-customised table fill + text across the switch', () => {
+    const brand = getTheme('brand');
+    const midnight = getTheme('midnight');
+    const el = table({ fillColor: '#ff0000', textColor: '#ffff00' });
+    const out = switchThemeElement(el, brand, midnight) as TableElement;
+    expect(out.fillColor).toBe('#ff0000');
+    expect(out.textColor).toBe('#ffff00');
   });
 });
 
