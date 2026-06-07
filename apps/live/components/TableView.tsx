@@ -103,6 +103,7 @@ function Trigger({
   return (
     <button
       type="button"
+      data-table-ui
       aria-label={vertical ? 'Row options' : 'Column options'}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
@@ -207,6 +208,7 @@ export function TableView({
   const isMobile = isMobileViewportSync();
   const editorRef = useRef<HTMLDivElement>(null);
   const initialTextRef = useRef('');
+  const typeToEditRef = useRef(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<(number | null)[] | null>(null);
   const dragRowRef = useRef<(number | null)[] | null>(null);
@@ -223,6 +225,20 @@ export function TableView({
     }
   }, [isSelected]);
 
+  // Close the column / row + cell menus on a click anywhere that
+  // isn't a table control (the triggers + menus carry data-table-ui).
+  useEffect(() => {
+    if (!menu && !cellMenu) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t && t.closest('[data-table-ui]')) return;
+      setMenu(null);
+      setCellMenu(null);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [menu, cellMenu]);
+
   useEffect(() => {
     if (!editing) return;
     const el = editorRef.current;
@@ -231,10 +247,43 @@ export function TableView({
     el.focus();
     const range = document.createRange();
     range.selectNodeContents(el);
+    // Type-to-edit seeds the first char and puts the caret at the end;
+    // a normal edit selects all so the first keystroke replaces.
+    if (typeToEditRef.current) range.collapse(false);
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
+    typeToEditRef.current = false;
   }, [editing]);
+
+  // Type-to-edit: with a cell selected (not yet editing), a printable
+  // key enters edit mode seeded with that char (like shapes); Backspace
+  // / Delete clears the cell; Enter / F2 edit the existing text.
+  useEffect(() => {
+    if (!selectedCell || editing || readOnly || element.locked) return;
+    const { r, c } = selectedCell;
+    const onKey = (e: KeyboardEvent) => {
+      const ae = document.activeElement as HTMLElement | null;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable))
+        return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        onCommitCells(element.id, setTableCell(element, r, c, '').cells);
+      } else if (e.key === 'Enter' || e.key === 'F2') {
+        e.preventDefault();
+        initialTextRef.current = element.cells[r]?.[c] ?? '';
+        setEditing({ r, c });
+      } else if (e.key.length === 1) {
+        e.preventDefault();
+        initialTextRef.current = e.key;
+        typeToEditRef.current = true;
+        setEditing({ r, c });
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [selectedCell, editing, readOnly, element, onCommitCells]);
 
   const stroke = element.strokeColor ?? defaultStrokeColor(element);
   const textColor = element.textColor ?? defaultTextColor(element);
@@ -459,7 +508,8 @@ export function TableView({
                   outline: isSelCell ? '2px solid rgb(14 165 233)' : undefined,
                   outlineOffset: isSelCell ? '-2px' : undefined,
                   fontSize: cellFontPx,
-                  fontWeight: isHeader ? 700 : (cs?.bold ?? element.textBold) ? 600 : 400,
+                  fontWeight:
+                    (cs?.bold ?? (isHeader || element.textBold)) ? (isHeader ? 700 : 600) : 400,
                   fontStyle: (cs?.italic ?? element.textItalic) ? 'italic' : undefined,
                   textDecoration:
                     [
@@ -665,7 +715,10 @@ export function TableView({
                         onClick={() => toggle('col', c)}
                       />
                       {menu?.axis === 'col' && menu.index === c ? (
-                        <div className="pointer-events-auto absolute left-1/2 top-7 z-30 w-36 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                        <div
+                          data-table-ui
+                          className="pointer-events-auto absolute left-1/2 top-7 z-30 w-36 -translate-x-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
+                        >
                           <MenuButton
                             label="Insert left"
                             onClick={() => apply(addTableColumn(element, c))}
@@ -714,7 +767,10 @@ export function TableView({
                   onClick={() => toggle('row', r)}
                 />
                 {menu?.axis === 'row' && menu.index === r ? (
-                  <div className="pointer-events-auto absolute left-7 top-1/2 z-30 w-36 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <div
+                    data-table-ui
+                    className="pointer-events-auto absolute left-7 top-1/2 z-30 w-36 -translate-y-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
+                  >
                     <MenuButton label="Insert above" onClick={() => apply(addTableRow(element, r))}>
                       <ArrowIcon dir="up" />
                     </MenuButton>
@@ -750,12 +806,14 @@ export function TableView({
           >
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="pointer-events-auto absolute left-1/2 top-0 z-40 flex -translate-x-1/2 -translate-y-[calc(100%+4px)] items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+              className="pointer-events-auto absolute left-1/2 top-0 z-40 flex -translate-x-1/2 -translate-y-[calc(100%+4px)] items-center animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-0.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
             >
               {(() => {
                 const sc = element.cellStyles?.[selectedCell.r]?.[selectedCell.c] ?? null;
                 const rr = selectedCell.r;
                 const cc = selectedCell.c;
+                const isHeaderSel =
+                  (element.headerRow && rr === 0) || (element.headerColumn && cc === 0);
                 const sep = <div className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-slate-700" />;
                 const secCls = (active: boolean) =>
                   `flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium ${
@@ -770,13 +828,14 @@ export function TableView({
                       : 'text-slate-600 hover:bg-brand-50 dark:text-slate-200 dark:hover:bg-slate-700'
                   }`;
                 const panel =
-                  'absolute left-0 top-full z-50 mt-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800';
+                  'absolute left-0 top-full z-50 mt-1 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90';
                 return (
                   <>
                     {/* Text */}
                     <div className="relative">
                       <button
                         type="button"
+                        title="Text formatting"
                         className={secCls(cellMenu === 'text')}
                         onClick={() => setCellMenu((m) => (m === 'text' ? null : 'text'))}
                       >
@@ -788,9 +847,13 @@ export function TableView({
                             <button
                               type="button"
                               title="Bold"
-                              className={tog(sc?.bold ?? element.textBold ?? false)}
+                              className={tog(
+                                sc?.bold ?? (isHeaderSel || (element.textBold ?? false)),
+                              )}
                               onClick={() =>
-                                applyCellStyle(rr, cc, { bold: !(sc?.bold ?? element.textBold) })
+                                applyCellStyle(rr, cc, {
+                                  bold: !(sc?.bold ?? (isHeaderSel || element.textBold)),
+                                })
                               }
                             >
                               <span className="font-bold">B</span>
@@ -843,6 +906,7 @@ export function TableView({
                     <div className="relative">
                       <button
                         type="button"
+                        title="Cell colours"
                         className={secCls(cellMenu === 'colours')}
                         onClick={() => setCellMenu((m) => (m === 'colours' ? null : 'colours'))}
                       >
@@ -888,6 +952,7 @@ export function TableView({
                     <div className="relative">
                       <button
                         type="button"
+                        title="Text alignment"
                         className={secCls(cellMenu === 'align')}
                         onClick={() => setCellMenu((m) => (m === 'align' ? null : 'align'))}
                       >
@@ -912,13 +977,15 @@ export function TableView({
                     {sep}
                     <button
                       type="button"
-                      title="Clear cell formatting"
-                      onClick={() =>
+                      title="Clear cell (text + formatting)"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCommitCells(element.id, setTableCell(element, rr, cc, '').cells);
                         onCommitCellStyles(
                           element.id,
                           clearCellStyle(element, rr, cc).cellStyles ?? [],
-                        )
-                      }
+                        );
+                      }}
                       className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950"
                     >
                       <TrashIcon />
