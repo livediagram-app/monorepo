@@ -118,6 +118,12 @@ export type SelectedElementControls = {
   tableHeaderColumn: boolean | null;
   onToggleTableHeaderRow: () => void;
   onToggleTableHeaderColumn: () => void;
+  // Header-band colours for a selected table (effective colour
+  // shown in the swatch; null for non-tables).
+  tableHeaderFill: string | null;
+  tableHeaderTextColor: string | null;
+  onSetTableHeaderFill: (color: string) => void;
+  onSetTableHeaderTextColor: (color: string) => void;
 };
 
 export type TabSectionControls = {

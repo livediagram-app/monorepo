@@ -113,6 +113,10 @@ export function deriveCanvasSelection(input: {
   const showPlus = !!(
     selected &&
     selectedIsBoxed &&
+    // Tables don't expose the quick-connect plus buttons (connecting a
+    // connector to a grid is an unlikely flow, and they clash with the
+    // table's own in-cell controls).
+    selected.type !== 'table' &&
     editingId !== selected.id &&
     !isPaintMode &&
     !isGroupMode &&
@@ -212,6 +216,8 @@ export type SelectedElementFields = Pick<
   | 'borderRadius'
   | 'tableHeaderRow'
   | 'tableHeaderColumn'
+  | 'tableHeaderFill'
+  | 'tableHeaderTextColor'
 >;
 
 // Which Editor-panel control values to surface for the selected element,
@@ -283,5 +289,13 @@ export function deriveSelectedElementFields(
     borderRadius: supportsBorderRadius(selected) ? (selected.borderRadius ?? 'sm') : null,
     tableHeaderRow: selected.type === 'table' ? (selected.headerRow ?? false) : null,
     tableHeaderColumn: selected.type === 'table' ? (selected.headerColumn ?? false) : null,
+    tableHeaderFill:
+      selected.type === 'table'
+        ? (selected.headerFill ?? selected.strokeColor ?? defaultStrokeColor(selected))
+        : null,
+    tableHeaderTextColor:
+      selected.type === 'table'
+        ? (selected.headerTextColor ?? selected.textColor ?? defaultTextColor(selected))
+        : null,
   };
 }

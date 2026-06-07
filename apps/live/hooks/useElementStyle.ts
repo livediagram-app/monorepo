@@ -226,6 +226,45 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     scheduleElementChangeLog('textColor');
   };
 
+  // Table header-band colours (debounced like the other colour
+  // pickers). Apply only to selected tables.
+  const setTableHeaderFillSelected = (color: string) => {
+    if (editsBlocked) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commitTabs((ts) =>
+      ts.map((t) =>
+        t.id === activeId
+          ? {
+              ...t,
+              elements: t.elements.map((el) =>
+                ids.has(el.id) && el.type === 'table' ? { ...el, headerFill: color } : el,
+              ),
+            }
+          : t,
+      ),
+    );
+    scheduleElementChangeLog('headerFill');
+  };
+  const setTableHeaderTextColorSelected = (color: string) => {
+    if (editsBlocked) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commitTabs((ts) =>
+      ts.map((t) =>
+        t.id === activeId
+          ? {
+              ...t,
+              elements: t.elements.map((el) =>
+                ids.has(el.id) && el.type === 'table' ? { ...el, headerTextColor: color } : el,
+              ),
+            }
+          : t,
+      ),
+    );
+    scheduleElementChangeLog('headerTextColor');
+  };
+
   const setOpacitySelected = (opacity: number) => {
     if (editsBlocked) return;
     const ids = currentSelectionIds();
@@ -424,6 +463,21 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
           const { fillColor: _f, strokeColor: _s, textColor: _t, ...rest } = el;
           return rest as typeof el;
         }
+        if (el.type === 'table') {
+          // Reset to theme grid + text; clear cell fill + header overrides.
+          return {
+            ...el,
+            ...(theme.elementStroke !== null
+              ? { strokeColor: theme.elementStroke }
+              : { strokeColor: undefined }),
+            ...(theme.elementText !== null
+              ? { textColor: theme.elementText }
+              : { textColor: undefined }),
+            fillColor: undefined,
+            headerFill: undefined,
+            headerTextColor: undefined,
+          };
+        }
         if (el.type === 'arrow') {
           return {
             ...el,
@@ -456,6 +510,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setArrowheadShapeSelected,
     setTableHeaderRowSelected,
     setTableHeaderColumnSelected,
+    setTableHeaderFillSelected,
+    setTableHeaderTextColorSelected,
     setArrowStyleSelected,
     setArrowStrokeStyleSelected,
     setShapeKindSelected,

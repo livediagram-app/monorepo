@@ -204,6 +204,8 @@ export function EditorView() {
     setArrowheadShapeSelected,
     setTableHeaderRowSelected,
     setTableHeaderColumnSelected,
+    setTableHeaderFillSelected,
+    setTableHeaderTextColorSelected,
     setArrowStrokeStyleSelected,
     setArrowStyleSelected,
     setArrowThicknessSelected,
@@ -549,6 +551,8 @@ export function EditorView() {
         onSetArrowheadShape={setArrowheadShapeSelected}
         onToggleTableHeaderRow={setTableHeaderRowSelected}
         onToggleTableHeaderColumn={setTableHeaderColumnSelected}
+        onSetTableHeaderFill={setTableHeaderFillSelected}
+        onSetTableHeaderTextColor={setTableHeaderTextColorSelected}
         onSetArrowStyle={setArrowStyleSelected}
         onSetArrowStrokeStyle={setArrowStrokeStyleSelected}
         onSetShapeKind={setShapeKindSelected}

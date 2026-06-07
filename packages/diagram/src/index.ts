@@ -242,6 +242,10 @@ export type TableElement = {
   // Render the first column as a header (same treatment). Combinable
   // with headerRow (the corner cell is then both).
   headerColumn?: boolean;
+  // Header-band colours, independent of the body cells. Unset =
+  // a tint of the grid stroke (fill) + the cell text colour (text).
+  headerFill?: string;
+  headerTextColor?: string;
   // Tables have no single label (cells carry the text). Declared as an
   // always-undefined optional so the generic "boxed element has a
   // label" code paths (change log, export, search) compile without a

@@ -15,10 +15,22 @@ import {
 // so it reads as the medium size.
 const CELL_FONT_PX: Record<string, number> = { sm: 11, md: 13, lg: 16, scale: 13 };
 
-function PlusIcon() {
+function ArrowIcon({ dir }: { dir: 'left' | 'right' | 'up' | 'down' }) {
+  const d = {
+    left: 'M11 7H3M3 7l3-3M3 7l3 3',
+    right: 'M3 7h8M11 7l-3-3M11 7l-3 3',
+    up: 'M7 11V3M7 3l3 3M7 3l-3 3',
+    down: 'M7 3v8M7 11l-3-3M7 11l3-3',
+  }[dir];
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-      <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d={d}
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -163,6 +175,8 @@ export function TableView({
   const stroke = element.strokeColor ?? defaultStrokeColor(element);
   const textColor = element.textColor ?? defaultTextColor(element);
   const fontPx = CELL_FONT_PX[element.textSize ?? 'md'] ?? 13;
+  const headerFill = element.headerFill ?? `${stroke}22`;
+  const headerTextColor = element.headerTextColor ?? textColor;
   const alignX = element.textAlignX ?? 'center';
   const alignY = element.textAlignY ?? 'middle';
   const justify = alignX === 'left' ? 'flex-start' : alignX === 'right' ? 'flex-end' : 'center';
@@ -214,10 +228,11 @@ export function TableView({
                 style={{
                   borderRight: c < cols - 1 ? `1px solid ${stroke}` : undefined,
                   borderBottom: r < rows - 1 ? `1px solid ${stroke}` : undefined,
-                  backgroundColor: isHeader ? `${stroke}22` : (element.fillColor ?? 'transparent'),
+                  backgroundColor: isHeader ? headerFill : (element.fillColor ?? 'transparent'),
                   display: 'flex',
                   justifyContent: justify,
                   alignItems,
+                  color: isHeader ? headerTextColor : undefined,
                   fontSize: fontPx,
                   fontWeight: isHeader || element.textBold ? 600 : 400,
                   fontStyle: element.textItalic ? 'italic' : undefined,
@@ -266,7 +281,7 @@ export function TableView({
                     className="h-full w-full resize-none border-0 bg-white/90 p-0 text-center outline-none dark:bg-slate-900/90"
                     style={{
                       fontSize: fontPx,
-                      color: textColor,
+                      color: isHeader ? headerTextColor : textColor,
                       textAlign: alignX,
                       fontWeight: isHeader || element.textBold ? 600 : 400,
                     }}
@@ -300,13 +315,13 @@ export function TableView({
               {menu?.axis === 'col' && menu.index === c ? (
                 <div className="pointer-events-auto absolute left-1/2 top-7 z-10 w-36 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                   <MenuButton label="Insert left" onClick={() => apply(addTableColumn(element, c))}>
-                    <PlusIcon />
+                    <ArrowIcon dir="left" />
                   </MenuButton>
                   <MenuButton
                     label="Insert right"
                     onClick={() => apply(addTableColumn(element, c + 1))}
                   >
-                    <PlusIcon />
+                    <ArrowIcon dir="right" />
                   </MenuButton>
                   <MenuButton
                     label="Delete column"
@@ -336,13 +351,13 @@ export function TableView({
               {menu?.axis === 'row' && menu.index === r ? (
                 <div className="pointer-events-auto absolute left-7 top-1/2 z-10 w-36 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                   <MenuButton label="Insert above" onClick={() => apply(addTableRow(element, r))}>
-                    <PlusIcon />
+                    <ArrowIcon dir="up" />
                   </MenuButton>
                   <MenuButton
                     label="Insert below"
                     onClick={() => apply(addTableRow(element, r + 1))}
                   >
-                    <PlusIcon />
+                    <ArrowIcon dir="down" />
                   </MenuButton>
                   <MenuButton
                     label="Delete row"
