@@ -59,6 +59,25 @@ import {
   type ShapeBounds,
 } from '@/lib/canvas';
 
+// Value-equality for two guide lists. Used to bail out of the
+// snapGuides state update when the guides haven't changed: on the vast
+// majority of drag frames `alignmentGuides` returns an empty list (no
+// snap), and feeding a fresh `[]` to setState every pointermove would
+// force a redundant re-render of the whole editor tree on top of the
+// per-frame `tick`. Returning the previous reference from the setState
+// updater lets React skip the render entirely (Object.is bail-out).
+function sameGuides(a: AlignmentGuide[], b: AlignmentGuide[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (x.axis !== y.axis || x.position !== y.position || x.start !== y.start || x.end !== y.end) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // External state + callbacks the drag machine reads on every move.
 // Bundled into one object so the hook signature doesn't sprout
 // positional arguments as more inputs land; tracked via a ref so the
@@ -374,13 +393,13 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     const onSecondTouch = (e: PointerEvent) => {
       if (e.pointerType === 'touch' && !e.isPrimary) {
         setDrag(null);
-        setSnapGuides([]);
+        setSnapGuides((prev) => (prev.length === 0 ? prev : []));
       }
     };
     const onMove = (e: PointerEvent) => {
       if (depsRef.current.isPinchingRef?.current) {
         setDrag(null);
-        setSnapGuides([]);
+        setSnapGuides((prev) => (prev.length === 0 ? prev : []));
         return;
       }
       const { activeTab, zoomRef, tick } = depsRef.current;
@@ -430,15 +449,14 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             snapDy = snap.dy;
             // Derive guides from the SNAPPED primary bounds so a line
             // only appears once the snap has aligned an edge / centre.
-            setSnapGuides(
-              alignmentGuides(
-                { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
-                activeTab.elements,
-                memberIds,
-              ),
+            const guides = alignmentGuides(
+              { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
+              activeTab.elements,
+              memberIds,
             );
+            setSnapGuides((prev) => (sameGuides(prev, guides) ? prev : guides));
           } else {
-            setSnapGuides([]);
+            setSnapGuides((prev) => (prev.length === 0 ? prev : []));
           }
           tick((els) => {
             // First pass: translate every dragged boxed element.
@@ -494,7 +512,8 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             // Guide off the snapped bounds (same rationale as move). A
             // constrained resize skips the snap, so guides only appear
             // when an edge / centre genuinely lines up.
-            setSnapGuides(alignmentGuides(next, activeTab.elements, memberIds));
+            const guides = alignmentGuides(next, activeTab.elements, memberIds);
+            setSnapGuides((prev) => (sameGuides(prev, guides) ? prev : guides));
             tick((els) =>
               els.map((el) => (el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el)),
             );
@@ -650,7 +669,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     };
     const onUp = () => {
       setDrag(null);
-      setSnapGuides([]);
+      setSnapGuides((prev) => (prev.length === 0 ? prev : []));
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
