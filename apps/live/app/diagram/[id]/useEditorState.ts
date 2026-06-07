@@ -1519,6 +1519,7 @@ export function useEditorState() {
   // styling from `canvasTool`, not the drag state); only the four
   // begin-handlers below are passed through to Canvas as props.
   const {
+    snapGuides,
     beginDrag,
     beginRotate,
     beginAnchorDrag,
@@ -1827,6 +1828,7 @@ export function useEditorState() {
     sharedDiagrams,
     shortcutsEnabled,
     skipTemplatePicker,
+    snapGuides,
     tabAccordionsOpen,
     tabs,
     toggleActiveTabLock,

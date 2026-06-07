@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { snapResizeBounds, snapToAlignment, type ShapeElement } from './index';
+import { alignmentGuides, snapResizeBounds, snapToAlignment, type ShapeElement } from './index';
 
 const shape = (id: string, overrides: Partial<ShapeElement> = {}): ShapeElement => ({
   id,
@@ -139,5 +139,73 @@ describe('snapResizeBounds', () => {
     const degenerate = shape('z', { x: 1000, y: 1000, width: 0, height: 0 });
     const c = box(0, 0, 100, 100);
     expect(snapResizeBounds(c, 'se', [degenerate], new Set(), 10, 20)).toEqual(c);
+  });
+});
+
+describe('alignmentGuides', () => {
+  it('returns no guides when nothing lines up', () => {
+    const other = shape('o', { x: 1000, y: 1000 });
+    expect(alignmentGuides(box(0, 0, 100, 100), [other], new Set())).toEqual([]);
+  });
+
+  it('reports a vertical guide when left edges coincide, spanning both elements', () => {
+    // Candidate left = 0; neighbour left = 0 too. Neighbour sits below.
+    const neighbour = shape('n', { x: 0, y: 300, width: 40, height: 60 });
+    const guides = alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set());
+    const vertical = guides.filter((g) => g.axis === 'x');
+    expect(vertical).toHaveLength(1);
+    expect(vertical[0]).toMatchObject({ axis: 'x', position: 0 });
+    // Spans from the candidate's top (0) to the neighbour's bottom (360).
+    expect(vertical[0]!.start).toBe(0);
+    expect(vertical[0]!.end).toBe(360);
+  });
+
+  it('reports a horizontal guide when centres coincide on the Y axis', () => {
+    // Candidate centre-y = 50; neighbour centre-y = 50 (y 30, height 40).
+    const neighbour = shape('n', { x: 400, y: 30, width: 40, height: 40 });
+    const guides = alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set());
+    const horizontal = guides.filter((g) => g.axis === 'y');
+    expect(horizontal).toHaveLength(1);
+    expect(horizontal[0]).toMatchObject({ axis: 'y', position: 50 });
+    expect(horizontal[0]!.start).toBe(0); // candidate left
+    expect(horizontal[0]!.end).toBe(440); // neighbour right
+  });
+
+  it('excludes the dragged element ids as guide targets', () => {
+    const neighbour = shape('n', { x: 0, y: 300, width: 40, height: 60 });
+    expect(alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set(['n']))).toEqual([]);
+  });
+
+  it('merges the span across multiple neighbours sharing one line', () => {
+    // Two neighbours both share the candidate's left edge (x = 0), one
+    // above and one below. The single vertical guide should span all three.
+    const above = shape('a', { x: 0, y: -200, width: 30, height: 50 });
+    const below = shape('b', { x: 0, y: 400, width: 30, height: 50 });
+    const guides = alignmentGuides(box(0, 0, 100, 100), [above, below], new Set());
+    const vertical = guides.filter((g) => g.axis === 'x' && g.position === 0);
+    expect(vertical).toHaveLength(1);
+    expect(vertical[0]!.start).toBe(-200); // top of `above`
+    expect(vertical[0]!.end).toBe(450); // bottom of `below`
+  });
+
+  it('reports both a vertical and a horizontal guide when the corner lands on a neighbour corner', () => {
+    // Neighbour's top-left corner (200, 0) coincides with the candidate's
+    // top-right corner (100+100=... no). Use a neighbour whose left edge
+    // equals the candidate right (100) and whose top equals candidate top (0).
+    const neighbour = shape('n', { x: 100, y: 0, width: 40, height: 40 });
+    const guides = alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set());
+    expect(guides.some((g) => g.axis === 'x' && g.position === 100)).toBe(true);
+    expect(guides.some((g) => g.axis === 'y' && g.position === 0)).toBe(true);
+  });
+
+  it('merges a left-edge and centre line that fall on the same position', () => {
+    // Candidate left = 0 and a neighbour centre-x at 0; candidate centre-x
+    // = 50 with another neighbour at 50. These are distinct positions, so
+    // two guides. But a single neighbour aligning to two candidate lines
+    // at the same x collapses to one.
+    const neighbour = shape('n', { x: -20, y: 300, width: 40, height: 40 }); // centre-x = 0
+    const guides = alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set());
+    const atZero = guides.filter((g) => g.axis === 'x' && g.position === 0);
+    expect(atZero).toHaveLength(1);
   });
 });

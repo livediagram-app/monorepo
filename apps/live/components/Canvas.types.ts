@@ -4,6 +4,7 @@
 // types as top-level imports.
 import type { PointerEvent as ReactPointerEvent, Ref } from 'react';
 import type {
+  AlignmentGuide,
   Anchor,
   BackgroundPattern,
   Element,
@@ -44,6 +45,10 @@ export type CanvasProps = {
   onFitToScreen: () => void;
   isPinchingRef?: React.RefObject<boolean>;
   elements: Element[];
+  // Faint alignment guides for the active move / resize drag (the edge
+  // / centre lines the dragged element shares with neighbours). Empty
+  // when no snap is in effect. Rendered by CanvasChrome. See spec/09.
+  snapGuides: AlignmentGuide[];
   selectedId: string | null;
   multiSelectedIds: Set<string>;
   onSelectMarquee: (ids: Set<string>) => void;

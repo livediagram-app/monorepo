@@ -23,6 +23,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
+  alignmentGuides,
   anchorPosition,
   angledElbow,
   arrowStyleOf,
@@ -34,6 +35,7 @@ import {
   snapResizeBounds,
   snapToAlignment,
   snapToAnchor,
+  type AlignmentGuide,
   type Anchor,
   type ArrowElement,
   type Element,
@@ -110,6 +112,11 @@ type EditorDragDeps = {
 
 type EditorDragApi = {
   drag: DragState | null;
+  // Faint alignment guides for the in-progress move / resize: the edge
+  // and centre lines the dragged element currently shares with its
+  // neighbours, drawn so the user can see why it snapped. Empty when no
+  // snap is in effect, and cleared on release. See `alignmentGuides`.
+  snapGuides: AlignmentGuide[];
   beginDrag: (elementId: string, mode: DragMode, e: ReactPointerEvent) => void;
   beginRotate: (
     elementId: string,
@@ -126,6 +133,10 @@ type EditorDragApi = {
 
 export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   const [drag, setDrag] = useState<DragState | null>(null);
+  // Alignment guides for the active gesture. Set from the move-effect on
+  // every boxed move / single-element resize, cleared on pointer-up. The
+  // render layer (CanvasChrome) draws them as faint lines.
+  const [snapGuides, setSnapGuides] = useState<AlignmentGuide[]>([]);
 
   // Stash deps on every render so the move-effect always reads
   // fresh values without re-subscribing global pointer listeners.
@@ -361,11 +372,15 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     // Cancel the drag immediately when a second touch finger lands — that
     // signals a pinch gesture, not a solo drag.
     const onSecondTouch = (e: PointerEvent) => {
-      if (e.pointerType === 'touch' && !e.isPrimary) setDrag(null);
+      if (e.pointerType === 'touch' && !e.isPrimary) {
+        setDrag(null);
+        setSnapGuides([]);
+      }
     };
     const onMove = (e: PointerEvent) => {
       if (depsRef.current.isPinchingRef?.current) {
         setDrag(null);
+        setSnapGuides([]);
         return;
       }
       const { activeTab, zoomRef, tick } = depsRef.current;
@@ -413,6 +428,17 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             );
             snapDx = snap.dx;
             snapDy = snap.dy;
+            // Derive guides from the SNAPPED primary bounds so a line
+            // only appears once the snap has aligned an edge / centre.
+            setSnapGuides(
+              alignmentGuides(
+                { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
+                activeTab.elements,
+                memberIds,
+              ),
+            );
+          } else {
+            setSnapGuides([]);
           }
           tick((els) => {
             // First pass: translate every dragged boxed element.
@@ -465,6 +491,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
                     MIN_SIZE,
                   )
                 : raw;
+            // Guide off the snapped bounds (same rationale as move). A
+            // constrained resize skips the snap, so guides only appear
+            // when an edge / centre genuinely lines up.
+            setSnapGuides(alignmentGuides(next, activeTab.elements, memberIds));
             tick((els) =>
               els.map((el) => (el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el)),
             );
@@ -618,7 +648,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
         );
       });
     };
-    const onUp = () => setDrag(null);
+    const onUp = () => {
+      setDrag(null);
+      setSnapGuides([]);
+    };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointerdown', onSecondTouch);
@@ -631,6 +664,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
 
   return {
     drag,
+    snapGuides,
     beginDrag,
     beginRotate,
     beginAnchorDrag,

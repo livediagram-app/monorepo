@@ -265,6 +265,7 @@ export function EditorView() {
     shortcutsEnabled,
     shortcutsOpen,
     skipTemplatePicker,
+    snapGuides,
     tabAccordionsOpen,
     tabs,
     toggleActiveTabLock,
@@ -379,6 +380,7 @@ export function EditorView() {
         viewportOffset={viewportOffset}
         setViewportOffset={setViewportOffset}
         elements={activeTab.elements}
+        snapGuides={snapGuides}
         selectedId={selectedId}
         multiSelectedIds={multiSelectedIds}
         remoteSelectionsByElement={remoteSelectionsByElement}

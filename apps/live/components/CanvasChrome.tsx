@@ -1,4 +1,6 @@
+import { deriveTextColorForBg } from '@livediagram/diagram';
 import { drawBannerMessage } from '@/lib/draw-mode';
+import { getTheme } from '@/lib/themes';
 import { CommandPalette, type SelectedElementControls } from './CommandPalette';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
@@ -181,6 +183,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     saveStatus,
     selectionScope,
     selfParticipant,
+    snapGuides,
     setActiveDockAnchor,
     setActiveMobilePanel,
     setContextBottomY,
@@ -278,6 +281,50 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onToggleLock={onToggleLockMultiSelected}
         />
       ) : null}
+
+      {/* Alignment guides. While a move / resize snap is in effect,
+          draw a faint line along each edge / centre the dragged element
+          now shares with a neighbour, so the user sees WHY it snapped.
+          Canvas coords convert to client coords via the wrapper rect +
+          zoom (same as the draw / pen previews). The colour follows the
+          theme: the theme's element stroke when it sets one, else a
+          slate tuned to contrast with the theme's backdrop — faint via
+          opacity so it reads as helper chrome, not content. */}
+      {snapGuides.length > 0
+        ? (() => {
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            if (!rect) return null;
+            const theme = getTheme(tabThemeId);
+            const color = theme.elementStroke ?? deriveTextColorForBg(theme.backgroundColor);
+            return (
+              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+                {snapGuides.map((g, i) => {
+                  // Convert the guide's canvas-space line into the two
+                  // screen-space endpoints. A vertical guide (axis 'x')
+                  // holds x constant and runs start→end in y; horizontal
+                  // is the mirror.
+                  const x1 = rect.left + (g.axis === 'x' ? g.position : g.start) * viewportZoom;
+                  const y1 = rect.top + (g.axis === 'x' ? g.start : g.position) * viewportZoom;
+                  const x2 = rect.left + (g.axis === 'x' ? g.position : g.end) * viewportZoom;
+                  const y2 = rect.top + (g.axis === 'x' ? g.end : g.position) * viewportZoom;
+                  return (
+                    <line
+                      key={`${g.axis}:${g.position}:${i}`}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke={color}
+                      strokeWidth={1}
+                      strokeOpacity={0.55}
+                      strokeDasharray="4 3"
+                    />
+                  );
+                })}
+              </svg>
+            );
+          })()
+        : null}
 
       {marquee ? (
         <div

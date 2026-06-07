@@ -348,6 +348,105 @@ export function snapResizeBounds(
   return { x, y, width, height };
 }
 
+// A faint line the canvas draws while an element is being dragged /
+// resized to show WHY it snapped to a given position: it lies along an
+// edge / centre line the dragged element now shares with one or more
+// neighbours. `axis: 'x'` is a vertical line at constant x; `axis: 'y'`
+// is a horizontal line at constant y. `start`/`end` are the inclusive
+// span on the perpendicular axis (top→bottom for a vertical line,
+// left→right for a horizontal one) so the guide bridges only the
+// aligned elements rather than crossing the whole canvas.
+export type AlignmentGuide = {
+  axis: 'x' | 'y';
+  position: number;
+  start: number;
+  end: number;
+};
+
+// Derive the alignment guides for an element at `candidate` bounds
+// against its neighbours. Decoupled from snapToAlignment /
+// snapResizeBounds on purpose: callers pass the ALREADY-SNAPPED bounds,
+// and this reports every candidate line (left / centre-x / right on X,
+// top / centre-y / bottom on Y) that now coincides with a neighbour's
+// line within `epsilon` pixels. Because it keys off the snapped
+// position, a guide surfaces exactly when a snap is in effect — there's
+// no separate "is the snap active" flag to keep in sync.
+//
+// `excludeIds` skips the dragged elements (so a group drag never guides
+// against itself). Each returned guide spans the union extent of the
+// candidate plus every matched neighbour on the perpendicular axis.
+// Lines at the same axis + position are merged into one.
+export function alignmentGuides(
+  candidate: { x: number; y: number; width: number; height: number },
+  elements: Element[],
+  excludeIds: Set<ElementId>,
+  epsilon = 0.5,
+): AlignmentGuide[] {
+  const candidateXs = [
+    candidate.x,
+    candidate.x + candidate.width / 2,
+    candidate.x + candidate.width,
+  ];
+  const candidateYs = [
+    candidate.y,
+    candidate.y + candidate.height / 2,
+    candidate.y + candidate.height,
+  ];
+  const candidateTop = candidate.y;
+  const candidateBottom = candidate.y + candidate.height;
+  const candidateLeft = candidate.x;
+  const candidateRight = candidate.x + candidate.width;
+
+  // Keyed by `${axis}:${roundedPosition}` so duplicate lines (e.g. left
+  // edge AND centre landing on the same x) collapse and their spans merge.
+  const guides = new Map<string, AlignmentGuide>();
+
+  const record = (axis: 'x' | 'y', position: number, start: number, end: number) => {
+    const key = `${axis}:${Math.round(position)}`;
+    const existing = guides.get(key);
+    if (existing) {
+      existing.start = Math.min(existing.start, start);
+      existing.end = Math.max(existing.end, end);
+    } else {
+      guides.set(key, { axis, position, start, end });
+    }
+  };
+
+  for (const lineX of candidateXs) {
+    let start = candidateTop;
+    let end = candidateBottom;
+    let matched = false;
+    for (const el of elements) {
+      if (!isBoxed(el) || excludeIds.has(el.id)) continue;
+      const targetXs = [el.x, el.x + el.width / 2, el.x + el.width];
+      if (targetXs.some((tx) => Math.abs(tx - lineX) <= epsilon)) {
+        matched = true;
+        start = Math.min(start, el.y);
+        end = Math.max(end, el.y + el.height);
+      }
+    }
+    if (matched) record('x', lineX, start, end);
+  }
+
+  for (const lineY of candidateYs) {
+    let start = candidateLeft;
+    let end = candidateRight;
+    let matched = false;
+    for (const el of elements) {
+      if (!isBoxed(el) || excludeIds.has(el.id)) continue;
+      const targetYs = [el.y, el.y + el.height / 2, el.y + el.height];
+      if (targetYs.some((ty) => Math.abs(ty - lineY) <= epsilon)) {
+        matched = true;
+        start = Math.min(start, el.x);
+        end = Math.max(end, el.x + el.width);
+      }
+    }
+    if (matched) record('y', lineY, start, end);
+  }
+
+  return [...guides.values()];
+}
+
 // Nearest boxed-element anchor to a canvas point. Returns the pinning
 // reference if one is within `threshold` pixels; otherwise null.
 export function snapToAnchor(
