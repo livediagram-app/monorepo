@@ -74,6 +74,16 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
   const [pan, setPan] = useState<PanState | null>(null);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
 
+  // The caller passes a fresh `deps` object literal every render. Keep it
+  // in a ref (refreshed each render) so the pan / marquee effects can
+  // depend ONLY on the gesture state (`pan` / `marquee`) and still read
+  // the latest deps. Depending on `deps` directly re-ran the effects on
+  // every render; paired with the move handler's setViewportOffset that
+  // tripped React's "Maximum update depth exceeded" loop (re-subscribe →
+  // setState → re-render → re-subscribe).
+  const depsRef = useRef(deps);
+  depsRef.current = deps;
+
   // Held-Space modifier turns canvas drag into a pan instead of a
   // marquee. Tracked via a ref so the pointerdown handler always
   // sees the current value without re-binding when state changes.
@@ -107,18 +117,19 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
   useEffect(() => {
     if (!pan) return;
     const onMove = (e: PointerEvent) => {
+      const d = depsRef.current;
       // Pinch zoom is active — let the pinch hook own viewportOffset.
-      if (deps.isPinchingRef?.current) return;
+      if (d.isPinchingRef?.current) return;
       // Pan offset is stored in canvas-coords; mouse delta is
       // screen-coords. Divide by zoom so a 100px screen drag
       // produces 100/zoom canvas-pixels of pan.
-      const dx = (e.clientX - pan.startClientX) / deps.viewportZoom;
-      const dy = (e.clientY - pan.startClientY) / deps.viewportZoom;
+      const dx = (e.clientX - pan.startClientX) / d.viewportZoom;
+      const dy = (e.clientY - pan.startClientY) / d.viewportZoom;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) pan.movedRef.current = true;
-      deps.setViewportOffset({ x: pan.startOffsetX + dx, y: pan.startOffsetY + dy });
+      d.setViewportOffset({ x: pan.startOffsetX + dx, y: pan.startOffsetY + dy });
     };
     const onUp = () => {
-      if (!pan.movedRef.current) deps.onDeselect();
+      if (!pan.movedRef.current) depsRef.current.onDeselect();
       setPan(null);
     };
     window.addEventListener('pointermove', onMove);
@@ -127,7 +138,7 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [pan, deps]);
+  }, [pan]);
 
   // Marquee drag: track the current pointer position and, on
   // release, convert the screen-coord rect to canvas coords and
@@ -141,14 +152,15 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
     const onUp = () => {
       const m = marquee;
       if (!m) return;
+      const d = depsRef.current;
       const dragWidth = Math.abs(m.currentX - m.startX);
       const dragHeight = Math.abs(m.currentY - m.startY);
       if (dragWidth < 4 && dragHeight < 4) {
-        deps.onDeselect();
+        d.onDeselect();
         setMarquee(null);
         return;
       }
-      const wrapper = deps.wrapperRef.current;
+      const wrapper = d.wrapperRef.current;
       if (wrapper) {
         const rect = wrapper.getBoundingClientRect();
         // Wrapper has `transform: scale(z) translate(ox, oy)` with
@@ -161,22 +173,22 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
         // the rect that already had it baked in, throwing
         // intersection bounds off by the pan amount and making the
         // marquee silently miss every element on a panned canvas.
-        const toCanvasX = (sx: number) => (sx - rect.left) / deps.viewportZoom;
-        const toCanvasY = (sy: number) => (sy - rect.top) / deps.viewportZoom;
+        const toCanvasX = (sx: number) => (sx - rect.left) / d.viewportZoom;
+        const toCanvasY = (sy: number) => (sy - rect.top) / d.viewportZoom;
         const minX = Math.min(toCanvasX(m.startX), toCanvasX(m.currentX));
         const maxX = Math.max(toCanvasX(m.startX), toCanvasX(m.currentX));
         const minY = Math.min(toCanvasY(m.startY), toCanvasY(m.currentY));
         const maxY = Math.max(toCanvasY(m.startY), toCanvasY(m.currentY));
         const hits = new Set<string>();
-        for (const el of deps.elements) {
+        for (const el of d.elements) {
           if (el.type === 'arrow') {
             // Arrow AABB: bounds of the (from, to) segment. Good
             // enough for marquee inclusion: connecting two
             // selected shapes always intersects the marquee they
             // sit inside, and lone arrows are caught when their
             // bbox overlaps.
-            const from = endpointPosition(el.from, deps.elements);
-            const to = endpointPosition(el.to, deps.elements);
+            const from = endpointPosition(el.from, d.elements);
+            const to = endpointPosition(el.to, d.elements);
             const aMinX = Math.min(from.x, to.x);
             const aMaxX = Math.max(from.x, to.x);
             const aMinY = Math.min(from.y, to.y);
@@ -192,7 +204,7 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
             hits.add(el.id);
           }
         }
-        deps.onSelectMarquee(hits);
+        d.onSelectMarquee(hits);
       }
       setMarquee(null);
     };
@@ -202,7 +214,7 @@ export function useCanvasPanAndMarquee(deps: Deps): Api {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [marquee, deps]);
+  }, [marquee]);
 
   return { pan, setPan, marquee, setMarquee, spaceHeldRef };
 }

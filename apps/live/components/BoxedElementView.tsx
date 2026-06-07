@@ -106,6 +106,11 @@ type BoxedElementViewProps = {
   // True when the tab as a whole is locked. Shows the LockBadge on
   // every element regardless of its own per-element lock state.
   tabLocked: boolean;
+  // True for view-role share visitors (session read-only). Shape / text
+  // editing is blocked upstream in the editing handlers, but the table
+  // edits in-component (TableView's own cell double-click + menus), so it
+  // needs the flag passed through to stay read-only for viewers.
+  readOnly: boolean;
   // Other participants whose realtime selection is currently on this
   // element. Rendered as a small initial-badge stack at the top-left
   // (opposite the link / comment badges).
@@ -151,6 +156,7 @@ function BoxedElementViewImpl({
   remoteSelectors,
   badgeColor,
   tabLocked,
+  readOnly,
 }: BoxedElementViewProps) {
   const isLocked = element.locked === true || tabLocked;
   // Clockwise rotation about the element centre. `isRotated` gates the
@@ -352,7 +358,7 @@ function BoxedElementViewImpl({
         <TableView
           element={element}
           isSelected={isSelected}
-          readOnly={isLocked}
+          readOnly={isLocked || readOnly}
           onCommitCells={onCommitCells}
           onCommitColWidths={onCommitColWidths}
           onCommitRowHeights={onCommitRowHeights}

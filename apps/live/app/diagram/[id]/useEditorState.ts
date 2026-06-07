@@ -951,8 +951,18 @@ export function useEditorState() {
   // confirmed their identity yet. Same chrome-hide rule as the old
   // welcome modal — focus the user on the name input before they
   // start editing.
+  //
+  // Excludes view-role visitors: the join card itself is suppressed for
+  // them (it can't commit anything — every write 403s — so EditorView
+  // gates `showTemplatePicker` on `!isReadOnly`). Without this `&&`, the
+  // card never renders for a viewer yet this gate stays true, leaving the
+  // chrome (notably the TabBar / footer) permanently hidden for them.
   const joinScreenOpen =
-    hydrated && loadedExistingDiagram && !nameConfirmed && templatePickerMode === 'identity';
+    hydrated &&
+    loadedExistingDiagram &&
+    !nameConfirmed &&
+    templatePickerMode === 'identity' &&
+    !isReadOnly;
   const identityOnlyScreenOpen = joinScreenOpen;
   // Combined gate for chrome-hide. Only the join-existing flow lives
   // on this route now; the historical new-diagram welcome lives on

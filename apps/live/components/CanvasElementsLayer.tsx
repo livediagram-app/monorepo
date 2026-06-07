@@ -151,6 +151,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             zoom={viewportZoom}
             badgeColor={badgeColor}
             tabLocked={tabLocked}
+            readOnly={readOnly}
             onBeginDrag={onBeginDrag}
             onBeginRotate={onBeginRotate}
             onShiftSelect={onShiftSelect}
