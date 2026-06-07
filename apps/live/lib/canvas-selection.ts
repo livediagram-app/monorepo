@@ -5,12 +5,23 @@
 // Canvas render reads. Lifted out of Canvas.tsx so this decision logic
 // is unit-testable in isolation (the component itself has no tests).
 import {
+  arrowheadSizeOf,
+  arrowStyleOf,
+  arrowThicknessOf,
+  defaultFillColor,
+  defaultPadding,
+  defaultStrokeColor,
+  defaultTextAlign,
+  defaultTextColor,
   elementBounds,
   isBoxed,
   selectionMembers,
+  supportsBorder,
+  supportsBorderRadius,
   unionBoxedBounds,
   type Element,
 } from '@livediagram/diagram';
+import type { SelectedElementControls } from '@/components/CommandPalette';
 
 type Bounds = { x: number; y: number; width: number; height: number };
 
@@ -159,5 +170,93 @@ export function deriveCanvasSelection(input: {
     unionResizeBounds,
     unionResizePrimaryId,
     showUnionResize,
+  };
+}
+
+// Field subset of SelectedElementControls — the value props the Editor
+// panel reads, NOT the on* handlers (the Canvas bundles those in around
+// this result).
+export type SelectedElementFields = Pick<
+  SelectedElementControls,
+  | 'textSize'
+  | 'textAlignX'
+  | 'textAlignY'
+  | 'textColor'
+  | 'fillColor'
+  | 'strokeColor'
+  | 'opacity'
+  | 'padding'
+  | 'textBold'
+  | 'textItalic'
+  | 'textUnderline'
+  | 'textStrikethrough'
+  | 'arrowEnds'
+  | 'arrowThickness'
+  | 'arrowheadSize'
+  | 'arrowStyle'
+  | 'arrowStrokeStyle'
+  | 'shapeKind'
+  | 'aspectLocked'
+  | 'borderStroke'
+  | 'borderStyle'
+  | 'borderRadius'
+>;
+
+// Which Editor-panel control values to surface for the selected element,
+// gated by element type: images (boxed but text/colour-less) null out the
+// text + colour fields, arrows expose the arrow fields, shapes expose
+// shapeKind + borderRadius. Pure — the Canvas merges the matching on*
+// handlers around this projection. `selectionSupportsColours` and
+// `selectedDefaultAlign` are precomputed by the caller (supportsColours /
+// defaultTextAlign of the selection).
+export function deriveSelectedElementFields(
+  selected: Element,
+  selectionSupportsColours: boolean,
+  selectedDefaultAlign: ReturnType<typeof defaultTextAlign> | null,
+): SelectedElementFields {
+  return {
+    textSize: isBoxed(selected) && selected.type !== 'image' ? (selected.textSize ?? 'md') : null,
+    textAlignX:
+      isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
+        ? (selected.textAlignX ?? selectedDefaultAlign.x)
+        : null,
+    textAlignY:
+      isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
+        ? (selected.textAlignY ?? selectedDefaultAlign.y)
+        : null,
+    textColor:
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textColor ?? defaultTextColor(selected))
+        : null,
+    fillColor:
+      selectionSupportsColours && isBoxed(selected)
+        ? (selected.fillColor ?? defaultFillColor(selected))
+        : null,
+    strokeColor: selectionSupportsColours
+      ? isBoxed(selected)
+        ? (selected.strokeColor ?? defaultStrokeColor(selected))
+        : selected.type === 'arrow'
+          ? (selected.strokeColor ?? 'rgb(51 65 85)') /* slate-700 = default arrow */
+          : null
+      : null,
+    opacity: selected.opacity ?? 1,
+    padding: isBoxed(selected) ? (selected.padding ?? defaultPadding(selected)) : null,
+    textBold: isBoxed(selected) && selected.type !== 'image' ? (selected.textBold ?? false) : null,
+    textItalic:
+      isBoxed(selected) && selected.type !== 'image' ? (selected.textItalic ?? false) : null,
+    textUnderline:
+      isBoxed(selected) && selected.type !== 'image' ? (selected.textUnderline ?? false) : null,
+    textStrikethrough:
+      isBoxed(selected) && selected.type !== 'image' ? (selected.textStrikethrough ?? false) : null,
+    arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
+    arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
+    arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,
+    arrowStyle: selected.type === 'arrow' ? arrowStyleOf(selected) : null,
+    arrowStrokeStyle: selected.type === 'arrow' ? (selected.strokeStyle ?? 'solid') : null,
+    shapeKind: selected.type === 'shape' ? selected.shape : null,
+    aspectLocked: isBoxed(selected) ? (selected.aspectLocked ?? false) : null,
+    borderStroke: supportsBorder(selected) ? (selected.strokeWidth ?? 'medium') : null,
+    borderStyle: supportsBorder(selected) ? (selected.strokeStyle ?? 'solid') : null,
+    borderRadius: supportsBorderRadius(selected) ? (selected.borderRadius ?? 'sm') : null,
   };
 }

@@ -6,23 +6,10 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import {
-  arrowThicknessOf,
-  arrowheadSizeOf,
-  arrowStyleOf,
-  defaultFillColor,
-  defaultPadding,
-  defaultStrokeColor,
-  defaultTextAlign,
-  defaultTextColor,
-  isBoxed,
-  snapResizeBounds,
-  supportsBorder,
-  supportsColours,
-} from '@livediagram/diagram';
+import { defaultTextAlign, isBoxed, snapResizeBounds, supportsColours } from '@livediagram/diagram';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
-import { deriveCanvasSelection } from '@/lib/canvas-selection';
+import { deriveCanvasSelection, deriveSelectedElementFields } from '@/lib/canvas-selection';
 import { canvasCursorClass } from '@/lib/canvas-chrome';
 import { useCanvasMobileDock } from '@/hooks/useCanvasMobileDock';
 import { drawBannerMessage, drawIntentCursor } from '@/lib/draw-mode';
@@ -411,53 +398,14 @@ export function Canvas(props: CanvasProps) {
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
   const paletteSelection: SelectedElementControls | null = selected
     ? {
-        // Image elements are boxed but carry no inline text + no
-        // colours; nulling these out hides the Text + Colours
-        // accordions in the Editor panel for image selections.
-        textSize:
-          isBoxed(selected) && selected.type !== 'image' ? (selected.textSize ?? 'md') : null,
-        textAlignX:
-          selected && isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
-            ? (selected.textAlignX ?? selectedDefaultAlign.x)
-            : null,
-        textAlignY:
-          selected && isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
-            ? (selected.textAlignY ?? selectedDefaultAlign.y)
-            : null,
-        textColor:
-          isBoxed(selected) && selected.type !== 'image'
-            ? (selected.textColor ?? defaultTextColor(selected))
-            : null,
-        fillColor:
-          selectionSupportsColours && isBoxed(selected)
-            ? (selected.fillColor ?? defaultFillColor(selected))
-            : null,
-        strokeColor: selectionSupportsColours
-          ? isBoxed(selected)
-            ? (selected.strokeColor ?? defaultStrokeColor(selected))
-            : selected.type === 'arrow'
-              ? (selected.strokeColor ?? 'rgb(51 65 85)') /* slate-700 = default arrow */
-              : null
-          : null,
-        opacity: selected.opacity ?? 1,
-        padding: isBoxed(selected) ? (selected.padding ?? defaultPadding(selected)) : null,
+        // Field values are the pure, type-gated projection
+        // (deriveSelectedElementFields); the on* handlers are bundled in
+        // around them here.
+        ...deriveSelectedElementFields(selected, selectionSupportsColours, selectedDefaultAlign),
         onBringToFront,
         onSendToBack,
         onSetTextSize,
         onSetTextAlign,
-        // ImageElement is boxed but carries no inline-text fields,
-        // so the text-styling switches surface as null for images
-        // (the Editor panel hides the matching accordion rows).
-        textBold:
-          isBoxed(selected) && selected.type !== 'image' ? (selected.textBold ?? false) : null,
-        textItalic:
-          isBoxed(selected) && selected.type !== 'image' ? (selected.textItalic ?? false) : null,
-        textUnderline:
-          isBoxed(selected) && selected.type !== 'image' ? (selected.textUnderline ?? false) : null,
-        textStrikethrough:
-          isBoxed(selected) && selected.type !== 'image'
-            ? (selected.textStrikethrough ?? false)
-            : null,
         onToggleTextBold,
         onToggleTextItalic,
         onToggleTextUnderline,
@@ -468,33 +416,13 @@ export function Canvas(props: CanvasProps) {
         onSetOpacity,
         onResetColors,
         onSetPadding,
-        arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
         onSetArrowEnds,
-        arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
         onSetArrowThickness,
-        arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,
         onSetArrowheadSize,
-        arrowStyle: selected.type === 'arrow' ? arrowStyleOf(selected) : null,
         onSetArrowStyle,
-        arrowStrokeStyle: selected.type === 'arrow' ? (selected.strokeStyle ?? 'solid') : null,
         onSetArrowStrokeStyle,
-        shapeKind: selected.type === 'shape' ? selected.shape : null,
         onSetShapeKind,
-        aspectLocked: isBoxed(selected) ? (selected.aspectLocked ?? false) : null,
         onToggleAspectLock,
-        // Border presets only meaningful for shapes (text has no
-        // outline; sticky's amber palette is fixed). Default to
-        // medium / solid / sm to match the renderer's fallbacks
-        // when the element hasn't been customised yet.
-        // Border-stroke + border-style: gated on supportsBorder so
-        // every consumer of "is this element border-styleable?"
-        // shares one predicate. Today shapes + freehand qualify;
-        // a future variant can opt in by changing one function.
-        // Border-radius stays shape-only because the freehand path
-        // defines its own corners via the polyline.
-        borderStroke: supportsBorder(selected) ? (selected.strokeWidth ?? 'medium') : null,
-        borderStyle: supportsBorder(selected) ? (selected.strokeStyle ?? 'solid') : null,
-        borderRadius: selected.type === 'shape' ? (selected.borderRadius ?? 'sm') : null,
         onSetBorderStroke,
         onSetBorderStyle,
         onSetBorderRadius,

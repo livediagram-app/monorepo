@@ -1,6 +1,6 @@
-import type { Element, ShapeElement } from '@livediagram/diagram';
+import { defaultTextAlign, type Element, type ShapeElement } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
-import { deriveCanvasSelection } from './canvas-selection';
+import { deriveCanvasSelection, deriveSelectedElementFields } from './canvas-selection';
 
 const box = (id: string, overrides: Partial<ShapeElement> = {}): ShapeElement => ({
   id,
@@ -122,5 +122,71 @@ describe('deriveCanvasSelection', () => {
     expect(s.showUnionResize).toBe(true);
     expect(s.unionResizePrimaryId).toBe('a');
     expect(s.showHandlesFor('a')).toBe(false); // memberIds.size !== 1
+  });
+});
+
+describe('deriveSelectedElementFields (per-type control gating)', () => {
+  const align = defaultTextAlign(box('x'));
+
+  it('a shape exposes shapeKind + border + text, no arrow fields', () => {
+    const f = deriveSelectedElementFields(box('s'), true, align);
+    expect(f.shapeKind).toBe('square');
+    expect(f.textSize).not.toBeNull();
+    expect(f.borderRadius).not.toBeNull();
+    expect(f.fillColor).not.toBeNull();
+    expect(f.arrowEnds).toBeNull();
+  });
+
+  it('an image nulls out text + colour fields but stays boxed for padding/aspect', () => {
+    const img = {
+      id: 'i',
+      type: 'image',
+      x: 0,
+      y: 0,
+      width: 80,
+      height: 80,
+      imageId: 'x',
+    } as unknown as Element;
+    const f = deriveSelectedElementFields(img, false, null);
+    expect(f.textSize).toBeNull();
+    expect(f.textColor).toBeNull();
+    expect(f.textBold).toBeNull();
+    expect(f.shapeKind).toBeNull();
+    expect(f.arrowEnds).toBeNull();
+    expect(f.aspectLocked).not.toBeNull(); // boxed -> aspect-lock control shows
+    expect(f.padding).not.toBeNull();
+  });
+
+  it('an arrow exposes arrow fields, no shape/text/box fields', () => {
+    const arrowEl = {
+      id: 'a',
+      type: 'arrow',
+      from: { kind: 'free', x: 0, y: 0 },
+      to: { kind: 'free', x: 50, y: 50 },
+    } as unknown as Element;
+    const f = deriveSelectedElementFields(arrowEl, true, null);
+    expect(f.arrowEnds).not.toBeNull();
+    expect(f.arrowThickness).not.toBeNull();
+    expect(f.arrowStyle).not.toBeNull();
+    expect(f.shapeKind).toBeNull();
+    expect(f.textSize).toBeNull();
+    expect(f.aspectLocked).toBeNull(); // not boxed
+    expect(f.strokeColor).not.toBeNull();
+  });
+
+  it('a text element shows text but no shape kind or border radius', () => {
+    const text = {
+      id: 't',
+      type: 'text',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 40,
+    } as unknown as Element;
+    const f = deriveSelectedElementFields(text, true, align);
+    expect(f.textSize).not.toBeNull();
+    expect(f.shapeKind).toBeNull();
+    expect(f.borderRadius).toBeNull();
+    expect(f.arrowEnds).toBeNull();
   });
 });
