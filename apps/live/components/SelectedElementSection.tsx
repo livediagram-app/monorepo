@@ -191,37 +191,6 @@ export function SelectedElementSection({
               label="Header column"
             />
           </div>
-          {selection.tableHeaderFill !== null ? (
-            <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-              <p className="mb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Header colours
-              </p>
-              <div className="flex flex-wrap items-stretch gap-1">
-                <Tooltip
-                  title="Header background"
-                  description="Background of the header row / column."
-                >
-                  <ColorSwatch
-                    label="Header bg"
-                    value={selection.tableHeaderFill}
-                    onChange={selection.onSetTableHeaderFill}
-                  />
-                </Tooltip>
-                {selection.tableHeaderTextColor !== null ? (
-                  <Tooltip
-                    title="Header text"
-                    description="Text colour in the header row / column."
-                  >
-                    <ColorSwatch
-                      label="Header text"
-                      value={selection.tableHeaderTextColor}
-                      onChange={selection.onSetTableHeaderTextColor}
-                    />
-                  </Tooltip>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
         </Accordion>
       ) : null}
 
@@ -402,6 +371,30 @@ export function SelectedElementSection({
                   label="Border"
                   value={selection.strokeColor}
                   onChange={selection.onSetStrokeColor}
+                />
+              </Tooltip>
+            ) : null}
+            {selection.tableHeaderFill !== null ? (
+              <Tooltip
+                title="Header background"
+                description="Background of a table's header row / column."
+              >
+                <ColorSwatch
+                  label="Header bg"
+                  value={selection.tableHeaderFill}
+                  onChange={selection.onSetTableHeaderFill}
+                />
+              </Tooltip>
+            ) : null}
+            {selection.tableHeaderTextColor !== null ? (
+              <Tooltip
+                title="Header text"
+                description="Text colour in a table's header row / column."
+              >
+                <ColorSwatch
+                  label="Header text"
+                  value={selection.tableHeaderTextColor}
+                  onChange={selection.onSetTableHeaderTextColor}
                 />
               </Tooltip>
             ) : null}

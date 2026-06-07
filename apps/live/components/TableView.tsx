@@ -234,7 +234,7 @@ export function TableView({
                   alignItems,
                   color: isHeader ? headerTextColor : undefined,
                   fontSize: fontPx,
-                  fontWeight: isHeader || element.textBold ? 600 : 400,
+                  fontWeight: isHeader ? 700 : element.textBold ? 600 : 400,
                   fontStyle: element.textItalic ? 'italic' : undefined,
                   textDecoration:
                     [
@@ -278,12 +278,12 @@ export function TableView({
                         }
                       }
                     }}
-                    className="h-full w-full resize-none border-0 bg-white/90 p-0 text-center outline-none dark:bg-slate-900/90"
+                    className="h-full w-full resize-none border-0 bg-transparent p-0 outline-none"
                     style={{
                       fontSize: fontPx,
                       color: isHeader ? headerTextColor : textColor,
                       textAlign: alignX,
-                      fontWeight: isHeader || element.textBold ? 600 : 400,
+                      fontWeight: isHeader ? 700 : element.textBold ? 600 : 400,
                     }}
                   />
                 ) : (

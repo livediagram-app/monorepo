@@ -273,9 +273,11 @@ export function deriveSelectedElementFields(
     textStrikethrough:
       isBoxed(selected) && selected.type !== 'image' ? (selected.textStrikethrough ?? false) : null,
     hasText:
-      isBoxed(selected) && selected.type !== 'image'
-        ? (selected.label?.trim().length ?? 0) > 0
-        : false,
+      selected.type === 'table'
+        ? true
+        : isBoxed(selected) && selected.type !== 'image'
+          ? (selected.label?.trim().length ?? 0) > 0
+          : false,
     arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
     arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
     arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,
