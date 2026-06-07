@@ -1,0 +1,48 @@
+// Small pure helpers for the canvas chrome, lifted out of Canvas.tsx so
+// they're unit-testable: the mobile dock-popover anchor math and the
+// cursor-class decision. Both are referentially transparent — geometry
+// / flags in, value out — with no React or DOM dependency.
+
+// Where a mobile dock popover should open, in canvas-relative px. The
+// popover is centred under its dock button but clamped to stay 8px
+// inside the canvas on both sides; `arrowOffset` is where the little
+// pointer triangle sits relative to the popover's left edge so it keeps
+// pointing at the button even after clamping.
+export function computeDockAnchor(
+  btnRect: { left: number; bottom: number; width: number },
+  canvasRect: { left: number; top: number; width: number },
+  popoverWidth: number,
+): { left: number; top: number; arrowOffset: number } {
+  const centerX = btnRect.left + btnRect.width / 2 - canvasRect.left;
+  const bottomY = btnRect.bottom - canvasRect.top;
+  const clampedLeft = Math.max(
+    8,
+    Math.min(centerX - popoverWidth / 2, canvasRect.width - popoverWidth - 8),
+  );
+  return { left: clampedLeft, top: bottomY, arrowOffset: centerX - clampedLeft };
+}
+
+// The Tailwind cursor class for the canvas surface, resolved from the
+// current gesture + tool state. Order matters: an in-progress gesture
+// (draw / pan / marquee) wins over the resting tool cursor, and holding
+// Space (pan override) suppresses the laser/pan tool cursors.
+export function canvasCursorClass(input: {
+  pendingDraw: boolean;
+  pan: boolean;
+  marquee: boolean;
+  canvasTool: string;
+  spaceHeld: boolean;
+  isPaintMode: boolean;
+  isGroupMode: boolean;
+}): string {
+  const { pendingDraw, pan, marquee, canvasTool, spaceHeld, isPaintMode, isGroupMode } = input;
+  if (pendingDraw) return 'cursor-crosshair';
+  if (pan) return 'cursor-grabbing';
+  if (marquee) return 'cursor-crosshair';
+  if (canvasTool === 'laser' && !spaceHeld) return 'cursor-crosshair';
+  if (canvasTool === 'pan' && !spaceHeld) return 'cursor-grab';
+  if (canvasTool === 'select') return 'cursor-crosshair';
+  if (isPaintMode) return 'cursor-copy';
+  if (isGroupMode) return 'cursor-crosshair';
+  return 'cursor-grab';
+}

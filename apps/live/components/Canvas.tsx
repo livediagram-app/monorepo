@@ -23,6 +23,8 @@ import {
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 import { deriveCanvasSelection } from '@/lib/canvas-selection';
+import { canvasCursorClass } from '@/lib/canvas-chrome';
+import { useCanvasMobileDock } from '@/hooks/useCanvasMobileDock';
 import { drawBannerMessage, drawIntentCursor } from '@/lib/draw-mode';
 import { track } from '@/lib/telemetry';
 import { ArrowDefs, ArrowView } from './ArrowView';
@@ -298,39 +300,17 @@ export function Canvas(props: CanvasProps) {
   // Editor pane on first paint and slides when Editor expands /
   // collapses.
   const [contextBottomY, setContextBottomY] = useState<number>(0);
-  // Mobile dock: which panel (if any) is open. Compact button row
-  // replaces the 4 full-width collapse banners on mobile.
-  const [activeMobilePanel, setActiveMobilePanel] = useState<
-    'explorer' | 'palette' | 'editor' | 'ai' | null
-  >(null);
-  const dockButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [activeDockAnchor, setActiveDockAnchor] = useState<{
-    left: number;
-    top: number;
-    arrowOffset: number;
-  } | null>(null);
-  const POPOVER_WIDTH = 256;
-  const handleDockButtonClick = (id: 'explorer' | 'palette' | 'editor' | 'ai') => {
-    if (activeMobilePanel === id) {
-      setActiveMobilePanel(null);
-      setActiveDockAnchor(null);
-      return;
-    }
-    setActiveMobilePanel(id);
-    const btn = dockButtonRefs.current[id];
-    const canvas = mainRef && 'current' in mainRef ? mainRef.current : null;
-    if (btn && canvas) {
-      const btnRect = btn.getBoundingClientRect();
-      const canvasRect = canvas.getBoundingClientRect();
-      const centerX = btnRect.left + btnRect.width / 2 - canvasRect.left;
-      const bottomY = btnRect.bottom - canvasRect.top;
-      const clampedLeft = Math.max(
-        8,
-        Math.min(centerX - POPOVER_WIDTH / 2, canvasRect.width - POPOVER_WIDTH - 8),
-      );
-      setActiveDockAnchor({ left: clampedLeft, top: bottomY, arrowOffset: centerX - clampedLeft });
-    }
-  };
+  // Mobile dock state + toggle (compact button row replacing the four
+  // full-width collapse banners on mobile). See useCanvasMobileDock; the
+  // popover anchor math is the tested computeDockAnchor.
+  const {
+    activeMobilePanel,
+    setActiveMobilePanel,
+    dockButtonRefs,
+    activeDockAnchor,
+    setActiveDockAnchor,
+    handleDockButtonClick,
+  } = useCanvasMobileDock(mainRef);
 
   // Pan + marquee + held-Space machinery lives in
   // useCanvasPanAndMarquee. The hook owns the pointerdown / move
@@ -417,23 +397,15 @@ export function Canvas(props: CanvasProps) {
   // O(N) for the sole purpose of computing a boolean.
   const hasArrows = elements.some((el) => el.type === 'arrow');
 
-  const cursorClass = pendingDraw
-    ? 'cursor-crosshair'
-    : pan
-      ? 'cursor-grabbing'
-      : marquee
-        ? 'cursor-crosshair'
-        : canvasTool === 'laser' && !spaceHeldRef.current
-          ? 'cursor-crosshair'
-          : canvasTool === 'pan' && !spaceHeldRef.current
-            ? 'cursor-grab'
-            : canvasTool === 'select'
-              ? 'cursor-crosshair'
-              : isPaintMode
-                ? 'cursor-copy'
-                : isGroupMode
-                  ? 'cursor-crosshair'
-                  : 'cursor-grab';
+  const cursorClass = canvasCursorClass({
+    pendingDraw: !!pendingDraw,
+    pan: !!pan,
+    marquee: !!marquee,
+    canvasTool,
+    spaceHeld: spaceHeldRef.current,
+    isPaintMode,
+    isGroupMode,
+  });
 
   const selectionSupportsColours = selected ? supportsColours(selected) : false;
   const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
