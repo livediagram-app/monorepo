@@ -11,9 +11,11 @@ export const dynamic = 'force-static';
 // Next.js convention: app/sitemap.ts → /sitemap.xml at build time.
 // See spec/16-marketing-site.md "SEO and metadata".
 //
-// Lists the indexable pages on the marketing origin. The editor
-// (/live/*) and API (/api/*) live on the same domain but aren't
-// public-content surfaces, so they don't belong in the sitemap.
+// Lists the indexable pages on the marketing origin, plus the two
+// public operational surfaces (/telemetry, /status) that hang off the
+// footer. The editor (/live/*) and API (/api/*) live on the same
+// domain but aren't public-content surfaces, so they don't belong in
+// the sitemap (robots.ts Disallows them too).
 //
 // When a new public page lands, add it here AND wire up its
 // per-page alternates.canonical block. Updating one without the
@@ -61,6 +63,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LEGAL_LAST_UPDATED,
       changeFrequency: 'yearly',
       priority: 0.3,
+    },
+    // Operational surfaces reachable from the footer (spec/16). Lower
+    // priority than the marketing content above: they're transparency
+    // pages, not landing destinations, but they're public + indexable
+    // (each sets robots index:true and a self-canonical), so listing
+    // them lets crawlers find them without relying on footer links
+    // alone. Build-time `now`: /telemetry reflects live event data and
+    // /status reflects the latest deployed state, so both are "fresh as
+    // of this build" rather than carrying a tracked revision constant.
+    {
+      url: `${base}/telemetry`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.4,
+    },
+    {
+      url: `${base}/status`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.4,
     },
     // Comparison / "alternative" pages (spec/21). Derived from the same
     // ALTERNATIVES list the route + metadata use, so adding a competitor

@@ -15,16 +15,14 @@ import {
   defaultStrokeColor,
   defaultTextAlign,
   defaultTextColor,
-  elementBounds,
   isBoxed,
-  selectionMembers,
   snapResizeBounds,
   supportsBorder,
   supportsColours,
-  unionBoxedBounds,
 } from '@livediagram/diagram';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
+import { deriveCanvasSelection } from '@/lib/canvas-selection';
 import { drawBannerMessage, drawIntentCursor } from '@/lib/draw-mode';
 import { track } from '@/lib/telemetry';
 import { ArrowDefs, ArrowView } from './ArrowView';
@@ -365,113 +363,49 @@ export function Canvas(props: CanvasProps) {
     track('Canvas', 'Zoomed', 'Reset');
   };
 
-  // Group-aware selection. `selected` is the editor's primary
-  // element (single-click, group root, or first member of a marquee
-  // multi-selection). Multi-select promotes the first selected
-  // boxed element so the Editor panel can read shared properties
-  // from it; setters in the editor bulk-apply across all selected
-  // members.
-  // Memoised: `selectionMembers` walks every element looking for
-  // matching groupIds (O(N)), and Set construction allocates fresh
-  // memory. Canvas re-renders on every drag tick / pointermove
-  // during gestures; recomputing this set on every render is wasted
-  // work because the membership only changes when `elements` or
-  // `selectedId` does. Stable identity also keeps the downstream
-  // consumers (unionBoxedBounds, selectionBounds, selectionScope)
-  // from re-deriving on unrelated state changes.
-  const memberIds = useMemo(
-    () => (selectedId ? new Set(selectionMembers(elements, selectedId)) : new Set<string>()),
-    [elements, selectedId],
+  // Selection-display derivation (primary element, bounds, and every
+  // "show this chrome?" predicate) lives in lib/canvas-selection.ts so
+  // it's unit-tested. Memoised because selectionMembers walks every
+  // element and Canvas re-renders on every drag tick.
+  const canvasSelection = useMemo(
+    () =>
+      deriveCanvasSelection({
+        elements,
+        selectedId,
+        multiSelectedIds,
+        editingId,
+        isPaintMode,
+        isGroupMode,
+        tabLocked,
+        readOnly,
+      }),
+    [
+      elements,
+      selectedId,
+      multiSelectedIds,
+      editingId,
+      isPaintMode,
+      isGroupMode,
+      tabLocked,
+      readOnly,
+    ],
   );
-  const multiPrimaryId =
-    multiSelectedIds.size > 0
-      ? (elements.find((el) => multiSelectedIds.has(el.id))?.id ?? null)
-      : null;
-  const selected =
-    (selectedId ? (elements.find((el) => el.id === selectedId) ?? null) : null) ??
-    (multiPrimaryId ? (elements.find((el) => el.id === multiPrimaryId) ?? null) : null);
-  const selectionScope: 'single' | 'multi' | 'group' =
-    multiSelectedIds.size > 0 ? 'multi' : selectedId && memberIds.size > 1 ? 'group' : 'single';
-  const selectedIsBoxed = selected ? isBoxed(selected) : false;
-  const selectedIsGrouped = selected && isBoxed(selected) && selected.groupId !== undefined;
-
-  let selectionBounds: { x: number; y: number; width: number; height: number } | null = null;
-  if (selected) {
-    if (selectedIsBoxed && memberIds.size > 0) {
-      selectionBounds = unionBoxedBounds(elements, memberIds);
-    } else {
-      selectionBounds = elementBounds(selected, elements);
-    }
-  }
-
-  const selectedLocked = selected ? selected.locked === true : false;
-  // Single-selection popover hides when a marquee multi-selection is active
-  // (a per-element popover doesn't make sense for many elements at once).
-  // It also hides when the tab itself is locked — no destination for any of
-  // the popover's actions.
-  const showPopover =
-    selected &&
-    editingId !== selected.id &&
-    !isPaintMode &&
-    !isGroupMode &&
-    multiSelectedIds.size === 0 &&
-    !tabLocked;
-  const showPlus =
-    selected &&
-    selectedIsBoxed &&
-    editingId !== selected.id &&
-    !isPaintMode &&
-    !isGroupMode &&
-    !selectedLocked &&
-    !tabLocked &&
-    !readOnly;
-  const showHandles = (id: string) =>
-    selectedIsBoxed &&
-    id === selectedId &&
-    memberIds.size === 1 &&
-    editingId !== id &&
-    !isPaintMode &&
-    !isGroupMode &&
-    !selectedLocked &&
-    !tabLocked &&
-    !readOnly;
-  // Union-level resize handles render on the selection bounding box
-  // whenever the selection covers more than one boxed element — either
-  // via marquee multi-select OR clicking into a group. Multi-select
-  // uses multiSelectedIds; group uses memberIds. For a plain single
-  // selection, the per-element handles (see ResizeHandles inside
-  // BoxedElementView) keep doing their job. Suppressed in the same
-  // edit-blocking modes as the single-element handles.
-  const unionResizeIds: Set<string> | null =
-    multiSelectedIds.size > 1 ? multiSelectedIds : memberIds.size > 1 ? memberIds : null;
-  const unionResizeBounds =
-    unionResizeIds && selected ? unionBoxedBounds(elements, unionResizeIds) : null;
-  const unionResizePrimaryId =
-    multiSelectedIds.size > 1
-      ? (multiPrimaryId ?? selectedId)
-      : memberIds.size > 1
-        ? selectedId
-        : null;
-  const showUnionResize =
-    !!unionResizeBounds &&
-    !!unionResizePrimaryId &&
-    selectedIsBoxed &&
-    editingId !== unionResizePrimaryId &&
-    !isPaintMode &&
-    !isGroupMode &&
-    !selectedLocked &&
-    !tabLocked &&
-    !readOnly;
-  const showAnchorsFor = (id: string) =>
-    selectedIsBoxed &&
-    id === selectedId &&
-    memberIds.size === 1 &&
-    editingId !== id &&
-    !isPaintMode &&
-    !isGroupMode &&
-    !selectedLocked &&
-    !tabLocked &&
-    !readOnly;
+  const {
+    memberIds,
+    selected,
+    selectionScope,
+    selectedIsBoxed,
+    selectedIsGrouped,
+    selectionBounds,
+    selectedLocked,
+    showPopover,
+    showPlus,
+    showHandlesFor: showHandles,
+    showAnchorsFor,
+    unionResizeBounds,
+    unionResizePrimaryId,
+    showUnionResize,
+  } = canvasSelection;
 
   // Cached check only. Render loops iterate `elements` directly so
   // arrows and boxed elements interleave in z-order (see render

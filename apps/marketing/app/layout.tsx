@@ -66,10 +66,25 @@ export const viewport: Viewport = {
 // in search.
 const OG_IMAGE = `${SITE_URL}/opengraph-image`;
 const REPO_URL = 'https://github.com/livediagram-app/monorepo';
+// The brand mark, served from public/ at the origin root. Used as the
+// Organization logo so a brand SERP / Knowledge Graph can show it.
+const LOGO_URL = `${SITE_URL}/livediagram-icon-512.png`;
 
 const JSON_LD = {
   '@context': 'https://schema.org',
   '@graph': [
+    // Organization anchors the brand entity: name + logo + the same
+    // GitHub sameAs the app node carries, so Google can resolve
+    // "livediagram" to one thing across the site, the repo, and social
+    // mentions. publisher/url on the other nodes point back at this @id.
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#org`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: LOGO_URL,
+      sameAs: [REPO_URL],
+    },
     {
       '@type': 'WebSite',
       '@id': `${SITE_URL}/#website`,
@@ -78,6 +93,7 @@ const JSON_LD = {
       description: DESCRIPTION,
       inLanguage: 'en-GB',
       image: OG_IMAGE,
+      publisher: { '@id': `${SITE_URL}/#org` },
     },
     {
       '@type': 'SoftwareApplication',
@@ -95,6 +111,7 @@ const JSON_LD = {
       // public marketing site, the GitHub repo, and the social
       // mentions that cite either.
       sameAs: [REPO_URL],
+      publisher: { '@id': `${SITE_URL}/#org` },
       offers: {
         '@type': 'Offer',
         price: '0',
