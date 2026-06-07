@@ -14,6 +14,7 @@ import {
   FoldersArt,
   FormatPainterArt,
   GroupArt,
+  IconsArt,
   ImagesArt,
   LaserArt,
   NotesArt,
@@ -38,6 +39,7 @@ import {
   TabCopyArt,
   TabLockArt,
   TabReorderArt,
+  TablesArt,
   TabsArt,
   TemplatesArt,
   ThemesArt,
@@ -102,9 +104,9 @@ export default function LandingPage() {
               },
               {
                 art: <TemplatesArt />,
-                title: 'Seventeen starter templates',
+                title: 'Nineteen starter templates',
                 description:
-                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, plus Venn, User journey, Fishbone, Pyramid, Flywheel, Logo design, and Mobile / Laptop / Slide-deck wireframes. Pick one, edit it, or start blank.',
+                  'Blank, Mind map, Org chart, Retrospective, Flowchart, Kanban, SWOT, Timeline, Gantt chart, plus Venn, User journey, Fishbone, Pyramid, Flywheel, Logo design, Live card, and Mobile / Laptop / Slide-deck wireframes. Pick one, edit it, or start blank.',
               },
               {
                 art: <ThemesArt />,
@@ -343,16 +345,28 @@ export default function LandingPage() {
                   'Drag, drop, or paste a PNG, JPEG, WebP, or GIF straight onto the canvas. Resize and arrange it like any other element. Everything you add lands in your own gallery, ready to reuse in any diagram without uploading twice.',
               },
               {
+                art: <TablesArt />,
+                title: 'Tables, fully editable',
+                description:
+                  'Drop a table and double-click any cell to type. Insert or delete rows and columns from the cell menu, toggle a header row and a header column, recolour the headers (or reset them to the theme), drag the dividers to set column widths, and pick the cell padding. It lays out and recolours with the rest of the canvas.',
+              },
+              {
                 art: <ShapesArt />,
                 title: 'A shape for everything',
                 description:
                   'Ten core shapes plus browser, monitor, laptop, phone, and tablet frames. Click to drop one, or drag to draw it at the exact size you want, snapped to line up with its neighbours. A flowchart one minute, a screen the next.',
               },
               {
+                art: <IconsArt />,
+                title: 'A library of icons',
+                description:
+                  'Reach past boxes and arrows: drop a clean single-colour icon, servers, databases, clouds, users, and more, from the icon picker. Each one recolours with the theme and styles like any other shape, so an architecture diagram reads at a glance.',
+              },
+              {
                 art: <ArrowsArt />,
                 title: 'Arrows that bend your way',
                 description:
-                  'Connect anything with straight, curved, or angled arrows. Drag the handle on a curve to reshape its bow, or on an elbow to move the bend. Set the thickness, size the arrowhead, add a label, and pin an end to a shape so it follows when things move.',
+                  'Connect anything with straight, curved, or angled arrows. Drag the handle on a curve to reshape its bow, or on an elbow to move the bend. Set the thickness, choose the arrowhead shape, filled or hollow triangle, line, circle, or diamond, for UML-style connectors and size it, add a label, and pin an end to a shape so it follows when things move.',
               },
               {
                 art: <RotateArt />,
@@ -382,7 +396,7 @@ export default function LandingPage() {
                 art: <CanvasBackdropArt />,
                 title: 'Set the canvas backdrop',
                 description:
-                  'Switch the canvas background between a dozen backdrops, from grid and lines to crosshatch, waves, and stars, or none at all. Each theme picks a fitting default.',
+                  'Switch the canvas background between thirteen backdrops, from grid and lines to crosshatch, waves, isometric, and engineering, or none at all. Each theme and template picks a fitting default.',
               },
             ]}
           />
