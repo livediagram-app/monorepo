@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type { Participant } from '@/lib/identity';
 import { initialsOf, randomName } from '@/lib/identity';
+import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateKind } from '@/lib/templates';
 import { TEMPLATES } from '@/lib/templates';
 import { THEMES, type ThemeId } from '@/lib/themes';
+
+// First-batch sizes for the shuffled grids — kept equal to the curated
+// default set (the non-`extra` entries) so the picker still opens to two
+// tidy rows. Shuffling only changes WHICH options fill those slots, not
+// how many; "Show more" then reveals the full catalogue.
+const TEMPLATE_VISIBLE_COUNT = TEMPLATES.filter((t) => !t.extra).length;
+const THEME_VISIBLE_COUNT = THEMES.filter((t) => !t.extra).length;
 import { ShowMoreButton } from './ShowMoreButton';
 import { TemplatePreview } from './template-preview';
 import { Tooltip } from './Tooltip';
@@ -76,11 +84,23 @@ export function TemplatePicker({
   const nameLocked = !!lockedName;
   const [templateKind, setTemplateKind] = useState<TemplateKind>('blank');
   const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
-  // "Show more" opt-ins for the templates + themes grids. The hook
-  // auto-expands when the active selection is itself an extra so
-  // the user always sees their current pick.
-  const templatePicker = useShowMoreList(TEMPLATES, (t) => t.kind === templateKind);
-  const themePicker = useShowMoreList(THEMES, (t) => t.id === themeId);
+  // Rotate which templates + themes greet the user on each open so
+  // people keep discovering options beyond the usual first rows, but
+  // always pin the sensible default first (Blank diagram, Brand theme).
+  // Shuffled once per mount via lazy useState so clicking around the
+  // grid never reshuffles it underfoot.
+  const [templates] = useState(() => shufflePinned(TEMPLATES, (t) => t.kind === 'blank'));
+  const [themes] = useState(() => shufflePinned(THEMES, (t) => t.id === 'brand'));
+  // "Show more" opt-ins for the templates + themes grids. Count mode
+  // keeps the first batch compact while letting shuffled extras surface
+  // up front; the hook auto-expands when the active pick lands in the
+  // hidden tail so the user always sees their current selection.
+  const templatePicker = useShowMoreList(
+    templates,
+    (t) => t.kind === templateKind,
+    TEMPLATE_VISIBLE_COUNT,
+  );
+  const themePicker = useShowMoreList(themes, (t) => t.id === themeId, THEME_VISIBLE_COUNT);
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
 

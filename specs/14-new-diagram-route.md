@@ -201,6 +201,32 @@ The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welco
 
 This is the only welcome surface so it sets the mobile floor for the rest of the editor's panel chrome (Palette / Context / Explorer / Activity, see [07-live-app](07-live-app.md)). Those are addressed separately.
 
+## Shuffled template + theme order
+
+The template and theme grids shuffle their order **once per open** of
+the picker, so returning users keep meeting options they have not
+explored instead of always seeing the same curated first rows.
+
+- **Pinned defaults stay first.** Blank diagram (templates) and Brand
+  (theme) are always pinned to index 0 — they are the sensible
+  starting points, so they never get shuffled away. Everything else is
+  randomised.
+- **The first batch stays compact.** The grids still open to the same
+  number of visible cards as the curated default set (8 templates, 12
+  themes), with the rest behind "Show more". Shuffling changes _which_
+  options fill those slots, not how many — so a template or theme that
+  used to live behind "Show more" can now greet the user up front, and
+  vice versa.
+- **Stable within a session.** The shuffle is computed when the picker
+  mounts and held for that open, so clicking around never reshuffles
+  the grid underfoot. Re-opening the picker reshuffles.
+
+Implementation: `lib/shuffle.ts` (`shufflePinned`, a pinned-first
+Fisher-Yates) feeds `components/TemplatePicker.tsx`, which drives the
+count-based mode of `hooks/useShowMoreList.ts`. The per-tab Current Tab
+theme/pattern grids (`components/TabSection.tsx`) keep their stable,
+flag-gated order — only the new-diagram / template picker shuffles.
+
 ## API impact
 
 - No new endpoints. `POST /api/diagrams` already accepts an
