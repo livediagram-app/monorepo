@@ -228,6 +228,15 @@ export type TextElement = {
 // resizes via the normal element handles (cells share the space
 // evenly); per-column / per-row sizing can come later. The first row
 // is rendered as a header when `headerRow` is set.
+export type TableCellStyle = {
+  // Cell background tint.
+  bg?: string;
+  // Cell text colour.
+  textColor?: string;
+  // Bold the cell's text.
+  bold?: boolean;
+};
+
 export type TableElement = {
   id: ElementId;
   type: 'table';
@@ -244,6 +253,10 @@ export type TableElement = {
   headerColumn?: boolean;
   // Alternating body-row background tint (a 'zebra' table).
   zebra?: boolean;
+  // Per-cell style overrides, row-major + aligned with `cells`
+  // (null = inherit the table defaults). Splices alongside cells
+  // when rows / columns are added or removed.
+  cellStyles?: (TableCellStyle | null)[][];
   // Header-band colours, independent of the body cells. Unset =
   // a tint of the grid stroke (fill) + the cell text colour (text).
   headerFill?: string;

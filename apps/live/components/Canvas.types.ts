@@ -230,6 +230,10 @@ export type CanvasProps = {
   onCommitCells: (id: string, cells: string[][]) => void;
   onCommitColWidths: (id: string, colWidths: (number | null)[]) => void;
   onCommitRowHeights: (id: string, rowHeights: (number | null)[]) => void;
+  onCommitCellStyles: (
+    id: string,
+    cellStyles: (import('@livediagram/diagram').TableCellStyle | null)[][],
+  ) => void;
   onCancelEdit: () => void;
   onBeginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   onBeginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;

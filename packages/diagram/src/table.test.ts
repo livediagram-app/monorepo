@@ -4,9 +4,11 @@ import {
   addTableColumn,
   addTableRow,
   normalizeTable,
+  clearCellStyle,
   pasteIntoTable,
   removeTableColumn,
   removeTableRow,
+  setCellStyle,
   setTableCell,
   tableColCount,
   tableRowCount,
@@ -112,5 +114,26 @@ describe('pasteIntoTable', () => {
     const next = pasteIntoTable(seeded, 0, 0, [['x']]);
     expect(next.cells[0]![0]).toBe('x');
     expect(next.cells[2]![2]).toBe('keep');
+  });
+});
+
+describe('cell styles', () => {
+  it('sets + merges a cell style and clears it', () => {
+    let next = setCellStyle(t(), 1, 1, { bg: '#ff0000' });
+    expect(next.cellStyles![1]![1]).toEqual({ bg: '#ff0000' });
+    next = setCellStyle(next, 1, 1, { bold: true });
+    expect(next.cellStyles![1]![1]).toEqual({ bg: '#ff0000', bold: true });
+    expect(next.cellStyles![0]![0]).toBeNull();
+    const cleared = clearCellStyle(next, 1, 1);
+    expect(cleared.cellStyles![1]![1]).toBeNull();
+  });
+
+  it('keeps cell styles aligned when a column is inserted', () => {
+    const styled = setCellStyle(t(), 0, 2, { bg: '#00ff00' });
+    const next = addTableColumn(styled, 0); // insert at the front
+    expect(tableColCount(next)).toBe(4);
+    // the styled cell shifted from col 2 to col 3
+    expect(next.cellStyles![0]![3]).toEqual({ bg: '#00ff00' });
+    expect(next.cellStyles![0]![0]).toBeNull();
   });
 });

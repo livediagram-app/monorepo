@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { isBoxed, type Element, type Tab } from '@livediagram/diagram';
+import { isBoxed, type Element, type TableCellStyle, type Tab } from '@livediagram/diagram';
 import { patchTab } from './editor-page-helpers';
 
 type SetState<T> = Dispatch<SetStateAction<T>>;
@@ -73,6 +73,12 @@ export function useSelectionEditing(opts: {
     setGroupSourceId(null);
     setSelectedId(elementId);
     setEditingId(elementId);
+  };
+
+  const commitCellStyles = (elementId: string, cellStyles: (TableCellStyle | null)[][]) => {
+    commit((els) =>
+      els.map((el) => (el.id === elementId && el.type === 'table' ? { ...el, cellStyles } : el)),
+    );
   };
 
   const commitRowHeights = (elementId: string, rowHeights: (number | null)[]) => {
@@ -200,6 +206,7 @@ export function useSelectionEditing(opts: {
     commitCells,
     commitColWidths,
     commitRowHeights,
+    commitCellStyles,
     cancelEdit,
     typeIntoSelected,
     selectElement,

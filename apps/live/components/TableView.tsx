@@ -5,10 +5,13 @@ import {
   defaultStrokeColor,
   defaultTextColor,
   PADDING_PX,
+  clearCellStyle,
   pasteIntoTable,
   removeTableColumn,
   removeTableRow,
+  setCellStyle,
   setTableCell,
+  type TableCellStyle,
   type TableElement,
 } from '@livediagram/diagram';
 import { isMobileViewportSync } from '@/lib/responsive';
@@ -148,6 +151,7 @@ export function TableView({
   onCommitCells,
   onCommitColWidths,
   onCommitRowHeights,
+  onCommitCellStyles,
 }: {
   element: TableElement;
   isSelected: boolean;
@@ -155,11 +159,13 @@ export function TableView({
   onCommitCells: (id: string, cells: string[][]) => void;
   onCommitColWidths: (id: string, colWidths: (number | null)[]) => void;
   onCommitRowHeights: (id: string, rowHeights: (number | null)[]) => void;
+  onCommitCellStyles: (id: string, cellStyles: (TableCellStyle | null)[][]) => void;
 }) {
   const rows = element.cells.length;
   const cols = element.cells[0]?.length ?? 0;
   const [editing, setEditing] = useState<{ r: number; c: number } | null>(null);
   const [menu, setMenu] = useState<{ axis: 'col' | 'row'; index: number } | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ r: number; c: number } | null>(null);
   // Live widths while dragging a column divider (committed on release).
   const [resizeWidths, setResizeWidths] = useState<(number | null)[] | null>(null);
   const [resizeHeights, setResizeHeights] = useState<(number | null)[] | null>(null);
@@ -179,7 +185,10 @@ export function TableView({
   }, [editing, rows, cols]);
 
   useEffect(() => {
-    if (!isSelected) setMenu(null);
+    if (!isSelected) {
+      setMenu(null);
+      setSelectedCell(null);
+    }
   }, [isSelected]);
 
   useEffect(() => {
@@ -229,6 +238,7 @@ export function TableView({
   const beginEdit = (r: number, c: number) => {
     if (readOnly || element.locked) return;
     initialTextRef.current = element.cells[r]?.[c] ?? '';
+    setSelectedCell(null);
     setEditing({ r, c });
   };
 
@@ -263,6 +273,10 @@ export function TableView({
       firstLine: !text.slice(0, offset).includes('\n'),
       lastLine: !text.slice(offset).includes('\n'),
     };
+  };
+
+  const applyCellStyle = (r: number, c: number, patch: Partial<TableCellStyle>) => {
+    onCommitCellStyles(element.id, setCellStyle(element, r, c, patch).cellStyles ?? []);
   };
 
   const apply = (next: { cells: string[][] }) => {
@@ -370,6 +384,8 @@ export function TableView({
               element.zebra && !isHeader && bodyRow >= 0 && bodyRow % 2 === 1
                 ? `${stroke}11`
                 : null;
+            const cs = element.cellStyles?.[r]?.[c] ?? null;
+            const isSelCell = selectedCell?.r === r && selectedCell?.c === c;
             const isEditingCell = editing?.r === r && editing?.c === c;
             return (
               <div
@@ -382,20 +398,28 @@ export function TableView({
                   e.stopPropagation();
                   beginEdit(r, c);
                 }}
+                onClick={(e) => {
+                  if (showControls && !isEditingCell) {
+                    e.stopPropagation();
+                    setSelectedCell({ r, c });
+                  }
+                }}
                 className="min-w-0 overflow-hidden"
                 style={{
                   padding: cellPad,
                   borderRight: c < cols - 1 ? `1px solid ${stroke}` : undefined,
                   borderBottom: r < rows - 1 ? `1px solid ${stroke}` : undefined,
-                  backgroundColor: isHeader
-                    ? headerFill
-                    : (zebraBg ?? element.fillColor ?? 'transparent'),
+                  backgroundColor:
+                    cs?.bg ??
+                    (isHeader ? headerFill : (zebraBg ?? element.fillColor ?? 'transparent')),
                   display: 'flex',
                   justifyContent: justify,
                   alignItems,
-                  color: isHeader ? headerTextColor : undefined,
+                  color: cs?.textColor ?? (isHeader ? headerTextColor : undefined),
+                  outline: isSelCell ? '2px solid rgb(14 165 233)' : undefined,
+                  outlineOffset: isSelCell ? '-2px' : undefined,
                   fontSize: fontPx,
-                  fontWeight: isHeader ? 700 : element.textBold ? 600 : 400,
+                  fontWeight: isHeader ? 700 : (cs?.bold ?? element.textBold) ? 600 : 400,
                   fontStyle: element.textItalic ? 'italic' : undefined,
                   textDecoration:
                     [
@@ -673,6 +697,108 @@ export function TableView({
               </div>
             );
           })}
+        </div>
+      ) : null}
+      {showControls && selectedCell && !editing ? (
+        <div
+          className="pointer-events-none absolute inset-0 grid"
+          style={{ gridTemplateColumns: colTemplate, gridTemplateRows: rowTemplate }}
+        >
+          <div
+            className="relative"
+            style={{ gridColumn: selectedCell.c + 1, gridRow: selectedCell.r + 1 }}
+          >
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="pointer-events-auto absolute left-1/2 top-0 z-40 flex -translate-x-1/2 -translate-y-[calc(100%+4px)] items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+            >
+              <button
+                type="button"
+                title="Bold cell"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyCellStyle(selectedCell.r, selectedCell.c, {
+                    bold: !(
+                      element.cellStyles?.[selectedCell.r]?.[selectedCell.c]?.bold ??
+                      element.textBold
+                    ),
+                  });
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded text-xs font-bold text-slate-700 hover:bg-brand-50 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                B
+              </button>
+              <label
+                title="Cell background"
+                className="flex h-6 w-6 cursor-pointer items-center justify-center rounded hover:bg-brand-50 dark:hover:bg-slate-700"
+              >
+                <span
+                  className="h-3.5 w-3.5 rounded-sm border border-slate-300"
+                  style={{
+                    backgroundColor:
+                      element.cellStyles?.[selectedCell.r]?.[selectedCell.c]?.bg ?? '#ffffff',
+                  }}
+                />
+                <input
+                  type="color"
+                  className="sr-only"
+                  value={element.cellStyles?.[selectedCell.r]?.[selectedCell.c]?.bg ?? '#ffffff'}
+                  onChange={(e) =>
+                    applyCellStyle(selectedCell.r, selectedCell.c, { bg: e.target.value })
+                  }
+                />
+              </label>
+              <label
+                title="Cell text colour"
+                className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-xs font-semibold hover:bg-brand-50 dark:hover:bg-slate-700"
+              >
+                <span
+                  style={{
+                    color:
+                      element.cellStyles?.[selectedCell.r]?.[selectedCell.c]?.textColor ??
+                      textColor,
+                  }}
+                >
+                  A
+                </span>
+                <input
+                  type="color"
+                  className="sr-only"
+                  value={
+                    element.cellStyles?.[selectedCell.r]?.[selectedCell.c]?.textColor ?? textColor
+                  }
+                  onChange={(e) =>
+                    applyCellStyle(selectedCell.r, selectedCell.c, { textColor: e.target.value })
+                  }
+                />
+              </label>
+              <button
+                type="button"
+                title="Clear cell formatting"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCommitCellStyles(
+                    element.id,
+                    clearCellStyle(element, selectedCell.r, selectedCell.c).cellStyles ?? [],
+                  );
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  aria-hidden
+                >
+                  <path d="M3 3l6 6M9 3l-6 6" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </>

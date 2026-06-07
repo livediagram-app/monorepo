@@ -79,6 +79,10 @@ type BoxedElementViewProps = {
   onCommitCells: (id: string, cells: string[][]) => void;
   onCommitColWidths: (id: string, colWidths: (number | null)[]) => void;
   onCommitRowHeights: (id: string, rowHeights: (number | null)[]) => void;
+  onCommitCellStyles: (
+    id: string,
+    cellStyles: (import('@livediagram/diagram').TableCellStyle | null)[][],
+  ) => void;
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (id: string) => void;
@@ -144,6 +148,7 @@ function BoxedElementViewImpl({
   onCommitCells,
   onCommitColWidths,
   onCommitRowHeights,
+  onCommitCellStyles,
   onCancelEdit,
   onFollowLink,
   onOpenComments,
@@ -358,6 +363,7 @@ function BoxedElementViewImpl({
           onCommitCells={onCommitCells}
           onCommitColWidths={onCommitColWidths}
           onCommitRowHeights={onCommitRowHeights}
+          onCommitCellStyles={onCommitCellStyles}
         />
       ) : (
         renderLabel(

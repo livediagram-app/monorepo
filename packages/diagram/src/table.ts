@@ -3,7 +3,7 @@
 // result straight into a commit. The grid is kept rectangular and at
 // least 1x1 at all times.
 
-import type { TableElement } from './index';
+import type { TableCellStyle, TableElement } from './index';
 
 export function tableRowCount(t: TableElement): number {
   return t.cells.length;
@@ -45,7 +45,11 @@ export function addTableRow(t: TableElement, at?: number): TableElement {
   const rowHeights = t.rowHeights
     ? [...t.rowHeights.slice(0, idx), null, ...t.rowHeights.slice(idx)]
     : t.rowHeights;
-  return { ...t, cells, rowHeights };
+  const blankStyles = Array.from({ length: Math.max(1, tableColCount(t)) }, () => null);
+  const cellStyles = t.cellStyles
+    ? [...t.cellStyles.slice(0, idx), blankStyles, ...t.cellStyles.slice(idx)]
+    : t.cellStyles;
+  return { ...t, cells, rowHeights, cellStyles };
 }
 
 // Remove a row (the last one by default). Never drops below one row.
@@ -54,7 +58,8 @@ export function removeTableRow(t: TableElement, at?: number): TableElement {
   const idx = at ?? t.cells.length - 1;
   const cells = t.cells.filter((_, i) => i !== idx);
   const rowHeights = t.rowHeights ? t.rowHeights.filter((_, i) => i !== idx) : t.rowHeights;
-  return { ...t, cells, rowHeights };
+  const cellStyles = t.cellStyles ? t.cellStyles.filter((_, i) => i !== idx) : t.cellStyles;
+  return { ...t, cells, rowHeights, cellStyles };
 }
 
 export function addTableColumn(t: TableElement, at?: number): TableElement {
@@ -63,7 +68,10 @@ export function addTableColumn(t: TableElement, at?: number): TableElement {
   const colWidths = t.colWidths
     ? [...t.colWidths.slice(0, idx), null, ...t.colWidths.slice(idx)]
     : t.colWidths;
-  return { ...t, cells, colWidths };
+  const cellStyles = t.cellStyles
+    ? t.cellStyles.map((row) => [...row.slice(0, idx), null, ...row.slice(idx)])
+    : t.cellStyles;
+  return { ...t, cells, colWidths, cellStyles };
 }
 
 export function removeTableColumn(t: TableElement, at?: number): TableElement {
@@ -71,7 +79,10 @@ export function removeTableColumn(t: TableElement, at?: number): TableElement {
   const idx = at ?? tableColCount(t) - 1;
   const cells = t.cells.map((row) => row.filter((_, i) => i !== idx));
   const colWidths = t.colWidths ? t.colWidths.filter((_, i) => i !== idx) : t.colWidths;
-  return { ...t, cells, colWidths };
+  const cellStyles = t.cellStyles
+    ? t.cellStyles.map((row) => row.filter((_, i) => i !== idx))
+    : t.cellStyles;
+  return { ...t, cells, colWidths, cellStyles };
 }
 
 // Overlay a parsed grid (rows of cells, e.g. from a pasted TSV) onto
@@ -97,4 +108,54 @@ export function pasteIntoTable(
     }),
   );
   return { ...t, cells };
+}
+
+// Per-cell style override (background / text colour / bold). Merges
+// `patch` into the cell's style; a cell whose merged style is empty
+// is stored as null (inherits the table defaults).
+export function setCellStyle(
+  t: TableElement,
+  r: number,
+  c: number,
+  patch: Partial<TableCellStyle>,
+): TableElement {
+  const row = t.cells[r];
+  if (!row || c < 0 || c >= row.length) return t;
+  const rows = t.cells.length;
+  const cols = tableColCount(t);
+  const existing = t.cellStyles?.[r]?.[c] ?? {};
+  const next: TableCellStyle = { ...existing, ...patch };
+  const cleaned: TableCellStyle = {};
+  if (next.bg !== undefined) cleaned.bg = next.bg;
+  if (next.textColor !== undefined) cleaned.textColor = next.textColor;
+  if (next.bold !== undefined) cleaned.bold = next.bold;
+  const merged = Object.keys(cleaned).length > 0 ? cleaned : null;
+  const cellStyles = Array.from({ length: rows }, (_, ri) =>
+    Array.from({ length: cols }, (_, ci) =>
+      ri === r && ci === c ? merged : (t.cellStyles?.[ri]?.[ci] ?? null),
+    ),
+  );
+  return { ...t, cellStyles };
+}
+
+// Clear a cell's style overrides (back to the table defaults).
+export function clearCellStyle(t: TableElement, r: number, c: number): TableElement {
+  if (!t.cellStyles) return t;
+  return setCellStyleRaw(t, r, c, null);
+}
+
+function setCellStyleRaw(
+  t: TableElement,
+  r: number,
+  c: number,
+  value: TableCellStyle | null,
+): TableElement {
+  const rows = t.cells.length;
+  const cols = tableColCount(t);
+  const cellStyles = Array.from({ length: rows }, (_, ri) =>
+    Array.from({ length: cols }, (_, ci) =>
+      ri === r && ci === c ? value : (t.cellStyles?.[ri]?.[ci] ?? null),
+    ),
+  );
+  return { ...t, cellStyles };
 }
