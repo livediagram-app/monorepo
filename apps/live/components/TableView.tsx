@@ -893,6 +893,7 @@ export function TableView({
             style={{ gridColumn: selectedCell.c + 1, gridRow: selectedCell.r + 1 }}
           >
             <div
+              data-table-ui
               onPointerDown={(e) => e.stopPropagation()}
               className="pointer-events-auto absolute left-1/2 top-0 z-40 flex -translate-x-1/2 -translate-y-[calc(100%+4px)] items-center animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-0.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
             >
