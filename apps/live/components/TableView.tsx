@@ -17,19 +17,19 @@ const CELL_FONT_PX: Record<string, number> = { sm: 11, md: 13, lg: 16, scale: 13
 
 function PlusIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden>
-      <path d="M6 2.5v7M2.5 6h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
 
 function TrashIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
       <path
-        d="M2.5 3.5h7M5 3.5V2.5h2v1M3.5 3.5l.4 6h4.2l.4-6"
+        d="M3 4h8M5.5 4V2.8h3V4M4 4l.4 7.2h5.2L10 4"
         stroke="currentColor"
-        strokeWidth="1.1"
+        strokeWidth="1.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -37,39 +37,81 @@ function TrashIcon() {
   );
 }
 
-// Small floating control button. stopPropagation on pointer-down so
-// clicking a control never starts a table drag or clears the selection.
-function CtrlButton({
-  title,
+// Small "⋯" trigger that sits inside the table's top / left edge. Tapping
+// it opens the column / row menu. Kept compact but with a 24px+ hit area
+// (the padding) so it stays tappable on touch.
+function Trigger({
+  open,
+  vertical,
   onClick,
-  disabled,
+}: {
+  open: boolean;
+  vertical?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={vertical ? 'Row options' : 'Column options'}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`pointer-events-auto flex items-center justify-center rounded-full border border-slate-200 shadow-sm transition dark:border-slate-700 ${
+        open ? 'bg-brand-500 text-white' : 'bg-white text-brand-600 dark:bg-slate-800'
+      } ${vertical ? 'h-7 w-5' : 'h-5 w-7'}`}
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden>
+        {vertical ? (
+          <>
+            <circle cx="7" cy="3.5" r="1.1" />
+            <circle cx="7" cy="7" r="1.1" />
+            <circle cx="7" cy="10.5" r="1.1" />
+          </>
+        ) : (
+          <>
+            <circle cx="3.5" cy="7" r="1.1" />
+            <circle cx="7" cy="7" r="1.1" />
+            <circle cx="10.5" cy="7" r="1.1" />
+          </>
+        )}
+      </svg>
+    </button>
+  );
+}
+
+// Large, tappable menu row (icon + label). Min height 36px for touch.
+function MenuButton({
+  label,
   danger,
+  disabled,
+  onClick,
   children,
 }: {
-  title: string;
-  onClick: () => void;
-  disabled?: boolean;
+  label: string;
   danger?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
-      title={title}
-      aria-label={title}
       disabled={disabled}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
       }}
-      className={`flex h-5 w-5 items-center justify-center rounded border border-slate-200 bg-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800 ${
+      className={`flex h-9 w-full items-center gap-2 whitespace-nowrap rounded-md px-2.5 text-left text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-30 ${
         danger
-          ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950'
-          : 'text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-700'
+          ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950'
+          : 'text-slate-700 hover:bg-brand-50 dark:text-slate-200 dark:hover:bg-slate-700'
       }`}
     >
-      {children}
+      <span className="shrink-0">{children}</span>
+      {label}
     </button>
   );
 }
@@ -77,10 +119,11 @@ function CtrlButton({
 // Renders a TableElement as an editable grid filling the element box.
 // Double-click a cell to edit its text; Enter / blur commits, Escape
 // cancels, Tab / Shift+Tab moves to the next / previous cell. When the
-// table is selected, hovering a column's top gutter / a row's left
-// gutter reveals floating add-left/right (or above/below) + delete
-// controls. Editing + control state is local; committed grids persist
-// via onCommitCells (the whole grid, mirroring how labels commit).
+// table is selected, a "⋯" trigger sits inside the top of each column /
+// the left of each row; tapping it opens a large add-before / add-after
+// / delete menu that drops INTO the table (away from the canvas's own
+// top-left resize / anchor controls). Editing + menu state is local;
+// committed grids persist via onCommitCells (the whole grid).
 export function TableView({
   element,
   isSelected,
@@ -96,15 +139,18 @@ export function TableView({
   const cols = element.cells[0]?.length ?? 0;
   const [editing, setEditing] = useState<{ r: number; c: number } | null>(null);
   const [draft, setDraft] = useState('');
-  const [hoverCol, setHoverCol] = useState<number | null>(null);
-  const [hoverRow, setHoverRow] = useState<number | null>(null);
+  const [menu, setMenu] = useState<{ axis: 'col' | 'row'; index: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Drop out of edit mode if the grid shrinks under the active cell
-  // (e.g. a row/column was removed while editing).
+  // Drop out of edit mode if the grid shrinks under the active cell.
   useEffect(() => {
     if (editing && (editing.r >= rows || editing.c >= cols)) setEditing(null);
   }, [editing, rows, cols]);
+
+  // Close the structural menu whenever the table is deselected.
+  useEffect(() => {
+    if (!isSelected) setMenu(null);
+  }, [isSelected]);
 
   useEffect(() => {
     if (editing) {
@@ -132,9 +178,15 @@ export function TableView({
     onCommitCells(element.id, setTableCell(element, r, c, text).cells);
   };
 
-  // Structural edits reuse the pure helpers; each commits the whole grid.
-  const apply = (next: { cells: string[][] }) => onCommitCells(element.id, next.cells);
+  // Structural edits reuse the pure helpers; each commits the whole grid
+  // and closes the menu.
+  const apply = (next: { cells: string[][] }) => {
+    onCommitCells(element.id, next.cells);
+    setMenu(null);
+  };
   const showControls = isSelected && !readOnly && !element.locked;
+  const toggle = (axis: 'col' | 'row', index: number) =>
+    setMenu((m) => (m && m.axis === axis && m.index === index ? null : { axis, index }));
 
   return (
     <>
@@ -143,7 +195,6 @@ export function TableView({
         style={{
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          // Outer frame; inner cell borders draw the grid.
           border: `1px solid ${stroke}`,
           color: textColor,
         }}
@@ -229,94 +280,82 @@ export function TableView({
         )}
       </div>
 
-      {/* Control layer: a non-clipped sibling so the gutter toolbars can
-          float outside the grid box. Container ignores pointer events;
-          the gutters + buttons re-enable them. */}
+      {/* Control layer: a non-clipped sibling so an open menu can spill
+          a little past the box. Triggers live INSIDE the top / left
+          edge of the grid; menus drop down / right into the table,
+          away from the canvas's own top-left resize + anchor controls. */}
       {showControls ? (
         <div className="pointer-events-none absolute inset-0">
-          {/* Column gutter (above the grid). Hover a column to reveal
-              its add-left / delete / add-right toolbar. */}
-          <div
-            className="absolute inset-x-0 -top-3 grid h-3"
-            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-          >
-            {Array.from({ length: cols }, (_, c) => (
-              <div
-                key={c}
-                className="pointer-events-auto relative"
-                onMouseEnter={() => setHoverCol(c)}
-                onMouseLeave={() => setHoverCol((v) => (v === c ? null : v))}
-              >
-                <div className="mx-auto h-1 w-5 rounded-full bg-brand-300/70" />
-                {hoverCol === c ? (
-                  <div className="absolute bottom-full left-1/2 mb-0.5 flex -translate-x-1/2 gap-0.5">
-                    <CtrlButton
-                      title="Add column to the left"
-                      onClick={() => apply(addTableColumn(element, c))}
-                    >
-                      <PlusIcon />
-                    </CtrlButton>
-                    <CtrlButton
-                      title="Delete column"
-                      danger
-                      disabled={cols <= 1}
-                      onClick={() => apply(removeTableColumn(element, c))}
-                    >
-                      <TrashIcon />
-                    </CtrlButton>
-                    <CtrlButton
-                      title="Add column to the right"
-                      onClick={() => apply(addTableColumn(element, c + 1))}
-                    >
-                      <PlusIcon />
-                    </CtrlButton>
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
+          {/* Column triggers along the top edge of the grid. */}
+          {Array.from({ length: cols }, (_, c) => (
+            <div
+              key={`col-${c}`}
+              className="absolute top-0.5 -translate-x-1/2"
+              style={{ left: `${((c + 0.5) / cols) * 100}%` }}
+            >
+              <Trigger
+                open={menu?.axis === 'col' && menu.index === c}
+                onClick={() => toggle('col', c)}
+              />
+              {menu?.axis === 'col' && menu.index === c ? (
+                <div className="pointer-events-auto absolute left-1/2 top-7 z-10 w-36 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <MenuButton label="Insert left" onClick={() => apply(addTableColumn(element, c))}>
+                    <PlusIcon />
+                  </MenuButton>
+                  <MenuButton
+                    label="Insert right"
+                    onClick={() => apply(addTableColumn(element, c + 1))}
+                  >
+                    <PlusIcon />
+                  </MenuButton>
+                  <MenuButton
+                    label="Delete column"
+                    danger
+                    disabled={cols <= 1}
+                    onClick={() => apply(removeTableColumn(element, c))}
+                  >
+                    <TrashIcon />
+                  </MenuButton>
+                </div>
+              ) : null}
+            </div>
+          ))}
 
-          {/* Row gutter (left of the grid). Hover a row to reveal its
-              add-above / delete / add-below toolbar. */}
-          <div
-            className="absolute inset-y-0 -left-3 grid w-3"
-            style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}
-          >
-            {Array.from({ length: rows }, (_, r) => (
-              <div
-                key={r}
-                className="pointer-events-auto relative flex items-center"
-                onMouseEnter={() => setHoverRow(r)}
-                onMouseLeave={() => setHoverRow((v) => (v === r ? null : v))}
-              >
-                <div className="my-auto h-5 w-1 rounded-full bg-brand-300/70" />
-                {hoverRow === r ? (
-                  <div className="absolute right-full top-1/2 mr-0.5 flex -translate-y-1/2 flex-col gap-0.5">
-                    <CtrlButton
-                      title="Add row above"
-                      onClick={() => apply(addTableRow(element, r))}
-                    >
-                      <PlusIcon />
-                    </CtrlButton>
-                    <CtrlButton
-                      title="Delete row"
-                      danger
-                      disabled={rows <= 1}
-                      onClick={() => apply(removeTableRow(element, r))}
-                    >
-                      <TrashIcon />
-                    </CtrlButton>
-                    <CtrlButton
-                      title="Add row below"
-                      onClick={() => apply(addTableRow(element, r + 1))}
-                    >
-                      <PlusIcon />
-                    </CtrlButton>
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
+          {/* Row triggers along the left edge of the grid. */}
+          {Array.from({ length: rows }, (_, r) => (
+            <div
+              key={`row-${r}`}
+              className="absolute left-0.5 -translate-y-1/2"
+              style={{ top: `${((r + 0.5) / rows) * 100}%` }}
+            >
+              <Trigger
+                vertical
+                open={menu?.axis === 'row' && menu.index === r}
+                onClick={() => toggle('row', r)}
+              />
+              {menu?.axis === 'row' && menu.index === r ? (
+                <div className="pointer-events-auto absolute left-7 top-1/2 z-10 w-36 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <MenuButton label="Insert above" onClick={() => apply(addTableRow(element, r))}>
+                    <PlusIcon />
+                  </MenuButton>
+                  <MenuButton
+                    label="Insert below"
+                    onClick={() => apply(addTableRow(element, r + 1))}
+                  >
+                    <PlusIcon />
+                  </MenuButton>
+                  <MenuButton
+                    label="Delete row"
+                    danger
+                    disabled={rows <= 1}
+                    onClick={() => apply(removeTableRow(element, r))}
+                  >
+                    <TrashIcon />
+                  </MenuButton>
+                </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       ) : null}
     </>
