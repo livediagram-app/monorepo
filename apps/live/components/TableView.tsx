@@ -362,6 +362,21 @@ export function TableView({
     onCommitCellStyles(element.id, setCellStyle(element, r, c, patch).cellStyles ?? []);
   };
 
+  const moveCol = (from: number, to: number) => {
+    const m = moveTableColumn(element, from, to);
+    onCommitCells(element.id, m.cells);
+    if (m.colWidths) onCommitColWidths(element.id, m.colWidths);
+    if (m.cellStyles) onCommitCellStyles(element.id, m.cellStyles);
+    setMenu(null);
+  };
+  const moveRow = (from: number, to: number) => {
+    const m = moveTableRow(element, from, to);
+    onCommitCells(element.id, m.cells);
+    if (m.rowHeights) onCommitRowHeights(element.id, m.rowHeights);
+    if (m.cellStyles) onCommitCellStyles(element.id, m.cellStyles);
+    setMenu(null);
+  };
+
   const apply = (next: { cells: string[][] }) => {
     onCommitCells(element.id, next.cells);
     setMenu(null);
@@ -735,6 +750,20 @@ export function TableView({
                             <ArrowIcon dir="right" />
                           </MenuButton>
                           <MenuButton
+                            label="Move left"
+                            disabled={c === 0}
+                            onClick={() => moveCol(c, c - 1)}
+                          >
+                            <ArrowIcon dir="left" />
+                          </MenuButton>
+                          <MenuButton
+                            label="Move right"
+                            disabled={c === cols - 1}
+                            onClick={() => moveCol(c, c + 1)}
+                          >
+                            <ArrowIcon dir="right" />
+                          </MenuButton>
+                          <MenuButton
                             label="Delete column"
                             danger
                             disabled={cols <= 1}
@@ -780,6 +809,20 @@ export function TableView({
                     <MenuButton
                       label="Insert below"
                       onClick={() => apply(addTableRow(element, r + 1))}
+                    >
+                      <ArrowIcon dir="down" />
+                    </MenuButton>
+                    <MenuButton
+                      label="Move up"
+                      disabled={r === 0}
+                      onClick={() => moveRow(r, r - 1)}
+                    >
+                      <ArrowIcon dir="up" />
+                    </MenuButton>
+                    <MenuButton
+                      label="Move down"
+                      disabled={r === rows - 1}
+                      onClick={() => moveRow(r, r + 1)}
                     >
                       <ArrowIcon dir="down" />
                     </MenuButton>
