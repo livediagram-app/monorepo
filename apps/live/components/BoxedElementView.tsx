@@ -426,34 +426,45 @@ export const BoxedElementView = memo(BoxedElementViewImpl);
 // Browser chrome rendered as fixed-pixel HTML rather than scaled SVG so
 // the window dots stay round, the nav icons keep their stroke weight,
 // and the URL bar grows to fill the available width at any aspect
-// ratio. The outer frame + divider line still come from the SVG layer
-// (so the user's themed fill / border style / dashed pattern apply).
+// ratio. The outer frame comes from the SVG layer (so the user's
+// themed fill / border style / dashed pattern apply); the divider line
+// under the chrome is drawn here as this strip's bottom border so it
+// rides with the FIXED chrome height rather than scaling with the box.
 // Counter-scaled by `zoom` is intentionally NOT applied — chrome
 // elements should scale with the canvas zoom like the rest of the
 // shape so a small browser at low zoom still reads as a browser.
+const BROWSER_CHROME_HEIGHT_PX = 48;
 function BrowserChrome({ stroke, zoom: _zoom }: { stroke: string; zoom: number }) {
   return (
     <div
       aria-hidden
-      // The chrome strip sits in the top 20% of the SVG viewBox (y 0
-      // to 20 of 100). Match that on the HTML side with a 20% height.
-      // pointer-events: none so it never intercepts clicks on the
-      // shape itself.
-      className="pointer-events-none absolute left-0 right-0 top-0 flex items-center gap-2 px-2"
-      style={{ height: '20%', color: stroke }}
+      // The address bar is a FIXED height pinned to the top: resizing
+      // the browser only grows the content area below, never the
+      // chrome. The height is in element space, so it still scales
+      // with canvas zoom like the rest of the shape. pointer-events:
+      // none so it never intercepts clicks on the shape itself.
+      // Span the full width: the frame is now the wrapper's own CSS
+      // border, so left-0 / right-0 lands the bottom divider exactly on
+      // the inner edges of the side border instead of overhanging it.
+      className="pointer-events-none absolute left-0 right-0 top-0 flex items-center gap-2.5 px-4 py-2.5"
+      style={{
+        height: BROWSER_CHROME_HEIGHT_PX,
+        color: stroke,
+        borderBottom: `1px solid ${stroke}`,
+      }}
     >
       {/* Three traffic-light window dots. Fixed-pixel so they stay
           round regardless of how the box stretches. */}
-      <div className="flex shrink-0 items-center gap-1">
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: stroke }} aria-hidden />
       </div>
       {/* Back / forward / reload icons. Single SVG group with fixed
           pixel size so the icon weight + spacing stays consistent. */}
       <svg
-        width="44"
-        height="14"
+        width="56"
+        height="18"
         viewBox="0 0 44 14"
         fill="none"
         stroke="currentColor"
@@ -471,7 +482,7 @@ function BrowserChrome({ stroke, zoom: _zoom }: { stroke: string; zoom: number }
           the shape; the height stays fixed so it always reads as a
           pill no matter how tall the chrome strip is. */}
       <div
-        className="h-3 min-w-0 flex-1 rounded-full border"
+        className="h-5 min-w-0 flex-1 rounded-full border"
         style={{ borderColor: stroke }}
         aria-hidden
       />

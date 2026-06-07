@@ -15,8 +15,13 @@ import type { ShapeKind } from '@livediagram/diagram';
 //   - square: rounded rectangle
 //   - circle: border-radius 50% (forced 1:1 so it stays a circle)
 //   - stadium: border-radius 9999px, always semicircular ends
+//   - browser: rounded rectangle frame (the HTML BrowserChrome strip
+//     paints the address bar on top). It MUST be CSS so the corner
+//     radius is a real pixel radius: an SVG rect rx in the stretched
+//     0..100 viewBox warps into big asymmetric arcs on a wide box,
+//     and the user's border-radius control would do nothing.
 export function isSvgRenderedShape(kind: ShapeKind): boolean {
-  return kind !== 'square' && kind !== 'circle' && kind !== 'stadium';
+  return kind !== 'square' && kind !== 'circle' && kind !== 'stadium' && kind !== 'browser';
 }
 
 export function ShapeSvgOverlay({
@@ -94,7 +99,10 @@ export function ShapeSvgOverlay({
         <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" {...common} />
       ) : null}
       {shape === 'document' ? (
-        <path d="M 0 0 L 100 0 L 100 78 C 80 95, 65 65, 50 80 C 35 95, 20 65, 0 80 Z" {...common} />
+        <path
+          d="M 0 0 L 100 0 L 100 92 C 80 109, 65 79, 50 94 C 35 109, 20 79, 0 94 Z"
+          {...common}
+        />
       ) : null}
       {shape === 'cylinder' ? (
         <g>
@@ -108,25 +116,10 @@ export function ShapeSvgOverlay({
           {...common}
         />
       ) : null}
-      {/* Browser: just the rounded outer frame + the divider line
-          under the chrome row. The chrome details (dots, nav icons,
-          URL pill) render as an HTML overlay (see BrowserChrome
-          in BoxedElementView) so their geometry stays fixed at any
-          aspect ratio rather than warping with the box. */}
-      {shape === 'browser' ? (
-        <g>
-          <rect x={1} y={1} width={98} height={98} rx={3} {...common} />
-          <line
-            x1={1}
-            y1={20}
-            x2={99}
-            y2={20}
-            stroke={stroke}
-            strokeWidth={1}
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-      ) : null}
+      {/* Browser is NOT drawn here: it is a CSS-rendered rounded
+          rectangle (see isSvgRenderedShape) so its corner radius is a
+          real pixel radius and the border-radius control applies. The
+          HTML BrowserChrome strip paints the address bar on top. */}
       {/* Monitor: screen rect on top, trapezoid stand on the bottom. */}
       {shape === 'monitor' ? (
         <g>
