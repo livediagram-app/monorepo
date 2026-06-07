@@ -24,6 +24,17 @@ const CELL_FONT_PX: Record<string, number> = { sm: 11, md: 13, lg: 16, scale: 13
 const MIN_COL_PX = 30;
 const MIN_ROW_PX = 24;
 
+// Build a CSS grid-template track list: an explicit `Npx` for each pinned
+// size, `minmax(0, 1fr)` for the rest, so unpinned tracks share the
+// remaining space evenly. A missing or short `sizes` array leaves every
+// unspecified track flexible. Used for both the column and row templates.
+export function gridTrackTemplate(count: number, sizes?: (number | null)[]): string {
+  return Array.from({ length: count }, (_, i) => {
+    const s = sizes?.[i];
+    return s != null ? `${s}px` : 'minmax(0, 1fr)';
+  }).join(' ');
+}
+
 function ArrowIcon({ dir }: { dir: 'left' | 'right' | 'up' | 'down' }) {
   const d = {
     left: 'M11 7H3M3 7l3-3M3 7l3 3',
@@ -304,16 +315,8 @@ export function TableView({
 
   // Explicit px for overridden columns, 1fr for the rest (they share the
   // remaining width).
-  const widths = resizeWidths ?? element.colWidths;
-  const colTemplate = Array.from({ length: cols }, (_, c) => {
-    const w = widths?.[c];
-    return w != null ? `${w}px` : 'minmax(0, 1fr)';
-  }).join(' ');
-  const heights = resizeHeights ?? element.rowHeights;
-  const rowTemplate = Array.from({ length: rows }, (_, r) => {
-    const h = heights?.[r];
-    return h != null ? `${h}px` : 'minmax(0, 1fr)';
-  }).join(' ');
+  const colTemplate = gridTrackTemplate(cols, resizeWidths ?? element.colWidths);
+  const rowTemplate = gridTrackTemplate(rows, resizeHeights ?? element.rowHeights);
 
   const beginEdit = (r: number, c: number) => {
     if (readOnly || element.locked) return;
