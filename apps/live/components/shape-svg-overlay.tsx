@@ -111,8 +111,13 @@ export function ShapeSvgOverlay({
         </g>
       ) : null}
       {shape === 'cloud' ? (
+        // Path normalised to fill the full 0..100 viewBox (the earlier
+        // geometry sat in x 12.7..90 / y 24.5..80, leaving dead margin
+        // on every side that made the cloud impossible to line up
+        // against neighbouring shapes). Control points fall outside the
+        // box by design — the curve itself reaches the edges.
         <path
-          d="M 30 80 C 14 80, 7 64, 18 55 C 11 42, 26 31, 37 38 C 41 21, 67 19, 70 38 C 84 31, 96 46, 85 57 C 96 65, 88 80, 72 80 Z"
+          d="M 22.4 100 C 1.7 100, -7.3 71.2, 6.9 55 C -2.2 31.5, 17.2 11.7, 31.4 24.3 C 36.6 -6.3, 70.2 -9.9, 74.1 24.3 C 92.1 11.7, 107.6 38.8, 93.4 58.6 C 107.6 73, 97.3 100, 76.6 100 Z"
           {...common}
         />
       ) : null}

@@ -56,6 +56,11 @@ export type SelectedElementControls = {
   onToggleTextItalic: () => void;
   onToggleTextUnderline: () => void;
   onToggleTextStrikethrough: () => void;
+  // Whether the selected element currently has non-empty label text.
+  // The Text accordion is hidden entirely when false: size / style /
+  // alignment / padding only matter once the element has a label, and
+  // you add one by double-clicking the element, not from this panel.
+  hasText: boolean;
   // Non-null only when an arrow is selected. Drives the Pointer
   // accordion that lets the user choose which end(s) of the arrow
   // get an arrowhead.

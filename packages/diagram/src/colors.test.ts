@@ -9,12 +9,15 @@ import {
   arrowStyleOf,
   arrowThicknessOf,
   arrowheadSizeOf,
+  createShape,
   deriveShapeColours,
   deriveTextColorForBg,
   isLightColor,
+  supportsBorderRadius,
   type ArrowElement,
   type ArrowThickness,
   type ArrowheadSize,
+  type ShapeKind,
 } from './index';
 
 const channels = (hex: string): [number, number, number] => {
@@ -149,5 +152,48 @@ describe('ARROWHEAD_SIZE_PX lookup', () => {
 
   it('DEFAULT_ARROWHEAD_SIZE has a non-zero pixel mapping so the default head paints', () => {
     expect(ARROWHEAD_SIZE_PX[DEFAULT_ARROWHEAD_SIZE]).toBeGreaterThan(0);
+  });
+});
+
+describe('supportsBorderRadius', () => {
+  // Only the free-corner rectangles expose a user-adjustable radius;
+  // every other shape bakes its rounding into the silhouette or is an
+  // SVG outline, so the Radius control is hidden for them.
+  const RADIUS_SHAPES: ShapeKind[] = ['square', 'browser'];
+  const NO_RADIUS_SHAPES: ShapeKind[] = [
+    'circle',
+    'diamond',
+    'cylinder',
+    'parallelogram',
+    'hexagon',
+    'document',
+    'stadium',
+    'actor',
+    'cloud',
+    'monitor',
+    'laptop',
+    'phone',
+    'tablet',
+  ];
+
+  it('is true for the free-corner rectangle shapes', () => {
+    for (const kind of RADIUS_SHAPES) {
+      expect(supportsBorderRadius(createShape(kind, 0, 0))).toBe(true);
+    }
+  });
+
+  it('is false for every other shape kind', () => {
+    for (const kind of NO_RADIUS_SHAPES) {
+      expect(supportsBorderRadius(createShape(kind, 0, 0))).toBe(false);
+    }
+  });
+
+  it('covers the whole ShapeKind union (radius + non-radius = all kinds)', () => {
+    const seen = new Set<ShapeKind>([...RADIUS_SHAPES, ...NO_RADIUS_SHAPES]);
+    expect(seen.size).toBe(RADIUS_SHAPES.length + NO_RADIUS_SHAPES.length);
+  });
+
+  it('is false for non-shape elements', () => {
+    expect(supportsBorderRadius(arrow())).toBe(false);
   });
 });

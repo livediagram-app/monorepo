@@ -190,6 +190,7 @@ export type SelectedElementFields = Pick<
   | 'textItalic'
   | 'textUnderline'
   | 'textStrikethrough'
+  | 'hasText'
   | 'arrowEnds'
   | 'arrowThickness'
   | 'arrowheadSize'
@@ -248,6 +249,10 @@ export function deriveSelectedElementFields(
       isBoxed(selected) && selected.type !== 'image' ? (selected.textUnderline ?? false) : null,
     textStrikethrough:
       isBoxed(selected) && selected.type !== 'image' ? (selected.textStrikethrough ?? false) : null,
+    hasText:
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.label?.trim().length ?? 0) > 0
+        : false,
     arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
     arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
     arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,

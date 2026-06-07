@@ -88,7 +88,11 @@ export function SelectedElementSection({
       return { ...ALL_SELECTED_ACCORDIONS_CLOSED, [key]: true };
     });
 
-  const showText = selection.textSize !== null || selection.textAlignX !== null;
+  // Only surface the Text accordion once the element actually has a
+  // label: with no text, size / style / alignment / padding have
+  // nothing to act on, so the accordion is just noise.
+  const showText =
+    selection.hasText && (selection.textSize !== null || selection.textAlignX !== null);
   const showColours =
     selection.textColor !== null || selection.fillColor !== null || selection.strokeColor !== null;
 
@@ -343,12 +347,13 @@ export function SelectedElementSection({
       ) : null}
 
       {/* Border accordion: visible when a shape is selected (shapes
-          carry the strokeWidth / strokeStyle / borderRadius fields).
-          Mirrors the Pointer accordion's icon-button-row pattern so
-          shape borders feel like a peer of arrow pointers. */}
-      {selection.borderStroke !== null &&
-      selection.borderStyle !== null &&
-      selection.borderRadius !== null ? (
+          carry the strokeWidth / strokeStyle fields). Mirrors the
+          Pointer accordion's icon-button-row pattern so shape borders
+          feel like a peer of arrow pointers. The Radius row below is
+          gated separately: only the free-corner rectangles (square /
+          browser) expose it, so borderRadius is null for every other
+          shape and the row is hidden without hiding the accordion. */}
+      {selection.borderStroke !== null && selection.borderStyle !== null ? (
         <Accordion title="Border" open={open.border} onToggle={() => toggle('border')}>
           <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Strength</p>
           <div className="mt-1 grid grid-cols-5 gap-1">
@@ -386,24 +391,30 @@ export function SelectedElementSection({
               </Tooltip>
             ))}
           </div>
-          <p className="mt-3 text-[10px] font-medium text-slate-500 dark:text-slate-300">Radius</p>
-          <div className="mt-1 grid grid-cols-4 gap-1">
-            {(['none', 'sm', 'md', 'lg'] as const).map((value) => (
-              <Tooltip
-                key={value}
-                block
-                title={BORDER_RADIUS_LABEL[value]}
-                description={`Corner radius: ${BORDER_RADIUS_LABEL[value].toLowerCase()}.`}
-              >
-                <SizeButton
-                  active={selection.borderRadius === value}
-                  onClick={() => selection.onSetBorderRadius(value)}
-                >
-                  <BorderRadiusIcon value={value} />
-                </SizeButton>
-              </Tooltip>
-            ))}
-          </div>
+          {selection.borderRadius !== null ? (
+            <>
+              <p className="mt-3 text-[10px] font-medium text-slate-500 dark:text-slate-300">
+                Radius
+              </p>
+              <div className="mt-1 grid grid-cols-4 gap-1">
+                {(['none', 'sm', 'md', 'lg'] as const).map((value) => (
+                  <Tooltip
+                    key={value}
+                    block
+                    title={BORDER_RADIUS_LABEL[value]}
+                    description={`Corner radius: ${BORDER_RADIUS_LABEL[value].toLowerCase()}.`}
+                  >
+                    <SizeButton
+                      active={selection.borderRadius === value}
+                      onClick={() => selection.onSetBorderRadius(value)}
+                    >
+                      <BorderRadiusIcon value={value} />
+                    </SizeButton>
+                  </Tooltip>
+                ))}
+              </div>
+            </>
+          ) : null}
         </Accordion>
       ) : null}
 

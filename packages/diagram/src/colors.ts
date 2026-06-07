@@ -172,6 +172,18 @@ export function supportsBorder(element: Element): element is ShapeElement | Free
   return element.type === 'shape' || element.type === 'freehand';
 }
 
+// Whether an element exposes a user-adjustable corner radius. Only the
+// free-corner rectangles qualify: the plain square and the browser
+// frame, both of which render as a CSS rounded rectangle so a real
+// pixel radius applies. Every other shape either bakes its rounding
+// into the silhouette (circle / stadium / cloud / actor) or is an SVG
+// outline (diamond / cylinder / hexagon / document / parallelogram and
+// the monitor / laptop / phone / tablet device frames) where a corner
+// radius is meaningless, so the Radius control is hidden for them.
+export function supportsBorderRadius(element: Element): element is ShapeElement {
+  return element.type === 'shape' && (element.shape === 'square' || element.shape === 'browser');
+}
+
 // Default arrow stroke colour when the element has no explicit one set.
 // Picked out as a helper so the Selected Element controls can show the
 // effective colour in the swatch when no override exists.
