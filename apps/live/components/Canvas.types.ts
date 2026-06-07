@@ -261,6 +261,7 @@ export type CanvasProps = {
   onSetArrowheadShape: (shape: import('@livediagram/diagram').ArrowheadShape) => void;
   onToggleTableHeaderRow: () => void;
   onToggleTableHeaderColumn: () => void;
+  onToggleTableZebra: () => void;
   onSetTableHeaderFill: (color: string) => void;
   onSetTableHeaderTextColor: (color: string) => void;
   onSetArrowStyle: (style: import('@livediagram/diagram').ArrowStyle) => void;

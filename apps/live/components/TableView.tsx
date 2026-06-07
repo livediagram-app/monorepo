@@ -365,6 +365,11 @@ export function TableView({
         {element.cells.flatMap((row, r) =>
           row.map((cell, c) => {
             const isHeader = (element.headerRow && r === 0) || (element.headerColumn && c === 0);
+            const bodyRow = element.headerRow ? r - 1 : r;
+            const zebraBg =
+              element.zebra && !isHeader && bodyRow >= 0 && bodyRow % 2 === 1
+                ? `${stroke}11`
+                : null;
             const isEditingCell = editing?.r === r && editing?.c === c;
             return (
               <div
@@ -382,7 +387,9 @@ export function TableView({
                   padding: cellPad,
                   borderRight: c < cols - 1 ? `1px solid ${stroke}` : undefined,
                   borderBottom: r < rows - 1 ? `1px solid ${stroke}` : undefined,
-                  backgroundColor: isHeader ? headerFill : (element.fillColor ?? 'transparent'),
+                  backgroundColor: isHeader
+                    ? headerFill
+                    : (zebraBg ?? element.fillColor ?? 'transparent'),
                   display: 'flex',
                   justifyContent: justify,
                   alignItems,

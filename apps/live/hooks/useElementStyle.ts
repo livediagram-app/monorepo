@@ -325,6 +325,13 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
       ),
     );
   };
+  const setTableZebraSelected = () => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'table' ? { ...el, zebra: !el.zebra } : el)),
+    );
+  };
   const setTableHeaderColumnSelected = () => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
@@ -510,6 +517,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setArrowheadShapeSelected,
     setTableHeaderRowSelected,
     setTableHeaderColumnSelected,
+    setTableZebraSelected,
     setTableHeaderFillSelected,
     setTableHeaderTextColorSelected,
     setArrowStyleSelected,

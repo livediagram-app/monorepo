@@ -116,8 +116,10 @@ export type SelectedElementControls = {
   // accordion's header-row / header-column toggles (combinable).
   tableHeaderRow: boolean | null;
   tableHeaderColumn: boolean | null;
+  tableZebra: boolean | null;
   onToggleTableHeaderRow: () => void;
   onToggleTableHeaderColumn: () => void;
+  onToggleTableZebra: () => void;
   // Header-band colours for a selected table (effective colour
   // shown in the swatch; null for non-tables).
   tableHeaderFill: string | null;

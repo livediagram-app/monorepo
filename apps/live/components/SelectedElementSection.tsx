@@ -191,6 +191,21 @@ export function SelectedElementSection({
               label="Header column"
             />
           </div>
+          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                Zebra striping
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                Tint alternate body rows.
+              </span>
+            </div>
+            <ToggleSwitch
+              checked={selection.tableZebra ?? false}
+              onChange={selection.onToggleTableZebra}
+              label="Zebra striping"
+            />
+          </div>
         </Accordion>
       ) : null}
 

@@ -242,6 +242,8 @@ export type TableElement = {
   // Render the first column as a header (same treatment). Combinable
   // with headerRow (the corner cell is then both).
   headerColumn?: boolean;
+  // Alternating body-row background tint (a 'zebra' table).
+  zebra?: boolean;
   // Header-band colours, independent of the body cells. Unset =
   // a tint of the grid stroke (fill) + the cell text colour (text).
   headerFill?: string;

@@ -216,6 +216,7 @@ export type SelectedElementFields = Pick<
   | 'borderRadius'
   | 'tableHeaderRow'
   | 'tableHeaderColumn'
+  | 'tableZebra'
   | 'tableHeaderFill'
   | 'tableHeaderTextColor'
 >;
@@ -291,6 +292,7 @@ export function deriveSelectedElementFields(
     borderRadius: supportsBorderRadius(selected) ? (selected.borderRadius ?? 'sm') : null,
     tableHeaderRow: selected.type === 'table' ? (selected.headerRow ?? false) : null,
     tableHeaderColumn: selected.type === 'table' ? (selected.headerColumn ?? false) : null,
+    tableZebra: selected.type === 'table' ? (selected.zebra ?? false) : null,
     tableHeaderFill:
       selected.type === 'table'
         ? (selected.headerFill ?? selected.strokeColor ?? defaultStrokeColor(selected))
