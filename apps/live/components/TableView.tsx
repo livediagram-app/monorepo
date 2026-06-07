@@ -154,11 +154,11 @@ export function TableView({
   const rows = element.cells.length;
   const cols = element.cells[0]?.length ?? 0;
   const [editing, setEditing] = useState<{ r: number; c: number } | null>(null);
-  const [draft, setDraft] = useState('');
   const [menu, setMenu] = useState<{ axis: 'col' | 'row'; index: number } | null>(null);
   // Live widths while dragging a column divider (committed on release).
   const [resizeWidths, setResizeWidths] = useState<(number | null)[] | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const initialTextRef = useRef('');
   const gridRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<(number | null)[] | null>(null);
 
@@ -171,16 +171,28 @@ export function TableView({
   }, [isSelected]);
 
   useEffect(() => {
-    if (editing) {
-      const el = textareaRef.current;
-      el?.focus();
-      el?.select();
-    }
+    if (!editing) return;
+    const el = editorRef.current;
+    if (!el) return;
+    el.textContent = initialTextRef.current;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
   }, [editing]);
 
   const stroke = element.strokeColor ?? defaultStrokeColor(element);
   const textColor = element.textColor ?? defaultTextColor(element);
-  const fontPx = CELL_FONT_PX[element.textSize ?? 'md'] ?? 13;
+  // 'scale' fits the text to the table: font tracks the row height so
+  // it grows / shrinks as the table is resized. Fixed presets use a
+  // constant px.
+  const rowH = rows > 0 ? element.height / rows : element.height;
+  const fontPx =
+    element.textSize === 'scale'
+      ? Math.max(9, Math.min(40, Math.round(rowH * 0.4)))
+      : (CELL_FONT_PX[element.textSize ?? 'md'] ?? 13);
   const cellPad = PADDING_PX[element.padding ?? 'sm'];
   const headerFill = element.headerFill ?? `${stroke}22`;
   const headerTextColor = element.headerTextColor ?? textColor;
@@ -199,7 +211,7 @@ export function TableView({
 
   const beginEdit = (r: number, c: number) => {
     if (readOnly || element.locked) return;
-    setDraft(element.cells[r]?.[c] ?? '');
+    initialTextRef.current = element.cells[r]?.[c] ?? '';
     setEditing({ r, c });
   };
 
@@ -300,13 +312,15 @@ export function TableView({
                 }}
               >
                 {isEditingCell ? (
-                  <textarea
-                    ref={textareaRef}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    role="textbox"
+                    tabIndex={0}
                     onPointerDown={(e) => e.stopPropagation()}
                     onBlur={() => {
-                      commitCell(r, c, draft);
+                      commitCell(r, c, editorRef.current?.textContent ?? '');
                       setEditing(null);
                     }}
                     onKeyDown={(e) => {
@@ -315,29 +329,28 @@ export function TableView({
                         setEditing(null);
                       } else if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        commitCell(r, c, draft);
+                        commitCell(r, c, editorRef.current?.textContent ?? '');
                         setEditing(null);
                       } else if (e.key === 'Tab') {
                         e.preventDefault();
-                        commitCell(r, c, draft);
+                        commitCell(r, c, editorRef.current?.textContent ?? '');
                         const flat = r * cols + c + (e.shiftKey ? -1 : 1);
                         if (flat >= 0 && flat < rows * cols) {
                           const nr = Math.floor(flat / cols);
                           const nc = flat % cols;
-                          setDraft(element.cells[nr]?.[nc] ?? '');
+                          initialTextRef.current = element.cells[nr]?.[nc] ?? '';
                           setEditing({ r: nr, c: nc });
                         } else {
                           setEditing(null);
                         }
                       }
                     }}
-                    className="h-full w-full resize-none border-0 bg-transparent p-0 outline-none"
-                    style={{
-                      fontSize: fontPx,
-                      color: isHeader ? headerTextColor : textColor,
-                      textAlign: alignX,
-                      fontWeight: isHeader ? 700 : element.textBold ? 600 : 400,
-                    }}
+                    // A contentEditable flex child (not a full-bleed
+                    // textarea) so the cell's justify / align centre the
+                    // text on BOTH axes and it inherits the cell font —
+                    // editing looks identical to the static cell.
+                    className="max-w-full whitespace-pre-wrap break-words outline-none"
+                    style={{ textAlign: alignX, minWidth: '1ch' }}
                   />
                 ) : (
                   <span className="whitespace-pre-wrap break-words">{cell}</span>
@@ -375,40 +388,48 @@ export function TableView({
             ))}
           </div>
 
-          {/* Column triggers along the top edge of the grid. */}
-          {Array.from({ length: cols }, (_, c) => (
-            <div
-              key={`col-${c}`}
-              className="absolute top-0.5 -translate-x-1/2"
-              style={{ left: `${((c + 0.5) / cols) * 100}%` }}
-            >
-              <Trigger
-                open={menu?.axis === 'col' && menu.index === c}
-                onClick={() => toggle('col', c)}
-              />
-              {menu?.axis === 'col' && menu.index === c ? (
-                <div className="pointer-events-auto absolute left-1/2 top-7 z-30 w-36 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                  <MenuButton label="Insert left" onClick={() => apply(addTableColumn(element, c))}>
-                    <ArrowIcon dir="left" />
-                  </MenuButton>
-                  <MenuButton
-                    label="Insert right"
-                    onClick={() => apply(addTableColumn(element, c + 1))}
-                  >
-                    <ArrowIcon dir="right" />
-                  </MenuButton>
-                  <MenuButton
-                    label="Delete column"
-                    danger
-                    disabled={cols <= 1}
-                    onClick={() => apply(removeTableColumn(element, c))}
-                  >
-                    <TrashIcon />
-                  </MenuButton>
+          {/* Column triggers laid out on a grid mirroring the column
+              template so each stays centred over its column at any width
+              (including while a column is being resized). */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0.5 grid"
+            style={{ gridTemplateColumns: colTemplate }}
+          >
+            {Array.from({ length: cols }, (_, c) => (
+              <div key={`col-${c}`} className="flex min-w-0 justify-center">
+                <div className="relative">
+                  <Trigger
+                    open={menu?.axis === 'col' && menu.index === c}
+                    onClick={() => toggle('col', c)}
+                  />
+                  {menu?.axis === 'col' && menu.index === c ? (
+                    <div className="pointer-events-auto absolute left-1/2 top-7 z-30 w-36 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                      <MenuButton
+                        label="Insert left"
+                        onClick={() => apply(addTableColumn(element, c))}
+                      >
+                        <ArrowIcon dir="left" />
+                      </MenuButton>
+                      <MenuButton
+                        label="Insert right"
+                        onClick={() => apply(addTableColumn(element, c + 1))}
+                      >
+                        <ArrowIcon dir="right" />
+                      </MenuButton>
+                      <MenuButton
+                        label="Delete column"
+                        danger
+                        disabled={cols <= 1}
+                        onClick={() => apply(removeTableColumn(element, c))}
+                      >
+                        <TrashIcon />
+                      </MenuButton>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-          ))}
+              </div>
+            ))}
+          </div>
 
           {/* Row triggers along the left edge of the grid. */}
           {Array.from({ length: rows }, (_, r) => (
