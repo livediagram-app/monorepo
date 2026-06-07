@@ -23,6 +23,16 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
   const minimalPanels = settings.minimalPanels === true;
   const alignmentGuides = settings.alignmentGuides !== false;
 
+  // Single-open accordion: the title of the one expanded group (or null).
+  // Opening one collapses the rest. Starts on Canvas so the dialog lands
+  // with a section showing.
+  const [openGroup, setOpenGroup] = useState<string | null>('Canvas');
+  const groupProps = (title: string) => ({
+    title,
+    open: openGroup === title,
+    onToggle: () => setOpenGroup((g) => (g === title ? null : title)),
+  });
+
   return (
     <Portal>
       <div
@@ -53,7 +63,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
             </button>
           </header>
           <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
-            <SettingsGroup title="Canvas" defaultOpen>
+            <SettingsGroup {...groupProps('Canvas')}>
               <ToggleRow
                 label="Auto-attach arrows when elements move"
                 description="Arrows connected to a shape re-pin to whichever face reads most naturally as you drag. Turn off to keep arrow anchors fixed at whatever you chose originally."
@@ -82,7 +92,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                 }}
               />
             </SettingsGroup>
-            <SettingsGroup title="Interface">
+            <SettingsGroup {...groupProps('Interface')}>
               <ToggleRow
                 label="Minimal panel layout"
                 description="Replaces the floating Explorer, Palette, Editor, and AI panels with a compact button bar that opens each as a popover. Keeps the canvas uncluttered when you want more room to work. Always active on mobile regardless of this setting."
@@ -94,7 +104,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
               />
             </SettingsGroup>
             {aiCapable && (
-              <SettingsGroup title="AI">
+              <SettingsGroup {...groupProps('AI')}>
                 <ToggleRow
                   label="AI Assistant"
                   description="Shows an AI panel in the editor. Use it to generate new elements, amend or clean existing ones, or get a written review of your diagram. Off by default."
@@ -106,7 +116,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                 />
               </SettingsGroup>
             )}
-            <SettingsGroup title="Privacy">
+            <SettingsGroup {...groupProps('Privacy')}>
               <ToggleRow
                 label="Send anonymous usage events"
                 description="Sends the small, first-party events listed on /telemetry (no user content, no third-party trackers) so we can see which features actually help. Turn off to keep everything you do strictly on your device."
@@ -133,20 +143,20 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
 function SettingsGroup({
   title,
   children,
-  defaultOpen = false,
+  open,
+  onToggle,
 }: {
   title: string;
   children: React.ReactNode;
-  // Collapsed by default so the dialog opens compact; the first group
-  // (Canvas) passes `defaultOpen` so there's always one section showing.
-  defaultOpen?: boolean;
+  // Controlled by the dialog so only one group is open at a time.
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between px-4 py-2.5 text-left"
       >
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -154,7 +164,15 @@ function SettingsGroup({
         </span>
         <ChevronIcon open={open} />
       </button>
-      {open && <div className="flex flex-col gap-2 px-4 pb-3">{children}</div>}
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ease-out ${
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-2 px-4 pb-3">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

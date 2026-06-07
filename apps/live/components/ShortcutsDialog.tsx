@@ -83,6 +83,11 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
   // when those are disabled.
   useEscape(onClose, { capture: true, stopPropagation: true });
 
+  // Single-open accordion: the heading of the one expanded section (or
+  // null when all are collapsed). Opening one collapses the rest. Starts
+  // on the first section so the dialog lands with one group showing.
+  const [openHeading, setOpenHeading] = useState<string | null>(SECTIONS[0]?.heading ?? null);
+
   return (
     <div
       onClick={(e) => {
@@ -124,11 +129,18 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
           </button>
         </div>
         <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto px-5 py-1 dark:divide-slate-800">
-          {SECTIONS.map((section, si) => (
-            // Each section is a collapsible accordion. Only the first opens
-            // by default so the (long) list lands compact and the user
-            // expands the group they want.
-            <ShortcutSection key={section.heading} section={section} defaultOpen={si === 0} />
+          {SECTIONS.map((section) => (
+            // Each section is a collapsible accordion. One open at a time:
+            // opening a group collapses whichever was open, so the (long)
+            // list stays compact.
+            <ShortcutSection
+              key={section.heading}
+              section={section}
+              open={openHeading === section.heading}
+              onToggle={() =>
+                setOpenHeading((h) => (h === section.heading ? null : section.heading))
+              }
+            />
           ))}
         </div>
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/50">
@@ -168,17 +180,18 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
 
 function ShortcutSection({
   section,
-  defaultOpen = false,
+  open,
+  onToggle,
 }: {
   section: ShortcutSection;
-  defaultOpen?: boolean;
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between py-2 text-left"
       >
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
@@ -186,28 +199,34 @@ function ShortcutSection({
         </span>
         <ChevronIcon open={open} />
       </button>
-      {open && (
-        <ul className="flex flex-col divide-y divide-slate-100 pb-2 dark:divide-slate-800">
-          {section.rows.map((s) => (
-            <li
-              key={s.keys.join('+')}
-              className="flex items-center justify-between gap-3 py-1.5 text-xs"
-            >
-              <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
-              <span className="flex shrink-0 items-center gap-1">
-                {s.keys.map((k, i) => (
-                  <kbd
-                    key={`${k}-${i}`}
-                    className="inline-flex min-w-[1.4rem] items-center justify-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {k}
-                  </kbd>
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ease-out ${
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <ul className="flex flex-col divide-y divide-slate-100 pb-2 dark:divide-slate-800">
+            {section.rows.map((s) => (
+              <li
+                key={s.keys.join('+')}
+                className="flex items-center justify-between gap-3 py-1.5 text-xs"
+              >
+                <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
+                <span className="flex shrink-0 items-center gap-1">
+                  {s.keys.map((k, i) => (
+                    <kbd
+                      key={`${k}-${i}`}
+                      className="inline-flex min-w-[1.4rem] items-center justify-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                      {k}
+                    </kbd>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
