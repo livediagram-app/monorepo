@@ -456,9 +456,11 @@ export function deriveNewBoxedColours(
       colours.textColor = deriveTextColorForBg(bg);
     }
   } else if (base.type === 'table') {
-    // Cell text must contrast with the canvas; the slate default
-    // vanishes on a dark backdrop. (Grid lines use the slate-400
-    // default, which reads on both light and dark.)
+    // Give cells a solid background matching the canvas base colour so
+    // the backdrop pattern doesn't bleed through and make text hard to
+    // read; derive the text colour to contrast with it. (Grid lines use
+    // the slate-400 default, which reads on both light and dark.)
+    colours.fillColor = bg;
     colours.textColor = deriveTextColorForBg(bg);
   }
   // Theme overrides win. Sticky stays untouched (returns colours

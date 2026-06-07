@@ -148,9 +148,19 @@ export function commentRowsFromElements(elements: BoxedElement[]): CommentRow[] 
     }[];
     const latest = comments[comments.length - 1]!;
     const labelSource = (el as { label?: string }).label;
+    // Tables have no single label (the cells carry the text), so describe
+    // them as "Table" plus the first non-empty cell rather than a stray
+    // fallback.
+    let label: string;
+    if (el.type === 'table') {
+      const firstCell = el.cells.flat().find((c) => c.trim().length > 0);
+      label = firstCell ? `Table — ${firstCell.trim()}` : 'Table';
+    } else {
+      label = labelSource && labelSource.trim().length > 0 ? labelSource.trim() : 'Untitled';
+    }
     rows.push({
       elementId: el.id,
-      label: labelSource && labelSource.trim().length > 0 ? labelSource.trim() : 'Untitled',
+      label,
       count: comments.length,
       resolved: !!thread.resolved,
       latestAuthorName: latest.authorName,
