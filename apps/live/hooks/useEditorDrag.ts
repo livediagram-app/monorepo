@@ -78,6 +78,15 @@ function sameGuides(a: AlignmentGuide[], b: AlignmentGuide[]): boolean {
   return true;
 }
 
+// Screen-pixel distance the pointer must travel before a body drag
+// actually starts moving the element. Below this a press (even one that
+// wobbles a few pixels) just selects / opens the element for editing —
+// it never nudges it. Distance-based, not time-based: a fast flick still
+// covers far more than this, so real drags engage immediately. Resize /
+// rotate / arrow-endpoint grabs are deliberate handle pulls and aren't
+// gated.
+const DRAG_ENGAGE_PX = 4;
+
 // External state + callbacks the drag machine reads on every move.
 // Bundled into one object so the hook signature doesn't sprout
 // positional arguments as more inputs land; tracked via a ref so the
@@ -171,6 +180,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // rescheduled so only the latest guides land; the sameGuides guard then
   // skips the render when they're unchanged.
   const guideRafRef = useRef<number | null>(null);
+  // Whether the current body drag has crossed DRAG_ENGAGE_PX. Reset at the
+  // start of each gesture (in the move effect below); flipped true once the
+  // pointer travels far enough that the press is unambiguously a drag.
+  const dragEngagedRef = useRef(false);
   const scheduleGuides = (next: AlignmentGuide[]) => {
     if (guideRafRef.current !== null) cancelAnimationFrame(guideRafRef.current);
     guideRafRef.current = requestAnimationFrame(() => {
@@ -416,6 +429,9 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // active-tab swap) is reflected without re-attaching.
   useEffect(() => {
     if (!drag) return;
+    // Each new gesture starts un-engaged: a body move must cross
+    // DRAG_ENGAGE_PX before it nudges anything (see the move branch).
+    dragEngagedRef.current = false;
     // Cancel the drag immediately when a second touch finger lands — that
     // signals a pinch gesture, not a solo drag.
     const onSecondTouch = (e: PointerEvent) => {
@@ -453,6 +469,18 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
 
       if (drag.kind === 'boxed') {
         if (drag.mode === 'move') {
+          // Drag-engage threshold: until the pointer has travelled past
+          // DRAG_ENGAGE_PX (screen space), treat the press as a click —
+          // select / open-to-edit without moving anything. Once engaged it
+          // tracks the full delta from the start, so there's no jump.
+          if (!dragEngagedRef.current) {
+            const travelled = Math.hypot(
+              e.clientX - drag.startClientX,
+              e.clientY - drag.startClientY,
+            );
+            if (travelled < DRAG_ENGAGE_PX) return;
+            dragEngagedRef.current = true;
+          }
           // Snap the primary's candidate bounds to align with other
           // elements' edges / centres; apply the same nudge to every
           // group member so they translate together.
