@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useEscape } from '@/hooks/useEscape';
 
 // Keyboard shortcut catalogue + per-device disable toggle. The
@@ -122,33 +123,12 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
             </svg>
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
+        <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto px-5 py-1 dark:divide-slate-800">
           {SECTIONS.map((section, si) => (
-            <div key={section.heading} className={si > 0 ? 'mt-4' : undefined}>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {section.heading}
-              </p>
-              <ul className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
-                {section.rows.map((s) => (
-                  <li
-                    key={s.keys.join('+')}
-                    className="flex items-center justify-between gap-3 py-1.5 text-xs"
-                  >
-                    <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {s.keys.map((k, i) => (
-                        <kbd
-                          key={`${k}-${i}`}
-                          className="inline-flex min-w-[1.4rem] items-center justify-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        >
-                          {k}
-                        </kbd>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            // Each section is a collapsible accordion. Only the first opens
+            // by default so the (long) list lands compact and the user
+            // expands the group they want.
+            <ShortcutSection key={section.heading} section={section} defaultOpen={si === 0} />
           ))}
         </div>
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/50">
@@ -183,5 +163,70 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
         </div>
       </div>
     </div>
+  );
+}
+
+function ShortcutSection({
+  section,
+  defaultOpen = false,
+}: {
+  section: ShortcutSection;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between py-2 text-left"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          {section.heading}
+        </span>
+        <ChevronIcon open={open} />
+      </button>
+      {open && (
+        <ul className="flex flex-col divide-y divide-slate-100 pb-2 dark:divide-slate-800">
+          {section.rows.map((s) => (
+            <li
+              key={s.keys.join('+')}
+              className="flex items-center justify-between gap-3 py-1.5 text-xs"
+            >
+              <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
+              <span className="flex shrink-0 items-center gap-1">
+                {s.keys.map((k, i) => (
+                  <kbd
+                    key={`${k}-${i}`}
+                    className="inline-flex min-w-[1.4rem] items-center justify-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    {k}
+                  </kbd>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={`text-slate-400 transition-transform duration-150 dark:text-slate-500 ${open ? 'rotate-180' : ''}`}
+    >
+      <path d="M2 4l4 4 4-4" />
+    </svg>
   );
 }
