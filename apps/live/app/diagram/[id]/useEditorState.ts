@@ -105,6 +105,12 @@ import { useEditorViewport } from '@/hooks/useEditorViewport';
 import { useCanvasPinchZoom } from '@/hooks/useCanvasPinchZoom';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { statusFromIdleMs, type Participant } from '@/lib/identity';
+import {
+  buildLaserTrailRows,
+  buildParticipantsByTab,
+  buildRemoteCursorRows,
+  buildRemoteSelectionsByElement,
+} from '@/lib/presence-rows';
 import { markNameConfirmed } from '@/lib/local-identity';
 import {
   apiDismissSharedWith,
@@ -893,75 +899,25 @@ export function useEditorState() {
   // is 'online' (green ring), a participant on any other tab is
   // 'away' (orange ring). Cheap signal that someone's not where you
   // are right now without leaving the TabBar.
-  const participantsByTab = (() => {
-    const map = new Map<string, Participant[]>();
-    // Private diagrams have no collaborators by definition, so the
-    // avatar row on the tab strip would just be a redundant "you're
-    // here" indicator. Skip it entirely until the diagram is shared.
-    if (!diagramShareable) return map;
-    const now = Date.now();
-    map.set(activeId, [
-      // Self is always "online" (you can't be idle to yourself in
-      // any useful sense), with lastActiveAt at "now" so the tooltip
-      // reads "Active just now".
-      { ...selfParticipant, status: 'online', lastActiveAt: now },
-    ]);
-    // Build a local view of "who's on which tab" that defaults any
-    // joiner whose tab-focus op hasn't arrived yet to the first tab
-    // (every visitor lands on tabs[0] by default unless they came in
-    // via a tab hash). Without this fallback a new joiner's avatar
-    // is invisible until they switch tabs once, even though their
-    // presence row already arrived. We derive a fresh Map rather
-    // than mutating `remoteTabFocus` state from a render callback.
-    const defaultTabId = tabs[0]?.id ?? activeId;
-    const tabFocus = new Map<string, string>(remoteTabFocus);
-    for (const p of livePresence) {
-      if (p.id === selfParticipant.id) continue;
-      if (!tabFocus.has(p.id)) tabFocus.set(p.id, defaultTabId);
-    }
-    for (const [id, tabId] of tabFocus) {
-      if (id === selfParticipant.id) continue;
-      const p = livePresenceById.get(id);
-      if (!p) continue;
-      // Combine the two presence signals: tab-focus (are they on my
-      // tab) and idle (how long since their last op). Idle wins when
-      // it's worse — a peer who's gone idle for an hour is "offline"
-      // no matter which tab they were last on. Otherwise the
-      // historical "on my tab → online, on another tab → away"
-      // signal applies.
-      const lastActiveAt = lastSeenRef.current.get(id) ?? now;
-      const idleStatus = statusFromIdleMs(now - lastActiveAt);
-      const status =
-        idleStatus === 'offline'
-          ? 'offline'
-          : idleStatus === 'away'
-            ? 'away'
-            : tabId === activeId
-              ? 'online'
-              : 'away';
-      const withStatus: Participant = { ...p, status, lastActiveAt };
-      const bucket = map.get(tabId);
-      if (bucket) bucket.push(withStatus);
-      else map.set(tabId, [withStatus]);
-    }
-    return map;
-  })();
+  const participantsByTab = buildParticipantsByTab({
+    diagramShareable,
+    activeId,
+    selfParticipant,
+    tabs,
+    remoteTabFocus,
+    livePresence,
+    livePresenceById,
+    lastSeen: lastSeenRef.current,
+    now: Date.now(),
+  });
   // Cursor rows joined with presence so we get a fresh colour + name on
   // every render and don't have to denormalise them into each `cursor`
   // op payload. Filter to the active tab so cursors of teammates
   // looking at a different tab don't bleed onto this one.
-  const remoteCursorRows = useMemo(() => {
-    const rows: { id: string; name: string; color: string; x: number; y: number }[] = [];
-    for (const [id, pos] of remoteCursors) {
-      if (!pos) continue;
-      if (id === selfParticipant.id) continue;
-      if (pos.tabId !== activeId) continue;
-      const p = livePresenceById.get(id);
-      if (!p) continue;
-      rows.push({ id, name: p.name, color: p.color, x: pos.x, y: pos.y });
-    }
-    return rows;
-  }, [remoteCursors, livePresenceById, selfParticipant.id, activeId]);
+  const remoteCursorRows = useMemo(
+    () => buildRemoteCursorRows(remoteCursors, livePresenceById, selfParticipant.id, activeId),
+    [remoteCursors, livePresenceById, selfParticipant.id, activeId],
+  );
   // Laser trails for the LaserOverlay — local first, then any peers
   // whose latest sample is on the active tab and whose participant
   // entry is still live. The overlay handles fade + cleanup; we just
@@ -979,48 +935,29 @@ export function useEditorState() {
     return commentRowsFromElements(boxed);
   }, [activeTab.elements]);
 
-  const laserTrailRows = useMemo(() => {
-    const rows: {
-      participantId: string;
-      color: string;
-      points: LaserPoint[];
-    }[] = [];
-    if (localLaserTrail.length > 0) {
-      rows.push({
-        participantId: selfParticipant.id,
-        color: selfParticipant.color,
-        points: localLaserTrail,
-      });
-    }
-    for (const [id, entry] of remoteLaserTrails) {
-      if (id === selfParticipant.id) continue;
-      if (entry.tabId !== activeId) continue;
-      const p = livePresenceById.get(id);
-      if (!p) continue;
-      rows.push({ participantId: id, color: p.color, points: entry.points });
-    }
-    return rows;
-  }, [
-    localLaserTrail,
-    remoteLaserTrails,
-    livePresenceById,
-    selfParticipant.id,
-    selfParticipant.color,
-    activeId,
-  ]);
-  const remoteSelectionsByElement = useMemo(() => {
-    const out = new Map<string, { id: string; name: string; color: string }[]>();
-    for (const [participantId, elementId] of remoteSelections) {
-      if (!elementId) continue;
-      if (participantId === selfParticipant.id) continue;
-      const participant = livePresenceById.get(participantId);
-      if (!participant) continue;
-      const list = out.get(elementId) ?? [];
-      list.push({ id: participant.id, name: participant.name, color: participant.color });
-      out.set(elementId, list);
-    }
-    return out;
-  }, [remoteSelections, livePresenceById, selfParticipant.id]);
+  const laserTrailRows = useMemo(
+    () =>
+      buildLaserTrailRows({
+        localLaserTrail,
+        remoteLaserTrails,
+        livePresenceById,
+        selfId: selfParticipant.id,
+        selfColor: selfParticipant.color,
+        activeId,
+      }),
+    [
+      localLaserTrail,
+      remoteLaserTrails,
+      livePresenceById,
+      selfParticipant.id,
+      selfParticipant.color,
+      activeId,
+    ],
+  );
+  const remoteSelectionsByElement = useMemo(
+    () => buildRemoteSelectionsByElement(remoteSelections, livePresenceById, selfParticipant.id),
+    [remoteSelections, livePresenceById, selfParticipant.id],
+  );
   // True only while the first-run welcome modal is up. Drives the chrome
   // hide rule (palette / explorer / dock / tab bar all suppressed so the
   // user's focus is on the modal). The Browse-templates flow uses the
