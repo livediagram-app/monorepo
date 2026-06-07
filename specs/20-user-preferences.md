@@ -187,9 +187,11 @@ behaviour is friction the tool's banner already solves.
   flip their own telemetry preference and (harmlessly) their own
   auto-rebind preference, even though they can't edit elements.
   Toggles are organised into collapsible groups (Canvas, Interface,
-  AI, Privacy) so the growing list stays scannable; each group
-  defaults open. The Interface group holds `minimalPanels`, whose
-  description notes the dock layout is always on for mobile.
+  AI, Privacy) so the growing list stays scannable; only the first
+  group (Canvas) is open by default and the rest start collapsed, so
+  the dialog opens compact and the user expands what they need. The
+  Interface group holds `minimalPanels`, whose description notes the
+  dock layout is always on for mobile.
 - **Per-tool surfaces**: today only the pencil's ModeBanner (a
   sparkle / magic-wand icon button to the left of Cancel) carries
   the `recogniseShapes` toggle. The button reads the value from

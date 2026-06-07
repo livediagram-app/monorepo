@@ -52,7 +52,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
             </button>
           </header>
           <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
-            <SettingsGroup title="Canvas">
+            <SettingsGroup title="Canvas" defaultOpen>
               <ToggleRow
                 label="Auto-attach arrows when elements move"
                 description="Arrows connected to a shape re-pin to whichever face reads most naturally as you drag. Turn off to keep arrow anchors fixed at whatever you chose originally."
@@ -120,8 +120,18 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
   );
 }
 
-function SettingsGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+function SettingsGroup({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  // Collapsed by default so the dialog opens compact; the first group
+  // (Canvas) passes `defaultOpen` so there's always one section showing.
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
       <button
