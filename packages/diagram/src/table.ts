@@ -163,3 +163,30 @@ function setCellStyleRaw(
   );
   return { ...t, cellStyles };
 }
+
+function moveInArray<T>(arr: T[], from: number, to: number): T[] {
+  const a = [...arr];
+  const [x] = a.splice(from, 1);
+  a.splice(to, 0, x as T);
+  return a;
+}
+
+// Reorder a column / row to a new index, carrying its width/height +
+// cell styles along.
+export function moveTableColumn(t: TableElement, from: number, to: number): TableElement {
+  const cols = tableColCount(t);
+  if (from === to || from < 0 || from >= cols || to < 0 || to >= cols) return t;
+  const cells = t.cells.map((row) => moveInArray(row, from, to));
+  const colWidths = t.colWidths ? moveInArray(t.colWidths, from, to) : t.colWidths;
+  const cellStyles = t.cellStyles ? t.cellStyles.map((row) => moveInArray(row, from, to)) : t.cellStyles;
+  return { ...t, cells, colWidths, cellStyles };
+}
+
+export function moveTableRow(t: TableElement, from: number, to: number): TableElement {
+  const rows = t.cells.length;
+  if (from === to || from < 0 || from >= rows || to < 0 || to >= rows) return t;
+  const cells = moveInArray(t.cells, from, to);
+  const rowHeights = t.rowHeights ? moveInArray(t.rowHeights, from, to) : t.rowHeights;
+  const cellStyles = t.cellStyles ? moveInArray(t.cellStyles, from, to) : t.cellStyles;
+  return { ...t, cells, rowHeights, cellStyles };
+}
