@@ -15,9 +15,9 @@ import { useRef } from 'react';
 import { autoAlignElements } from '@/lib/auto-align';
 import {
   getTheme,
-  resetThemeElement,
+  resetThemeElementsToTheme,
   switchThemeBackdrop,
-  switchThemeElement,
+  switchThemeElements,
   THEMES,
   type ThemeId,
 } from '@/lib/themes';
@@ -151,8 +151,10 @@ export function useTabCanvas(deps: TabCanvasDeps) {
         // Per-field, preserve-customs walk. See `switchThemeElement`
         // in lib/themes.ts for the rule (a field is replaced when
         // it's unset or still matches the previous theme's value,
-        // and kept when the user has set it to something else).
-        const elements = t.elements.map((el) => switchThemeElement(el, prevTheme, theme));
+        // and kept when the user has set it to something else). The
+        // graph-aware wrapper additionally rainbows the branches when
+        // either side is a multi-colour theme (spec/29).
+        const elements = switchThemeElements(t.elements, prevTheme, theme);
         // Backdrop follows the same preserve-customs rule as the
         // elements: a deliberately-chosen pattern / colour survives a
         // theme change instead of being reset to the theme's backdrop.
@@ -181,8 +183,9 @@ export function useTabCanvas(deps: TabCanvasDeps) {
       ts.map((t) => {
         if (t.id !== activeId) return t;
         // Hard reset: blank user overrides too. See `resetThemeElement`
-        // in lib/themes.ts for the rule.
-        const elements = t.elements.map((el) => resetThemeElement(el, theme));
+        // in lib/themes.ts for the rule. The graph-aware wrapper
+        // re-rainbows the branches for a multi-colour theme (spec/29).
+        const elements = resetThemeElementsToTheme(t.elements, theme);
         return { ...t, elements };
       }),
     );

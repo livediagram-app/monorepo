@@ -33,7 +33,7 @@ const FAQS: { q: string; a: ReactNode; aText?: string }[] = [
   },
   {
     q: 'What can I make with it?',
-    a: 'Flowcharts, mind maps, org charts, retrospectives, kanban boards, SWOT grids, timelines, Gantt charts, flywheels, editable tables, and UI wireframes for browser, laptop, phone and tablet screens. Nineteen starter templates and eighteen themes get you going in seconds.',
+    a: 'Flowcharts, mind maps, org charts, retrospectives, kanban boards, SWOT grids, timelines, Gantt charts, flywheels, editable tables, and UI wireframes for browser, laptop, phone and tablet screens. Nineteen starter templates and twenty-one themes get you going in seconds.',
   },
   {
     q: 'Can I work on a diagram with my team?',

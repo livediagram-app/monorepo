@@ -7,6 +7,7 @@ import {
   type BoxedElement,
   type Element,
 } from '@livediagram/diagram';
+import { assignBranches, branchOfArrow, ROOT_BRANCH } from './hierarchy';
 
 // A preset theme bundles a canvas backdrop (background colour + pattern +
 // pattern colour) with the default colours used for newly added boxed
@@ -33,7 +34,23 @@ export type ThemeId =
   | 'pine'
   | 'steel'
   | 'mocha'
-  | 'charcoal';
+  | 'charcoal'
+  // Multi-colour ("rainbow") themes — see spec/29. Each carries a
+  // `palette` so branches of the hierarchy get distinct hues.
+  | 'rainbow'
+  | 'pastel'
+  | 'tropical';
+
+// One branch colour for a multi-colour theme: the fill / stroke / text
+// triple a single limb of the hierarchy is painted with. Unlike the
+// single-colour `elementFill` etc. fields (which are nullable to let the
+// brand theme defer to type-defaults), a palette entry is always a
+// concrete colour — a palette theme always paints.
+export type ThemePaletteEntry = {
+  fill: string;
+  stroke: string;
+  text: string;
+};
 
 export type ThemeDefinition = {
   id: ThemeId;
@@ -48,6 +65,13 @@ export type ThemeDefinition = {
   elementFill: string | null;
   elementStroke: string | null;
   elementText: string | null;
+  // Multi-colour themes (spec/29) carry a palette: an ordered list of
+  // branch colours that the hierarchy cycles through
+  // (palette[branchIndex % palette.length]), plus a `rootColor` for the
+  // trunk (root nodes + not-yet-connected elements). Absent on
+  // single-colour themes, which keep painting via elementFill/Stroke/Text.
+  palette?: ThemePaletteEntry[];
+  rootColor?: ThemePaletteEntry;
   // True for themes that sit behind the picker's "Show more" toggle —
   // both in the welcome / template picker AND in the Current Tab theme
   // grid. The default twelve render in the first batch; extras unlock
@@ -250,6 +274,78 @@ export const THEMES: ThemeDefinition[] = [
     elementText: '#f4f4f5',
     extra: true,
   },
+  // --- Multi-colour themes (spec/29) ---------------------------------
+  // Each tints a different branch of the hierarchy with its own hue.
+  // `elementFill / -Stroke / -Text` mirror the `rootColor` so any code
+  // path that reads the single-colour fields (or a non-hierarchy
+  // diagram) still gets a sensible neutral.
+  {
+    id: 'rainbow',
+    label: 'Rainbow',
+    backgroundColor: '#ffffff',
+    backgroundPattern: 'grid',
+    patternColor: '#e2e8f0',
+    elementFill: '#f1f5f9',
+    elementStroke: '#475569',
+    elementText: '#0f172a',
+    rootColor: { fill: '#f1f5f9', stroke: '#475569', text: '#0f172a' },
+    // A saturated six-hue spectrum: red → orange → amber → green →
+    // blue → violet. Light tinted fills with a deep stroke + text so
+    // labels stay legible on white.
+    palette: [
+      { fill: '#fee2e2', stroke: '#dc2626', text: '#7f1d1d' },
+      { fill: '#ffedd5', stroke: '#ea580c', text: '#7c2d12' },
+      { fill: '#fef9c3', stroke: '#ca8a04', text: '#713f12' },
+      { fill: '#dcfce7', stroke: '#16a34a', text: '#14532d' },
+      { fill: '#dbeafe', stroke: '#2563eb', text: '#1e3a8a' },
+      { fill: '#f3e8ff', stroke: '#9333ea', text: '#581c87' },
+    ],
+    extra: true,
+  },
+  {
+    id: 'pastel',
+    label: 'Pastel',
+    backgroundColor: '#fafafa',
+    backgroundPattern: 'grid',
+    patternColor: '#e5e7eb',
+    elementFill: '#f4f4f5',
+    elementStroke: '#a1a1aa',
+    elementText: '#3f3f46',
+    rootColor: { fill: '#f4f4f5', stroke: '#a1a1aa', text: '#3f3f46' },
+    // The same wheel as Rainbow but softer: lighter strokes, gentler
+    // fills, for a calmer multi-colour look.
+    palette: [
+      { fill: '#ffe4e6', stroke: '#fb7185', text: '#9f1239' },
+      { fill: '#ffedd5', stroke: '#fb923c', text: '#9a3412' },
+      { fill: '#fef9c3', stroke: '#facc15', text: '#854d0e' },
+      { fill: '#d1fae5', stroke: '#34d399', text: '#065f46' },
+      { fill: '#e0f2fe', stroke: '#38bdf8', text: '#075985' },
+      { fill: '#ede9fe', stroke: '#a78bfa', text: '#5b21b6' },
+    ],
+    extra: true,
+  },
+  {
+    id: 'tropical',
+    label: 'Tropical',
+    backgroundColor: '#ffffff',
+    backgroundPattern: 'grid',
+    patternColor: '#e2e8f0',
+    elementFill: '#f1f5f9',
+    elementStroke: '#475569',
+    elementText: '#0f172a',
+    rootColor: { fill: '#f1f5f9', stroke: '#475569', text: '#0f172a' },
+    // A vivid teal → cyan → lime → orange → pink → violet spread; reads
+    // brighter and more "summery" than Rainbow's primary-colour wheel.
+    palette: [
+      { fill: '#ccfbf1', stroke: '#0d9488', text: '#134e4a' },
+      { fill: '#cffafe', stroke: '#0891b2', text: '#155e75' },
+      { fill: '#ecfccb', stroke: '#65a30d', text: '#365314' },
+      { fill: '#ffedd5', stroke: '#f97316', text: '#7c2d12' },
+      { fill: '#fce7f3', stroke: '#db2777', text: '#831843' },
+      { fill: '#ede9fe', stroke: '#7c3aed', text: '#4c1d95' },
+    ],
+    extra: true,
+  },
 ];
 
 export function getTheme(id: string | undefined): ThemeDefinition {
@@ -443,6 +539,98 @@ export function resetThemeElement(el: Element, theme: ThemeDefinition): Element 
     patch[element] = theme[themeKey] ?? undefined;
   }
   return { ...el, ...patch } as Element;
+}
+
+// --- Multi-colour ("rainbow") themes (spec/29) -----------------------
+//
+// A palette theme paints each branch of the hierarchy a different hue
+// instead of one colour for everything. Branch assignment needs the
+// WHOLE element list (to read the pinned-arrow graph), so the three
+// transforms above — which are per-element — can't express it directly.
+//
+// The trick: for a palette theme we resolve each element's branch
+// colours and hand the existing per-element transform a SYNTHETIC theme
+// whose elementFill / -Stroke / -Text are that element's branch colours.
+// Every existing rule (sticky / image opt-out, themeLockFill, the table
+// backdrop handling) then applies unchanged — there's no second code
+// path to keep in sync. Single-colour themes skip all of this and fall
+// straight through to the per-element helpers.
+
+// The branch colours a given element should be painted with under a
+// palette theme: the palette entry for its branch, or the trunk colour
+// (rootColor) for root + not-yet-connected elements.
+function branchEntryFor(
+  theme: ThemeDefinition,
+  el: Element,
+  branches: Map<string, number>,
+): ThemePaletteEntry {
+  const palette = theme.palette!;
+  const root = theme.rootColor ?? {
+    fill: theme.elementFill ?? '#f1f5f9',
+    stroke: theme.elementStroke ?? '#475569',
+    text: theme.elementText ?? '#0f172a',
+  };
+  const index =
+    el.type === 'arrow' ? branchOfArrow(el, branches) : (branches.get(el.id) ?? ROOT_BRANCH);
+  if (index === ROOT_BRANCH) return root;
+  // Guard against an empty palette + negative modulo.
+  const i = ((index % palette.length) + palette.length) % palette.length;
+  return palette[i] ?? root;
+}
+
+// A per-element theme view: the same theme, but with its single-colour
+// element fields swapped for this element's branch colours. Identity for
+// single-colour themes (no palette).
+function elementThemeView(
+  theme: ThemeDefinition,
+  el: Element,
+  branches: Map<string, number> | null,
+): ThemeDefinition {
+  if (!theme.palette || !branches) return theme;
+  const entry = branchEntryFor(theme, el, branches);
+  return {
+    ...theme,
+    elementFill: entry.fill,
+    elementStroke: entry.stroke,
+    elementText: entry.text,
+  };
+}
+
+// Graph-aware counterpart to `recolourElementForTheme`: paints a fresh
+// scaffold (template / Markdown import) with a theme, rainbowing the
+// branches when the theme has a palette. Used by every "apply a theme to
+// these elements" path so single- and multi-colour themes share one
+// entry point.
+export function recolourElementsForTheme(elements: Element[], theme: ThemeDefinition): Element[] {
+  const branches = theme.palette ? assignBranches(elements) : null;
+  return elements.map((el) => recolourElementForTheme(el, elementThemeView(theme, el, branches)));
+}
+
+// Graph-aware counterpart to `switchThemeElement`: the in-editor
+// "pick a theme" path. Computes the branch map once per side (only when
+// that side is a palette theme) so the preserve-customs comparison sees
+// the right per-element colours.
+export function switchThemeElements(
+  elements: Element[],
+  prev: ThemeDefinition,
+  next: ThemeDefinition,
+): Element[] {
+  const prevBranches = prev.palette ? assignBranches(elements) : null;
+  const nextBranches = next.palette ? assignBranches(elements) : null;
+  return elements.map((el) =>
+    switchThemeElement(
+      el,
+      elementThemeView(prev, el, prevBranches),
+      elementThemeView(next, el, nextBranches),
+    ),
+  );
+}
+
+// Graph-aware counterpart to `resetThemeElement`: the "Reset elements to
+// theme" button. Force-repaints every branch from the palette.
+export function resetThemeElementsToTheme(elements: Element[], theme: ThemeDefinition): Element[] {
+  const branches = theme.palette ? assignBranches(elements) : null;
+  return elements.map((el) => resetThemeElement(el, elementThemeView(theme, el, branches)));
 }
 
 // Colour projection for a NEWLY-added boxed element, given the

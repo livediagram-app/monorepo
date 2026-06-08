@@ -4,6 +4,7 @@ import type {} from '@livediagram/diagram';
 import { THEMES } from '@/lib/themes';
 import { AutoAlignIcon, DotsIcon, ResetIcon, ScaleIcon } from './palette-icons';
 import { ShowMoreButton } from './ShowMoreButton';
+import { ThemeSwatch } from './ThemeSwatch';
 import { Tooltip } from './Tooltip';
 import { FontSelect } from './FontSelect';
 
@@ -54,15 +55,15 @@ export function TabSection({
         <div className="mt-1 grid grid-cols-3 gap-1">
           {themesList.visible.map((t) => {
             const active = tab.themeId === t.id;
-            // Border / dot colours come from the theme's element-stroke (or
-            // pattern colour when the theme is the brand default).
-            const dot = t.elementStroke ?? t.patternColor;
-            const swatch = t.elementFill ?? '#ffffff';
             return (
               <Tooltip
                 key={t.id}
                 title={t.label}
-                description="Applies the theme's background and new-element colours."
+                description={
+                  t.palette
+                    ? 'A multi-colour theme: tints each branch of the hierarchy a different hue.'
+                    : "Applies the theme's background and new-element colours."
+                }
                 block
               >
                 <button
@@ -75,16 +76,7 @@ export function TabSection({
                       : 'flex w-full flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15'
                   }
                 >
-                  <span
-                    aria-hidden
-                    style={{ backgroundColor: t.backgroundColor }}
-                    className="flex h-7 w-full items-center justify-center rounded-sm border border-slate-200 dark:border-slate-700"
-                  >
-                    <span
-                      style={{ backgroundColor: swatch, borderColor: dot }}
-                      className="h-3 w-3 rounded-sm border"
-                    />
-                  </span>
+                  <ThemeSwatch theme={t} size="sm" />
                   <span>{t.label}</span>
                 </button>
               </Tooltip>

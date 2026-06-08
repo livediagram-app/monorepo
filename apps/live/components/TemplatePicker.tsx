@@ -15,6 +15,7 @@ const TEMPLATE_VISIBLE_COUNT = TEMPLATES.filter((t) => !t.extra).length;
 const THEME_VISIBLE_COUNT = THEMES.filter((t) => !t.extra).length;
 import { ShowMoreButton } from './ShowMoreButton';
 import { TemplatePreview } from './template-preview';
+import { ThemeSwatch } from './ThemeSwatch';
 import { Tooltip } from './Tooltip';
 
 type TemplatePickerProps = {
@@ -260,8 +261,6 @@ export function TemplatePicker({
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {themePicker.visible.map((t) => {
                   const active = themeId === t.id;
-                  const dot = t.elementStroke ?? t.patternColor;
-                  const swatch = t.elementFill ?? '#ffffff';
                   return (
                     <button
                       key={t.id}
@@ -274,16 +273,7 @@ export function TemplatePicker({
                           : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
                       }
                     >
-                      <span
-                        aria-hidden
-                        style={{ backgroundColor: t.backgroundColor }}
-                        className="flex h-8 w-full items-center justify-center rounded-sm border border-slate-200 dark:border-slate-700"
-                      >
-                        <span
-                          style={{ backgroundColor: swatch, borderColor: dot }}
-                          className="h-3.5 w-3.5 rounded-sm border"
-                        />
-                      </span>
+                      <ThemeSwatch theme={t} size="md" />
                       <span>{t.label}</span>
                     </button>
                   );

@@ -20,7 +20,7 @@ import {
   type Element,
   type Tab,
 } from '@livediagram/diagram';
-import { getTheme, recolourElementForTheme, type ThemeId } from './themes';
+import { getTheme, recolourElementsForTheme, type ThemeId } from './themes';
 import { templateCanvasOverrides, type TemplateKind } from './templates';
 import {
   buildLaptopWireframe,
@@ -41,7 +41,10 @@ export function buildTemplatedTab(
 ): Tab {
   const theme = getTheme(themeId);
   const rawElements = buildTemplate(kind, 0, 0);
-  const elements = rawElements.map((el) => recolourElementForTheme(el, theme));
+  // Graph-aware recolour so multi-colour themes (spec/29) can tint each
+  // branch of the scaffold a distinct hue; single-colour themes fall
+  // straight through to the per-element transform.
+  const elements = recolourElementsForTheme(rawElements, theme);
   return {
     id: tabId,
     name: tabName,

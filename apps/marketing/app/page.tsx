@@ -114,9 +114,9 @@ export default function LandingPage() {
               },
               {
                 art: <ThemesArt />,
-                title: 'Eighteen preset themes',
+                title: 'Twenty-one preset themes',
                 description:
-                  'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
+                  'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more — plus multi-colour Rainbow themes that tint each branch a different hue. One click recolours the canvas, every shape, and every arrow.',
               },
               {
                 art: <FontsArt />,

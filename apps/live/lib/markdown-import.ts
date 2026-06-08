@@ -24,7 +24,7 @@ import {
   type TextSize,
   type Tab,
 } from '@livediagram/diagram';
-import { getTheme, recolourElementForTheme } from './themes';
+import { getTheme, recolourElementsForTheme } from './themes';
 
 // ---------------------------------------------------------------------
 // Parse
@@ -317,7 +317,10 @@ export function buildTabFromMarkdown(
   }
 
   const theme = getTheme(themeId);
-  const themed = elements.map((el) => recolourElementForTheme(el, theme));
+  // Graph-aware recolour: an imported outline is a tree of pinned
+  // arrows, so a multi-colour theme (spec/29) tints each top-level
+  // branch its own hue.
+  const themed = recolourElementsForTheme(elements, theme);
 
   return {
     ok: true,

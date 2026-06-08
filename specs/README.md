@@ -37,6 +37,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 26  | [Zen mode](26-zen-mode.md)                                         | Distraction-free focus mode: hide all chrome, keep canvas + zoom   |
 | 27  | [Markdown import](27-markdown-import.md)                           | Import Markdown outlines (XMind etc.) into a themed tree diagram   |
 | 28  | [Fonts](28-fonts.md)                                               | Eight Google Fonts, pickable per element + as a per-tab default    |
+| 29  | [Multi-colour themes](29-multicolour-themes.md)                    | Rainbow/palette themes that tint each hierarchy branch a hue       |
 
 ## Workflow
 

@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { Tab } from '@livediagram/diagram';
 import { track, titleCaseType } from '@/lib/telemetry';
-import { getTheme, recolourElementForTheme, THEMES, type ThemeId } from '@/lib/themes';
+import { getTheme, recolourElementsForTheme, THEMES, type ThemeId } from '@/lib/themes';
 import { templateCanvasOverrides, type TemplateKind } from '@/lib/templates';
 import type { Participant } from '@/lib/identity';
 import { patchTab } from './editor-page-helpers';
@@ -105,9 +105,10 @@ export function useTemplateFlow(opts: {
     // mindmap / flowchart / flywheel templates picked from inside
     // the editor stayed brand-blue instead of inheriting the
     // theme's stroke colour.
-    const elements = !theme
-      ? rawElements
-      : rawElements.map((el) => recolourElementForTheme(el, theme));
+    // Graph-aware recolour (multi-colour themes tint each branch a
+    // different hue — spec/29); single-colour themes fall through to the
+    // per-element transform unchanged.
+    const elements = !theme ? rawElements : recolourElementsForTheme(rawElements, theme);
     // Apply the picker's theme choice at the same time as the
     // template scaffold so the user lands on a fully themed canvas
     // in one step instead of having to revisit the Theme accordion.

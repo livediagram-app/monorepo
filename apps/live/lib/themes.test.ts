@@ -8,14 +8,18 @@ import type {
   TextElement,
 } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
+import { createPinnedArrow, createShape } from '@livediagram/diagram';
 import {
   THEMES,
   deriveNewBoxedColours,
   getTheme,
   recolourElementForTheme,
+  recolourElementsForTheme,
   resetThemeElement,
+  resetThemeElementsToTheme,
   switchThemeBackdrop,
   switchThemeElement,
+  switchThemeElements,
   type ThemeDefinition,
 } from './themes';
 
@@ -38,24 +42,23 @@ describe('THEMES catalogue', () => {
     }
   });
 
-  // spec/16-marketing-site.md claims "18 themes (12 default + 6
+  // spec/16-marketing-site.md claims "21 themes (12 default + 9
   // extra)". The marketing site cites the number directly in its
   // copy and the welcome picker gates the extras behind a "Show
   // more" toggle (apps/live/components/TemplatePicker.tsx +
   // hooks/useShowMoreList.ts). If the catalogue drifts from those
-  // counts the spec stops being accurate and the picker's two-row
-  // visual cadence breaks (the extras row currently fills cleanly
-  // with 6 entries). Mirrors the equivalent assertions in
-  // templates.test.ts.
-  it('lists exactly 18 themes (matches spec/16)', () => {
-    expect(THEMES).toHaveLength(18);
+  // counts the spec stops being accurate. The nine extras include the
+  // three multi-colour themes added in spec/29. Mirrors the equivalent
+  // assertions in templates.test.ts.
+  it('lists exactly 21 themes (matches spec/16)', () => {
+    expect(THEMES).toHaveLength(21);
   });
 
-  it('splits cleanly into 12 default + 6 extra (the picker uses `extra` to gate behind "Show more")', () => {
+  it('splits cleanly into 12 default + 9 extra (the picker uses `extra` to gate behind "Show more")', () => {
     const defaults = THEMES.filter((t) => !t.extra);
     const extras = THEMES.filter((t) => t.extra);
     expect(defaults).toHaveLength(12);
-    expect(extras).toHaveLength(6);
+    expect(extras).toHaveLength(9);
   });
 
   it('keeps the brand theme out of the "extras" bucket (it must be visible without expanding)', () => {
@@ -684,5 +687,100 @@ describe('deriveNewBoxedColours', () => {
   it('treats undefined tab fields as design defaults (no NPE on a fresh tab)', () => {
     expect(deriveNewBoxedColours(shape, {})).toEqual({});
     expect(deriveNewBoxedColours(text, {})).toEqual({});
+  });
+
+  it('gives a new element the trunk (rootColor) under a multi-colour theme', () => {
+    // A brand-new element isn't in the arrow graph yet, so it should
+    // pick up the palette theme's neutral trunk (mirrored into the
+    // single-colour element fields). See spec/29.
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    const out = deriveNewBoxedColours(shape, { theme: 'rainbow' });
+    expect(out.fillColor).toBe(rainbow.rootColor!.fill);
+    expect(out.strokeColor).toBe(rainbow.rootColor!.stroke);
+    expect(out.textColor).toBe(rainbow.rootColor!.text);
+  });
+});
+
+describe('multi-colour (rainbow) themes', () => {
+  it('ships three palette themes, all behind the "Show more" toggle', () => {
+    for (const id of ['rainbow', 'pastel', 'tropical'] as const) {
+      const t = THEMES.find((x) => x.id === id)!;
+      expect(t).toBeTruthy();
+      expect(t.extra).toBe(true);
+      expect(t.palette && t.palette.length).toBeGreaterThan(0);
+      expect(t.rootColor).toBeTruthy();
+    }
+  });
+
+  it('mirrors rootColor into the single-colour element fields (non-hierarchy fallback)', () => {
+    // Code paths that read elementFill/Stroke/Text directly (e.g.
+    // deriveNewBoxedColours) must still get a sensible neutral.
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    expect(rainbow.elementFill).toBe(rainbow.rootColor!.fill);
+    expect(rainbow.elementStroke).toBe(rainbow.rootColor!.stroke);
+    expect(rainbow.elementText).toBe(rainbow.rootColor!.text);
+  });
+
+  // A minimal mind map: centre → two topics. Centre is the trunk; the
+  // two topics are distinct branches.
+  function miniMap() {
+    const center = { ...createShape('circle', 0, 0), id: 'center' };
+    const t1 = { ...createShape('square', 300, 0), id: 't1' };
+    const t2 = { ...createShape('square', -300, 0), id: 't2' };
+    return [
+      center,
+      t1,
+      t2,
+      createPinnedArrow('center', 'e', 't1', 'w'),
+      createPinnedArrow('center', 'w', 't2', 'e'),
+    ];
+  }
+
+  it('recolourElementsForTheme paints each branch a distinct palette hue', () => {
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    const out = recolourElementsForTheme(miniMap(), rainbow);
+    const byId = Object.fromEntries(out.map((el) => [el.id, el]));
+    // Trunk gets the rootColor stroke.
+    expect((byId.center as { strokeColor?: string }).strokeColor).toBe(rainbow.rootColor!.stroke);
+    // The two topics get the first two palette entries, and they differ.
+    expect((byId.t1 as { strokeColor?: string }).strokeColor).toBe(rainbow.palette![0]!.stroke);
+    expect((byId.t2 as { strokeColor?: string }).strokeColor).toBe(rainbow.palette![1]!.stroke);
+  });
+
+  it('colours a connector arrow by the branch it feeds into', () => {
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    const out = recolourElementsForTheme(miniMap(), rainbow);
+    const arrowToT1 = out.find(
+      (el) => el.type === 'arrow' && el.to.kind === 'pinned' && el.to.elementId === 't1',
+    ) as { strokeColor?: string };
+    expect(arrowToT1.strokeColor).toBe(rainbow.palette![0]!.stroke);
+  });
+
+  it('still recolours single-colour themes through the graph-aware path', () => {
+    const slate = THEMES.find((t) => t.id === 'slate')!;
+    const out = recolourElementsForTheme(miniMap(), slate);
+    for (const el of out) {
+      if (el.type === 'shape') {
+        expect((el as { strokeColor?: string }).strokeColor).toBe(slate.elementStroke);
+      }
+    }
+  });
+
+  it('switchThemeElements rainbows the branches when switching to a palette theme', () => {
+    const brand = THEMES.find((t) => t.id === 'brand')!;
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    const out = switchThemeElements(miniMap(), brand, rainbow);
+    const byId = Object.fromEntries(out.map((el) => [el.id, el]));
+    expect((byId.t1 as { strokeColor?: string }).strokeColor).toBe(rainbow.palette![0]!.stroke);
+    expect((byId.t2 as { strokeColor?: string }).strokeColor).toBe(rainbow.palette![1]!.stroke);
+  });
+
+  it('resetThemeElementsToTheme force-repaints every branch from the palette', () => {
+    const rainbow = THEMES.find((t) => t.id === 'rainbow')!;
+    // Hand-colour a topic, then reset: the override is overwritten.
+    const els = miniMap().map((el) => (el.id === 't1' ? { ...el, strokeColor: '#123456' } : el));
+    const out = resetThemeElementsToTheme(els, rainbow);
+    const byId = Object.fromEntries(out.map((el) => [el.id, el]));
+    expect((byId.t1 as { strokeColor?: string }).strokeColor).toBe(rainbow.palette![0]!.stroke);
   });
 });
