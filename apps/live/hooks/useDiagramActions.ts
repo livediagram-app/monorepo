@@ -165,6 +165,9 @@ export function useDiagramActions(deps: DiagramActionsDeps) {
       const copy = await apiCopyDiagram(ownerId, diagramId, {
         shareCode: sessionShareCode,
       });
+      // A visitor cloning someone else's shared diagram into their own
+      // account — a distinct signal from duplicating your own (type 'Copy').
+      track('Diagram', 'Duplicated', 'Copy');
       window.location.assign(`${window.location.origin}/live/diagram/${copy.id}`);
     } catch {
       // Network / auth glitch — let the user try again. Leave the

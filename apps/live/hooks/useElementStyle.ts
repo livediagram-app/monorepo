@@ -103,6 +103,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, aspectLocked: shouldLock } : el)),
     );
+    track('Element', 'Toggled', 'AspectLock');
   };
 
   const bringSelectedToFront = () => {
@@ -125,6 +126,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, textSize: size } : el)),
     );
+    track('Element', 'Changed', 'TextSize');
   };
 
   // Font (spec/28). Passing a font id sets it on every text-bearing
@@ -144,6 +146,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         return { ...el, font };
       }),
     );
+    track('Element', 'Changed', 'Font');
   };
 
   const setTextAlignSelected = (x: TextAlignX, y: TextAlignY) => {
@@ -154,6 +157,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         ids.has(el.id) && isBoxed(el) ? { ...el, textAlignX: x, textAlignY: y } : el,
       ),
     );
+    track('Element', 'Changed', 'TextAlign');
   };
 
   // Generic helper for the inline label styles. Each toggle flips the
@@ -170,6 +174,9 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, [field]: next } : el)),
     );
+    // Telemetry type is the style name (Bold / Italic / Underline /
+    // Strikethrough) — `field` minus its 'text' prefix, title-cased.
+    track('Element', 'Toggled', field.replace(/^text/, ''));
   };
 
   const setFillColorSelected = (color: string) => {
@@ -305,6 +312,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) => els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, padding } : el)));
+    track('Element', 'Changed', 'Padding');
   };
 
   const setArrowEndsSelected = (arrowEnds: ArrowEnds) => {
@@ -313,6 +321,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowEnds } : el)),
     );
+    track('Element', 'Changed', 'ArrowEnds');
   };
 
   const setArrowThicknessSelected = (thickness: ArrowThickness) => {
@@ -322,6 +331,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeWidth: px } : el)),
     );
+    track('Element', 'Changed', 'ArrowThickness');
   };
 
   const setArrowheadSizeSelected = (size: ArrowheadSize) => {
@@ -332,6 +342,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowheadSize: size } : el,
       ),
     );
+    track('Element', 'Changed', 'ArrowheadSize');
   };
 
   // Toggle the header row / column band on the selected table(s).
@@ -370,6 +381,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowStyle: style } : el)),
     );
+    track('Element', 'Changed', 'ArrowStyle');
   };
 
   const setArrowheadShapeSelected = (shape: ArrowheadShape) => {
@@ -380,6 +392,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowheadShape: shape } : el,
       ),
     );
+    track('Element', 'Changed', 'ArrowheadShape');
   };
 
   // Line pattern (solid / dashed / dotted) on the selected arrow.
@@ -392,6 +405,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     commit((els) =>
       els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeStyle: style } : el)),
     );
+    track('Element', 'Changed', 'ArrowLineStyle');
   };
 
   // Morph the selected shape into a different kind, preserving width /
@@ -411,6 +425,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         return { ...el, shape: kind };
       }),
     );
+    track('Element', 'Changed', 'ShapeMorph');
   };
 
   // Border-preset setters. Each writes the field on any element
@@ -429,6 +444,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
           : el,
       ),
     );
+    track('Element', 'Changed', 'BorderStroke');
   };
   const setBorderStyleSelected = (value: BorderStyle) => {
     if (!selectedId) return;
@@ -439,6 +455,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
           : el,
       ),
     );
+    track('Element', 'Changed', 'BorderStyle');
   };
   const setBorderRadiusSelected = (value: BorderRadius) => {
     if (!selectedId) return;
@@ -447,6 +464,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
         el.id === selectedId && el.type === 'shape' ? { ...el, borderRadius: value } : el,
       ),
     );
+    track('Element', 'Changed', 'BorderRadius');
   };
 
   // Clear per-element colour overrides so the element falls back to

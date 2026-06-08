@@ -40,7 +40,6 @@ import {
 import { ShapeIcon } from './shape-icon';
 import { Tooltip } from './Tooltip';
 import { FontSelect } from './FontSelect';
-import { track } from '@/lib/telemetry';
 
 import type { SelectedElementControls } from './CommandPalette';
 
@@ -250,10 +249,7 @@ export function SelectedElementSection({
               value={selection.font}
               defaultLabel="Tab default"
               ariaLabel="Element font"
-              onChange={(font) => {
-                track('Element', 'Changed', 'Font');
-                selection.onSetFont(font);
-              }}
+              onChange={selection.onSetFont}
             />
           </div>
           {selection.textSize !== null ? (

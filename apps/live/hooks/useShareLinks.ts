@@ -90,6 +90,8 @@ export function useShareLinks(deps: ShareLinksDeps) {
     } catch {
       // ignore — list refresh below reconciles if it actually went through.
     }
+    // Counterpart to the Diagram/Shared emit when a link is created.
+    track('Diagram', 'Removed', 'ShareLink');
     setShareLinks((prev) => {
       const next = prev.filter((l) => l.code !== code);
       if (next.length === 0) {

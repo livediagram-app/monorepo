@@ -206,6 +206,15 @@ export function useEditorState() {
   // regardless. Lives in page so other components (e.g. status bar
   // later) can read it without prop-drilling through Canvas.
   const [canvasTool, setCanvasTool] = useState<'pan' | 'select' | 'laser'>('pan');
+  // User-facing tool picker (palette buttons + keyboard). Wraps the raw
+  // setter to emit telemetry when the user enters laser (presenter) mode
+  // — a distinct feature. Pan / select switches stay untracked (high
+  // frequency), and internal auto-switches (e.g. laser→pan when a draw
+  // starts) keep the raw setter so they don't count as "used laser".
+  const selectCanvasTool = (tool: 'pan' | 'select' | 'laser') => {
+    if (tool === 'laser' && canvasTool !== 'laser') track('Canvas', 'Used', 'Laser');
+    setCanvasTool(tool);
+  };
   // Picker mode lives here (rather than nearer `chooseTemplate`) so the
   // derived `identityOnlyScreenOpen` below — used to gate page-level
   // chrome for the visitor join flow — can read it. See
@@ -1645,7 +1654,7 @@ export function useEditorState() {
     undo,
     redo,
     copySelection,
-    setCanvasTool,
+    setCanvasTool: selectCanvasTool,
     addShape,
     addText,
     addSticky,
@@ -1855,7 +1864,7 @@ export function useEditorState() {
     setBorderRadiusSelected,
     setBorderStrokeSelected,
     setBorderStyleSelected,
-    setCanvasTool,
+    setCanvasTool: selectCanvasTool,
     setContextMenu,
     setDiagramLinkSelected,
     setDiagramName,
