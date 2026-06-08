@@ -7,7 +7,7 @@ export function ShowMoreButton({ label, onClick }: { label: string; onClick: () 
     <button
       type="button"
       onClick={onClick}
-      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 hover:text-brand-800"
+      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
     >
       {label}
       <span aria-hidden>↓</span>

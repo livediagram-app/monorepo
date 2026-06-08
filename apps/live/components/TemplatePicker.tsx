@@ -110,11 +110,11 @@ export function TemplatePicker({
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
     >
       <div
-        className={`pointer-events-auto flex h-full w-full animate-fly-up-in flex-col bg-white sm:h-auto sm:max-h-[90vh] ${isIdentity ? 'sm:w-[26rem]' : 'sm:w-[44rem]'} sm:max-w-[92%] sm:rounded-xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10`}
+        className={`pointer-events-auto flex h-full w-full animate-fly-up-in flex-col bg-white dark:bg-slate-900 sm:h-auto sm:max-h-[90vh] ${isIdentity ? 'sm:w-[26rem]' : 'sm:w-[44rem]'} sm:max-w-[92%] sm:rounded-xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10 dark:sm:border-slate-800 dark:sm:shadow-black/40`}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {isWelcome
                 ? 'Quick Start'
                 : isIdentity
@@ -123,7 +123,7 @@ export function TemplatePicker({
                     : 'Welcome to this diagram'
                   : 'Pick a template'}
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               {isWelcome
                 ? 'Pick a template and a theme to start with.'
                 : isIdentity
@@ -137,7 +137,7 @@ export function TemplatePicker({
             type="button"
             onClick={onSkip}
             aria-label="Close"
-            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <CloseIcon />
           </button>
@@ -146,7 +146,7 @@ export function TemplatePicker({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {/* Identity row — first-run welcome + join-existing-diagram flows. */}
           {showIdentity ? (
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
               <div
                 role="img"
                 aria-label={`Your avatar colour: ${participant.color}`}
@@ -158,7 +158,7 @@ export function TemplatePicker({
               <div className="flex-1">
                 <label
                   htmlFor="welcome-name"
-                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                 >
                   Your name
                 </label>
@@ -175,8 +175,8 @@ export function TemplatePicker({
                   // present so the name is still visible.
                   className={
                     nameLocked
-                      ? 'mt-0.5 w-full cursor-default bg-transparent text-sm text-slate-500 outline-none'
-                      : 'mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400'
+                      ? 'mt-0.5 w-full cursor-default bg-transparent text-sm text-slate-500 outline-none dark:text-slate-400'
+                      : 'mt-0.5 w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500'
                   }
                 />
               </div>
@@ -186,7 +186,7 @@ export function TemplatePicker({
                     type="button"
                     onClick={() => setName(randomName())}
                     aria-label="Generate a different name"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
                     <RefreshIcon />
                   </button>
@@ -200,7 +200,7 @@ export function TemplatePicker({
           {showTemplates ? (
             <>
               <p
-                className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 ${showIdentity ? 'mt-5' : ''}`}
+                className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ${showIdentity ? 'mt-5' : ''}`}
               >
                 Pick a template
               </p>
@@ -222,16 +222,21 @@ export function TemplatePicker({
                       aria-pressed={active}
                       className={
                         active
-                          ? 'flex flex-col items-start gap-1.5 rounded-lg border-2 border-brand-400 bg-brand-50 p-2 text-left'
-                          : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40'
+                          ? 'flex flex-col items-start gap-1.5 rounded-lg border-2 border-brand-400 bg-brand-50 p-2 text-left dark:border-brand-500 dark:bg-brand-500/15'
+                          : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
                       }
                     >
-                      <div className="flex h-14 w-full items-center justify-center rounded-md bg-slate-50">
+                      {/* Preview tiles are illustrative mini-canvases (light
+                          SVG content), so the tile keeps a light backdrop in
+                          dark mode to stay legible. */}
+                      <div className="flex h-14 w-full items-center justify-center rounded-md bg-slate-50 dark:bg-slate-200">
                         <TemplatePreview kind={t.kind} />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-slate-900">{t.title}</p>
-                        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500">
+                        <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                          {t.title}
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
                           {t.description}
                         </p>
                       </div>
@@ -249,7 +254,7 @@ export function TemplatePicker({
               tabs keep whichever theme they already have. */}
           {showThemes ? (
             <>
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Select a theme
               </p>
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -265,14 +270,14 @@ export function TemplatePicker({
                       aria-pressed={active}
                       className={
                         active
-                          ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800'
-                          : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40'
+                          ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-200'
+                          : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
                       }
                     >
                       <span
                         aria-hidden
                         style={{ backgroundColor: t.backgroundColor }}
-                        className="flex h-8 w-full items-center justify-center rounded-sm border border-slate-200"
+                        className="flex h-8 w-full items-center justify-center rounded-sm border border-slate-200 dark:border-slate-700"
                       >
                         <span
                           style={{ backgroundColor: swatch, borderColor: dot }}
@@ -291,8 +296,8 @@ export function TemplatePicker({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-3">
-          <p className="mr-auto text-[11px] text-slate-500">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-3 dark:border-slate-800">
+          <p className="mr-auto text-[11px] text-slate-500 dark:text-slate-400">
             {isWelcome
               ? 'You can change these later from the Palette.'
               : isIdentity
@@ -306,7 +311,7 @@ export function TemplatePicker({
             <button
               type="button"
               onClick={onSkip}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Cancel
             </button>

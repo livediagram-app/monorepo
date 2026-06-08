@@ -55,6 +55,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB">
       <body className="bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
+        {/* Apply the persisted UI light/dark choice before first paint, so
+            EVERY route honours it — including /live/new and the welcome /
+            template-picker flow, which never mount the TabBar that's the
+            only caller of useUiMode. Without this they'd render light over
+            the dark body. Mirrors hooks/useUiMode.ts (same localStorage
+            key); opt-in only, never auto-detects the OS (spec/07). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('livediagram:v2:ui-mode')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
         <ClerkProvider>
           <ToastProvider>
             <ConfirmProvider>{children}</ConfirmProvider>

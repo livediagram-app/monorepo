@@ -272,7 +272,7 @@ export default function NewDiagramPage() {
           onOpenShare={() => {}}
           onRename={() => {}}
         />
-        <main className="relative flex-1 bg-slate-50">
+        <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
           <ApiErrorPage
             title="Couldn’t create the diagram"
             message="We couldn’t reach the server to create your diagram. Check your connection and try again."
