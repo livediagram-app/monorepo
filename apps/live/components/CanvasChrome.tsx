@@ -876,7 +876,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
           position={palettePosition}
           canvasTool={canvasTool}
           onSetCanvasTool={onSetCanvasTool}
-          onToggleZen={onToggleZen}
           onMoveTo={onMovePalette}
           onReset={onResetPalette}
           onAddShape={onAddShape}
@@ -1000,7 +999,8 @@ export function CanvasChrome(props: CanvasChromeProps) {
               onZoomOut={handleZoomOut}
               onReset={handleResetZoom}
               onFitToScreen={onFitToScreen}
-              onExitZen={zenMode ? onToggleZen : undefined}
+              onToggleZen={onToggleZen}
+              zenActive={zenMode}
             />
           </>
         )}

@@ -1,4 +1,4 @@
-import { ZenExitIcon } from './palette-icons';
+import { ZenExitIcon, ZenIcon } from './palette-icons';
 import { Tooltip } from './Tooltip';
 
 type ZoomControlsProps = {
@@ -7,22 +7,25 @@ type ZoomControlsProps = {
   onZoomOut: () => void;
   onReset: () => void;
   onFitToScreen: () => void;
-  // When set, the editor is in zen / focus mode (spec/26): the zoom
-  // dock is the only visible chrome, so it carries the way out. Renders
-  // an exit button at the end; omitted (undefined) outside zen mode.
-  onExitZen?: () => void;
+  // Zen / focus mode toggle (spec/26). When set, the zoom dock carries
+  // the zen button at the end: enter-zen outside zen, exit-zen inside it
+  // (the zoom dock is the only chrome left in zen, so entry + exit share
+  // one home). `zenActive` picks the icon / copy. Omitted → no button.
+  onToggleZen?: () => void;
+  zenActive?: boolean;
 };
 
 // Floating zoom controls, bottom-right of the canvas. Four
 // actions: -10% / current % (click to reset) / +10% / Fit to
-// screen. In zen mode it also carries the exit-zen button.
+// screen. It also carries the zen-mode toggle (enter / exit).
 export function ZoomControls({
   zoom,
   onZoomIn,
   onZoomOut,
   onReset,
   onFitToScreen,
-  onExitZen,
+  onToggleZen,
+  zenActive,
 }: ZoomControlsProps) {
   const percent = Math.round(zoom * 100);
   return (
@@ -97,15 +100,19 @@ export function ZoomControls({
           Fit
         </button>
       </Tooltip>
-      {onExitZen ? (
+      {onToggleZen ? (
         <>
           <div className="mx-0.5 h-6 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
           <Tooltip
-            title="Exit zen mode"
-            description="Bring back the toolbars and panels (Z or Esc)."
+            title={zenActive ? 'Exit zen mode' : 'Zen mode'}
+            description={
+              zenActive
+                ? 'Bring back the toolbars and panels (Z or Esc).'
+                : 'Hide every panel and toolbar to focus on the canvas (Z).'
+            }
           >
-            <IconButton onClick={onExitZen} label="Exit zen mode">
-              <ZenExitIcon />
+            <IconButton onClick={onToggleZen} label={zenActive ? 'Exit zen mode' : 'Zen mode'}>
+              {zenActive ? <ZenExitIcon /> : <ZenIcon />}
             </IconButton>
           </Tooltip>
         </>

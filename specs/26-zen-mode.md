@@ -20,8 +20,8 @@ What stays:
 - the **canvas and its content** (elements, alignment guides, laser
   trails, remote cursors, selection — interaction is unaffected),
 - the **zoom controls** (bottom-right), so the user can still zoom / fit,
-- an **exit-zen control next to the zoom controls** so there's always a
-  visible way out.
+- the **zen toggle on the zoom controls**, which flips to an exit-zen
+  control in zen mode so there's always a visible way out.
 
 Zen mode is purely a view state. It changes nothing about the diagram,
 never persists to the server, and is not synced to other participants —
@@ -30,12 +30,13 @@ view-only visitors (focusing is read-only).
 
 ## How it's toggled
 
-- **Enter:** a button on the right of the Pan / Select / **Laser** tool
-  row in the command palette, using a fullscreen / expand icon.
-- **Exit:** the control next to the zoom controls (a compress icon),
-  shown only while zen mode is active (the palette that holds the enter
-  button is itself hidden in zen mode, so exit has to live somewhere that
-  stays visible).
+- **Enter + exit share one home — the zoom controls** (bottom-right),
+  which stay visible in zen mode. Outside zen the button shows a
+  fullscreen / expand icon ("Zen mode"); inside zen it shows a compress
+  icon ("Exit zen mode"). Keeping entry and exit in the same place means
+  the user looks to one spot for the mode toggle, and it keeps the
+  command-palette tool row (Pan / Select / Laser) to the three actual
+  canvas tools rather than overflowing a fourth button.
 - **Keyboard:** `Z` toggles it on and off; `Escape` exits when active.
   The binding obeys the per-device keyboard-shortcuts toggle and the
   usual text-input / label-edit bailouts (so typing a `z` into a label
