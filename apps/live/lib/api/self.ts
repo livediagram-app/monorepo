@@ -67,6 +67,7 @@ export async function apiDeleteAccount(): Promise<{
 // `{ migrated: { diagrams, folders, shared, images } }`.
 export async function apiMigrateGuestData(
   guestOwnerId: string,
+  guestSignature: string | null,
 ): Promise<{ diagrams: number; folders: number; shared: number; images: number } | null> {
   const res = await fetch(`${API_BASE}/migrate`, {
     method: 'POST',
@@ -76,13 +77,62 @@ export async function apiMigrateGuestData(
     // server-side for this endpoint but the helper still expects
     // it; pass the guest id to keep signatures uniform.
     headers: await apiHeaders(guestOwnerId, { body: true }),
-    body: JSON.stringify({ guestOwnerId }),
+    // The signature proves the caller owns this guest id (spec/04). It's
+    // null for a legacy guest that never got signed — the worker then
+    // rejects when signing is enforced, which is why the bootstrap
+    // upgrades legacy ids to signed ones before sign-up.
+    body: JSON.stringify({ guestOwnerId, guestSignature }),
   });
   if (!res.ok) return null;
   const body = (await res.json()) as {
     migrated: { diagrams: number; folders: number; shared: number; images: number };
   };
   return body.migrated;
+}
+
+// Mint a SERVER-signed guest identity (spec/04). The worker generates the
+// id — so a caller can only ever hold a signature for an id it was handed,
+// never for one observed in someone else's DTO / presence — and returns
+// its HMAC signature (`ownerSig` is null when the worker has no
+// GUEST_ID_HMAC_SECRET configured). Returns null on a network failure so
+// the caller can fall back to a local unsigned id.
+export async function apiMintGuestId(): Promise<{
+  ownerId: string;
+  ownerSig: string | null;
+} | null> {
+  try {
+    const res = await fetch(`${API_BASE}/guest-id`, {
+      method: 'POST',
+      headers: await apiHeaders('', { body: true }),
+      body: '{}',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { ownerId: string; ownerSig: string | null };
+  } catch {
+    return null;
+  }
+}
+
+// Legacy upgrade: move an existing unsigned guest's data onto a freshly
+// minted signed id (spec/04 migrate flow 2). Authenticated by the OLD id
+// as X-Owner-Id (the guest bearer credential, present because no Clerk
+// token is registered for a guest); the NEW id is proven by its
+// signature. Returns true on success.
+export async function apiUpgradeGuestId(
+  fromOwnerId: string,
+  toOwnerId: string,
+  toSignature: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/migrate`, {
+      method: 'POST',
+      headers: await apiHeaders(fromOwnerId, { body: true }),
+      body: JSON.stringify({ toOwnerId, toSignature }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function apiSaveSelf(p: Participant): Promise<void> {

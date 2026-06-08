@@ -4,7 +4,7 @@ import { useAuth, useUser } from '@clerk/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiMigrateGuestData, setTokenProvider } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
-import { clearGuestSelfId, getGuestSelfId } from '@/lib/local-identity';
+import { clearGuestSelfId, getGuestSelfId, getGuestSelfSig } from '@/lib/local-identity';
 
 // Two things every page that talks to the api needs to do once Clerk
 // is in the tree:
@@ -104,7 +104,13 @@ function useClerkApiBootstrapEnabled(): BootstrapResult {
     const guestId = getGuestSelfId();
     if (!guestId || guestId === clerkUserId) return;
     migrateAttemptedRef.current = true;
-    void apiMigrateGuestData(guestId)
+    // Send the guest id's signature so the worker can verify possession
+    // (spec/04). Null for a guest the editor bootstrap never managed to
+    // sign (offline, or worker signing disabled); the worker then accepts
+    // it only when signing is off, and otherwise refuses — the safe
+    // failure (data stays under the guest id rather than being claimable
+    // by an observer).
+    void apiMigrateGuestData(guestId, getGuestSelfSig())
       .then((res) => {
         if (res) clearGuestSelfId();
       })

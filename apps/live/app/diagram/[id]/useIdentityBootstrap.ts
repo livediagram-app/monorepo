@@ -18,7 +18,8 @@ import {
   type ShareRole,
 } from '@/lib/api-client';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
-import { ensureGuestSelfId, hasConfirmedName } from '@/lib/local-identity';
+import { hasConfirmedName } from '@/lib/local-identity';
+import { ensureSignedGuestIdentity } from '@/lib/guest-identity';
 import { track } from '@/lib/telemetry';
 import { placeholdersFromSummaries, resolveDiagramSession } from './editor-page-helpers';
 
@@ -173,7 +174,11 @@ export function useIdentityBootstrap(opts: {
         // Two ways in (spec/04): when signed in, the Clerk userId becomes
         // the canonical participant id. When signed out, fall back to the
         // localStorage guest UUID.
-        const selfId = clerkUserId ?? ensureGuestSelfId();
+        // For a guest, resolve a SERVER-SIGNED id (minting one on first
+        // visit, upgrading a legacy unsigned id) so the eventual sign-up
+        // migrate can prove possession. Falls back to a local unsigned id
+        // offline. See spec/04 + lib/guest-identity.ts.
+        const selfId = clerkUserId ?? (await ensureSignedGuestIdentity()).id;
         const storedSelf = await apiLoadSelf(selfId).catch(() => null);
         // Signed-in users always use their Clerk-known name on the
         // participant record. For a brand-new participant (no storedSelf)

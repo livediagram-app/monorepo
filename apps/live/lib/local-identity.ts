@@ -22,6 +22,13 @@ const KEYS = {
   // carried to the api worker as `X-Owner-Id` until/unless the
   // user signs in with Clerk. See spec/04 — "Hybrid identity".
   selfId: `${NS}self-id`,
+  // HMAC signature of the guest id, minted by the api worker at
+  // POST /api/guest-id (auth/owner-signature.ts). Replayed in the
+  // /api/migrate body so the worker can prove the caller actually owns
+  // the guest data it's claiming — observing the bare id is not enough.
+  // Absent for legacy guests created before signing shipped, or when the
+  // worker has no GUEST_ID_HMAC_SECRET configured. See spec/04.
+  selfSig: `${NS}self-sig`,
   // Boolean flag — '1' once the user has confirmed their display
   // name via the welcome modal at least once. Used to suppress the
   // identity prompt on subsequent diagram opens. Only meaningful
@@ -53,6 +60,22 @@ export function setGuestSelfId(id: string): void {
 
 export function clearGuestSelfId(): void {
   safeLocalStorage()?.removeItem(KEYS.selfId);
+  safeLocalStorage()?.removeItem(KEYS.selfSig);
+}
+
+export function getGuestSelfSig(): string | null {
+  return safeLocalStorage()?.getItem(KEYS.selfSig) ?? null;
+}
+
+// Persist the id + its signature together: they are a pair, and a
+// signature without its matching id (or vice-versa) is useless. Pass
+// `null` sig to clear it (e.g. a worker with signing disabled).
+export function setGuestIdentity(id: string, sig: string | null): void {
+  const ls = safeLocalStorage();
+  if (!ls) return;
+  ls.setItem(KEYS.selfId, id);
+  if (sig) ls.setItem(KEYS.selfSig, sig);
+  else ls.removeItem(KEYS.selfSig);
 }
 
 // Read the existing guest id, or mint + persist a fresh one. The
