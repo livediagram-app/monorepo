@@ -721,6 +721,21 @@ describe('multi-colour (rainbow) themes', () => {
     expect(rainbow.elementText).toBe(rainbow.rootColor!.text);
   });
 
+  it('gives each multi-colour theme a backdrop that visibly differs from the default white canvas', () => {
+    // Regression guard: the first cut shipped white/near-white grid
+    // backdrops, so picking a multi-colour theme left the canvas looking
+    // unchanged (and did nothing visible on an empty diagram). Each must
+    // shift the canvas colour and/or pattern away from the brand default.
+    const brand = THEMES.find((t) => t.id === 'brand')!;
+    for (const id of ['rainbow', 'pastel', 'tropical'] as const) {
+      const t = THEMES.find((x) => x.id === id)!;
+      const changed =
+        t.backgroundColor !== brand.backgroundColor ||
+        t.backgroundPattern !== brand.backgroundPattern;
+      expect(changed).toBe(true);
+    }
+  });
+
   // A minimal mind map: centre → two topics. Centre is the trunk; the
   // two topics are distinct branches.
   function miniMap() {

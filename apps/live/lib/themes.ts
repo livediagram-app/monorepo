@@ -282,13 +282,17 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'rainbow',
     label: 'Rainbow',
-    backgroundColor: '#ffffff',
-    backgroundPattern: 'grid',
+    // Confetti backdrop — a fixed multi-colour scatter (ignores
+    // patternColor) so picking Rainbow visibly turns the canvas
+    // colourful even before any element is added, on a faint warm tint
+    // that reads as "not the default white".
+    backgroundColor: '#fffdf7',
+    backgroundPattern: 'confetti',
     patternColor: '#e2e8f0',
-    elementFill: '#f1f5f9',
+    elementFill: '#f8fafc',
     elementStroke: '#475569',
     elementText: '#0f172a',
-    rootColor: { fill: '#f1f5f9', stroke: '#475569', text: '#0f172a' },
+    rootColor: { fill: '#f8fafc', stroke: '#475569', text: '#0f172a' },
     // A saturated six-hue spectrum: red → orange → amber → green →
     // blue → violet. Light tinted fills with a deep stroke + text so
     // labels stay legible on white.
@@ -305,13 +309,15 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'pastel',
     label: 'Pastel',
-    backgroundColor: '#fafafa',
+    // Soft lilac canvas so the backdrop shifts off white and matches
+    // the gentle palette.
+    backgroundColor: '#fbf7fe',
     backgroundPattern: 'grid',
-    patternColor: '#e5e7eb',
-    elementFill: '#f4f4f5',
+    patternColor: '#ede9fe',
+    elementFill: '#faf5ff',
     elementStroke: '#a1a1aa',
     elementText: '#3f3f46',
-    rootColor: { fill: '#f4f4f5', stroke: '#a1a1aa', text: '#3f3f46' },
+    rootColor: { fill: '#faf5ff', stroke: '#a1a1aa', text: '#3f3f46' },
     // The same wheel as Rainbow but softer: lighter strokes, gentler
     // fills, for a calmer multi-colour look.
     palette: [
@@ -327,13 +333,14 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'tropical',
     label: 'Tropical',
-    backgroundColor: '#ffffff',
+    // Faint teal canvas to match the bright, summery palette.
+    backgroundColor: '#f0fdfa',
     backgroundPattern: 'grid',
-    patternColor: '#e2e8f0',
-    elementFill: '#f1f5f9',
+    patternColor: '#99f6e4',
+    elementFill: '#f0fdfa',
     elementStroke: '#475569',
     elementText: '#0f172a',
-    rootColor: { fill: '#f1f5f9', stroke: '#475569', text: '#0f172a' },
+    rootColor: { fill: '#f0fdfa', stroke: '#475569', text: '#0f172a' },
     // A vivid teal → cyan → lime → orange → pink → violet spread; reads
     // brighter and more "summery" than Rainbow's primary-colour wheel.
     palette: [
