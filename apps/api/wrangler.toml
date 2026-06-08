@@ -181,3 +181,11 @@ simple = { limit = 30, period = 60 }
 # is `https://<your-instance>.clerk.accounts.dev/.well-known/jwks.json`
 # (test tenant) or `https://clerk.<your-domain>/.well-known/jwks.json`
 # (production tenant).
+#
+# GUEST_ID_HMAC_SECRET is provisioned the same way (`.dev.vars` locally,
+# `wrangler secret put GUEST_ID_HMAC_SECRET` + a matching GitHub repo
+# secret in prod; never in [vars] — it's secret material). When set, the
+# worker mints signed guest ids and /api/migrate requires a valid
+# signature, closing the "observe a guest id, claim its data" hole
+# (spec/04). Generate with `openssl rand -hex 32`. Unset = legacy unsigned
+# migrate (pure-guest / single-user self-host).

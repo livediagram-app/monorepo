@@ -11,6 +11,7 @@ import { handleEvents } from './routes/events';
 import { handleFolders } from './routes/folders';
 import { handleImages } from './routes/images';
 import { handleMigrate } from './routes/migrate';
+import { handleGuestId } from './routes/guest-id';
 import { handleParticipants } from './routes/participants';
 import { handlePreferences } from './routes/preferences';
 import { handleShare } from './routes/share';
@@ -111,6 +112,8 @@ export default {
           return await handlePreferences(ctx);
         case 'migrate':
           return await handleMigrate(ctx);
+        case 'guest-id':
+          return await handleGuestId(ctx);
         case 'participants':
           return await handleParticipants(ctx);
       }

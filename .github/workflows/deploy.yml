@@ -184,6 +184,7 @@ jobs:
     # the `if:` treats as "skip" — same pure-guest fallback as before.
     env:
       CLERK_JWKS_URL: ${{ secrets.CLERK_JWKS_URL }}
+      GUEST_ID_HMAC_SECRET: ${{ secrets.GUEST_ID_HMAC_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -252,6 +253,17 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: printf '%s' "$CLERK_JWKS_URL" | pnpm exec wrangler secret put CLERK_JWKS_URL
+
+      # Same provisioning story for the guest-id HMAC secret (spec/04):
+      # when present it makes /api/migrate require a signed guest id;
+      # empty/unset leaves the worker on legacy unsigned migrate.
+      - name: Sync GUEST_ID_HMAC_SECRET secret
+        if: ${{ env.GUEST_ID_HMAC_SECRET != '' }}
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: printf '%s' "$GUEST_ID_HMAC_SECRET" | pnpm exec wrangler secret put GUEST_ID_HMAC_SECRET
 
       - name: Deploy to Cloudflare Workers
         working-directory: apps/api

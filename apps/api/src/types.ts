@@ -36,6 +36,13 @@ export type Env = {
   // claim (spec/04) so a token from another instance sharing the JWKS
   // host can't be replayed. Unset → issuer not asserted (back-compat).
   CLERK_ISSUER?: string;
+  // HMAC secret for signing guest owner-ids (spec/04 + auth/
+  // owner-signature.ts). When set, POST /api/guest-id mints a signed id
+  // and /api/migrate requires a valid signature before reassigning a
+  // guest's data to a Clerk account — closing the "observe a guest id,
+  // claim its data" hole. Unset → migrate keeps its legacy unsigned
+  // behaviour (OSS self-host that hasn't configured it).
+  GUEST_ID_HMAC_SECRET?: string;
   // R2 bucket holding image-element bytes (spec/19). Optional so
   // self-hosters who haven't provisioned R2 can still deploy the
   // api worker: when unbound, the image endpoints all return 503
