@@ -1527,6 +1527,7 @@ export function useEditorState() {
   // begin-handlers below are passed through to Canvas as props.
   const {
     snapGuides,
+    distGuides,
     beginDrag,
     beginRotate,
     beginAnchorDrag,
@@ -1837,6 +1838,7 @@ export function useEditorState() {
     shortcutsEnabled,
     skipTemplatePicker,
     snapGuides,
+    distGuides,
     tabAccordionsOpen,
     tabs,
     toggleActiveTabLock,

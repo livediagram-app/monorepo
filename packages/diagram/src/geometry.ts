@@ -447,6 +447,134 @@ export function alignmentGuides(
   return [...guides.values()];
 }
 
+// Equal-spacing ("distribution") guide: the equal gaps the moving element
+// shares with its neighbours along one axis — Figma's pink equal-distance
+// guides. `gap` is the matched spacing; `spans` are the gap segments to
+// draw (each runs `from`->`to` along `axis` at the perpendicular `cross`),
+// tick-capped so the equal gaps read at a glance.
+export type DistributionGuide = {
+  axis: 'x' | 'y';
+  gap: number;
+  spans: { from: number; to: number; cross: number }[];
+};
+
+type DistAxisItem = { low: number; high: number; crossLow: number; crossHigh: number };
+type DistAxisResult = { delta: number; gap: number; spans: { from: number; to: number }[] };
+
+// Per-axis equal-spacing search. `cand` is the moving element's interval
+// on the primary axis (low + size) plus its span on the cross axis;
+// `items` are the other elements' intervals. Only neighbours that overlap
+// the candidate on the cross axis count (so X-spacing considers a
+// horizontal row, Y-spacing a vertical column). Returns the smallest snap
+// within `threshold` that makes a gap equal, or null.
+function distributeAxis(
+  cand: { low: number; size: number; crossLow: number; crossHigh: number },
+  items: DistAxisItem[],
+  threshold: number,
+): DistAxisResult | null {
+  const row = items.filter((n) => n.crossLow < cand.crossHigh && n.crossHigh > cand.crossLow);
+  const cHigh = cand.low + cand.size;
+  let best: DistAxisResult | null = null;
+  const consider = (delta: number, gap: number, spans: { from: number; to: number }[]) => {
+    if (gap < 1 || Math.abs(delta) > threshold) return;
+    if (!best || Math.abs(delta) < Math.abs(best.delta)) best = { delta, gap, spans };
+  };
+  // Equidistant: a neighbour P to the left and Q to the right; centre the
+  // candidate in the gap so the two facing gaps are equal.
+  for (const P of row) {
+    if (P.high > cand.low + threshold) continue;
+    for (const Q of row) {
+      if (Q.low < cHigh - threshold || Q.low <= P.high) continue;
+      const gap = (Q.low - P.high - cand.size) / 2;
+      const targetLow = P.high + gap;
+      consider(targetLow - cand.low, gap, [
+        { from: P.high, to: targetLow },
+        { from: targetLow + cand.size, to: Q.low },
+      ]);
+    }
+  }
+  // Equal extension: an adjacent neighbour pair (P, Q) defines a gap;
+  // snap the candidate one gap beyond Q (to the right) or before P (left).
+  const sorted = [...row].sort((a, b) => a.low - b.low);
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    const P = sorted[i]!;
+    const Q = sorted[i + 1]!;
+    if (Q.low <= P.high) continue;
+    const gap = Q.low - P.high;
+    if (cand.low + cand.size / 2 > Q.high) {
+      const targetLow = Q.high + gap;
+      consider(targetLow - cand.low, gap, [
+        { from: P.high, to: Q.low },
+        { from: Q.high, to: targetLow },
+      ]);
+    }
+    if (cand.low + cand.size / 2 < P.low) {
+      const targetLow = P.low - gap - cand.size;
+      consider(targetLow - cand.low, gap, [
+        { from: targetLow + cand.size, to: P.low },
+        { from: P.high, to: Q.low },
+      ]);
+    }
+  }
+  return best;
+}
+
+// Snap a dragged element to EQUAL spacing with its neighbours (so three
+// elements end up evenly spread) and report the gap segments to draw.
+// Pure; mirrors snapToAlignment's shape (a dx/dy nudge) but for
+// inter-element spacing rather than edge/centre alignment. Each axis is
+// considered independently.
+export function distributionSnap(
+  candidate: { x: number; y: number; width: number; height: number },
+  elements: Element[],
+  excludeIds: Set<ElementId>,
+  threshold: number,
+): { dx: number; dy: number; guides: DistributionGuide[] } {
+  const boxed = elements.filter((el): el is BoxedElement => isBoxed(el) && !excludeIds.has(el.id));
+  const xs = distributeAxis(
+    {
+      low: candidate.x,
+      size: candidate.width,
+      crossLow: candidate.y,
+      crossHigh: candidate.y + candidate.height,
+    },
+    boxed.map((el) => ({
+      low: el.x,
+      high: el.x + el.width,
+      crossLow: el.y,
+      crossHigh: el.y + el.height,
+    })),
+    threshold,
+  );
+  const ys = distributeAxis(
+    {
+      low: candidate.y,
+      size: candidate.height,
+      crossLow: candidate.x,
+      crossHigh: candidate.x + candidate.width,
+    },
+    boxed.map((el) => ({
+      low: el.y,
+      high: el.y + el.height,
+      crossLow: el.x,
+      crossHigh: el.x + el.width,
+    })),
+    threshold,
+  );
+  const dx = xs?.delta ?? 0;
+  const dy = ys?.delta ?? 0;
+  const guides: DistributionGuide[] = [];
+  if (xs) {
+    const cross = candidate.y + dy + candidate.height / 2;
+    guides.push({ axis: 'x', gap: xs.gap, spans: xs.spans.map((s) => ({ ...s, cross })) });
+  }
+  if (ys) {
+    const cross = candidate.x + dx + candidate.width / 2;
+    guides.push({ axis: 'y', gap: ys.gap, spans: ys.spans.map((s) => ({ ...s, cross })) });
+  }
+  return { dx, dy, guides };
+}
+
 // Nearest boxed-element anchor to a canvas point. Returns the pinning
 // reference if one is within `threshold` pixels; otherwise null.
 export function snapToAnchor(

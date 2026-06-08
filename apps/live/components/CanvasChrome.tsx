@@ -184,6 +184,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     selectionScope,
     selfParticipant,
     snapGuides,
+    distGuides,
     setActiveDockAnchor,
     setActiveMobilePanel,
     setContextBottomY,
@@ -321,6 +322,51 @@ export function CanvasChrome(props: CanvasChromeProps) {
                     />
                   );
                 })}
+              </svg>
+            );
+          })()
+        : null}
+
+      {/* Equal-spacing (distribution) guides. While a move snaps an
+          element to even spacing with its neighbours, draw the matched
+          gap segments as pink tick-capped lines so the equal distances
+          read at a glance. Same canvas→screen conversion as above. */}
+      {distGuides.length > 0
+        ? (() => {
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            if (!rect) return null;
+            const cx = (v: number) => rect.left + v * viewportZoom;
+            const cy = (v: number) => rect.top + v * viewportZoom;
+            const color = 'rgb(236, 72, 153)'; // pink-500, distinct from alignment
+            return (
+              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+                {distGuides.flatMap((g, gi) =>
+                  g.spans.map((s, si) => {
+                    const key = `${gi}:${si}`;
+                    if (g.axis === 'x') {
+                      const x1 = cx(s.from);
+                      const x2 = cx(s.to);
+                      const y = cy(s.cross);
+                      return (
+                        <g key={key} stroke={color} strokeWidth={1}>
+                          <line x1={x1} y1={y} x2={x2} y2={y} />
+                          <line x1={x1} y1={y - 4} x2={x1} y2={y + 4} />
+                          <line x1={x2} y1={y - 4} x2={x2} y2={y + 4} />
+                        </g>
+                      );
+                    }
+                    const y1 = cy(s.from);
+                    const y2 = cy(s.to);
+                    const x = cx(s.cross);
+                    return (
+                      <g key={key} stroke={color} strokeWidth={1}>
+                        <line x1={x} y1={y1} x2={x} y2={y2} />
+                        <line x1={x - 4} y1={y1} x2={x + 4} y2={y1} />
+                        <line x1={x - 4} y1={y2} x2={x + 4} y2={y2} />
+                      </g>
+                    );
+                  }),
+                )}
               </svg>
             );
           })()

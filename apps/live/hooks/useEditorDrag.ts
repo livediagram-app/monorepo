@@ -24,6 +24,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   alignmentGuides,
+  distributionSnap,
   anchorPosition,
   angledElbow,
   arrowStyleOf,
@@ -36,6 +37,7 @@ import {
   snapToAlignment,
   snapToAnchor,
   type AlignmentGuide,
+  type DistributionGuide,
   type Anchor,
   type ArrowElement,
   type Element,
@@ -73,6 +75,23 @@ function sameGuides(a: AlignmentGuide[], b: AlignmentGuide[]): boolean {
     const y = b[i]!;
     if (x.axis !== y.axis || x.position !== y.position || x.start !== y.start || x.end !== y.end) {
       return false;
+    }
+  }
+  return true;
+}
+
+// Value-equality for two distribution-guide lists (axis / gap / spans),
+// so the rAF setter can bail when they haven't changed.
+function sameDistGuides(a: DistributionGuide[], b: DistributionGuide[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (x.axis !== y.axis || x.gap !== y.gap || x.spans.length !== y.spans.length) return false;
+    for (let j = 0; j < x.spans.length; j++) {
+      const s = x.spans[j]!;
+      const t = y.spans[j]!;
+      if (s.from !== t.from || s.to !== t.to || s.cross !== t.cross) return false;
     }
   }
   return true;
@@ -151,6 +170,9 @@ type EditorDragApi = {
   // neighbours, drawn so the user can see why it snapped. Empty when no
   // snap is in effect, and cleared on release. See `alignmentGuides`.
   snapGuides: AlignmentGuide[];
+  // Equal-spacing guides for the in-progress move: the gap segments shown
+  // when the element snaps to even spacing with its neighbours.
+  distGuides: DistributionGuide[];
   beginDrag: (elementId: string, mode: DragMode, e: ReactPointerEvent) => void;
   beginRotate: (
     elementId: string,
@@ -171,6 +193,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // every boxed move / single-element resize, cleared on pointer-up. The
   // render layer (CanvasChrome) draws them as faint lines.
   const [snapGuides, setSnapGuides] = useState<AlignmentGuide[]>([]);
+  // Equal-spacing (distribution) guides: the gap segments shown when the
+  // element snaps to even spacing with its neighbours. Rendered alongside
+  // the alignment guides; coalesced through the same rAF below.
+  const [distGuides, setDistGuides] = useState<DistributionGuide[]>([]);
   // Coalesce snap-guide state updates into a single rAF. The guides are
   // purely cosmetic — the snap itself is applied synchronously in the
   // `tick` below — so keeping their state update OFF the synchronous
@@ -184,11 +210,12 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // start of each gesture (in the move effect below); flipped true once the
   // pointer travels far enough that the press is unambiguously a drag.
   const dragEngagedRef = useRef(false);
-  const scheduleGuides = (next: AlignmentGuide[]) => {
+  const scheduleGuides = (align: AlignmentGuide[], dist: DistributionGuide[] = []) => {
     if (guideRafRef.current !== null) cancelAnimationFrame(guideRafRef.current);
     guideRafRef.current = requestAnimationFrame(() => {
       guideRafRef.current = null;
-      setSnapGuides((prev) => (sameGuides(prev, next) ? prev : next));
+      setSnapGuides((prev) => (sameGuides(prev, align) ? prev : align));
+      setDistGuides((prev) => (sameDistGuides(prev, dist) ? prev : dist));
     });
   };
   useEffect(
@@ -503,19 +530,38 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             );
             snapDx = snap.dx;
             snapDy = snap.dy;
+            // Equal-spacing (distribution) snap fills the axes alignment
+            // didn't already claim, so the element lands evenly spaced
+            // between / beyond its neighbours. Alignment (edge / centre)
+            // wins per axis when both are in range.
+            const dist = distributionSnap(
+              candidate,
+              activeTab.elements,
+              memberIds,
+              ALIGN_SNAP_THRESHOLD,
+            );
+            if (snapDx === 0) snapDx = dist.dx;
+            if (snapDy === 0) snapDy = dist.dy;
             // Derive guides from the SNAPPED primary bounds so a line
             // only appears once the snap has aligned an edge / centre.
             // Suppressed entirely when the user has turned guides off
             // (the snap above still applies; only the hint is hidden).
-            const guides =
-              (depsRef.current.alignmentGuidesRef.current ?? true)
-                ? alignmentGuides(
-                    { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
-                    activeTab.elements,
-                    memberIds,
-                  )
-                : [];
-            scheduleGuides(guides);
+            const guidesOn = depsRef.current.alignmentGuidesRef.current ?? true;
+            const guides = guidesOn
+              ? alignmentGuides(
+                  { ...candidate, x: candidate.x + snapDx, y: candidate.y + snapDy },
+                  activeTab.elements,
+                  memberIds,
+                )
+              : [];
+            // Distribution guides only for the axis distribution actually
+            // drove (alignment didn't already claim it).
+            const distOut = guidesOn
+              ? dist.guides.filter((g) =>
+                  g.axis === 'x' ? snap.dx === 0 && dist.dx !== 0 : snap.dy === 0 && dist.dy !== 0,
+                )
+              : [];
+            scheduleGuides(guides, distOut);
           } else {
             scheduleGuides([]);
           }
@@ -749,6 +795,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   return {
     drag,
     snapGuides,
+    distGuides,
     beginDrag,
     beginRotate,
     beginAnchorDrag,

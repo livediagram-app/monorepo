@@ -7,6 +7,7 @@ import type {
   AlignmentGuide,
   Anchor,
   BackgroundPattern,
+  DistributionGuide,
   Element,
   ShapeKind,
   TextAlignX,
@@ -49,6 +50,9 @@ export type CanvasProps = {
   // / centre lines the dragged element shares with neighbours). Empty
   // when no snap is in effect. Rendered by CanvasChrome. See spec/09.
   snapGuides: AlignmentGuide[];
+  // Equal-spacing guides: the gap segments shown when a moved element
+  // snaps to even spacing with its neighbours. Rendered by CanvasChrome.
+  distGuides: DistributionGuide[];
   selectedId: string | null;
   multiSelectedIds: Set<string>;
   onSelectMarquee: (ids: Set<string>) => void;

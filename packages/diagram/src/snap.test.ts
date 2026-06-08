@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { alignmentGuides, snapResizeBounds, snapToAlignment, type ShapeElement } from './index';
+import {
+  alignmentGuides,
+  distributionSnap,
+  snapResizeBounds,
+  snapToAlignment,
+  type ShapeElement,
+} from './index';
 
 const shape = (id: string, overrides: Partial<ShapeElement> = {}): ShapeElement => ({
   id,
@@ -207,5 +213,61 @@ describe('alignmentGuides', () => {
     const guides = alignmentGuides(box(0, 0, 100, 100), [neighbour], new Set());
     const atZero = guides.filter((g) => g.axis === 'x' && g.position === 0);
     expect(atZero).toHaveLength(1);
+  });
+});
+
+describe('distributionSnap', () => {
+  it('snaps a third element equidistant between two others (equal gaps)', () => {
+    // A right edge = 100, C left edge = 400 → inner space 300; a 100-wide
+    // candidate centred leaves a 100px gap each side, at x = 200.
+    const a = shape('a', { x: 0, y: 0, width: 100, height: 100 });
+    const c = shape('c', { x: 400, y: 0, width: 100, height: 100 });
+    const out = distributionSnap(box(195, 0, 100, 100), [a, c], new Set(), 10);
+    expect(out.dx).toBe(5); // 200 - 195
+    expect(out.dy).toBe(0);
+    const g = out.guides.find((gd) => gd.axis === 'x');
+    expect(g?.gap).toBe(100);
+    expect(g?.spans).toHaveLength(2);
+  });
+
+  it('snaps to continue an equal-spacing run (equal extension)', () => {
+    // A (0..100) and B (200..300) leave a 100px gap; the candidate snaps
+    // to one gap beyond B → x = 400.
+    const a = shape('a', { x: 0, y: 0, width: 100, height: 100 });
+    const b = shape('b', { x: 200, y: 0, width: 100, height: 100 });
+    const out = distributionSnap(box(395, 0, 100, 100), [a, b], new Set(), 10);
+    expect(out.dx).toBe(5); // 400 - 395
+    expect(out.guides.find((gd) => gd.axis === 'x')?.gap).toBe(100);
+  });
+
+  it('does not snap when the candidate is outside the threshold', () => {
+    const a = shape('a', { x: 0, y: 0, width: 100, height: 100 });
+    const c = shape('c', { x: 400, y: 0, width: 100, height: 100 });
+    const out = distributionSnap(box(250, 0, 100, 100), [a, c], new Set(), 10);
+    expect(out.dx).toBe(0);
+    expect(out.guides).toHaveLength(0);
+  });
+
+  it('ignores neighbours that do not overlap on the cross axis (not a row)', () => {
+    // A + C sit far below the candidate, so there's no horizontal "row".
+    const a = shape('a', { x: 0, y: 1000, width: 100, height: 100 });
+    const c = shape('c', { x: 400, y: 1000, width: 100, height: 100 });
+    const out = distributionSnap(box(195, 0, 100, 100), [a, c], new Set(), 10);
+    expect(out.dx).toBe(0);
+  });
+
+  it('snaps the Y axis for a vertical column', () => {
+    const a = shape('a', { x: 0, y: 0, width: 100, height: 100 });
+    const c = shape('c', { x: 0, y: 400, width: 100, height: 100 });
+    const out = distributionSnap(box(0, 195, 100, 100), [a, c], new Set(), 10);
+    expect(out.dy).toBe(5);
+    expect(out.guides.find((gd) => gd.axis === 'y')?.gap).toBe(100);
+  });
+
+  it('excludes the dragged ids', () => {
+    const a = shape('a', { x: 0, y: 0, width: 100, height: 100 });
+    const c = shape('c', { x: 400, y: 0, width: 100, height: 100 });
+    const out = distributionSnap(box(195, 0, 100, 100), [a, c], new Set(['a']), 10);
+    expect(out.dx).toBe(0); // only one neighbour left → no pair
   });
 });
