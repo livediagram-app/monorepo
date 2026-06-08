@@ -122,10 +122,10 @@ export function useDiagramHistory(initialTabs: Tab[]): DiagramHistory {
     setHistory(historyRedo);
   };
 
-  // Replace the present tab list with `tabs` and clear history. Used by
-  // the page when hydrating on mount AND when a remote `tab` /
-  // `diagram-meta` op needs to merge changes from a peer (the
-  // callback form gives the merger access to the current state).
+  // Replace the present tab list with `tabs` and CLEAR history. For
+  // genuine context switches (hydrating on mount, opening a different
+  // diagram, loading a tab) where prior undo states no longer apply.
+  // Remote peer merges use `applyRemote` instead, to keep history.
   const reset = (tabs: Tab[] | ((prev: Tab[]) => Tab[])) => {
     setHistory((h) => historyReset(h, tabs));
   };

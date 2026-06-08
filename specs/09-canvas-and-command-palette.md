@@ -170,9 +170,11 @@ A separate row at the bottom of the palette (separated from the add-buttons by a
 
 History is kept to a maximum of **3 steps** in each direction. Older states are dropped.
 
-Undo-able actions: adding/deleting any element, label commits, lock toggle, layer order (bring/send), format-paint apply, duplicate-and-connect, drag-end (move or resize, including arrow-endpoint drags). The snapshot is taken at the **start** of a drag so undo returns to the pre-drag state, not to intermediate frames.
+Undo-able actions: adding/deleting any element, label commits, lock toggle, layer order (bring/send), format-paint apply, duplicate-and-connect, drag-end (move or resize, including arrow-endpoint drags). A drag's snapshot is **armed** at the start but only **taken on the first actual movement** (the first `tick` past the engage threshold), so undo returns to the pre-drag state without intermediate frames — and a plain click that merely selects an element, or a press on a locked element / tab that never mutates, leaves the history untouched (it used to push a no-op snapshot and clear the redo stack on every click).
 
 Not in history: selection, edit mode entry, palette position/minimize state, format-painter mode.
+
+**Collaboration + history.** A remote peer's `tab` / `diagram-meta` op merges into the present via `applyRemote`, which keeps the local undo/redo stacks intact (peers autosave ~every 600ms, so the old history-clearing `reset` wiped undo continuously during a shared session). The retained past states predate the peer's change, so undoing far enough can locally drop a collaborator's edit — an accepted limitation of last-write-wins collab without OT/CRDT. Genuine context switches (mount hydration, opening another diagram, loading a tab) still use `reset`, which clears history.
 
 The palette is laid out top-to-bottom as: canvas-tool toggle (Pan / Select / Laser) → general shape row (always visible) → **Tools** accordion (collapsed by default) → **Devices** accordion (collapsed by default). Tools and Devices are mutually exclusive: opening one closes the other so the palette stays compact. Shapes are NOT folded behind an accordion because they're the most common entry point on every fresh canvas and tucking them behind a collapsible header buries a click for no payoff.
 
