@@ -50,15 +50,37 @@ export type SelectedNode =
 
 // ---------- Right pane primitives ---------------------------------
 
+function HamburgerIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M3 5h12M3 9h12M3 13h12" />
+    </svg>
+  );
+}
+
 export function PaneHeader({
   title,
   crumbs,
   onCreateDiagram,
   onCreateFolder,
   folderLabel,
+  onOpenNav,
 }: {
   title: string;
   crumbs: { name: string; onClick?: () => void }[];
+  // Mobile only: opens the section drawer (the sidebar is hidden below
+  // `sm`). Renders a hamburger to the left of the title. Omitted on
+  // desktop where the sidebar is always visible.
+  onOpenNav?: () => void;
   // Optional CTAs rendered in the title row's right edge. Replaces
   // the standalone floating "+" FAB so the actions sit in their
   // current context rather than as a global affordance. New diagram
@@ -80,9 +102,21 @@ export function PaneHeader({
   return (
     <div className="mb-4">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-slate-900">
-          {title}
-        </h1>
+        <div className="flex min-w-0 items-center gap-2">
+          {onOpenNav ? (
+            <button
+              type="button"
+              onClick={onOpenNav}
+              aria-label="Browse sections"
+              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
+            >
+              <HamburgerIcon />
+            </button>
+          ) : null}
+          <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-slate-900">
+            {title}
+          </h1>
+        </div>
         {hasActions ? (
           <div className="flex shrink-0 items-center gap-2">
             {onCreateDiagram ? (

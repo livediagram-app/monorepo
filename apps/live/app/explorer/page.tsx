@@ -31,7 +31,15 @@ const SearchPanel = dynamic(() => import('@/components/SearchPanel').then((m) =>
 // picks the Image Gallery sidebar item, so the upload + delete +
 // usage view doesn't sit in the default explorer chunk.
 const GalleryPane = dynamic(() => import('@/components/GalleryPane').then((m) => m.GalleryPane));
-import { ClockIcon, FolderIcon, HomeIcon, ImageIcon, MenuFolderIcon, ShareIcon } from './icons';
+import {
+  ClockIcon,
+  CloseIcon,
+  FolderIcon,
+  HomeIcon,
+  ImageIcon,
+  MenuFolderIcon,
+  ShareIcon,
+} from './icons';
 import {
   SearchSidebarIcon,
   SidebarFolderSubtree,
@@ -109,6 +117,16 @@ export default function ExplorerPage() {
   // Land on Recent — the diagrams you're most likely to want — rather
   // than the full folder tree.
   const [selected, setSelected] = useState<SelectedNode>({ kind: 'recent' });
+  // Mobile section drawer: the sidebar is hidden below `sm`, so on a
+  // phone this slides it in from a hamburger in the pane header.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // Select a section and close the mobile drawer (a no-op on desktop
+  // where it's never open). Used by every sidebar row so picking a
+  // section on a phone returns you to the content.
+  const go = (node: SelectedNode) => {
+    setSelected(node);
+    setMobileNavOpen(false);
+  };
   const confirm = useConfirm();
   // Which folder branches are open in the sidebar. Local state only;
   // a fresh visit starts with the root open and everything else
@@ -463,6 +481,92 @@ export default function ExplorerPage() {
     },
   });
 
+  // The section tree, shared by the desktop sidebar and the mobile
+  // drawer. Every navigation goes through `go` so picking a section on a
+  // phone also closes the drawer; search closes it too.
+  const sidebarTree = (
+    <>
+      <SidebarSectionLabel first>Hi {clerkDisplayName ?? 'there'}</SidebarSectionLabel>
+      <button
+        type="button"
+        onClick={() => {
+          setSearchOpen(true);
+          setMobileNavOpen(false);
+        }}
+        className="mt-2 flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-left text-xs text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+      >
+        <SearchSidebarIcon />
+        <span className="flex-1 truncate">Search...</span>
+      </button>
+      <div className="my-4 h-px bg-slate-100" aria-hidden />
+      <SidebarRow
+        icon={<ClockIcon />}
+        label="Recent"
+        selected={selected.kind === 'recent'}
+        onClick={() => go({ kind: 'recent' })}
+        depth={0}
+      />
+
+      <SidebarSectionLabel>Folders</SidebarSectionLabel>
+      <SidebarRow
+        icon={<HomeIcon />}
+        label="All diagrams"
+        selected={selected.kind === 'all'}
+        onClick={() => go({ kind: 'all' })}
+        depth={0}
+        hasChildren={rootFolders.length > 0}
+        expanded={true}
+        onToggleExpand={undefined}
+      />
+      {/* Unsorted is a synthetic folder backed by folder_id IS NULL —
+          always present at the top of the root level so loose diagrams
+          have somewhere obvious to land. */}
+      <SidebarRow
+        icon={<FolderIcon open={false} />}
+        label="Unsorted"
+        selected={selected.kind === 'unsorted'}
+        onClick={() => go({ kind: 'unsorted' })}
+        depth={1}
+        badge={unsortedDiagrams.length > 0 ? unsortedDiagrams.length : undefined}
+      />
+      {rootFolders.map((f) => (
+        <SidebarFolderSubtree
+          key={f.id}
+          folder={f}
+          depth={1}
+          expanded={expanded}
+          onToggleExpand={toggleExpand}
+          selected={selected}
+          onSelect={(id) => go({ kind: 'folder', id })}
+          childrenByParent={childrenByParent}
+          renamingFolderId={renamingFolderId}
+          onCommitRenameFolder={commitRenameFolder}
+          onCancelRenameFolder={() => setRenamingFolderId(null)}
+          folderActions={folderActions}
+        />
+      ))}
+
+      <SidebarSectionLabel>Library</SidebarSectionLabel>
+      <SidebarRow
+        icon={<ImageIcon />}
+        label="Image Gallery"
+        selected={selected.kind === 'gallery'}
+        onClick={() => go({ kind: 'gallery' })}
+        depth={0}
+      />
+
+      <SidebarSectionLabel>Shared</SidebarSectionLabel>
+      <SidebarRow
+        icon={<ShareIcon />}
+        label="Shared with me"
+        selected={selected.kind === 'shared'}
+        onClick={() => go({ kind: 'shared' })}
+        depth={0}
+        badge={shared.length > 0 ? shared.length : undefined}
+      />
+    </>
+  );
+
   return (
     <div className="relative flex min-h-dvh flex-col bg-slate-50">
       <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 px-4 backdrop-blur">
@@ -485,89 +589,43 @@ export default function ExplorerPage() {
           aria-label="Folders"
         >
           <div className="sticky top-20 rounded-xl border border-slate-200 bg-white px-3 py-5 shadow-sm">
-            <SidebarSectionLabel first>Hi {clerkDisplayName ?? 'there'}</SidebarSectionLabel>
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="mt-2 flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-left text-xs text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
-            >
-              <SearchSidebarIcon />
-              <span className="flex-1 truncate">Search...</span>
-            </button>
-            <div className="my-4 h-px bg-slate-100" aria-hidden />
-            <SidebarRow
-              icon={<ClockIcon />}
-              label="Recent"
-              selected={selected.kind === 'recent'}
-              onClick={() => setSelected({ kind: 'recent' })}
-              depth={0}
-            />
-
-            <SidebarSectionLabel>Folders</SidebarSectionLabel>
-            <SidebarRow
-              icon={<HomeIcon />}
-              label="All diagrams"
-              selected={selected.kind === 'all'}
-              onClick={() => setSelected({ kind: 'all' })}
-              depth={0}
-              hasChildren={rootFolders.length > 0}
-              expanded={true}
-              onToggleExpand={undefined}
-            />
-            {/* Unsorted is a synthetic folder backed by folder_id IS
-                NULL — always present at the top of the root level so
-                loose diagrams have somewhere obvious to land. */}
-            <SidebarRow
-              icon={<FolderIcon open={false} />}
-              label="Unsorted"
-              selected={selected.kind === 'unsorted'}
-              onClick={() => setSelected({ kind: 'unsorted' })}
-              depth={1}
-              badge={unsortedDiagrams.length > 0 ? unsortedDiagrams.length : undefined}
-            />
-            {rootFolders.map((f) => (
-              <SidebarFolderSubtree
-                key={f.id}
-                folder={f}
-                depth={1}
-                expanded={expanded}
-                onToggleExpand={toggleExpand}
-                selected={selected}
-                onSelect={(id) => setSelected({ kind: 'folder', id })}
-                childrenByParent={childrenByParent}
-                renamingFolderId={renamingFolderId}
-                onCommitRenameFolder={commitRenameFolder}
-                onCancelRenameFolder={() => setRenamingFolderId(null)}
-                folderActions={folderActions}
-              />
-            ))}
-
-            <SidebarSectionLabel>Library</SidebarSectionLabel>
-            <SidebarRow
-              icon={<ImageIcon />}
-              label="Image Gallery"
-              selected={selected.kind === 'gallery'}
-              onClick={() => setSelected({ kind: 'gallery' })}
-              depth={0}
-            />
-
-            <SidebarSectionLabel>Shared</SidebarSectionLabel>
-            <SidebarRow
-              icon={<ShareIcon />}
-              label="Shared with me"
-              selected={selected.kind === 'shared'}
-              onClick={() => setSelected({ kind: 'shared' })}
-              depth={0}
-              badge={shared.length > 0 ? shared.length : undefined}
-            />
+            {sidebarTree}
           </div>
         </aside>
+
+        {/* ---------- Mobile section drawer ---------- */}
+        {/* The sidebar is hidden below `sm`; this slides the same tree in
+            from the left, opened by the hamburger in the pane header. */}
+        {mobileNavOpen ? (
+          <div className="fixed inset-0 z-40 sm:hidden">
+            <div
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setMobileNavOpen(false)}
+              aria-hidden
+            />
+            <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85%] animate-slide-in-left flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 shadow-xl">
+              <div className="mb-1 flex items-center justify-between pl-1">
+                <span className="text-sm font-semibold text-slate-700">Sections</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  aria-label="Close"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              {sidebarTree}
+            </div>
+          </div>
+        ) : null}
 
         {/* ---------- Right pane ---------- */}
         <section className="min-w-0 flex-1">
           <PaneHeader
             title={paneTitle}
             crumbs={paneCrumbs}
+            onOpenNav={() => setMobileNavOpen(true)}
             onCreateDiagram={
               selected.kind === 'shared' || selected.kind === 'gallery'
                 ? undefined
