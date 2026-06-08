@@ -66,18 +66,44 @@ export async function insertChangeLogEntry(env: Env, entry: ChangeLogEntryDTO): 
 
 // Bulk-drop every log entry for a tab. Used by the live app when it
 // deletes a tab — the tab no longer exists, its history is dead with
-// it. See specs/12-activity-and-audit.md. Post #14 the diagram-side
-// filter is gone (the column was dropped); the tab_id alone keys
-// the delete.
-export async function deleteChangeLogForTab(env: Env, tabId: string): Promise<void> {
-  await env.DB.prepare('DELETE FROM change_log WHERE tab_id = ?').bind(tabId).run();
+// it. See specs/12-activity-and-audit.md. The delete is SCOPED to the
+// caller's diagram (via diagram_tabs): migration 0012 dropped
+// change_log.diagram_id, so a bare `WHERE tab_id = ?` would let an
+// owner of one diagram wipe a foreign diagram's tab log by id (IDOR).
+// Requiring the tab to be linked to `diagramId` (which the route has
+// already authorised) closes that.
+export async function deleteChangeLogForTab(
+  env: Env,
+  diagramId: string,
+  tabId: string,
+): Promise<void> {
+  await env.DB.prepare(
+    `DELETE FROM change_log
+      WHERE tab_id = ?
+        AND tab_id IN (SELECT tab_id FROM diagram_tabs WHERE diagram_id = ?)`,
+  )
+    .bind(tabId, diagramId)
+    .run();
 }
 
 // Drop a single log entry. Used by the live app when the user clicks
 // Revert — the original entry vanishes rather than gaining a
-// 'reverted' counterpart, so the log stays compact.
-export async function deleteChangeLogEntry(env: Env, entryId: string): Promise<void> {
-  await env.DB.prepare('DELETE FROM change_log WHERE id = ?').bind(entryId).run();
+// 'reverted' counterpart, so the log stays compact. SCOPED to the
+// caller's diagram for the same reason as deleteChangeLogForTab: the
+// entry id alone is not diagram-bound post-0012, so the delete must
+// confirm the entry's tab belongs to the authorised diagram.
+export async function deleteChangeLogEntry(
+  env: Env,
+  diagramId: string,
+  entryId: string,
+): Promise<void> {
+  await env.DB.prepare(
+    `DELETE FROM change_log
+      WHERE id = ?
+        AND tab_id IN (SELECT tab_id FROM diagram_tabs WHERE diagram_id = ?)`,
+  )
+    .bind(entryId, diagramId)
+    .run();
 }
 
 // 90-day retention sweep — fired from the scheduled handler (item

@@ -564,7 +564,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     if (access instanceof Response) return access;
 
     if (request.method === 'DELETE') {
-      await deleteChangeLogEntry(env, entryId);
+      await deleteChangeLogEntry(env, id, entryId);
       return noContent();
     }
   }
@@ -579,7 +579,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     if (access instanceof Response) return access;
 
     if (request.method === 'DELETE') {
-      await deleteChangeLogForTab(env, tabId);
+      await deleteChangeLogForTab(env, id, tabId);
       return noContent();
     }
   }
