@@ -27,6 +27,7 @@ export function ZoomControls({
   const percent = Math.round(zoom * 100);
   return (
     <div
+      data-zoom-controls
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => {
         e.preventDefault();

@@ -195,15 +195,42 @@ export function MovablePanel({
     const compute = () => {
       const panel = ref.current;
       if (!panel) return;
-      const panelTop = panel.getBoundingClientRect().top;
+      const panelRect = panel.getBoundingClientRect();
       const headerH = headerRef.current?.getBoundingClientRect().height ?? 36;
-      setBodyMaxH(Math.max(window.innerHeight - panelTop - headerH - 16, 80));
+      // Grow the scrollable body to the most space actually available,
+      // rather than a fixed reserve. The hard bottom edge is the top of
+      // the TabBar (the canvas's real bottom; falls back to the viewport
+      // bottom on routes without one). If the panel overlaps the floating
+      // zoom controls' column, stop above those too so its last rows stay
+      // clickable. Previously a fixed 16px reserve let long panels (Theme /
+      // Canvas accordions on a laptop) run under the tab bar / behind the
+      // zoom bar.
+      const GAP = 12;
+      const tabbar = document.querySelector('[data-editor-tabbar]');
+      let bottomLimit = tabbar ? tabbar.getBoundingClientRect().top : window.innerHeight;
+      const zoom = document.querySelector('[data-zoom-controls]');
+      if (zoom) {
+        const z = zoom.getBoundingClientRect();
+        const overlapsX = panelRect.right > z.left && panelRect.left < z.right;
+        if (overlapsX) bottomLimit = Math.min(bottomLimit, z.top);
+      }
+      setBodyMaxH(Math.max(bottomLimit - panelRect.top - headerH - GAP, 80));
     };
     const raf = requestAnimationFrame(compute);
     window.addEventListener('resize', compute);
+    // Re-measure on any layout shift of the panel itself — accordions
+    // expanding/collapsing, the panel settling into its stacked position,
+    // or the zoom bar / tab bar mounting after first paint. Safe from a
+    // feedback loop: bodyMaxH is derived from the panel's TOP and the
+    // chrome below it, never from the body content, so once the layout
+    // settles compute returns the same value and React bails on the set.
+    const panel = ref.current;
+    const ro = panel ? new ResizeObserver(() => compute()) : null;
+    ro?.observe(panel!);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', compute);
+      ro?.disconnect();
     };
     // Re-measure after drag (position changes) or dynamic stacking (stackBelowY changes).
   }, [position, stackBelowY]);

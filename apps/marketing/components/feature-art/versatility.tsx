@@ -766,6 +766,106 @@ export function ZenModeArt() {
   );
 }
 
+// Fonts: the same word in four distinct typeface styles, the brand
+// highlight cycling through to read as "pick a font". Uses generic
+// system stacks (sans / serif / mono / cursive) so the card conveys the
+// variety without depending on the real Google Fonts loading here.
+export function FontsArt() {
+  const fonts = [
+    { label: 'Inter', family: 'ui-sans-serif, system-ui, sans-serif' },
+    { label: 'Lora', family: 'Georgia, ui-serif, serif' },
+    { label: 'Roboto Mono', family: 'ui-monospace, SFMono-Regular, monospace' },
+    { label: 'Caveat', family: '"Segoe Script", "Comic Sans MS", ui-rounded, cursive' },
+  ];
+  return (
+    <Frame>
+      <div className="flex h-full flex-col justify-center gap-1.5 px-3">
+        <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-500">Fonts</p>
+        {fonts.map((f, i) => (
+          <span
+            key={f.label}
+            className="relative flex items-center justify-between rounded border border-slate-200 bg-white px-2 py-1"
+          >
+            <span
+              className="fa-hl pointer-events-none absolute inset-0 rounded ring-2 ring-brand-500"
+              style={{ animationDelay: `${i * 0.7}s` }}
+            />
+            <span
+              className="text-[13px] leading-none text-slate-800"
+              style={{ fontFamily: f.family }}
+            >
+              Diagram
+            </span>
+            <span className="text-[8px] text-slate-400">{f.label}</span>
+          </span>
+        ))}
+      </div>
+    </Frame>
+  );
+}
+
+// Markdown import: a heading + nested-bullet outline on the left turns
+// into a small node-link tree on the right, with an arrow between. Mirrors
+// what the importer does (outline → themed tree).
+export function MarkdownImportArt() {
+  return (
+    <Frame canvas>
+      {/* left: a markdown outline */}
+      <div className="absolute bottom-3 left-2 top-3 w-[40%] rounded-md border border-slate-200 bg-white p-1.5 shadow-sm">
+        <div className="flex items-center gap-1">
+          <span className="rounded-sm bg-slate-200 px-1 text-[6px] font-semibold text-slate-500">
+            md
+          </span>
+        </div>
+        <div className="mt-1.5 space-y-1.5">
+          <div className="h-1.5 w-4/5 rounded bg-slate-400" />
+          <div className="ml-2 h-1.5 w-3/5 rounded bg-slate-200" />
+          <div className="ml-4 h-1.5 w-1/2 rounded bg-slate-100" />
+          <div className="ml-2 h-1.5 w-3/5 rounded bg-slate-200" />
+        </div>
+      </div>
+      {/* arrow */}
+      <svg viewBox="0 0 220 96" className="absolute inset-0 h-full w-full">
+        <line x1="96" y1="48" x2="120" y2="48" stroke="rgb(100 116 139)" strokeWidth="2" />
+        <polygon points="120,48 113,44 113,52" fill="rgb(100 116 139)" />
+        {/* right: a tiny tree (root + two children) */}
+        <line x1="150" y1="48" x2="178" y2="28" stroke={BLUE_STROKE} strokeWidth="1.5" />
+        <line x1="150" y1="48" x2="178" y2="68" stroke={BLUE_STROKE} strokeWidth="1.5" />
+        <rect
+          x="132"
+          y="40"
+          width="22"
+          height="16"
+          rx="3"
+          fill={BLUE_FILL}
+          stroke={BLUE_STROKE}
+          strokeWidth="1.5"
+        />
+        <rect
+          x="176"
+          y="20"
+          width="22"
+          height="16"
+          rx="3"
+          fill="white"
+          stroke={BLUE_STROKE}
+          strokeWidth="1.25"
+        />
+        <rect
+          x="176"
+          y="60"
+          width="22"
+          height="16"
+          rx="3"
+          fill="white"
+          stroke={BLUE_STROKE}
+          strokeWidth="1.25"
+        />
+      </svg>
+    </Frame>
+  );
+}
+
 // Editable table element: a coloured header row over body cells, with one
 // cell ringed as if mid-edit (the real table opens a cell on double-click)
 // and the header tinted to show the per-table header colours.

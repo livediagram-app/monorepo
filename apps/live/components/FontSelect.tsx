@@ -1,11 +1,12 @@
-import { FONTS, resolveFontStack } from '@/lib/fonts';
+import { FONTS } from '@/lib/fonts';
 
 // Shared font dropdown (spec/28) used by both the per-element Text
 // accordion and the tab-level Current Tab section. A styled native
 // <select> so keyboard + accessibility come for free; each option
-// previews in its own face, and the closed control renders in the
-// currently-selected font. `value` is the stored font id (or null for
-// the default option).
+// previews in its own face. The closed control stays in the compact UI
+// font (matching the panel's other tiny labels) rather than rendering
+// the selected value in its own typeface, which read oversized next to
+// them. `value` is the stored font id (or null for the default option).
 export function FontSelect({
   value,
   onChange,
@@ -19,7 +20,6 @@ export function FontSelect({
   defaultLabel?: string;
   ariaLabel?: string;
 }) {
-  const selectedStack = resolveFontStack(value);
   return (
     <select
       aria-label={ariaLabel}
@@ -27,8 +27,7 @@ export function FontSelect({
       // Empty option → null (clear the override / use the default).
       onChange={(e) => onChange(e.target.value || null)}
       onPointerDown={(e) => e.stopPropagation()}
-      className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none transition hover:border-slate-300 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
-      style={selectedStack ? { fontFamily: selectedStack } : undefined}
+      className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 outline-none transition hover:border-slate-300 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
     >
       <option value="">{defaultLabel}</option>
       {FONTS.map((f) => (

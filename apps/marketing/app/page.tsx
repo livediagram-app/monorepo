@@ -13,6 +13,7 @@ import {
   DepthArt,
   EasyStartArt,
   FoldersArt,
+  FontsArt,
   FormatPainterArt,
   GroupArt,
   IconsArt,
@@ -20,6 +21,7 @@ import {
   LaserArt,
   NotesArt,
   LockArt,
+  MarkdownImportArt,
   MarqueeArt,
   MinimalPanelArt,
   PencilArt,
@@ -115,6 +117,18 @@ export default function LandingPage() {
                 title: 'Eighteen preset themes',
                 description:
                   'Brand, Slate, Forest, Sunset, Ocean, Crimson, Midnight and a dozen more. One click recolours the canvas, every shape, and every arrow.',
+              },
+              {
+                art: <FontsArt />,
+                title: 'Eight fonts',
+                description:
+                  'Set the typeface per element or as a tab-wide default, from eight Google Fonts spanning sans, serif, slab, mono, and handwriting. New tabs inherit it, so a diagram reads consistently.',
+              },
+              {
+                art: <MarkdownImportArt />,
+                title: 'Import a Markdown outline',
+                description:
+                  'Bring an outline in from XMind, Obsidian, or any notes: headings and nested bullets become a tidy, themed node-link tree. Pick Markdown in the import dialog — it builds onto the current tab, and one undo takes it back.',
               },
               {
                 art: <ShortcutsArt />,

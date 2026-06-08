@@ -115,7 +115,10 @@ export function TabBar({
   const [overId, setOverId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
+    <div
+      data-editor-tabbar
+      className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900"
+    >
       <span
         className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:flex dark:text-slate-500"
         aria-hidden
