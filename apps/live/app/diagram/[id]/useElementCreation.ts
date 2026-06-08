@@ -2,58 +2,40 @@ import type { Dispatch, SetStateAction } from 'react';
 import {
   createShape,
   createTable,
-  createSticky,
   createText,
-  type ArrowElement,
   type BoxedElement,
-  type Element,
   type ShapeKind,
   type Tab,
 } from '@livediagram/diagram';
-import { getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
 import type { PendingDraw } from '@/lib/draw-mode';
-import { patchTab } from './editor-page-helpers';
 
 type SetState<T> = Dispatch<SetStateAction<T>>;
 
-// Palette element-creation handlers, lifted out of editor-page.tsx. Each
-// short-circuits into draw-to-size mode when enabled (beginDrawIfEnabled,
-// from useShapeDrawing) else drops the element at the viewport centre via
-// addBoxed (from useElementHelpers); arrows + double-click text take
-// their own commit path because they also flip the tab's templateChosen.
+// Palette element-creation handlers, lifted out of editor-page.tsx. The
+// draw-capable elements (shape / text / sticky / arrow) arm the combined
+// add gesture (beginDraw, from useShapeDrawing) — the canvas then drops
+// them at default size on a tap or sizes them on a drag. Icons + tables
+// have no draw-to-size, so they drop straight at the viewport centre via
+// addBoxed (from useElementHelpers).
 export function useElementCreation(opts: {
   editsBlocked: boolean;
   activeId: string;
-  activeTab: Tab;
-  getViewportCenter: () => { x: number; y: number };
   commitTabs: (updater: (tabs: Tab[]) => Tab[]) => void;
-  emitChange: (tabId: string, before: Element[], after: Element[]) => void;
   setSelectedId: SetState<string | null>;
   setEditingId: SetState<string | null>;
   addBoxed: <T extends BoxedElement>(make: (x: number, y: number) => T) => void;
-  beginDrawIfEnabled: (intent: PendingDraw) => boolean;
+  beginDraw: (intent: PendingDraw) => void;
 }) {
-  const {
-    editsBlocked,
-    activeId,
-    activeTab,
-    getViewportCenter,
-    commitTabs,
-    emitChange,
-    setSelectedId,
-    setEditingId,
-    addBoxed,
-    beginDrawIfEnabled,
-  } = opts;
+  const { editsBlocked, activeId, commitTabs, setSelectedId, setEditingId, addBoxed, beginDraw } =
+    opts;
 
+  // Telemetry for these arming handlers fires on commit (see
+  // useShapeDrawing.commitDraw), once the tap / drag actually lands the
+  // element — not here, where the gesture is only queued.
   const addShape = (kind: ShapeKind) => {
     if (editsBlocked) return;
-    if (beginDrawIfEnabled({ type: 'shape', kind })) return;
-    addBoxed((x, y) => createShape(kind, x, y));
-    // Telemetry (spec/22): element added; `type` is the shape kind
-    // (a preset enum, e.g. "Square"), never user content.
-    track('Element', 'Added', titleCaseType(kind));
+    beginDraw({ type: 'shape', kind });
   };
 
   // Curated icon glyph. Unlike addShape it drops straight at the
@@ -77,15 +59,11 @@ export function useElementCreation(opts: {
 
   const addText = () => {
     if (editsBlocked) return;
-    if (beginDrawIfEnabled({ type: 'text' })) return;
-    addBoxed((x, y) => createText(x, y));
-    track('Element', 'Added', 'Text');
+    beginDraw({ type: 'text' });
   };
   const addSticky = () => {
     if (editsBlocked) return;
-    if (beginDrawIfEnabled({ type: 'sticky' })) return;
-    addBoxed((x, y) => createSticky(x, y));
-    track('Element', 'Added', 'Sticky');
+    beginDraw({ type: 'sticky' });
   };
 
   // Drop a plain connector at the viewport centre. Defaults to no
@@ -95,28 +73,7 @@ export function useElementCreation(opts: {
   // fact to pin to anchors.
   const addArrow = () => {
     if (editsBlocked) return;
-    if (beginDrawIfEnabled({ type: 'arrow' })) return;
-    const centre = getViewportCenter();
-    const halfLen = 80;
-    const theme = getTheme(activeTab.theme);
-    const arrow: ArrowElement = {
-      id: crypto.randomUUID(),
-      type: 'arrow',
-      from: { kind: 'free', x: centre.x - halfLen, y: centre.y },
-      to: { kind: 'free', x: centre.x + halfLen, y: centre.y },
-      arrowEnds: 'none',
-      ...(theme.elementStroke ? { strokeColor: theme.elementStroke } : {}),
-    };
-    const before = activeTab.elements;
-    const after = [...before, arrow];
-    commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
-    // Same activity-log emit as addBoxed: commit() does this for
-    // element-only commits, but this path also touches
-    // templateChosen on the tab so we use commitTabs and emit
-    // explicitly.
-    emitChange(activeId, before, after);
-    setSelectedId(arrow.id);
-    track('Element', 'Added', 'Arrow');
+    beginDraw({ type: 'arrow' });
   };
 
   const handleCanvasDoubleClick = (x: number, y: number) => {

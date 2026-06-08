@@ -1,4 +1,26 @@
-import type { ArrowElement } from '@livediagram/diagram';
+import { isBoxed, type ArrowElement, type BoxedElement, type Element } from '@livediagram/diagram';
+
+// Size a newly-added boxed element. It inherits the currently-selected
+// boxed element's width / height (so adding elements one after another
+// keeps a consistent size), falling back to the factory default when
+// nothing boxed is selected. Circles + diamonds are forced square — a
+// non-square inherited size would squash them. Shared by the palette
+// tap-to-drop (addBoxed) and the combined add gesture's tap branch
+// (useShapeDrawing.commitDraw) so both paths size new elements the same.
+export function inheritedSizeFor(
+  base: BoxedElement,
+  selected: Element | null | undefined,
+): { width: number; height: number } {
+  const inherit = selected && isBoxed(selected) ? selected : null;
+  let width = inherit?.width ?? base.width;
+  let height = inherit?.height ?? base.height;
+  if (base.type === 'shape' && (base.shape === 'circle' || base.shape === 'diamond')) {
+    const side = Math.max(width, height);
+    width = side;
+    height = side;
+  }
+  return { width, height };
+}
 
 // One of the gestures a `BoxedElementView` can be in mid-drag. `move`
 // is the body drag; the four `resize-*` corners are the bounding-box

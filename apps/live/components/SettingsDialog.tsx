@@ -18,7 +18,6 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
 
   const autoRebind = settings.autoRebindArrows !== false;
   const telemetryOn = settings.telemetryEnabled !== false;
-  const drawToAdd = settings.drawToAdd === true;
   const aiEnabled = settings.aiAssistanceEnabled === true;
   const minimalPanels = settings.minimalPanels === true;
   const alignmentGuides = settings.alignmentGuides !== false;
@@ -71,15 +70,6 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                 onChange={(v) => {
                   track('UI', 'Toggled', v ? 'AutoRebindOn' : 'AutoRebindOff');
                   onChange({ ...settings, autoRebindArrows: v });
-                }}
-              />
-              <ToggleRow
-                label="Draw shapes instead of dropping them"
-                description="When on, picking a shape from the palette enters a draw mode: the cursor becomes a crosshair and you drag a rectangle on the canvas to set the shape's size. Off (the default) drops every shape at the centre of your view at a preset size."
-                checked={drawToAdd}
-                onChange={(v) => {
-                  track('UI', 'Toggled', v ? 'DrawToAddOn' : 'DrawToAddOff');
-                  onChange({ ...settings, drawToAdd: v });
                 }}
               />
               <ToggleRow

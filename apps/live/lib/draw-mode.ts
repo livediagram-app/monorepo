@@ -48,16 +48,18 @@ function prettyShapeLabel(kind: ShapeKind): string {
 export function drawBannerMessage(intent: PendingDraw, isMobile: boolean): string {
   switch (intent.type) {
     case 'shape':
-      return `Drag to draw ${prettyShapeLabel(intent.kind)}`;
+      return `Tap to drop or drag to draw ${prettyShapeLabel(intent.kind)}`;
     case 'text':
-      return 'Drag to place text';
+      return 'Tap to drop or drag to place text';
     case 'sticky':
-      return 'Drag to draw a sticky note';
+      return 'Tap to drop or drag to draw a sticky note';
     case 'image':
-      return 'Drag to draw image bounds';
+      return 'Tap to drop or drag to draw image bounds';
     case 'arrow':
-      return 'Drag to draw an arrow';
+      return 'Tap to drop or drag to draw an arrow';
     case 'freehand':
+      // Freehand is gestural only (no tap-to-drop): it collects the
+      // pointer stream, so it keeps the bare "Drag to draw".
       return isMobile ? 'Drag to draw' : 'Drag to draw (release near the start to close)';
   }
 }

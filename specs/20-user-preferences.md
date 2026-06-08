@@ -103,14 +103,6 @@ type UserPreferences = {
   // setting it to false is the only state that changes behaviour.
   // See spec/22 for the rest of the telemetry contract.
   telemetryEnabled?: boolean;
-
-  // When true, picking a shape (or tool) from the palette enters
-  // a draw-to-size mode: the canvas cursor becomes a shape-aware
-  // crosshair and the next drag defines the bounds of the new
-  // element. Defaults to false (the historical drop-at-viewport-
-  // centre behaviour). See `apps/live/lib/draw-mode.ts` for the
-  // PendingDraw discriminated union the gesture commits through.
-  drawToAdd?: boolean;
   // Pencil tool's shape-recognition toggle (spec/09 Pencil
   // subsection). When true, every freehand commit while the
   // pencil banner is up runs through recogniseShape and may
@@ -159,9 +151,6 @@ Missing key === undefined === default behaviour. Concretely:
   changes behaviour.
 - `telemetryEnabled` undefined → telemetry on (the default).
   Setting it to `false` is the only state that opts out.
-- `drawToAdd` undefined → drop-at-centre placement (the default).
-  Setting it to `true` flips the palette into draw-to-size mode
-  for every element kind.
 - `recogniseShapes` undefined → raw-sketch pencil (the default).
   Setting it to `true` makes every pencil commit attempt
   classification first. Flipped from the pencil ModeBanner icon
@@ -200,8 +189,9 @@ behaviour is friction the tool's banner already solves.
   AI, Privacy) so the growing list stays scannable; only the first
   group (Canvas) is open by default and the rest start collapsed, so
   the dialog opens compact and the user expands what they need. The
-  Canvas group holds `autoRebindArrows`, `drawToAdd`, and
-  `alignmentGuides`. The Interface group holds `minimalPanels`, whose
+  Canvas group holds `autoRebindArrows` and `alignmentGuides`
+  (element add is now a single always-on tap-or-drag gesture with no
+  setting — see [spec/09](09-canvas-and-command-palette.md)). The Interface group holds `minimalPanels`, whose
   description notes the dock layout is always on for mobile.
 - **Per-tool surfaces**: today only the pencil's ModeBanner (a
   sparkle / magic-wand icon button to the left of Cancel) carries

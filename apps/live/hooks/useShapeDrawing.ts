@@ -19,7 +19,8 @@
 // beginFreehand, commitFreehand) is consumed by the Canvas + keyboard
 // hook. Verbatim relocation — no behaviour change.
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { inheritedSizeFor } from '@/lib/canvas';
 import {
   createFreehand,
   createImage,
@@ -38,10 +39,10 @@ import { track, titleCaseType } from '@/lib/telemetry';
 import type { PendingDraw } from '@/lib/draw-mode';
 
 type ShapeDrawingDeps = {
-  // user-preferences.drawToAdd — gates whether palette adds queue a
-  // draw gesture vs drop at the viewport centre.
-  drawToAdd: boolean;
   editsBlocked: boolean;
+  // The currently-selected element id, read at arm-time so a tap-to-drop
+  // inherits its size (see beginDraw / commitDraw).
+  selectedId: string | null;
   canvasTool: 'pan' | 'select' | 'laser';
   setCanvasTool: (tool: 'pan' | 'select' | 'laser') => void;
   activeTab: Tab;
@@ -66,8 +67,8 @@ type ShapeDrawingDeps = {
 
 export function useShapeDrawing(deps: ShapeDrawingDeps) {
   const {
-    drawToAdd,
     editsBlocked,
+    selectedId,
     canvasTool,
     setCanvasTool,
     activeTab,
@@ -90,21 +91,30 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
   // drag's bounding box for the shape's size. Escape clears the
   // pending state. See user-preferences.drawToAdd.
   const [pendingDraw, setPendingDraw] = useState<PendingDraw | null>(null);
+  // The element selected when the gesture was armed, captured here because
+  // beginDraw clears the selection (below). A tap-to-drop inherits this
+  // element's size in commitDraw, preserving the old "new shapes match the
+  // last one you had selected" behaviour through the combined gesture.
+  const inheritSizeRef = useRef<Element | null>(null);
 
-  // Shared "enter draw mode" path for every palette add. Returns true
-  // when the gesture is queued (caller should bail), false otherwise.
-  // Clears the current selection so the selection popover doesn't
-  // float over the about-to-be-drawn rectangle, and bumps laser to
-  // pan because laser swallows pointer-down to paint trail dots and
-  // would prevent the draw drag from ever starting.
-  const beginDrawIfEnabled = (intent: PendingDraw): boolean => {
-    if (!drawToAdd) return false;
+  // Shared "arm draw mode" path for every palette add. Tap-to-drop and
+  // drag-to-draw are one combined gesture now (no setting): picking an
+  // element stashes the intent, and the canvas resolves the next pointer
+  // gesture — a tap drops it at its inherited / default size, a drag sizes
+  // it (see commitDraw). Clears the current selection so the popover
+  // doesn't float over the about-to-be-drawn box, and bumps laser to pan
+  // (laser swallows pointer-down to paint trail dots and would block it).
+  const beginDraw = (intent: PendingDraw): void => {
+    // Capture the selection's size BEFORE clearing it so commitDraw's
+    // tap branch can inherit it.
+    inheritSizeRef.current = selectedId
+      ? (activeTab.elements.find((el) => el.id === selectedId) ?? null)
+      : null;
     setSelectedId(null);
     setMultiSelectedIds(new Set());
     setEditingId(null);
     if (canvasTool === 'laser') setCanvasTool('pan');
     setPendingDraw(intent);
-    return true;
   };
 
   // Canvas-driven commit of a draw-to-size gesture. Canvas hands us
@@ -171,18 +181,26 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
       setPendingDraw(null);
       return;
     }
-    const x = Math.min(startX, endX);
-    const y = Math.min(startY, endY);
-    const width = Math.max(16, Math.abs(endX - startX));
-    const height = Math.max(16, Math.abs(endY - startY));
+    // Tap vs drag (the combined add mode): a press with under 16px of
+    // travel in either axis is a tap — drop the element centred on the tap
+    // at its inherited size (the armed-time selection's size, else the
+    // factory default; circle/diamond stay square). A real drag sizes it
+    // to the dragged box (16px floor). Mirrors the arrow branch's
+    // stray-click handling.
+    const isTap = Math.abs(endX - startX) < 16 && Math.abs(endY - startY) < 16;
     const base =
       intent.type === 'shape'
-        ? createShape(intent.kind, x, y)
+        ? createShape(intent.kind, startX, startY)
         : intent.type === 'text'
-          ? createText(x, y)
+          ? createText(startX, startY)
           : intent.type === 'sticky'
-            ? createSticky(x, y)
-            : createImage(x, y);
+            ? createSticky(startX, startY)
+            : createImage(startX, startY);
+    const tapSize = inheritedSizeFor(base, inheritSizeRef.current);
+    const width = isTap ? tapSize.width : Math.max(16, Math.abs(endX - startX));
+    const height = isTap ? tapSize.height : Math.max(16, Math.abs(endY - startY));
+    const x = isTap ? startX - width / 2 : Math.min(startX, endX);
+    const y = isTap ? startY - height / 2 : Math.min(startY, endY);
     const colours = deriveNewBoxedColours(base, {
       backgroundColor: activeTab.backgroundColor,
       patternColor: activeTab.patternColor,
@@ -348,7 +366,7 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
 
   return {
     pendingDraw,
-    beginDrawIfEnabled,
+    beginDraw,
     commitDraw,
     cancelDrawShape,
     beginFreehand,

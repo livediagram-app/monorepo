@@ -1339,44 +1339,35 @@ export function useEditorState() {
   // commit handlers). beginDrawIfEnabled short-circuits the palette
   // adds below into draw mode; the rest is consumed by the Canvas +
   // keyboard hook. See useShapeDrawing.
-  const {
-    pendingDraw,
-    beginDrawIfEnabled,
-    commitDraw,
-    cancelDrawShape,
-    beginFreehand,
-    commitFreehand,
-  } = useShapeDrawing({
-    drawToAdd: userPreferences.drawToAdd === true,
-    editsBlocked,
-    canvasTool,
-    setCanvasTool,
-    activeTab,
-    activeId,
-    commit,
-    commitTabs,
-    patchTab,
-    emitChange,
-    setSelectedId,
-    setMultiSelectedIds,
-    setEditingId,
-    openImagePickerFor,
-    zoomRef,
-  });
+  const { pendingDraw, beginDraw, commitDraw, cancelDrawShape, beginFreehand, commitFreehand } =
+    useShapeDrawing({
+      editsBlocked,
+      selectedId,
+      canvasTool,
+      setCanvasTool,
+      activeTab,
+      activeId,
+      commit,
+      commitTabs,
+      patchTab,
+      emitChange,
+      setSelectedId,
+      setMultiSelectedIds,
+      setEditingId,
+      openImagePickerFor,
+      zoomRef,
+    });
 
   // Palette element-creation handlers. See useElementCreation.
   const { addShape, addIcon, addTable, addText, addSticky, addArrow, handleCanvasDoubleClick } =
     useElementCreation({
       editsBlocked,
       activeId,
-      activeTab,
-      getViewportCenter,
       commitTabs,
-      emitChange,
       setSelectedId,
       setEditingId,
       addBoxed,
-      beginDrawIfEnabled,
+      beginDraw,
     });
 
   // Structural element operations (delete, marquee commit, group /

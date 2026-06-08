@@ -211,11 +211,11 @@ Arrows are no longer in the palette — see [Adding an arrow](#adding-an-arrow).
 
 ### Placement on add
 
-Every `Add ...` button places the new element at the **centre of the visible canvas viewport**, accounting for any pan offset. The element is also auto-selected.
+The **Icon** and **Table** buttons place the new element at the **centre of the visible canvas viewport** (accounting for pan), auto-selected. The draw-capable buttons (shape / text / sticky / image / arrow) instead arm the combined tap-or-drag gesture — see [Adding elements](#adding-elements--tap-to-drop-or-drag-to-draw) — where a tap drops it at the tap point and a drag sizes it.
 
-If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed.
+If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed. This rule lives in `inheritedSizeFor` (`apps/live/lib/canvas.ts`) and applies to both the centre-drop and the tap-to-drop paths (the combined gesture captures the selection at arm-time, since arming clears it).
 
-Multiple consecutive clicks land at the same viewport centre and stack on top of each other; the user sees the auto-selection move to the latest, so they can drag it off or undo without trial-and-error. An earlier draft of this spec promised a "staggered default position" to spread adds out, but that was never wired up and the simpler centre-then-let-the-user-move-it path turned out to be what shipped. (When the user-preference `drawToAdd` is on, see the [Draw-to-size](#draw-to-size) section below, the click instead queues a drag-to-define gesture and bypasses centre-of-viewport placement entirely.)
+Consecutive **icon / table** adds land at the same viewport centre and stack on top of each other; the user sees the auto-selection move to the latest, so they can drag it off or undo without trial-and-error. An earlier draft promised a "staggered default position" to spread adds out, but that was never wired up and the simpler centre-then-let-the-user-move-it path shipped instead.
 
 ## Arrows
 
@@ -957,21 +957,21 @@ When a move or resize snap lands an element's edge or centre onto a neighbour's,
 - **Opt-out.** The guides are gated on the `alignmentGuides` user preference (defaults to on; see [spec/20](20-user-preferences.md)), toggled from the Settings dialog's Canvas group. Turning it off suppresses the guide lines only; the snap itself is unchanged. The flag is read through a ref during the drag so flipping it takes effect on the next pointer move.
 - **Performance.** Guides are recomputed every pointer move but the state only updates when the guide set actually changes (`sameGuides` bail-out), so the dominant no-snap frames cost nothing beyond the move itself.
 
-## Draw-to-size
+## Adding elements — tap-to-drop or drag-to-draw
 
-Optional alternate add-element gesture, gated on the user-preference `drawToAdd` (Settings dialog, see [spec/20](20-user-preferences.md)). When off (the default), picking a shape / tool from the palette drops the element at the viewport centre at a preset size, the historical behaviour. When on, picking a palette entry stashes an intent (shape kind, text, sticky, image, or arrow) and the next pointer-down on the canvas starts a drag-to-define gesture instead.
+Picking a draw-capable element (shape / text / sticky / image / arrow) from the palette arms **one combined add gesture — there is no setting** (the old `drawToAdd` preference is gone). The palette entry stashes an intent (shape kind, text, sticky, image, or arrow); the next pointer gesture on the canvas resolves it:
 
-- A top-of-canvas `ModeBanner` shows what's queued and a Cancel button; Escape cancels too.
-- The matching palette button renders with a pressed (brand-tinted) state until release.
-- Cursor: a custom inline-SVG crosshair with a small glyph of the shape / tool in the lower-right, so the user can see what's about to land without looking at the banner.
-- Picking a palette entry from laser mode auto-switches to pan so the canvas accepts the gesture (laser-mode swallows pointer-down to paint the trail).
-- Box intents (shape / text / sticky / image) compute width / height from the drag's bounding box with a 16 px floor on each axis (a stray click still produces a sensibly-sized element). The drag also passes through `snapResizeBounds` so the new element snaps to neighbour edges + dimensions the same way a resize does. **Hold Shift** to constrain to a 1:1 aspect ratio (perfect square / circle), preserving drag direction.
-- The arrow intent treats the drag's start and end points as `from` / `to` directly (a line, not a box). Stray clicks (under 16 canvas-px in both axes) fall back to the default-sized horizontal arrow centred on the click point. Element-edge snap is skipped for the arrow intent (per-end pinning still happens via the existing arrow drag-handle flow after creation).
-- Image-intent commits open the image picker after placing the element, matching the click-to-drop path.
+- **Tap** (pointer travel under 16 canvas-px in both axes) drops the element centred on the tap point, sized to the element that was selected when you picked the palette entry — so consecutive adds keep a consistent size — else the factory default. Circles + diamonds stay square. That size inheritance is shared with the click-to-drop path via `inheritedSizeFor` (`apps/live/lib/canvas.ts`); the selection is captured at arm-time because arming clears it.
+- **Drag** sizes the box (shape / text / sticky / image) to the drag's bounding box with a 16 px floor on each axis, passed through `snapResizeBounds` so it snaps to neighbour edges + dimensions like a resize. **Hold Shift** to constrain to 1:1 (perfect square / circle).
+- The **arrow** intent treats the drag's start / end as `from` / `to` directly (a line, not a box); a tap drops the default-sized horizontal arrow centred on the click. Element-edge snap is skipped for arrows (per-end pinning happens via the arrow drag-handle flow after creation).
+- A top-of-canvas `ModeBanner` reads "Tap to drop or drag to draw …" with a Cancel button (Escape cancels too); the matching palette button renders pressed (brand-tinted) until release; the cursor is a custom inline-SVG crosshair with a small shape / tool glyph in the lower-right.
+- Picking a palette entry from laser mode auto-switches to pan so the canvas accepts the gesture (laser swallows pointer-down to paint the trail). Image commits open the image picker after placing, matching the old click-to-drop path.
+
+Icons + tables have no draw-to-size (a glyph / fixed grid isn't a box you size by dragging) — they drop straight at the viewport centre via `addBoxed`, which applies the same `inheritedSizeFor` size inheritance.
 
 ## Pencil (freehand)
 
-Always-on palette tool (no `drawToAdd` gating, unlike draw-to-size): clicking the Pencil button, or pressing **F** (Freehand; P is taken by the Pan tool), enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
+Always-on palette tool (the pencil is gestural by definition — no tap-to-drop branch): clicking the Pencil button, or pressing **F** (Freehand; P is taken by the Pan tool), enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
 
 - A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pencil button on the palette renders pressed while a draw is queued.
 - The canvas cursor swaps to a diagonal-pencil glyph that mirrors the palette icon.

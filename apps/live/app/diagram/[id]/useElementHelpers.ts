@@ -8,6 +8,7 @@ import {
   type Tab,
 } from '@livediagram/diagram';
 import { deriveNewBoxedColours } from '@/lib/themes';
+import { inheritedSizeFor } from '@/lib/canvas';
 import { paintableArrowFields, paintableBoxedFields } from '@/lib/format-painter';
 import { track } from '@/lib/telemetry';
 import { patchTab } from './editor-page-helpers';
@@ -54,27 +55,14 @@ export function useElementHelpers(opts: {
     setGroupSourceId,
   } = opts;
 
-  const sizeFromSelection = (): { width: number; height: number } | null => {
-    if (!selectedId) return null;
-    const sel = activeTab.elements.find((el) => el.id === selectedId);
-    if (!sel || !isBoxed(sel)) return null;
-    return { width: sel.width, height: sel.height };
-  };
-
   const addBoxed = <T extends BoxedElement>(make: (x: number, y: number) => T) => {
     if (editsBlocked) return;
     const base = make(0, 0);
-    const override = sizeFromSelection();
-    let width = override?.width ?? base.width;
-    let height = override?.height ?? base.height;
-    // Circles and diamonds are inherently 1:1 — inheriting a non-square
-    // size from the selection would squash them. Snap them back to a square
-    // using the larger inherited dimension so they stay visible.
-    if (base.type === 'shape' && (base.shape === 'circle' || base.shape === 'diamond')) {
-      const side = Math.max(width, height);
-      width = side;
-      height = side;
-    }
+    // Inherit the selected element's size (shared with the combined add
+    // gesture's tap branch via inheritedSizeFor); circles + diamonds stay
+    // square so an inherited non-square size doesn't squash them.
+    const sel = selectedId ? activeTab.elements.find((el) => el.id === selectedId) : null;
+    const { width, height } = inheritedSizeFor(base, sel);
     // Derive colours from the active tab's backdrop + theme. The
     // two-pass projection (background-derived then theme-override)
     // lives in lib/themes.ts so the rule is testable in isolation
@@ -186,7 +174,6 @@ export function useElementHelpers(opts: {
   };
 
   return {
-    sizeFromSelection,
     addBoxed,
     memberIdsOf,
     currentSelectionIds,
