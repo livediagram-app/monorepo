@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ICON_ID, ICON_CATALOG, PLACEHOLDER_ICON, getIcon, searchIcons } from './icons';
+import {
+  DEFAULT_ICON_ID,
+  ICON_CATALOG,
+  ICON_CATEGORIES,
+  PLACEHOLDER_ICON,
+  getIcon,
+  iconsInCategory,
+  searchIcons,
+} from './icons';
 
 describe('icon catalogue', () => {
   it('is non-empty and has unique ids', () => {
@@ -48,5 +56,23 @@ describe('searchIcons', () => {
 
   it('returns an empty array when nothing matches', () => {
     expect(searchIcons('zzzznotanicon')).toEqual([]);
+  });
+});
+
+describe('icon categories', () => {
+  it('every category id resolves to a catalogue entry', () => {
+    const known = new Set(ICON_CATALOG.map((i) => i.id));
+    for (const cat of ICON_CATEGORIES) {
+      for (const id of cat.iconIds) {
+        expect(known.has(id), `category "${cat.id}" references unknown icon "${id}"`).toBe(true);
+      }
+    }
+  });
+
+  it('iconsInCategory returns catalogue entries in catalogue order', () => {
+    const tech = iconsInCategory('tech');
+    expect(tech.length).toBeGreaterThan(0);
+    expect(tech.every((i) => ICON_CATALOG.includes(i))).toBe(true);
+    expect(iconsInCategory('does-not-exist')).toEqual([]);
   });
 });

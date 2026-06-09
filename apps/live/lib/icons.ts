@@ -387,6 +387,320 @@ export const ICON_CATALOG: IconDef[] = [
       { t: 'polyline', points: '21 15 16 10 5 21' },
     ],
   },
+  {
+    id: 'layers',
+    label: 'Layers',
+    keywords: 'stack tiers levels group',
+    prims: [
+      { t: 'polygon', points: '12 2 2 7 12 12 22 7 12 2' },
+      { t: 'polyline', points: '2 17 12 22 22 17' },
+      { t: 'polyline', points: '2 12 12 17 22 12' },
+    ],
+  },
+  {
+    id: 'box',
+    label: 'Box',
+    keywords: 'package cube container 3d',
+    prims: [
+      {
+        t: 'path',
+        d: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z',
+      },
+      { t: 'polyline', points: '3.27 6.96 12 12.01 20.73 6.96' },
+      { t: 'line', x1: 12, y1: 22.08, x2: 12, y2: 12 },
+    ],
+  },
+  {
+    id: 'external-link',
+    label: 'External link',
+    keywords: 'open out web url visit',
+    prims: [
+      { t: 'path', d: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' },
+      { t: 'polyline', points: '15 3 21 3 21 9' },
+      { t: 'line', x1: 10, y1: 14, x2: 21, y2: 3 },
+    ],
+  },
+  {
+    id: 'download',
+    label: 'Download',
+    keywords: 'save export down arrow',
+    prims: [
+      { t: 'path', d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' },
+      { t: 'polyline', points: '7 10 12 15 17 10' },
+      { t: 'line', x1: 12, y1: 15, x2: 12, y2: 3 },
+    ],
+  },
+  {
+    id: 'upload',
+    label: 'Upload',
+    keywords: 'import send up arrow',
+    prims: [
+      { t: 'path', d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' },
+      { t: 'polyline', points: '17 8 12 3 7 8' },
+      { t: 'line', x1: 12, y1: 3, x2: 12, y2: 15 },
+    ],
+  },
+  {
+    id: 'send',
+    label: 'Send',
+    keywords: 'message paper plane submit',
+    prims: [
+      { t: 'line', x1: 22, y1: 2, x2: 11, y2: 13 },
+      { t: 'polygon', points: '22 2 15 22 11 13 2 9 22 2' },
+    ],
+  },
+  {
+    id: 'phone',
+    label: 'Phone',
+    keywords: 'call contact telephone',
+    prims: [
+      {
+        t: 'path',
+        d: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z',
+      },
+    ],
+  },
+  {
+    id: 'camera',
+    label: 'Camera',
+    keywords: 'photo capture snapshot',
+    prims: [
+      {
+        t: 'path',
+        d: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z',
+      },
+      { t: 'circle', cx: 12, cy: 13, r: 4 },
+    ],
+  },
+  {
+    id: 'eye',
+    label: 'View',
+    keywords: 'eye see visible watch preview',
+    prims: [
+      { t: 'path', d: 'M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z' },
+      { t: 'circle', cx: 12, cy: 12, r: 3 },
+    ],
+  },
+  {
+    id: 'edit',
+    label: 'Edit',
+    keywords: 'pencil write modify change',
+    prims: [
+      { t: 'path', d: 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' },
+      { t: 'path', d: 'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' },
+    ],
+  },
+  {
+    id: 'trash',
+    label: 'Delete',
+    keywords: 'trash bin remove rubbish',
+    prims: [
+      { t: 'polyline', points: '3 6 5 6 21 6' },
+      {
+        t: 'path',
+        d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+      },
+    ],
+  },
+  {
+    id: 'filter',
+    label: 'Filter',
+    keywords: 'funnel sort narrow refine',
+    prims: [{ t: 'polygon', points: '22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3' }],
+  },
+  {
+    id: 'tag',
+    label: 'Tag',
+    keywords: 'label badge price category',
+    prims: [
+      {
+        t: 'path',
+        d: 'M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z',
+      },
+      { t: 'line', x1: 7, y1: 7, x2: 7.01, y2: 7 },
+    ],
+  },
+  {
+    id: 'flag',
+    label: 'Flag',
+    keywords: 'milestone marker goal banner',
+    prims: [
+      { t: 'path', d: 'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z' },
+      { t: 'line', x1: 4, y1: 22, x2: 4, y2: 15 },
+    ],
+  },
+  {
+    id: 'bar-chart',
+    label: 'Bar chart',
+    keywords: 'graph stats metrics analytics',
+    prims: [
+      { t: 'line', x1: 12, y1: 20, x2: 12, y2: 10 },
+      { t: 'line', x1: 18, y1: 20, x2: 18, y2: 4 },
+      { t: 'line', x1: 6, y1: 20, x2: 6, y2: 16 },
+    ],
+  },
+  {
+    id: 'pie-chart',
+    label: 'Pie chart',
+    keywords: 'graph stats share segment analytics',
+    prims: [
+      { t: 'path', d: 'M21.21 15.89A10 10 0 1 1 8 2.83' },
+      { t: 'path', d: 'M22 12A10 10 0 0 0 12 2v10z' },
+    ],
+  },
+  {
+    id: 'trending-up',
+    label: 'Trending up',
+    keywords: 'growth increase arrow graph analytics',
+    prims: [
+      { t: 'polyline', points: '23 6 13.5 15.5 8.5 10.5 1 18' },
+      { t: 'polyline', points: '17 6 23 6 23 12' },
+    ],
+  },
+  {
+    id: 'briefcase',
+    label: 'Briefcase',
+    keywords: 'work business job office case',
+    prims: [
+      { t: 'rect', x: 2, y: 7, w: 20, h: 14, rx: 2 },
+      { t: 'path', d: 'M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16' },
+    ],
+  },
+  {
+    id: 'book',
+    label: 'Book',
+    keywords: 'docs documentation read manual notes',
+    prims: [
+      { t: 'path', d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20' },
+      { t: 'path', d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' },
+    ],
+  },
+  {
+    id: 'clipboard',
+    label: 'Clipboard',
+    keywords: 'copy paste tasks list notes',
+    prims: [
+      {
+        t: 'path',
+        d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2',
+      },
+      { t: 'rect', x: 8, y: 2, w: 8, h: 4, rx: 1 },
+    ],
+  },
+  {
+    id: 'dollar-sign',
+    label: 'Money',
+    keywords: 'dollar currency cost price payment',
+    prims: [
+      { t: 'line', x1: 12, y1: 1, x2: 12, y2: 23 },
+      { t: 'path', d: 'M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' },
+    ],
+  },
+  {
+    id: 'credit-card',
+    label: 'Card',
+    keywords: 'payment billing money credit debit',
+    prims: [
+      { t: 'rect', x: 1, y: 4, w: 22, h: 16, rx: 2 },
+      { t: 'line', x1: 1, y1: 10, x2: 23, y2: 10 },
+    ],
+  },
+  {
+    id: 'cart',
+    label: 'Cart',
+    keywords: 'shopping basket buy ecommerce store',
+    prims: [
+      { t: 'circle', cx: 9, cy: 21, r: 1 },
+      { t: 'circle', cx: 20, cy: 21, r: 1 },
+      { t: 'path', d: 'M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6' },
+    ],
+  },
+  {
+    id: 'tool',
+    label: 'Tool',
+    keywords: 'wrench spanner fix settings build',
+    prims: [
+      {
+        t: 'path',
+        d: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+      },
+    ],
+  },
+  {
+    id: 'power',
+    label: 'Power',
+    keywords: 'on off toggle start stop switch',
+    prims: [
+      { t: 'path', d: 'M18.36 6.64a9 9 0 1 1-12.73 0' },
+      { t: 'line', x1: 12, y1: 2, x2: 12, y2: 12 },
+    ],
+  },
+  {
+    id: 'arrow-right',
+    label: 'Arrow right',
+    keywords: 'next forward direction flow',
+    prims: [
+      { t: 'line', x1: 5, y1: 12, x2: 19, y2: 12 },
+      { t: 'polyline', points: '12 5 19 12 12 19' },
+    ],
+  },
+  {
+    id: 'arrow-left',
+    label: 'Arrow left',
+    keywords: 'back previous direction flow',
+    prims: [
+      { t: 'line', x1: 19, y1: 12, x2: 5, y2: 12 },
+      { t: 'polyline', points: '12 19 5 12 12 5' },
+    ],
+  },
+  {
+    id: 'arrow-up',
+    label: 'Arrow up',
+    keywords: 'top direction flow increase',
+    prims: [
+      { t: 'line', x1: 12, y1: 19, x2: 12, y2: 5 },
+      { t: 'polyline', points: '5 12 12 5 19 12' },
+    ],
+  },
+  {
+    id: 'arrow-down',
+    label: 'Arrow down',
+    keywords: 'bottom direction flow decrease',
+    prims: [
+      { t: 'line', x1: 12, y1: 5, x2: 12, y2: 19 },
+      { t: 'polyline', points: '19 12 12 19 5 12' },
+    ],
+  },
+  {
+    id: 'plus',
+    label: 'Plus',
+    keywords: 'add new create increment',
+    prims: [
+      { t: 'line', x1: 12, y1: 5, x2: 12, y2: 19 },
+      { t: 'line', x1: 5, y1: 12, x2: 19, y2: 12 },
+    ],
+  },
+  {
+    id: 'check',
+    label: 'Check',
+    keywords: 'tick done complete yes ok',
+    prims: [{ t: 'polyline', points: '20 6 9 17 4 12' }],
+  },
+  {
+    id: 'x',
+    label: 'Close',
+    keywords: 'x cross cancel no remove',
+    prims: [
+      { t: 'line', x1: 18, y1: 6, x2: 6, y2: 18 },
+      { t: 'line', x1: 6, y1: 6, x2: 18, y2: 18 },
+    ],
+  },
+  {
+    id: 'activity',
+    label: 'Activity',
+    keywords: 'pulse heartbeat monitor health graph',
+    prims: [{ t: 'polyline', points: '22 12 18 12 15 21 9 3 6 12 2 12' }],
+  },
 ];
 
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved
@@ -445,11 +759,42 @@ export const ICON_CATEGORIES: IconCategory[] = [
       'monitor',
       'smartphone',
       'globe',
+      'layers',
+      'box',
+      'power',
+      'external-link',
     ],
   },
-  { id: 'people', label: 'People', iconIds: ['user', 'users', 'heart', 'message', 'mail'] },
+  {
+    id: 'people',
+    label: 'People',
+    iconIds: ['user', 'users', 'heart', 'message', 'mail', 'phone'],
+  },
   { id: 'security', label: 'Security', iconIds: ['shield', 'lock', 'key'] },
-  { id: 'files', label: 'Files', iconIds: ['folder', 'file', 'image'] },
+  {
+    id: 'files',
+    label: 'Files',
+    iconIds: ['folder', 'file', 'image', 'clipboard', 'book', 'download', 'upload'],
+  },
+  {
+    id: 'charts',
+    label: 'Charts',
+    iconIds: [
+      'bar-chart',
+      'pie-chart',
+      'trending-up',
+      'activity',
+      'dollar-sign',
+      'credit-card',
+      'cart',
+      'briefcase',
+    ],
+  },
+  {
+    id: 'arrows',
+    label: 'Arrows',
+    iconIds: ['arrow-right', 'arrow-left', 'arrow-up', 'arrow-down', 'send'],
+  },
   {
     id: 'ui',
     label: 'UI',
@@ -466,6 +811,17 @@ export const ICON_CATEGORIES: IconCategory[] = [
       'calendar',
       'clock',
       'map-pin',
+      'eye',
+      'edit',
+      'trash',
+      'filter',
+      'tag',
+      'flag',
+      'plus',
+      'check',
+      'x',
+      'camera',
+      'tool',
     ],
   },
 ];

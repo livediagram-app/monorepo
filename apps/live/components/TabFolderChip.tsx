@@ -157,10 +157,10 @@ export function TabFolderChip({
         />
       ) : (
         <Tooltip
-          title={showMembers ? 'Collapse folder' : 'Expand folder'}
-          description={`"${name}" - ${tabs.length} ${tabs.length === 1 ? 'tab' : 'tabs'}${
-            readOnly ? '' : '. Double-click to rename.'
-          }`}
+          title={name}
+          description={`${tabs.length} ${tabs.length === 1 ? 'tab' : 'tabs'} · Click to ${
+            showMembers ? 'collapse' : 'expand'
+          }${readOnly ? '' : ' · Double-click to rename'}`}
         >
           <button
             type="button"
