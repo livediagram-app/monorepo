@@ -102,8 +102,10 @@ export function useTabActions(deps: TabActionsDeps) {
           patternColor: activeTab.patternColor,
           // Carry the font + default text size too so tabs in one diagram
           // stay visually consistent instead of each reverting to default.
+          // Fall back to small (spec/28) when the active tab has no explicit
+          // size, so a new tab still defaults to small rather than md.
           font: activeTab.font,
-          defaultTextSize: activeTab.defaultTextSize,
+          defaultTextSize: activeTab.defaultTextSize ?? 'sm',
         }
       : {};
     const tab: Tab = { ...createTab(`Tab ${tabs.length + 1}`), ...seed };

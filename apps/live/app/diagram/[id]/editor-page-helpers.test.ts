@@ -26,6 +26,10 @@ describe('createTab', () => {
     expect(typeof t.id).toBe('string');
     expect(t.id.length).toBeGreaterThan(0);
   });
+
+  it('defaults the per-tab text size to small (spec/28)', () => {
+    expect(createTab('Tab 1').defaultTextSize).toBe('sm');
+  });
 });
 
 describe('placeholdersFromSummaries', () => {

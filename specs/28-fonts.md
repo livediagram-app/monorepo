@@ -39,9 +39,13 @@ self-host that opts out). The editor never depends on the fonts loading.
     changing it later never resizes existing elements). Unset = the
     per-type factory default ('md').
 
-A **new tab** inherits the active tab's `font` and `defaultTextSize` (the
-same way it inherits the theme), so tabs in one diagram stay consistent
-instead of each reverting to the editor default.
+A **new diagram's first tab** (and any blank tab minted by `createTab`)
+defaults `defaultTextSize` to **small** (`sm`), so a fresh canvas starts
+compact. A **new tab added to an existing diagram** inherits the active
+tab's `font` and `defaultTextSize` (the same way it inherits the theme),
+falling back to small when the active tab has no explicit size — so tabs in
+one diagram stay consistent and a brand-new tab still defaults to small
+rather than the `md` factory baseline.
 
 Resolution order for any text: `element.font → tab.font → editor default`
 (the system sans stack). `resolveFontStack` maps a stored id to its CSS

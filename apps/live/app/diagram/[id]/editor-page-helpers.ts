@@ -4,7 +4,11 @@
 import type { Tab } from '@livediagram/diagram';
 
 export function createTab(name: string): Tab {
-  return { id: crypto.randomUUID(), name, elements: [] };
+  // New tabs (and a new diagram's first tab) default the per-tab text size
+  // to small (spec/28); elements added from the palette inherit it via
+  // `defaultTextSize`. A new tab added to an existing diagram still inherits
+  // the active tab's explicit size where it has one (see useTabActions).
+  return { id: crypto.randomUUID(), name, elements: [], defaultTextSize: 'sm' };
 }
 
 // Build the lazy-load placeholder tabs from a diagram's tab summaries.
