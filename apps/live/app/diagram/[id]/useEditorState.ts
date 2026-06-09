@@ -105,7 +105,6 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { type Participant } from '@/lib/identity';
 import { markNameConfirmed } from '@/lib/local-identity';
 import {
-  apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
   apiSaveSelf,
@@ -419,18 +418,8 @@ export function useEditorState() {
       .then((items) => setSharedDiagrams(items))
       .catch(() => {});
   };
-  const dismissSharedDiagram = async (diagramId: string) => {
-    const target = sharedDiagrams.find((d) => d.id === diagramId);
-    const ok = await confirm({
-      title: `Remove "${target?.name || 'this diagram'}" from your Shared list?`,
-      message:
-        "It'll vanish from your Shared with you list. You can still open it again from the share link the owner gave you, and that re-adds it here.",
-      confirmLabel: 'Remove',
-    });
-    if (!ok) return;
-    setSharedDiagrams((prev) => prev.filter((d) => d.id !== diagramId));
-    void apiDismissSharedWith(selfParticipant.id, diagramId).catch(() => {});
-  };
+  // Dismissing a "shared with you" row lives in useDiagramListActions
+  // (via useDiagramActions below), shared with /explorer and /new.
   // `remoteUpdateRef` blocks the auto-save effect from re-broadcasting
   // a remote update back through the room (which would cause an
   // infinite save/broadcast loop between two connected clients).
@@ -1135,6 +1124,7 @@ export function useEditorState() {
     deleteFolder,
     moveDiagramToFolder,
     duplicateDiagram,
+    dismissSharedDiagram,
     newDiagram,
     openDiagram,
     makeCopy,
@@ -1146,6 +1136,8 @@ export function useEditorState() {
     confirm,
     ownerId: selfParticipant.id,
     hookDeleteFolder,
+    sharedDiagrams,
+    setSharedDiagrams,
     copying,
     setCopying,
     sessionShareCode,

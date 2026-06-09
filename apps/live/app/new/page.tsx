@@ -8,8 +8,6 @@ import { TemplatePicker } from '@/components/TemplatePicker';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
   apiCreateDiagram,
-  apiDeleteDiagram,
-  apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
   apiLoadSelf,
@@ -19,11 +17,12 @@ import {
   type DiagramListItem,
   type SharedWithItem,
 } from '@/lib/api-client';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useDiagramListActions } from '@/hooks/useDiagramListActions';
 import { useFolders } from '@/hooks/useFolders';
 import { randomColor, randomName, type Participant } from '@/lib/identity';
 import { titleCaseType, track } from '@/lib/telemetry';
 import { ensureGuestSelfId, markNameConfirmed } from '@/lib/local-identity';
-import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { buildTemplatedTab } from '@/lib/template-builders';
 import type { TemplateKind } from '@/lib/templates';
 import { getTheme, THEMES, type ThemeId } from '@/lib/themes';
@@ -216,43 +215,33 @@ export default function NewDiagramPage() {
     window.location.assign(`/live/diagram/${diagramId}`);
   };
 
-  const openDiagram = (id: string, shareCode?: string) => {
-    const url = shareCode
-      ? `/live/diagram/${id}?s=${encodeURIComponent(shareCode)}`
-      : `/live/diagram/${id}`;
-    window.location.assign(url);
-  };
-
-  const refreshList = async (ownerId: string) => {
-    const list = await apiListDiagrams(ownerId).catch(() => null);
-    setDiagramList(list ?? []);
-  };
-
-  // Diagram-side cascade chains in front of the hook's
-  // folder-side update so the list doesn't flash a stale
-  // "folder-id pointing at a deleted folder" state between the
-  // click and the next list refresh.
-  const deleteFolder = (id: string) => {
-    setDiagramList((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)));
-    hookDeleteFolder(id);
-  };
-
-  const moveDiagramToFolder = (diagramId: string, folderId: string | null) => {
-    setDiagramList((prev) => prev.map((d) => (d.id === diagramId ? { ...d, folderId } : d)));
-    void apiSetDiagramFolder(self.id, diagramId, folderId).catch(() => {});
-  };
-
-  const deleteDiagram = (id: string) => {
-    track('Diagram', 'Deleted');
-    void apiDeleteDiagram(self.id, id).catch(() => {});
-    setDiagramList((prev) => prev.filter((d) => d.id !== id));
-    void refreshList(self.id);
-  };
-
-  const duplicateDiagram = async (id: string) => {
-    await duplicate(self.id, id);
-    await refreshList(self.id);
-  };
+  // Explorer-row mutations come from the shared useDiagramListActions
+  // hook (the same behaviours behind the editor's Explorer panel and
+  // /explorer), so the optimistic updates, API calls, telemetry, and
+  // confirm copy stay single-sourced.
+  const confirm = useConfirm();
+  const {
+    openDiagram,
+    deleteDiagram,
+    deleteFolder,
+    moveDiagramToFolder,
+    duplicateDiagram,
+    dismissSharedDiagram,
+  } = useDiagramListActions({
+    ownerId: self.id === 'pending' ? null : self.id,
+    diagramList,
+    setDiagramList,
+    confirm,
+    deleteFolderFromHook: hookDeleteFolder,
+    // Stay on the welcome flow after a duplicate; just refresh the
+    // list so the copy's row appears.
+    afterDuplicate: async () => {
+      const list = await apiListDiagrams(self.id).catch(() => null);
+      setDiagramList(list ?? []);
+    },
+    sharedDiagrams,
+    setSharedDiagrams,
+  });
 
   if (createError) {
     return (
@@ -338,10 +327,7 @@ export default function NewDiagramPage() {
           // the header to reveal it.
           defaultRecentOpen={diagramList.length > 0}
           shared={sharedDiagrams}
-          onDismissShared={(diagramId) => {
-            setSharedDiagrams((prev) => prev.filter((d) => d.id !== diagramId));
-            void apiDismissSharedWith(self.id, diagramId).catch(() => {});
-          }}
+          onDismissShared={(diagramId) => void dismissSharedDiagram(diagramId)}
           // Open to guests too: the standalone page is not gated (it
           // keys off the per-browser id for signed-out visitors, see
           // app/explorer/page.tsx), so the button surfaces for everyone.

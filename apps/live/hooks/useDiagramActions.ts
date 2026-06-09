@@ -1,26 +1,21 @@
-// Diagram-level lifecycle + navigation, lifted out of editor-page.tsx:
-// delete / duplicate / move-to-folder / delete-folder, and the
-// navigation helpers (new / open / make-a-copy) that hand off to a
-// full-page load. These operate on whole diagrams (and the Explorer
-// list), distinct from the per-tab lifecycle in useTabActions.
+// Diagram-level lifecycle + navigation for the EDITOR surface. The
+// list-level operations (open / rename / delete / move / duplicate /
+// folder delete / dismiss shared) live in useDiagramListActions,
+// shared with /explorer and /new; this hook wires them to the
+// editor's state (current diagram, Explorer list, shared list) and
+// adds the two editor-only actions: newDiagram (hand off to /live/new)
+// and makeCopy (visitor copies the open shared diagram).
 //
 // Navigation is deliberately a hard `window.location.assign` rather
 // than client routing: the editor's hydration path owns identity +
 // load, and the current diagram is already autosaved, so a reload is
-// the simplest correct handoff (spec/14). The Explorer list is updated
-// optimistically (delete / move) so rows react instantly without
-// waiting on a refetch that used to race the mutation.
+// the simplest correct handoff (spec/14).
 
 import type { Dispatch, SetStateAction } from 'react';
-import {
-  apiCopyDiagram,
-  apiDeleteDiagram,
-  apiSetDiagramFolder,
-  type DiagramListItem,
-} from '@/lib/api-client';
-import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
+import { apiCopyDiagram, type DiagramListItem, type SharedWithItem } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 import type { useConfirm } from '@/hooks/useConfirm';
+import { useDiagramListActions } from '@/hooks/useDiagramListActions';
 
 type DiagramActionsDeps = {
   diagramId: string | null;
@@ -29,9 +24,13 @@ type DiagramActionsDeps = {
   setDiagramList: Dispatch<SetStateAction<DiagramListItem[]>>;
   confirm: ReturnType<typeof useConfirm>;
   ownerId: string;
-  // useFolders' delete, wrapped here with a diagram-side re-bucket.
+  // useFolders' delete, wrapped by the shared hook with a
+  // diagram-side re-bucket.
   hookDeleteFolder: (id: string) => void;
-  // Guards the visitor "make a copy" button against double-submits.
+  // Shared-with-you list, for the dismiss action surfaced in the
+  // Explorer panel's Shared accordion.
+  sharedDiagrams: SharedWithItem[];
+  setSharedDiagrams: Dispatch<SetStateAction<SharedWithItem[]>>;
   copying: boolean;
   setCopying: (copying: boolean) => void;
   // The session's share code (edit/view visitors), forwarded to the
@@ -48,116 +47,36 @@ export function useDiagramActions(deps: DiagramActionsDeps) {
     confirm,
     ownerId,
     hookDeleteFolder,
+    sharedDiagrams,
+    setSharedDiagrams,
     copying,
     setCopying,
     sessionShareCode,
   } = deps;
 
-  // Open a different diagram from the Explorer list. The auto-save has
-  // already persisted the current diagram so nothing is lost. Path
-  // scheme per spec/14.
-  const openDiagram = (id: string, shareCode?: string) => {
-    if (typeof window === 'undefined') return;
-    if (id === diagramId) return;
-    // Shared-list rows pass a share code so the non-owner can
-    // actually load the target diagram — without it the editor's
-    // hydration goes through the owner-only `/api/diagrams/:id`
-    // path and 404s.
-    const url = shareCode
-      ? `${window.location.origin}/live/diagram/${id}?s=${encodeURIComponent(shareCode)}`
-      : `${window.location.origin}/live/diagram/${id}`;
-    window.location.assign(url);
-  };
-
-  // Delete a diagram by id. When the target is the currently-open one,
-  // redirect to /live/explorer so the user lands on their library (the
-  // editor would otherwise be staring at a row that no longer exists),
-  // where they can pick another diagram or start a new one. Deleting any
-  // *other* diagram just hits the API + refreshes the Explorer list. Not
-  // undoable — the menu is an explicit action.
-  const deleteDiagram = async (
-    id: string,
-    beforeRemove?: () => Promise<void> | void,
-    opts?: { skipConfirm?: boolean },
-  ) => {
-    if (typeof window === 'undefined') return;
-    // The Explorer panel confirms inline via ConfirmPopover and passes
-    // skipConfirm; other callers (the full-page route) still get the
-    // modal confirm here.
-    if (!opts?.skipConfirm) {
-      const target =
-        id === diagramId ? { name: diagramName } : diagramList.find((d) => d.id === id);
-      const ok = await confirm({
-        title: `Delete "${target?.name || 'this diagram'}"?`,
-        message:
-          'Every tab, change-log entry, and share link on this diagram is removed. Visitors holding a share link will see a 404. This cannot be undone.',
-        confirmLabel: 'Delete diagram',
-      });
-      if (!ok) return;
-    }
-    track('Diagram', 'Deleted');
-    if (id === diagramId) {
-      void apiDeleteDiagram(ownerId, id).catch(() => {});
-      window.location.assign(`${window.location.origin}/live/explorer`);
-      return;
-    }
-    // Let the caller play a row exit animation now that the delete is
-    // CONFIRMED, before the row is pulled from the list (Explorer slides it
-    // out ~220ms). Previously the caller animated before this confirm even
-    // showed, so a cancelled delete still flashed the row out.
-    await beforeRemove?.();
-    // Optimistic local removal so the Recent row disappears the
-    // moment the user clicks Delete. The previous shape was a
-    // fire-and-forget apiDeleteDiagram followed by an immediate
-    // refreshDiagramList: the DELETE and the GET raced, and the
-    // refresh frequently won, repainting the row that the API
-    // hadn't yet committed. Users had to click Delete twice to
-    // make it stick.
-    setDiagramList((prev) => prev.filter((d) => d.id !== id));
-    void apiDeleteDiagram(ownerId, id).catch(() => {});
-  };
-
-  // Folder helpers (spec/15). createFolder / renameFolder come
-  // straight from useFolders; deleteFolder wraps the hook with a
-  // diagram-side cascade so diagrams that pointed at the deleted
-  // folder visibly re-bucket to Unsorted instead of waiting for
-  // the next list refresh.
-  const deleteFolder = async (id: string) => {
-    const ok = await confirm({
-      title: 'Delete this folder?',
-      message:
-        'Diagrams inside the folder move to Unsorted. Subfolders are promoted to the root. The folder row itself is removed.',
-      confirmLabel: 'Delete folder',
-    });
-    if (!ok) return;
-    setDiagramList((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)));
-    hookDeleteFolder(id);
-  };
-
-  const moveDiagramToFolder = (id: string, folderId: string | null) => {
-    setDiagramList((prev) => prev.map((d) => (d.id === id ? { ...d, folderId } : d)));
-    void apiSetDiagramFolder(ownerId, id, folderId).catch(() => {});
-    track('Diagram', 'Moved');
-  };
-
-  // Duplicate a diagram into a brand-new one. Loads the source's
-  // metadata + every tab's content, mints new tab ids (otherwise they
-  // collide with the source when the user opens both), preserves
-  // element ids inside each tab (arrows + same-tab links keep
-  // resolving), and rewrites any tab-link references on the new tabs
-  // through the id remap so cross-tab navigation survives the copy.
-  const duplicateDiagram = async (id: string) => {
-    const newId = await duplicate(ownerId, id);
-    // Open the freshly created copy. Navigation reloads the editor onto
-    // the new id, so a separate list refresh is unnecessary.
-    if (newId) {
-      track('Diagram', 'Duplicated');
-      openDiagram(newId);
-    }
-  };
+  const {
+    openDiagram,
+    deleteDiagram,
+    deleteFolder,
+    moveDiagramToFolder,
+    duplicateDiagram,
+    dismissSharedDiagram,
+  } = useDiagramListActions({
+    ownerId,
+    diagramList,
+    setDiagramList,
+    confirm,
+    deleteFolderFromHook: hookDeleteFolder,
+    currentDiagram: diagramId ? { id: diagramId, name: diagramName } : null,
+    // Open the freshly created copy. Navigation reloads the editor
+    // onto the new id, so a separate list refresh is unnecessary.
+    afterDuplicate: (newId) => openDiagram(newId),
+    sharedDiagrams,
+    setSharedDiagrams,
+  });
 
   // "New Diagram" from the Explorer. Welcome / create-new lives at
-  // /live/new (spec/14), so hand off there — that route owns the
+  // /live/new (spec/14), so hand off there; that route owns the
   // identity + template + theme picker and the actual diagram POST.
   // The current diagram is already autosaved so nothing is lost.
   const newDiagram = () => {
@@ -170,7 +89,7 @@ export function useDiagramActions(deps: DiagramActionsDeps) {
   // endpoint which authorises via owner / shared_with row / share
   // code (spec/11), then navigates to the new diagram so the
   // visitor immediately lands on their own copy. Owner case never
-  // hits this — the button is gated on `!isOwner`.
+  // hits this; the button is gated on `!isOwner`.
   const makeCopy = async () => {
     if (!diagramId || copying) return;
     setCopying(true);
@@ -179,11 +98,11 @@ export function useDiagramActions(deps: DiagramActionsDeps) {
         shareCode: sessionShareCode,
       });
       // A visitor cloning someone else's shared diagram into their own
-      // account — a distinct signal from duplicating your own (type 'Copy').
+      // account; a distinct signal from duplicating your own (type 'Copy').
       track('Diagram', 'Duplicated', 'Copy');
       window.location.assign(`${window.location.origin}/live/diagram/${copy.id}`);
     } catch {
-      // Network / auth glitch — let the user try again. Leave the
+      // Network / auth glitch; let the user try again. Leave the
       // header button enabled by clearing the loading flag.
       setCopying(false);
     }
@@ -194,6 +113,7 @@ export function useDiagramActions(deps: DiagramActionsDeps) {
     deleteFolder,
     moveDiagramToFolder,
     duplicateDiagram,
+    dismissSharedDiagram,
     newDiagram,
     openDiagram,
     makeCopy,

@@ -5,12 +5,8 @@ import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import {
-  apiDeleteDiagram,
-  apiDismissSharedWith,
   apiListDiagrams,
   apiListSharedWith,
-  apiSaveDiagramMeta,
-  apiSetDiagramFolder,
   apiUpdateFolder,
   type DiagramListItem,
   type Folder,
@@ -20,7 +16,7 @@ import { ensureGuestSelfId } from '@/lib/local-identity';
 import { track } from '@/lib/telemetry';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
-import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
+import { useDiagramListActions } from '@/hooks/useDiagramListActions';
 import dynamic from 'next/dynamic';
 import { MenuItem, PortalMenu } from '@/components/PortalMenu';
 // Lazy-load SearchPanel — same rationale as the editor route: it's
@@ -252,58 +248,38 @@ export default function ExplorerPage() {
     track('Folder', 'Moved');
   };
 
+  // Diagram-row + Shared-row mutations come from the shared
+  // useDiagramListActions hook (the same behaviours behind the
+  // editor's Explorer panel and /new), so the optimistic updates,
+  // API calls, telemetry, and confirm copy stay single-sourced. The
+  // page wraps the rename to also clear its inline-rename state.
+  const {
+    renameDiagram: listRenameDiagram,
+    deleteDiagram,
+    deleteFolder: deleteFolderWithCascade,
+    moveDiagramToFolder,
+    duplicateDiagram,
+    dismissSharedDiagram: dismissShared,
+  } = useDiagramListActions({
+    ownerId,
+    diagramList: diagrams,
+    setDiagramList: setDiagrams,
+    confirm,
+    deleteFolderFromHook: deleteFolder,
+    // Stay on the library after a duplicate; just refresh the list
+    // so the copy's row appears.
+    afterDuplicate: async () => {
+      if (!ownerId) return;
+      const list = await apiListDiagrams(ownerId).catch(() => null);
+      if (list) setDiagrams(list);
+    },
+    sharedDiagrams: shared,
+    setSharedDiagrams: setShared,
+  });
+
   const renameDiagram = (id: string, name: string) => {
-    if (!ownerId) return;
-    const trimmed = name.trim();
     setRenamingDiagramId(null);
-    if (!trimmed) return;
-    const prevName = diagrams.find((d) => d.id === id)?.name?.trim() ?? '';
-    setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, name: trimmed } : d)));
-    void apiSaveDiagramMeta(ownerId, { id, name: trimmed }).catch(() => {});
-    if (trimmed !== prevName) track('Diagram', 'Renamed');
-  };
-
-  const deleteDiagram = async (id: string) => {
-    if (!ownerId) return;
-    const target = diagrams.find((d) => d.id === id);
-    const ok = await confirm({
-      title: `Delete "${target?.name || 'this diagram'}"?`,
-      message:
-        'Every tab, change-log entry, and share link on this diagram is removed. Visitors holding a share link will see a 404. This cannot be undone.',
-      confirmLabel: 'Delete diagram',
-    });
-    if (!ok) return;
-    track('Diagram', 'Deleted');
-    setDiagrams((prev) => prev.filter((d) => d.id !== id));
-    void apiDeleteDiagram(ownerId, id).catch(() => {});
-  };
-
-  const moveDiagramToFolder = (id: string, folderId: string | null) => {
-    if (!ownerId) return;
-    setDiagrams((prev) => prev.map((d) => (d.id === id ? { ...d, folderId } : d)));
-    void apiSetDiagramFolder(ownerId, id, folderId).catch(() => {});
-    track('Diagram', 'Moved');
-  };
-
-  const duplicateDiagram = async (id: string) => {
-    if (!ownerId) return;
-    await duplicate(ownerId, id);
-    const list = await apiListDiagrams(ownerId).catch(() => null);
-    if (list) setDiagrams(list);
-  };
-
-  const dismissShared = async (diagramId: string) => {
-    if (!ownerId) return;
-    const target = shared.find((s) => s.id === diagramId);
-    const ok = await confirm({
-      title: `Remove "${target?.name || 'this diagram'}" from your Shared list?`,
-      message:
-        "It'll vanish from your Shared with you list. You can still open it again from the share link the owner gave you, and that re-adds it here.",
-      confirmLabel: 'Remove',
-    });
-    if (!ok) return;
-    setShared((prev) => prev.filter((s) => s.id !== diagramId));
-    void apiDismissSharedWith(ownerId, diagramId).catch(() => {});
+    listRenameDiagram(id, name);
   };
 
   const openMovePickerForDiagram = (id: string, anchor: HTMLElement | null) => {
@@ -453,29 +429,13 @@ export default function ExplorerPage() {
     newSubfolder: () => void createFolder(f.id),
     move: () => openMovePickerForFolder(f.id, anchor),
     delete: async () => {
-      const ok = await confirm({
-        title: `Delete "${f.name || 'folder'}"?`,
-        message:
-          'Diagrams inside this folder move to Unsorted. Subfolders are promoted to the root. The folder row itself is removed.',
-        confirmLabel: 'Delete folder',
-      });
-      if (!ok) return;
-      // Mirror what the server actually does (apps/api/src/db.ts
-      // deleteFolder): only direct children get re-parented or
-      // null-folder-ed. Subfolders of f become root-level (handled
-      // inside useFolders.deleteFolder); diagrams directly inside
-      // f fall to Unsorted; diagrams inside subfolders stay where
-      // they are (their parent folder still exists, it just moved
-      // to root). The earlier code descended the whole subtree
-      // and over-collapsed grandchildren into Unsorted, diverging
-      // from server state until the next list refresh.
-      setDiagrams((prev) => prev.map((d) => (d.folderId === f.id ? { ...d, folderId: null } : d)));
-      deleteFolder(f.id);
-      // Only bounce selection if the deleted folder itself was
-      // focused. Descendants survive the delete (they're now root
-      // folders), so a B-was-selected, delete-A flow should keep
-      // B selected.
-      if (selected.kind === 'folder' && selected.id === f.id) {
+      // Confirm + diagram-side cascade + useFolders delete, all in the
+      // shared hook. Only bounce selection if the deleted folder itself
+      // was focused: descendants survive the delete (they're now root
+      // folders), so a B-was-selected, delete-A flow should keep B
+      // selected.
+      const deleted = await deleteFolderWithCascade(f.id, f.name || 'folder');
+      if (deleted && selected.kind === 'folder' && selected.id === f.id) {
         setSelected({ kind: 'all' });
       }
     },
