@@ -70,7 +70,7 @@ type TabBarProps = {
   onImportTab: () => void;
   onExportTab: () => void;
   // The user's other diagrams (excluding the current one). Drives the
-  // "Add to another diagram" submenu in the tab ellipsis.
+  // "Add to Diagram" submenu in the tab ellipsis.
   otherDiagrams: { id: string; name: string }[];
   // Copy the active tab into another diagram. Callee handles the
   // round-trip to the API. Returns a promise so the menu can dismiss
@@ -133,7 +133,7 @@ export function TabBar({
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
-  // Distinct folder names in this diagram, for the "Organise in folder"
+  // Distinct folder names in this diagram, for the "Add to Folder"
   // menu's pick list (spec/30).
   const folderNames = folderNamesInDiagram(tabs);
 
@@ -745,11 +745,10 @@ function PortalMenu({
                 groups the verbose / destructive actions into sections. */}
             <MenuToolbar>
               <MenuToolButton
-                icon={<TabLockIcon />}
-                label={locked ? 'Unlock tab' : 'Lock tab'}
-                description={locked ? 'Make this tab editable again.' : 'Make this tab read-only.'}
-                onClick={onToggleLock}
-                active={locked}
+                icon={<CopyIcon />}
+                label="Duplicate"
+                description="Create a copy of this tab in this diagram."
+                onClick={onDuplicate}
               />
               <MenuToolButton
                 icon={<PencilIcon />}
@@ -758,17 +757,18 @@ function PortalMenu({
                 onClick={onRename}
               />
               <MenuToolButton
-                icon={<CopyIcon />}
-                label="Duplicate"
-                description="Create a copy of this tab in this diagram."
-                onClick={onDuplicate}
+                icon={<TabLockIcon />}
+                label={locked ? 'Unlock tab' : 'Lock tab'}
+                description={locked ? 'Make this tab editable again.' : 'Make this tab read-only.'}
+                onClick={onToggleLock}
+                active={locked}
               />
             </MenuToolbar>
             <MenuDivider />
             <MenuSection label="Organise" />
             <MenuItem
               icon={<FolderMenuIcon />}
-              label="Organise in folder…"
+              label="Add to Folder"
               onClick={() => {
                 setNewFolder('');
                 setView('folder');
@@ -776,7 +776,7 @@ function PortalMenu({
             />
             <MenuItem
               icon={<MoveIcon />}
-              label="Add to another diagram…"
+              label="Add to Diagram"
               onClick={() => setView('copyTo')}
               disabled={otherDiagrams.length === 0}
             />
@@ -784,14 +784,14 @@ function PortalMenu({
             <MenuSection label="Content" />
             <MenuItem
               icon={<FileImportIcon />}
-              label="Import…"
+              label="Import Content"
               onClick={onImport}
               disabled={locked}
             />
-            <MenuItem icon={<FileExportIcon />} label="Export…" onClick={onExport} />
+            <MenuItem icon={<FileExportIcon />} label="Export Contents" onClick={onExport} />
             <MenuItem
               icon={<ClearIcon />}
-              label="Clear content"
+              label="Reset Canvas"
               onClick={onClearContent}
               disabled={!canClearContent}
             />
@@ -839,7 +839,7 @@ function PortalMenu({
               Back
             </button>
             <p className="px-2 pb-1 text-[10px] text-slate-400 dark:text-slate-500">
-              Organise this tab into a folder
+              Add this tab to a folder
             </p>
             {/* New-folder inline input: Enter (or the + button) commits.
                 Typing an existing name just moves the tab into it

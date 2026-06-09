@@ -380,9 +380,9 @@ export function useTabActions(deps: TabActionsDeps) {
     // clearing the instant the menu item is clicked. It IS undoable
     // (one commit), which the message notes.
     const ok = await confirm({
-      title: 'Clear this tab?',
+      title: 'Reset this canvas?',
       message: 'Every element on this tab is removed. Undo (Cmd/Ctrl-Z) brings it back.',
-      confirmLabel: 'Clear content',
+      confirmLabel: 'Reset canvas',
     });
     if (!ok) return;
     commit(() => []);

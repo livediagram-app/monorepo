@@ -179,7 +179,10 @@ export function MenuToolButton({
         disabled={disabled}
         aria-label={label}
         aria-pressed={active}
-        className={`flex h-7 w-7 items-center justify-center rounded transition ${tone}`}
+        // h-8 w-8 + forced 16px icons to match the canvas element toolbar
+        // (SelectionPopover); the `[&_svg]` override beats each glyph's
+        // intrinsic width/height attribute.
+        className={`flex h-8 w-8 items-center justify-center rounded transition [&_svg]:h-4 [&_svg]:w-4 ${tone}`}
       >
         {icon}
       </button>

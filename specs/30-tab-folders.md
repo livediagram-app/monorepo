@@ -40,7 +40,7 @@ Folder membership changes two ways:
 
 **1. Drag and drop.** Dropping a tab onto a folder's pills (or onto the folder chip, which targets the run's first member, so it works on a collapsed folder too) **joins** that folder; dropping it among loose tabs makes it **loose**; dropping it among a different folder's pills **moves** it there. The tab simply adopts the drop target's folder. `reorderTabs` performs the membership change in the same commit as the reorder.
 
-**2. The tab's right-click / ellipsis menu** — a third "Organise in folder" view alongside the existing actions / copy-to views, for precise / keyboard-free control:
+**2. The tab's right-click / ellipsis menu** — an "Add to Folder" view alongside the existing actions / copy-to views, for precise / keyboard-free control:
 
 - **An existing folder name** in this diagram → move the active tab into it.
 - **New folder…** → inline text input; validates a trimmed, non-empty name that doesn't collide with an existing folder in this diagram (same name = same folder).
