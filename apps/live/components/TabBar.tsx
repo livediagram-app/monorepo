@@ -332,7 +332,7 @@ export function TabBar({
             type="button"
             onClick={onOpenSearch}
             aria-label="Search"
-            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           >
             <SearchGlyph />
           </button>
@@ -348,7 +348,7 @@ export function TabBar({
               type="button"
               onClick={onOpenShortcuts}
               aria-label="Keyboard shortcuts"
-              className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               <KeyboardIcon />
             </button>
@@ -367,7 +367,7 @@ export function TabBar({
             type="button"
             onClick={onOpenSettings}
             aria-label="Diagram settings"
-            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           >
             <GearIcon />
           </button>
@@ -463,7 +463,7 @@ function UiModeToggle() {
         onClick={toggle}
         aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         aria-pressed={isDark}
-        className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
       >
         {isDark ? <SunIcon /> : <MoonIcon />}
       </button>

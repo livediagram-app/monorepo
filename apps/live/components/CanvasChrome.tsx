@@ -843,15 +843,13 @@ export function CanvasChrome(props: CanvasChromeProps) {
           owns it ("Owner: <avatar> <name>", when the owner is in the
           room and so reachable via livePresence) and their own role
           (Viewing in amber, Editing in green). Pointer events stay off
-          so the badges don't intercept clicks on the canvas. Hidden
-          below sm because the same top-row real estate carries the
-          Explorer / Palette / Editor banner pills there, and the
-          Owner pill overlaps them. The role is still discoverable
-          from the canvas chrome (no-add palette + locked element
-          affordances for view-role), so dropping the badge on a
-          phone is a small loss for a meaningful layout win. */}
+          so the badges don't intercept clicks on the canvas. Shown on
+          mobile too: the top-row pills that used to overlap it here
+          have since moved, so there's no longer a clash to dodge and a
+          visitor on a phone should still see whose diagram this is and
+          which role they hold. */}
       {!isOwner && !zenMode ? (
-        <div className="pointer-events-none absolute left-1/2 top-3 z-30 hidden -translate-x-1/2 items-center gap-2 sm:flex">
+        <div className="pointer-events-none absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2">
           {ownerParticipant ? (
             <div className="flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
               <span className="text-slate-500 dark:text-slate-400">Owner:</span>

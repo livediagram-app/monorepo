@@ -58,11 +58,11 @@ export function EditorHeader({
     // overflows the header bounds downward) was getting hidden
     // behind the canvas — siblings without explicit z-index stack in
     // document order and the canvas wins.
-    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 sm:gap-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
       <div className="flex w-auto items-center sm:w-48">
         <Brand href="/" size="md" accentColor={brandAccent} wordmarkClassName="hidden sm:inline" />
       </div>
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-start sm:justify-center">
         {hideTitle ? null : editing && !readOnly ? (
           <NameEditor
             initial={diagramName}
