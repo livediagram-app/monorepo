@@ -15,6 +15,11 @@ export type TabRow = {
   order_index: number;
   data: string;
   updated_at: number;
+  // Per-diagram folder name from the diagram_tabs link (spec/30).
+  // NULL when the tab is loose. Read sites that don't join the link
+  // for folder (none today) leave it undefined, which maps the same
+  // as NULL.
+  folder?: string | null;
 };
 
 // Pure mapper from D1 tab row to wire-format DTO. Pulled out of db.ts
@@ -42,6 +47,10 @@ export function rowToTab(row: TabRow): TabDTO {
     diagramId: row.diagram_id,
     orderIndex: row.order_index,
     updatedAt: row.updated_at,
+    // Folder is link metadata, not body content — it overrides any
+    // stale `folder` a forged data blob might carry (the client
+    // strips it before persisting, so it should never be in `data`).
+    folder: row.folder ?? undefined,
   };
 }
 
@@ -55,5 +64,6 @@ export function rowToTabSummary(row: TabRow): TabSummaryDTO {
     name: row.name,
     orderIndex: row.order_index,
     updatedAt: row.updated_at,
+    folder: row.folder ?? undefined,
   };
 }

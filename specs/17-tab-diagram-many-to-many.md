@@ -29,7 +29,7 @@ CREATE INDEX diagram_tabs_by_diagram ON diagram_tabs(diagram_id, order_index);
 CREATE INDEX diagram_tabs_by_tab     ON diagram_tabs(tab_id);
 ```
 
-`order_index` lives on the link, not on the tab — two diagrams that share a tab can order it independently. `added_at` lets us surface "added to this diagram on date X" later.
+`order_index` lives on the link, not on the tab — two diagrams that share a tab can order it independently. `added_at` lets us surface "added to this diagram on date X" later. A later migration (0018, [spec/30](30-tab-folders.md)) adds a nullable `folder` column to this table for the same reason: tab-folder membership is per-diagram, so a shared tab can be foldered in one diagram and loose in another.
 
 The legacy `tabs.diagram_id` and `tabs.order_index` columns stay for one phase as a transitional denormalisation: migration 0011 backfills `diagram_tabs` from them and keeps them in sync on writes. Item #14's migration will drop both columns once every read site has moved through the link table.
 

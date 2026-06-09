@@ -249,14 +249,19 @@ export async function apiDelete(
   }
 }
 
-// `templateChosen` is UI-only state (have we dismissed the per-tab
-// template picker yet?). It rides on the Tab type so the editor can
-// flip it locally, but there's no reason for the server to persist
-// it — strip before every write so it stays purely a frontend
-// concern. Shared by apiCreateDiagram + apiSaveTab.
-export function stripTemplateChosen(tab: Tab): Tab {
-  if (tab.templateChosen === undefined) return tab;
-  const { templateChosen: _tc, ...rest } = tab;
+// Strip fields that ride on the Tab type for the editor's convenience
+// but must never enter the persisted tab body (`tabs.data`):
+//   - `templateChosen` — UI-only (have we dismissed the per-tab
+//     template picker yet?); a pure frontend concern.
+//   - `folder` — per-diagram membership (spec/30) that lives on the
+//     diagram_tabs link, carried via the meta/reorder path. Leaking it
+//     into the shared body would make a folder follow the tab into
+//     every diagram it's shared into, breaking per-diagram scope.
+// Shared by apiCreateDiagram + apiSaveTab.
+export function stripUiTabFields(tab: Tab): Tab {
+  if (tab.templateChosen === undefined && tab.folder === undefined) return tab;
+  const { templateChosen: _tc, folder: _f, ...rest } = tab;
   void _tc;
+  void _f;
   return rest as Tab;
 }

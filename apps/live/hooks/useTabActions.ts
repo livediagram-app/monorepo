@@ -15,7 +15,7 @@
 // helper — those are separate concerns that stay in the page (or move
 // in their own pass).
 
-import { type Element, type Tab } from '@livediagram/diagram';
+import { normalizeFolderOrder, type Element, type Tab } from '@livediagram/diagram';
 import { apiLinkTab, type ChangeLogEntry } from '@/lib/api-client';
 import { parseImportedTab, pickTabFile, type ImportOutcome } from '@/lib/import-tab';
 import { track } from '@/lib/telemetry';
@@ -347,7 +347,11 @@ export function useTabActions(deps: TabActionsDeps) {
       const next = [...ts];
       const [moved] = next.splice(srcIdx, 1);
       next.splice(tgtIdx, 0, moved!);
-      return next;
+      // Re-normalize so every folder stays one contiguous run
+      // (spec/30): dragging only reorders, it never changes folder
+      // membership, so a tab dropped outside its folder's run snaps
+      // back into it. No-op (same reference) for loose-only bars.
+      return normalizeFolderOrder(next);
     });
     track('Tab', 'Reordered');
   };

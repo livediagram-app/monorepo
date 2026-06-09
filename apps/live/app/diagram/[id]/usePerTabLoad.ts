@@ -90,7 +90,11 @@ export function usePerTabLoad(opts: {
             const userHasEdited = t.elements.length > 0 || t.templateChosen === true;
             if (userHasEdited) return t;
             didMerge = true;
-            return tab;
+            // Keep the local folder: it's per-diagram link metadata
+            // (spec/30) owned by the meta path, not the content fetch,
+            // so a content load must never overwrite a folder the user
+            // just set on this not-yet-opened tab.
+            return { ...tab, folder: t.folder };
           }),
         );
         if (didMerge) remoteUpdateRef.current = true;

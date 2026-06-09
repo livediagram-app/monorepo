@@ -78,11 +78,17 @@ export type TabSummary = {
   name: string;
   orderIndex: number;
   updatedAt: number;
+  // Per-diagram folder name (spec/30), read from the diagram_tabs
+  // link row. Optional / omitted = the tab is loose (no folder). The
+  // TabBar groups contiguous same-folder tabs under one chip.
+  folder?: string;
 };
 
 // Full tab payload returned by `GET /api/diagrams/:id/tabs/:tabId`:
 // the editor's `Tab` (elements + comments + theme + canvas) plus the
-// row's audit metadata.
+// row's audit metadata. `folder` here is the per-diagram membership
+// from the diagram_tabs link (spec/30), distinct from anything in the
+// tab body — it is never stored in the `tabs.data` blob.
 export type TabRecord = Tab & {
   diagramId: string;
   orderIndex: number;
@@ -261,7 +267,9 @@ export type RoomOp =
   | {
       kind: 'diagram-meta';
       name: string;
-      tabs: { id: string; name: string; orderIndex: number }[];
+      // `folder` (spec/30) is the per-diagram folder name, optional so
+      // an older peer that omits it is treated as loose — no parse break.
+      tabs: { id: string; name: string; orderIndex: number; folder?: string }[];
     }
   | { kind: 'select'; elementId: string | null }
   // Cursor position in canvas coordinates. `null` means the cursor

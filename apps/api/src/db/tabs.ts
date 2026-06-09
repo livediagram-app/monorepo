@@ -13,7 +13,7 @@ export async function getTab(env: Env, diagramId: string, tabId: string): Promis
   // per-diagram order_index, so the returned summary's position
   // is correct for whichever diagram the caller asked about.
   const row = await env.DB.prepare(
-    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, t.data, t.updated_at
+    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, t.data, t.updated_at, dt.folder
        FROM tabs t
        JOIN diagram_tabs dt ON dt.tab_id = t.id
       WHERE t.id = ? AND dt.diagram_id = ?`,
@@ -134,21 +134,47 @@ export async function diagramsContainingTab(env: Env, tabId: string): Promise<st
   return (rows.results ?? []).map((r) => r.diagram_id);
 }
 
-// Update tab order. Caller passes the ids in their new positions; we
-// rewrite every order_index in one batch. Cheap given the < 20-tab
-// scale we see in practice (see spec/13 "Risk").
-export async function reorderTabs(env: Env, diagramId: string, tabIds: string[]): Promise<void> {
+// One position in a reorder request: the tab id plus its per-diagram
+// folder (spec/30). Folder rides this path — never the per-tab content
+// PUT — so a content save can't clobber membership. `null`/omitted =
+// loose. A plain `string` is accepted for the legacy (pre-folder)
+// payload shape and treated as loose.
+export type ReorderEntry = string | { id: string; folder?: string | null };
+
+// Normalise one reorder entry to its (id, folder) form: legacy string
+// entries are loose, and empty / whitespace folder names collapse to
+// NULL so a blank folder can never persist. Pure + exported for tests.
+export function normalizeReorderEntry(entry: ReorderEntry): { id: string; folder: string | null } {
+  if (typeof entry === 'string') return { id: entry, folder: null };
+  const trimmed = entry.folder?.trim();
+  return { id: entry.id, folder: trimmed ? trimmed : null };
+}
+
+// Update tab order + folder membership. Caller passes the entries in
+// their new positions; we rewrite every order_index (and folder) in
+// one batch. Cheap given the < 20-tab scale we see in practice (see
+// spec/13 "Risk"). Empty / whitespace folder names normalise to NULL
+// so a blank folder can never persist.
+export async function reorderTabs(
+  env: Env,
+  diagramId: string,
+  entries: ReorderEntry[],
+): Promise<void> {
   const now = Date.now();
-  // Update the link-table order alongside the legacy column.
-  // Phase-1 keeps both in sync per spec/17.
-  const batch = tabIds.flatMap((tabId, idx) => [
-    env.DB.prepare(
-      'UPDATE diagram_tabs SET order_index = ? WHERE diagram_id = ? AND tab_id = ?',
-    ).bind(idx, diagramId, tabId),
-    env.DB.prepare(
-      'UPDATE tabs SET order_index = ?, updated_at = ? WHERE id = ? AND diagram_id = ?',
-    ).bind(idx, now, tabId, diagramId),
-  ]);
+  // Update the link-table order + folder alongside the legacy
+  // order_index column. Phase-1 keeps both order columns in sync per
+  // spec/17; folder lives only on the link (no legacy equivalent).
+  const batch = entries.flatMap((entry, idx) => {
+    const { id: tabId, folder } = normalizeReorderEntry(entry);
+    return [
+      env.DB.prepare(
+        'UPDATE diagram_tabs SET order_index = ?, folder = ? WHERE diagram_id = ? AND tab_id = ?',
+      ).bind(idx, folder, diagramId, tabId),
+      env.DB.prepare(
+        'UPDATE tabs SET order_index = ?, updated_at = ? WHERE id = ? AND diagram_id = ?',
+      ).bind(idx, now, tabId, diagramId),
+    ];
+  });
   if (batch.length > 0) await env.DB.batch(batch);
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
 }

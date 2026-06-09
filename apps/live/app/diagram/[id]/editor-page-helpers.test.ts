@@ -14,6 +14,10 @@ function tab(id: string, name = id, elements: Tab['elements'] = []): Tab {
   return { id, name, elements };
 }
 
+function foldered(id: string, folder: string): Tab {
+  return { id, name: id, elements: [], folder };
+}
+
 describe('createTab', () => {
   it('mints a tab with a fresh id, the given name, and no elements', () => {
     const t = createTab('Tab 1');
@@ -44,6 +48,14 @@ describe('placeholdersFromSummaries', () => {
       ['b', 'Backend'],
     ]);
     expect(out.every((t) => t.elements.length === 0)).toBe(true);
+  });
+
+  it('carries folder membership from the summary (spec/30)', () => {
+    const out = placeholdersFromSummaries([
+      { id: 'a', name: 'Overview', folder: 'Org' },
+      { id: 'b', name: 'Backend' },
+    ]);
+    expect(out.map((t) => t.folder)).toEqual(['Org', undefined]);
   });
 });
 
@@ -119,6 +131,31 @@ describe('computeTabSaveDiff (autosave decision kernel)', () => {
     expect(diff.changedTabs).toEqual([]);
     expect(diff.deletedIds).toEqual([]);
     expect(diff.hasChanges).toBe(true);
+  });
+
+  it('flags a folder-only change as orderChanged so it rides the meta save (spec/30)', () => {
+    const a = tab('a');
+    const b = tab('b');
+    const bFoldered = { ...b, folder: 'Org' };
+    // Same ids, same positions — only b's folder changed. The meta
+    // save (gated on orderChanged) must still fire.
+    const diff = computeTabSaveDiff([a, b], [a, bFoldered], 'Doc', 'Doc');
+    expect(diff.orderChanged).toBe(true);
+    expect(diff.hasChanges).toBe(true);
+  });
+
+  it('does not flag orderChanged when folders are unchanged', () => {
+    const tabs = [foldered('a', 'Org'), tab('b')];
+    const diff = computeTabSaveDiff(tabs, tabs, 'Doc', 'Doc');
+    expect(diff.orderChanged).toBe(false);
+    expect(diff.hasChanges).toBe(false);
+  });
+
+  it('treats empty-string and undefined folder as the same (no false positive)', () => {
+    const a = tab('a');
+    const aEmpty = { ...a, folder: '' };
+    const diff = computeTabSaveDiff([a], [aEmpty], 'Doc', 'Doc');
+    expect(diff.orderChanged).toBe(false);
   });
 
   it('combines edits, deletes, reorders, and a rename in one diff', () => {

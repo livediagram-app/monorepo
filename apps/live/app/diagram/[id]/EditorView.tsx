@@ -186,6 +186,9 @@ export function EditorView() {
     removeImageFromElement,
     renameFolder,
     renameTab,
+    renameTabFolder,
+    moveTabToFolder,
+    removeTabFromFolder,
     reorderTabs,
     resetColorsSelected,
     resetElementsToTheme,
@@ -688,6 +691,10 @@ export function EditorView() {
         <TabBar
           tabs={tabs}
           activeId={activeId}
+          diagramId={diagramId ?? ''}
+          onMoveTabToFolder={moveTabToFolder}
+          onRemoveTabFromFolder={removeTabFromFolder}
+          onRenameFolder={renameTabFolder}
           activeTabHasContent={activeTab.elements.length > 0}
           onSelect={(id) => {
             setActiveId(id);

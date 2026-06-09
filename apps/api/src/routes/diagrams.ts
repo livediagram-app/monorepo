@@ -106,10 +106,16 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     }
     if (request.method === 'PUT') {
       // Metadata-only PUT now that tabs live in their own table.
-      // Body: { name?: string, tabIds?: string[] } — name renames
-      // the diagram, tabIds reorders the tabs to match. Both are
-      // optional, and at least one must be present.
-      const body = (await request.json()) as { name?: string; tabIds?: string[] };
+      // Body: { name?, tabIds?, tabs? } — name renames the diagram;
+      // `tabs` (preferred, spec/30) reorders AND sets each tab's
+      // per-diagram folder; `tabIds` is the legacy folder-less shape,
+      // still accepted for older clients. All optional, at least one
+      // must be present.
+      const body = (await request.json()) as {
+        name?: string;
+        tabIds?: string[];
+        tabs?: { id: string; folder?: string | null }[];
+      };
       const owner = requireOwner(ctx);
       if (owner instanceof Response) return owner;
       const existing = await getDiagram(env, id);
@@ -130,7 +136,11 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
         savedAt: now,
         createdAt: existing?.createdAt ?? now,
       });
-      if (Array.isArray(body.tabIds)) {
+      // Prefer the folder-carrying `tabs` shape; fall back to the
+      // legacy `tabIds` (treated as loose) so older clients keep working.
+      if (Array.isArray(body.tabs)) {
+        await reorderTabs(env, id, body.tabs);
+      } else if (Array.isArray(body.tabIds)) {
         await reorderTabs(env, id, body.tabIds);
       }
       const diagram = await getDiagram(env, id);

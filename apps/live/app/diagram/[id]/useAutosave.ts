@@ -74,10 +74,13 @@ export function useAutosave(opts: {
       };
       if (sessionShareCode) headers['X-Share-Code'] = sessionShareCode;
       for (const t of changedTabs) {
-        // Strip `templateChosen` (UI-only) before persisting,
-        // mirroring apiSaveTab.
-        const { templateChosen: _tc, ...persistable } = t;
+        // Strip UI-only / link-only fields (`templateChosen`, `folder`)
+        // before persisting the body, mirroring apiSaveTab's
+        // stripUiTabFields. `folder` is per-diagram link metadata
+        // (spec/30) and rides the meta PUT below, never the body.
+        const { templateChosen: _tc, folder: _f, ...persistable } = t;
         void _tc;
+        void _f;
         fetch(`${apiBase}/diagrams/${diagramId}/tabs/${t.id}`, {
           method: 'PUT',
           headers,
@@ -98,7 +101,10 @@ export function useAutosave(opts: {
         fetch(`${apiBase}/diagrams/${diagramId}`, {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ name: diagramName, tabIds: tabs.map((t) => t.id) }),
+          body: JSON.stringify({
+            name: diagramName,
+            tabs: tabs.map((t) => ({ id: t.id, folder: t.folder })),
+          }),
           keepalive: true,
         }).catch(() => {});
       }
@@ -142,7 +148,11 @@ export function useAutosave(opts: {
         writes.push(
           apiSaveDiagramMeta(
             selfId,
-            { id: diagramId, name: diagramName, tabIds: tabs.map((t) => t.id) },
+            {
+              id: diagramId,
+              name: diagramName,
+              tabs: tabs.map((t) => ({ id: t.id, folder: t.folder })),
+            },
             sessionShareCode,
           ).then(() => {
             roomRef.current?.send({
@@ -154,6 +164,7 @@ export function useAutosave(opts: {
                   id: t.id,
                   name: t.name,
                   orderIndex: i,
+                  folder: t.folder,
                 })),
               },
             });

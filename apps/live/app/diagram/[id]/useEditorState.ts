@@ -99,6 +99,7 @@ import { useElementStyle } from '@/hooks/useElementStyle';
 import { useShapeDrawing } from '@/hooks/useShapeDrawing';
 import { useShareLinks } from '@/hooks/useShareLinks';
 import { useTabActions } from '@/hooks/useTabActions';
+import { useTabFolders } from '@/hooks/useTabFolders';
 import { useTabCanvas } from '@/hooks/useTabCanvas';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
 import { useEditorViewport } from '@/hooks/useEditorViewport';
@@ -1235,6 +1236,19 @@ export function useEditorState() {
     toast,
   });
 
+  // Tab-folder membership (spec/30), kept separate from the busy
+  // useTabActions. Menu-only: drag-reorder lives above.
+  const {
+    moveTabToFolder,
+    removeTabFromFolder,
+    renameFolder: renameTabFolder,
+  } = useTabFolders({
+    tabs,
+    activeId,
+    commitTabs,
+    emitTabMeta,
+  });
+
   // Diagram-level lifecycle + navigation (delete / duplicate /
   // move-to-folder / delete-folder, and the new / open / make-a-copy
   // full-page-load helpers). Operates on whole diagrams + the Explorer
@@ -1833,6 +1847,9 @@ export function useEditorState() {
     removeImageFromElement,
     renameFolder,
     renameTab,
+    renameTabFolder,
+    moveTabToFolder,
+    removeTabFromFolder,
     reorderTabs,
     resetColorsSelected,
     resetElementsToTheme,

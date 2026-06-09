@@ -89,6 +89,19 @@ describe('rowToTab', () => {
     expect(dto.updatedAt).toBe(1_700_000_000_000);
   });
 
+  it('takes folder from the row column and lets it override a forged data-blob folder (spec/30)', () => {
+    // folder is per-diagram link metadata read from the diagram_tabs
+    // JOIN, never from tabs.data (the client strips it before saving).
+    // A folder stuffed into the blob must not win.
+    const dto = rowToTab(baseRow({ folder: 'Org', data: bodyJson({ folder: 'Forged' }) }));
+    expect(dto.folder).toBe('Org');
+  });
+
+  it('maps a NULL / missing folder column to undefined (loose)', () => {
+    expect(rowToTab(baseRow({ folder: null })).folder).toBeUndefined();
+    expect(rowToTab(baseRow()).folder).toBeUndefined();
+  });
+
   it('throws on invalid JSON in the data column (call sites can decide whether to filter or surface)', () => {
     // Documents the current contract: rowToTab does NOT silently
     // swallow malformed JSON. A regression that wrapped this in a
@@ -120,5 +133,10 @@ describe('rowToTabSummary', () => {
     // shuffle the strip after every list call.
     expect(rowToTabSummary(baseRow({ order_index: 7 })).orderIndex).toBe(7);
     expect(rowToTabSummary(baseRow({ order_index: 0 })).orderIndex).toBe(0);
+  });
+
+  it('carries the per-diagram folder name, mapping NULL to undefined (spec/30)', () => {
+    expect(rowToTabSummary(baseRow({ folder: 'Org' })).folder).toBe('Org');
+    expect(rowToTabSummary(baseRow({ folder: null })).folder).toBeUndefined();
   });
 });

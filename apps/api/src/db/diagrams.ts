@@ -31,7 +31,7 @@ async function listTabSummariesFor(env: Env, diagramId: string): Promise<TabSumm
   // path here and let writes keep both in sync until they're
   // dropped in a follow-up migration.
   const result = await env.DB.prepare(
-    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, '' AS data, t.updated_at
+    `SELECT t.id, dt.diagram_id, t.name, dt.order_index, '' AS data, t.updated_at, dt.folder
        FROM diagram_tabs dt
        JOIN tabs t ON t.id = dt.tab_id
       WHERE dt.diagram_id = ?

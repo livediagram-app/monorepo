@@ -10,7 +10,7 @@ import {
   expectOk,
   expectOkOrNull,
   expectOkVoid,
-  stripTemplateChosen,
+  stripUiTabFields,
   type TabResponse,
 } from './core';
 
@@ -61,7 +61,7 @@ export async function apiSaveTab(
   const res = await fetch(`${API_BASE}/diagrams/${diagramId}/tabs/${tab.id}`, {
     method: 'PUT',
     headers: await apiHeaders(ownerId, { share: shareCode, body: true }),
-    body: JSON.stringify(stripTemplateChosen(tab)),
+    body: JSON.stringify(stripUiTabFields(tab)),
   });
   await expectOkVoid(res, 'save tab');
 }

@@ -15,9 +15,19 @@ export function createTab(name: string): Tab {
 // falls back to `tabs[0]`) undefined, and the editor crashes on the
 // first `activeTab.elements` read. The seeded tab autosaves back to the
 // API on the next save cycle, healing the diagram.
-export function placeholdersFromSummaries(summaries: { id: string; name: string }[]): Tab[] {
+export function placeholdersFromSummaries(
+  summaries: { id: string; name: string; folder?: string }[],
+): Tab[] {
   if (summaries.length === 0) return [createTab('Tab 1')];
-  return summaries.map((summary) => ({ id: summary.id, name: summary.name, elements: [] }));
+  // Carry `folder` (spec/30) so the tab bar renders folders from the
+  // first paint; the lazy per-tab content fetch fills `elements` later
+  // without touching folder (it's link metadata, not body content).
+  return summaries.map((summary) => ({
+    id: summary.id,
+    name: summary.name,
+    elements: [],
+    folder: summary.folder,
+  }));
 }
 
 // What the canvas should show for the ACTIVE tab while its lazy per-tab
@@ -79,8 +89,11 @@ export function patchTab(ts: Tab[], id: string, patch: Partial<Tab>): Tab[] {
 //
 // `changedTabs` is identity-based: callers patch tabs immutably
 // (see `patchTab`), so an unchanged tab keeps its reference and is
-// skipped. `orderChanged` covers both tab add/remove count and a pure
-// reorder. `deletedIds` are tabs present at last save but gone now.
+// skipped. `orderChanged` covers tab add/remove count, a pure
+// reorder, AND a per-diagram folder change (spec/30) — folder rides
+// the same meta-save path as order, so a folder-only edit must flip
+// this even when positions are unchanged. `deletedIds` are tabs
+// present at last save but gone now.
 export type TabSaveDiff = {
   changedTabs: Tab[];
   deletedIds: string[];
@@ -98,7 +111,14 @@ export function computeTabSaveDiff(
   const prevTabById = new Map(prevTabs.map((t) => [t.id, t] as const));
   const changedTabs = currentTabs.filter((t) => prevTabById.get(t.id) !== t);
   const orderChanged =
-    currentTabs.length !== prevTabs.length || currentTabs.some((t, i) => prevTabs[i]?.id !== t.id);
+    currentTabs.length !== prevTabs.length ||
+    currentTabs.some(
+      (t, i) =>
+        prevTabs[i]?.id !== t.id ||
+        // Coalesce '' / whitespace to undefined so a loose tab never
+        // looks "changed" against another loose representation.
+        (prevTabs[i]?.folder?.trim() || undefined) !== (t.folder?.trim() || undefined),
+    );
   const nameChanged = currentName !== prevName;
   const deletedIds = prevTabs
     .filter((t) => !currentTabs.some((current) => current.id === t.id))

@@ -38,6 +38,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 27  | [Markdown import](27-markdown-import.md)                           | Import Markdown outlines (XMind etc.) into a themed tree diagram   |
 | 28  | [Fonts](28-fonts.md)                                               | Eight Google Fonts, pickable per element + as a per-tab default    |
 | 29  | [Multi-colour themes](29-multicolour-themes.md)                    | Rainbow/palette themes that tint each hierarchy branch a hue       |
+| 30  | [Tab folders](30-tab-folders.md)                                   | Group a diagram's tabs into one-level, collapsible named folders   |
 
 ## Workflow
 

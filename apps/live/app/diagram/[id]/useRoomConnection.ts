@@ -161,7 +161,11 @@ export function useRoomConnection(opts: {
             const existing = prev.findIndex((t) => t.id === op.tabId);
             if (existing === -1) return [...prev, op.tab];
             const next = [...prev];
-            next[existing] = op.tab;
+            // `folder` is per-diagram link metadata owned by the
+            // diagram-meta op (spec/30), not by content. Keep the
+            // local membership so a content edit can't clobber a
+            // concurrent folder change.
+            next[existing] = { ...op.tab, folder: next[existing]!.folder };
             return next;
           });
         } else if (op.kind === 'diagram-meta') {
@@ -172,14 +176,25 @@ export function useRoomConnection(opts: {
           setDiagramName(op.name);
           applyRemoteTabs((prev) => {
             const localById = new Map(prev.map((t) => [t.id, t] as const));
-            return op.tabs.map(
-              (summary) =>
-                localById.get(summary.id) ?? {
-                  id: summary.id,
-                  name: summary.name,
-                  elements: [],
-                },
-            );
+            return op.tabs.map((summary) => {
+              const local = localById.get(summary.id);
+              // diagram-meta owns folder membership (spec/30). Apply
+              // the incoming folder, but only mint a new object when it
+              // actually differs so unchanged tabs keep their identity
+              // (the autosave content diff keys off identity).
+              if (local) {
+                const folder = summary.folder;
+                return (local.folder ?? undefined) === (folder ?? undefined)
+                  ? local
+                  : { ...local, folder };
+              }
+              return {
+                id: summary.id,
+                name: summary.name,
+                elements: [],
+                folder: summary.folder,
+              };
+            });
           });
         } else if (op.kind === 'select') {
           setRemoteSelections((prev) => {

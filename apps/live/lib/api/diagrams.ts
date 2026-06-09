@@ -10,7 +10,7 @@ import {
   expectOk,
   expectOkOrNull,
   expectOkVoid,
-  stripTemplateChosen,
+  stripUiTabFields,
   type DiagramResponse,
   type ListResponse,
 } from './core';
@@ -29,18 +29,25 @@ async function _apiLoadDiagram(ownerId: string, id: string): Promise<Diagram | n
 }
 export const apiLoadDiagram = dedupeInFlight(_apiLoadDiagram, (ownerId, id) => `${ownerId}|${id}`);
 
-// Persist diagram-level metadata: name (rename) and tab order. Used
-// for tab reorders + rename ops — anything that doesn't touch
-// element content. Element changes go through apiSaveTab.
+// Persist diagram-level metadata: name (rename), tab order, and each
+// tab's per-diagram folder (spec/30). Used for tab reorders + rename
+// + folder ops — anything that doesn't touch element content. Element
+// changes go through apiSaveTab. Callers pass `tabs` (id + order +
+// folder); `tabIds` stays accepted as the legacy folder-less shape.
 export async function apiSaveDiagramMeta(
   ownerId: string,
-  d: { id: string; name?: string; tabIds?: string[] },
+  d: {
+    id: string;
+    name?: string;
+    tabs?: { id: string; folder?: string }[];
+    tabIds?: string[];
+  },
   shareCode: string | null = null,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/diagrams/${d.id}`, {
     method: 'PUT',
     headers: await apiHeaders(ownerId, { share: shareCode, body: true }),
-    body: JSON.stringify({ name: d.name, tabIds: d.tabIds }),
+    body: JSON.stringify({ name: d.name, tabs: d.tabs, tabIds: d.tabIds }),
   });
   await expectOkVoid(res, 'save diagram meta');
 }
@@ -59,7 +66,7 @@ export async function apiCreateDiagram(
     body: JSON.stringify({
       id: d.id,
       name: d.name,
-      tabs: (d.tabs ?? []).map(stripTemplateChosen),
+      tabs: (d.tabs ?? []).map(stripUiTabFields),
     }),
   });
   const { diagram } = await expectOk<DiagramResponse>(res, 'create diagram');

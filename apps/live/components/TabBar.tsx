@@ -1,6 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Portal } from './Portal';
-import type { Tab } from '@livediagram/diagram';
+import {
+  folderNamesInDiagram,
+  groupTabsIntoRuns,
+  tabFolderName,
+  type Tab,
+} from '@livediagram/diagram';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
 import { useUiMode } from '@/hooks/useUiMode';
 import type { Participant } from '@/lib/identity';
@@ -8,6 +13,7 @@ import { getTheme } from '@/lib/themes';
 import { PencilIcon, TrashIcon } from './explorer-icons';
 import { FileExportIcon, FileImportIcon } from './palette-icons';
 import { MenuItem } from './PortalMenu';
+import { TabFolderChip } from './TabFolderChip';
 import { TabPresenceStack } from './TabPresenceStack';
 import { Tooltip } from './Tooltip';
 
@@ -36,6 +42,15 @@ type TabBarProps = {
   onOpenSearch?: () => void;
   tabs: Tab[];
   activeId: string;
+  // The current diagram id — used to key per-folder collapse state in
+  // localStorage (spec/30) so two diagrams don't share a toggle.
+  diagramId: string;
+  // Folder membership actions (spec/30), menu-only. Move the active tab
+  // into a folder by name (new or existing), make it loose again, or
+  // rename a folder (rewrites every member).
+  onMoveTabToFolder: (tabId: string, folderName: string) => void;
+  onRemoveTabFromFolder: (tabId: string) => void;
+  onRenameFolder: (oldName: string, newName: string) => void;
   // True when the active tab has at least one element. Used to enable
   // / disable the "Clear content" menu item — disabled on empty tabs
   // so the option is still discoverable but doesn't no-op.
@@ -88,6 +103,10 @@ type TabBarProps = {
 export function TabBar({
   tabs,
   activeId,
+  diagramId,
+  onMoveTabToFolder,
+  onRemoveTabFromFolder,
+  onRenameFolder,
   activeTabHasContent,
   onSelect,
   onAdd,
@@ -114,6 +133,155 @@ export function TabBar({
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  // Distinct folder names in this diagram, for the "Organise in folder"
+  // menu's pick list (spec/30).
+  const folderNames = folderNamesInDiagram(tabs);
+
+  // One tab pill. Factored out of the map so loose tabs and folder
+  // members (rendered inside TabFolderChip) share the exact same pill —
+  // selection, presence, drag-reorder, and the ellipsis menu all behave
+  // identically whether or not the tab lives in a folder.
+  const renderTabPill = (tab: Tab): ReactNode => {
+    const isActive = tab.id === activeId;
+    const isEditing = editingId === tab.id;
+    const isDragOver = overId === tab.id && dragId && dragId !== tab.id;
+    return (
+      <div
+        key={tab.id}
+        draggable={!isEditing && !readOnly}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', tab.id);
+          e.dataTransfer.effectAllowed = 'move';
+          setDragId(tab.id);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (overId !== tab.id) setOverId(tab.id);
+        }}
+        onDragLeave={() => {
+          if (overId === tab.id) setOverId(null);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const src = e.dataTransfer.getData('text/plain');
+          if (src && src !== tab.id) onReorder(src, tab.id);
+          setDragId(null);
+          setOverId(null);
+        }}
+        onDragEnd={() => {
+          setDragId(null);
+          setOverId(null);
+        }}
+        style={{
+          color: tabAccent(tab),
+          ...(isActive ? { backgroundColor: `${tabAccent(tab)}1a` } : {}),
+        }}
+        className={`relative flex shrink-0 items-center gap-3 rounded-md px-2 transition ${
+          isActive ? '' : 'hover:bg-slate-100'
+        } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
+      >
+        {isEditing ? (
+          <TabNameEditor
+            initial={tab.name}
+            onCommit={(name) => {
+              onRename(tab.id, name.trim() || tab.name);
+              setEditingId(null);
+            }}
+            onCancel={() => setEditingId(null)}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSelect(tab.id)}
+            onDoubleClick={readOnly ? undefined : () => isActive && setEditingId(tab.id)}
+            onContextMenu={
+              readOnly
+                ? undefined
+                : (e) => {
+                    // Right-click on a tab opens the same menu the
+                    // active tab's ellipsis button does. If the
+                    // user clicked a non-active tab, switch to it
+                    // first so the menu's "active tab" actions
+                    // (Rename / Duplicate / Clear / Lock / Import /
+                    // Export / Move) operate on the tab they just
+                    // pointed at. Preventing the browser's default
+                    // context menu is the whole point of the
+                    // binding; without it the menu would open
+                    // briefly and then get shadowed.
+                    e.preventDefault();
+                    if (!isActive) onSelect(tab.id);
+                    setMenuFor(tab.id);
+                  }
+            }
+            className="flex items-center gap-1 rounded-md py-1.5 text-sm font-medium"
+          >
+            {tab.locked ? <TabLockIcon /> : null}
+            {tab.name}
+          </button>
+        )}
+        <TabPresenceStack
+          participants={participantsByTab.get(tab.id) ?? []}
+          selfId={selfId}
+          selfRole={selfRole}
+        />
+        {isActive && !isEditing && !readOnly ? (
+          <EllipsisMenuButton
+            open={menuFor === tab.id}
+            onToggle={() => setMenuFor(menuFor === tab.id ? null : tab.id)}
+            onClose={() => setMenuFor(null)}
+            canDelete={tabs.length > 1}
+            canClearContent={activeTabHasContent && !tab.locked}
+            locked={tab.locked === true}
+            otherDiagrams={otherDiagrams}
+            folderNames={folderNames}
+            currentFolder={tabFolderName(tab)}
+            onMoveToFolder={(name) => {
+              onMoveTabToFolder(tab.id, name);
+              setMenuFor(null);
+            }}
+            onRemoveFromFolder={() => {
+              onRemoveTabFromFolder(tab.id);
+              setMenuFor(null);
+            }}
+            onRename={() => {
+              setEditingId(tab.id);
+              setMenuFor(null);
+            }}
+            onDuplicate={() => {
+              onDuplicate(tab.id);
+              setMenuFor(null);
+            }}
+            onClearContent={() => {
+              onClearContent();
+              setMenuFor(null);
+            }}
+            onImport={() => {
+              onImportTab();
+              setMenuFor(null);
+            }}
+            onExport={() => {
+              onExportTab();
+              setMenuFor(null);
+            }}
+            onCopyTo={async (targetId) => {
+              await onCopyTabTo(targetId);
+              setMenuFor(null);
+            }}
+            onToggleLock={() => {
+              onToggleLockTab();
+              setMenuFor(null);
+            }}
+            onDelete={() => {
+              onDelete(tab.id);
+              setMenuFor(null);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <div
       data-editor-tabbar
@@ -127,136 +295,23 @@ export function TabBar({
         Tabs
       </span>
       <div className="scrollbar-slim flex flex-1 items-center gap-1 overflow-x-auto">
-        {tabs.map((tab) => {
-          const isActive = tab.id === activeId;
-          const isEditing = editingId === tab.id;
-          const isDragOver = overId === tab.id && dragId && dragId !== tab.id;
-          return (
-            <div
-              key={tab.id}
-              draggable={!isEditing && !readOnly}
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', tab.id);
-                e.dataTransfer.effectAllowed = 'move';
-                setDragId(tab.id);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                if (overId !== tab.id) setOverId(tab.id);
-              }}
-              onDragLeave={() => {
-                if (overId === tab.id) setOverId(null);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const src = e.dataTransfer.getData('text/plain');
-                if (src && src !== tab.id) onReorder(src, tab.id);
-                setDragId(null);
-                setOverId(null);
-              }}
-              onDragEnd={() => {
-                setDragId(null);
-                setOverId(null);
-              }}
-              style={{
-                color: tabAccent(tab),
-                ...(isActive ? { backgroundColor: `${tabAccent(tab)}1a` } : {}),
-              }}
-              className={`relative flex shrink-0 items-center gap-3 rounded-md px-2 transition ${
-                isActive ? '' : 'hover:bg-slate-100'
-              } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
-            >
-              {isEditing ? (
-                <TabNameEditor
-                  initial={tab.name}
-                  onCommit={(name) => {
-                    onRename(tab.id, name.trim() || tab.name);
-                    setEditingId(null);
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onSelect(tab.id)}
-                  onDoubleClick={readOnly ? undefined : () => isActive && setEditingId(tab.id)}
-                  onContextMenu={
-                    readOnly
-                      ? undefined
-                      : (e) => {
-                          // Right-click on a tab opens the same menu the
-                          // active tab's ellipsis button does. If the
-                          // user clicked a non-active tab, switch to it
-                          // first so the menu's "active tab" actions
-                          // (Rename / Duplicate / Clear / Lock / Import /
-                          // Export / Move) operate on the tab they just
-                          // pointed at. Preventing the browser's default
-                          // context menu is the whole point of the
-                          // binding; without it the menu would open
-                          // briefly and then get shadowed.
-                          e.preventDefault();
-                          if (!isActive) onSelect(tab.id);
-                          setMenuFor(tab.id);
-                        }
-                  }
-                  className="flex items-center gap-1 rounded-md py-1.5 text-sm font-medium"
-                >
-                  {tab.locked ? <TabLockIcon /> : null}
-                  {tab.name}
-                </button>
-              )}
-              <TabPresenceStack
-                participants={participantsByTab.get(tab.id) ?? []}
-                selfId={selfId}
-                selfRole={selfRole}
-              />
-              {isActive && !isEditing && !readOnly ? (
-                <EllipsisMenuButton
-                  open={menuFor === tab.id}
-                  onToggle={() => setMenuFor(menuFor === tab.id ? null : tab.id)}
-                  onClose={() => setMenuFor(null)}
-                  canDelete={tabs.length > 1}
-                  canClearContent={activeTabHasContent && !tab.locked}
-                  locked={tab.locked === true}
-                  otherDiagrams={otherDiagrams}
-                  onRename={() => {
-                    setEditingId(tab.id);
-                    setMenuFor(null);
-                  }}
-                  onDuplicate={() => {
-                    onDuplicate(tab.id);
-                    setMenuFor(null);
-                  }}
-                  onClearContent={() => {
-                    onClearContent();
-                    setMenuFor(null);
-                  }}
-                  onImport={() => {
-                    onImportTab();
-                    setMenuFor(null);
-                  }}
-                  onExport={() => {
-                    onExportTab();
-                    setMenuFor(null);
-                  }}
-                  onCopyTo={async (targetId) => {
-                    await onCopyTabTo(targetId);
-                    setMenuFor(null);
-                  }}
-                  onToggleLock={() => {
-                    onToggleLockTab();
-                    setMenuFor(null);
-                  }}
-                  onDelete={() => {
-                    onDelete(tab.id);
-                    setMenuFor(null);
-                  }}
-                />
-              ) : null}
-            </div>
-          );
-        })}
+        {groupTabsIntoRuns(tabs).map((run) =>
+          run.kind === 'loose' ? (
+            renderTabPill(run.tab)
+          ) : (
+            <TabFolderChip
+              key={`folder:${run.name}`}
+              name={run.name}
+              tabs={run.tabs}
+              activeId={activeId}
+              diagramId={diagramId}
+              readOnly={readOnly}
+              renderTab={renderTabPill}
+              onReorder={onReorder}
+              onRename={onRenameFolder}
+            />
+          ),
+        )}
         {readOnly ? null : (
           <button
             type="button"
@@ -496,6 +551,10 @@ function EllipsisMenuButton({
   canClearContent,
   locked,
   otherDiagrams,
+  folderNames,
+  currentFolder,
+  onMoveToFolder,
+  onRemoveFromFolder,
   onRename,
   onDuplicate,
   onClearContent,
@@ -512,6 +571,10 @@ function EllipsisMenuButton({
   canClearContent: boolean;
   locked: boolean;
   otherDiagrams: { id: string; name: string }[];
+  folderNames: string[];
+  currentFolder: string | null;
+  onMoveToFolder: (folderName: string) => void;
+  onRemoveFromFolder: () => void;
   onRename: () => void;
   onDuplicate: () => void;
   onClearContent: () => void;
@@ -551,6 +614,10 @@ function EllipsisMenuButton({
           onToggleLock={onToggleLock}
           locked={locked}
           otherDiagrams={otherDiagrams}
+          folderNames={folderNames}
+          currentFolder={currentFolder}
+          onMoveToFolder={onMoveToFolder}
+          onRemoveFromFolder={onRemoveFromFolder}
           onDelete={onDelete}
           canDelete={canDelete}
           canClearContent={canClearContent}
@@ -572,6 +639,10 @@ function PortalMenu({
   onToggleLock,
   locked,
   otherDiagrams,
+  folderNames,
+  currentFolder,
+  onMoveToFolder,
+  onRemoveFromFolder,
   onDelete,
   canClearContent,
   canDelete,
@@ -587,16 +658,22 @@ function PortalMenu({
   onToggleLock: () => void;
   locked: boolean;
   otherDiagrams: { id: string; name: string }[];
+  folderNames: string[];
+  currentFolder: string | null;
+  onMoveToFolder: (folderName: string) => void;
+  onRemoveFromFolder: () => void;
   onDelete: () => void;
   canDelete: boolean;
   canClearContent: boolean;
 }) {
-  // The menu has two views — "actions" lists the verbs (Rename,
-  // Duplicate, Clear…), and "copyTo" lists the user's other diagrams
-  // so the active tab can be cloned into one of them. Stays in the
-  // same portal so the existing positioning and outside-click handler
-  // both work unchanged.
-  const [view, setView] = useState<'actions' | 'copyTo'>('actions');
+  // The menu has three views — "actions" lists the verbs (Rename,
+  // Duplicate, Clear…), "copyTo" lists the user's other diagrams so the
+  // active tab can be cloned into one of them, and "folder" (spec/30)
+  // organises the tab into a one-level folder. All stay in the same
+  // portal so the existing positioning and outside-click handler both
+  // work unchanged.
+  const [view, setView] = useState<'actions' | 'copyTo' | 'folder'>('actions');
+  const [newFolder, setNewFolder] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [adjust, setAdjust] = useState({ x: 0, y: 0 });
@@ -651,7 +728,7 @@ function PortalMenu({
       <div
         ref={ref}
         role="menu"
-        className={`fixed z-50 flex ${view === 'copyTo' ? 'w-56' : 'w-44'} flex-col rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40`}
+        className={`fixed z-50 flex ${view === 'actions' ? 'w-44' : 'w-56'} flex-col rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40`}
         style={{
           // pos pins the menu's right edge to the ellipsis button's right edge,
           // then translate shifts it left and up. adjust nudges back on-screen
@@ -677,6 +754,14 @@ function PortalMenu({
               disabled={otherDiagrams.length === 0}
             />
             <MenuItem
+              icon={<FolderMenuIcon />}
+              label="Organise in folder…"
+              onClick={() => {
+                setNewFolder('');
+                setView('folder');
+              }}
+            />
+            <MenuItem
               icon={<ClearIcon />}
               label="Clear content"
               onClick={onClearContent}
@@ -697,7 +782,7 @@ function PortalMenu({
               disabled={!canDelete}
             />
           </>
-        ) : (
+        ) : view === 'copyTo' ? (
           <>
             <button
               type="button"
@@ -720,6 +805,69 @@ function PortalMenu({
                 />
               ))}
             </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setView('actions')}
+              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              <BackIcon />
+              Back
+            </button>
+            <p className="px-2 pb-1 text-[10px] text-slate-400 dark:text-slate-500">
+              Organise this tab into a folder
+            </p>
+            {/* New-folder inline input: Enter (or the + button) commits.
+                Typing an existing name just moves the tab into it
+                (same name = same folder, spec/30). */}
+            <form
+              className="flex items-center gap-1 px-2 pb-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const name = newFolder.trim();
+                if (name) onMoveToFolder(name);
+              }}
+            >
+              <input
+                value={newFolder}
+                onChange={(e) => setNewFolder(e.target.value)}
+                placeholder="New folder…"
+                aria-label="New folder name"
+                className="min-w-0 flex-1 rounded bg-slate-100 px-2 py-1 text-xs text-slate-800 outline-none ring-brand-300 focus:ring-1 dark:bg-slate-800 dark:text-slate-100"
+              />
+              <button
+                type="submit"
+                aria-label="Create folder"
+                disabled={!newFolder.trim()}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                +
+              </button>
+            </form>
+            {folderNames.length > 0 ? (
+              <div className="max-h-44 overflow-y-auto border-t border-slate-100 pt-1 dark:border-slate-800">
+                {folderNames.map((name) => (
+                  <MenuItem
+                    key={name}
+                    icon={<FolderMenuIcon />}
+                    label={name === currentFolder ? `${name} (current)` : name}
+                    onClick={() => onMoveToFolder(name)}
+                    disabled={name === currentFolder}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {currentFolder ? (
+              <div className="border-t border-slate-100 pt-1 dark:border-slate-800">
+                <MenuItem
+                  icon={<FolderRemoveIcon />}
+                  label="Remove from folder"
+                  onClick={onRemoveFromFolder}
+                />
+              </div>
+            ) : null}
           </>
         )}
       </div>
@@ -760,6 +908,43 @@ function TabLockIcon() {
     >
       <rect x="3.5" y="7.5" width="9" height="6" rx="1.25" />
       <path d="M5.5 7.5V5a2.5 2.5 0 0 1 5 0v2.5" />
+    </svg>
+  );
+}
+
+function FolderMenuIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4.5h4l1.25 1.5H14v6.5H2z" />
+    </svg>
+  );
+}
+
+function FolderRemoveIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4.5h4l1.25 1.5H14v6.5H2z" />
+      <path d="M6 9.5h4" />
     </svg>
   );
 }

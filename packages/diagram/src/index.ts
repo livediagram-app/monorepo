@@ -748,6 +748,14 @@ export type Tab = {
   // buttons for as long as this tab is active. Toggled from the
   // tab ellipsis menu.
   locked?: boolean;
+  // Per-diagram folder name (specs/30). Tabs sharing a name render
+  // as a contiguous run under one collapsible chip in the tab bar.
+  // This is link metadata, not body content: it's stripped from the
+  // persisted tab body and carried on the diagram_tabs row alongside
+  // order_index, so a shared tab can be foldered in one diagram and
+  // loose in another. Unset / empty = loose. See tab-folders.ts for
+  // the normalize + grouping helpers.
+  folder?: string;
 };
 
 export type Diagram = {
@@ -820,6 +828,12 @@ export * from './table';
 export * from './geometry';
 
 export * from './groups';
+
+// Tab-folder grouping + order normalization (specs/30). One home
+// shared by the tab-bar renderer, the client save path, and the
+// server route so the contiguous-run invariant has a single
+// implementation.
+export * from './tab-folders';
 
 // Pencil-tool shape recognition (spec/09 Pencil (freehand)
 // subsection's recognise mode). Re-exported so callers import
