@@ -147,7 +147,7 @@ What the product runs on. Items marked ✗ haven't shipped yet — see "What's b
 
 See [specs/10-deployment.md](specs/10-deployment.md).
 
-All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static Assets for `marketing`, `live`, and `telemetry`). CI runs lint / format / typecheck / test / build on every PR and push. On `main`, a successful CI triggers the deploy workflow which builds, then deploys `marketing` + `live` + `telemetry` + `api` in parallel, then `router` last (its service bindings depend on the other four existing).
+All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static Assets for `marketing`, `live`, and `telemetry`). CI runs lint / format / typecheck / test / build on every PR and push. The deploy workflow is **manual-only** (`workflow_dispatch`, intentionally not chained to CI): trigger it from the Actions tab or `gh workflow run Deploy --ref main` once CI on `main` is green and you've decided to ship. It builds, then deploys `marketing` + `live` + `telemetry` + `api` in parallel, then `router` last (its service bindings depend on the other four existing).
 
 Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-telemetry`, `livediagram-api`, `livediagram-router`, matching the service-binding targets in `apps/router/wrangler.toml`. Deploy order: marketing + live + telemetry + api in parallel, then router last (its service bindings depend on the other four existing).
 
