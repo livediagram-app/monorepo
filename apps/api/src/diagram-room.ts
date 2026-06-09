@@ -116,12 +116,21 @@ export class DiagramRoom implements DurableObject {
       if (msg.kind === 'op') {
         const sender = this.sessions.get(ws);
         if (!sender) return;
-        // Only edit-role sessions may broadcast ops. The role is the
-        // server-verified one (X-Verified-Role, re-stamped in hello),
-        // not anything the client claims — so a view-only visitor (or a
-        // session the worker admitted with no role) can read live ops
-        // but can't inject edits into peers' canvases.
-        if (sender.role !== 'edit') return;
+        // Presence ops (cursor / select / laser / tab-focus) are ephemeral
+        // and mutate nothing, so they relay from ANY connected session —
+        // that's how a view-only visitor still shows their cursor, current
+        // selection, and which tab they're on to everyone else. Mutation
+        // ops (tab content, diagram-meta, change-log) stay edit-role-only:
+        // a viewer must not be able to inject edits into peers' canvases.
+        // The role is the server-verified one (X-Verified-Role, re-stamped
+        // in hello), not anything the client claims.
+        const opKind = (msg.op as { kind?: unknown } | null | undefined)?.kind;
+        const isPresenceOp =
+          opKind === 'cursor' ||
+          opKind === 'select' ||
+          opKind === 'laser' ||
+          opKind === 'tab-focus';
+        if (sender.role !== 'edit' && !isPresenceOp) return;
         // Per-session op-rate cap (sliding 1s window) — drop over-cap ops.
         const now = Date.now();
         const rate = this.opRates.get(ws);

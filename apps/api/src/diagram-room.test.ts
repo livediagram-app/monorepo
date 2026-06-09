@@ -303,4 +303,36 @@ describe('DiagramRoom op-role enforcement', () => {
 
     expect(opsReceived(editor.ws)).toHaveLength(0);
   });
+
+  // Presence ops are ephemeral (cursor / selection / tab-focus / laser) and
+  // must relay from a view-role session too, otherwise a viewer is invisible
+  // to peers — no cursor, no selection highlight, no "which tab they're on".
+  for (const kind of ['cursor', 'select', 'tab-focus', 'laser'] as const) {
+    it(`relays a '${kind}' presence op from a view-role session`, () => {
+      const room = newRoom();
+      const editor = connect(room, 'editor', 'edit');
+      const viewer = connect(room, 'viewer', 'view');
+      editor.ws.sent.length = 0;
+
+      viewer.ws.listeners['message']![0]!({
+        data: JSON.stringify({ kind: 'op', op: { kind, tabId: 't', x: 1, y: 2 } }),
+      });
+
+      expect(opsReceived(editor.ws)).toHaveLength(1);
+    });
+  }
+
+  it('still drops a mutation op from a view-role session', () => {
+    const room = newRoom();
+    const editor = connect(room, 'editor', 'edit');
+    const viewer = connect(room, 'viewer', 'view');
+    editor.ws.sent.length = 0;
+
+    // A view-only visitor must not inject canvas edits into peers.
+    viewer.ws.listeners['message']![0]!({
+      data: JSON.stringify({ kind: 'op', op: { kind: 'tab', tabId: 't', tab: {} } }),
+    });
+
+    expect(opsReceived(editor.ws)).toHaveLength(0);
+  });
 });
