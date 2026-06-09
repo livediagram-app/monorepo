@@ -9,16 +9,8 @@ import { SignInPrompt } from './SignInPrompt';
 import { ConfirmPopover } from './ConfirmPopover';
 import { Tooltip } from './Tooltip';
 import { ExpandIcon, FolderIcon, PlusIcon, UnsortedIcon } from './explorer-icons';
-import {
-  AccordionHeader,
-  DiagramRow,
-  FolderNode,
-  SharedRow,
-  UnsortedNode,
-  type DiagramListItem,
-  type FolderItem,
-  type SharedItem,
-} from './explorer-views';
+import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
+import { AccordionHeader, DiagramRow, FolderNode, SharedRow, UnsortedNode } from './explorer-views';
 
 type ExplorerProps = {
   position: { x: number; y: number } | null;
@@ -28,11 +20,11 @@ type ExplorerProps = {
   diagrams: DiagramListItem[];
   // Every folder for the owner. Empty array = no user folders, but
   // the synthetic Unsorted bucket still renders. See spec/15.
-  folders: FolderItem[];
+  folders: Folder[];
   // Diagrams shared with the current owner (read-only or edit
   // visitor entries). Empty array hides the section entirely so
   // pure-private users don't see an empty accordion.
-  shared?: SharedItem[];
+  shared?: SharedWithItem[];
   // Dismiss a single Shared row — drops the shared_with reference
   // server-side so the row no longer surfaces. Optional so consumers
   // that haven't wired the api endpoint can omit it.
@@ -70,7 +62,7 @@ type ExplorerProps = {
   ) => void;
   onDuplicateDiagram?: (id: string) => void;
   // Folder mutations. Optional so read-only surfaces can omit them.
-  onCreateFolder?: (input: { name: string; parentId: string | null }) => Promise<FolderItem | void>;
+  onCreateFolder?: (input: { name: string; parentId: string | null }) => Promise<Folder | void>;
   onRenameFolder?: (id: string, name: string) => void;
   onDeleteFolder?: (id: string) => void;
   onMoveDiagramToFolder?: (diagramId: string, folderId: string | null) => void;
@@ -273,7 +265,7 @@ export function Explorer({
   // Folder tree: index folders by parentId so the recursive renderer
   // can ask for children by id without rescanning the full list.
   const foldersByParent = useMemo(() => {
-    const map = new Map<string | null, FolderItem[]>();
+    const map = new Map<string | null, Folder[]>();
     for (const f of folders) {
       const bucket = map.get(f.parentId) ?? [];
       bucket.push(f);

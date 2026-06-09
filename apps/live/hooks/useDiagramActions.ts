@@ -12,18 +12,15 @@
 // waiting on a refetch that used to race the mutation.
 
 import type { Dispatch, SetStateAction } from 'react';
-import { apiCopyDiagram, apiDeleteDiagram, apiSetDiagramFolder } from '@/lib/api-client';
+import {
+  apiCopyDiagram,
+  apiDeleteDiagram,
+  apiSetDiagramFolder,
+  type DiagramListItem,
+} from '@/lib/api-client';
 import { duplicateDiagram as duplicate } from '@/lib/duplicate-diagram';
 import { track } from '@/lib/telemetry';
 import type { useConfirm } from '@/hooks/useConfirm';
-
-type DiagramListItem = {
-  id: string;
-  name: string;
-  folderId: string | null;
-  savedAt: number;
-  shareCode: string | null;
-};
 
 type DiagramActionsDeps = {
   diagramId: string | null;

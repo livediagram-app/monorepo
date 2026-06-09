@@ -1,15 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  isBoxed,
-  setCellStyle,
-  type BoxedElement,
-  type Element,
-  type ElementLink,
-  type Tab,
-} from '@livediagram/diagram';
-import { type EditorContextMenuState } from '@/components/EditorContextMenu';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { isBoxed, type BoxedElement, type Element, type Tab } from '@livediagram/diagram';
 // Lazy-load EditorContextMenu: the right-click menu only renders
 // while `contextMenu` is non-null, so the menu's render tree + its
 // icon set never need to ship in the editor's initial chunk. Same
@@ -76,21 +68,19 @@ import type { SaveStatus } from '@/components/EditorHeader';
 // Lazy-load SettingsDialog: opens only when the user clicks the
 // footer gear (spec/20). Same lazy pattern as the other modals.
 // AiPanel content is rendered inside Canvas via MovablePanel (spec/25).
+import { useCanvasTool } from '@/hooks/useCanvasTool';
+import { useCellLinkPicker } from '@/hooks/useCellLinkPicker';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { useClipboard } from '@/hooks/useClipboard';
-import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { useDiagramActions } from '@/hooks/useDiagramActions';
+import { useEditorContextMenu } from '@/hooks/useEditorContextMenu';
+import { useEditorPreferences } from '@/hooks/useEditorPreferences';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import { useNudgeSelection } from '@/hooks/useNudgeSelection';
 import { useFolders } from '@/hooks/useFolders';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
-import {
-  readUserPreferences,
-  fetchUserPreferences,
-  writeUserPreferences,
-  type UserPreferences,
-} from '@/lib/user-preferences';
+import { writeUserPreferences } from '@/lib/user-preferences';
 import { track, titleCaseType } from '@/lib/telemetry';
 import { useActivityLogDebounce } from '@/hooks/useActivityLogDebounce';
 import { useActivityLogEmitter } from '@/hooks/useActivityLogEmitter';
@@ -113,12 +103,6 @@ import { useEditorViewport } from '@/hooks/useEditorViewport';
 import { useCanvasPinchZoom } from '@/hooks/useCanvasPinchZoom';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { type Participant } from '@/lib/identity';
-import {
-  buildLaserTrailRows,
-  buildParticipantsByTab,
-  buildRemoteCursorRows,
-  buildRemoteSelectionsByElement,
-} from '@/lib/presence-rows';
 import { markNameConfirmed } from '@/lib/local-identity';
 import {
   apiDismissSharedWith,
@@ -127,6 +111,7 @@ import {
   apiSaveSelf,
   connectRoom,
   type ChangeLogEntry,
+  type DiagramListItem,
   type ShareLink,
   type ShareRole,
   type SharedWithItem,
@@ -142,6 +127,7 @@ import { useIdentityBootstrap } from './useIdentityBootstrap';
 import { useEditorHistory } from './useEditorHistory';
 import { useTemplateFlow } from './useTemplateFlow';
 import { usePanelLayout } from './usePanelLayout';
+import { usePresenceRows } from './usePresenceRows';
 import { usePresenceState } from './usePresenceState';
 import { useEditorDialogs } from './useEditorDialogs';
 import { useElementHelpers } from './useElementHelpers';
@@ -210,20 +196,10 @@ export function useEditorState() {
     canvas: boolean;
     cleanup: boolean;
   }>({ text: false, theme: false, canvas: false, cleanup: false });
-  // Canvas tool — Pan (default, drag-on-empty scrolls) vs Select
-  // (drag-on-empty marquee-selects). Holding Space always pans
-  // regardless. Lives in page so other components (e.g. status bar
-  // later) can read it without prop-drilling through Canvas.
-  const [canvasTool, setCanvasTool] = useState<'pan' | 'select' | 'laser'>('pan');
-  // User-facing tool picker (palette buttons + keyboard). Wraps the raw
-  // setter to emit telemetry when the user enters laser (presenter) mode
-  // — a distinct feature. Pan / select switches stay untracked (high
-  // frequency), and internal auto-switches (e.g. laser→pan when a draw
-  // starts) keep the raw setter so they don't count as "used laser".
-  const selectCanvasTool = (tool: 'pan' | 'select' | 'laser') => {
-    if (tool === 'laser' && canvasTool !== 'laser') track('Canvas', 'Used', 'Laser');
-    setCanvasTool(tool);
-  };
+  // Canvas tool (Pan / Select / Laser). See useCanvasTool: the raw
+  // setter serves internal auto-switches, the tracked selectCanvasTool
+  // serves the user-facing pickers.
+  const { canvasTool, setCanvasTool, selectCanvasTool } = useCanvasTool();
   // Picker mode lives here (rather than nearer `chooseTemplate`) so the
   // derived `identityOnlyScreenOpen` below — used to gate page-level
   // chrome for the visitor join flow — can read it. See
@@ -313,40 +289,23 @@ export function useEditorState() {
   // valid password yet. Declared early so the preferences and capabilities
   // effects below can gate on it.
   const [sharePasswordGate, setSharePasswordGate] = useState<{ invalid: boolean } | null>(null);
-  // Per-user editor preferences (spec/20). One localStorage key,
-  // applies to every diagram the user opens from this device. Loaded
-  // on mount (not gated on diagramId, since preferences aren't
-  // diagram-scoped anymore) and mutated through the SettingsDialog.
-  const [userPreferences, setUserPreferences] = useState<UserPreferences>({});
-  useEffect(() => {
-    if (userPreferences.aiAssistanceEnabled) panelLayout.setAiPanelVisible(true);
-  }, [userPreferences.aiAssistanceEnabled]);
-  // Apply the "Reduce motion" preference (spec/20) to <html>. The OS
-  // prefers-reduced-motion media query is honoured by globals.css
-  // regardless; this lets the user force it on independent of the OS.
-  useReduceMotion(userPreferences.reduceMotion === true);
-  // Mirror the auto-rebind flag into its own ref so the drag move
-  // handler can read it without re-attaching listeners. Defaults
-  // to true (auto-rebind on) so a fresh session keeps today's UX.
-  const autoRebindArrowsRef = useRef<boolean>(userPreferences.autoRebindArrows !== false);
-  autoRebindArrowsRef.current = userPreferences.autoRebindArrows !== false;
-  // Same mirror for the alignment-guide preference so the drag move
-  // handler can gate the guide computation without re-attaching its
-  // listeners. Defaults to true (guides on) so a fresh session shows
-  // them; flipping the Settings toggle takes effect on the next move.
-  const alignmentGuidesRef = useRef<boolean>(userPreferences.alignmentGuides !== false);
-  alignmentGuidesRef.current = userPreferences.alignmentGuides !== false;
+  // Per-user editor preferences (spec/20): the state, the ref mirrors
+  // the drag hook reads, and the localStorage read + D1 sync effects.
+  // See useEditorPreferences.
+  const { userPreferences, setUserPreferences, autoRebindArrowsRef, alignmentGuidesRef } =
+    useEditorPreferences({
+      ownerId: selfParticipant.id,
+      passwordGated: sharePasswordGate !== null,
+      setAiPanelVisible: panelLayout.setAiPanelVisible,
+    });
 
   // Per-element note popover (state + open/close/setNote handlers)
   // lives in useEditorNotes. Invoked further down, after `commit`
   // exists.
 
-  // Right-click context menu state. Tracks the cursor position + the
-  // menu's mode (element-scoped vs tab-scoped) so the page can render
-  // a single ContextMenu portal that swaps its items based on what
-  // was clicked. Null = menu closed.
-  const [contextMenu, setContextMenu] = useState<EditorContextMenuState | null>(null);
-  const closeContextMenu = () => setContextMenu(null);
+  // Right-click context menu state (cursor position + element-scoped
+  // vs tab-scoped mode). See useEditorContextMenu.
+  const { contextMenu, setContextMenu, closeContextMenu } = useEditorContextMenu();
 
   // Element link picker (open + anchor state) and the link read/write
   // handlers live in useElementLinks. Invoked further down, after
@@ -356,15 +315,7 @@ export function useEditorState() {
   // list. Refreshed on hydration and after we save the current diagram
   // (so the Explorer's "Your diagrams" section reflects renames + first
   // saves in real time).
-  const [diagramList, setDiagramList] = useState<
-    {
-      id: string;
-      name: string;
-      folderId: string | null;
-      savedAt: number;
-      shareCode: string | null;
-    }[]
-  >([]);
+  const [diagramList, setDiagramList] = useState<DiagramListItem[]>([]);
   // Folders for the owner — state + the mutation triple
   // (create / rename / delete) come from the shared useFolders
   // hook so editor-page, /new, and /explorer all share the same
@@ -578,42 +529,6 @@ export function useEditorState() {
   // header — auto-clears after 6 seconds so the user isn't stuck
   // looking at it, and gets cleared on the next import attempt.
   const [importError, setImportError] = useState<string | null>(null);
-
-  // Load the per-user preferences (spec/20) once on mount. The
-  // preferences are device-scoped, not diagram-scoped, so this runs
-  // independently of which diagram is open. Missing or unparseable
-  // entries collapse to `{}`; the per-flag default then depends on
-  // the consumer's comparison: `autoRebindArrows` and
-  // `telemetryEnabled` read via `!== false` so undefined = on (the
-  // historical "everything on" default), while `drawToAdd` and
-  // `recogniseShapes` read via `=== true` so undefined = off
-  // (matches spec/20's "drop-at-centre" + "raw-sketch" defaults).
-  useEffect(() => {
-    setUserPreferences(readUserPreferences());
-  }, []);
-
-  // Server-side preferences sync (spec/20). Once the owner id
-  // resolves (Clerk userId for signed-in users, the per-browser
-  // participant id for guests), fetch the row from D1 and merge it
-  // over the localStorage cache. Server wins for any key present on
-  // both sides. The cache-only read above still fired first so the
-  // UI never blocks on this network step; this just reconciles
-  // toggles the user made on another device.
-  useEffect(() => {
-    const ownerId = selfParticipant?.id;
-    if (!ownerId || ownerId === 'self') return;
-    // Don't sync until the share-link password has been accepted — no
-    // point fetching preferences for a visitor who hasn't got in yet.
-    if (sharePasswordGate !== null) return;
-    let cancelled = false;
-    void fetchUserPreferences(ownerId).then((merged) => {
-      if (cancelled || merged === null) return;
-      setUserPreferences(merged);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selfParticipant?.id, sharePasswordGate]);
 
   useEffect(() => {
     if (!importError) return;
@@ -912,51 +827,29 @@ export function useEditorState() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, activeId, activeTab.elements.length]);
 
-  // Per-element remote-selection map. Looks up each participant id
-  // against the current `livePresence` so we can render their colour +
-  // initials without bringing the participant blob along in every
-  // `select` op. Self is filtered out — we don't need a "you're here"
-  // badge on top of our own selection ring.
-  const livePresenceById = useMemo(
-    () => new Map(livePresence.map((p) => [p.id, p] as const)),
-    [livePresence],
-  );
-  // Group participants by the tab they're currently focused on, so
-  // each TabBar entry can render the right avatar dots. Always
-  // includes the local participant on their active tab — that way
-  // the feature is visible even for solo / unshared sessions, and
-  // remote peers see their own dot pop onto the tab they switch to
-  // before any pointer movement. Remote entries come from the
-  // tab-focus RoomOp; only those whose sender is still present
-  // (livePresence has them) survive.
-  //
-  // Status is per-viewer: a participant on the viewer's active tab
-  // is 'online' (green ring), a participant on any other tab is
-  // 'away' (orange ring). Cheap signal that someone's not where you
-  // are right now without leaving the TabBar.
-  const participantsByTab = buildParticipantsByTab({
+  // Derived realtime presence rows (avatars per tab, remote cursors,
+  // laser trails, per-element selections) and the concurrent-selection
+  // lock (spec/07). Pure derivation over the usePresenceState values +
+  // the local laser trail. See usePresenceRows.
+  const {
+    participantsByTab,
+    remoteCursorRows,
+    laserTrailRows,
+    remoteSelectionsByElement,
+    lockedByOther,
+  } = usePresenceRows({
     diagramShareable,
     activeId,
     selfParticipant,
     tabs,
-    remoteTabFocus,
     livePresence,
-    livePresenceById,
-    lastSeen: lastSeenRef.current,
-    now: Date.now(),
+    lastSeenRef,
+    remoteTabFocus,
+    remoteCursors,
+    remoteSelections,
+    remoteLaserTrails,
+    localLaserTrail,
   });
-  // Cursor rows joined with presence so we get a fresh colour + name on
-  // every render and don't have to denormalise them into each `cursor`
-  // op payload. Filter to the active tab so cursors of teammates
-  // looking at a different tab don't bleed onto this one.
-  const remoteCursorRows = useMemo(
-    () => buildRemoteCursorRows(remoteCursors, livePresenceById, selfParticipant.id, activeId),
-    [remoteCursors, livePresenceById, selfParticipant.id, activeId],
-  );
-  // Laser trails for the LaserOverlay — local first, then any peers
-  // whose latest sample is on the active tab and whose participant
-  // entry is still live. The overlay handles fade + cleanup; we just
-  // assemble per-tab visibility here.
   // Comment-bearing element rows for the floating Comments panel.
   // Only the boxed elements carry threads (arrows can't), so the
   // filter walks `activeTab.elements` and routes the boxed ones
@@ -970,39 +863,6 @@ export function useEditorState() {
     return commentRowsFromElements(boxed);
   }, [activeTab.elements]);
 
-  const laserTrailRows = useMemo(
-    () =>
-      buildLaserTrailRows({
-        localLaserTrail,
-        remoteLaserTrails,
-        livePresenceById,
-        selfId: selfParticipant.id,
-        selfColor: selfParticipant.color,
-        activeId,
-      }),
-    [
-      localLaserTrail,
-      remoteLaserTrails,
-      livePresenceById,
-      selfParticipant.id,
-      selfParticipant.color,
-      activeId,
-    ],
-  );
-  const remoteSelectionsByElement = useMemo(
-    () => buildRemoteSelectionsByElement(remoteSelections, livePresenceById, selfParticipant.id),
-    [remoteSelections, livePresenceById, selfParticipant.id],
-  );
-  // Concurrent-selection lock (spec/07): an element another participant
-  // has selected is off-limits to the local user. buildRemoteSelections-
-  // ByElement already filters out our own selection, so a hit here always
-  // means someone ELSE holds it. The selection hooks consult this to block
-  // select / edit / marquee; the element view uses it for the cursor +
-  // "Locked to <name>" tooltip.
-  const lockedByOther = useCallback(
-    (id: string) => remoteSelectionsByElement.has(id),
-    [remoteSelectionsByElement],
-  );
   // True only while the first-run welcome modal is up. Drives the chrome
   // hide rule (palette / explorer / dock / tab bar all suppressed so the
   // user's focus is on the modal). The Browse-templates flow uses the
@@ -1523,30 +1383,12 @@ export function useEditorState() {
     track('Element', 'Added', titleCaseType('icon'));
   };
 
-  // Per-cell table links (spec/09). Which cell's link picker is open
-  // (null = closed); the shared LinkPickerDialog renders against it in
-  // EditorView and applyCellLink writes the chosen link into that cell's
-  // style via setCellStyle (history-committed; null clears it).
-  const [cellLinkPickerOpenFor, setCellLinkPickerOpenFor] = useState<{
-    tableId: string;
-    r: number;
-    c: number;
-  } | null>(null);
-  const openCellLinkPicker = (tableId: string, r: number, c: number) => {
-    if (editsBlocked) return;
-    setCellLinkPickerOpenFor({ tableId, r, c });
-  };
-  const applyCellLink = (link: ElementLink | null) => {
-    const target = cellLinkPickerOpenFor;
-    if (!target || editsBlocked) return;
-    commit((els) =>
-      els.map((e) =>
-        e.id === target.tableId && e.type === 'table'
-          ? setCellStyle(e, target.r, target.c, { link: link ?? undefined })
-          : e,
-      ),
-    );
-  };
+  // Per-cell table links (spec/09). Which cell's link picker is open +
+  // the history-committed write into that cell's style. See
+  // useCellLinkPicker; the shared LinkPickerDialog renders against it
+  // in EditorView.
+  const { cellLinkPickerOpenFor, setCellLinkPickerOpenFor, openCellLinkPicker, applyCellLink } =
+    useCellLinkPicker({ editsBlocked, commit });
 
   // Structural element operations (delete, marquee commit, group /
   // ungroup, and the duplicate family). They change the element set

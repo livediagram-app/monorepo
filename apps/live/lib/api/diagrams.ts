@@ -15,6 +15,16 @@ import {
   type ListResponse,
 } from './core';
 
+// The diagram-list row every list surface renders: the Explorer
+// panel, the /explorer page, /new, and the editor's diagram-list
+// state. A Pick of the wire type so the UI rows can't drift from
+// what apiListDiagrams actually returns; surfaces needing more
+// fields widen the Pick rather than re-declaring the shape.
+export type DiagramListItem = Pick<
+  DiagramSummary,
+  'id' | 'name' | 'folderId' | 'savedAt' | 'shareCode'
+>;
+
 // Deduped on `${ownerId}|${id}`: the editor mounts and React Strict
 // Mode in dev double-invokes its hydration effect, so this fires
 // twice on first paint. With dedup, the second call receives the

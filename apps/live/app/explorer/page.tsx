@@ -12,6 +12,7 @@ import {
   apiSaveDiagramMeta,
   apiSetDiagramFolder,
   apiUpdateFolder,
+  type DiagramListItem,
   type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
@@ -52,7 +53,6 @@ import {
   PaneHeader,
   SharedList,
   SkeletonRows,
-  type DiagramItem,
   type SelectedNode,
 } from './views';
 
@@ -86,7 +86,7 @@ export default function ExplorerPage() {
     if (!authLoaded) return null;
     return clerkUserId ?? ensureGuestSelfId();
   }, [authLoaded, clerkUserId]);
-  const [diagrams, setDiagrams] = useState<DiagramItem[]>([]);
+  const [diagrams, setDiagrams] = useState<DiagramListItem[]>([]);
   const {
     folders,
     createFolder: hookCreateFolder,
@@ -338,7 +338,7 @@ export default function ExplorerPage() {
 
   // ---- Right-pane content --------------------------------------
   const diagramsByFolder = useMemo(() => {
-    const m = new Map<string | null, DiagramItem[]>();
+    const m = new Map<string | null, DiagramListItem[]>();
     for (const d of diagrams) {
       const bucket = m.get(d.folderId) ?? [];
       bucket.push(d);
@@ -370,7 +370,7 @@ export default function ExplorerPage() {
   const paneContent = useMemo<{
     showUnsortedRow: boolean;
     folders: Folder[];
-    diagrams: DiagramItem[];
+    diagrams: DiagramListItem[];
   }>(() => {
     if (selected.kind === 'recent') {
       const sorted = diagrams.slice().sort((a, b) => b.savedAt - a.savedAt);

@@ -16,6 +16,11 @@
 // target, recursive tree). The two coexist by design.
 
 import { useEffect, useRef, useState } from 'react';
+// Row data shapes come straight from the api client (the same rows
+// apiListDiagrams / useFolders / apiListSharedWith return) so the
+// panel and the /explorer route can't drift apart on what a list
+// item carries.
+import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { InlineRenameInput } from './InlineRenameInput';
 import { MenuItem, PortalMenu } from './PortalMenu';
@@ -40,43 +45,6 @@ import {
 // than triggering a browser navigation to "the dragged URL".
 export const DIAGRAM_DRAG_MIME = 'application/x-livediagram-id';
 
-export type DiagramListItem = {
-  id: string;
-  name: string;
-  folderId: string | null;
-  savedAt: number;
-  shareCode: string | null;
-};
-
-export type FolderItem = {
-  id: string;
-  parentId: string | null;
-  name: string;
-};
-
-// "Shared with you" entry, a diagram the visitor previously opened
-// via a share link, surfaced by `/api/shared` so the Explorer can
-// list it alongside their owned diagrams without the visitor having
-// to bookmark the share URL. Visitor's resolved owner is the
-// implicit key; rows live in the api worker's `shared_with` table.
-export type SharedItem = {
-  id: string;
-  name: string;
-  savedAt: number;
-  role: 'edit' | 'view';
-  // Still-live share code for the visitor's role, needed so the
-  // row click can navigate to `/live/diagram/<id>?s=<code>`, which
-  // is the only path a non-owner can actually open the diagram on.
-  shareCode: string;
-  // Owner's display name + avatar colour for the "shared by"
-  // attribution. Null when the owner has no participant row (e.g.
-  // Clerk-authed owners who haven't opened the diagram with a
-  // chosen name yet). UI falls back to "Unknown owner" in that
-  // case so the row still reads.
-  ownerName: string | null;
-  ownerColor: string | null;
-};
-
 // Recursive folder node in the panel's tree. Renders its label +
 // chevron + menu, and when expanded reveals child folders (recursive)
 // + the diagrams in this folder (DiagramRow).
@@ -100,9 +68,9 @@ export function FolderNode({
   onMoveDiagramRequest,
   onMoveDiagramToFolder,
 }: {
-  folder: FolderItem;
+  folder: Folder;
   depth: number;
-  foldersByParent: Map<string | null, FolderItem[]>;
+  foldersByParent: Map<string | null, Folder[]>;
   diagramsByFolder: Map<string | null, DiagramListItem[]>;
   expanded: Record<string, boolean>;
   onToggleExpanded: (key: string) => void;
@@ -467,7 +435,7 @@ export function SharedRow({
   onOpen,
   onDismiss,
 }: {
-  item: SharedItem;
+  item: SharedWithItem;
   active: boolean;
   onOpen: () => void;
   onDismiss?: () => void;

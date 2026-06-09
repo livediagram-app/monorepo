@@ -16,6 +16,7 @@ import {
   apiSaveSelf,
   apiSetDiagramFolder,
   DIAGRAM_LIST_LOAD_SAFETY_MS,
+  type DiagramListItem,
   type SharedWithItem,
 } from '@/lib/api-client';
 import { useFolders } from '@/hooks/useFolders';
@@ -74,15 +75,7 @@ export default function NewDiagramPage() {
   // — the welcome flow shouldn't be a dead end. List + loading are
   // sourced from the same API the editor uses, keyed by the local
   // self id once it's available.
-  const [diagramList, setDiagramList] = useState<
-    {
-      id: string;
-      name: string;
-      folderId: string | null;
-      savedAt: number;
-      shareCode: string | null;
-    }[]
-  >([]);
+  const [diagramList, setDiagramList] = useState<DiagramListItem[]>([]);
   // Folder state + mutations via the shared useFolders hook. The
   // ownerId is `'pending'` until the post-mount effect resolves
   // self.id, so we gate the hook on a real id — passing `null`

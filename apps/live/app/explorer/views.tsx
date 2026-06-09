@@ -9,7 +9,7 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
-import type { Folder, SharedWithItem } from '@/lib/api-client';
+import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
 import { InlineRenameInput } from '@/components/InlineRenameInput';
 import { MenuItem, PortalMenu } from '@/components/PortalMenu';
@@ -25,17 +25,9 @@ import {
   PlusIcon,
 } from './icons';
 
-// Shared shapes between the page (which owns the data) and the
-// view primitives (which render it). Lifted here, not into a third
-// `types.ts`, because every consumer of these types also reaches
-// for one of the view components.
-export type DiagramItem = {
-  id: string;
-  name: string;
-  folderId: string | null;
-  savedAt: number;
-  shareCode: string | null;
-};
+// Diagram rows render the api client's DiagramListItem directly
+// (same rows the floating Explorer panel uses), so the two explorer
+// surfaces can't drift apart on what a list item carries.
 
 // What the sidebar tree highlights and what the right pane shows.
 // "Special" nodes (`recent`, `all`, `shared`) are virtual buckets
@@ -198,7 +190,7 @@ export function ListView({
   diagramsCount,
 }: {
   folders: Folder[];
-  diagrams: DiagramItem[];
+  diagrams: DiagramListItem[];
   // True on the "All diagrams" view: the synthetic Unsorted row
   // renders at the very top so the root has the same "folder row
   // per child" feel as any non-root folder. The row is only
@@ -412,7 +404,7 @@ export function DiagramRow({
   onDelete,
   onMove,
 }: {
-  diagram: DiagramItem;
+  diagram: DiagramListItem;
   renaming: boolean;
   onStartRename: () => void;
   onCommitRename: (name: string) => void;

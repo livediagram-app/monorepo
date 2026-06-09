@@ -6,17 +6,15 @@ import {
   type SetStateAction,
 } from 'react';
 import type { Tab } from '@livediagram/diagram';
-import { apiDeleteTab, apiSaveDiagramMeta, apiSaveTab, connectRoom } from '@/lib/api-client';
+import {
+  apiDeleteTab,
+  apiSaveDiagramMeta,
+  apiSaveTab,
+  connectRoom,
+  type DiagramListItem,
+} from '@/lib/api-client';
 import type { SaveStatus } from '@/components/EditorHeader';
 import { computeTabSaveDiff } from './editor-page-helpers';
-
-type DiagramListItem = {
-  id: string;
-  name: string;
-  folderId: string | null;
-  savedAt: number;
-  shareCode: string | null;
-};
 
 // Per-tab autosave (spec/13), lifted out of editor-page.tsx. Two effects:
 // a debounced (600ms) save and a beforeunload flush so a fast edit ->

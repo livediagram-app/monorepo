@@ -18,7 +18,7 @@ import type { ImageSummary } from '@livediagram/api-schema';
 import type { ArrowEnd, DragMode } from '@/lib/canvas';
 import type { PendingDraw } from '@/lib/draw-mode';
 import type { TemplateKind } from '@/lib/templates';
-import type { ChangeLogEntry } from '@/lib/api-client';
+import type { ChangeLogEntry, DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import type { CanvasTool } from './CommandPalette';
 
 export type CanvasProps = {
@@ -151,25 +151,11 @@ export type CanvasProps = {
   onResetPalette: () => void;
   onMoveExplorer: (x: number, y: number) => void;
   onResetExplorer: () => void;
-  diagramList: {
-    id: string;
-    name: string;
-    folderId: string | null;
-    savedAt: number;
-    shareCode: string | null;
-  }[];
-  folders: { id: string; parentId: string | null; name: string }[];
+  diagramList: DiagramListItem[];
+  folders: Folder[];
   // Shared-with-you list. Empty by default so legacy callers can
   // omit it.
-  sharedDiagrams?: {
-    id: string;
-    name: string;
-    savedAt: number;
-    role: 'edit' | 'view';
-    shareCode: string;
-    ownerName: string | null;
-    ownerColor: string | null;
-  }[];
+  sharedDiagrams?: SharedWithItem[];
   onDismissShared?: (diagramId: string) => void;
   // Navigate to the standalone full-page Explorer. Forwarded into
   // the floating Explorer panel's header "expand" button.
@@ -217,10 +203,7 @@ export type CanvasProps = {
   onRenameCurrent: (name: string) => void;
   onDeleteDiagram: (id: string) => void;
   onDuplicateDiagram: (id: string) => void;
-  onCreateFolder: (input: {
-    name: string;
-    parentId: string | null;
-  }) => Promise<{ id: string; parentId: string | null; name: string } | void>;
+  onCreateFolder: (input: { name: string; parentId: string | null }) => Promise<Folder | void>;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
   onMoveDiagramToFolder: (diagramId: string, folderId: string | null) => void;
