@@ -266,6 +266,11 @@ export function TemplatePicker({
                       key={t.id}
                       type="button"
                       onClick={() => setThemeId(t.id)}
+                      // Double-click commits with this theme — same
+                      // shortcut the template tiles offer (select + submit
+                      // in one gesture), using the currently-picked
+                      // template + entered name.
+                      onDoubleClick={() => onPick(templateKind, effectiveName, t.id)}
                       aria-pressed={active}
                       className={
                         active
