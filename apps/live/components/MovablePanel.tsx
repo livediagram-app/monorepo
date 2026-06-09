@@ -206,6 +206,17 @@ export function MovablePanel({
       // Canvas accordions on a laptop) run under the tab bar / behind the
       // zoom bar.
       const GAP = 12;
+      // A panel parked at a BOTTOM default corner (and not yet dragged)
+      // grows UPWARD, so its top edge moves with its own body content.
+      // Measuring the body cap from panelRect.top there would feed back
+      // through the ResizeObserver below (taller body -> higher top ->
+      // bigger cap -> ...), collapsing or jittering the panel. Its bottom
+      // edge is CSS-fixed and stable, so measure the space up from there.
+      const bottomAnchored = position === null && defaultCorner.startsWith('bottom');
+      if (bottomAnchored) {
+        setBodyMaxH(Math.max(panelRect.bottom - headerH - GAP * 2, 80));
+        return;
+      }
       const tabbar = document.querySelector('[data-editor-tabbar]');
       let bottomLimit = tabbar ? tabbar.getBoundingClientRect().top : window.innerHeight;
       const zoom = document.querySelector('[data-zoom-controls]');
@@ -233,7 +244,7 @@ export function MovablePanel({
       ro?.disconnect();
     };
     // Re-measure after drag (position changes) or dynamic stacking (stackBelowY changes).
-  }, [position, stackBelowY]);
+  }, [position, stackBelowY, defaultCorner]);
 
   // Publish the panel's bounding box upward whenever it changes
   // (the Palette uses this so the ContextPanel can stack below).
