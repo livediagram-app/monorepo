@@ -342,6 +342,45 @@ export function FoldersArt() {
   );
 }
 
+// Tab folders (spec/30): grouping a diagram's TABS along the tab bar,
+// distinct from FoldersArt above (filing whole diagrams in the explorer).
+export function TabFoldersArt() {
+  const members = [
+    { name: 'Auth', c: '#8b5cf6' },
+    { name: 'API', c: '#f59e0b' },
+  ];
+  return (
+    <Frame>
+      <div className="flex h-full items-center justify-center gap-1.5 px-3">
+        {/* A folder chip grouping two member tabs. */}
+        <span className="flex items-center gap-1 rounded border border-slate-200 bg-white px-1 py-0.5">
+          <span className="flex items-center gap-1 px-1 text-[7px] font-semibold text-slate-600">
+            <FolderIcon />
+            <span>Backend</span>
+            <span className="rounded-full bg-slate-200 px-1 text-[6px] font-semibold text-slate-500">
+              2
+            </span>
+          </span>
+          {members.map((t) => (
+            <span
+              key={t.name}
+              className="flex items-center gap-1 rounded bg-slate-50 px-1.5 py-1 text-[7px] font-medium text-slate-600"
+            >
+              <span className="h-2.5 w-1 rounded-full" style={{ backgroundColor: t.c }} />
+              {t.name}
+            </span>
+          ))}
+        </span>
+        {/* A loose tab outside the folder. */}
+        <span className="flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-1 text-[7px] font-medium text-slate-600">
+          <span className="h-2.5 w-1 rounded-full" style={{ backgroundColor: SKY }} />
+          Notes
+        </span>
+      </div>
+    </Frame>
+  );
+}
+
 function FolderIcon({ muted = false }: { muted?: boolean }) {
   return (
     <svg

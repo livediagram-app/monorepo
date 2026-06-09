@@ -40,6 +40,7 @@ import {
   ShareLinksArt,
   ShortcutsArt,
   TabCopyArt,
+  TabFoldersArt,
   TabLockArt,
   TabReorderArt,
   TablesArt,
@@ -292,6 +293,12 @@ export default function LandingPage() {
                 title: 'Reorder and tell them apart',
                 description:
                   'Drag tabs into any order. Each one is colour-coded by its theme, so the right canvas is easy to spot.',
+              },
+              {
+                art: <TabFoldersArt />,
+                title: 'Group tabs into folders',
+                description:
+                  'Big diagram, lots of tabs? Group related tabs into named folders along the tab bar and collapse the ones you are not using. Drag a tab in or out, and a folder opens on its own when you work in it.',
               },
             ]}
           />
