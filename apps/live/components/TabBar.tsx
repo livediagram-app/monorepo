@@ -173,6 +173,22 @@ export function TabBar({
           setDragId(null);
           setOverId(null);
         }}
+        onContextMenu={
+          readOnly
+            ? undefined
+            : (e) => {
+                // Right-click ANYWHERE on the tab pill (name, the gap, the
+                // presence avatars, the ellipsis) opens the tab menu —
+                // not just the name. Previously the handler lived on the
+                // name button alone, so a click on the ellipsis or the
+                // gap fell through to the browser's own menu. Switch to
+                // the clicked tab first (if it isn't active) so the menu's
+                // active-tab actions target what the user pointed at.
+                e.preventDefault();
+                if (!isActive) onSelect(tab.id);
+                setMenuFor(tab.id);
+              }
+        }
         style={{
           color: tabAccent(tab),
           ...(isActive ? { backgroundColor: `${tabAccent(tab)}1a` } : {}),
@@ -195,25 +211,6 @@ export function TabBar({
             type="button"
             onClick={() => onSelect(tab.id)}
             onDoubleClick={readOnly ? undefined : () => isActive && setEditingId(tab.id)}
-            onContextMenu={
-              readOnly
-                ? undefined
-                : (e) => {
-                    // Right-click on a tab opens the same menu the
-                    // active tab's ellipsis button does. If the
-                    // user clicked a non-active tab, switch to it
-                    // first so the menu's "active tab" actions
-                    // (Rename / Duplicate / Clear / Lock / Import /
-                    // Export / Move) operate on the tab they just
-                    // pointed at. Preventing the browser's default
-                    // context menu is the whole point of the
-                    // binding; without it the menu would open
-                    // briefly and then get shadowed.
-                    e.preventDefault();
-                    if (!isActive) onSelect(tab.id);
-                    setMenuFor(tab.id);
-                  }
-            }
             className="flex items-center gap-1 rounded-md py-1.5 text-sm font-medium"
           >
             {tab.locked ? <TabLockIcon /> : null}
