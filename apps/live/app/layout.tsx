@@ -77,6 +77,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             __html: `try{if(localStorage.getItem('livediagram:v2:ui-mode')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
           }}
         />
+        {/* Apply the persisted "Reduce motion" preference (spec/20) before
+            first paint, for the same reason as the dark-mode script above:
+            the class must be on <html> by the time elements mount, or their
+            one-shot pop-in / fly-up-in animations have already fired before
+            a React effect could add it. The OS prefers-reduced-motion query
+            in globals.css needs no JS; this only covers the user override. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var p=JSON.parse(localStorage.getItem('livediagram:user-preferences:v1')||'{}');if(p&&p.reduceMotion===true)document.documentElement.classList.add('reduce-motion')}catch(e){}`,
+          }}
+        />
         <ClerkProvider>
           <ToastProvider>
             <ConfirmProvider>{children}</ConfirmProvider>
