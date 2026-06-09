@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { DEFAULT_BACKGROUND_COLOR, DEFAULT_PATTERN_COLOR, isBoxed } from '@livediagram/diagram';
 import { track } from '@/lib/telemetry';
 import { getTheme, type ThemeId } from '@/lib/themes';
-import { apiAddComment } from '@/lib/api-client';
+import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/Canvas';
 import { EditorHeader } from '@/components/EditorHeader';
@@ -826,6 +826,21 @@ export function EditorView() {
                 onDeleteComment={(cid) => {
                   deleteComment(target.id, cid);
                   track('Comment', 'Deleted');
+                  // View-role visitors don't autosave the tab, so the
+                  // local delete alone would resurrect on refresh.
+                  // Persist via the dedicated DELETE endpoint (the
+                  // server re-checks authorId === caller, so a viewer
+                  // can only land their own deletes). Owners / editors
+                  // persist via the normal tab autosave.
+                  if (isReadOnly && diagramId) {
+                    void apiDeleteComment(
+                      selfParticipant.id,
+                      diagramId,
+                      activeTab.id,
+                      cid,
+                      sessionShareCode,
+                    ).catch(() => {});
+                  }
                 }}
                 onResolve={() => {
                   resolveThread(target.id);
@@ -837,6 +852,7 @@ export function EditorView() {
                 }}
                 onClose={closeComments}
                 readOnly={isReadOnly}
+                selfId={selfParticipant.id}
               />
             );
           })()

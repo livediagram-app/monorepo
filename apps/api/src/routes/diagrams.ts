@@ -6,7 +6,12 @@
 import type { Tab } from '@livediagram/diagram';
 import { parseChangeLogEntryBody } from '../change-log-body';
 import { timingSafeEqual } from '../auth/timing-safe';
-import { rewriteCommentAuthors } from '../comments';
+import {
+  findComment,
+  redactCommentAuthorIds,
+  removeComment,
+  rewriteCommentAuthors,
+} from '../comments';
 import {
   copyDiagram,
   createShareLink,
@@ -243,7 +248,17 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       const allowed = await gateRead(ctx, id, existing.ownerId);
       if (!allowed) return forbidden();
       const tab = await getTab(env, id, tabId);
-      return tab ? json({ tab }) : notFound();
+      if (!tab) return notFound();
+      // Blank other people's comment author ids before handing the tab
+      // to a non-owner: a visitor should only ever see their OWN author
+      // id (so they can delete-own), never another participant's owner
+      // id. The diagram owner sees everything (viewerId === ownerId is a
+      // no-op). Same anti-claim posture as redactOwner on the diagram.
+      const safe =
+        owner === existing.ownerId
+          ? tab
+          : { ...tab, elements: redactCommentAuthorIds(tab.elements, owner) };
+      return json({ tab: safe });
     }
 
     // Writes below: owner or edit-role share visitor only.
@@ -331,6 +346,10 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       createdAt: Date.now(),
       authorName,
       authorColor,
+      // Stamp the writer's stable id so they (and only they) can later
+      // delete this comment via the DELETE endpoint below. Server-set,
+      // never read from the client.
+      authorId: owner,
     };
     const updatedElements = tab.elements.map((el) => {
       if (el.id !== elementId || el.type === 'arrow') return el;
@@ -348,6 +367,43 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     });
     await upsertTab(env, id, { ...tab, elements: updatedElements }, tab.orderIndex);
     return json({ comment });
+  }
+
+  // DELETE /api/diagrams/<id>/tabs/<tabId>/comments/<commentId> —
+  // delete a SINGLE comment you authored. Read-role visitors are
+  // allowed (gateRead, like the POST above) so a view-only collaborator
+  // can remove their own comment without edit rights — but only their
+  // own: the comment's server-stamped authorId must equal the caller.
+  // Owners / edit-role visitors also use this for delete-own; deleting
+  // SOMEONE ELSE'S comment still goes through the edit-gated tab PUT.
+  if (
+    segments.length === 7 &&
+    segments[3] === 'tabs' &&
+    segments[5] === 'comments' &&
+    request.method === 'DELETE'
+  ) {
+    const id = segments[2]!;
+    const tabId = segments[4]!;
+    const commentId = segments[6]!;
+    const owner = requireOwner(ctx);
+    if (owner instanceof Response) return owner;
+    const existing = await getDiagram(env, id);
+    if (!existing) return notFound();
+    const allowed = await gateRead(ctx, id, existing.ownerId);
+    if (!allowed) return forbidden();
+    const tab = await getTab(env, id, tabId);
+    if (!tab) return notFound();
+    // Locate the comment + confirm authorship before mutating anything.
+    const found = findComment(tab.elements, commentId);
+    if (!found) return notFound();
+    // Delete-own only. The diagram owner may also delete their own
+    // comments here; removing other people's requires the edit-gated
+    // tab PUT. Mismatched author is forbidden (not 404) — the caller
+    // can see the comment exists, they just can't delete it.
+    if (found.authorId !== owner) return forbidden();
+    const updatedElements = removeComment(tab.elements, commentId);
+    await upsertTab(env, id, { ...tab, elements: updatedElements }, tab.orderIndex);
+    return noContent();
   }
 
   // /api/diagrams/<id>/tabs/<tabId>/link — owner only.

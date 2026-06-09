@@ -35,8 +35,11 @@ type EditorCommentsDeps = {
   tickTabs: (mapTabs: (ts: Tab[]) => Tab[]) => void;
   // The local participant. Their name + color stamp every comment
   // the user adds so other participants see "Tom: ..." rather
-  // than anonymous bubbles.
-  selfParticipant: { name: string; color: string };
+  // than anonymous bubbles. The id is stamped as the comment's
+  // authorId so the optimistic local copy already qualifies for the
+  // delete-own affordance (it equals the server `owner` the API
+  // stamps, for guests and Clerk users alike).
+  selfParticipant: { id: string; name: string; color: string };
 };
 
 type EditorCommentsApi = {
@@ -96,7 +99,11 @@ export function useEditorComments(deps: EditorCommentsDeps): EditorCommentsApi {
     updateThread(elementId, (thread) => ({
       comments: [
         ...(thread?.comments ?? []),
-        createComment(text, { name: deps.selfParticipant.name, color: deps.selfParticipant.color }),
+        createComment(text, {
+          id: deps.selfParticipant.id,
+          name: deps.selfParticipant.name,
+          color: deps.selfParticipant.color,
+        }),
       ],
       // Adding a comment unresolves a resolved thread, the new
       // message is itself a signal that the conversation isn't

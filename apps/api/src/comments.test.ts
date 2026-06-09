@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Comment, Element, ShapeElement } from '@livediagram/diagram';
-import { rewriteCommentAuthors } from './comments';
+import {
+  findComment,
+  redactCommentAuthorIds,
+  removeComment,
+  rewriteCommentAuthors,
+} from './comments';
 import type { ParticipantDTO } from './types';
 
 // Server-side comment-author rewrite is a security boundary: the
@@ -23,8 +28,14 @@ function mkShape(id: string, comments: Comment[]): ShapeElement {
   };
 }
 
-function mkComment(id: string, authorName: string, authorColor: string, text = 't'): Comment {
-  return { id, text, createdAt: 1, authorName, authorColor };
+function mkComment(
+  id: string,
+  authorName: string,
+  authorColor: string,
+  text = 't',
+  authorId?: string,
+): Comment {
+  return { id, text, createdAt: 1, authorName, authorColor, authorId };
 }
 
 const writer: ParticipantDTO = {
@@ -114,5 +125,69 @@ describe('rewriteCommentAuthors', () => {
     );
     // Original element untouched.
     expect(next.commentThread!.comments[0]!.authorName).toBe('lie');
+  });
+
+  it('stamps the writer id as authorId on a brand-new comment (ignoring any client-sent id)', () => {
+    const next = mkShape('a', [mkComment('c1', 'lie', '#ff0000', 't', 'CLIENT-FORGED-ID')]);
+    const [out] = rewriteCommentAuthors([next], [], writer) as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorId).toBe('writer-id');
+  });
+
+  it('preserves the stored authorId of an existing comment even if the body reassigns it', () => {
+    const prev = mkShape('a', [mkComment('c1', 'Orig', '#10b981', 't', 'owner-1')]);
+    const next = mkShape('a', [mkComment('c1', 'Orig', '#10b981', 't', 'attacker-id')]);
+    const [out] = rewriteCommentAuthors([next], [prev], writer) as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorId).toBe('owner-1');
+  });
+});
+
+describe('findComment', () => {
+  it('finds a comment by id across elements', () => {
+    const els = [mkShape('a', [mkComment('c1', 'A', '#fff')]), mkShape('b', [])];
+    expect(findComment(els, 'c1')?.id).toBe('c1');
+  });
+
+  it('returns null when the id is absent', () => {
+    expect(findComment([mkShape('a', [mkComment('c1', 'A', '#fff')])], 'missing')).toBeNull();
+  });
+});
+
+describe('removeComment', () => {
+  it('removes the matching comment from its thread', () => {
+    const els = [mkShape('a', [mkComment('c1', 'A', '#fff'), mkComment('c2', 'B', '#fff')])];
+    const [out] = removeComment(els, 'c1') as [ShapeElement];
+    expect(out.commentThread!.comments.map((c) => c.id)).toEqual(['c2']);
+  });
+
+  it('drops the whole thread once its last comment is removed', () => {
+    const els = [mkShape('a', [mkComment('c1', 'A', '#fff')])];
+    const [out] = removeComment(els, 'c1');
+    expect((out as { commentThread?: unknown }).commentThread).toBeUndefined();
+  });
+
+  it('returns elements unchanged when the comment id is absent', () => {
+    const els = [mkShape('a', [mkComment('c1', 'A', '#fff')])];
+    const result = removeComment(els, 'nope');
+    expect(result[0]).toBe(els[0]);
+  });
+});
+
+describe('redactCommentAuthorIds', () => {
+  it("blanks other people's author ids but keeps the viewer's own", () => {
+    const els = [
+      mkShape('a', [
+        mkComment('c1', 'Me', '#fff', 't', 'viewer-1'),
+        mkComment('c2', 'Owner', '#000', 't', 'owner-9'),
+      ]),
+    ];
+    const [out] = redactCommentAuthorIds(els, 'viewer-1') as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorId).toBe('viewer-1');
+    expect(out.commentThread!.comments[1]!.authorId).toBeUndefined();
+  });
+
+  it('blanks every author id when the viewer matches none', () => {
+    const els = [mkShape('a', [mkComment('c1', 'Owner', '#000', 't', 'owner-9')])];
+    const [out] = redactCommentAuthorIds(els, 'someone-else') as [ShapeElement];
+    expect(out.commentThread!.comments[0]!.authorId).toBeUndefined();
   });
 });

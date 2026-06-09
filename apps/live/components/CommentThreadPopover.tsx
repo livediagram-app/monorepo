@@ -21,14 +21,22 @@ type CommentThreadPopoverProps = {
   onClose: () => void;
   // True for a view-only ('view' share role) session. View-role
   // visitors can still READ the thread (so they can see what the
-  // host's collaborators have been discussing), but the composer
-  // hides, per-row delete buttons hide, and the resolve/unresolve
-  // toggle becomes a plain "Resolved" badge they can't flip. The
+  // host's collaborators have been discussing), and the composer
+  // stays open (they can chime in), but the resolve/unresolve toggle
+  // becomes a plain "Resolved" badge they can't flip, and per-row
+  // delete is limited to THEIR OWN comments (see selfId). The
   // selection-popover gate in Canvas means a view-role visitor
   // can't open the popover from the toolbar anyway — but the
   // element comment-badge is a separate entry point, so the
   // mutations need their own gate.
   readOnly?: boolean;
+  // The local participant's stable id, matched against each comment's
+  // server-stamped authorId to decide whether a view-role visitor may
+  // delete it. The API only ever exposes the visitor's own authorId
+  // (others are redacted), so this can't reveal anyone else's comments
+  // as deletable. Editors can delete any comment, so this is only
+  // consulted in read-only mode.
+  selfId: string;
 };
 
 const WIDTH = 288;
@@ -48,6 +56,7 @@ export function CommentThreadPopover({
   onUnresolve,
   onClose,
   readOnly = false,
+  selfId,
 }: CommentThreadPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -176,8 +185,16 @@ export function CommentThreadPopover({
                 key={c.id}
                 comment={c}
                 resolved={resolved}
-                // View-role hides the per-row delete button entirely.
-                onDelete={readOnly ? undefined : () => onDeleteComment(c.id)}
+                // Editors can delete any comment; view-role visitors can
+                // delete only their own (server-enforced too — the
+                // delete endpoint checks authorId === caller). Other
+                // comments' authorId is redacted to undefined for a
+                // visitor, so the match naturally fails for them.
+                onDelete={
+                  !readOnly || (c.authorId !== undefined && c.authorId === selfId)
+                    ? () => onDeleteComment(c.id)
+                    : undefined
+                }
               />
             ))
           )}

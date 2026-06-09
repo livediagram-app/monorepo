@@ -106,6 +106,30 @@ export async function apiAddComment(
   }>(res, 'add comment').then((b) => b.comment);
 }
 
+// Delete a single comment you authored. The server authorises this on
+// the comment's stamped authorId === caller, so a view-role visitor can
+// remove their OWN comment (the matching write path to apiAddComment)
+// without edit rights. Owner / edit-role sessions persist their
+// delete-own through the normal tab autosave, so the editor only calls
+// this for view-role; deleting someone else's comment still requires
+// edit rights via the tab PUT.
+export async function apiDeleteComment(
+  ownerId: string,
+  diagramId: string,
+  tabId: string,
+  commentId: string,
+  shareCode: string | null = null,
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/diagrams/${encodeURIComponent(diagramId)}/tabs/${encodeURIComponent(tabId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: 'DELETE',
+      headers: await apiHeaders(ownerId, { share: shareCode }),
+    },
+  );
+  await expectOkVoid(res, 'delete comment');
+}
+
 // Link an existing tab into another of the caller's diagrams
 // (spec/17). After this returns, the tab body is shared: edits
 // from either diagram write to the same `tabs.data` row. Returns

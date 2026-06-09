@@ -779,6 +779,15 @@ export type Comment = {
   createdAt: number; // unix ms
   authorName: string;
   authorColor: string;
+  // Stable id of the participant who wrote it (their Clerk sub or guest
+  // owner id). Server-stamped and server-trusted, never read from the
+  // client. Lets a view-role visitor delete their OWN comments without
+  // being able to touch anyone else's. When serving a diagram to a
+  // non-owner the API blanks this on comments they didn't write (same
+  // anti-claim redaction `redactOwner` applies to the diagram owner id),
+  // so a visitor only ever sees their own author id. Optional so
+  // comments written before this field existed still parse.
+  authorId?: string;
 };
 
 // Threads live on elements (currently boxed only). `resolved` is sticky:
@@ -788,13 +797,17 @@ export type CommentThread = {
   resolved: boolean;
 };
 
-export function createComment(text: string, author: { name: string; color: string }): Comment {
+export function createComment(
+  text: string,
+  author: { id?: string; name: string; color: string },
+): Comment {
   return {
     id: crypto.randomUUID(),
     text,
     createdAt: Date.now(),
     authorName: author.name,
     authorColor: author.color,
+    authorId: author.id,
   };
 }
 
