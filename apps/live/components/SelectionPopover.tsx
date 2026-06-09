@@ -15,6 +15,10 @@ type SelectionPopoverProps = {
   onToggleLock?: () => void;
   onDelete?: () => void;
   onCopyFormat?: () => void;
+  // Duplicate the selected element. Sits next to Copy formatting as a
+  // one-click toolbar action (it used to live only in the right-click
+  // context menu). Omitted in read-only / view-role mode.
+  onDuplicate?: () => void;
   onGroup?: () => void;
   onUngroup?: () => void;
   // Open the comment thread. The toolbar shows the Comment button
@@ -51,6 +55,7 @@ export function SelectionPopover({
   onToggleLock,
   onDelete,
   onCopyFormat,
+  onDuplicate,
   onGroup,
   onUngroup,
   onOpenComments,
@@ -146,6 +151,19 @@ export function SelectionPopover({
             onClick={onCopyFormat}
           >
             <PaintbrushIcon />
+          </PopoverButton>
+          <Divider />
+        </>
+      ) : null}
+
+      {onDuplicate ? (
+        <>
+          <PopoverButton
+            label="Duplicate"
+            description="Create a copy of this element."
+            onClick={onDuplicate}
+          >
+            <DuplicateIcon />
           </PopoverButton>
           <Divider />
         </>
@@ -289,6 +307,24 @@ function PaintbrushIcon() {
       <path d="M13.5 2.5l-6 6" />
       <path d="M7 8l1.5 1.5" />
       <path d="M6.5 9.5a3 3 0 1 0 1 4.5c.5-.6.5-1.4 0-2-.6-.5-1.4-.5-2 0" />
+    </svg>
+  );
+}
+
+function DuplicateIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2.5" y="2.5" width="8" height="8" rx="1.5" />
+      <path d="M5.5 13.5h6a1.5 1.5 0 0 0 1.5-1.5v-6" />
     </svg>
   );
 }

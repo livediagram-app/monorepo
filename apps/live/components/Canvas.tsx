@@ -149,6 +149,7 @@ export function Canvas(props: CanvasProps) {
     onToggleAspectLock,
     onToggleLockSelected,
     onDeleteSelected,
+    onDuplicateSelected,
     onCanvasDoubleClick,
     tabLoadState,
     onRetryTabLoad,
@@ -941,6 +942,7 @@ export function Canvas(props: CanvasProps) {
                   ? onBeginFormatPainter
                   : undefined
             }
+            onDuplicate={readOnly ? undefined : selected ? onDuplicateSelected : undefined}
             onGroup={!readOnly && selectedIsBoxed && !selectedIsGrouped ? onBeginGroup : undefined}
             onUngroup={!readOnly && selectedIsGrouped ? onUngroup : undefined}
             onToggleLock={readOnly ? undefined : onToggleLockSelected}

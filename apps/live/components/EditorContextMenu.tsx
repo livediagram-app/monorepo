@@ -2,9 +2,10 @@
 
 // Right-click context menu for the editor, lifted out of
 // editor-page.tsx. Renders one of two menus depending on what was
-// clicked: an element-scoped menu (duplicate / link / layer order /
-// note / comment) or a canvas-scoped menu (change theme / canvas,
-// auto-align, add shape / sticky).
+// clicked: an element-scoped menu (link / layer order / note /
+// comment) or a canvas-scoped menu (change theme / canvas,
+// auto-align, add shape / sticky). Duplicate lives in the selection
+// toolbar (SelectionPopover), not here.
 //
 // Purely presentational: every action is a callback prop, and each
 // item closes the menu after firing (the close-then-act pattern the
@@ -18,7 +19,6 @@ import {
   CanvasMenuIcon,
   CircleMenuIcon,
   CommentMenuIcon,
-  DuplicateMenuIcon,
   LayerDownIcon,
   LayerUpIcon,
   LinkMenuIcon,
@@ -42,7 +42,6 @@ type EditorContextMenuProps = {
   // (for the element menu) and read its link / note state.
   elements: Element[];
   onClose: () => void;
-  onDuplicate: () => void;
   onLinkElement: (elementId: string) => void;
   onBringToFront: () => void;
   onSendToBack: () => void;
@@ -65,14 +64,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     const boxed = isBoxed(target);
     return (
       <ContextMenu position={position} onClose={onClose}>
-        <MenuItem
-          icon={<DuplicateMenuIcon />}
-          label="Duplicate"
-          onClick={() => {
-            props.onDuplicate();
-            onClose();
-          }}
-        />
         <MenuItem
           icon={<LinkMenuIcon />}
           label={target.link ? 'Edit link' : 'Link Element'}

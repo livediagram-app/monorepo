@@ -663,6 +663,7 @@ export function EditorView() {
         onDuplicateConnect={duplicateConnectSelected}
         onToggleLockSelected={toggleLockSelected}
         onDeleteSelected={deleteSelected}
+        onDuplicateSelected={duplicateSelected}
         onCanvasDoubleClick={handleCanvasDoubleClick}
         tabLoadState={tabLoadState}
         onRetryTabLoad={retryActiveTabLoad}
@@ -853,7 +854,6 @@ export function EditorView() {
           menu={contextMenu}
           elements={activeTab.elements}
           onClose={closeContextMenu}
-          onDuplicate={duplicateSelected}
           onLinkElement={setLinkPickerOpenForId}
           onBringToFront={bringSelectedToFront}
           onSendToBack={sendSelectedToBack}
