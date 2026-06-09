@@ -318,12 +318,15 @@ function BoxedElementViewImpl({
   // releasing (null = not currently a drag target).
   const acceptsIconDrop = !!onDropIcon && element.type === 'shape' && element.shape !== 'icon';
   const [dropSide, setDropSide] = useState<'left' | 'right' | 'above' | 'below' | null>(null);
-  // Which side the cursor sits nearest, normalised by half-extent so a
-  // wide-but-short box still reads top / bottom drops correctly.
-  const sideFromEvent = (e: ReactDragEvent): 'left' | 'right' | 'above' | 'below' => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2 || 1);
-    const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2 || 1);
+  // Which side a point sits nearest, normalised by half-extent so a
+  // wide-but-short box still reads top / bottom correctly.
+  const sideFromPoint = (
+    clientX: number,
+    clientY: number,
+    rect: DOMRect,
+  ): 'left' | 'right' | 'above' | 'below' => {
+    const dx = (clientX - (rect.left + rect.width / 2)) / (rect.width / 2 || 1);
+    const dy = (clientY - (rect.top + rect.height / 2)) / (rect.height / 2 || 1);
     return Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'above' : 'below';
   };
   const handleIconDragOver = (e: ReactDragEvent) => {
@@ -331,7 +334,7 @@ function BoxedElementViewImpl({
     // preventDefault marks this element as a valid drop target.
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
-    const side = sideFromEvent(e);
+    const side = sideFromPoint(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect());
     setDropSide((prev) => (prev === side ? prev : side));
   };
   const handleIconDragLeave = () => setDropSide(null);
@@ -342,7 +345,38 @@ function BoxedElementViewImpl({
     if (!iconId) return;
     e.preventDefault();
     e.stopPropagation();
-    onDropIcon!(element.id, iconId, sideFromEvent(e));
+    onDropIcon!(
+      element.id,
+      iconId,
+      sideFromPoint(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect()),
+    );
+  };
+  // Reposition the EXISTING inline icon by dragging it (when its shape is
+  // selected). Pointer-drag rather than HTML5 DnD since it starts on a
+  // canvas element; on release the nearest side becomes the new
+  // iconPosition (reuses onDropIcon with the same iconId). The live
+  // preview band reuses `dropSide`.
+  const canRepositionIcon =
+    isSelected && !readOnly && !!onDropIcon && element.type === 'shape' && !!element.iconId;
+  const startIconReposition = (e: ReactPointerEvent) => {
+    if (!canRepositionIcon || !element.iconId) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const wrapper = (e.currentTarget as HTMLElement).closest('[data-element-id]');
+    if (!wrapper) return;
+    const iconId = element.iconId;
+    const move = (ev: PointerEvent) => {
+      setDropSide(sideFromPoint(ev.clientX, ev.clientY, wrapper.getBoundingClientRect()));
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      const side = sideFromPoint(ev.clientX, ev.clientY, wrapper.getBoundingClientRect());
+      setDropSide(null);
+      onDropIcon!(element.id, iconId, side);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
   };
   // Translucent band on the target side + a ring, shown while dragging an
   // icon over this shape so the drop position is obvious.
@@ -466,6 +500,8 @@ function BoxedElementViewImpl({
           textColor={textColor}
           textSize={textSize}
           fontFamily={fontFamily}
+          draggableIcon={canRepositionIcon}
+          onIconPointerDown={startIconReposition}
         />
       ) : (
         labelNode
@@ -733,6 +769,8 @@ function ShapeInlineIconLayout({
   textColor,
   textSize,
   fontFamily,
+  draggableIcon,
+  onIconPointerDown,
 }: {
   element: ShapeElement;
   position: 'left' | 'right' | 'above' | 'below';
@@ -746,6 +784,10 @@ function ShapeInlineIconLayout({
   textColor: string;
   textSize: TextSize;
   fontFamily?: string;
+  // When true the glyph itself is grabbable (parent shape selected): a
+  // pointer-drag repositions it to a different side via onIconPointerDown.
+  draggableIcon?: boolean;
+  onIconPointerDown?: (e: ReactPointerEvent) => void;
 }) {
   if (isEditing) return editor;
 
@@ -760,7 +802,12 @@ function ShapeInlineIconLayout({
       : INLINE_FONT_PX[textSize];
 
   const iconBox = (
-    <div className="relative shrink-0" style={{ width: iconSize, height: iconSize }}>
+    <div
+      className={`relative shrink-0 ${draggableIcon ? 'pointer-events-auto cursor-grab' : ''}`}
+      style={{ width: iconSize, height: iconSize }}
+      onPointerDown={draggableIcon ? onIconPointerDown : undefined}
+      title={draggableIcon ? 'Drag to move the icon to another side' : undefined}
+    >
       <IconGlyph iconId={element.iconId} stroke={iconStroke} strokeWidth={2} hasLabel={false} />
     </div>
   );
