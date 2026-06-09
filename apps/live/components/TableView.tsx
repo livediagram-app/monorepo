@@ -21,6 +21,7 @@ import {
 import { isMobileViewportSync } from '@/lib/responsive';
 import { track } from '@/lib/telemetry';
 import { Tooltip } from './Tooltip';
+import { describeLink } from '@/lib/link-label';
 
 // Cell font size per preset (element-space px; the canvas zoom scales
 // it like everything else). 'scale' has no per-element basis on a grid,
@@ -754,18 +755,20 @@ export function TableView({
                       Clicking it follows the link (works in view + edit
                       sessions) without selecting / editing the cell. */}
                   {cs?.link && !isEditingCell ? (
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (cs.link) onFollowLink?.(cs.link);
-                      }}
-                      aria-label="Follow cell link"
-                      className="pointer-events-auto absolute right-0.5 top-0.5 z-10 flex h-4 w-4 items-center justify-center rounded text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-500/15"
-                    >
-                      <CellLinkIcon />
-                    </button>
+                    <Tooltip title="Follow link" description={describeLink(cs.link)}>
+                      <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (cs.link) onFollowLink?.(cs.link);
+                        }}
+                        aria-label="Follow cell link"
+                        className="pointer-events-auto absolute right-0.5 top-0.5 z-10 flex h-4 w-4 items-center justify-center rounded text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-500/15"
+                      >
+                        <CellLinkIcon />
+                      </button>
+                    </Tooltip>
                   ) : null}
                 </div>
               );

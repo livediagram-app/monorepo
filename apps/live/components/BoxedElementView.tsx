@@ -33,6 +33,7 @@ import { describeVariant } from './element-variant';
 import { BadgeStrip, RemoteSelectorsStrip } from './element-badges';
 import { IconGlyph } from './icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
+import { describeLink } from '@/lib/link-label';
 import { TableView } from './TableView';
 
 type BoxedElementViewProps = {
@@ -492,6 +493,7 @@ function BoxedElementViewImpl({
         <BadgeStrip
           zoom={zoom}
           linked={linked}
+          linkLabel={element.link ? describeLink(element.link) : undefined}
           commentCount={commentCount}
           hasNote={!!element.note && !!onOpenNote}
           badgeColor={badgeColor}

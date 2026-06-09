@@ -55,6 +55,7 @@ export function RemoteSelectorsStrip({
 export function BadgeStrip({
   zoom,
   linked,
+  linkLabel,
   commentCount,
   hasNote,
   badgeColor,
@@ -64,6 +65,10 @@ export function BadgeStrip({
 }: {
   zoom: number;
   linked: boolean;
+  // Destination shown in the link badge's hover tooltip (e.g. the URL),
+  // so a user sees where a link goes before clicking. Undefined when
+  // unlinked.
+  linkLabel?: string;
   commentCount: number;
   hasNote: boolean;
   badgeColor: string;
@@ -83,9 +88,11 @@ export function BadgeStrip({
       className="pointer-events-auto absolute -right-1 -top-1 flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm"
     >
       {linked ? (
-        <BadgeButton label="Follow link" color={badgeColor} onClick={onFollowLink}>
-          <LinkBadgeIcon />
-        </BadgeButton>
+        <Tooltip title="Follow link" description={linkLabel ?? 'Open the linked destination.'}>
+          <BadgeButton label="Follow link" color={badgeColor} onClick={onFollowLink}>
+            <LinkBadgeIcon />
+          </BadgeButton>
+        </Tooltip>
       ) : null}
       {hasNote && onOpenNote ? (
         <BadgeButton label="Open note" color={badgeColor} onClick={onOpenNote}>
