@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Tab } from '@livediagram/diagram';
 import { readLocalStorageSafe, writeLocalStorageSafe } from '@/lib/local-storage-safe';
+import { Tooltip } from './Tooltip';
 
 // One folder group in the tab bar (spec/30). Collapsed it shows just
 // the folder name + member count; expanded it shows the chip plus the
@@ -57,6 +58,21 @@ export function TabFolderChip({
   // can always see where they are (spec/30 edge case).
   const showMembers = !collapsed || containsActive;
 
+  // Auto-collapse when the user navigates OUT of this folder: once the
+  // active tab leaves (and didn't move to another tab in here), fold the
+  // folder back up so the tab bar stays tidy — a folder only stays open
+  // while you're working inside it. Only acts on an expanded folder; a
+  // force-expanded one (collapsed already true) folds on its own as
+  // `containsActive` flips. Re-entering force-expands it again.
+  const wasActiveInside = useRef(containsActive);
+  useEffect(() => {
+    if (wasActiveInside.current && !containsActive && !collapsed) {
+      setCollapsed(true);
+      writeLocalStorageSafe(collapseKey(diagramId, name), '1');
+    }
+    wasActiveInside.current = containsActive;
+  }, [containsActive, collapsed, diagramId, name]);
+
   const toggle = () => {
     const next = !collapsed;
     setCollapsed(next);
@@ -104,18 +120,25 @@ export function TabFolderChip({
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <button
-          type="button"
-          onClick={toggle}
-          onDoubleClick={readOnly ? undefined : () => setEditing(true)}
-          title={collapsed ? `Expand folder "${name}"` : `Collapse folder "${name}"`}
-          className="flex items-center gap-1 rounded px-1.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        <Tooltip
+          title={showMembers ? 'Collapse folder' : 'Expand folder'}
+          description={`"${name}" - ${tabs.length} ${tabs.length === 1 ? 'tab' : 'tabs'}${
+            readOnly ? '' : '. Double-click to rename.'
+          }`}
         >
-          <ChevronIcon open={showMembers} />
-          <FolderGlyph />
-          <span>{name}</span>
-          <span className="text-slate-400 dark:text-slate-500">{tabs.length}</span>
-        </button>
+          <button
+            type="button"
+            onClick={toggle}
+            onDoubleClick={readOnly ? undefined : () => setEditing(true)}
+            className="flex items-center gap-1 rounded px-1.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <FolderGlyph open={showMembers} />
+            <span>{name}</span>
+            <span className="rounded-full bg-slate-200 px-1.5 py-px text-[10px] font-semibold leading-none text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+              {tabs.length}
+            </span>
+          </button>
+        </Tooltip>
       )}
       {showMembers ? <div className="flex items-center gap-1">{tabs.map(renderTab)}</div> : null}
     </div>
@@ -160,39 +183,28 @@ function FolderNameEditor({
   );
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
+// The folder itself carries the expand/collapse state: a closed folder
+// when collapsed, an open folder when its members are showing. Clearer
+// than a separate chevron (which, while a folder is force-expanded for the
+// active tab, was stuck pointing "open" with no way to act on it).
+function FolderGlyph({ open }: { open: boolean }) {
   return (
     <svg
-      width="9"
-      height="9"
-      viewBox="0 0 12 12"
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }}
-    >
-      <path d="M4 2.5L8 6L4 9.5" />
-    </svg>
-  );
-}
-
-function FolderGlyph() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M2 4.5h4l1.25 1.5H14v6.5H2z" />
+      {open ? (
+        <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
+      ) : (
+        <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+      )}
     </svg>
   );
 }

@@ -177,7 +177,7 @@ export function TabBar({
           color: tabAccent(tab),
           ...(isActive ? { backgroundColor: `${tabAccent(tab)}1a` } : {}),
         }}
-        className={`relative flex shrink-0 items-center gap-3 rounded-md px-2 transition ${
+        className={`relative flex shrink-0 items-center gap-1 rounded-md px-2 transition ${
           isActive ? '' : 'hover:bg-slate-100'
         } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
       >

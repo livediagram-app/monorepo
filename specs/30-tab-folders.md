@@ -49,9 +49,9 @@ Dragging tabs reorders only; it never changes membership.
 `TabBar` maps over `groupTabsIntoRuns(tabs)` instead of the flat list:
 
 - **Loose** entries render the existing tab pill.
-- **Folder** entries render a chip. **Collapsed** = chip showing the folder name + member count; **expanded** = chip plus the inline member pills, which behave exactly like loose pills (selection, presence, drag-reorder, context menu).
+- **Folder** entries render a chip carrying a **folder glyph** (drawn closed when collapsed, open when expanded — no separate chevron, the folder icon itself signals the state), the folder **name**, and the member count as a small rounded **badge**. **Collapsed** = just that chip; **expanded** = the chip plus the inline member pills, which behave exactly like loose pills (selection, presence, drag-reorder, context menu).
 - Clicking the chip toggles collapse. Double-clicking renames (rewrites every member). Collapse/expand state is **UI-only**: per browser via `localStorage` key `tabfolder:<diagramId>:<folderName>`, never persisted to D1 and never broadcast.
-- If the active tab is inside a collapsed folder, the chip force-expands so the user can always see where they are.
+- If the active tab is inside a collapsed folder, the chip force-expands so the user can always see where they are. Conversely, navigating the active tab **out** of an expanded folder **auto-collapses** it, so a folder only stays open while you're working inside it; re-entering force-expands it again.
 
 ## Persistence & realtime
 
