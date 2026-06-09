@@ -94,7 +94,9 @@ export function TabPresenceStack({
   const slots = overflow > 0 ? shown.length + 1 : shown.length;
 
   return (
-    <div className="flex items-center">
+    // ml-2 keeps the avatar stack off the tab name it sits beside in
+    // TabBar (the row only uses gap-1, which crowds the initials).
+    <div className="ml-2 flex items-center">
       {shown.map((slot, i) => (
         <span
           key={slot.p.id}

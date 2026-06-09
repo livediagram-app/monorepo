@@ -391,9 +391,15 @@ export function EditorView() {
           if (isOwner) return selfParticipant;
           const live = livePresence.find((p) => p.id === diagramOwnerId);
           if (live) return live;
-          if (diagramOwnerId && diagramOwnerName) {
+          // The share endpoint redacts ownerId to '' for visitors (so an
+          // observer can't learn + claim a guest's owner-id), but it
+          // still returns ownerName/ownerColor. So key tier 3 off the
+          // NAME, not the (blanked) id, or viewers never get the badge.
+          // The id here is display-only (the badge reads name + colour),
+          // so a synthetic fallback is fine.
+          if (diagramOwnerName) {
             return {
-              id: diagramOwnerId,
+              id: diagramOwnerId || 'owner',
               name: diagramOwnerName,
               color: diagramOwnerColor ?? '#94a3b8',
               status: 'offline' as const,
