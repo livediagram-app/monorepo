@@ -49,12 +49,19 @@ async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
   // online in the realtime room. Null when the owner has no
   // participant row yet (e.g. a Clerk-authed owner who's never set a
   // name on a diagram); the UI hides the badge in that case.
-  const ownerParticipant = await getParticipant(env, row.owner_id);
+  // The participant lookup and the tab-summary read are independent,
+  // so issue them concurrently rather than paying two serial round
+  // trips on every diagram fetch (this path is hit by nearly every
+  // owned-diagram / share / WS-upgrade request).
+  const [ownerParticipant, tabs] = await Promise.all([
+    getParticipant(env, row.owner_id),
+    listTabSummariesFor(env, row.id),
+  ]);
   return {
     id: row.id,
     ownerId: row.owner_id,
     name: row.name,
-    tabs: await listTabSummariesFor(env, row.id),
+    tabs,
     shareable: row.shareable === 1,
     shareCode: row.share_code,
     folderId: row.folder_id,
@@ -271,20 +278,21 @@ export async function copyDiagram(
   )
     .bind(sourceId)
     .all<{ id: string; name: string; order_index: number; data: string }>();
-  for (const row of tabRows.results ?? []) {
+  // One batch instead of 2N sequential round trips: collect both
+  // inserts for every source tab and submit them together.
+  const inserts = (tabRows.results ?? []).flatMap((row) => {
     const freshTabId = crypto.randomUUID();
-    await env.DB.prepare(
-      `INSERT INTO tabs (id, diagram_id, name, order_index, data, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(freshTabId, newId, row.name, row.order_index, row.data, now)
-      .run();
-    await env.DB.prepare(
-      `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
-       VALUES (?, ?, ?, ?)`,
-    )
-      .bind(newId, freshTabId, row.order_index, now)
-      .run();
-  }
+    return [
+      env.DB.prepare(
+        `INSERT INTO tabs (id, diagram_id, name, order_index, data, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      ).bind(freshTabId, newId, row.name, row.order_index, row.data, now),
+      env.DB.prepare(
+        `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
+         VALUES (?, ?, ?, ?)`,
+      ).bind(newId, freshTabId, row.order_index, now),
+    ];
+  });
+  if (inserts.length > 0) await env.DB.batch(inserts);
   return await getDiagram(env, newId);
 }

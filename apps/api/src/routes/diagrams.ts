@@ -93,9 +93,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       // id — it ships the templated tab inline so the very
       // first per-tab fetch already has data.
       if (Array.isArray(body.tabs)) {
-        for (let i = 0; i < body.tabs.length; i++) {
-          await upsertTab(env, body.id, body.tabs[i]!, i);
-        }
+        await seedTabs(env, body.id, body.tabs);
       }
       const diagram = await getDiagram(env, body.id);
       return json({ diagram }, { status: 201 });

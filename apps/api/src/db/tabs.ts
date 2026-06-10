@@ -64,6 +64,39 @@ export async function upsertTab(
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
 }
 
+// Bulk-seed a fresh diagram's tabs in one batch (create path). The
+// per-tab upsertTab does three sequential writes each (tab body,
+// link row, and a redundant saved_at bump), so seeding K tabs that
+// way costs ~3K serial round trips. Here we collect every insert and
+// submit one batch, then bump saved_at exactly once. Same ON CONFLICT
+// semantics as upsertTab so a retried create stays idempotent.
+export async function seedTabs(env: Env, diagramId: string, tabs: Tab[]): Promise<void> {
+  if (tabs.length === 0) return;
+  const now = Date.now();
+  const stmts = tabs.flatMap((tab, idx) => {
+    const { id, name, ...rest } = tab;
+    const data = JSON.stringify(rest);
+    return [
+      env.DB.prepare(
+        `INSERT INTO tabs (id, diagram_id, name, order_index, data, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           order_index = excluded.order_index,
+           data = excluded.data,
+           updated_at = excluded.updated_at`,
+      ).bind(id, diagramId, name, idx, data, now),
+      env.DB.prepare(
+        `INSERT INTO diagram_tabs (diagram_id, tab_id, order_index, added_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (diagram_id, tab_id) DO UPDATE SET order_index = excluded.order_index`,
+      ).bind(diagramId, id, idx, now),
+    ];
+  });
+  stmts.push(env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId));
+  await env.DB.batch(stmts);
+}
+
 // Remove the tab from this diagram (drops the `diagram_tabs` link
 // row). The underlying `tabs` row only goes away when no other
 // diagram still references it: linked tabs (per spec/17) survive
@@ -121,6 +154,28 @@ export async function linkTabToDiagram(
     .run();
   await env.DB.prepare('UPDATE diagrams SET saved_at = ? WHERE id = ?').bind(now, diagramId).run();
   return true;
+}
+
+// The link endpoint's authorisation check in one query: is this tab
+// linked into at least one diagram owned by `ownerId`? Replaces the
+// old "list every containing diagram id, then getDiagram() each in a
+// loop" pattern (N full diagram hydrations to read one column). The
+// JOIN + LIMIT 1 stops at the first owned match.
+export async function tabLinkedToOwnedDiagram(
+  env: Env,
+  tabId: string,
+  ownerId: string,
+): Promise<boolean> {
+  const row = await env.DB.prepare(
+    `SELECT 1 AS present
+       FROM diagram_tabs dt
+       JOIN diagrams d ON d.id = dt.diagram_id
+      WHERE dt.tab_id = ? AND d.owner_id = ?
+      LIMIT 1`,
+  )
+    .bind(tabId, ownerId)
+    .first<{ present: number }>();
+  return row !== null;
 }
 
 // Look up every diagram id that links the given tab. Used by the
