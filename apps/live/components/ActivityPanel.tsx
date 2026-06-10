@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { ChangeLogEntry } from '@/lib/api-client';
 import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from './EditorHeader';
@@ -51,7 +52,7 @@ type ActivityPanelProps = {
 // surgical Revert button on each row and the Undo / Redo controls
 // docked at the top. Same shape language as Explorer / Palette so the
 // editor's chrome stays consistent. See specs/12-activity-and-audit.md.
-export function ActivityPanel({
+function ActivityPanelImpl({
   position,
   minimized,
   tabLocked,
@@ -157,7 +158,7 @@ export function ActivityPanel({
                 type="button"
                 onClick={onClearActivity}
                 disabled={entries.length === 0}
-                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition enabled:hover:border-rose-300 enabled:hover:bg-rose-50 enabled:hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <TrashIcon size={12} />
                 Clear Activity
@@ -320,7 +321,7 @@ function UndoRedoButton({
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition enabled:hover:border-brand-300 enabled:hover:bg-brand-50 enabled:hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:enabled:hover:border-brand-400 dark:enabled:hover:bg-slate-700 dark:enabled:hover:text-brand-200"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition enabled:hover:border-brand-300 enabled:hover:bg-brand-50 enabled:hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:enabled:hover:border-brand-400 dark:enabled:hover:bg-slate-700 dark:enabled:hover:text-brand-200"
       >
         {icon}
         {label}
@@ -385,6 +386,8 @@ function RevertIcon() {
     </svg>
   );
 }
+
+export const ActivityPanel = memo(ActivityPanelImpl);
 
 // Clock-with-counter-clockwise-arrow — the universal "history" icon.
 // Lines up with the Activity panel's role as the editorial timeline.

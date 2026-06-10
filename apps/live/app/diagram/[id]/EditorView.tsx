@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
 import { DEFAULT_BACKGROUND_COLOR, DEFAULT_PATTERN_COLOR, isBoxed } from '@livediagram/diagram';
 import { track } from '@/lib/telemetry';
 import { getTheme, type ThemeId } from '@/lib/themes';
@@ -314,6 +315,15 @@ export function EditorView() {
     viewportZoom,
     writeUserPreferences,
   } = ctx;
+  // Stable references for the two list-shaped props the Explorer +
+  // Activity panels take, so those (React.memo'd) panels don't
+  // re-render on every drag frame just because the editor re-rendered.
+  // Both recompute only when their real inputs change, not per frame.
+  const explorerTeams = useMemo(() => teams.map((t) => ({ id: t.id, name: t.name })), [teams]);
+  const activeTabChangeLog = useMemo(
+    () => changeLog.filter((entry) => entry.tabId === activeId),
+    [changeLog, activeId],
+  );
   // Lazy per-tab load gate (spec/13): show a blocking loader / error
   // over the canvas while the active tab's content is still being
   // fetched, so the user never edits a blank placeholder whose autosave
@@ -551,7 +561,7 @@ export function EditorView() {
         diagramList={diagramList}
         folders={folders}
         sharedDiagrams={sharedDiagrams}
-        teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+        teams={explorerTeams}
         teamFolders={teamFolders}
         teamDiagrams={teamDiagrams}
         currentOwnerId={selfParticipant?.id ?? null}
@@ -560,7 +570,7 @@ export function EditorView() {
           window.location.assign(`${window.location.origin}/live/explorer/recent`)
         }
         diagramListLoading={diagramListLoading}
-        changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
+        changeLog={activeTabChangeLog}
         changeLogLoading={changeLogLoading}
         activityPosition={activityPosition}
         activityMinimized={activityMinimized}

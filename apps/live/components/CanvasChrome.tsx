@@ -44,7 +44,8 @@ import { Tooltip } from './Tooltip';
 import { ZoomControls } from './ZoomControls';
 import { CanvasMobileDock } from './CanvasMobileDock';
 import type { CanvasProps } from './Canvas.types';
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import { useCallback, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { useStableCallbacks } from '@/hooks/useStableCallbacks';
 import type { TabSectionControls } from './CommandPalette';
 import type { DockAnchor, MobilePanel } from '@/hooks/useCanvasMobileDock';
 
@@ -218,6 +219,46 @@ export function CanvasChrome(props: CanvasChromeProps) {
     zenMode,
     onToggleZen,
   } = props;
+  // Stable handler identities for the two React.memo'd panels (Explorer,
+  // ActivityPanel) so they skip re-rendering on every drag frame even
+  // though this chrome host re-renders with the canvas. useStableCallbacks
+  // keeps each reference fixed while always invoking the latest prop, so
+  // there's no stale-closure risk despite the parent's per-frame churn.
+  // (The panels' data props are already stable: list state doesn't change
+  // mid-drag, and EditorView memoises the `teams` / change-log arrays.)
+  const explorerHandlers = useStableCallbacks({
+    onDismissShared,
+    onOpenFullExplorer,
+    onMoveExplorer,
+    onResetExplorer,
+    onOpenDiagram,
+    onNewDiagram,
+    onRenameCurrent,
+    onDeleteDiagram,
+    onDuplicateDiagram,
+    onCreateFolder,
+    onRenameFolder,
+    onDeleteFolder,
+    onMoveDiagramToFolder,
+  });
+  const activityHandlers = useStableCallbacks({
+    onUndo,
+    onRedo,
+    onRevertChange,
+    onActivityRowClick,
+    onClearActivity,
+    onMoveActivity,
+    onResetActivity,
+    onToggleActivityMinimized,
+  });
+  const onExplorerSize = useCallback(
+    (size: { width: number; height: number; bottomY: number }) => setExplorerBottomY(size.bottomY),
+    [setExplorerBottomY],
+  );
+  const closeMobilePanel = useCallback(() => {
+    setActiveMobilePanel(null);
+    setActiveDockAnchor(null);
+  }, [setActiveMobilePanel, setActiveDockAnchor]);
   // Zen / focus mode (spec/26): hide all floating chrome. `chromeHidden`
   // folds it in next to the welcome-flow gate that already suppresses
   // the same panels, so each panel stays hidden in either state.
@@ -738,28 +779,25 @@ export function CanvasChrome(props: CanvasChromeProps) {
           teams={teams}
           teamFolders={teamFolders}
           teamDiagrams={teamDiagrams}
-          onDismissShared={onDismissShared}
-          onOpenFullExplorer={onOpenFullExplorer}
+          onDismissShared={explorerHandlers.onDismissShared}
+          onOpenFullExplorer={explorerHandlers.onOpenFullExplorer}
           currentDiagramId={currentDiagramId}
-          onMoveTo={onMoveExplorer}
-          onReset={onResetExplorer}
-          onOpenDiagram={onOpenDiagram}
-          onNewDiagram={onNewDiagram}
-          onRenameCurrent={onRenameCurrent}
-          onDeleteDiagram={onDeleteDiagram}
-          onDuplicateDiagram={onDuplicateDiagram}
-          onCreateFolder={onCreateFolder}
-          onRenameFolder={onRenameFolder}
-          onDeleteFolder={onDeleteFolder}
-          onMoveDiagramToFolder={onMoveDiagramToFolder}
-          onSize={(size) => setExplorerBottomY(size.bottomY)}
+          onMoveTo={explorerHandlers.onMoveExplorer}
+          onReset={explorerHandlers.onResetExplorer}
+          onOpenDiagram={explorerHandlers.onOpenDiagram}
+          onNewDiagram={explorerHandlers.onNewDiagram}
+          onRenameCurrent={explorerHandlers.onRenameCurrent}
+          onDeleteDiagram={explorerHandlers.onDeleteDiagram}
+          onDuplicateDiagram={explorerHandlers.onDuplicateDiagram}
+          onCreateFolder={explorerHandlers.onCreateFolder}
+          onRenameFolder={explorerHandlers.onRenameFolder}
+          onDeleteFolder={explorerHandlers.onDeleteFolder}
+          onMoveDiagramToFolder={explorerHandlers.onMoveDiagramToFolder}
+          onSize={onExplorerSize}
           mobileOpenOverride={activeMobilePanel === 'explorer'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
-          onMobileClose={() => {
-            setActiveMobilePanel(null);
-            setActiveDockAnchor(null);
-          }}
+          onMobileClose={closeMobilePanel}
         />
       )}
 
@@ -830,16 +868,16 @@ export function CanvasChrome(props: CanvasChromeProps) {
           readOnly={readOnly}
           canUndo={canUndo}
           canRedo={canRedo}
-          onUndo={onUndo}
-          onRedo={onRedo}
-          onRevert={onRevertChange}
-          onRowClick={onActivityRowClick}
-          onClearActivity={onClearActivity}
+          onUndo={activityHandlers.onUndo}
+          onRedo={activityHandlers.onRedo}
+          onRevert={activityHandlers.onRevertChange}
+          onRowClick={activityHandlers.onActivityRowClick}
+          onClearActivity={activityHandlers.onClearActivity}
           saveStatus={saveStatus}
           savedAt={savedAt}
-          onMoveTo={onMoveActivity}
-          onReset={onResetActivity}
-          onToggleMinimized={onToggleActivityMinimized}
+          onMoveTo={activityHandlers.onMoveActivity}
+          onReset={activityHandlers.onResetActivity}
+          onToggleMinimized={activityHandlers.onToggleActivityMinimized}
         />
       )}
 

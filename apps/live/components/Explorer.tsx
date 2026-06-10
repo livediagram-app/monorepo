@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useRelativeTimeTick } from '@/lib/relative-time';
 import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel } from './MovablePanel';
@@ -102,7 +102,12 @@ type ExplorerProps = {
 
 // Floating "Explorer" panel pinned to the top-left of the canvas by
 // default. Symmetric to the Palette in shape and behaviour.
-export function Explorer({
+//
+// Wrapped in React.memo at the export below so it skips re-rendering on
+// the editor's per-drag-frame churn: CanvasChrome stabilises its handler
+// props (useStableCallbacks) and EditorView memoises its list/team
+// props, so shallow prop equality holds while a shape is being dragged.
+function ExplorerImpl({
   position,
   diagrams,
   folders,
@@ -788,3 +793,5 @@ export function Explorer({
     </MovablePanel>
   );
 }
+
+export const Explorer = memo(ExplorerImpl);
