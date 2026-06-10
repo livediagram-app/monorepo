@@ -280,16 +280,21 @@ describe('share password gate (spec/24)', () => {
 });
 
 describe('team-library access (spec/35)', () => {
+  // Membership is checked against the VERIFIED callerId (8th arg), the
+  // Clerk user id — NOT the hybrid `owner` (3rd arg, which may be the
+  // unsigned X-Owner-Id header). The member here is a guest-shaped
+  // `owner` (null) with a verified callerId to prove that's what counts.
   it('grants edit to a JOINED member of the diagram team', async () => {
     getMembershipMock.mockResolvedValue({ status: 'joined' });
     const allowed = await canEditDiagram(
       FAKE_ENV,
       'diag-1',
-      'user-1',
+      null,
       null,
       'owner-a',
       null,
       'team-1',
+      'user-1',
     );
     expect(allowed).toBe(true);
     expect(getMembershipMock).toHaveBeenCalledWith(FAKE_ENV, 'team-1', 'user-1');
@@ -300,13 +305,30 @@ describe('team-library access (spec/35)', () => {
     const allowed = await canReadDiagram(
       FAKE_ENV,
       'diag-1',
-      'user-1',
+      null,
       null,
       'owner-a',
       null,
       'team-1',
+      'user-1',
     );
     expect(allowed).toBe(true);
+  });
+
+  // Security: a forged X-Owner-Id header (member id in `owner`) with NO
+  // verified Clerk session (callerId null) must NOT pass — otherwise a
+  // removed member could forge a current member's id. Membership is
+  // never even consulted (callerId is null).
+  it('denies a forged owner-id header with no verified caller on a team diagram', async () => {
+    getMembershipMock.mockClear();
+    getMembershipMock.mockResolvedValue({ status: 'joined' });
+    expect(
+      await canEditDiagram(FAKE_ENV, 'diag-1', 'user-1', null, 'owner-a', null, 'team-1', null),
+    ).toBe(false);
+    expect(
+      await canReadDiagram(FAKE_ENV, 'diag-1', 'owner-a', null, 'owner-a', null, 'team-1', null),
+    ).toBe(false);
+    expect(getMembershipMock).not.toHaveBeenCalled();
   });
 
   it('denies an INVITED (un-accepted) member', async () => {
@@ -314,11 +336,12 @@ describe('team-library access (spec/35)', () => {
     const allowed = await canEditDiagram(
       FAKE_ENV,
       'diag-1',
-      'user-1',
+      null,
       null,
       'owner-a',
       null,
       'team-1',
+      'user-1',
     );
     expect(allowed).toBe(false);
   });
@@ -326,12 +349,12 @@ describe('team-library access (spec/35)', () => {
   it('denies a non-member, and never consults membership when the diagram has no team', async () => {
     getMembershipMock.mockResolvedValue(null);
     expect(
-      await canEditDiagram(FAKE_ENV, 'diag-1', 'user-2', null, 'owner-a', null, 'team-1'),
+      await canEditDiagram(FAKE_ENV, 'diag-1', null, null, 'owner-a', null, 'team-1', 'user-2'),
     ).toBe(false);
     getMembershipMock.mockClear();
-    expect(await canEditDiagram(FAKE_ENV, 'diag-1', 'user-2', null, 'owner-a', null, null)).toBe(
-      false,
-    );
+    expect(
+      await canEditDiagram(FAKE_ENV, 'diag-1', 'user-2', null, 'owner-a', null, null, 'user-2'),
+    ).toBe(false);
     expect(getMembershipMock).not.toHaveBeenCalled();
   });
 });

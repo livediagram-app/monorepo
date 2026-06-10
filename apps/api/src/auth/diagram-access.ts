@@ -46,9 +46,12 @@ async function sharePasswordOk(
   return provided != null && (await timingSafeEqual(provided, required));
 }
 
-// Joined-member check for team diagrams (spec/35). `owner` here is
-// the resolved caller identity (Clerk userId or guest id); guest ids
-// never match a membership row, so the guest path stays unaffected.
+// Joined-member check for team diagrams (spec/35). `caller` MUST be the
+// VERIFIED Clerk user id (never the unsigned X-Owner-Id header): a team
+// owner/member id is a Clerk id deliberately shared among teammates, so
+// trusting an attacker-supplied id here would let a removed member (or
+// anyone who learned a member's id) forge access. Guests (callerId null)
+// can never be members.
 async function isJoinedTeamMember(
   env: Env,
   teamId: string | null,
@@ -59,6 +62,12 @@ async function isJoinedTeamMember(
   return membership?.status === 'joined';
 }
 
+// `owner` is the hybrid identity (Clerk sub OR unsigned X-Owner-Id guest
+// header); `callerId` is the VERIFIED Clerk user id (null for guests).
+// For a personal diagram the hybrid `owner` path is safe (a guest id is
+// an unguessable UUID). For a TEAM diagram the identity must be verified,
+// because owner/member ids are Clerk ids shared among the team — so the
+// header path is disabled there and only `callerId` + share codes count.
 export async function canEditDiagram(
   env: Env,
   diagramId: string,
@@ -67,9 +76,14 @@ export async function canEditDiagram(
   ownerId: string,
   sharePassword: string | null = null,
   teamId: string | null = null,
+  callerId: string | null = null,
 ): Promise<boolean> {
-  if (owner && owner === ownerId) return true;
-  if (await isJoinedTeamMember(env, teamId, owner)) return true;
+  if (teamId) {
+    if (callerId && callerId === ownerId) return true;
+    if (await isJoinedTeamMember(env, teamId, callerId)) return true;
+  } else if (owner && owner === ownerId) {
+    return true;
+  }
   if (!shareCode) return false;
   const link = await getShareLink(env, shareCode);
   if (!link) return false;
@@ -86,9 +100,14 @@ export async function canReadDiagram(
   ownerId: string,
   sharePassword: string | null = null,
   teamId: string | null = null,
+  callerId: string | null = null,
 ): Promise<boolean> {
-  if (owner && owner === ownerId) return true;
-  if (await isJoinedTeamMember(env, teamId, owner)) return true;
+  if (teamId) {
+    if (callerId && callerId === ownerId) return true;
+    if (await isJoinedTeamMember(env, teamId, callerId)) return true;
+  } else if (owner && owner === ownerId) {
+    return true;
+  }
   if (!shareCode) return false;
   const link = await getShareLink(env, shareCode);
   if (!link || link.diagramId !== diagramId) return false;

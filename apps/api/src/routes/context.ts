@@ -68,6 +68,9 @@ export function gateRead(
     diagramOwnerId,
     sharePasswordOf(ctx.request),
     diagramTeamId,
+    // Verified Clerk id for the team-membership check — never the
+    // unsigned X-Owner-Id header (spec/35 access trust boundary).
+    ctx.clerkUserId,
   );
 }
 
@@ -85,6 +88,9 @@ export function gateEdit(
     diagramOwnerId,
     sharePasswordOf(ctx.request),
     diagramTeamId,
+    // Verified Clerk id for the team-membership check — never the
+    // unsigned X-Owner-Id header (spec/35 access trust boundary).
+    ctx.clerkUserId,
   );
 }
 
