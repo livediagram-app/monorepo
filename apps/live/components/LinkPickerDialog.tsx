@@ -209,7 +209,7 @@ export function LinkPickerDialog({
         </div>
 
         {currentLink ? (
-          <div className="flex justify-end border-t border-slate-100 px-6 py-3 dark:border-slate-800">
+          <div className="flex justify-end border-t border-slate-100 px-6 py-4 dark:border-slate-800">
             <button
               type="button"
               onClick={() => commit(null)}

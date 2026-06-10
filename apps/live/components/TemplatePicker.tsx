@@ -297,7 +297,7 @@ export function TemplatePicker({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-3 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
           <p className="mr-auto text-[11px] text-slate-500 dark:text-slate-400">
             {isWelcome
               ? 'You can change these later from the Palette.'
