@@ -179,134 +179,60 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Toggled', field.replace(/^text/, ''));
   };
 
-  const setFillColorSelected = (color: string) => {
+  // Debounced field write shared by the colour / opacity pickers: goes
+  // straight through commitTabs (bypassing commit's per-tick emitChange,
+  // see the file header) with a single debounced change-log entry, so
+  // dragging a picker doesn't spam the realtime channel. `update` maps one
+  // already-selected element, returning it unchanged for the element types
+  // the field doesn't apply to.
+  const commitSelectedStyle = (logField: string, update: (el: Element) => Element) => {
     if (editsBlocked) return;
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
-    // State update inline (bypass `commit` so emitChange doesn't
-    // fire per-tick); log entry debounced — same pattern as
-    // opacity.
     commitTabs((ts) =>
       ts.map((t) =>
         t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) =>
-                ids.has(el.id) &&
-                (el.type === 'shape' ||
-                  el.type === 'sticky' ||
-                  el.type === 'freehand' ||
-                  el.type === 'table')
-                  ? { ...el, fillColor: color }
-                  : el,
-              ),
-            }
+          ? { ...t, elements: t.elements.map((el) => (ids.has(el.id) ? update(el) : el)) }
           : t,
       ),
     );
-    scheduleElementChangeLog('fillColor');
+    scheduleElementChangeLog(logField);
   };
 
-  const setStrokeColorSelected = (color: string) => {
-    if (editsBlocked) return;
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) =>
-                ids.has(el.id) &&
-                (el.type === 'shape' ||
-                  el.type === 'sticky' ||
-                  el.type === 'arrow' ||
-                  el.type === 'freehand' ||
-                  el.type === 'table')
-                  ? { ...el, strokeColor: color }
-                  : el,
-              ),
-            }
-          : t,
-      ),
+  const setFillColorSelected = (color: string) =>
+    commitSelectedStyle('fillColor', (el) =>
+      el.type === 'shape' || el.type === 'sticky' || el.type === 'freehand' || el.type === 'table'
+        ? { ...el, fillColor: color }
+        : el,
     );
-    scheduleElementChangeLog('strokeColor');
-  };
 
-  const setTextColorSelected = (color: string) => {
-    if (editsBlocked) return;
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) =>
-                ids.has(el.id) && isBoxed(el) ? { ...el, textColor: color } : el,
-              ),
-            }
-          : t,
-      ),
+  const setStrokeColorSelected = (color: string) =>
+    commitSelectedStyle('strokeColor', (el) =>
+      el.type === 'shape' ||
+      el.type === 'sticky' ||
+      el.type === 'arrow' ||
+      el.type === 'freehand' ||
+      el.type === 'table'
+        ? { ...el, strokeColor: color }
+        : el,
     );
-    scheduleElementChangeLog('textColor');
-  };
+
+  const setTextColorSelected = (color: string) =>
+    commitSelectedStyle('textColor', (el) => (isBoxed(el) ? { ...el, textColor: color } : el));
 
   // Table header-band colours (debounced like the other colour
   // pickers). Apply only to selected tables.
-  const setTableHeaderFillSelected = (color: string) => {
-    if (editsBlocked) return;
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) =>
-                ids.has(el.id) && el.type === 'table' ? { ...el, headerFill: color } : el,
-              ),
-            }
-          : t,
-      ),
+  const setTableHeaderFillSelected = (color: string) =>
+    commitSelectedStyle('headerFill', (el) =>
+      el.type === 'table' ? { ...el, headerFill: color } : el,
     );
-    scheduleElementChangeLog('headerFill');
-  };
-  const setTableHeaderTextColorSelected = (color: string) => {
-    if (editsBlocked) return;
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) =>
-                ids.has(el.id) && el.type === 'table' ? { ...el, headerTextColor: color } : el,
-              ),
-            }
-          : t,
-      ),
+  const setTableHeaderTextColorSelected = (color: string) =>
+    commitSelectedStyle('headerTextColor', (el) =>
+      el.type === 'table' ? { ...el, headerTextColor: color } : el,
     );
-    scheduleElementChangeLog('headerTextColor');
-  };
 
-  const setOpacitySelected = (opacity: number) => {
-    if (editsBlocked) return;
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commitTabs((ts) =>
-      ts.map((t) =>
-        t.id === activeId
-          ? {
-              ...t,
-              elements: t.elements.map((el) => (ids.has(el.id) ? { ...el, opacity } : el)),
-            }
-          : t,
-      ),
-    );
-    scheduleElementChangeLog('elementOpacity');
-  };
+  const setOpacitySelected = (opacity: number) =>
+    commitSelectedStyle('elementOpacity', (el) => ({ ...el, opacity }));
 
   const setPaddingSelected = (padding: Padding) => {
     const ids = currentSelectionIds();
