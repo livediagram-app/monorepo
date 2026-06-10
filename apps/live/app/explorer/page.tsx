@@ -564,7 +564,7 @@ export default function ExplorerPage() {
                   setTeamModalOpen(true);
                   setMobileNavOpen(false);
                 }}
-                className="flex w-full items-center gap-1.5 rounded-md py-1 pl-6 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
+                className="flex w-full items-center gap-1.5 rounded-md py-1 pl-7 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
               >
                 <span className="shrink-0 text-slate-400">
                   <PlusIcon />
@@ -583,7 +583,7 @@ export default function ExplorerPage() {
           ) : (
             <Link
               href="/sign-in/"
-              className="flex w-full items-center gap-1.5 rounded-md py-1 pl-6 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
+              className="flex w-full items-center gap-1.5 rounded-md py-1 pl-7 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
             >
               <span className="shrink-0 text-slate-400">
                 <SignInIcon />
