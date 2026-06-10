@@ -276,6 +276,10 @@ function eventExplanation(category: string, action: string, type: string | null)
     if (action === 'SignedUp') return 'A visitor just completed sign-up via Clerk.';
     if (action === 'SignedOut') return 'A visitor just signed out.';
   }
+  if (category === 'Participant') {
+    if (action === 'Created')
+      return 'A brand-new browser identity was minted: a first-time visitor.';
+  }
 
   // Generic fallback.
   return `One occurrence of ${eventLabel({ category, action, type, count: 0 })}.`;
@@ -378,6 +382,7 @@ function EventIcon({
   if (category === 'UI') return <WindowGlyph />;
   if (category === 'Folder') return <FolderGlyph />;
   if (category === 'Session') return <PersonGlyph />;
+  if (category === 'Participant') return <PersonGlyph />;
   return <DotGlyph />;
 }
 

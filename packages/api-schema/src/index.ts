@@ -385,6 +385,10 @@ export const TELEMETRY_CATEGORIES = [
   'Session',
   'AI',
   'Team',
+  // Participant lifecycle (spec/22): 'Participant'/'Created' fires
+  // once per fresh browser identity mint, the daily-new-visitors
+  // signal. Sign-in / sign-up / sign-out stay under 'Session'.
+  'Participant',
 ] as const;
 export type TelemetryCategory = (typeof TELEMETRY_CATEGORIES)[number];
 

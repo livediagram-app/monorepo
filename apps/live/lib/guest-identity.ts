@@ -22,11 +22,17 @@ import {
   setGuestIdentity,
 } from './local-identity';
 import { apiMintGuestId, apiUpgradeGuestId } from './api/self';
+import { track } from './telemetry';
 
 export async function ensureSignedGuestIdentity(): Promise<{ id: string; sig: string | null }> {
   const existingId = getGuestSelfId();
   const existingSig = getGuestSelfSig();
   if (existingId && existingSig) return { id: existingId, sig: existingSig };
+  // No id at all → this browser has never had a participant: the
+  // daily new-visitors signal (spec/22). Emitted per adopted branch
+  // below rather than up here so the offline fallback doesn't double
+  // count (ensureGuestSelfId fires its own event when IT mints).
+  const isNewVisitor = !existingId;
 
   const minted = await apiMintGuestId();
   if (!minted) {
@@ -38,6 +44,7 @@ export async function ensureSignedGuestIdentity(): Promise<{ id: string; sig: st
     // adopt the freshly generated (unsigned) one.
     const id = existingId ?? minted.ownerId;
     setGuestIdentity(id, null);
+    if (isNewVisitor) track('Participant', 'Created');
     return { id, sig: null };
   }
   // Worker returned a SIGNED id. Upgrade legacy data onto it if needed.
@@ -50,5 +57,6 @@ export async function ensureSignedGuestIdentity(): Promise<{ id: string; sig: st
     }
   }
   setGuestIdentity(minted.ownerId, minted.ownerSig);
+  if (isNewVisitor) track('Participant', 'Created');
   return { id: minted.ownerId, sig: minted.ownerSig };
 }

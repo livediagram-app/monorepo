@@ -21,6 +21,7 @@ import {
   removeLocalStorageSafe,
   writeLocalStorageSafe,
 } from './local-storage-safe';
+import { track } from './telemetry';
 
 const NS = 'livediagram:v2:';
 
@@ -83,6 +84,12 @@ export function ensureGuestSelfId(): string {
   if (stored) return stored;
   const fresh = crypto.randomUUID();
   setGuestSelfId(fresh);
+  // A fresh mint means a browser we've never seen: the daily
+  // new-visitors signal (spec/22). Returning visitors hit the
+  // `stored` early-return above and never re-emit. The signed-mint
+  // path (guest-identity.ts) emits its own event only when it
+  // doesn't fall back to this helper, so a visitor counts once.
+  track('Participant', 'Created');
   return fresh;
 }
 
