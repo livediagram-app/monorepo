@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Portal } from './Portal';
+import { useReposition } from '@/hooks/useReposition';
 import type { Comment, CommentThread } from '@livediagram/diagram';
 import { initialsOf } from '@/lib/identity';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -76,29 +77,20 @@ export function CommentThreadPopover({
   // Resolve the element's on-screen rect (after the canvas transform has
   // been applied), then place the popover just to the right with a small
   // gap. Re-measures on resize / scroll so it stays attached during pans.
-  useLayoutEffect(() => {
-    const update = () => {
-      const node = document.querySelector(`[data-element-id="${elementId}"]`);
-      if (!node) return;
-      const rect = node.getBoundingClientRect();
-      let left = rect.right + GAP;
-      let top = rect.top;
-      // Flip to the left of the element if there's no room on the right.
-      if (left + WIDTH > window.innerWidth - EDGE_MARGIN) {
-        left = rect.left - GAP - WIDTH;
-      }
-      // Clamp to viewport edges.
-      left = Math.max(EDGE_MARGIN, Math.min(left, window.innerWidth - WIDTH - EDGE_MARGIN));
-      top = Math.max(EDGE_MARGIN, top);
-      setPos({ left, top });
-    };
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-    };
+  useReposition(() => {
+    const node = document.querySelector(`[data-element-id="${elementId}"]`);
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    let left = rect.right + GAP;
+    let top = rect.top;
+    // Flip to the left of the element if there's no room on the right.
+    if (left + WIDTH > window.innerWidth - EDGE_MARGIN) {
+      left = rect.left - GAP - WIDTH;
+    }
+    // Clamp to viewport edges.
+    left = Math.max(EDGE_MARGIN, Math.min(left, window.innerWidth - WIDTH - EDGE_MARGIN));
+    top = Math.max(EDGE_MARGIN, top);
+    setPos({ left, top });
   }, [elementId]);
 
   // Don't close on a click that lands on a comment badge: those are

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { NameEditor } from './NameEditor';
+import { useReposition } from '@/hooks/useReposition';
 import { Portal } from './Portal';
 import { ConfirmPopover } from './ConfirmPopover';
 import {
@@ -650,19 +651,10 @@ function PortalMenu({
 
   // Position above the anchor button, right-aligned to it. Measured each
   // time the menu opens so it stays attached even after layout shifts.
-  useEffect(() => {
+  useReposition(() => {
     if (!anchor) return;
-    const update = () => {
-      const r = anchor.getBoundingClientRect();
-      setPos({ left: r.right, top: r.top });
-    };
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-    };
+    const r = anchor.getBoundingClientRect();
+    setPos({ left: r.right, top: r.top });
   }, [anchor]);
 
   // After the menu mounts, nudge it back on-screen if it overflows any

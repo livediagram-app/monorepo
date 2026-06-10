@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { Portal } from './Portal';
 import { Tooltip } from './Tooltip';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
+import { useReposition } from '@/hooks/useReposition';
 
 type Placement = 'above' | 'below';
 
@@ -34,22 +35,13 @@ export function PortalMenu({ anchor, placement = 'below', onClose, children }: P
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [adjust, setAdjust] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
+  useReposition(() => {
     if (!anchor) return;
-    const update = () => {
-      const r = anchor.getBoundingClientRect();
-      setPos({
-        left: r.right,
-        top: placement === 'below' ? r.bottom : r.top,
-      });
-    };
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-    };
+    const r = anchor.getBoundingClientRect();
+    setPos({
+      left: r.right,
+      top: placement === 'below' ? r.bottom : r.top,
+    });
   }, [anchor, placement]);
 
   useLayoutEffect(() => {
