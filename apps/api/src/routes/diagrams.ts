@@ -106,15 +106,15 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
   if (segments.length === 3) {
     const id = segments[2]!;
     if (request.method === 'GET') {
-      // Loading a diagram by raw id is an owner-only operation —
-      // visitors should be using /api/share/:code instead. Without
-      // this gate, any visitor with a guessed UUID could pull a
-      // diagram they don't own. Mismatched owner returns 404
-      // (not 403) so we don't leak the diagram's existence.
-      const owner = requireOwner(ctx);
-      if (owner instanceof Response) return owner;
+      // Read access (spec/35): the owner, a valid share-code visitor,
+      // OR a joined member of the diagram's team — the same gate the
+      // tab-content read below uses, so a team member can open a team
+      // diagram by raw id (not just via a share link). A miss returns
+      // 404 (not 403) so a guessed UUID can't probe existence.
       const d = await getDiagram(env, id);
-      return d && d.ownerId === owner ? json({ diagram: d }) : notFound();
+      if (!d) return notFound();
+      const allowed = await gateRead(ctx, id, d.ownerId, d.teamId);
+      return allowed ? json({ diagram: d }) : notFound();
     }
     if (request.method === 'PUT') {
       // Metadata-only PUT now that tabs live in their own table.
@@ -160,16 +160,22 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       return json({ diagram });
     }
     if (request.method === 'DELETE') {
-      // Owner-only. Until this guard landed, any client that
-      // knew or guessed a diagram id could DELETE it — the
-      // endpoint took no auth headers and the handler called
-      // `deleteDiagram(env, id)` unconditionally. Now we
-      // resolve the caller (Clerk Bearer or X-Owner-Id, per
-      // spec/04), 404 on a missing diagram (no existence
-      // leak), and 403 on a mismatched owner. Mirrors the GET
-      // branch above which had this guard from the start.
-      const existing = await requireOwnedDiagram(ctx, id);
-      if (existing instanceof Response) return existing;
+      // Owner, OR a joined member of the diagram's team (spec/35:
+      // members fully manage team diagrams, delete included). NOT a
+      // share-link visitor — editing content via a link is one thing,
+      // destroying the diagram is owner/team-only. Resolve the caller
+      // first (400 with no auth), then 404 on a missing diagram (no
+      // existence leak), then 403 on a caller with no claim.
+      const owner = requireOwner(ctx);
+      if (owner instanceof Response) return owner;
+      const existing = await getDiagram(env, id);
+      if (!existing) return notFound();
+      let allowed = owner === existing.ownerId;
+      if (!allowed && existing.teamId && ctx.clerkUserId) {
+        const membership = await getMembership(env, existing.teamId, ctx.clerkUserId);
+        allowed = membership?.status === 'joined';
+      }
+      if (!allowed) return forbidden();
       await deleteDiagram(env, id);
       return noContent();
     }
