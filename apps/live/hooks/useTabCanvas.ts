@@ -201,8 +201,11 @@ export function useTabCanvas(deps: TabCanvasDeps) {
   const resetElementsToTheme = () => {
     if (editsBlocked) return;
     const theme = getTheme(activeTab.theme);
-    const themeLabel = THEMES.find((t) => t.id === activeTab.theme)?.label ?? 'theme';
-    emitTabMeta(activeId, `Reset elements to ${themeLabel}`);
+    const themeId = activeTab.theme ?? 'brand';
+    const themeLabel =
+      THEMES.find((t) => t.id === themeId)?.label ??
+      themeId.charAt(0).toUpperCase() + themeId.slice(1);
+    emitTabMeta(activeId, `Reset element colours to the ${themeLabel} theme`);
     commitTabs((ts) =>
       ts.map((t) => {
         if (t.id !== activeId) return t;
