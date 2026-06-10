@@ -5,12 +5,11 @@ import type { ReactNode } from 'react';
 import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { TeamFormModal } from '@/components/TeamFormModal';
-import { MenuItem, PortalMenu } from '@/components/PortalMenu';
-import { MenuSection } from '@/components/PortalMenu';
+import { MoveToFolderDialog } from '@/components/MoveToFolderDialog';
 import { ExplorerProvider, useExplorer } from './ExplorerContext';
 import { ExplorerSidebar } from './ExplorerSidebar';
 import { useExplorerState } from './useExplorerState';
-import { CloseIcon, MenuFolderIcon, TeamIcon } from './icons';
+import { CloseIcon } from './icons';
 
 // Lazy-load SearchPanel — same rationale as the editor route: it's
 // gated on `searchOpen`, never default-rendered, and dropping ~375
@@ -55,7 +54,6 @@ function ShellChrome({ children }: { children: ReactNode }) {
     setSearchOpen,
     moveTarget,
     setMoveTarget,
-    moveAnchorRef,
     movePickerRows,
     moveDiagramToFolder,
     moveDiagramToTeam,
@@ -122,53 +120,35 @@ function ShellChrome({ children }: { children: ReactNode }) {
         <section className="min-w-0 flex-1">{children}</section>
       </main>
 
+      {/* Move-destination modal (spec/15), LinkPickerDialog-styled.
+          Team destinations (spec/35) are diagrams-only: folders stay
+          personal. A team pick lands in the team's Unsorted; organise
+          further on the team page. */}
       {moveTarget ? (
-        <PortalMenu
-          anchor={moveAnchorRef.current}
-          placement="below"
+        <MoveToFolderDialog
+          subjectName={
+            (moveTarget.kind === 'diagram'
+              ? diagrams.find((d) => d.id === moveTarget.id)?.name
+              : folders.find((f) => f.id === moveTarget.id)?.name) || 'Untitled'
+          }
+          subjectKind={moveTarget.kind}
+          rootLabel="All diagrams"
+          folders={movePickerRows}
+          teams={moveTarget.kind === 'diagram' && teams.length > 0 ? teams : undefined}
+          currentFolderId={
+            moveTarget.kind === 'diagram'
+              ? (diagrams.find((d) => d.id === moveTarget.id)?.folderId ?? null)
+              : (folders.find((f) => f.id === moveTarget.id)?.parentId ?? null)
+          }
+          onPickFolder={(folderId) => {
+            if (moveTarget.kind === 'diagram') moveDiagramToFolder(moveTarget.id, folderId);
+            else moveFolderToParent(moveTarget.id, folderId);
+          }}
+          onPickTeam={(teamId) => {
+            moveDiagramToTeam(moveTarget.id, teamId);
+          }}
           onClose={() => setMoveTarget(null)}
-        >
-          <MenuItem
-            icon={<MenuFolderIcon />}
-            label="All diagrams"
-            onClick={() => {
-              if (moveTarget.kind === 'diagram') moveDiagramToFolder(moveTarget.id, null);
-              else moveFolderToParent(moveTarget.id, null);
-              setMoveTarget(null);
-            }}
-          />
-          {movePickerRows.map((row) => (
-            <MenuItem
-              key={row.id}
-              icon={<MenuFolderIcon />}
-              label={row.path}
-              onClick={() => {
-                if (moveTarget.kind === 'diagram') moveDiagramToFolder(moveTarget.id, row.id);
-                else moveFolderToParent(moveTarget.id, row.id);
-                setMoveTarget(null);
-              }}
-            />
-          ))}
-          {/* Team destinations (spec/35): diagrams only — folders
-              stay personal. Lands in the team's Unsorted; organise
-              further on the team page. */}
-          {moveTarget.kind === 'diagram' && teams.length > 0 ? (
-            <>
-              <MenuSection label="Teams" />
-              {teams.map((t) => (
-                <MenuItem
-                  key={t.id}
-                  icon={<TeamIcon />}
-                  label={t.name}
-                  onClick={() => {
-                    moveDiagramToTeam(moveTarget.id, t.id);
-                    setMoveTarget(null);
-                  }}
-                />
-              ))}
-            </>
-          ) : null}
-        </PortalMenu>
+        />
       ) : null}
       <TeamFormModal
         open={teamModalOpen}

@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRelativeTimeTick } from '@/lib/relative-time';
 import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel } from './MovablePanel';
-import { MenuItem, PortalMenu } from './PortalMenu';
+import { MoveToFolderDialog } from './MoveToFolderDialog';
 import { SignInPrompt } from './SignInPrompt';
 import { ConfirmPopover } from './ConfirmPopover';
 import { Tooltip } from './Tooltip';
-import { ExpandIcon, FolderIcon, PlusIcon, UnsortedIcon } from './explorer-icons';
+import { ExpandIcon, PlusIcon } from './explorer-icons';
 import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import { AccordionHeader, DiagramRow, FolderNode, SharedRow, UnsortedNode } from './explorer-views';
 
@@ -166,10 +166,9 @@ export function Explorer({
   // folder id, or the literal 'unsorted' for the synthetic bucket).
   // Defaults to all collapsed so the panel stays compact on load.
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  // When set, the diagram row whose Move menu is open. Stored here
-  // (vs. in DiagramRow) so the picker portals don't nest.
+  // When set, the diagram row whose Move dialog is open. Stored here
+  // (vs. in DiagramRow) so the modal doesn't nest inside row portals.
   const [moveTargetDiagramId, setMoveTargetDiagramId] = useState<string | null>(null);
-  const moveAnchorRef = useRef<HTMLElement | null>(null);
   // Folder id newly created via the New folder button — used to drop
   // the row into rename mode immediately after the API returns.
   const [pendingRenameFolderId, setPendingRenameFolderId] = useState<string | null>(null);
@@ -323,8 +322,10 @@ export function Explorer({
     }
   };
 
-  const openMovePicker = (diagramId: string, anchor: HTMLElement | null) => {
-    moveAnchorRef.current = anchor;
+  // The anchor argument survives in the row-callback signature (the
+  // delete flow's ConfirmPopover still anchors), but the move flow is
+  // a centred modal now (spec/15) and ignores it.
+  const openMovePicker = (diagramId: string) => {
     setMoveTargetDiagramId(diagramId);
   };
 
@@ -397,9 +398,7 @@ export function Explorer({
                       onDuplicateDiagram ? () => onDuplicateDiagram(current.id) : undefined
                     }
                     onMoveRequest={
-                      onMoveDiagramToFolder
-                        ? (anchor) => openMovePicker(current.id, anchor)
-                        : undefined
+                      onMoveDiagramToFolder ? () => openMovePicker(current.id) : undefined
                     }
                   />
                 </li>
@@ -466,9 +465,7 @@ export function Explorer({
                           onDuplicateDiagram ? () => onDuplicateDiagram(d.id) : undefined
                         }
                         onMoveRequest={
-                          onMoveDiagramToFolder
-                            ? (anchor) => openMovePicker(d.id, anchor)
-                            : undefined
+                          onMoveDiagramToFolder ? () => openMovePicker(d.id) : undefined
                         }
                       />
                     </li>
@@ -577,7 +574,7 @@ export function Explorer({
                     exitingDiagramIds={exitingDiagramIds}
                     onDuplicateDiagram={onDuplicateDiagram}
                     onMoveDiagramRequest={
-                      onMoveDiagramToFolder ? (id, anchor) => openMovePicker(id, anchor) : undefined
+                      onMoveDiagramToFolder ? (id) => openMovePicker(id) : undefined
                     }
                     onMoveDiagramToFolder={onMoveDiagramToFolder}
                   />
@@ -593,7 +590,7 @@ export function Explorer({
                     exitingDiagramIds={exitingDiagramIds}
                     onDuplicateDiagram={onDuplicateDiagram}
                     onMoveDiagramRequest={
-                      onMoveDiagramToFolder ? (id, anchor) => openMovePicker(id, anchor) : undefined
+                      onMoveDiagramToFolder ? (id) => openMovePicker(id) : undefined
                     }
                     onMoveDiagramToFolder={onMoveDiagramToFolder}
                   />
@@ -624,32 +621,21 @@ export function Explorer({
         />
       </div>
 
+      {/* Move-destination modal (spec/15), shared with the /explorer
+          page. The panel scopes it to personal folders: team moves
+          (spec/35) live on the full explorer page. */}
       {moveTargetDiagramId && onMoveDiagramToFolder ? (
-        <PortalMenu
-          anchor={moveAnchorRef.current}
-          placement="below"
+        <MoveToFolderDialog
+          subjectName={diagrams.find((d) => d.id === moveTargetDiagramId)?.name || 'Untitled'}
+          subjectKind="diagram"
+          rootLabel="Unsorted"
+          folders={folderPathPicker}
+          currentFolderId={diagrams.find((d) => d.id === moveTargetDiagramId)?.folderId ?? null}
+          onPickFolder={(folderId) => {
+            onMoveDiagramToFolder(moveTargetDiagramId, folderId);
+          }}
           onClose={() => setMoveTargetDiagramId(null)}
-        >
-          <MenuItem
-            icon={<UnsortedIcon />}
-            label="Unsorted"
-            onClick={() => {
-              onMoveDiagramToFolder(moveTargetDiagramId, null);
-              setMoveTargetDiagramId(null);
-            }}
-          />
-          {folderPathPicker.map((f) => (
-            <MenuItem
-              key={f.id}
-              icon={<FolderIcon />}
-              label={f.path}
-              onClick={() => {
-                onMoveDiagramToFolder(moveTargetDiagramId, f.id);
-                setMoveTargetDiagramId(null);
-              }}
-            />
-          ))}
-        </PortalMenu>
+        />
       ) : null}
 
       {deleteConfirm && deleteAnchorRef.current ? (

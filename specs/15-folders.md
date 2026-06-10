@@ -31,9 +31,15 @@ In scope:
   Diagrams without a folder render under a synthetic "Unsorted"
   section that's always present (so freshly-created diagrams have
   somewhere obvious to be).
-- A per-diagram-row "Move to folder…" menu item; the picker shows a
-  flat list of every folder by breadcrumb path (`Marketing / Q3`)
-  - Unsorted.
+- A per-diagram-row "Move to folder…" menu item. The picker is a
+  centred modal (`MoveToFolderDialog`, LinkPickerDialog-styled, shared
+  by the /explorer page and the floating Explorer panel): a filter
+  input over a flat list of every folder by breadcrumb path
+  (`Marketing / Q3`), with the root bucket first ("All diagrams" on
+  the page, "Unsorted" in the panel) and the current placement marked
+  as current and disabled. Diagram moves on the page also list team
+  destinations (spec/35). It outgrew the original anchored popover
+  once nested paths and teams joined the list.
 
 ## Explorer routes
 
