@@ -408,7 +408,10 @@ export function TeamPane({
 
       {/* ---------- Shared diagrams (spec/35): the team's folder
           tree + diagrams, managed by every joined member. ---------- */}
-      <TeamSharedDiagrams ownerId={ownerId} teamId={teamId} />
+      {/* key on teamId so switching teams remounts the library and
+          resets its open-folder `spot` — otherwise a subfolder open in
+          team A leaks into team B as a stale, empty folder view. */}
+      <TeamSharedDiagrams key={teamId} ownerId={ownerId} teamId={teamId} />
 
       <TeamFormModal
         open={editOpen}

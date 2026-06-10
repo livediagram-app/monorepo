@@ -223,9 +223,18 @@ export async function updateTeam(
 }
 
 export async function deleteTeam(env: Env, id: string): Promise<void> {
-  // Explicit member delete before the team row, mirroring
-  // deleteFolder's rationale: SQLite FK enforcement is opt-in via
-  // PRAGMA, so don't depend on ON DELETE CASCADE firing.
+  // Re-home the team's diagrams to their owners' personal Unsorted FIRST
+  // (spec/35): deleting a team must never destroy members' work. Each
+  // team diagram already carries an owner_id (its creator, or whoever a
+  // move-out transferred it to), so clearing team_id + folder_id returns
+  // it to that owner's personal library. The team's folders are dropped
+  // (a team's folder tree doesn't map onto a personal one). Explicit
+  // deletes (not FK CASCADE — SQLite enforcement is opt-in via PRAGMA),
+  // mirroring deleteFolder's re-home-then-delete rationale.
+  await env.DB.prepare('UPDATE diagrams SET team_id = NULL, folder_id = NULL WHERE team_id = ?')
+    .bind(id)
+    .run();
+  await env.DB.prepare('DELETE FROM folders WHERE team_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM team_members WHERE team_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM teams WHERE id = ?').bind(id).run();
 }

@@ -315,7 +315,12 @@ export function useExplorerState() {
   // lists either way, so the local row is dropped optimistically.
   const moveDiagramToTeam = (id: string, teamId: string, folderId: string | null = null) => {
     if (!ownerId) return;
-    void apiSetDiagramFolder(ownerId, id, folderId, teamId).catch(() => {});
+    // Re-sweep on success so the diagram appears under the team in
+    // Recent / the sidebar / the move picker (the sibling team moves do
+    // the same; omitting it left the row invisible until a later bump).
+    void apiSetDiagramFolder(ownerId, id, folderId, teamId)
+      .then(() => refreshTeamLibraries())
+      .catch(() => {});
     setDiagrams((prev) => prev.filter((d) => d.id !== id));
     track('Team', 'Added', 'Diagram');
   };
