@@ -1365,18 +1365,28 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     });
 
   // Palette element-creation handlers. See useElementCreation.
-  const { addShape, addIcon, addTable, addText, addSticky, addArrow, handleCanvasDoubleClick } =
-    useElementCreation({
-      editsBlocked,
-      activeId,
-      activeTab,
-      selectedId,
-      commitTabs,
-      setSelectedId,
-      setEditingId,
-      addBoxed,
-      beginDraw,
-    });
+  const {
+    addShape,
+    addIcon,
+    addTable,
+    addText,
+    addSticky,
+    addArrow,
+    handleCanvasDoubleClick,
+    connectSourceId,
+    connectArrowTo,
+    cancelConnect,
+  } = useElementCreation({
+    editsBlocked,
+    activeId,
+    activeTab,
+    selectedId,
+    commitTabs,
+    setSelectedId,
+    setEditingId,
+    addBoxed,
+    beginDraw,
+  });
 
   // Drop a palette icon onto a shape (drag-and-drop): set its inline
   // iconId + the side the icon landed on. History-aware via commit so
@@ -1620,6 +1630,8 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     applyFormatFromSource,
     groupSourceId,
     completeGrouping,
+    connectSourceId,
+    connectArrowTo,
     tick,
     commit,
     markCheckpoint,
@@ -1726,6 +1738,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addArrow,
     addComment,
     addIcon,
+    connectSourceId,
+    connectArrowTo,
+    cancelConnect,
     dropIconOnElement,
     removeIconFromElement,
     addImage,

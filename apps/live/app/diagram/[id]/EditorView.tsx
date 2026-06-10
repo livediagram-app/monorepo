@@ -208,6 +208,8 @@ export function EditorView() {
     searchOpen,
     selectedId,
     selectElement,
+    connectSourceId,
+    cancelConnect,
     selectMarquee,
     selfParticipant,
     sendSelectedToBack,
@@ -326,6 +328,25 @@ export function EditorView() {
   });
   return (
     <div className="flex h-dvh flex-col">
+      {/* Arrow click-to-connect hint (spec/09): shown while the gesture
+          is armed so the user knows the next shape click connects, and
+          gives a click target to cancel (clicking empty canvas also
+          cancels). */}
+      {connectSourceId !== null ? (
+        <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
+          <button
+            type="button"
+            onClick={cancelConnect}
+            className="pointer-events-auto flex items-center gap-2 rounded-full border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 shadow-sm transition hover:bg-brand-100 dark:border-brand-500/40 dark:bg-brand-500/15 dark:text-brand-200"
+          >
+            Click a shape to connect the arrow
+            <span className="text-brand-300" aria-hidden>
+              |
+            </span>
+            <span className="text-brand-500 dark:text-brand-300">Cancel</span>
+          </button>
+        </div>
+      ) : null}
       {/* Zen / focus mode (spec/26) hides the header entirely so the
           canvas gets the full height. Embeds (spec/33) never show it. */}
       {zenMode || embedMode ? null : (
@@ -591,6 +612,8 @@ export function EditorView() {
         onDeleteFolder={deleteFolder}
         onMoveDiagramToFolder={moveDiagramToFolder}
         onDeselect={() => {
+          // Clicking empty canvas also cancels an armed arrow-connect.
+          cancelConnect();
           setSelectedId(null);
           setMultiSelectedIds(new Set());
           setEditingId(null);

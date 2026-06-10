@@ -136,6 +136,9 @@ type EditorDragDeps = {
   applyFormatFromSource: (targetId: string) => void;
   groupSourceId: string | null;
   completeGrouping: (targetId: string) => void;
+  // Arrow click-to-connect (spec/09): armed source + the action.
+  connectSourceId: string | null;
+  connectArrowTo: (targetId: string) => void;
   // Element setters from the editor. `tick` writes elements without
   // taking a history checkpoint (used during the move-effect's
   // 60+/sec updates); `commit` writes elements AND snapshots history
@@ -252,6 +255,13 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
 
   const beginDrag = (elementId: string, mode: DragMode, e: ReactPointerEvent) => {
     const d = depsRef.current;
+    // Arrow click-to-connect (spec/09): same "armed source, next click
+    // is the action" shape as format-paint / group below. Draws a
+    // pinned connector to the clicked shape instead of selecting it.
+    if (d.connectSourceId !== null && mode === 'move') {
+      d.connectArrowTo(elementId);
+      return;
+    }
     if (d.formatSourceId !== null && mode === 'move') {
       d.applyFormatFromSource(elementId);
       return;
