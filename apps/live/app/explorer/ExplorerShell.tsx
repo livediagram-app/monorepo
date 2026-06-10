@@ -48,6 +48,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
     shared,
     teams,
     teamFolders,
+    teamDiagrams,
     go,
     mobileNavOpen,
     setMobileNavOpen,
@@ -58,6 +59,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
     movePickerRows,
     moveDiagramToFolder,
     moveDiagramToTeam,
+    moveTeamDiagramToFolder,
     moveFolderToParent,
     teamModalOpen,
     setTeamModalOpen,
@@ -125,7 +127,24 @@ function ShellChrome({ children }: { children: ReactNode }) {
           Team destinations (spec/35) are diagrams-only: folders stay
           personal. A team pick lands in the team's Unsorted; organise
           further on the team page. */}
-      {moveTarget ? (
+      {/* Team-scoped variant first (a Recent team row's "Move within
+          team"): destinations are that team's folders + its Unsorted
+          root, nothing personal. */}
+      {moveTarget && moveTarget.kind === 'diagram' && moveTarget.team ? (
+        <MoveToFolderDialog
+          subjectName={teamDiagrams.find((d) => d.id === moveTarget.id)?.name || 'Untitled'}
+          subjectKind="diagram"
+          rootLabel="Unsorted"
+          folders={teamFolders
+            .filter((f) => f.teamId === moveTarget.team!.id)
+            .map((f) => ({ id: f.id, path: f.path }))}
+          currentFolderId={teamDiagrams.find((d) => d.id === moveTarget.id)?.folderId ?? null}
+          onPickFolder={(folderId) => {
+            moveTeamDiagramToFolder(moveTarget.id, moveTarget.team!.id, folderId);
+          }}
+          onClose={() => setMoveTarget(null)}
+        />
+      ) : moveTarget ? (
         <MoveToFolderDialog
           subjectName={
             (moveTarget.kind === 'diagram'

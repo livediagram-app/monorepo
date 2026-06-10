@@ -90,8 +90,13 @@ export function useExplorerState() {
   // so the picker can filter (a folder can't be moved into itself
   // or its descendants — the server cycle-checks but the picker
   // hides those rows up-front to make the rejection less surprising).
+  // `team` set on a diagram target = a team-library row (a Recent
+  // team row's "Move within team"): the modal scopes to that team's
+  // folders instead of the personal tree + team destinations.
   const [moveTarget, setMoveTarget] = useState<
-    { kind: 'diagram'; id: string } | { kind: 'folder'; id: string } | null
+    | { kind: 'diagram'; id: string; team?: { id: string; name: string } }
+    | { kind: 'folder'; id: string }
+    | null
   >(null);
   const moveAnchorRef = useRef<HTMLElement | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -100,7 +105,11 @@ export function useExplorerState() {
   // destinations, and the Recent list's team rows. Recent is the
   // landing section, so signed-in members effectively sweep on
   // arrival; guests (no teams) never fetch.
-  const { teamFolders, teamDiagrams } = useTeamLibrariesSweep(ownerId, teams, {
+  const {
+    teamFolders,
+    teamDiagrams,
+    refresh: refreshTeamLibraries,
+  } = useTeamLibrariesSweep(ownerId, teams, {
     enabled: searchOpen || moveTarget?.kind === 'diagram' || selected.kind === 'recent',
   });
   // Mobile section drawer: the sidebar is hidden below `sm`, so on a
@@ -289,9 +298,42 @@ export function useExplorerState() {
     track('Team', 'Added', 'Diagram');
   };
 
-  const openMovePickerForDiagram = (id: string, anchor: HTMLElement | null) => {
+  // Re-folder a team-library diagram WITHIN its team (folderId null =
+  // the team's Unsorted), then re-sweep so Recent's rows repaint.
+  // Same call the team page's own move uses (spec/35).
+  const moveTeamDiagramToFolder = (id: string, teamId: string, folderId: string | null) => {
+    if (!ownerId) return;
+    void apiSetDiagramFolder(ownerId, id, folderId, teamId)
+      .catch(() => {})
+      .then(() => refreshTeamLibraries());
+    track('Team', 'Moved', 'Diagram');
+  };
+
+  // Remove a diagram from its team: back to its OWNER's personal
+  // Unsorted (spec/35), whoever clicked. Refreshes both the team
+  // sweep (the row leaves Recent's team set) and the personal list
+  // (it reappears there when the caller IS the owner).
+  const removeDiagramFromTeam = async (id: string, name: string) => {
+    if (!ownerId) return;
+    const ok = await confirm({
+      title: 'Remove from team?',
+      message: `"${name}" will leave the team's shared diagrams and return to its owner's personal Unsorted.`,
+      confirmLabel: 'Remove',
+    });
+    if (!ok) return;
+    await apiSetDiagramFolder(ownerId, id, null, null).catch(() => {});
+    track('Team', 'Removed', 'Diagram');
+    refreshTeamLibraries();
+    void refresh(ownerId);
+  };
+
+  const openMovePickerForDiagram = (
+    id: string,
+    anchor: HTMLElement | null,
+    team?: { id: string; name: string },
+  ) => {
     moveAnchorRef.current = anchor;
-    setMoveTarget({ kind: 'diagram', id });
+    setMoveTarget(team ? { kind: 'diagram', id, team } : { kind: 'diagram', id });
   };
 
   const openMovePickerForFolder = (id: string, anchor: HTMLElement | null) => {
@@ -496,6 +538,8 @@ export function useExplorerState() {
     duplicateDiagram,
     moveDiagramToFolder,
     moveDiagramToTeam,
+    moveTeamDiagramToFolder,
+    removeDiagramFromTeam,
     moveFolderToParent,
     openMovePickerForDiagram,
     moveTarget,

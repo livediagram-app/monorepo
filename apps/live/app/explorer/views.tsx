@@ -23,6 +23,7 @@ import {
   MenuPencilIcon,
   MenuTrashIcon,
   PlusIcon,
+  TeamIcon,
 } from './icons';
 
 // Diagram rows render the api client's DiagramListItem directly
@@ -194,6 +195,8 @@ export function ListView({
   onDuplicateDiagram,
   onDeleteDiagram,
   onMoveDiagram,
+  onMoveTeamDiagram,
+  onRemoveFromTeam,
   childrenCount,
   diagramsCount,
   showOwner = false,
@@ -230,6 +233,13 @@ export function ListView({
   onDuplicateDiagram: (id: string) => void;
   onDeleteDiagram: (id: string) => void;
   onMoveDiagram: (id: string, anchor: HTMLElement | null) => void;
+  // Team-row actions (spec/35), used by Recent's team rows.
+  onMoveTeamDiagram?: (
+    id: string,
+    anchor: HTMLElement | null,
+    team: { id: string; name: string },
+  ) => void;
+  onRemoveFromTeam?: (id: string, name: string) => void;
   childrenCount: (id: string) => number;
   diagramsCount: (id: string) => number;
 }) {
@@ -275,6 +285,14 @@ export function ListView({
             onDuplicate={() => onDuplicateDiagram(d.id)}
             onDelete={() => onDeleteDiagram(d.id)}
             onMove={(anchor) => onMoveDiagram(d.id, anchor)}
+            onMoveWithinTeam={
+              d.team && onMoveTeamDiagram
+                ? (anchor) => onMoveTeamDiagram(d.id, anchor, d.team!)
+                : undefined
+            }
+            onRemoveFromTeam={
+              d.team && onRemoveFromTeam ? () => onRemoveFromTeam(d.id, d.name) : undefined
+            }
           />
         ))}
       </ul>
@@ -423,6 +441,8 @@ export function DiagramRow({
   onDuplicate,
   onDelete,
   onMove,
+  onMoveWithinTeam,
+  onRemoveFromTeam,
   showOwner = false,
 }: {
   diagram: PaneDiagram;
@@ -433,6 +453,11 @@ export function DiagramRow({
   onDuplicate: () => void;
   onDelete: () => void;
   onMove: (anchor: HTMLElement | null) => void;
+  // Team-row menu actions (spec/35). Personal rows ignore these; team
+  // rows swap the personal menu (rename / duplicate / delete / move,
+  // which are the owner's) for these member-valid ones.
+  onMoveWithinTeam?: (anchor: HTMLElement | null) => void;
+  onRemoveFromTeam?: () => void;
   // Adds the desktop Owner cell ("You", or the team name for
   // team-library rows).
   showOwner?: boolean;
@@ -543,7 +568,7 @@ export function DiagramRow({
       <span className="text-[11px] uppercase tracking-wider text-slate-400">
         {formatRelativeTime(Date.now() - diagram.savedAt)}
       </span>
-      {renaming || isTeamRow ? (
+      {renaming ? (
         <span />
       ) : (
         <button
@@ -559,7 +584,42 @@ export function DiagramRow({
           <EllipsisIcon />
         </button>
       )}
-      {menuOpen ? (
+      {menuOpen && isTeamRow ? (
+        // Team rows get the member-valid actions (spec/35): re-folder
+        // within the team, remove from the team (back to its owner's
+        // personal Unsorted), or jump to the team page. Rename /
+        // duplicate / delete stay with the owner's personal surfaces.
+        <PortalMenu anchor={menuRef.current} placement="below" onClose={() => setMenuOpen(false)}>
+          <MenuItem
+            icon={<MenuFolderIcon />}
+            label="Move within team…"
+            onClick={() => {
+              onMoveWithinTeam?.(menuRef.current);
+              setMenuOpen(false);
+            }}
+          />
+          <MenuItem
+            icon={<TeamIcon />}
+            label="Open team page"
+            onClick={() => {
+              window.location.assign(
+                `/live/explorer/team?id=${encodeURIComponent(diagram.team!.id)}${
+                  diagram.folderId ? `&folder=${encodeURIComponent(diagram.folderId)}` : ''
+                }`,
+              );
+            }}
+          />
+          <MenuItem
+            icon={<MenuTrashIcon />}
+            label="Remove from team"
+            onClick={() => {
+              onRemoveFromTeam?.();
+              setMenuOpen(false);
+            }}
+          />
+        </PortalMenu>
+      ) : null}
+      {menuOpen && !isTeamRow ? (
         <PortalMenu anchor={menuRef.current} placement="below" onClose={() => setMenuOpen(false)}>
           <MenuItem
             icon={<MenuPencilIcon />}

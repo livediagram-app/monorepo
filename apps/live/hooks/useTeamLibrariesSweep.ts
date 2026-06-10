@@ -9,7 +9,7 @@
 // requests. Best-effort: a team whose fetch fails contributes no rows
 // this round; the sweep re-arms when the team list changes.
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Folder } from '@livediagram/api-schema';
 import { apiGetTeamLibrary, type DiagramListItem } from '@/lib/api-client';
 
@@ -40,17 +40,21 @@ export function useTeamLibrariesSweep(
   ownerId: string | null,
   teams: { id: string; name: string }[],
   opts: { enabled: boolean },
-): { teamFolders: TeamFolderRow[]; teamDiagrams: TeamDiagramRow[] } {
+): { teamFolders: TeamFolderRow[]; teamDiagrams: TeamDiagramRow[]; refresh: () => void } {
   const { enabled } = opts;
   const [teamFolders, setTeamFolders] = useState<TeamFolderRow[]>([]);
   const [teamDiagrams, setTeamDiagrams] = useState<TeamDiagramRow[]>([]);
-  // One sweep per (owner, team-id set) while enabled; re-arm when the
-  // team list changes so a freshly joined team's library appears.
+  // One sweep per (owner, team-id set, nonce) while enabled; re-arms
+  // when the team list changes so a freshly joined team's library
+  // appears, and when `refresh` bumps the nonce after a mutation
+  // (move within team / remove from team) so consumers repaint.
   const sweptKeyRef = useRef<string | null>(null);
+  const [sweepNonce, setSweepNonce] = useState(0);
+  const refresh = useCallback(() => setSweepNonce((n) => n + 1), []);
 
   useEffect(() => {
     if (!enabled || !ownerId || teams.length === 0) return;
-    const key = `${ownerId}|${teams
+    const key = `${ownerId}|${sweepNonce}|${teams
       .map((t) => t.id)
       .sort()
       .join(',')}`;
@@ -90,7 +94,7 @@ export function useTeamLibrariesSweep(
     return () => {
       cancelled = true;
     };
-  }, [enabled, ownerId, teams]);
+  }, [enabled, ownerId, teams, sweepNonce]);
 
-  return { teamFolders, teamDiagrams };
+  return { teamFolders, teamDiagrams, refresh };
 }

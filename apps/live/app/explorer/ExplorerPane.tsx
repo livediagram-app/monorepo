@@ -42,6 +42,7 @@ export function ExplorerPane() {
     deleteDiagram,
     duplicateDiagram,
     openMovePickerForDiagram,
+    removeDiagramFromTeam,
     folderActions,
     shared,
     dismissShared,
@@ -132,6 +133,8 @@ export function ExplorerPane() {
           onDuplicateDiagram={(id) => void duplicateDiagram(id)}
           onDeleteDiagram={deleteDiagram}
           onMoveDiagram={openMovePickerForDiagram}
+          onMoveTeamDiagram={(id, anchor, team) => openMovePickerForDiagram(id, anchor, team)}
+          onRemoveFromTeam={(id, name) => void removeDiagramFromTeam(id, name)}
           childrenCount={(id) => childrenByParent.get(id)?.length ?? 0}
           diagramsCount={(id) => diagramsByFolder.get(id)?.length ?? 0}
           // Owner column (desktop): Recent mixes personal + team rows
