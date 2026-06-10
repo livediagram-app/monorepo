@@ -38,8 +38,10 @@ In scope:
   (`Marketing / Q3`), with the root bucket first ("All diagrams" on
   the page, "Unsorted" in the panel) and the current placement marked
   as current and disabled. Diagram moves on the page also list team
-  destinations (spec/35). It outgrew the original anchored popover
-  once nested paths and teams joined the list.
+  destinations (spec/35): each team's root plus its folders as
+  "Team / path" rows, so a diagram lands in a team folder in one
+  move. It outgrew the original anchored popover once nested paths
+  and teams joined the list.
 
 ## Explorer routes
 

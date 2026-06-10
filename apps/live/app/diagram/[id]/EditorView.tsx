@@ -288,6 +288,7 @@ export function EditorView() {
     tabAccordionsOpen,
     tabLoadErrors,
     tabs,
+    teamFolders,
     teams,
     toggleActiveTabLock,
     toggleZenMode,
@@ -802,6 +803,7 @@ export function EditorView() {
             shareCode: s.shareCode,
           }))}
           teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+          teamFolders={teamFolders}
           tabs={tabs}
           currentTabId={activeId}
           onSelectDiagram={(id) => {
@@ -813,6 +815,11 @@ export function EditorView() {
           onSelectTeam={(id) => {
             window.location.assign(
               `${window.location.origin}/live/explorer/team?id=${encodeURIComponent(id)}`,
+            );
+          }}
+          onSelectTeamFolder={(teamId, folderId) => {
+            window.location.assign(
+              `${window.location.origin}/live/explorer/team?id=${encodeURIComponent(teamId)}&folder=${encodeURIComponent(folderId)}`,
             );
           }}
           onSelectTab={(tabId) => {

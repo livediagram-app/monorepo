@@ -301,7 +301,7 @@ export function TeamPane({
                   </span>
                   <span className="block truncate text-xs text-slate-400">
                     {pending
-                      ? 'Invited — waiting for them to accept'
+                      ? 'Invited, waiting for them to accept'
                       : isSelf
                         ? (m.email ?? '')
                         : ''}

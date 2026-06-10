@@ -268,3 +268,37 @@ describe('buildSearchResults — shared diagrams + teams (spec/09 Search panel)'
     expect(out.map((g) => g.key)).toEqual(['folders']);
   });
 });
+
+describe('buildSearchResults — team folders (spec/35)', () => {
+  it('appends team-library folders to the Folders group, tagged with their team', () => {
+    const out = buildSearchResults({
+      query: 'q3',
+      diagrams: [],
+      folders: [{ id: 'pf', name: 'Q3 planning' }],
+      teamFolders: [
+        { id: 'tf', path: 'Marketing / Q3', teamId: 'team1', teamName: 'Platform' },
+        { id: 'tf2', path: 'Hiring', teamId: 'team1', teamName: 'Platform' },
+      ],
+    });
+    expect(out).toHaveLength(1);
+    const items = out[0]!.items;
+    expect(items).toHaveLength(2);
+    expect(items[0]).toMatchObject({ kind: 'folder', id: 'pf', name: 'Q3 planning' });
+    expect(items[1]).toMatchObject({
+      kind: 'folder',
+      id: 'tf',
+      name: 'Marketing / Q3',
+      team: { id: 'team1', name: 'Platform' },
+    });
+  });
+
+  it('matches team folders by team name too, so "platform" finds the team library', () => {
+    const out = buildSearchResults({
+      query: 'platform',
+      diagrams: [],
+      folders: [],
+      teamFolders: [{ id: 'tf', path: 'Hiring', teamId: 'team1', teamName: 'Platform' }],
+    });
+    expect(out[0]!.items[0]).toMatchObject({ kind: 'folder', id: 'tf' });
+  });
+});

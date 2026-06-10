@@ -270,11 +270,12 @@ export function useExplorerState() {
   };
 
   // Send one of the caller's own diagrams into a team's shared
-  // library (spec/35) — it lands in the team's Unsorted and leaves
-  // the personal lists, so the local row is dropped optimistically.
-  const moveDiagramToTeam = (id: string, teamId: string) => {
+  // library (spec/35) — straight into a team folder when the move
+  // picker chose one, else the team's Unsorted. Leaves the personal
+  // lists either way, so the local row is dropped optimistically.
+  const moveDiagramToTeam = (id: string, teamId: string, folderId: string | null = null) => {
     if (!ownerId) return;
-    void apiSetDiagramFolder(ownerId, id, null, teamId).catch(() => {});
+    void apiSetDiagramFolder(ownerId, id, folderId, teamId).catch(() => {});
     setDiagrams((prev) => prev.filter((d) => d.id !== id));
     track('Team', 'Added', 'Diagram');
   };

@@ -36,11 +36,16 @@ type MoveToFolderDialogProps = {
   // Team libraries (spec/35). Only diagram moves on the explorer
   // page pass these; omitted = no Teams section.
   teams?: { id: string; name: string }[];
+  // Folders inside those team libraries, so a diagram can land in a
+  // team folder in one move (rather than team root first, re-folder
+  // second). Rendered under each team's root row.
+  teamFolders?: { id: string; path: string; teamId: string; teamName: string }[];
   // The subject's current placement; that row gets a "current" chip
   // and is disabled (moving there is a no-op). null = root.
   currentFolderId?: string | null;
   onPickFolder: (folderId: string | null) => void;
-  onPickTeam?: (teamId: string) => void;
+  // folderId null = the team's Unsorted root.
+  onPickTeam?: (teamId: string, folderId: string | null) => void;
   onClose: () => void;
 };
 
@@ -50,6 +55,7 @@ export function MoveToFolderDialog({
   rootLabel,
   folders,
   teams,
+  teamFolders,
   currentFolderId,
   onPickFolder,
   onPickTeam,
@@ -61,7 +67,23 @@ export function MoveToFolderDialog({
   useEscape(onClose, { capture: true, stopPropagation: true });
 
   const folderRows = folders.filter((f) => matches(query, f.path));
-  const teamRows = (teams ?? []).filter((t) => matches(query, t.name));
+  // Team destinations: each team's root, then its folders as
+  // "<Team> / <path>" rows, so a diagram lands in a team folder in
+  // one move. The team name matches its whole block.
+  const teamRows = (teams ?? []).flatMap((t) => {
+    const inside = (teamFolders ?? [])
+      .filter((f) => f.teamId === t.id)
+      .map((f) => ({
+        key: `${t.id}:${f.id}`,
+        teamId: t.id,
+        folderId: f.id as string | null,
+        label: `${t.name} / ${f.path}`,
+      }));
+    return [
+      { key: t.id, teamId: t.id, folderId: null as string | null, label: t.name },
+      ...inside,
+    ].filter((row) => matches(query, row.label));
+  });
   const rootVisible = matches(query, rootLabel);
   const empty = !rootVisible && folderRows.length === 0 && teamRows.length === 0;
 
@@ -69,8 +91,8 @@ export function MoveToFolderDialog({
     onPickFolder(id);
     onClose();
   };
-  const pickTeam = (id: string) => {
-    onPickTeam?.(id);
+  const pickTeam = (teamId: string, folderId: string | null) => {
+    onPickTeam?.(teamId, folderId);
     onClose();
   };
 
@@ -153,11 +175,11 @@ export function MoveToFolderDialog({
                     <p className={sectionLabel}>Teams</p>
                     {teamRows.map((t) => (
                       <DestinationRow
-                        key={t.id}
-                        icon={<TeamIcon />}
-                        label={t.name}
+                        key={t.key}
+                        icon={t.folderId === null ? <TeamIcon /> : <FolderIcon />}
+                        label={t.label}
                         isCurrent={false}
-                        onClick={() => pickTeam(t.id)}
+                        onClick={() => pickTeam(t.teamId, t.folderId)}
                       />
                     ))}
                   </>

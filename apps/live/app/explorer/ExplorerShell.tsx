@@ -6,6 +6,7 @@ import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/AuthControls';
 import { TeamFormModal } from '@/components/TeamFormModal';
 import { MoveToFolderDialog } from '@/components/MoveToFolderDialog';
+import { useTeamFoldersForSearch } from '@/hooks/useTeamFoldersForSearch';
 import { ExplorerProvider, useExplorer } from './ExplorerContext';
 import { ExplorerSidebar } from './ExplorerSidebar';
 import { useExplorerState } from './useExplorerState';
@@ -43,6 +44,7 @@ export function ExplorerShell({ children }: { children: ReactNode }) {
 
 function ShellChrome({ children }: { children: ReactNode }) {
   const {
+    ownerId,
     diagrams,
     folders,
     shared,
@@ -62,6 +64,13 @@ function ShellChrome({ children }: { children: ReactNode }) {
     setTeamModalOpen,
     hookCreateTeam,
   } = useExplorer();
+
+  // Team-library folders (spec/35), fetched lazily for the two
+  // surfaces that list them: the search panel's Folders group and the
+  // move modal's team destinations. One sweep covers both.
+  const teamFolders = useTeamFoldersForSearch(ownerId, teams, {
+    enabled: searchOpen || moveTarget?.kind === 'diagram',
+  });
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-slate-50">
@@ -135,6 +144,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
           rootLabel="All diagrams"
           folders={movePickerRows}
           teams={moveTarget.kind === 'diagram' && teams.length > 0 ? teams : undefined}
+          teamFolders={moveTarget.kind === 'diagram' ? teamFolders : undefined}
           currentFolderId={
             moveTarget.kind === 'diagram'
               ? (diagrams.find((d) => d.id === moveTarget.id)?.folderId ?? null)
@@ -144,8 +154,8 @@ function ShellChrome({ children }: { children: ReactNode }) {
             if (moveTarget.kind === 'diagram') moveDiagramToFolder(moveTarget.id, folderId);
             else moveFolderToParent(moveTarget.id, folderId);
           }}
-          onPickTeam={(teamId) => {
-            moveDiagramToTeam(moveTarget.id, teamId);
+          onPickTeam={(teamId, folderId) => {
+            moveDiagramToTeam(moveTarget.id, teamId, folderId);
           }}
           onClose={() => setMoveTarget(null)}
         />
@@ -168,6 +178,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
           folders={folders.map((f) => ({ id: f.id, name: f.name }))}
           shared={shared.map((s) => ({ id: s.id, name: s.name, shareCode: s.shareCode }))}
           teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+          teamFolders={teamFolders}
           onSelectDiagram={(id) => {
             window.location.assign(`/live/diagram/${id}`);
           }}
@@ -182,6 +193,13 @@ function ShellChrome({ children }: { children: ReactNode }) {
           onSelectTeam={(id) => {
             go({ kind: 'team', id });
             setSearchOpen(false);
+          }}
+          onSelectTeamFolder={(teamId, folderId) => {
+            // Full load rather than go(): the team page reads the
+            // folder deep-link param at mount (spec/35).
+            window.location.assign(
+              `/live/explorer/team?id=${encodeURIComponent(teamId)}&folder=${encodeURIComponent(folderId)}`,
+            );
           }}
           onClose={() => setSearchOpen(false)}
         />

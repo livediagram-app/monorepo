@@ -21,6 +21,7 @@ type SearchPanelDiagram = { id: string; name: string };
 type SearchPanelFolder = { id: string; name: string };
 type SearchPanelShared = { id: string; name: string; shareCode: string };
 type SearchPanelTeam = { id: string; name: string };
+type SearchPanelTeamFolder = { id: string; path: string; teamId: string; teamName: string };
 
 type SearchPanelProps = {
   diagrams: SearchPanelDiagram[];
@@ -31,6 +32,9 @@ type SearchPanelProps = {
   // Teams the signed-in user belongs to (spec/32). Optional: guests
   // have none.
   teams?: SearchPanelTeam[];
+  // Team-library folders (spec/35), rendered in the Folders group
+  // with an "in <team>" suffix. Optional: guests have none.
+  teamFolders?: SearchPanelTeamFolder[];
   // When the user is inside a diagram editor these provide the
   // tab + element scope. Omitted on routes (e.g. the dashboard)
   // where only diagrams + folders should match.
@@ -45,6 +49,9 @@ type SearchPanelProps = {
   onSelectShared?: (id: string, shareCode: string) => void;
   onSelectFolder?: (id: string) => void;
   onSelectTeam?: (id: string) => void;
+  // A team-library folder pick: receives the team AND folder ids so
+  // the host can land on the team page with that folder open.
+  onSelectTeamFolder?: (teamId: string, folderId: string) => void;
   onSelectTab?: (tabId: string) => void;
   // Receives the tab id AND element id when the user picks an
   // element match. The host route is responsible for switching
@@ -61,12 +68,14 @@ export function SearchPanel({
   folders,
   shared,
   teams,
+  teamFolders,
   tabs,
   currentTabId,
   onSelectDiagram,
   onSelectShared,
   onSelectFolder,
   onSelectTeam,
+  onSelectTeamFolder,
   onSelectTab,
   onSelectElement,
   onClose,
@@ -91,8 +100,18 @@ export function SearchPanel({
   useEscape(onClose, { capture: true, stopPropagation: true });
 
   const groups = useMemo<SearchGroup[]>(
-    () => buildSearchResults({ query, diagrams, folders, shared, teams, tabs, currentTabId }),
-    [query, diagrams, folders, shared, teams, tabs, currentTabId],
+    () =>
+      buildSearchResults({
+        query,
+        diagrams,
+        folders,
+        shared,
+        teams,
+        teamFolders,
+        tabs,
+        currentTabId,
+      }),
+    [query, diagrams, folders, shared, teams, teamFolders, tabs, currentTabId],
   );
 
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
@@ -106,7 +125,9 @@ export function SearchPanel({
   const handleSelect = (item: SearchResultItem) => {
     if (item.kind === 'diagram') onSelectDiagram(item.id);
     else if (item.kind === 'shared' && onSelectShared) onSelectShared(item.id, item.shareCode);
-    else if (item.kind === 'folder' && onSelectFolder) onSelectFolder(item.id);
+    else if (item.kind === 'folder' && item.team && onSelectTeamFolder)
+      onSelectTeamFolder(item.team.id, item.id);
+    else if (item.kind === 'folder' && !item.team && onSelectFolder) onSelectFolder(item.id);
     else if (item.kind === 'team' && onSelectTeam) onSelectTeam(item.id);
     else if (item.kind === 'tab' && onSelectTab) onSelectTab(item.id);
     else if (item.kind === 'element' && onSelectElement)
@@ -208,6 +229,11 @@ export function SearchPanel({
                         {item.kind === 'element' ? (
                           <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
                             on {item.tabName}
+                          </span>
+                        ) : null}
+                        {item.kind === 'folder' && item.team ? (
+                          <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
+                            in {item.team.name}
                           </span>
                         ) : null}
                         {item.kind === 'tab' && item.isCurrent ? (

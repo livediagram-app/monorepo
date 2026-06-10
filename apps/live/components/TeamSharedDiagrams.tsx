@@ -7,6 +7,7 @@ import { FolderRow, UnsortedRow } from '@/app/explorer/views';
 import { MenuFolderIcon, PlusIcon } from '@/app/explorer/icons';
 import { DiagramIcon, EllipsisIcon, MenuTrashIcon } from '@/app/explorer/icons';
 import { MenuItem, PortalMenu } from './PortalMenu';
+import { MoveToFolderDialog } from './MoveToFolderDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTeamLibrary } from '@/hooks/useTeamLibrary';
 import { formatRelativeTime, useRelativeTimeTick } from '@/lib/relative-time';
@@ -24,12 +25,19 @@ type Spot = { kind: 'root' } | { kind: 'unsorted' } | { kind: 'folder'; id: stri
 
 export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamId: string }) {
   const lib = useTeamLibrary(ownerId, teamId);
-  const [spot, setSpot] = useState<Spot>({ kind: 'root' });
+  // Deep link: /explorer/team?id=<team>&folder=<id> opens with that
+  // folder focused (the search panel's team-folder results navigate
+  // here). Safe to read window in the initialiser: the explorer
+  // chrome only mounts post-auth on the client, never in SSG output.
+  const [spot, setSpot] = useState<Spot>(() => {
+    if (typeof window === 'undefined') return { kind: 'root' };
+    const folder = new URLSearchParams(window.location.search).get('folder');
+    return folder ? { kind: 'folder', id: folder } : { kind: 'root' };
+  });
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [moveTarget, setMoveTarget] = useState<
     { kind: 'diagram'; id: string } | { kind: 'folder'; id: string } | null
   >(null);
-  const moveAnchorRef = useRef<HTMLElement | null>(null);
   const confirm = useConfirm();
   useRelativeTimeTick();
 
@@ -63,7 +71,10 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
     ];
   })();
 
-  const folderActions = (f: Folder, anchor: HTMLElement | null) => ({
+  // The anchor survives in the row-callback signature (FolderRow's
+  // menu passes it) but the move flow is a centred modal now and
+  // ignores it.
+  const folderActions = (f: Folder, _anchor: HTMLElement | null) => ({
     rename: () => setRenamingFolderId(f.id),
     newSubfolder: () =>
       void lib.createFolder(f.id).then((created) => {
@@ -73,7 +84,6 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
         }
       }),
     move: () => {
-      moveAnchorRef.current = anchor;
       setMoveTarget({ kind: 'folder', id: f.id });
     },
     delete: async () => {
@@ -238,8 +248,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
             <TeamDiagramRow
               key={d.id}
               diagram={d}
-              onMove={(anchor) => {
-                moveAnchorRef.current = anchor;
+              onMove={() => {
                 setMoveTarget({ kind: 'diagram', id: d.id });
               }}
               onRemoveFromTeam={async () => {
@@ -256,34 +265,31 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
       )}
 
       {/* ---------- Move picker ---------- */}
+      {/* Same shared move modal as the personal surfaces (spec/15),
+          scoped to this team's tree: no Teams section (the diagram is
+          already in this team; cross-team moves go via the personal
+          picker or Remove-from-team first). */}
       {moveTarget ? (
-        <PortalMenu
-          anchor={moveAnchorRef.current}
-          placement="below"
+        <MoveToFolderDialog
+          subjectName={
+            (moveTarget.kind === 'diagram'
+              ? lib.diagrams.find((d) => d.id === moveTarget.id)?.name
+              : lib.folders.find((f) => f.id === moveTarget.id)?.name) || 'Untitled'
+          }
+          subjectKind={moveTarget.kind}
+          rootLabel="Unsorted"
+          folders={movePickerRows}
+          currentFolderId={
+            moveTarget.kind === 'diagram'
+              ? (lib.diagrams.find((d) => d.id === moveTarget.id)?.folderId ?? null)
+              : (lib.folders.find((f) => f.id === moveTarget.id)?.parentId ?? null)
+          }
+          onPickFolder={(folderId) => {
+            if (moveTarget.kind === 'diagram') void lib.moveDiagram(moveTarget.id, folderId);
+            else void lib.moveFolder(moveTarget.id, folderId);
+          }}
           onClose={() => setMoveTarget(null)}
-        >
-          <MenuItem
-            icon={<MenuFolderIcon />}
-            label="Unsorted"
-            onClick={() => {
-              if (moveTarget.kind === 'diagram') void lib.moveDiagram(moveTarget.id, null);
-              else void lib.moveFolder(moveTarget.id, null);
-              setMoveTarget(null);
-            }}
-          />
-          {movePickerRows.map((row) => (
-            <MenuItem
-              key={row.id}
-              icon={<MenuFolderIcon />}
-              label={row.path}
-              onClick={() => {
-                if (moveTarget.kind === 'diagram') void lib.moveDiagram(moveTarget.id, row.id);
-                else void lib.moveFolder(moveTarget.id, row.id);
-                setMoveTarget(null);
-              }}
-            />
-          ))}
-        </PortalMenu>
+        />
       ) : null}
     </div>
   );

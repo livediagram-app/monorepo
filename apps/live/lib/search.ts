@@ -31,7 +31,15 @@ type SearchInputShared = { id: string; name: string; shareCode: string };
 type SearchInputTeam = { id: string; name: string };
 
 export type DiagramItem = { kind: 'diagram'; id: string; name: string };
-export type FolderItem = { kind: 'folder'; id: string; name: string };
+// `team` set = a team-library folder (spec/35): the panel renders an
+// "in <team>" suffix and picking it lands on the team page with that
+// folder open. Personal folders leave it unset.
+export type FolderItem = {
+  kind: 'folder';
+  id: string;
+  name: string;
+  team?: { id: string; name: string };
+};
 // The remaining variants are union members of the exported
 // `SearchResultItem`. Callers narrow via the `kind` discriminator
 // rather than importing the individual variants by name, so the
@@ -75,6 +83,11 @@ type SearchInput = {
   // Diagrams shared with the current owner ("Shared with you").
   // Optional: surfaces without the list omit it.
   shared?: SearchInputShared[];
+  // Team-library folders (spec/35), breadcrumb-pathed + tagged with
+  // their team. Appended to the Folders group after personal folders,
+  // with their own cap. Optional: guests have none and surfaces fetch
+  // them lazily.
+  teamFolders?: { id: string; path: string; teamId: string; teamName: string }[];
   // Teams the signed-in user belongs to (spec/32). Optional: guests
   // have none and surfaces fetch the list lazily.
   teams?: SearchInputTeam[];
@@ -94,7 +107,7 @@ export function matches(needle: string, hay: string): boolean {
 }
 
 export function buildSearchResults(input: SearchInput): SearchGroup[] {
-  const { query, diagrams, folders, shared, teams, tabs, currentTabId } = input;
+  const { query, diagrams, folders, shared, teamFolders, teams, tabs, currentTabId } = input;
   const q = query.trim();
   const groups: SearchGroup[] = [];
 
@@ -129,12 +142,34 @@ export function buildSearchResults(input: SearchInput): SearchGroup[] {
     });
   }
 
+  // One Folders group, personal first then team-library folders
+  // (spec/35), each capped separately so a folder-heavy team can't
+  // crowd out the personal tree (or vice versa).
   const folderMatches = folders.filter((f) => matches(q, f.name)).slice(0, FOLDER_LIMIT);
-  if (folderMatches.length > 0) {
+  const teamFolderMatches = (teamFolders ?? [])
+    .filter((f) => matches(q, f.path) || matches(q, f.teamName))
+    .slice(0, FOLDER_LIMIT);
+  if (folderMatches.length + teamFolderMatches.length > 0) {
     groups.push({
       key: 'folders',
       label: 'Folders',
-      items: folderMatches.map((f) => ({ kind: 'folder', id: f.id, name: f.name })),
+      items: [
+        ...folderMatches.map(
+          (f): FolderItem => ({
+            kind: 'folder',
+            id: f.id,
+            name: f.name,
+          }),
+        ),
+        ...teamFolderMatches.map(
+          (f): FolderItem => ({
+            kind: 'folder',
+            id: f.id,
+            name: f.path,
+            team: { id: f.teamId, name: f.teamName },
+          }),
+        ),
+      ],
     });
   }
 

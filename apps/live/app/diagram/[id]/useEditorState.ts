@@ -96,6 +96,7 @@ import { useElementStyle } from '@/hooks/useElementStyle';
 import { useShapeDrawing } from '@/hooks/useShapeDrawing';
 import { useShareLinks } from '@/hooks/useShareLinks';
 import { useTabActions } from '@/hooks/useTabActions';
+import { useTeamFoldersForSearch } from '@/hooks/useTeamFoldersForSearch';
 import { useTeams } from '@/hooks/useTeams';
 import { useTabFolders } from '@/hooks/useTabFolders';
 import { useTabCanvas } from '@/hooks/useTabCanvas';
@@ -770,6 +771,11 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // guest sessions and non-searching sessions never pay the request;
   // guests can't have teams, so the gate also requires a Clerk id.
   const { teams } = useTeams(clerkUserId ?? null, {
+    enabled: dialogs.searchOpen && !!clerkUserId,
+  });
+  // Their libraries' folders too (spec/35): one sweep per team list,
+  // also search-open gated. See useTeamFoldersForSearch.
+  const teamFolders = useTeamFoldersForSearch(clerkUserId ?? null, teams, {
     enabled: dialogs.searchOpen && !!clerkUserId,
   });
 
@@ -1910,6 +1916,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     tabAccordionsOpen,
     tabLoadErrors,
     tabs,
+    teamFolders,
     teams,
     toggleActiveTabLock,
     toggleZenMode,
