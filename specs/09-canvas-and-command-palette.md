@@ -466,6 +466,21 @@ All template elements are inserted via the history hook (commit), so they're und
 
 Below the templates, a 6-column responsive grid of theme cards (3-col on narrow viewports) lets the user pick a preset theme — exactly the same `THEMES` catalogue the [palette's Theme accordion](#current-tab-section) uses. Defaults to **Brand**. Confirming with **Create diagram** applies the chosen theme to the new tab (background colour + pattern + pattern colour + theme id), which then affects the default colours of every element added afterwards.
 
+## Search panel
+
+A global search modal (`apps/live/components/SearchPanel.tsx`; matching logic in `apps/live/lib/search.ts`, unit-tested in `search.test.ts`). Opened from the TabBar footer Search button in the editor and from the sidebar Search row on `/explorer`. Case-insensitive substring matching; the empty query lists everything (browse-first, narrow by typing). Esc and outside-click close; arrows + Enter drive keyboard selection.
+
+Result sections, in order, each capped (8 per section, 12 for elements):
+
+1. **Diagrams** — the owner's diagram names. Picking one opens it.
+2. **Shared with you** — diagrams shared with the current owner, matched by name. Rows carry their still-live share code; picking one opens the visitor URL (`/live/diagram/<id>?s=<code>`), the only path a non-owner can open the diagram on.
+3. **Folders** — folder names. In the editor this opens nothing yet; on `/explorer` it selects the folder.
+4. **Teams** — teams the signed-in user belongs to (spec/32), matched by name. Picking one lands on `/explorer/team?id=<id>`. Guests have none; the editor fetches the list lazily the first time search opens so non-searching sessions never pay the request.
+5. **Tabs** — the open diagram's tab names (editor only; `/explorer` has no active diagram).
+6. **Elements** — the open diagram's element text (editor only). Matches element labels; **tables match by cell text** (tables have no single label), surfacing the matching cell as the row label. Blank-labelled elements are unmatchable. Opening the panel triggers a **load-all-tabs prefetch**: per-tab lazy loading (spec/13) means unvisited tabs are empty placeholders locally, so search pulls every remaining tab's content in one parallel best-effort sweep — without it, element search silently misses tabs the user hasn't opened this session.
+
+Out of scope (deliberate): element text in **other** diagrams (issue #13 — needs a server-side index), comments, notes, element links, the activity log, and participant names.
+
 ## Comments
 
 Every boxed element can carry a **comment thread**. Stored as `commentThread?: { comments: Comment[]; resolved: boolean }` on the element. Each `Comment` carries the text, `createdAt` ms timestamp, and a denormalised copy of the author's `name` + `color` taken from the current [participant](#welcome--identity-section). Author is recorded at write-time so renaming yourself later doesn't rewrite historical comments.

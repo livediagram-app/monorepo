@@ -167,6 +167,7 @@ export function EditorView() {
     linkActiveTabTo,
     linkPickerOpenForId,
     livePresence,
+    loadAllTabs,
     loadedTabIds,
     makeCopy,
     moveDiagramToFolder,
@@ -287,6 +288,7 @@ export function EditorView() {
     tabAccordionsOpen,
     tabLoadErrors,
     tabs,
+    teams,
     toggleActiveTabLock,
     toggleZenMode,
     zenMode,
@@ -780,17 +782,38 @@ export function EditorView() {
             setSettingsOpen(true);
             track('UI', 'Opened', 'Settings');
           }}
-          onOpenSearch={() => setSearchOpen(true)}
+          onOpenSearch={() => {
+            setSearchOpen(true);
+            // Element search walks local tab state; pull every
+            // not-yet-visited tab's content so matches cover the
+            // whole diagram (spec/09 "Search panel"). Best-effort
+            // and fire-and-forget: results refresh as tabs land.
+            void loadAllTabs();
+          }}
         />
       )}
       {searchOpen ? (
         <SearchPanel
           diagrams={diagramList.map((d) => ({ id: d.id, name: d.name }))}
           folders={folders.map((f) => ({ id: f.id, name: f.name }))}
+          shared={sharedDiagrams.map((s) => ({
+            id: s.id,
+            name: s.name,
+            shareCode: s.shareCode,
+          }))}
+          teams={teams.map((t) => ({ id: t.id, name: t.name }))}
           tabs={tabs}
           currentTabId={activeId}
           onSelectDiagram={(id) => {
             openDiagram(id);
+          }}
+          onSelectShared={(id, shareCode) => {
+            openDiagram(id, shareCode);
+          }}
+          onSelectTeam={(id) => {
+            window.location.assign(
+              `${window.location.origin}/live/explorer/team?id=${encodeURIComponent(id)}`,
+            );
           }}
           onSelectTab={(tabId) => {
             setActiveId(tabId);

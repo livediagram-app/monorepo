@@ -1,4 +1,10 @@
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from 'react';
 import type { Tab } from '@livediagram/diagram';
 import { apiLoadTab } from '@/lib/api-client';
 
@@ -8,12 +14,20 @@ import { apiLoadTab } from '@/lib/api-client';
 // back to the placeholder so the editor doesn't lock up. The loaded-set
 // ref + its reactive mirror are seeded by hydration and passed in, as is
 // resetTabs (the history reset) and the remote-update guard ref.
+//
+// Also returns `loadAllTabs`, the search panel's prefetch (spec/09
+// "Search panel"): element search walks local tab state, so unvisited
+// placeholders would silently miss; opening search pulls every
+// remaining tab's content in one parallel sweep.
 export function usePerTabLoad(opts: {
   hydrated: boolean;
   diagramId: string | null;
   activeId: string;
   selfId: string;
   sessionShareCode: string | null;
+  // Latest tabs, mirrored to a ref by the page so loadAllTabs can
+  // enumerate ids without re-creating itself on every tabs change.
+  tabsRef: MutableRefObject<Tab[]>;
   loadedTabIdsRef: MutableRefObject<Set<string>>;
   setLoadedTabIds: Dispatch<SetStateAction<Set<string>>>;
   // Tabs whose lazy fetch FAILED (network / 5xx). Drives the canvas
@@ -31,6 +45,7 @@ export function usePerTabLoad(opts: {
     activeId,
     selfId,
     sessionShareCode,
+    tabsRef,
     loadedTabIdsRef,
     setLoadedTabIds,
     setTabLoadErrors,
@@ -131,4 +146,48 @@ export function usePerTabLoad(opts: {
       if (!merged) loadedTabIds.delete(targetId);
     };
   }, [hydrated, diagramId, activeId, selfId, sessionShareCode, retryNonce, resetTabs]);
+
+  // One-shot parallel fetch of every not-yet-loaded tab, so element
+  // search covers the whole diagram instead of just the tabs the user
+  // happened to visit. Same merge semantics as the single-tab effect
+  // above (skip user-edited tabs, keep the local folder, flag the
+  // remote-update guard). Best-effort: a failed fetch just drops the
+  // id back out of the loaded-set so the normal visit-time load (with
+  // its error overlay) retries; search shouldn't surface blocking
+  // errors for tabs the user isn't even looking at.
+  const loadAllTabs = useCallback(async () => {
+    if (!hydrated || !diagramId) return;
+    const loadedTabIds = loadedTabIdsRef.current;
+    const pending = tabsRef.current.map((t) => t.id).filter((id) => !loadedTabIds.has(id));
+    if (pending.length === 0) return;
+    pending.forEach((id) => loadedTabIds.add(id));
+    await Promise.all(
+      pending.map(async (targetId) => {
+        try {
+          const tab = await apiLoadTab(selfId, diagramId, targetId, sessionShareCode);
+          if (tab) {
+            let didMerge = false;
+            resetTabs((prev) =>
+              prev.map((t) => {
+                if (t.id !== tab.id) return t;
+                const userHasEdited = t.elements.length > 0 || t.templateChosen === true;
+                if (userHasEdited) return t;
+                didMerge = true;
+                return { ...tab, folder: t.folder };
+              }),
+            );
+            if (didMerge) remoteUpdateRef.current = true;
+          }
+          // 404s count as loaded too, same as the visit-time path: the
+          // tab genuinely has no server content.
+          setLoadedTabIds((prev) => (prev.has(targetId) ? prev : new Set(prev).add(targetId)));
+        } catch {
+          loadedTabIds.delete(targetId);
+        }
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, diagramId, selfId, sessionShareCode, resetTabs]);
+
+  return { loadAllTabs };
 }

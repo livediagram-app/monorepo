@@ -96,6 +96,7 @@ import { useElementStyle } from '@/hooks/useElementStyle';
 import { useShapeDrawing } from '@/hooks/useShapeDrawing';
 import { useShareLinks } from '@/hooks/useShareLinks';
 import { useTabActions } from '@/hooks/useTabActions';
+import { useTeams } from '@/hooks/useTeams';
 import { useTabFolders } from '@/hooks/useTabFolders';
 import { useTabCanvas } from '@/hooks/useTabCanvas';
 import { useEditorKeyboardShortcuts } from '@/hooks/useEditorKeyboardShortcuts';
@@ -737,19 +738,39 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     roomRef.current?.send({ kind: 'op', op: { kind: 'tab-focus', tabId: activeId } });
   }, [hydrated, diagramId, diagramShareable, activeId]);
 
-  // Lazy fetch the active tab's full payload on first open. See usePerTabLoad.
-  usePerTabLoad({
+  // Latest tabs mirrored to a ref so timer-driven callbacks (e.g.
+  // the opacity debounce below) can read the post-debounce state
+  // rather than whatever was in scope when the timer was scheduled.
+  // Declared before usePerTabLoad so its loadAllTabs prefetch can
+  // enumerate the current tab ids through the same mirror.
+  const tabsRef = useRef(tabs);
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
+
+  // Lazy fetch the active tab's full payload on first open, plus the
+  // search panel's load-everything prefetch. See usePerTabLoad.
+  const { loadAllTabs } = usePerTabLoad({
     hydrated,
     diagramId,
     activeId,
     selfId: selfParticipant.id,
     sessionShareCode,
+    tabsRef,
     loadedTabIdsRef,
     setLoadedTabIds,
     setTabLoadErrors,
     retryNonce: tabLoadRetryNonce,
     remoteUpdateRef,
     resetTabs,
+  });
+
+  // Teams the signed-in user belongs to (spec/32), surfaced in the
+  // search panel. Fetched lazily the first time search opens so
+  // guest sessions and non-searching sessions never pay the request;
+  // guests can't have teams, so the gate also requires a Clerk id.
+  const { teams } = useTeams(clerkUserId ?? null, {
+    enabled: dialogs.searchOpen && !!clerkUserId,
   });
 
   // Outbound realtime broadcasters (cursor + laser) and the local
@@ -769,14 +790,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // reads each pointer-move) lives in useEditorViewport. The hook
   // is invoked further down, once `activeTab` is in scope; it
   // also owns `getViewportCenter` and `fitToScreen`.
-
-  // Latest tabs mirrored to a ref so timer-driven callbacks (e.g.
-  // the opacity debounce below) can read the post-debounce state
-  // rather than whatever was in scope when the timer was scheduled.
-  const tabsRef = useRef(tabs);
-  useEffect(() => {
-    tabsRef.current = tabs;
-  }, [tabs]);
 
   // Same trick for selfParticipant — the WS effect intentionally
   // omits selfParticipant from its dep list (re-opening the socket
@@ -1793,6 +1806,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     openCellLinkPicker,
     applyCellLink,
     livePresence,
+    loadAllTabs,
     loadedTabIds,
     loadingDiagram,
     makeCopy,
@@ -1896,6 +1910,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     tabAccordionsOpen,
     tabLoadErrors,
     tabs,
+    teams,
     toggleActiveTabLock,
     toggleZenMode,
     toggleAspectLockSelected,

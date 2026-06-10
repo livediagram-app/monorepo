@@ -8,20 +8,29 @@ import { useEscape } from '@/hooks/useEscape';
 
 // Global search panel: triggered from a footer button, blurs the
 // canvas behind it, pops up near the top-centre. The scope is
-// contextual:
+// contextual (spec/09 "Search panel"):
 //   - Always: diagrams (user's list) + folders.
+//   - When supplied: "Shared with you" diagrams + teams (spec/32).
 //   - When inside a diagram: also tabs + elements on the current
-//     diagram.
+//     diagram (table text matches by cell).
 // Selection navigates to the right surface (open the diagram /
-// switch tabs / select the element). Esc + outside-click close;
-// Enter on the first match picks it.
+// switch tabs / select the element / jump to the team). Esc +
+// outside-click close; Enter on the first match picks it.
 
 type SearchPanelDiagram = { id: string; name: string };
 type SearchPanelFolder = { id: string; name: string };
+type SearchPanelShared = { id: string; name: string; shareCode: string };
+type SearchPanelTeam = { id: string; name: string };
 
 type SearchPanelProps = {
   diagrams: SearchPanelDiagram[];
   folders: SearchPanelFolder[];
+  // Diagrams shared with the current owner. Optional so surfaces
+  // without the list (or guests with an empty one) can omit it.
+  shared?: SearchPanelShared[];
+  // Teams the signed-in user belongs to (spec/32). Optional: guests
+  // have none.
+  teams?: SearchPanelTeam[];
   // When the user is inside a diagram editor these provide the
   // tab + element scope. Omitted on routes (e.g. the dashboard)
   // where only diagrams + folders should match.
@@ -31,7 +40,11 @@ type SearchPanelProps = {
   // their current view).
   currentTabId?: string;
   onSelectDiagram: (id: string) => void;
+  // Receives the diagram id AND its share code: a non-owner can only
+  // open the diagram on the visitor URL the code builds.
+  onSelectShared?: (id: string, shareCode: string) => void;
   onSelectFolder?: (id: string) => void;
+  onSelectTeam?: (id: string) => void;
   onSelectTab?: (tabId: string) => void;
   // Receives the tab id AND element id when the user picks an
   // element match. The host route is responsible for switching
@@ -46,10 +59,14 @@ type SearchPanelProps = {
 export function SearchPanel({
   diagrams,
   folders,
+  shared,
+  teams,
   tabs,
   currentTabId,
   onSelectDiagram,
+  onSelectShared,
   onSelectFolder,
+  onSelectTeam,
   onSelectTab,
   onSelectElement,
   onClose,
@@ -74,8 +91,8 @@ export function SearchPanel({
   useEscape(onClose, { capture: true, stopPropagation: true });
 
   const groups = useMemo<SearchGroup[]>(
-    () => buildSearchResults({ query, diagrams, folders, tabs, currentTabId }),
-    [query, diagrams, folders, tabs, currentTabId],
+    () => buildSearchResults({ query, diagrams, folders, shared, teams, tabs, currentTabId }),
+    [query, diagrams, folders, shared, teams, tabs, currentTabId],
   );
 
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
@@ -88,7 +105,9 @@ export function SearchPanel({
 
   const handleSelect = (item: SearchResultItem) => {
     if (item.kind === 'diagram') onSelectDiagram(item.id);
+    else if (item.kind === 'shared' && onSelectShared) onSelectShared(item.id, item.shareCode);
     else if (item.kind === 'folder' && onSelectFolder) onSelectFolder(item.id);
+    else if (item.kind === 'team' && onSelectTeam) onSelectTeam(item.id);
     else if (item.kind === 'tab' && onSelectTab) onSelectTab(item.id);
     else if (item.kind === 'element' && onSelectElement)
       onSelectElement(item.tabId, item.elementId);
@@ -139,7 +158,9 @@ export function SearchPanel({
             }}
             onKeyDown={handleInputKey}
             placeholder={
-              tabs ? 'Search diagrams, folders, tabs, elements...' : 'Search diagrams, folders...'
+              tabs
+                ? 'Search diagrams, folders, teams, tabs, elements...'
+                : 'Search diagrams, folders, teams...'
             }
             className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
@@ -211,6 +232,44 @@ function SearchResultIcon({ item }: { item: SearchResultItem }) {
   // Compact glyph per result kind so users can scan the list by
   // shape without reading labels.
   const stroke = 'currentColor';
+  if (item.kind === 'shared') {
+    // Diagram rect + an inbound arrow: someone else's diagram that
+    // was shared into this account.
+    return (
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.4"
+        aria-hidden
+      >
+        <rect x="5" y="5" width="8" height="8" rx="1.5" />
+        <path d="M2 2l4 4M6 3v3h-3" />
+      </svg>
+    );
+  }
+  if (item.kind === 'team') {
+    // Two heads: a team.
+    return (
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        aria-hidden
+      >
+        <circle cx="6" cy="6" r="2.2" />
+        <path d="M2.5 13c.5-2.3 1.7-3.5 3.5-3.5s3 1.2 3.5 3.5" />
+        <circle cx="11.5" cy="6.5" r="1.8" />
+        <path d="M11 9.6c1.6.1 2.6 1.2 3 3" />
+      </svg>
+    );
+  }
   if (item.kind === 'diagram') {
     return (
       <svg
