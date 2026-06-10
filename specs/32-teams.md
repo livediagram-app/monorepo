@@ -27,7 +27,12 @@ Teams are keyed by Clerk user ids and invites are keyed by email, so the whole f
 
 ### Email claim
 
-Connect-on-signup needs the user's email **server-side and verified**. The worker reads an optional `email` claim from the verified Clerk session token (`apps/api/src/auth/clerk.ts`); it never trusts a client-supplied email. The deployment must add the claim to the **session token** (Clerk dashboard → Sessions → Customize session token → `{"email": "{{user.primary_email_address}}"}`). It has to be the session token, not a named JWT template: the frontend authenticates with `getToken()` (no template), so a named template is never requested and configuring one does nothing. When the claim is absent (a default Clerk session token, or a deployment that hasn't configured it) everything still works except invite auto-connection, and the creator's member row stores no email.
+Connect-on-signup needs the user's email so a pending invite can be matched to the person. The worker resolves it from two sources, in order:
+
+1. **The verified `email` claim on the Clerk session token** (`apps/api/src/auth/clerk.ts`). Adding it is optional: Clerk dashboard → Sessions → Customize session token → `{"email": "{{user.primary_email_address}}"}`. It has to be the session token, not a named JWT template — the frontend authenticates with `getToken()` (no template), so a named template is never requested. When present this is the trusted path.
+2. **The `X-Owner-Email` request header** — the frontend forwards the signed-in user's Clerk-verified `primaryEmailAddress` on every authenticated request (`setEmailProvider`). The worker falls back to it when the token carries no claim, so invites connect with **zero Clerk-dashboard config** out of the box.
+
+The header is consulted **only** for invite matching, never for ownership / write auth (those stay JWT-`sub` based). The trade-off: a signed-in user could hand-craft a request with someone else's address and surface / accept a team invite addressed to it. The session-token claim (path 1) closes that gap for deployments that want it; path 2 keeps the common case working without setup. A guest (no Clerk session) has no email either way, so invites are signed-in only.
 
 ## Invites, connect-on-sign-in, and accept/decline
 

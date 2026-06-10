@@ -52,9 +52,19 @@ export default {
     // legacy `X-Owner-Id` header.
     const clerkIdentity = await getClerkIdentity(env, request);
     const clerkUserId = clerkIdentity?.userId ?? null;
-    // Verified email claim (spec/32) — null unless the deployment's
-    // Clerk JWT template carries it. Only teams consumes it.
-    const clerkEmail = clerkIdentity?.email ?? null;
+    // Email used for team-invite matching (spec/32). Prefer the
+    // verified `email` claim when the session token carries it;
+    // otherwise fall back to the browser-supplied `X-Owner-Email`
+    // (only meaningful with a verified Clerk session — guests can't
+    // have invites). This is consulted ONLY for invite connection,
+    // never for ownership / write auth (those stay JWT-`sub` based),
+    // so a forged header can at most surface or claim a team invite
+    // addressed to the forged address — a documented trade-off for
+    // not requiring the email to be wired into the Clerk session token.
+    const headerEmail = clerkUserId
+      ? request.headers.get('X-Owner-Email')?.trim().toLowerCase() || null
+      : null;
+    const clerkEmail = (clerkIdentity?.email ?? null) || headerEmail;
     const resolveOwner = (): string | null => clerkUserId ?? request.headers.get('X-Owner-Id');
 
     // Per-owner write rate limit. Gates POST / PUT / DELETE at a
