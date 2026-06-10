@@ -35,7 +35,7 @@ view-only visitors (focusing is read-only).
   fullscreen / expand icon ("Zen mode"); inside zen it shows a compress
   icon ("Exit zen mode"). Keeping entry and exit in the same place means
   the user looks to one spot for the mode toggle, and it keeps the
-  command-palette tool row (Pan / Select / Laser) to the three actual
+  command-palette tool row (Select / Hand / Laser) to the three actual
   canvas tools rather than overflowing a fourth button.
 - **Keyboard:** `Z` toggles it on and off; `Escape` exits when active.
   The binding obeys the per-device keyboard-shortcuts toggle and the
@@ -59,7 +59,7 @@ and minimal-panel toggles.
   welcome flow — each `welcomeOpen ? null` / `welcomeOpen || readOnly`
   guard in `CanvasChrome` also checks `zenMode`. The header + tab bar are
   hidden in `EditorView`.
-- Not a `CanvasTool` (Pan / Select / Laser are mutually-exclusive cursor
+- Not a `CanvasTool` (Select / Hand / Laser are mutually-exclusive cursor
   modes); zen mode is an orthogonal visibility flag, so it sits beside
   the tool row rather than inside the tool group.
 

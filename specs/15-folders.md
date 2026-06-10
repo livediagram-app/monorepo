@@ -34,31 +34,30 @@ In scope:
 - A per-diagram-row "Move to folder…" menu item. The picker is a
   centred modal (`MoveToFolderDialog`, LinkPickerDialog-styled, shared
   by the /explorer page and the floating Explorer panel): a filter
-  input over a flat list of every folder by breadcrumb path
-  (`Marketing / Q3`), with the root bucket first ("All diagrams" on
-  the page, "Unsorted" in the panel) and the current placement marked
-  as current and disabled. Diagram moves on the page also list team
-  destinations (spec/35): each team's root plus its folders as
-  "Team / path" rows, so a diagram lands in a team folder in one
-  move. It outgrew the original anchored popover once nested paths
-  and teams joined the list.
+  input over **one indented, collapsible tree** of destinations — the
+  personal root ("My Work" on the page, "Unsorted" in the panel) with
+  its folders nested beneath, and each team nested under its own name
+  (spec/35), with folders indented under it (no "A / B" breadcrumb
+  strings and no repeated team-name prefixes). The current placement is
+  marked and disabled. It outgrew the original anchored popover once
+  nested folders and teams joined the picker.
 
 ## Explorer routes
 
 Every Explorer section is its own page under `/live/explorer` (the chrome — header, sidebar tree, mobile drawer — is a shared layout, so the sidebar and its loaded data persist across section navigations):
 
-| Section           | Route                        |
-| ----------------- | ---------------------------- |
-| Recent diagrams   | `/explorer/recent` (default) |
-| Shared with me    | `/explorer/shared`           |
-| All diagrams      | `/explorer/all`              |
-| Unsorted          | `/explorer/unsorted`         |
-| A folder          | `/explorer/folder?id=<id>`   |
-| A team (spec/32)  | `/explorer/team?id=<id>`     |
-| Invites (spec/32) | `/explorer/invites`          |
-| Image gallery     | `/explorer/images`           |
+| Section           | Route                                                       |
+| ----------------- | ----------------------------------------------------------- |
+| Recent diagrams   | `/explorer/recent` (default)                                |
+| Shared with you   | `/explorer/shared`                                          |
+| All diagrams      | `/explorer/all` (route kept for deep links; no sidebar row) |
+| Unsorted          | `/explorer/unsorted`                                        |
+| A folder          | `/explorer/folder?id=<id>`                                  |
+| A team (spec/32)  | `/explorer/team?id=<id>`                                    |
+| Invites (spec/32) | `/explorer/invites`                                         |
+| Image gallery     | `/explorer/images`                                          |
 
-`/live/explorer` itself redirects to `/explorer/recent` (worker-level 302 in production, client replace in dev). Folder and team ids ride the **query string**, not a path segment: `output: 'export'` can't enumerate user-minted ids, and the `/diagram/<id>` placeholder-rewrite workaround (spec/14) is deliberately kept single-purpose. Sidebar row labels are sentence case ("Recent diagrams", "Image gallery"). Section headers, top to bottom: **"Quick find"** (Recent diagrams + Shared with me), **"My Work"** (the personal tree, contrasting with team libraries, spec/35), **"Teams"** (spec/32), and **"Library"**.
+`/live/explorer` itself redirects to `/explorer/recent` (worker-level 302 in production, client replace in dev). Folder and team ids ride the **query string**, not a path segment: `output: 'export'` can't enumerate user-minted ids, and the `/diagram/<id>` placeholder-rewrite workaround (spec/14) is deliberately kept single-purpose. Sidebar row labels are sentence case ("Recent diagrams", "Image gallery"). Section headers, top to bottom: **"Quick find"** (Recent diagrams + Shared with you), **"My Work"** (the personal tree — Unsorted + the root folders directly, no "All diagrams" parent row; contrasts with team libraries, spec/35), **"Teams"** (spec/32), and **"Library"**.
 
 Out of scope (V1):
 
@@ -154,8 +153,9 @@ beats "browse my whole library."
   startling enough that the confirmation is worth the extra click;
   both the editor and the standalone `/explorer` page wire delete
   through the same prompt.
-- Diagram-row ellipsis menu gains a "Move to folder…" sub-action
-  that lists every folder by breadcrumb path + Unsorted as choices.
+- Diagram-row ellipsis menu gains a "Change Folder" sub-action that
+  opens the indented destination tree (personal folders + Unsorted,
+  and teams with their folders — see the move-picker note above).
   Picking one calls `PUT /api/diagrams/:id/folder`.
 - **Drag-and-drop**: diagram rows are HTML5-draggable. Drop targets
   are folder headers (any nested depth) and the synthetic Unsorted
@@ -183,17 +183,21 @@ breadcrumb + list view on the right shows the focused folder's
 contents.
 
 - **Sidebar (left, fixed width):**
-  - "Recent" — virtual entry, last N most-recently-saved diagrams.
-  - "All diagrams" — the root. Children of the root render below it
-    as a recursive tree with chevron expand/collapse and indented
-    nesting. Each folder row carries an ellipsis menu with Rename,
-    New subfolder, Move to folder, Delete.
+  - "Recent" — virtual entry, last N most-recently-saved diagrams
+    (personal + team + shared-with-you, interleaved by recency), with
+    a count badge.
+  - **"My Work"** — there is no "All diagrams" parent row; Unsorted and
+    the root folders render directly under the heading as a recursive
+    tree with chevron expand/collapse and indented nesting. Each folder
+    row carries an ellipsis menu with Rename, New subfolder, Change
+    Folder, Delete. Teams (under the "Teams" heading) likewise expand
+    to reveal their folders.
   - "Image Gallery" (under a "Library" section heading) — virtual
     entry that opens the per-owner image gallery on the right
     pane. Always present (the section behind it degrades to an
     empty state when the api worker reports 503, e.g. a self-host
     without R2).
-  - "Shared with me" — virtual entry, only present when the user
+  - "Shared with you" — virtual entry, only present when the user
     has at least one accepted share.
 - **Right pane:**
   - Breadcrumb showing the path from "All diagrams" through every

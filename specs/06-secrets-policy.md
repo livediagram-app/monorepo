@@ -32,7 +32,7 @@ Future cloud features may add: `CLERK_SECRET_KEY` (if backend Clerk Admin API ca
 Some keys are designed to be public; they go in `NEXT_PUBLIC_*` vars and end up in the bundle:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk publishable key.
-- Public URLs (`NEXT_PUBLIC_API_URL`, etc.).
+- Public URLs (`NEXT_PUBLIC_API_BASE`, etc.).
 
 If a value's documentation calls it "public", "publishable", or "client", it's fine for client bundles.
 

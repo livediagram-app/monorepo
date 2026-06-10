@@ -104,7 +104,7 @@ Added to the existing routes in [11-api.md](11-api.md). All JSON except where no
 
 ### Palette
 
-A new **Image** entry in the Palette's **Tools** accordion (see [09](09-canvas-and-command-palette.md)). Same staggered-placement + auto-select behaviour as the other Add buttons. Drops a 200 × 150 `ImageElement` with `imageId: null` at the centre of the visible viewport.
+A new **Image** entry in the Palette's **Tools** accordion (see [09](09-canvas-and-command-palette.md)). Like the other draw-capable tools, picking it arms the draw-to-size gesture: a tap drops a default-size `ImageElement` (`imageId: null`) and a drag sizes it, then the image picker opens to attach a file.
 
 ### Placeholder rendering
 
@@ -127,7 +127,7 @@ When the picker is opened for an element that already has an attached image, a *
 
 ### Resize behaviour
 
-Image elements gain a "Reset to natural size" entry in the right-click context menu, which sets `width = naturalWidth, height = naturalHeight`. Aspect lock defaults to true on first paint (the user can explicitly unlock via the Shape accordion's existing aspect-lock toggle, which works on ImageElement the same way it works on shapes).
+`naturalWidth` / `naturalHeight` are captured on load so a future "Reset to natural size" affordance can snap back to them — but that menu entry is **not yet wired** (the right-click context menu currently exposes Link / Remove icon / layer order / Note / Comment only). Aspect lock defaults to true on first paint (the user can explicitly unlock via the Shape accordion's existing aspect-lock toggle, which works on ImageElement the same way it works on shapes).
 
 ## Self-host degradation
 

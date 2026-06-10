@@ -27,8 +27,9 @@ Any element on any canvas can **link to** something on another tab:
 
 - A link can target **a tab** (open that tab when clicked).
 - A link can target **a specific element on another tab** (open that tab and focus/scroll-to that element).
+- A link can target **another diagram** (`diagram` kind) or **an external URL** (`url` kind, opens in a new tab).
 
-Activating a link is a navigation action inside the diagram, not a URL. Each linked element renders a small "Follow link" badge in its selection popover.
+Activating a tab/element/diagram link is a navigation action; a `url` link opens the external address. Each linked element renders a small "Follow link" badge whose tooltip names the target (spec/09).
 
 ### Use cases
 
@@ -80,7 +81,9 @@ type Element =
 
 type ElementLink =
   | { kind: 'tab'; tabId: TabId }
-  | { kind: 'element'; tabId: TabId; elementId: ElementId };
+  | { kind: 'element'; tabId: TabId; elementId: ElementId }
+  | { kind: 'diagram'; diagramId: string; name: string }
+  | { kind: 'url'; url: string }; // external address, opens in a new tab
 ```
 
 Persistence shape lives in [11-api.md](11-api.md) (per-tab rows + diagram-meta rows in D1). The `apps/live/lib/api-client.ts` boundary serialises this same in-memory shape against the api worker.
@@ -95,4 +98,4 @@ Element IDs are diagram-scoped so cross-tab links are stable even if elements mo
 - A `+` button on the tab bar adds a new empty tab and switches to it.
 - **Rename** a tab by double-clicking its label (inline input — Enter commits, Escape cancels). Also available via the per-tab ellipsis menu.
 - **Reorder** tabs by dragging a tab to a new position in the bar.
-- **Create a cross-tab link** from the selection popover, click "Link Element", pick a target tab; the link follows the element if it's moved.
+- **Create a link** from the element's right-click context menu, click "Link Element", and pick a target (tab, element, another diagram, or an external URL); the link follows the element if it's moved.

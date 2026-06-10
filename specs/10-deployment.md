@@ -37,7 +37,7 @@ Steps:
 
 CI is the gate you check before deploying, but it does **not** trigger the deploy — deploy is a separate, manually-dispatched workflow (see below).
 
-**Testing** runs via [Vitest](https://vitest.dev). Workspaces opt in by adding `"test": "vitest run"` to their `package.json` scripts and `vitest` to their `devDependencies`; turbo then picks the task up automatically. Tests live next to the source they cover as `*.test.ts` files. Today `packages/diagram` and `apps/live` are opted in; other workspaces mirror the pattern when they add their first test.
+**Testing** runs via [Vitest](https://vitest.dev). Workspaces opt in by adding `"test": "vitest run"` to their `package.json` scripts and `vitest` to their `devDependencies`; turbo then picks the task up automatically. Tests live next to the source they cover as `*.test.ts` files. Today `packages/diagram`, `apps/live`, `apps/api`, and `apps/marketing` are opted in; other workspaces mirror the pattern when they add their first test.
 
 ## Deploy
 

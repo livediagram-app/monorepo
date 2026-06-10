@@ -10,9 +10,9 @@ A small floating panel **initially placed in the top-right corner of the canvas*
 
 The first row of the palette holds the canvas-tool toggles:
 
-- **Pan** (default) — drag-on-empty scrolls the canvas.
-- **Select** — drag-on-empty draws a marquee for multi-select.
-- **Laser**: presenter mode. Pointer-move emits a glowing trail in the local participant's colour that fades over ~1 s. On a mouse, click-drag pans the canvas (same as Pan tool) so the presenter can reposition without switching tools, and the trail keeps capturing during the pan so peers see a sweeping laser. On a touch device the same drag DRAWS the laser instead of panning: touch has no hover, so a finger drag is the only way to point at things and pan-on-drag would pin the laser dot in canvas-coords (the canvas slides under the finger). Touch users pan via the Pan tool, two-finger trackpad, or zoom controls. Other participants see the trail in real time in the sender's colour via the `laser` `RoomOp` (see [spec/11](11-api.md)). Cursor indicators broadcast as `null` while laser is active so peers see only the laser dot, not a stacked cursor + dot.
+- **Select** (default on desktop) — drag-on-empty draws a marquee for multi-select. Listed first in the palette.
+- **Hand** (the pan tool; default on mobile / touch viewports) — drag-on-empty scrolls the canvas. Middle-click also pans from any tool.
+- **Laser**: presenter mode. Pointer-move emits a glowing trail in the local participant's colour that fades over ~1 s. On a mouse, click-drag pans the canvas (same as the Hand tool) so the presenter can reposition without switching tools, and the trail keeps capturing during the pan so peers see a sweeping laser. On a touch device the same drag DRAWS the laser instead of panning: touch has no hover, so a finger drag is the only way to point at things and pan-on-drag would pin the laser dot in canvas-coords (the canvas slides under the finger). Touch users pan via the Hand tool, two-finger trackpad, or zoom controls. Other participants see the trail in real time in the sender's colour via the `laser` `RoomOp` (see [spec/11](11-api.md)). Cursor indicators broadcast as `null` while laser is active so peers see only the laser dot, not a stacked cursor + dot.
 
 To the right of Laser sits the **Zen mode** button (a fullscreen / expand icon, shortcut `Z`) — not a canvas tool but an orthogonal focus toggle that hides all chrome. See [spec/26](26-zen-mode.md).
 
@@ -157,7 +157,7 @@ Accordion groups (rendered in this order top-to-bottom, hidden when their gate d
 
 ### Arrow labels
 
-Double-clicking the body of a selected arrow opens an inline `<foreignObject>` editor for the arrow's `label?: string`. Enter / blur commits, Escape cancels. The label renders as an SVG `<text>` anchored at the path's midpoint (chord midpoint for straight, t=0.5 of the quadratic bezier for curved, the elbow vertex for angled). Placement chooses one of four cardinal slots around the midpoint (right → below → left → above) and picks the first whose AABB doesn't collide with a neighbouring boxed element; falls back to "right" if every slot collides. Empty label string strips the field on commit so persisted JSON stays clean.
+Double-clicking the body of a selected arrow opens an inline `<foreignObject>` editor for the arrow's `label?: string`. Enter / blur commits, Escape cancels. The label renders as an SVG `<text>` anchored at the path's midpoint (chord midpoint for straight, t=0.5 of the quadratic bezier for curved, the elbow vertex for angled). By default placement chooses one of four cardinal slots around the midpoint (right → below → left → above) and picks the first whose AABB doesn't collide with a neighbouring boxed element; falls back to "right" if every slot collides. The user can **override placement by dragging the label**: when the arrow is selected a dashed box + move-cursor appear on the label, and dragging it slides the label **along the line** and to **either side** of it, staying connected (stored as `labelOffset: { t, offset }`). Empty label string strips the field on commit so persisted JSON stays clean.
 
 Accordion headers show a chevron that rotates 180° when open. The body slides open/closed via a `grid-template-rows` 0fr↔1fr transition (~200 ms) so motion is smooth and free of layout jumps.
 
@@ -178,7 +178,7 @@ Not in history: selection, edit mode entry, palette position/minimize state, for
 
 **Collaboration + history.** A remote peer's `tab` / `diagram-meta` op merges into the present via `applyRemote`, which keeps the local undo/redo stacks intact (peers autosave ~every 600ms, so the old history-clearing `reset` wiped undo continuously during a shared session). The retained past states predate the peer's change, so undoing far enough can locally drop a collaborator's edit — an accepted limitation of last-write-wins collab without OT/CRDT. Genuine context switches (mount hydration, opening another diagram, loading a tab) still use `reset`, which clears history.
 
-The palette is laid out top-to-bottom as: canvas-tool toggle (Pan / Select / Laser) → general shape row (always visible) → **Tools** accordion (collapsed by default) → **Devices** accordion (collapsed by default). Tools and Devices are mutually exclusive: opening one closes the other so the palette stays compact. Shapes are NOT folded behind an accordion because they're the most common entry point on every fresh canvas and tucking them behind a collapsible header buries a click for no payoff.
+The palette is laid out top-to-bottom as: canvas-tool toggle (Select / Hand / Laser) → general shape row (always visible) → **Tools** accordion (collapsed by default) → **Devices** accordion (collapsed by default). Tools and Devices are mutually exclusive: opening one closes the other so the palette stays compact. Shapes are NOT folded behind an accordion because they're the most common entry point on every fresh canvas and tucking them behind a collapsible header buries a click for no payoff.
 
 **Shapes row** (general shapes, always visible):
 
@@ -210,10 +210,8 @@ The palette is laid out top-to-bottom as: canvas-tool toggle (Pan / Select / Las
 **Tools** accordion (other element kinds):
 
 - **Text** — adds a free-floating text element (see [Text element](#text-element)).
-- **Arrow** — adds a plain straight connector (see [Adding an arrow](#adding-an-arrow)).
+- **Arrow** ("Add arrow") — drops / draws a plain straight connector, OR, with a shape selected, arms click-to-connect (see [Adding an arrow](#adding-an-arrow)).
 - **Sticky note** — adds a sticky-note element (see [Sticky note element](#sticky-note-element)).
-
-Arrows are no longer in the palette — see [Adding an arrow](#adding-an-arrow).
 
 ### Placement on add
 
@@ -243,14 +241,15 @@ No "center" or "anywhere on the edge" anchors — only these eight.
 
 ### Adding an arrow
 
-Arrows are created by **dragging from an anchor dot on a selected element**.
+There are three ways to create an arrow:
 
-- When a boxed element is selected (and not locked, not editing, not in a special mode), small **anchor dots** appear on each of its **four edge midpoints** (N, E, S, W). They are filled brand-coloured circles, distinct from the corner resize handles.
-- **Press-and-drag** a dot to start creating an arrow: the `from` endpoint is immediately pinned to that anchor, and the `to` endpoint follows the cursor.
-- Release on **another element's anchor** (within snap distance, ~24 px) → that endpoint becomes pinned. Release on **empty canvas** → that endpoint stays free.
-- Releasing without any drag movement creates a tiny "stub" arrow at that anchor — delete it via the selection popover if it wasn't intended.
-
-The old palette "Add arrow" button has been removed in favour of this direct, contextual interaction.
+1. **Drag from an anchor dot on a selected element** (the direct, contextual way):
+   - When a boxed element is selected (and not locked, not editing, not in a special mode), small **anchor dots** appear on each of its **four edge midpoints** (N, E, S, W). They are filled brand-coloured circles, distinct from the corner resize handles.
+   - **Press-and-drag** a dot to start creating an arrow: the `from` endpoint is immediately pinned to that anchor, and the `to` endpoint follows the cursor. An arrow drawn this way inherits the source shape's stroke colour (so it matches the theme, not black).
+   - Release on **another element's anchor** (within snap distance, ~24 px) → that endpoint becomes pinned. Release on **empty canvas** → that endpoint stays free.
+   - Releasing without any drag movement creates a tiny "stub" arrow at that anchor.
+2. **The palette "Add arrow" button** with nothing selected: drops / draws (draw-to-size) a plain connector with free endpoints — drag the endpoints onto shapes afterwards to pin them.
+3. **Click-to-connect**: with a shape **selected**, pick the palette **Add arrow** tool (or press `A`) to arm a connect gesture — a hint banner appears — then **click another shape** and a pinned connector is drawn between the two, anchored on the facing sides (`bestAnchorTowards`) and inheriting the source's stroke. Clicking empty canvas (or the banner) cancels.
 
 Snapping during the drag continues to consider all eight anchors of every shape on the canvas — corners and midpoints — so an arrow drag from a midpoint can still snap to and pin at a corner.
 
@@ -535,7 +534,9 @@ When a shape is selected, a small **popover menu** appears next to it with actio
 - The popover follows the shape during drag/resize — its position is derived from the shape's current bounds.
 - Clicking inside the popover never deselects.
 
-Button set (left to right, grouped by a thin divider):
+The popover surface itself is kept compact: it shows the **Comment** button plus a **More** ("More actions") button that opens the element menu. The fuller action set below is reached via that **More** menu and the element's **right-click context menu** (`EditorContextMenu`) — "Link Element" in particular lives in the right-click menu, not as a primary popover button.
+
+Action set (grouped by a thin divider):
 
 Format + duplication:
 
@@ -571,11 +572,11 @@ The **Fit-to-screen** control (in the bottom-right `ZoomControls`) centres the v
 
 ### Touch (iOS / iPad)
 
-On a touch device, the canvas surface declares `touch-action: none` and `user-select: none` (plus the iOS-specific `-webkit-touch-callout: none` and `-webkit-tap-highlight-color: transparent`). Without those, mobile Safari intercepts a one-finger drag for native scrolling, treats a long-press as the system text-selection callout, and shows a tap highlight ring on every element press. Pointer events are then dispatched normally so the same handlers (pan in Pan mode, marquee in Select mode, move / resize on elements) work from a finger or a stylus the same way they work from a mouse. Pinch-to-zoom is also disabled because the canvas owns its own zoom (wheel / +/- buttons / Fit). A dedicated touch pinch handler can land later; until it does, touch zoom goes through the Zoom controls.
+On a touch device, the canvas surface declares `touch-action: none` and `user-select: none` (plus the iOS-specific `-webkit-touch-callout: none` and `-webkit-tap-highlight-color: transparent`). Without those, mobile Safari intercepts a one-finger drag for native scrolling, treats a long-press as the system text-selection callout, and shows a tap highlight ring on every element press. Pointer events are then dispatched normally so the same handlers (pan in Hand mode, marquee in Select mode, move / resize on elements) work from a finger or a stylus the same way they work from a mouse. Pinch-to-zoom is also disabled because the canvas owns its own zoom (wheel / +/- buttons / Fit). A dedicated touch pinch handler can land later; until it does, touch zoom goes through the Zoom controls.
 
 ## Marquee box-select
 
-**Press-and-drag the empty canvas background** (without holding Space) to draw a translucent selection rectangle. On release, every boxed element whose bounding box intersects the rectangle is multi-selected. Releasing inside a sub-4-pixel area is treated as a click and deselects.
+**Press-and-drag the empty canvas background** (without holding Space) to draw a translucent selection rectangle. On release, every boxed element whose bounding box is **fully enclosed** by the rectangle is multi-selected (containment, not intersection — you must drag a box right around an element to catch it). Releasing inside a sub-4-pixel area is treated as a click and deselects.
 
 A multi-selection is mutually exclusive with the single-element selection:
 
@@ -591,7 +592,7 @@ While multi-selected:
 - **Shift-click any element** toggles its membership — adds if absent, removes if present. Folds the current single selection in first so "I had A selected, now also B and C" works without losing A.
 - **Click empty canvas** or **switch tabs** clears the multi-selection.
 
-Marquee hits include both boxed elements (shape, text, sticky) and arrows whose endpoint AABB falls inside the rectangle. Duplicating a marquee that contains both carries the connectors across with their endpoints remapped to the duplicated targets.
+Marquee hits include both boxed elements (shape, text, sticky) and arrows whose segment AABB is fully enclosed by the rectangle. Duplicating a marquee that contains both carries the connectors across with their endpoints remapped to the duplicated targets.
 
 ## Quick add + connect
 
@@ -790,7 +791,7 @@ Each boxed element carries a `textSize` setting controlling how its label render
 | `'md'`    | Fixed medium font.                                                                                                                               |
 | `'lg'`    | Fixed large font.                                                                                                                                |
 
-Selectable from the [Selected Element](#selected-element-section) section of the palette. When set to a fixed size, content is centered (single-line) or wrapped (sticky). Resizing the element does not change the font — only `scale` reacts to box size.
+Selectable from the [Selected Element](#selected-element-section) section of the palette. When set to a fixed size, content is centered and wraps on its newlines (and, for stickies, soft-wraps). Resizing the element does not change the font — only `scale` reacts to box size.
 
 ```ts
 type TextSize = 'scale' | 'sm' | 'md' | 'lg';
@@ -891,7 +892,7 @@ type ElementLink =
   | { kind: 'element'; tabId: TabId; elementId: ElementId };
 ```
 
-Today only the `'tab'` kind is exposed in the UI. The `'element'` kind is in the model so future iterations can "jump and focus a specific element" without a schema change.
+The UI exposes the `'tab'`, `'diagram'`, and `'url'` kinds (via the LinkPickerDialog's Tab / Diagram / External URL modes). The `'element'` kind is in the model so future iterations can "jump and focus a specific element" without a schema change.
 
 ### Group behaviour
 
@@ -924,12 +925,12 @@ A shape can carry an inline **text label**.
 - With a single element selected, **press Space** for the same effect (keyboard equivalent of the double-click). Multi-selection Space falls through to the canvas pan modifier (see Move) since there's no obvious single label to edit; held Space + drag stays the pan modifier in every selection state.
 - **Type-to-edit:** with a single label-bearing element selected (not yet editing), pressing any **printable character** (a letter, digit, or punctuation; Space is excluded so it stays the pan/edit modifier) opens the label editor seeded with that character, **replacing** the existing label. This intentionally wins over the single-key tool / add shortcuts (`R`/`O`/`D`/`T`/`N`/`A`/`I`/`F`, `S`/`P`/`L`) when an element is selected: a user who selects a shape and starts typing expects to edit its text, not to drop a new element. The shortcuts still fire when nothing (or a multi-selection) is selected. Read-only (view-role) sessions never type-to-edit, so viewers keep the tool shortcuts. Non-labelable selections (image, freehand) fall through to the shortcuts unchanged.
 - Type to set or change the label.
-- Commit with **Enter** or by **clicking outside**. Cancel with **Escape**.
+- **Enter** inserts a newline (labels are multi-line). **Commit** by clicking outside / blurring; **Escape** cancels.
 - The label **auto-scales to fit the shape** — text is rendered inside an SVG whose `viewBox` is set to the text's measured bounds, with `preserveAspectRatio="xMidYMid meet"`. The text scales uniformly to fill the shape: bigger shapes get bigger text; longer labels shrink to fit.
 - During edit, selection handles and the popover are hidden so they don't get in the way.
 - **Locked** shapes can still be labelled — locking protects position, not content.
 - Empty labels are valid (nothing is rendered).
-- Labels are **single-line** for shapes and text; **multi-line** for sticky notes. Multi-line in other element types is out of scope.
+- Labels are **multi-line** for shapes, text, and sticky notes: Enter inserts a newline and the renderers (auto-fit SVG `tspan`s / wrapping div) lay the lines out.
 - Label data lives on the element: `label?: string`.
 
 ### Edit vs modes
@@ -998,7 +999,7 @@ Icons + tables have no draw-to-size (a glyph / fixed grid isn't a box you size b
 
 ## Pencil (freehand)
 
-Always-on palette tool (the pencil is gestural by definition — no tap-to-drop branch): clicking the Pencil button, or pressing **F** (Freehand; P is taken by the Pan tool), enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
+Always-on palette tool (the pencil is gestural by definition — no tap-to-drop branch): clicking the Pencil button, or pressing **F** (Freehand; P is taken by the Hand/pan tool), enters a one-shot freehand-draw mode for the next canvas drag. Drawing produces a new `FreehandElement` (see [spec/05](05-diagram-structure.md)) rendered as an inline SVG path inside its bounding box.
 
 - A `ModeBanner` reads "Drag to draw" with a Cancel action; Escape cancels too. The pencil button on the palette renders pressed while a draw is queued.
 - The canvas cursor swaps to a diagonal-pencil glyph that mirrors the palette icon.

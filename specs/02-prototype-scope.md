@@ -34,7 +34,7 @@ These are the meaningful gaps between today and "full product":
 
 - **Transactional email** (Resend), for share notifications and account flows.
 - **Operational transform / CRDT** — realtime is LWW; concurrent edits on the same element clobber.
-- **Multi-user permissions beyond share links** — today a diagram is either private or shared via a link with role. No teams, no per-user grants.
+- **Per-user grants beyond teams + share links** — a diagram is private, shared via a link with a role, or part of a team's shared library (teams with Admin/Member roles shipped — see spec/32 + spec/35). There are still no per-diagram per-user grants outside those.
 
 ## Hard rules carried forward
 
