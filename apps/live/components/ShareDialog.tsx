@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Portal } from './Portal';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
+import { buildEmbedSnippet } from '@/lib/embed';
 import type { ShareLink, ShareRole } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -127,6 +128,23 @@ export function ShareDialog({
     } catch {
       // Browsers without clipboard permission silently no-op; the
       // user can still select the input.
+    }
+  };
+
+  // Copy an <iframe> snippet for the read-only embed view (spec/33).
+  // Per link, so the snippet inherits that link's code (and its
+  // password gate, if one is set). The copied-state slot is shared
+  // with the URL copy via a distinct key so the two buttons don't
+  // flash each other's "Copied".
+  const copyEmbed = async (code: string) => {
+    const snippet = buildEmbedSnippet(window.location.origin, code);
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopiedCode(`embed:${code}`);
+      window.setTimeout(() => setCopiedCode(null), 1500);
+      track('UI', 'Copied', 'EmbedCode');
+    } catch {
+      // Same silent no-op as the URL copy above.
     }
   };
 
@@ -283,6 +301,18 @@ export function ShareDialog({
                       >
                         {copiedCode === link.code ? 'Copied' : 'Copy'}
                       </button>
+                      <Tooltip
+                        title="Embed code"
+                        description="Copies an <iframe> snippet you can paste into wikis, Notion, and docs."
+                      >
+                        <button
+                          type="button"
+                          onClick={() => copyEmbed(link.code)}
+                          className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
+                        >
+                          {copiedCode === `embed:${link.code}` ? 'Copied' : 'Embed'}
+                        </button>
+                      </Tooltip>
                       <button
                         type="button"
                         onClick={() => revoke(link.code)}
@@ -296,6 +326,12 @@ export function ShareDialog({
                   ))}
                 </ul>
               )}
+              {links.length > 0 && sharePassword ? (
+                <p className="text-[11px] text-slate-500">
+                  This diagram has a share password: embed viewers will be asked for it inside the
+                  frame.
+                </p>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-2 border-t border-slate-100 pt-4">

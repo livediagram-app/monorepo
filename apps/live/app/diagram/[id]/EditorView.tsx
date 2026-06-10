@@ -8,6 +8,7 @@ import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/Canvas';
 import { EditorHeader } from '@/components/EditorHeader';
+import { EmbedChrome } from '@/components/EmbedChrome';
 import { TabBar } from '@/components/TabBar';
 import { deriveTabLoadState } from './editor-page-helpers';
 import { useEditorContext } from './EditorContext';
@@ -68,6 +69,7 @@ export function EditorView() {
     aiPanelVisible,
     anyWelcomeOpen,
     applyAiElements,
+    embedMode,
     applyImageToElement,
     autoAlignTab,
     beginAnchorDrag,
@@ -316,8 +318,8 @@ export function EditorView() {
   return (
     <div className="flex h-dvh flex-col">
       {/* Zen / focus mode (spec/26) hides the header entirely so the
-          canvas gets the full height. */}
-      {zenMode ? null : (
+          canvas gets the full height. Embeds (spec/33) never show it. */}
+      {zenMode || embedMode ? null : (
         <EditorHeader
           diagramName={diagramName}
           hideTitle={anyWelcomeOpen}
@@ -687,8 +689,12 @@ export function EditorView() {
         onCanvasDoubleClick={handleCanvasDoubleClick}
         tabLoadState={tabLoadState}
         onRetryTabLoad={retryActiveTabLoad}
-        zenMode={zenMode}
-        onToggleZen={toggleZenMode}
+        // Embeds (spec/33) ride the zen chrome-hide gates: every panel
+        // and badge zen hides, embeds hide too. The zen TOGGLE is
+        // withheld so the ZoomControls dock doesn't offer an exit
+        // from a mode the embed can't actually leave.
+        zenMode={zenMode || embedMode}
+        onToggleZen={embedMode ? undefined : toggleZenMode}
         aiPanel={
           aiCapable && userPreferences.aiAssistanceEnabled && aiPanelVisible && !isReadOnly
             ? {
@@ -708,7 +714,26 @@ export function EditorView() {
             : undefined
         }
       />
-      {anyWelcomeOpen || zenMode ? null : (
+      {embedMode ? (
+        // Embed chrome (spec/33): the link-out badge + a minimal tab
+        // switcher replace the full TabBar. Same selection clears as
+        // the TabBar's onSelect so element state never leaks across a
+        // tab switch.
+        <EmbedChrome
+          tabs={tabs}
+          activeId={activeId}
+          shareCode={sessionShareCode}
+          onSelectTab={(id) => {
+            setActiveId(id);
+            setSelectedId(null);
+            setMultiSelectedIds(new Set());
+            setEditingId(null);
+            setFormatSourceId(null);
+            setGroupSourceId(null);
+          }}
+        />
+      ) : null}
+      {anyWelcomeOpen || zenMode || embedMode ? null : (
         <TabBar
           tabs={tabs}
           activeId={activeId}

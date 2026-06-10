@@ -41,12 +41,18 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
 
-function withSecurityHeaders(res: Response): Response {
+function withSecurityHeaders(res: Response, opts?: { frameable?: boolean }): Response {
   // Response headers from the assets binding are immutable when the
   // body is a stream, so we clone into a fresh Response with the
   // merged headers. Status / body pass through.
   const merged = new Headers(res.headers);
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) merged.set(k, v);
+  // The read-only embed view (spec/33) is the one path that MUST be
+  // frameable by third-party sites; it carries no authenticated
+  // actions to clickjack, so dropping the header there doesn't
+  // reopen the attack the DENY exists for. Every other route keeps
+  // DENY.
+  if (opts?.frameable) merged.delete('X-Frame-Options');
   return new Response(res.body, {
     status: res.status,
     statusText: res.statusText,
@@ -57,6 +63,7 @@ function withSecurityHeaders(res: Response): Response {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const frameable = url.pathname === '/embed' || url.pathname.startsWith('/embed/');
     // `/diagram` and everything under it shares one HTML file. We
     // rewrite the request rather than redirect so the browser URL
     // stays `/diagram/<id>` (that's the whole point of the path
@@ -72,6 +79,6 @@ export default {
         );
       }
     }
-    return withSecurityHeaders(await env.ASSETS.fetch(request));
+    return withSecurityHeaders(await env.ASSETS.fetch(request), { frameable });
   },
 };

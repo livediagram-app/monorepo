@@ -1,0 +1,43 @@
+# 33 — Read-only embeds (`/live/embed`)
+
+Tracked as [issue #8](https://github.com/livediagram-app/monorepo/issues/8). Spec/00 says "diagrams may be embedded elsewhere"; this spec makes a shared diagram iframe-able in Notion, wikis, and docs. Every embedded diagram is a distribution channel for a free product whose growth model is distribution (spec/03).
+
+## URL shape
+
+`/live/embed?s=<share-code>`.
+
+The issue sketched a path segment (`/live/embed/<code>`), but the static export (spec/14) would need a second worker rewrite rule to serve it, and the existing share view already uses the query form (`/live/diagram/shared?s=<code>`). The embed route follows the share view: one statically exported page (`apps/live/app/embed/page.tsx`), the code read client-side from `?s=`. No new infrastructure.
+
+## What renders
+
+The embed route mounts the same editor page component with an `embed` flag. The flag:
+
+- **Forces read-only**, whatever role the share code carries. An edit-role code embedded in a wiki still renders a viewer; editing happens in the full editor, one click away.
+- **Hides all chrome**: header, TabBar, every floating panel (the same gates zen mode uses, spec/26). What remains: the canvas (pan / zoom / pinch), the ZoomControls dock (without the zen toggle), and the two embed affordances below.
+- **Suppresses the visitor identity screen.** A "what's your name" card inside a README iframe is wrong; embed sessions keep their default guest identity silently. They still join the realtime room like any view-role visitor, so embedded diagrams **live-update** as the diagram is edited (the room's whole-tab ops; spec/11). If the WebSocket can't connect, the embed simply shows the fetch-time content, which is the existing degradation path.
+- Renders an **embed tab switcher** (bottom-left pill row, only when the diagram has more than one tab) and an **"Open in livediagram" badge** (bottom-right) linking to the full share view (`/live/diagram/shared?s=<code>`, new tab). The badge is the acquisition loop.
+
+The share-password gate (spec/24) renders inside the iframe exactly as it does on the share view. Browsers partition third-party iframe storage, so the cached password is per-embedding-site: visitors enter it once per site, which is acceptable for a password-protected artifact. NotFound (revoked code) and the API-error card render minimal versions inside the frame, without the app header or Explorer.
+
+## Frame headers
+
+The live worker (`apps/live/src/worker.ts`) sends `X-Frame-Options: DENY` on every response as clickjacking defence. Embed responses (`/embed` and anything under it) are the **one path-scoped exception**: the header is omitted so any site can frame them. This is safe because the embed view is read-only and carries no authenticated actions to clickjack; the editor and every other route keep DENY. No `Content-Security-Policy: frame-ancestors` is added (absence means frameable, and the CSP cycle is still deferred per the worker's comment).
+
+## Share dialog
+
+Each link row in the ShareDialog gains a **"Embed" copy button** next to the URL copy. It copies an `<iframe>` snippet built by `buildEmbedSnippet` (`apps/live/lib/embed.ts`, unit-tested): the embed URL for that link's code, a sensible default size (800×500), a hairline border, and `allowfullscreen`. When the diagram has a share password set, a hint under the buttons notes that viewers will be prompted for it inside the embed.
+
+## Telemetry (spec/22)
+
+- `track('Session', 'Opened', 'Embed')` once when the embed route hydrates.
+- `track('UI', 'Copied', 'EmbedCode')` when the snippet is copied (sibling of the existing `UI / Copied / ShareLink`).
+
+## Self-hosting
+
+Works with zero external services: the embed page is part of the live app's static export, and the snippet builds its URL from the live origin at copy time, so self-hosted instances emit self-hosted embed URLs.
+
+## Out of scope
+
+- oEmbed / OpenGraph provider endpoints (candidate follow-up).
+- Embedding a single element or region rather than a tab.
+- Hiding the "Open in livediagram" badge (it is deliberately not configurable).

@@ -40,6 +40,8 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 29  | [Multi-colour themes](29-multicolour-themes.md)                    | Rainbow/palette themes that tint each hierarchy branch a hue       |
 | 30  | [Tab folders](30-tab-folders.md)                                   | Group a diagram's tabs into one-level, collapsible named folders   |
 | 31  | [Presentation mode](31-presentation-mode.md)                       | Step through a tab as a progressive-reveal slideshow with notes    |
+| 32  | [Teams](32-teams.md)                                               | Teams with Admin/Member roles, email invites, Explorer section     |
+| 33  | [Read-only embeds](33-embeds.md)                                   | Iframe-able `/live/embed` share view + Copy-embed-code in Share    |
 
 ## Workflow
 

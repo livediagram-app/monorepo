@@ -15,8 +15,11 @@ const SharePasswordGate = dynamic(() =>
   import('@/components/SharePasswordGate').then((m) => m.SharePasswordGate),
 );
 
-export default function LivePage() {
-  const state = useEditorState();
+// `embed` mounts the read-only embed view (spec/33): same state, same
+// EditorView, with the chrome / identity / edit gates flipped by the
+// flag. The /live/embed route passes it; the /diagram route doesn't.
+export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
+  const state = useEditorState({ embed });
   const {
     diagramNotFound,
     loadError,
@@ -47,6 +50,18 @@ export default function LivePage() {
   // show the error card (with the Explorer behind it for navigation)
   // instead of NotFound. Retry re-runs hydration via a full reload.
   if (loadError) {
+    // Embed frames get the bare retry card: an app header + Explorer
+    // panel inside someone else's page is noise (spec/33).
+    if (embed) {
+      return (
+        <main className="relative h-dvh bg-slate-50 dark:bg-slate-950">
+          <ApiErrorPage
+            onRetry={() => window.location.reload()}
+            message="We couldn’t load this diagram — the server didn’t respond. Check your connection and try again."
+          />
+        </main>
+      );
+    }
     return (
       <div className="flex h-dvh flex-col">
         <EditorHeader
@@ -90,6 +105,20 @@ export default function LivePage() {
   }
 
   if (diagramNotFound) {
+    // Same bare-card rule as the embed loadError branch above; the
+    // create-new escape opens the full app in a new tab rather than
+    // navigating the host page's iframe.
+    if (embed) {
+      return (
+        <main className="relative h-dvh bg-slate-50 dark:bg-slate-950">
+          <NotFound
+            onCreateNew={() => {
+              window.open(`${window.location.origin}/live/new`, '_blank', 'noopener');
+            }}
+          />
+        </main>
+      );
+    }
     return (
       <div className="flex h-dvh flex-col">
         <EditorHeader
@@ -138,16 +167,20 @@ export default function LivePage() {
   // sets the session password and bumps passwordRetry to re-run the
   // bootstrap, which now carries the password on every request.
   if (sharePasswordGate) {
+    // In an embed the gate renders inside the iframe, headerless
+    // (spec/33): the host page provides the surrounding context.
     return (
       <div className="flex h-dvh flex-col">
-        <EditorHeader
-          diagramName="Password required"
-          hideTitle
-          showShare={false}
-          shareable={false}
-          onOpenShare={() => {}}
-          onRename={() => {}}
-        />
+        {embed ? null : (
+          <EditorHeader
+            diagramName="Password required"
+            hideTitle
+            showShare={false}
+            shareable={false}
+            onOpenShare={() => {}}
+            onRename={() => {}}
+          />
+        )}
         <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
           <SharePasswordGate
             invalid={sharePasswordGate.invalid}

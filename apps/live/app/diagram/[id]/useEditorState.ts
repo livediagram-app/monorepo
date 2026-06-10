@@ -140,8 +140,22 @@ import { useSelectionEditing } from './useSelectionEditing';
 // drift (was a literal mirror of `3` here, which is the kind of
 // duplication a future HISTORY_LIMIT bump would silently break).
 
-export function useEditorState() {
+export function useEditorState(opts: { embed?: boolean } = {}) {
+  // Read-only embed view (spec/33). The flag forces view behaviour
+  // regardless of the share role, suppresses the visitor identity
+  // screen, and EditorView swaps the chrome for the embed badge +
+  // tab switcher. Constant for the lifetime of the page (it comes
+  // from which route mounted us), so it's safe in derived consts.
+  const embedMode = opts.embed === true;
   const initialTabs: Tab[] = [createTab('Tab 1')];
+
+  // Embed page view (spec/33 telemetry). Once per mount; the embed
+  // route is its own document inside the iframe so this is one event
+  // per embed render, the signal the spec wants.
+  useEffect(() => {
+    if (embedMode) track('Session', 'Opened', 'Embed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clerk wiring (token provider + guest→authed migration). One hook
   // does both — see `hooks/useClerkApiBootstrap.ts`. The values it
@@ -539,7 +553,9 @@ export function useEditorState() {
   // visitors get whatever role their share code carried. Drives the
   // save / op-broadcast gates so view-only visitors can't push edits.
   const [sessionRole, setSessionRole] = useState<ShareRole>('edit');
-  const isReadOnly = sessionRole === 'view';
+  // Embeds are read-only whatever role the share code carries: editing
+  // happens in the full editor, one badge-click away (spec/33).
+  const isReadOnly = sessionRole === 'view' || embedMode;
   // Visitors are admitted via a share code in the URL (?s=<code>).
   // Owners arrive via ?d=<id> with no share code. The log endpoints
   // accept the code as a fallback authorisation so edit visitors can
@@ -881,8 +897,16 @@ export function useEditorState() {
   // edit), so a viewer can confirm a name without any 403. EditorView
   // lets the IDENTITY mode of the picker through for read-only while
   // still blocking the template-choosing mode.
+  //
+  // Embeds skip the prompt entirely (spec/33): a "what's your name"
+  // card inside a README iframe is wrong, so embed sessions keep
+  // their default guest identity silently.
   const joinScreenOpen =
-    hydrated && loadedExistingDiagram && !nameConfirmed && templatePickerMode === 'identity';
+    !embedMode &&
+    hydrated &&
+    loadedExistingDiagram &&
+    !nameConfirmed &&
+    templatePickerMode === 'identity';
   const identityOnlyScreenOpen = joinScreenOpen;
   // Combined gate for chrome-hide. Only the join-existing flow lives
   // on this route now; the historical new-diagram welcome lives on
@@ -1738,6 +1762,7 @@ export function useEditorState() {
     editCursorAtEnd,
     editingId,
     effectiveTemplatePickerMode,
+    embedMode,
     exitFormatPainter,
     exitGroupMode,
     fitToScreen,
