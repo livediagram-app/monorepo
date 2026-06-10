@@ -46,12 +46,13 @@ const EXPIRY_LABELS: Record<Exclude<ShareLinkExpiry, 'never'>, string> = {
   sixMonths: '6 months',
 };
 
-// Share-diagram modal. Layout per spec/07 ("Share dialog"): sections
-// ordered by frequency of use — the create row first (the dialog's
-// primary action), then the active link cards, the inactive (expired)
-// links when any exist (spec/34), and finally the quieter options
-// band: the share password (spec/24) and the owner's display name.
-// Backdrop + dark-mode treatment match Settings / Shortcuts / Export.
+// Share-diagram modal. Layout per spec/07 ("Share dialog"): the
+// guest-only name row first (so a guest sets the identity their links
+// will carry), then the create row (the dialog's primary action), the
+// active link cards, the inactive (expired) links when any exist
+// (spec/34), and finally the share password (spec/24) as the quiet
+// options band. Backdrop + dark-mode treatment match Settings /
+// Shortcuts / Export.
 export function ShareDialog({
   participant,
   links,
@@ -227,7 +228,48 @@ export function ShareDialog({
           </div>
 
           <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
-            {/* Primary action first: mint a link. The empty state below
+            {/* Guests only, and first: the name peers will see on the
+                links minted below. Signed-in users' display names come
+                from their Clerk account, so there's nothing to edit and
+                the row hides entirely (spec/07). */}
+            {nameLocked ? null : (
+              <div className="flex flex-col gap-1.5">
+                <p className={sectionLabel}>Your name</p>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    role="img"
+                    aria-label={`Your avatar colour: ${participant.color}`}
+                    style={{ backgroundColor: participant.color }}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  >
+                    {initialsOf(effectiveName)}
+                  </div>
+                  <input
+                    id="share-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={participant.name}
+                    aria-label="Your name"
+                    className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                  <Tooltip title="Shuffle name" description="Pick a different random name.">
+                    <button
+                      type="button"
+                      onClick={() => setName(randomName())}
+                      aria-label="Generate a different name"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    >
+                      <RefreshIcon />
+                    </button>
+                  </Tooltip>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  What collaborators see on your cursor and comments.
+                </p>
+              </div>
+            )}
+
+            {/* Primary action: mint a link. The empty state below
                 points back up here. */}
             <div className="flex flex-col gap-2">
               <p className={sectionLabel}>New link</p>
@@ -422,10 +464,9 @@ export function ShareDialog({
               </div>
             ) : null}
 
-            {/* Options band: the quieter settings. Password applies to
-                every link (spec/24); the name is what peers see on
-                cursors and comments. Both are touched far less often
-                than the link actions above, so they sit last. */}
+            {/* Options band: the share password (spec/24). Applies to
+                every link, and is touched far less often than the link
+                actions above, so it sits last. */}
             <div className="flex flex-col gap-4 border-t border-slate-100 pt-4 dark:border-slate-800">
               <div className="flex flex-col gap-1.5">
                 <p className={sectionLabel}>Password</p>
@@ -465,46 +506,6 @@ export function ShareDialog({
                   it.
                 </p>
               </div>
-
-              {/* Guests only: signed-in users' display names come from
-                  their Clerk account, so there's nothing to edit here
-                  and the row hides entirely. */}
-              {nameLocked ? null : (
-                <div className="flex flex-col gap-1.5">
-                  <p className={sectionLabel}>Your name</p>
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      role="img"
-                      aria-label={`Your avatar colour: ${participant.color}`}
-                      style={{ backgroundColor: participant.color }}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                    >
-                      {initialsOf(effectiveName)}
-                    </div>
-                    <input
-                      id="share-name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={participant.name}
-                      aria-label="Your name"
-                      className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                    />
-                    <Tooltip title="Shuffle name" description="Pick a different random name.">
-                      <button
-                        type="button"
-                        onClick={() => setName(randomName())}
-                        aria-label="Generate a different name"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                      >
-                        <RefreshIcon />
-                      </button>
-                    </Tooltip>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    What collaborators see on your cursor and comments.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
