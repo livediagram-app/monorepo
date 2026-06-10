@@ -785,6 +785,7 @@ function TeamFolderNode({
   expanded,
   onToggleExpanded,
   onOpenDiagram,
+  deleteFor,
 }: {
   folder: TeamFolderTreeNode;
   depth: number;
@@ -794,6 +795,9 @@ function TeamFolderNode({
   expanded: Record<string, boolean>;
   onToggleExpanded: (id: string) => void;
   onOpenDiagram: (id: string) => void;
+  // Owner-gated per-row delete, threaded down from TeamNode so nested
+  // folder rows share the same ownership check (spec/35).
+  deleteFor: (d: DiagramListItem) => ((anchor: HTMLElement | null) => void) | undefined;
 }) {
   const kids = childrenByParent.get(folder.id) ?? [];
   const diagramsHere = diagramsByFolder.get(folder.id) ?? [];
@@ -845,6 +849,7 @@ function TeamFolderNode({
               expanded={expanded}
               onToggleExpanded={onToggleExpanded}
               onOpenDiagram={onOpenDiagram}
+              deleteFor={deleteFor}
             />
           ))}
           {diagramsHere.map((d) => (
@@ -853,6 +858,7 @@ function TeamFolderNode({
                 item={d}
                 active={d.id === currentDiagramId}
                 onOpen={() => onOpenDiagram(d.id)}
+                onDelete={deleteFor(d)}
               />
             </li>
           ))}
@@ -867,10 +873,12 @@ export function TeamNode({
   folders,
   diagrams,
   currentDiagramId,
+  currentOwnerId,
   expanded,
   onToggleExpanded,
   onOpenTeam,
   onOpenDiagram,
+  onDeleteDiagram,
 }: {
   team: { id: string; name: string };
   // This team's folder rows (flat, with parentId).
@@ -878,12 +886,19 @@ export function TeamNode({
   // This team's diagrams (carry folderId; null = the team's Unsorted).
   diagrams: DiagramListItem[];
   currentDiagramId: string | null;
+  // The viewer's owner id. A team-library row only exposes Delete when
+  // the viewer owns it (the api restricts diagram DELETE to the owner,
+  // spec/35); non-owners get the open-only row.
+  currentOwnerId?: string | null;
   expanded: Record<string, boolean>;
   onToggleExpanded: (id: string) => void;
   // The team NAME opens the full team page; folders + diagrams browse
   // inline in the panel (spec/35).
   onOpenTeam: (teamId: string) => void;
   onOpenDiagram: (id: string) => void;
+  // Owner-only hard delete on a team-library row. Anchored to the
+  // row's menu button so Explorer can pop its ConfirmPopover beside it.
+  onDeleteDiagram?: (id: string, anchor: HTMLElement | null) => void;
 }) {
   const childrenByParent = useMemo(() => {
     const map = new Map<string | null, TeamFolderTreeNode[]>();
@@ -908,6 +923,13 @@ export function TeamNode({
   const rootFolders = childrenByParent.get(null) ?? [];
   // Diagrams loose at the team root (its synthetic Unsorted bucket).
   const rootDiagrams = diagramsByFolder.get(null) ?? [];
+  // Per-row owner-gated delete: only the diagram's owner sees it
+  // (spec/35 keeps hard delete with the owner). Shared by the root
+  // rows here and the nested TeamFolderNode rows.
+  const deleteFor = (d: DiagramListItem) =>
+    onDeleteDiagram && currentOwnerId && d.ownerId === currentOwnerId
+      ? (anchor: HTMLElement | null) => onDeleteDiagram(d.id, anchor)
+      : undefined;
   const hasContent = rootFolders.length > 0 || rootDiagrams.length > 0;
   const isExpanded = expanded[team.id] ?? false;
   return (
@@ -953,6 +975,7 @@ export function TeamNode({
               expanded={expanded}
               onToggleExpanded={onToggleExpanded}
               onOpenDiagram={onOpenDiagram}
+              deleteFor={deleteFor}
             />
           ))}
           {rootDiagrams.map((d) => (
@@ -961,6 +984,7 @@ export function TeamNode({
                 item={d}
                 active={d.id === currentDiagramId}
                 onOpen={() => onOpenDiagram(d.id)}
+                onDelete={deleteFor(d)}
               />
             </li>
           ))}

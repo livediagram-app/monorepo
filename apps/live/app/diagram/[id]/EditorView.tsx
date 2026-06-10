@@ -554,6 +554,7 @@ export function EditorView() {
         teams={teams.map((t) => ({ id: t.id, name: t.name }))}
         teamFolders={teamFolders}
         teamDiagrams={teamDiagrams}
+        currentOwnerId={selfParticipant?.id ?? null}
         onDismissShared={dismissSharedDiagram}
         onOpenFullExplorer={() =>
           window.location.assign(`${window.location.origin}/live/explorer/recent`)

@@ -169,6 +169,10 @@ export type CanvasProps = {
   teams?: { id: string; name: string }[];
   teamFolders?: TeamFolderRow[];
   teamDiagrams?: TeamDiagramRow[];
+  // The caller's resolved owner id (Clerk sub or guest self-id). Lets
+  // the Explorer panel gate owner-only actions on team diagrams (e.g.
+  // hard delete, which the api restricts to the owner) — spec/35.
+  currentOwnerId?: string | null;
   // Navigate to the standalone full-page Explorer. Forwarded into
   // the floating Explorer panel's header "expand" button.
   onOpenFullExplorer?: () => void;

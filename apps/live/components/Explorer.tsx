@@ -40,6 +40,11 @@ type ExplorerProps = {
   teams?: { id: string; name: string }[];
   teamFolders?: TeamFolderRow[];
   teamDiagrams?: TeamDiagramRow[];
+  // The caller's resolved owner id. Team-diagram rows expose a hard
+  // Delete only when this matches the diagram's ownerId — the api
+  // restricts diagram DELETE to the owner (spec/35), so showing it to
+  // non-owners would just 403.
+  currentOwnerId?: string | null;
   // Dismiss a single Shared row — drops the shared_with reference
   // server-side so the row no longer surfaces. Optional so consumers
   // that haven't wired the api endpoint can omit it.
@@ -122,6 +127,7 @@ export function Explorer({
   teams = [],
   teamFolders = [],
   teamDiagrams = [],
+  currentOwnerId = null,
   onDismissShared,
   onOpenFullExplorer,
   defaultRecentOpen = false,
@@ -205,6 +211,12 @@ export function Explorer({
   // slides the row out first via the beforeRemove hook.
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string } | null>(null);
   const deleteAnchorRef = useRef<HTMLElement | null>(null);
+  // Team diagrams aren't in the personal `diagrams` prop, so the parent's
+  // delete (which prunes the personal list + fires a fire-and-forget API
+  // DELETE) can't drop a team row from view, and the team-library sweep
+  // won't re-fetch in time. Track confirmed team deletes locally and hide
+  // those rows optimistically; the set is pruned once the sweep catches up.
+  const [deletedTeamIds, setDeletedTeamIds] = useState<Set<string>>(new Set());
   const openDeleteConfirm = onDeleteDiagram
     ? (id: string, anchor: HTMLElement | null) => {
         deleteAnchorRef.current = anchor;
@@ -213,6 +225,15 @@ export function Explorer({
     : undefined;
   const runDelete = (id: string) => {
     if (!onDeleteDiagram) return;
+    // A team diagram lives in the swept library, not the personal list,
+    // so hide it locally on confirm (the parent's delete can't).
+    if (teamDiagrams.some((d) => d.id === id)) {
+      setDeletedTeamIds((prev) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+    }
     void onDeleteDiagram(
       id,
       () =>
@@ -247,6 +268,23 @@ export function Explorer({
     });
   }, [diagrams]);
 
+  // Same pruning for team deletes: once the library sweep re-fetches
+  // without the deleted id, drop it from the local hide-set so the set
+  // can't grow unbounded.
+  useEffect(() => {
+    setDeletedTeamIds((prev) => {
+      if (prev.size === 0) return prev;
+      const present = new Set(teamDiagrams.map((d) => d.id));
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (present.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [teamDiagrams]);
+
   // (Previously: `if (hideOnMobile) return null;` — Explorer now
   // renders on mobile too, banner-collapsed by default. The panel
   // sits at the top of the canvas above Palette + Editor.)
@@ -264,15 +302,23 @@ export function Explorer({
     () => (currentDiagramId ? (diagrams.find((d) => d.id === currentDiagramId) ?? null) : null),
     [diagrams, currentDiagramId],
   );
+  // Team rows minus any the viewer just deleted (see deletedTeamIds).
+  const visibleTeamDiagrams = useMemo(
+    () =>
+      deletedTeamIds.size === 0
+        ? teamDiagrams
+        : teamDiagrams.filter((d) => !deletedTeamIds.has(d.id)),
+    [teamDiagrams, deletedTeamIds],
+  );
   // When the open diagram lives in a team library it won't be in
   // `diagrams` (those are personal only). Fall back to the swept team
   // diagrams so the Current Diagram section renders for team diagrams.
   const currentTeam = useMemo(
     () =>
       !current && currentDiagramId
-        ? (teamDiagrams.find((d) => d.id === currentDiagramId) ?? null)
+        ? (visibleTeamDiagrams.find((d) => d.id === currentDiagramId) ?? null)
         : null,
-    [current, teamDiagrams, currentDiagramId],
+    [current, visibleTeamDiagrams, currentDiagramId],
   );
   // When the open diagram is shared (not owned / not team), it won't
   // appear in `diagrams` either. Fall back to the shared list so the
@@ -300,7 +346,7 @@ export function Explorer({
     const own: RecentEntry[] = diagrams
       .filter((d) => d.id !== currentDiagramId)
       .map((d) => ({ kind: 'own', savedAt: d.savedAt, d }));
-    const team: RecentEntry[] = teamDiagrams
+    const team: RecentEntry[] = visibleTeamDiagrams
       .filter((d) => d.id !== currentDiagramId)
       .map((d) => ({ kind: 'team', savedAt: d.savedAt, d }));
     const sharedEntries: RecentEntry[] = shared
@@ -309,7 +355,7 @@ export function Explorer({
     return [...own, ...team, ...sharedEntries]
       .sort((a, b) => b.savedAt - a.savedAt)
       .slice(0, RECENT_LIMIT);
-  }, [diagrams, teamDiagrams, shared, currentDiagramId]);
+  }, [diagrams, visibleTeamDiagrams, shared, currentDiagramId]);
   // This team's folder rows, indexed by team, for the Teams accordion.
   const foldersByTeam = useMemo(() => {
     const map = new Map<string, { id: string; name: string; parentId: string | null }[]>();
@@ -324,13 +370,13 @@ export function Explorer({
   // show the diagrams inside each team folder (spec/35).
   const diagramsByTeam = useMemo(() => {
     const map = new Map<string, DiagramListItem[]>();
-    for (const d of teamDiagrams) {
+    for (const d of visibleTeamDiagrams) {
       const bucket = map.get(d.team.id) ?? [];
       bucket.push(d);
       map.set(d.team.id, bucket);
     }
     return map;
-  }, [teamDiagrams]);
+  }, [visibleTeamDiagrams]);
 
   // Folder tree: index folders by parentId so the recursive renderer
   // can ask for children by id without rescanning the full list.
@@ -464,6 +510,14 @@ export function Explorer({
                     active
                     onOpen={() => onOpenDiagram(currentTeam.id)}
                     onRename={onRenameCurrent}
+                    // Hard delete is the owner's to make (spec/35); the
+                    // api 403s anyone else, so only surface it when the
+                    // viewer owns this team diagram.
+                    onDelete={
+                      openDeleteConfirm && currentOwnerId && currentTeam.ownerId === currentOwnerId
+                        ? (anchor) => openDeleteConfirm(currentTeam.id, anchor)
+                        : undefined
+                    }
                   />
                 </li>
               ) : currentShared ? (
@@ -672,6 +726,10 @@ export function Explorer({
                     onOpenTeam={(teamId) =>
                       window.location.assign(`/live/explorer/team?id=${encodeURIComponent(teamId)}`)
                     }
+                    // Owner-only hard delete on team-library rows
+                    // (spec/35). TeamNode gates each row on ownerId.
+                    currentOwnerId={currentOwnerId}
+                    onDeleteDiagram={openDeleteConfirm}
                   />
                 ))}
               </ul>
@@ -721,7 +779,9 @@ export function Explorer({
         <ConfirmPopover
           anchor={deleteAnchorRef.current}
           message={`Delete "${
-            diagrams.find((d) => d.id === deleteConfirm.id)?.name || 'this diagram'
+            diagrams.find((d) => d.id === deleteConfirm.id)?.name ||
+            teamDiagrams.find((d) => d.id === deleteConfirm.id)?.name ||
+            'this diagram'
           }"? Its tabs, history and share links go with it.`}
           confirmLabel="Delete"
           onConfirm={() => {
