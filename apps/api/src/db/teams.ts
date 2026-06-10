@@ -7,6 +7,7 @@
 
 import type { Team, TeamInvite, TeamListItem, TeamMember, TeamRole } from '@livediagram/api-schema';
 import type { Env } from '../types';
+import { getParticipant } from './participants';
 
 const TEAM_COLS = 'id, name, organisation, created_at, updated_at';
 const MEMBER_COLS =
@@ -57,6 +58,9 @@ function rowToMember(row: MemberRow): TeamMember {
     // NULL status reads as 'joined' so a drifted row can't lock a
     // real member out of their own team.
     status: row.status === 'invited' ? 'invited' : 'joined',
+    // Filled in by listTeamMembers via the participants join; the bare
+    // row mapping leaves it null.
+    name: null,
     inviteToken: row.invite_token ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -147,7 +151,16 @@ export async function listTeamMembers(env: Env, teamId: string): Promise<TeamMem
   )
     .bind(teamId)
     .all<MemberRow>();
-  return (result.results ?? []).map(rowToMember);
+  const members = (result.results ?? []).map(rowToMember);
+  // Resolve each connected member's display name from their participant
+  // profile (spec/32) so the list shows real names ("Anna Smith"), not
+  // just the prettified invite email. Pending / profile-less rows stay
+  // null and the client falls back to the email.
+  return Promise.all(
+    members.map(async (m) =>
+      m.userId ? { ...m, name: (await getParticipant(env, m.userId))?.name ?? null } : m,
+    ),
+  );
 }
 
 // The caller's own membership row in a team — the permission check
@@ -253,6 +266,7 @@ export async function addTeamMember(
     email: m.email,
     role: 'member',
     status: 'invited',
+    name: null,
     inviteToken,
     createdAt: now,
     updatedAt: now,

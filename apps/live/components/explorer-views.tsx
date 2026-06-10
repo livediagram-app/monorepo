@@ -43,7 +43,7 @@ import {
 // type means dropping a diagram outside any registered target (the
 // page background, the URL bar, an unrelated app) is a no-op rather
 // than triggering a browser navigation to "the dragged URL".
-export const DIAGRAM_DRAG_MIME = 'application/x-livediagram-id';
+const DIAGRAM_DRAG_MIME = 'application/x-livediagram-id';
 
 // Recursive folder node in the panel's tree. Renders its label +
 // chevron + menu, and when expanded reveals child folders (recursive)

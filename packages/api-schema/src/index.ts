@@ -165,6 +165,11 @@ export type TeamMember = {
   email: string | null;
   role: TeamRole;
   status: TeamMemberStatus;
+  // The member's display name (spec/32), resolved from their
+  // participant profile once they've joined and used the app. Null on
+  // a pending invite or a member with no profile yet; the client then
+  // falls back to the invite email's local part.
+  name: string | null;
   // Shareable claim token for a pending invite (spec/32). Lets the
   // invitee join from a link without the verified-email auto-connect.
   // Only ever populated on the admin's view of a pending row; the

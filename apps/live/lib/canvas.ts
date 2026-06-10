@@ -50,8 +50,8 @@ export const ZOOM_MAX = 5;
 // the raw angle lands within ROTATION_SNAP_DEG of one, so squaring a
 // shape up is effortless. Holding Shift (passed as `free`) disables
 // the snap for fine control.
-export const ROTATION_SNAP_STEP = 15;
-export const ROTATION_SNAP_DEG = 7;
+const ROTATION_SNAP_STEP = 15;
+const ROTATION_SNAP_DEG = 7;
 
 // Normalise a rotation in degrees into [0, 360) and, unless `free`,
 // snap it to the nearest ROTATION_SNAP_STEP when within

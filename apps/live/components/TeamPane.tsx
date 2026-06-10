@@ -448,6 +448,10 @@ export function TeamPane({
 // the row to stay calm — the local part is the recognisable bit).
 function memberName(m: TeamMember, isSelf: boolean, clerkDisplayName: string | null): string {
   if (isSelf && clerkDisplayName) return clerkDisplayName;
+  // Real display name once they've joined + used the app (spec/32),
+  // resolved server-side from their participant profile. Falls back to
+  // the prettified invite email for pending / profile-less rows.
+  if (m.name) return m.name;
   if (m.email) return prettifyEmailLocalPart(m.email);
   return isSelf ? 'You' : 'Member';
 }

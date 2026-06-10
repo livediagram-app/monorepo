@@ -10,7 +10,7 @@
 // stay as pure-render presentational markup. Adding a new glyph means
 // appending one function here and one branch in EventIcon.
 
-export const SVG_PROPS = {
+const SVG_PROPS = {
   width: 14,
   height: 14,
   viewBox: '0 0 14 14',

@@ -63,6 +63,7 @@ function member(overrides: Partial<TeamMember> = {}): TeamMember {
     email: 'me@example.com',
     role: 'admin',
     status: 'joined',
+    name: null,
     inviteToken: null,
     createdAt: 1,
     updatedAt: 1,
