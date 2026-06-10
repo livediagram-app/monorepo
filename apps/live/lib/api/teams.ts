@@ -6,7 +6,7 @@
 // guard) return discriminated results instead of throwing, because the
 // UI has to message them ("Already on this team") rather than treat
 // them as transport failures.
-import type { Team, TeamListItem, TeamMember, TeamRole } from '@livediagram/api-schema';
+import type { Team, TeamInvite, TeamListItem, TeamMember, TeamRole } from '@livediagram/api-schema';
 import { dedupeInFlight } from '../dedupe';
 import { API_BASE, apiDelete, apiHeaders, expectOk } from './core';
 
@@ -14,6 +14,7 @@ export type TeamsResponse = { teams: TeamListItem[] };
 export type TeamResponse = { team: Team };
 export type TeamDetailResponse = { team: Team; members: TeamMember[]; myRole: TeamRole };
 export type TeamMemberResponse = { member: TeamMember };
+export type TeamInvitesResponse = { invites: TeamInvite[] };
 
 // Same dedupe rationale as apiListFolders: the sidebar list is
 // fetched once per surface, and concurrent mounts must not fan out
@@ -24,6 +25,30 @@ async function _apiListTeams(ownerId: string): Promise<TeamListItem[]> {
   return teams;
 }
 export const apiListTeams = dedupeInFlight(_apiListTeams, (ownerId) => ownerId);
+
+// The caller's pending invites (spec/32 accept/decline). Deduped for
+// the same concurrent-mount reason as the list.
+async function _apiListTeamInvites(ownerId: string): Promise<TeamInvite[]> {
+  const res = await fetch(`${API_BASE}/teams/invites`, { headers: await apiHeaders(ownerId) });
+  const { invites } = await expectOk<TeamInvitesResponse>(res, 'list team invites');
+  return invites;
+}
+export const apiListTeamInvites = dedupeInFlight(_apiListTeamInvites, (ownerId) => ownerId);
+
+// The invitee's yes: flips their own member row from invited to
+// joined. Declining is apiRemoveTeamMember on the same row.
+export async function apiAcceptTeamInvite(
+  ownerId: string,
+  teamId: string,
+  memberId: string,
+): Promise<TeamMember> {
+  const res = await fetch(`${API_BASE}/teams/${teamId}/members/${memberId}/accept`, {
+    method: 'POST',
+    headers: await apiHeaders(ownerId),
+  });
+  const { member } = await expectOk<TeamMemberResponse>(res, 'accept team invite');
+  return member;
+}
 
 export async function apiCreateTeam(
   ownerId: string,

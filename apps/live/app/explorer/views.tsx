@@ -40,7 +40,8 @@ export type SelectedNode =
   | { kind: 'shared' }
   | { kind: 'gallery' }
   | { kind: 'folder'; id: string }
-  | { kind: 'team'; id: string };
+  | { kind: 'team'; id: string }
+  | { kind: 'invites' };
 
 // ---------- Right pane primitives ---------------------------------
 

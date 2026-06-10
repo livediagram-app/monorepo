@@ -192,6 +192,25 @@ export function TeamIcon() {
   );
 }
 
+export function InviteIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+      <path d="M2.5 4.5L8 9l5.5-4.5" />
+    </svg>
+  );
+}
+
 export function EllipsisIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>

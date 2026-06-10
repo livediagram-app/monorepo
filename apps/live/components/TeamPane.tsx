@@ -201,9 +201,12 @@ export function TeamPane({
     await refresh();
   };
 
+  const joinedCount = members.filter((m) => m.status === 'joined').length;
+  const invitedCount = members.length - joinedCount;
   const headline = [
     team.organisation,
-    `${members.length} ${members.length === 1 ? 'member' : 'members'}`,
+    `${joinedCount} ${joinedCount === 1 ? 'member' : 'members'}`,
+    invitedCount > 0 ? `${invitedCount} invited` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -265,7 +268,9 @@ export function TeamPane({
         {members.map((m) => {
           const isSelf = m.userId !== null && m.userId === clerkUserId;
           const name = memberName(m, isSelf, clerkDisplayName);
-          const pending = m.userId === null;
+          // Pending = hasn't accepted (spec/32 handshake), regardless
+          // of whether the lazy claim has identified them yet.
+          const pending = m.status === 'invited';
           const pinnedAdmin = isLastAdmin(m);
           const removable = isAdmin && !isSelf && !pinnedAdmin;
           return (
@@ -289,7 +294,7 @@ export function TeamPane({
                   ) : null}
                 </span>
                 <span className="block truncate text-xs text-slate-400">
-                  {pending ? 'Invited — joins when they sign in' : isSelf ? (m.email ?? '') : ''}
+                  {pending ? 'Invited — waiting for them to accept' : isSelf ? (m.email ?? '') : ''}
                 </span>
               </span>
               {isAdmin && !pinnedAdmin ? (

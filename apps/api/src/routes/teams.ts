@@ -7,6 +7,7 @@
 
 import type { TeamRole } from '@livediagram/api-schema';
 import {
+  acceptTeamMember,
   addTeamMember,
   connectInvitesByEmail,
   countTeamAdmins,
@@ -15,6 +16,7 @@ import {
   getMembership,
   getTeam,
   getTeamMember,
+  listInvitesByUser,
   listTeamMembers,
   listTeamsByUser,
   removeTeamMember,
@@ -75,15 +77,33 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
     return notFound();
   }
 
+  // /api/teams/invites — the caller's pending invites (spec/32).
+  // Sits above the team-scoped resolution because 'invites' occupies
+  // the id slot (team ids are UUIDs, so no collision). Runs the same
+  // lazy claim as the list so the two calls are order-independent.
+  if (segments.length === 3 && segments[2] === 'invites') {
+    if (request.method === 'GET') {
+      if (clerkEmail) await connectInvitesByEmail(env, clerkUserId, clerkEmail);
+      const invites = await listInvitesByUser(env, clerkUserId);
+      return json({ invites });
+    }
+    return notFound();
+  }
+
   // Everything below is team-scoped: resolve the team and the
   // caller's membership once. Non-members get 404 (not 403) so a
-  // team id can't be probed for existence.
+  // team id can't be probed for existence. An 'invited' membership
+  // row passes this gate — the invitee may read the team to decide,
+  // accept, or decline (delete their row) — but every admin verb
+  // below additionally requires a JOINED admin row.
   const teamId = segments[2]!;
   const team = await getTeam(env, teamId);
   if (!team) return notFound();
   const me = await getMembership(env, teamId, clerkUserId);
   if (!me) return notFound();
-  const isAdmin = me.role === 'admin';
+  // Admin verbs need an accepted admin row: a pending invite that was
+  // pre-promoted to admin manages nothing until they join.
+  const isAdmin = me.role === 'admin' && me.status === 'joined';
 
   // /api/teams/<id> — read / update / delete
   if (segments.length === 3) {
@@ -138,7 +158,22 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
     return notFound();
   }
 
+  // /api/teams/<id>/members/<memberId>/accept — the invitee's yes
+  // (spec/32): own row only, and only while it's still 'invited'.
+  if (segments.length === 6 && segments[3] === 'members' && segments[5] === 'accept') {
+    if (request.method !== 'POST') return notFound();
+    const member = await getTeamMember(env, segments[4]!);
+    if (!member || member.teamId !== teamId) return notFound();
+    if (member.userId === null || member.userId !== clerkUserId) {
+      return json({ error: 'not_your_invite' }, { status: 403 });
+    }
+    if (member.status === 'invited') await acceptTeamMember(env, member.id);
+    const updated = await getTeamMember(env, member.id);
+    return json({ member: updated });
+  }
+
   // /api/teams/<id>/members/<memberId> — role change / remove
+  // (removing your own row doubles as both "leave" and "decline").
   if (segments.length === 5 && segments[3] === 'members') {
     const member = await getTeamMember(env, segments[4]!);
     if (!member || member.teamId !== teamId) return notFound();
@@ -149,9 +184,10 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
       const body = (await request.json().catch(() => null)) as { role?: string } | null;
       const role = body?.role;
       if (role !== 'admin' && role !== 'member') return badRequest('invalid role');
-      // Last-admin guard (spec/32): demoting the only admin would
-      // leave the team unmanageable.
-      if (member.role === 'admin' && role === 'member') {
+      // Last-admin guard (spec/32): demoting the only JOINED admin
+      // would leave the team unmanageable. Invited rows are exempt —
+      // they don't count as managing admins yet either way.
+      if (member.role === 'admin' && member.status === 'joined' && role === 'member') {
         if ((await countTeamAdmins(env, teamId)) <= 1) return conflict('last_admin');
       }
       if (role !== member.role) await updateTeamMemberRole(env, member.id, role as TeamRole);
@@ -160,9 +196,15 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
     }
     if (request.method === 'DELETE') {
       // Admins remove anyone; a non-admin may only remove their own
-      // row (leave). Same last-admin guard either way.
+      // row (leave / decline). Same last-admin guard either way,
+      // skipped for invited rows (declining a pre-promoted invite
+      // must always work — it was never a managing admin).
       if (!isAdmin && !isSelf) return adminRequired();
-      if (member.role === 'admin' && (await countTeamAdmins(env, teamId)) <= 1) {
+      if (
+        member.role === 'admin' &&
+        member.status === 'joined' &&
+        (await countTeamAdmins(env, teamId)) <= 1
+      ) {
         return conflict('last_admin');
       }
       await removeTeamMember(env, member.id);

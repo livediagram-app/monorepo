@@ -4,7 +4,9 @@ import type { Env } from '../types';
 
 const { db } = vi.hoisted(() => ({
   db: {
+    acceptTeamMember: vi.fn(),
     addTeamMember: vi.fn(),
+    listInvitesByUser: vi.fn(),
     connectInvitesByEmail: vi.fn(),
     countTeamAdmins: vi.fn(),
     createTeam: vi.fn(),
@@ -59,6 +61,7 @@ function member(overrides: Partial<TeamMember> = {}): TeamMember {
     userId: 'user-1',
     email: 'me@example.com',
     role: 'admin',
+    status: 'joined',
     createdAt: 1,
     updatedAt: 1,
     ...overrides,
@@ -90,6 +93,75 @@ describe('GET /api/teams (list + lazy invite claim)', () => {
     db.listTeamsByUser.mockResolvedValue([]);
     await handleTeams(makeCtx('GET', '/api/teams', { clerkEmail: 'me@example.com' }));
     expect(db.connectInvitesByEmail).toHaveBeenCalledWith({}, 'user-1', 'me@example.com');
+  });
+});
+
+describe('GET /api/teams/invites (spec/32 accept/decline)', () => {
+  it('lazy-claims then lists the pending invites', async () => {
+    db.listInvitesByUser.mockResolvedValue([
+      { memberId: 'm2', team, memberCount: 3, invitedAt: 5 },
+    ]);
+    const res = await handleTeams(
+      makeCtx('GET', '/api/teams/invites', { clerkEmail: 'me@example.com' }),
+    );
+    expect(res.status).toBe(200);
+    expect(db.connectInvitesByEmail).toHaveBeenCalledWith({}, 'user-1', 'me@example.com');
+    expect(db.listInvitesByUser).toHaveBeenCalledWith({}, 'user-1');
+  });
+
+  it('401 for the guest path', async () => {
+    const res = await handleTeams(makeCtx('GET', '/api/teams/invites', { clerkUserId: null }));
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('POST /api/teams/:id/members/:memberId/accept', () => {
+  beforeEach(() => {
+    db.getTeam.mockResolvedValue(team);
+  });
+
+  it("flips the caller's own invited row to joined", async () => {
+    db.getMembership.mockResolvedValue(member({ role: 'member', status: 'invited' }));
+    db.getTeamMember.mockResolvedValue(member({ role: 'member', status: 'invited' }));
+    const res = await handleTeams(makeCtx('POST', '/api/teams/t1/members/m1/accept'));
+    expect(res.status).toBe(200);
+    expect(db.acceptTeamMember).toHaveBeenCalledWith({}, 'm1');
+  });
+
+  it("403 not_your_invite on someone else's row", async () => {
+    db.getMembership.mockResolvedValue(member());
+    db.getTeamMember.mockResolvedValue(
+      member({ id: 'm2', userId: 'user-2', role: 'member', status: 'invited' }),
+    );
+    const res = await handleTeams(makeCtx('POST', '/api/teams/t1/members/m2/accept'));
+    expect(res.status).toBe(403);
+    expect(db.acceptTeamMember).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent on an already-joined row (no rewrite)', async () => {
+    db.getMembership.mockResolvedValue(member());
+    db.getTeamMember.mockResolvedValue(member());
+    const res = await handleTeams(makeCtx('POST', '/api/teams/t1/members/m1/accept'));
+    expect(res.status).toBe(200);
+    expect(db.acceptTeamMember).not.toHaveBeenCalled();
+  });
+});
+
+describe('invited rows grant no admin powers', () => {
+  it('an invited admin row cannot use admin verbs', async () => {
+    db.getTeam.mockResolvedValue(team);
+    db.getMembership.mockResolvedValue(member({ status: 'invited' }));
+    const res = await handleTeams(makeCtx('PUT', '/api/teams/t1', { body: { name: 'X' } }));
+    expect(res.status).toBe(403);
+  });
+
+  it('declining an invited admin row bypasses the last-admin guard', async () => {
+    db.getTeam.mockResolvedValue(team);
+    db.getMembership.mockResolvedValue(member({ status: 'invited' }));
+    db.getTeamMember.mockResolvedValue(member({ status: 'invited' }));
+    const res = await handleTeams(makeCtx('DELETE', '/api/teams/t1/members/m1'));
+    expect(res.status).toBe(204);
+    expect(db.countTeamAdmins).not.toHaveBeenCalled();
   });
 });
 

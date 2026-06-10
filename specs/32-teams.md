@@ -11,10 +11,11 @@ Multi-user team permissions have been "still ahead" since spec/02. This is the f
 Two D1 tables, owned by the api worker (migration `0019_teams.sql`):
 
 - **`teams`**: `id`, `name`, `organisation` (free text, nullable), `created_at`, `updated_at`. No owner column: ownership is expressed through the Admin role in the link table, so a team survives its creator leaving.
-- **`team_members`** (the link table): `id`, `team_id`, `user_id` (nullable), `email` (nullable), `role` (`'admin' | 'member'`), `created_at`, `updated_at`.
+- **`team_members`** (the link table): `id`, `team_id`, `user_id` (nullable), `email` (nullable), `role` (`'admin' | 'member'`), `status` (`'invited' | 'joined'`, migration `0021`), `created_at`, `updated_at`.
   - `user_id` is a Clerk user id. Null on a pending invite that hasn't connected yet.
   - `email` is the lowercased invite address. Unique per team. May be null only on the creator's row when the deployment's JWT carries no email claim.
   - One of `user_id` / `email` is always set.
+  - `status` is the accept/decline handshake state. Creator rows are born `joined`; invite rows are born `invited`. Rows that pre-date migration 0021 were backfilled `joined` (they joined under the old auto-join rules) except never-connected invites, which stayed `invited`.
 
 ## Identity: signed-in only
 
@@ -27,11 +28,17 @@ Teams are keyed by Clerk user ids and invites are keyed by email, so the whole f
 
 Connect-on-signup needs the user's email **server-side and verified**. The worker reads an optional `email` claim from the verified Clerk JWT (`apps/api/src/auth/clerk.ts`); it never trusts a client-supplied email. The hosted deployment's Clerk JWT template must include `"email": "{{user.primary_email_address}}"`. When the claim is absent (default Clerk token, or self-host that hasn't configured it) everything still works except invite auto-connection, and the creator's member row stores no email.
 
-## Invites and connect-on-sign-in
+## Invites, connect-on-sign-in, and accept/decline
 
-- An Admin invites by email address. That immediately creates a `team_members` row: `role = 'member'`, `email = <lowercased address>`, `user_id = NULL`. **No email is sent in v1** (Resend hasn't shipped); the inviter tells the person out of band. A pending invite renders as the email with an "Invited" badge.
-- **Lazy claim**: on every authenticated `GET /api/teams`, the worker first connects pending invites: `UPDATE team_members SET user_id = <sub> WHERE email = <jwt email> AND user_id IS NULL`. So an invitee sees the team the first time they open the Explorer signed in with that address, whether they signed up before or after the invite.
-- Duplicate invite of an email already on the team: `409 conflict`.
+Membership is a two-step handshake: being invited does not make someone a member until they accept.
+
+- An Admin invites by email address. That creates a `team_members` row: `role = 'member'`, `email = <lowercased address>`, `user_id = NULL`, **`status = 'invited'`**. **No email is sent in v1** (Resend hasn't shipped); the inviter tells the person out of band.
+- **Lazy claim**: on every authenticated `GET /api/teams` and `GET /api/teams/invites`, the worker connects pending invites (`user_id = <sub> WHERE email = <jwt email> AND user_id IS NULL`) — connecting fills in who the person is, it does **not** accept for them; `status` stays `invited`.
+- The invitee sees the invite in the Explorer's **Invites** section (below, with team name, organisation, and member count) and chooses:
+  - **Accept** → `status` flips to `joined`; the team moves into their Teams list and their row in the team reads as a normal member.
+  - **Decline** → the member row is deleted; they were never a member. An Admin may re-invite the same address later.
+- An `invited` row grants no membership: `GET /api/teams` lists `joined` rows only, and `memberCount` counts `joined` rows only. The invitee may read the team's detail (to decide), accept, or decline — nothing else.
+- Duplicate invite of an email already on the team (any status): `409 conflict`.
 
 ## Roles and permissions
 
@@ -53,7 +60,9 @@ Two roles: `admin`, `member`. The creating user becomes the team's first Admin.
 
 All under `/api/teams`, Clerk Bearer required, handled by `apps/api/src/routes/teams.ts`:
 
-- `GET /api/teams` — lazy-claims invites (above), then lists teams the caller belongs to, each with `myRole` and `memberCount`.
+- `GET /api/teams` — lazy-claims invites (above), then lists teams the caller has **joined**, each with `myRole` and `memberCount`.
+- `GET /api/teams/invites` — lazy-claims, then lists the caller's pending invites (member id + team summary + joined-member count). The Explorer's Invites badge is this list's length.
+- `POST /api/teams/:id/members/:memberId/accept` — own row only; flips `status` from `invited` to `joined`. Declining is the existing `DELETE` on the own member row.
 - `POST /api/teams` `{id, name, organisation?}` — creates the team plus the caller's Admin member row.
 - `GET /api/teams/:id` — team + full member list + `myRole`. Members only.
 - `PUT /api/teams/:id` `{name?, organisation?}` — Admin only.
@@ -68,8 +77,9 @@ Wire DTOs (`Team`, `TeamListItem`, `TeamMember`, `TeamRole`) live in `@livediagr
 
 In the Explorer sidebar, a **Teams** section sits under the Folders section (above Library):
 
-- One row per team the user is in; selecting it shows the team in the right pane.
+- One row per team the user has joined; selecting it shows the team in the right pane.
 - A "New team" affordance opens a create modal (name + organisation); submitting creates the team with the user as Admin.
+- An **Invites** row directly under "New team", carrying a count badge when invites are pending. Selecting it shows each pending invite as a card (team name, organisation, joined-member count) with **Accept** and **Decline** actions. Accepting selects the newly joined team; declining removes the card.
 
 The right-pane team view is **one calm card**, not a stack of panels:
 
@@ -83,7 +93,7 @@ The pane title row reads "Recent Diagrams" for the recent section (renamed from 
 
 ## Telemetry
 
-New category `Team` (spec/22). Events: `Team/Created`, `Team/Deleted`, `Team/Changed` (edit name/organisation), `Team/Changed/Role` (role change), `Team/Added/Member` (invite), `Team/Removed/Member` (admin removes someone), `Team/Removed/Self` (leave). No `type` value carries user content.
+New category `Team` (spec/22). Events: `Team/Created`, `Team/Deleted`, `Team/Changed` (edit name/organisation), `Team/Changed/Role` (role change), `Team/Added/Member` (invite), `Team/Joined` (invite accepted), `Team/Removed/Invite` (invite declined), `Team/Removed/Member` (admin removes someone), `Team/Removed/Self` (leave). No `type` value carries user content.
 
 ## Out of scope (v1)
 

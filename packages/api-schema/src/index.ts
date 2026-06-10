@@ -136,19 +136,36 @@ export type TeamListItem = Team & {
   memberCount: number;
 };
 
+// The accept/decline handshake state (spec/32). An 'invited' row
+// grants no membership: it waits in the invitee's Invites section
+// until they accept ('joined') or decline (row deleted).
+export type TeamMemberStatus = 'invited' | 'joined';
+
 // One member link row. `userId` is the Clerk user id, null while the
-// invite is pending (the address hasn't signed in yet — spec/32's
-// lazy claim fills it in). `email` is the lowercased invite address;
-// null only on a creator row minted when the deployment's JWT carries
-// no email claim. One of the two is always set.
+// invite hasn't connected yet (spec/32's lazy claim fills it in —
+// connecting identifies the person, it does NOT accept for them).
+// `email` is the lowercased invite address; null only on a creator
+// row minted when the deployment's JWT carries no email claim. One of
+// the two is always set.
 export type TeamMember = {
   id: string;
   teamId: string;
   userId: string | null;
   email: string | null;
   role: TeamRole;
+  status: TeamMemberStatus;
   createdAt: number;
   updatedAt: number;
+};
+
+// One row of `GET /api/teams/invites`: the caller's own pending
+// member row plus enough of the team to decide (name, organisation,
+// how many people have actually joined).
+export type TeamInvite = {
+  memberId: string;
+  team: Team;
+  memberCount: number;
+  invitedAt: number;
 };
 
 // ---------------------------------------------------------------------

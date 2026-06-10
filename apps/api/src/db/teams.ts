@@ -1,13 +1,19 @@
 // teams + team_members (spec/32). Membership doubles as the invite
-// store: a row with user_id NULL is a pending email invite that
-// `connectInvitesByEmail` claims the first time that address shows up
-// in a verified JWT.
+// store: a row with status 'invited' is a pending invite waiting in
+// its owner's Invites section; `connectInvitesByEmail` fills in WHO
+// the person is the first time their address shows up in a verified
+// JWT, and `acceptTeamMember` is the explicit yes that makes them a
+// member. Declining is a plain row delete.
 
-import type { Team, TeamListItem, TeamMember, TeamRole } from '@livediagram/api-schema';
+import type { Team, TeamInvite, TeamListItem, TeamMember, TeamRole } from '@livediagram/api-schema';
 import type { Env } from '../types';
 
 const TEAM_COLS = 'id, name, organisation, created_at, updated_at';
-const MEMBER_COLS = 'id, team_id, user_id, email, role, created_at, updated_at';
+const MEMBER_COLS = 'id, team_id, user_id, email, role, status, created_at, updated_at';
+
+// Joined-members subquery used everywhere a member count surfaces:
+// pending invites are not members, so they never inflate the number.
+const JOINED_COUNT = `(SELECT COUNT(*) FROM team_members c WHERE c.team_id = t.id AND c.status = 'joined')`;
 
 type TeamRow = {
   id: string;
@@ -23,6 +29,7 @@ type MemberRow = {
   user_id: string | null;
   email: string | null;
   role: string;
+  status: string | null;
   created_at: number;
   updated_at: number;
 };
@@ -44,6 +51,10 @@ function rowToMember(row: MemberRow): TeamMember {
     userId: row.user_id,
     email: row.email,
     role: row.role === 'admin' ? 'admin' : 'member',
+    // Defensive default mirrors the migration backfill: an unknown /
+    // NULL status reads as 'joined' so a drifted row can't lock a
+    // real member out of their own team.
+    status: row.status === 'invited' ? 'invited' : 'joined',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -66,13 +77,16 @@ export async function connectInvitesByEmail(
     .run();
 }
 
+// Teams the user has JOINED — pending invites live in
+// listInvitesByUser instead, so an un-accepted invite never shows up
+// as a membership (spec/32 accept/decline).
 export async function listTeamsByUser(env: Env, userId: string): Promise<TeamListItem[]> {
   const result = await env.DB.prepare(
     `SELECT t.id, t.name, t.organisation, t.created_at, t.updated_at,
             m.role AS my_role,
-            (SELECT COUNT(*) FROM team_members c WHERE c.team_id = t.id) AS member_count
+            ${JOINED_COUNT} AS member_count
      FROM teams t
-     JOIN team_members m ON m.team_id = t.id AND m.user_id = ?
+     JOIN team_members m ON m.team_id = t.id AND m.user_id = ? AND m.status = 'joined'
      ORDER BY t.name ASC`,
   )
     .bind(userId)
@@ -82,6 +96,36 @@ export async function listTeamsByUser(env: Env, userId: string): Promise<TeamLis
     myRole: row.my_role === 'admin' ? 'admin' : 'member',
     memberCount: row.member_count,
   }));
+}
+
+// The caller's pending invites, oldest first: their own 'invited'
+// rows joined with enough of the team to decide on (spec/32).
+export async function listInvitesByUser(env: Env, userId: string): Promise<TeamInvite[]> {
+  const result = await env.DB.prepare(
+    `SELECT t.id, t.name, t.organisation, t.created_at, t.updated_at,
+            m.id AS member_id, m.created_at AS invited_at,
+            ${JOINED_COUNT} AS member_count
+     FROM teams t
+     JOIN team_members m ON m.team_id = t.id AND m.user_id = ? AND m.status = 'invited'
+     ORDER BY m.created_at ASC`,
+  )
+    .bind(userId)
+    .all<TeamRow & { member_id: string; invited_at: number; member_count: number }>();
+  return (result.results ?? []).map((row) => ({
+    memberId: row.member_id,
+    team: rowToTeam(row),
+    memberCount: row.member_count,
+    invitedAt: row.invited_at,
+  }));
+}
+
+// The explicit yes (spec/32): flips the caller's own invite row to
+// 'joined'. Row-level authorisation (own row, currently invited)
+// happens in the route; this is the plain write.
+export async function acceptTeamMember(env: Env, memberId: string): Promise<void> {
+  await env.DB.prepare(`UPDATE team_members SET status = 'joined', updated_at = ? WHERE id = ?`)
+    .bind(Date.now(), memberId)
+    .run();
 }
 
 export async function getTeam(env: Env, id: string): Promise<Team | null> {
@@ -138,8 +182,8 @@ export async function createTeam(
       `INSERT INTO teams (id, name, organisation, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
     ).bind(t.id, t.name, t.organisation, now, now),
     env.DB.prepare(
-      `INSERT INTO team_members (id, team_id, user_id, email, role, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'admin', ?, ?)`,
+      `INSERT INTO team_members (id, team_id, user_id, email, role, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'admin', 'joined', ?, ?)`,
     ).bind(crypto.randomUUID(), t.id, creator.userId, creator.email, now, now),
   ]);
   return { id: t.id, name: t.name, organisation: t.organisation, createdAt: now, updatedAt: now };
@@ -191,8 +235,8 @@ export async function addTeamMember(
   const now = Date.now();
   const id = crypto.randomUUID();
   await env.DB.prepare(
-    `INSERT INTO team_members (id, team_id, user_id, email, role, created_at, updated_at)
-     VALUES (?, ?, NULL, ?, 'member', ?, ?)`,
+    `INSERT INTO team_members (id, team_id, user_id, email, role, status, created_at, updated_at)
+     VALUES (?, ?, NULL, ?, 'member', 'invited', ?, ?)`,
   )
     .bind(id, m.teamId, m.email, now, now)
     .run();
@@ -202,6 +246,7 @@ export async function addTeamMember(
     userId: null,
     email: m.email,
     role: 'member',
+    status: 'invited',
     createdAt: now,
     updatedAt: now,
   };
@@ -221,13 +266,13 @@ export async function removeTeamMember(env: Env, memberId: string): Promise<void
   await env.DB.prepare('DELETE FROM team_members WHERE id = ?').bind(memberId).run();
 }
 
-// The last-admin guard's input (spec/32): how many admin rows the
-// team has. Counts pending-invite admins too — there are none today
-// (invites are always members) but if that ever changes the guard
-// should still see them.
+// The last-admin guard's input (spec/32): how many JOINED admin rows
+// the team has. Status-filtered on purpose — a pending invite that
+// was promoted to admin hasn't accepted responsibility for the team,
+// so it must not satisfy the "someone can still manage this" check.
 export async function countTeamAdmins(env: Env, teamId: string): Promise<number> {
   const row = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM team_members WHERE team_id = ? AND role = 'admin'`,
+    `SELECT COUNT(*) AS n FROM team_members WHERE team_id = ? AND role = 'admin' AND status = 'joined'`,
   )
     .bind(teamId)
     .first<{ n: number }>();

@@ -17,8 +17,10 @@ export type {
   ShareLinkExpiry,
   ShareRole,
   Team,
+  TeamInvite,
   TeamListItem,
   TeamMember,
+  TeamMemberStatus,
   TeamRole,
 } from '@livediagram/api-schema';
 

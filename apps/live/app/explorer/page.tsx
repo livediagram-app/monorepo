@@ -36,12 +36,16 @@ const GalleryPane = dynamic(() => import('@/components/GalleryPane').then((m) =>
 // a team is selected in the sidebar, so the member-management view
 // stays out of the default explorer chunk.
 const TeamPane = dynamic(() => import('@/components/TeamPane').then((m) => m.TeamPane));
+const TeamInvitesPane = dynamic(() =>
+  import('@/components/TeamInvitesPane').then((m) => m.TeamInvitesPane),
+);
 import {
   ClockIcon,
   CloseIcon,
   FolderIcon,
   HomeIcon,
   ImageIcon,
+  InviteIcon,
   MenuFolderIcon,
   PlusIcon,
   ShareIcon,
@@ -107,7 +111,10 @@ export default function ExplorerPage() {
   const teamsEnabled = Boolean(isSignedIn && clerkUserId);
   const {
     teams,
+    invites,
     createTeam: hookCreateTeam,
+    acceptInvite,
+    declineInvite,
     refresh: refreshTeams,
   } = useTeams(ownerId, { enabled: teamsEnabled });
   const [teamModalOpen, setTeamModalOpen] = useState(false);
@@ -375,7 +382,7 @@ export default function ExplorerPage() {
     if (selected.kind === 'shared') {
       return { showUnsortedRow: false, folders: [], diagrams: [] };
     }
-    if (selected.kind === 'gallery' || selected.kind === 'team') {
+    if (selected.kind === 'gallery' || selected.kind === 'team' || selected.kind === 'invites') {
       return { showUnsortedRow: false, folders: [], diagrams: [] };
     }
     if (selected.kind === 'unsorted') {
@@ -402,6 +409,7 @@ export default function ExplorerPage() {
     if (selected.kind === 'team') {
       return teams.find((t) => t.id === selected.id)?.name ?? 'Team';
     }
+    if (selected.kind === 'invites') return 'Invites';
     if (selected.kind === 'all') return 'All diagrams';
     if (selected.kind === 'unsorted') return 'Unsorted';
     return folderById.get(selected.id)?.name ?? 'Folder';
@@ -417,6 +425,7 @@ export default function ExplorerPage() {
     if (selected.kind === 'shared') return [{ name: 'Shared with me' }];
     if (selected.kind === 'gallery') return [{ name: 'Image Gallery' }];
     if (selected.kind === 'team') return [{ name: paneTitle }];
+    if (selected.kind === 'invites') return [{ name: 'Invites' }];
     if (selected.kind === 'all') return [{ name: 'All diagrams' }];
     if (selected.kind === 'unsorted') return [all, { name: 'Unsorted' }];
     const chain = breadcrumb(selected.id);
@@ -562,6 +571,14 @@ export default function ExplorerPage() {
                 </span>
                 New team
               </button>
+              <SidebarRow
+                icon={<InviteIcon />}
+                label="Invites"
+                selected={selected.kind === 'invites'}
+                onClick={() => go({ kind: 'invites' })}
+                depth={0}
+                badge={invites.length > 0 ? invites.length : undefined}
+              />
             </>
           ) : (
             <Link
@@ -658,7 +675,10 @@ export default function ExplorerPage() {
             crumbs={paneCrumbs}
             onOpenNav={() => setMobileNavOpen(true)}
             onCreateDiagram={
-              selected.kind === 'shared' || selected.kind === 'gallery' || selected.kind === 'team'
+              selected.kind === 'shared' ||
+              selected.kind === 'gallery' ||
+              selected.kind === 'team' ||
+              selected.kind === 'invites'
                 ? undefined
                 : () =>
                     window.location.assign(
@@ -669,6 +689,7 @@ export default function ExplorerPage() {
               selected.kind === 'shared' ||
               selected.kind === 'gallery' ||
               selected.kind === 'team' ||
+              selected.kind === 'invites' ||
               selected.kind === 'recent'
                 ? undefined
                 : () => createFolder(selected.kind === 'folder' ? selected.id : null)
@@ -678,6 +699,16 @@ export default function ExplorerPage() {
 
           {loading ? (
             <SkeletonRows />
+          ) : selected.kind === 'invites' ? (
+            <TeamInvitesPane
+              invites={invites}
+              onAccept={(invite) =>
+                void acceptInvite(invite).then((teamId) => {
+                  if (teamId) setSelected({ kind: 'team', id: teamId });
+                })
+              }
+              onDecline={(invite) => void declineInvite(invite)}
+            />
           ) : selected.kind === 'team' ? (
             ownerId ? (
               <TeamPane
