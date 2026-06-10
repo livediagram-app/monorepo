@@ -155,18 +155,6 @@ export function useTeamLibrary(ownerId: string | null, teamId: string) {
     [ownerId, teamId, refresh],
   );
 
-  // Remove a diagram from the team: back to its OWNER's personal
-  // Unsorted (spec/35), whoever clicked the action.
-  const removeDiagramFromTeam = useCallback(
-    async (diagramId: string) => {
-      if (!ownerId) return;
-      await apiSetDiagramFolder(ownerId, diagramId, null, null).catch(() => {});
-      track('Team', 'Removed', 'Diagram');
-      await refresh();
-    },
-    [ownerId, refresh],
-  );
-
   // Hard-delete a team diagram. Any joined member may delete it
   // (spec/35), gated server-side by the team-member delete check.
   const deleteDiagram = useCallback(
@@ -224,7 +212,6 @@ export function useTeamLibrary(ownerId: string | null, teamId: string) {
     moveFolder,
     deleteFolder,
     moveDiagram,
-    removeDiagramFromTeam,
     deleteDiagram,
     renameDiagram,
     duplicateDiagram,

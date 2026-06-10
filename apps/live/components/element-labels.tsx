@@ -65,7 +65,7 @@ function svgPreserve(alignX: TextAlignX, alignY: TextAlignY): string {
 
 // --- Auto-scaling single-line label (SVG fit-to-bounds) --------------------
 
-export function ScalingLabel({
+function ScalingLabel({
   text,
   alignX,
   alignY,
@@ -140,7 +140,7 @@ const FIXED_FONT_PX: Record<Exclude<TextSize, 'scale'>, number> = {
   lg: 32,
 };
 
-export function FixedSizeLabel({
+function FixedSizeLabel({
   text,
   size,
   alignX,
@@ -200,7 +200,7 @@ type SingleLineLabelEditorProps = {
   cursorAtEnd?: boolean;
 };
 
-export function SingleLineLabelEditor({
+function SingleLineLabelEditor({
   initial,
   placeholder,
   textSize,
@@ -330,7 +330,7 @@ type MultilineLabelProps = {
   className?: string;
 };
 
-export function MultilineLabel({
+function MultilineLabel({
   text,
   placeholder,
   textSize,
@@ -382,7 +382,7 @@ type MultilineLabelEditorProps = {
   textClassName?: string;
 };
 
-export function MultilineLabelEditor({
+function MultilineLabelEditor({
   initial,
   placeholder,
   textSize,

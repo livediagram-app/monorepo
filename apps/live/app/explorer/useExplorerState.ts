@@ -364,24 +364,6 @@ export function useExplorerState() {
     else moveTeamDiagramOut(id, dest.teamId, dest.folderId);
   };
 
-  // Remove a diagram from its team: back to its OWNER's personal
-  // Unsorted (spec/35), whoever clicked. Refreshes both the team
-  // sweep (the row leaves Recent's team set) and the personal list
-  // (it reappears there when the caller IS the owner).
-  const removeDiagramFromTeam = async (id: string, name: string) => {
-    if (!ownerId) return;
-    const ok = await confirm({
-      title: 'Remove from team?',
-      message: `"${name}" will leave the team's shared diagrams and return to its owner's personal Unsorted.`,
-      confirmLabel: 'Remove',
-    });
-    if (!ok) return;
-    await apiSetDiagramFolder(ownerId, id, null, null).catch(() => {});
-    track('Team', 'Removed', 'Diagram');
-    refreshTeamLibraries();
-    void refresh(ownerId);
-  };
-
   const openMovePickerForDiagram = (id: string, anchor: HTMLElement | null) => {
     moveAnchorRef.current = anchor;
     setMoveTarget({ kind: 'diagram', id });
@@ -628,7 +610,6 @@ export function useExplorerState() {
     moveTeamDiagramToFolder,
     moveTeamDiagramOut,
     moveDiagramTo,
-    removeDiagramFromTeam,
     moveFolderToParent,
     openMovePickerForDiagram,
     moveTarget,

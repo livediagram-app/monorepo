@@ -310,7 +310,7 @@ const ALIGN_GRID: { x: TextAlignX; y: TextAlignY }[] = [
   { y: 'bottom', x: 'right' },
 ];
 
-export function alignLabel(x: TextAlignX, y: TextAlignY): string {
+function alignLabel(x: TextAlignX, y: TextAlignY): string {
   const yLabel = y === 'top' ? 'Top' : y === 'bottom' ? 'Bottom' : 'Middle';
   const xLabel = x === 'left' ? 'left' : x === 'right' ? 'right' : 'centre';
   return `${yLabel} ${xLabel}`;
@@ -383,7 +383,7 @@ export function ColorSwatch({
   );
 }
 
-export function hexish(color: string): string {
+function hexish(color: string): string {
   if (/^#[0-9a-fA-F]{6}$/.test(color)) return color;
   return '#ffffff';
 }
