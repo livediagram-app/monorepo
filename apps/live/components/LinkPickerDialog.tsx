@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { useEscape } from '@/hooks/useEscape';
 import type { ElementLink } from '@livediagram/diagram';
 
 // Shared link picker, styled like the import / export dialogs (centred
@@ -54,6 +55,7 @@ export function LinkPickerDialog({
   onCommit,
   onClose,
 }: LinkPickerDialogProps) {
+  useEscape(onClose);
   // External URL is the default; when editing an existing link, open on
   // that link's own mode instead.
   const [mode, setMode] = useState<Mode>(

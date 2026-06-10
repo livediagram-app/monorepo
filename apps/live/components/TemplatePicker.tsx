@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { useEscape } from '@/hooks/useEscape';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type { Participant } from '@/lib/identity';
 import { initialsOf, randomName } from '@/lib/identity';
@@ -67,6 +68,7 @@ export function TemplatePicker({
   onPick,
   onSkip,
 }: TemplatePickerProps) {
+  useEscape(onSkip);
   const isWelcome = mode === 'welcome';
   const isIdentity = mode === 'identity';
   // Identity / "your name" moved entirely into the Share flow — there's
@@ -109,7 +111,7 @@ export function TemplatePicker({
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
+      className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
     >
       <div
         className={`pointer-events-auto flex h-full w-full animate-fly-up-in flex-col bg-white dark:bg-slate-900 sm:h-auto sm:max-h-[90vh] ${isIdentity ? 'sm:w-[26rem]' : 'sm:w-[44rem]'} sm:max-w-[92%] sm:rounded-xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10 dark:sm:border-slate-800 dark:sm:shadow-black/40`}

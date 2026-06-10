@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { useEscape } from '@/hooks/useEscape';
 import type { Tab } from '@livediagram/diagram';
 import {
   downloadBlob,
@@ -35,6 +36,7 @@ type Format = 'markdown' | 'pdf' | 'png' | 'file';
 export function ExportTabDialog({ tab, diagramName, onClose }: ExportTabDialogProps) {
   const [busyFormat, setBusyFormat] = useState<Format | null>(null);
   const [error, setError] = useState<string | null>(null);
+  useEscape(onClose);
 
   const baseName = sanitizeFilename(`${diagramName || 'diagram'} - ${tab.name || 'tab'}`);
 

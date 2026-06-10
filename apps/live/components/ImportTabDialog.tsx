@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { useEscape } from '@/hooks/useEscape';
 import type { ImportOutcome } from '@/lib/import-tab';
 
 type Format = 'json' | 'markdown';
@@ -22,6 +23,7 @@ type ImportTabDialogProps = {
 export function ImportTabDialog({ tabName, onImport, onClose }: ImportTabDialogProps) {
   const [busyFormat, setBusyFormat] = useState<Format | null>(null);
   const [error, setError] = useState<string | null>(null);
+  useEscape(onClose);
 
   const handle = async (format: Format) => {
     if (busyFormat) return;
