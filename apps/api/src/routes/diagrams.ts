@@ -38,9 +38,11 @@ import {
   listShareLinks,
   listSharedWith,
   reorderTabs,
+  seedTabs,
   setDiagramFolder,
   setDiagramShare,
   setDiagramSharePassword,
+  tabLinkedToOwnedDiagram,
   upsertDiagramMeta,
   upsertTab,
 } from '../db';
@@ -502,22 +504,15 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     const existing = await getDiagram(env, id);
     if (!existing) return notFound();
     if (existing.ownerId !== owner) return forbidden();
-    // The tab must already live in at least one of the
-    // caller's owned diagrams. Iterating ids and looking up
-    // ownership is fine at the < 20-tab / < 1000-diagram
-    // scale we operate at; if that ever changes a single
-    // JOIN against diagrams replaces the loop.
-    const sourceIds = await diagramsContainingTab(env, tabId);
-    if (sourceIds.length === 0) return notFound();
-    let authorised = false;
-    for (const sid of sourceIds) {
-      const source = await getDiagram(env, sid);
-      if (source && source.ownerId === owner) {
-        authorised = true;
-        break;
-      }
+    // The tab must already live in at least one of the caller's
+    // owned diagrams. One JOIN answers that (LIMIT 1 on the first
+    // owned match). On the failure path we fall back to listing the
+    // containing diagrams once, purely to tell "tab doesn't exist
+    // anywhere" (404) apart from "exists but you don't own it" (403).
+    if (!(await tabLinkedToOwnedDiagram(env, tabId, owner))) {
+      const sourceIds = await diagramsContainingTab(env, tabId);
+      return sourceIds.length === 0 ? notFound() : forbidden();
     }
-    if (!authorised) return forbidden();
     await linkTabToDiagram(env, id, tabId);
     // Return the tab summary the client uses to render the
     // new pill in its TabBar without re-fetching the whole
