@@ -19,11 +19,11 @@ import type {
 import { dedupeInFlight } from '../dedupe';
 import { API_BASE, apiDelete, apiHeaders, expectOk } from './core';
 
-export type TeamsResponse = { teams: TeamListItem[] };
-export type TeamResponse = { team: Team };
+type TeamsResponse = { teams: TeamListItem[] };
+type TeamResponse = { team: Team };
 export type TeamDetailResponse = { team: Team; members: TeamMember[]; myRole: TeamRole };
-export type TeamMemberResponse = { member: TeamMember };
-export type TeamInvitesResponse = { invites: TeamInvite[] };
+type TeamMemberResponse = { member: TeamMember };
+type TeamInvitesResponse = { invites: TeamInvite[] };
 export type TeamLibraryResponse = { folders: Folder[]; diagrams: DiagramSummary[] };
 
 // Same dedupe rationale as apiListFolders: the sidebar list is

@@ -33,7 +33,7 @@ type SearchInputTeam = { id: string; name: string };
 // `team` set = a diagram in a team's library (spec/35): the panel
 // renders an "in <team>" suffix, like team folders. Personal diagrams
 // leave it unset. Either way picking it opens the diagram by id.
-export type DiagramItem = {
+type DiagramItem = {
   kind: 'diagram';
   id: string;
   name: string;
@@ -42,7 +42,7 @@ export type DiagramItem = {
 // `team` set = a team-library folder (spec/35): the panel renders an
 // "in <team>" suffix and picking it lands on the team page with that
 // folder open. Personal folders leave it unset.
-export type FolderItem = {
+type FolderItem = {
   kind: 'folder';
   id: string;
   name: string;

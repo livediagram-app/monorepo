@@ -18,7 +18,7 @@
 // any row / claim / lede.
 export const ALTERNATIVES_LAST_UPDATED = new Date('2026-06-02');
 
-export type ComparisonRow = {
+type ComparisonRow = {
   label: string;
   // Short, factual cell text. `us` = livediagram, `them` = competitor.
   us: string;

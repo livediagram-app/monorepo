@@ -46,7 +46,7 @@ export type ThemeId =
 // single-colour `elementFill` etc. fields (which are nullable to let the
 // brand theme defer to type-defaults), a palette entry is always a
 // concrete colour — a palette theme always paints.
-export type ThemePaletteEntry = {
+type ThemePaletteEntry = {
   fill: string;
   stroke: string;
   text: string;

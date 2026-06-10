@@ -26,7 +26,7 @@ import { endpointPosition, isBoxed, type Element } from '@livediagram/diagram';
 //     decide pan vs marquee when the canvas tool is otherwise
 //     "select" (mirrors Figma / Excalidraw's hold-space-to-pan).
 
-export type PanState = {
+type PanState = {
   startClientX: number;
   startClientY: number;
   startOffsetX: number;
@@ -34,7 +34,7 @@ export type PanState = {
   movedRef: { current: boolean };
 };
 
-export type MarqueeState = {
+type MarqueeState = {
   startX: number;
   startY: number;
   currentX: number;

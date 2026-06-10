@@ -31,7 +31,7 @@ import { getTheme, recolourElementsForTheme } from './themes';
 // ---------------------------------------------------------------------
 
 export type MarkdownNode = { label: string; children: MarkdownNode[] };
-export type MarkdownTable = { headers: string[]; rows: string[][] };
+type MarkdownTable = { headers: string[]; rows: string[][] };
 export type ParsedMarkdown = { roots: MarkdownNode[]; tables: MarkdownTable[] };
 
 // Strip inline Markdown / HTML so a node label reads as plain text.

@@ -34,7 +34,7 @@ export type MoveFolderNode = { id: string; name: string; parentId: string | null
 
 // A team library destination: its root (= the team's Unsorted) plus
 // its folder tree.
-export type MoveTeamDest = { id: string; name: string; folders: MoveFolderNode[] };
+type MoveTeamDest = { id: string; name: string; folders: MoveFolderNode[] };
 
 // Where the subject should move to. `teamId` null = the caller's
 // personal library; `folderId` null = that scope's root / Unsorted.
