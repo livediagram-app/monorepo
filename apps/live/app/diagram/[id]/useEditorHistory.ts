@@ -224,9 +224,7 @@ export function useEditorHistory(opts: {
         // it had before the undo. Idempotent under network retries
         // (the API treats POST as insert; a re-insert of the same id
         // would fail loudly but we don't double-fire).
-        if (diagramId) {
-          apiAppendChangeLogEntry(selfId, diagramId, next, sessionShareCode).catch(() => {});
-        }
+        apiAppendChangeLogEntry(selfId, diagramId, next, sessionShareCode).catch(() => {});
       }
       roomRef.current?.send({ kind: 'op', op: { kind: 'log', entry: next } });
     }

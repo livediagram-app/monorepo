@@ -753,7 +753,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onDeleteFolder={onDeleteFolder}
           onMoveDiagramToFolder={onMoveDiagramToFolder}
           onSize={(size) => setExplorerBottomY(size.bottomY)}
-          mobileOpenOverride={activeMobilePanel === 'explorer' ? true : false}
+          mobileOpenOverride={activeMobilePanel === 'explorer'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
           onMobileClose={() => {
@@ -802,7 +802,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           collapsible
           onReset={aiPanel.onReset}
           onMoveTo={aiPanel.onMove}
-          mobileOpenOverride={activeMobilePanel === 'ai' ? true : false}
+          mobileOpenOverride={activeMobilePanel === 'ai'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
           onMobileClose={() => {
@@ -893,7 +893,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           pendingDraw={pendingDraw}
           onSize={(size) => setPaletteBottomY(size.bottomY)}
           mobileTopOverridePx={explorerBottomY > 0 ? explorerBottomY + 4 : undefined}
-          mobileOpenOverride={activeMobilePanel === 'palette' ? true : false}
+          mobileOpenOverride={activeMobilePanel === 'palette'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
           onMobileClose={() => {
@@ -918,7 +918,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
             palettePosition !== null || paletteBottomY === 0 ? undefined : paletteBottomY
           }
           onSize={(size) => setContextBottomY(size.bottomY)}
-          mobileOpenOverride={activeMobilePanel === 'editor' ? true : false}
+          mobileOpenOverride={activeMobilePanel === 'editor'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
           onMobileClose={() => {

@@ -692,7 +692,7 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
         return forbidden();
     }
     const forwarded = new Request(request);
-    if (role) forwarded.headers.set('X-Verified-Role', role);
+    forwarded.headers.set('X-Verified-Role', role);
     return stub.fetch(forwarded);
   }
 

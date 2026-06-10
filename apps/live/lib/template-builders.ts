@@ -651,7 +651,7 @@ function buildFishbone(cx: number, cy: number): Element[] {
     // Branch arrow from the corner of the category card down/up to
     // a point on the spine to the right of the card.
     const fromX = c.x;
-    const fromY = c.above ? branchY : branchY;
+    const fromY = branchY;
     const toX = c.x + 110;
     const toY = cy;
     elements.push(createArrow(fromX, fromY, toX, toY));

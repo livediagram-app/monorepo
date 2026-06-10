@@ -142,11 +142,6 @@ function meanEllipseDistance(
 // swings the confidence by a lot.
 const MIN_SIZE = 12;
 
-// Aspect-ratio cap that distinguishes "drew a line on purpose" from
-// "drew a very thin rectangle". Above this ratio (length / minDim)
-// the line branch wins.
-const LINE_ASPECT_RATIO = 6;
-
 // Closed-curve test: how close the endpoints have to be (as a
 // fraction of the longer bbox axis) to count as "the user came back
 // around". Hand-drawn shapes rarely close perfectly; 0.18 is the
@@ -277,9 +272,6 @@ export function recogniseShape(points: Point[]): RecognisedShape | null {
   // recurse into the closed branch if the line branch fails: an open
   // squiggle doesn't look like a closed shape.
   if (!closed) {
-    const minDim = Math.min(bbox.width, bbox.height) || 1;
-    const aspect = longerSide / minDim;
-    if (aspect >= LINE_ASPECT_RATIO) return recogniseLine(points, bbox);
     return recogniseLine(points, bbox);
   }
 

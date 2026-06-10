@@ -97,8 +97,7 @@ export function rebindArrowAnchorsAfterMove(
   elements: Element[],
   movingIds: ReadonlySet<ElementId> | Map<ElementId, unknown>,
 ): Element[] {
-  const includes = (id: ElementId) =>
-    movingIds instanceof Map ? movingIds.has(id) : movingIds.has(id);
+  const includes = (id: ElementId) => movingIds.has(id);
   return elements.map((el) => {
     if (el.type !== 'arrow') return el;
     const fromMoved = el.from.kind === 'pinned' && includes(el.from.elementId);
