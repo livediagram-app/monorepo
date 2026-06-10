@@ -24,12 +24,16 @@ function getJWKS(url: string): ReturnType<typeof createRemoteJWKSet> {
 }
 
 // The identity a verified Clerk session token asserts. `email` is the
-// optional `email` claim (spec/32): present only when the deployment's
-// Clerk JWT template includes it (`"email":
-// "{{user.primary_email_address}}"`). It is the ONLY email the worker
-// ever trusts — never a client-supplied value — because it rides inside
-// the JWKS-verified payload. Null when the template doesn't carry it;
-// teams' invite auto-connection degrades gracefully in that case.
+// optional `email` claim (spec/32): present only when the deployment
+// has added it to the Clerk SESSION TOKEN (dashboard → Sessions →
+// Customize session token → `{"email": "{{user.primary_email_address}}"}`).
+// It must be on the session token specifically because the frontend
+// authenticates with `getToken()` (no template) — a named JWT template
+// is never requested, so configuring one has no effect. It is the ONLY
+// email the worker ever trusts — never a client-supplied value —
+// because it rides inside the JWKS-verified payload. Null when the
+// session token doesn't carry it; teams' invite auto-connection
+// degrades gracefully in that case.
 export type ClerkIdentity = {
   userId: string;
   email: string | null;

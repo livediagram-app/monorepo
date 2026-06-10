@@ -26,7 +26,7 @@ Teams are keyed by Clerk user ids and invites are keyed by email, so the whole f
 
 ### Email claim
 
-Connect-on-signup needs the user's email **server-side and verified**. The worker reads an optional `email` claim from the verified Clerk JWT (`apps/api/src/auth/clerk.ts`); it never trusts a client-supplied email. The hosted deployment's Clerk JWT template must include `"email": "{{user.primary_email_address}}"`. When the claim is absent (default Clerk token, or self-host that hasn't configured it) everything still works except invite auto-connection, and the creator's member row stores no email.
+Connect-on-signup needs the user's email **server-side and verified**. The worker reads an optional `email` claim from the verified Clerk session token (`apps/api/src/auth/clerk.ts`); it never trusts a client-supplied email. The deployment must add the claim to the **session token** (Clerk dashboard → Sessions → Customize session token → `{"email": "{{user.primary_email_address}}"}`). It has to be the session token, not a named JWT template: the frontend authenticates with `getToken()` (no template), so a named template is never requested and configuring one does nothing. When the claim is absent (a default Clerk session token, or a deployment that hasn't configured it) everything still works except invite auto-connection, and the creator's member row stores no email.
 
 ## Invites, connect-on-sign-in, and accept/decline
 
