@@ -142,7 +142,16 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
                     {c.label}
                   </button>
                 ) : (
-                  <span className="px-1 py-0.5 font-semibold uppercase tracking-wider text-slate-500">
+                  // The section-label uppercase look is reserved for the
+                  // root "Shared diagrams" crumb; deeper crumbs are user
+                  // folder names and must keep their own casing.
+                  <span
+                    className={
+                      i === 0
+                        ? 'px-1 py-0.5 font-semibold uppercase tracking-wider text-slate-500'
+                        : 'px-1 py-0.5 font-semibold text-slate-700'
+                    }
+                  >
                     {c.label}
                   </span>
                 )}
@@ -150,18 +159,38 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
             );
           })}
         </nav>
-        <button
-          type="button"
-          onClick={() =>
-            void lib.createFolder(currentFolderId).then((created) => {
-              if (created) setRenamingFolderId(created.id);
-            })
-          }
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
-        >
-          <PlusIcon />
-          {spot.kind === 'folder' ? 'New subfolder' : 'New folder'}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* New diagram lands directly in the team library, scoped to
+              the folder currently open (spec/35): /live/new applies the
+              team + folder placement after the create. Brand-filled,
+              mirroring the personal pane header's primary action. */}
+          <button
+            type="button"
+            onClick={() =>
+              window.location.assign(
+                `/live/new?team=${encodeURIComponent(teamId)}${
+                  currentFolderId ? `&folder=${encodeURIComponent(currentFolderId)}` : ''
+                }`,
+              )
+            }
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-500 px-2 py-1 text-[11px] font-medium text-white shadow-sm transition hover:bg-brand-600"
+          >
+            <PlusIcon />
+            New diagram
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              void lib.createFolder(currentFolderId).then((created) => {
+                if (created) setRenamingFolderId(created.id);
+              })
+            }
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
+          >
+            <PlusIcon />
+            {spot.kind === 'folder' ? 'New subfolder' : 'New folder'}
+          </button>
+        </div>
       </div>
 
       {/* ---------- Rows ---------- */}

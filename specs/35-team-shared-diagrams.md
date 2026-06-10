@@ -31,7 +31,7 @@ Joined team membership grants **edit** on every diagram in the team's library, e
 
 ## Explorer UI
 
-- **Team detail page** gains a "Shared diagrams" card between the header and the member list: breadcrumb navigation through the team's folder tree, an Unsorted bucket at the root, "New folder" / "New subfolder", folder rename / move / delete, and per-diagram actions: open, "Move to folder…" (within the team), and "Remove from team". Rename / duplicate / delete stay with the diagram's owner in their personal surfaces.
+- **Team detail page** gains a "Shared diagrams" card between the header and the member list: breadcrumb navigation through the team's folder tree, an Unsorted bucket at the root, a brand-filled **"New diagram"** button (left of "New folder"; hands off to `/live/new?team=<id>&folder=<currentFolderId?>`, which applies the team + folder placement right after the create, so the fresh diagram lands in the team folder being browsed rather than the personal Unsorted), "New folder" / "New subfolder", folder rename / move / delete, and per-diagram actions: open, "Move to folder…" (within the team), and "Remove from team". Rename / duplicate / delete stay with the diagram's owner in their personal surfaces. Breadcrumb crumbs keep the folder's own casing; only the root "Shared diagrams" crumb uses the uppercase section-label style.
 - **Personal explorer**: the existing "Move to folder…" picker gains a Teams group — moving a diagram there sends it to that team's Unsorted (organise it further on the team page). Only the owner sees their own diagrams, so this is inherently owner-only.
 - The sidebar's personal tree section is labelled **"My Work"** to contrast with team libraries.
 

@@ -200,16 +200,21 @@ export default function NewDiagramPage() {
       themeId.charAt(0).toUpperCase() + themeId.slice(1);
     track('Theme', 'Changed', themeLabel);
     if (templateKind) track('Template', 'Used', titleCaseType(templateKind));
-    // Folder context from the URL: /live/new?folder=<id> lets the
-    // explorer's FAB drop a fresh diagram straight into the folder
-    // the user was browsing. Done as a follow-up PUT rather than
-    // baking folderId into POST /diagrams so the create endpoint
-    // signature stays stable and the per-folder assignment can fail
-    // independently (network glitch → diagram lives in Unsorted,
-    // user can drag it later).
+    // Placement context from the URL. /live/new?folder=<id> lets the
+    // explorer drop a fresh diagram straight into the folder the user
+    // was browsing; /live/new?team=<id>(&folder=<id>) sends it into
+    // that team's shared library (spec/35), scoped to the open team
+    // folder when one is set. Done as a follow-up PUT rather than
+    // baking placement into POST /diagrams so the create endpoint
+    // signature stays stable and the assignment can fail
+    // independently (network glitch → diagram lives in the personal
+    // Unsorted, user can move it later).
     const params = new URLSearchParams(window.location.search);
     const targetFolderId = params.get('folder');
-    if (targetFolderId) {
+    const targetTeamId = params.get('team');
+    if (targetTeamId) {
+      await apiSetDiagramFolder(self.id, diagramId, targetFolderId, targetTeamId).catch(() => {});
+    } else if (targetFolderId) {
       await apiSetDiagramFolder(self.id, diagramId, targetFolderId).catch(() => {});
     }
     window.location.assign(`/live/diagram/${diagramId}`);
