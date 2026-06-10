@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { useReposition } from '@/hooks/useReposition';
 import type { Comment, CommentThread } from '@livediagram/diagram';
@@ -161,7 +162,7 @@ export function CommentThreadPopover({
               onClick={onClose}
               className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             >
-              <CloseIcon />
+              <CloseIcon size={12} />
             </button>
           </div>
         </header>
@@ -278,23 +279,6 @@ function CommentRow({
         </button>
       ) : null}
     </li>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3 3l6 6M3 9l6-6" />
-    </svg>
   );
 }
 

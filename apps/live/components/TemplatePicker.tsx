@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type { Participant } from '@/lib/identity';
 import { initialsOf, randomName } from '@/lib/identity';
@@ -342,23 +343,6 @@ function RefreshIcon() {
       <path d="M13.5 2.5v3h-3" />
       <path d="M13.5 8a5.5 5.5 0 0 1-9.4 3.9L2.5 10.5" />
       <path d="M2.5 13.5v-3h3" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
     </svg>
   );
 }

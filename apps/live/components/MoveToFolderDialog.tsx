@@ -24,6 +24,7 @@
 // only renders, filters, and collapses.
 
 import { Fragment, useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { useEscape } from '@/hooks/useEscape';
 import { matches } from '@/lib/search';
@@ -401,23 +402,6 @@ function TeamIcon() {
       <path d="M2.5 13c.5-2.3 1.7-3.5 3.5-3.5s3 1.2 3.5 3.5" />
       <circle cx="11.5" cy="6.5" r="1.8" />
       <path d="M11 9.6c1.6.1 2.6 1.2 3 3" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
     </svg>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { useEscape } from '@/hooks/useEscape';
 import { track } from '@/lib/telemetry';
@@ -59,7 +60,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
               aria-label="Close"
               className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
             >
-              <CloseIcon />
+              <CloseIcon size={16} strokeWidth={1.6} />
             </button>
           </header>
           <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
@@ -223,23 +224,6 @@ function ChevronIcon({ open }: { open: boolean }) {
       className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
     >
       <path d="M2 4l4 4 4-4" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3 3l10 10M3 13l10-10" />
     </svg>
   );
 }

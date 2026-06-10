@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import type { ElementLink } from '@livediagram/diagram';
 
 // Shared link picker, styled like the import / export dialogs (centred
@@ -305,23 +306,6 @@ function CheckGlyph() {
       className="shrink-0"
     >
       <path d="M3.5 8.5l3 3 6-6.5" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
     </svg>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { initialsOf, randomName, type Participant } from '@/lib/identity';
 import { buildEmbedSnippet } from '@/lib/embed';
@@ -550,23 +551,6 @@ function RoleButton({
         {label}
       </button>
     </Tooltip>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3.5 3.5l7 7M3.5 10.5l7-7" />
-    </svg>
   );
 }
 

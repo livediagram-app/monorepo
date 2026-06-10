@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Portal } from '@/components/Portal';
+import { CloseIcon } from '@/components/CloseIcon';
 
 // Lightweight toast surface. Used to make previously-silent async
 // failures visible (linkTab, copy diagram, upload errors that
@@ -146,7 +147,7 @@ function ToastBubble({ toast, onDismiss }: { toast: ToastEntry; onDismiss: () =>
         aria-label="Dismiss"
         className="rounded-md p-1 text-current opacity-60 transition hover:opacity-100"
       >
-        <CloseIcon />
+        <CloseIcon size={12} strokeWidth={1.6} />
       </button>
     </div>
   );
@@ -206,23 +207,6 @@ function ToneGlyph({ tone }: { tone: ToastTone }) {
     >
       <circle cx="8" cy="8" r="6.5" />
       <path d="M8 11v-3M8 5h0" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3 3l10 10M3 13l10-10" />
     </svg>
   );
 }

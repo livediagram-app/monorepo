@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { apiDeleteImage, apiListImages, type ImageSummary } from '@/lib/api-client';
 import { ImageUploadError, uploadImageFile } from '@/lib/upload-image';
@@ -158,7 +159,7 @@ export function ImagePicker({
               className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               aria-label="Close"
             >
-              <CloseIcon />
+              <CloseIcon size={16} strokeWidth={1.6} />
             </button>
           </header>
           <nav className="flex gap-1 border-b border-slate-200 px-4 pt-3 dark:border-slate-800">
@@ -313,22 +314,5 @@ function TabButton({
     >
       {children}
     </button>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M3 3l10 10M3 13l10-10" />
-    </svg>
   );
 }
