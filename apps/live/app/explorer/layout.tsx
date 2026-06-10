@@ -1,21 +1,30 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
+import { ExplorerShell } from './ExplorerShell';
 
-// Per-route metadata: the explorer page is a client component and
-// can't export `metadata` itself, so this layout sets the title
-// for the static-export `<title>` tag. Without it the page
-// inherited the root layout's bare `livediagram` until a
-// post-hydration `document.title = ...` rewrote it, which gave a
-// brief flash of the wrong title in the browser tab on first load
-// (and meant crawlers / link unfurlers saw the wrong value).
+// The /explorer layout (spec/15): every section under /explorer is
+// its own route page, and this layout wraps them all in the shared
+// chrome — header, sidebar tree, mobile drawer, cross-section
+// overlays — via ExplorerShell. App Router keeps the layout mounted
+// across child navigations, so the shell's state (diagram list,
+// folders, teams, expanded branches) survives switching sections.
 //
-// `index: false` is inherited from the live app's root layout
-// (`spec/07` keeps every /live route out of the index), so the
-// title is for tab chrome only, not search results.
+// Suspense: the shell derives the current section from the URL via
+// useSearchParams (folder/team ids ride the query string — see
+// routes.ts), which `output: 'export'` requires to sit under a
+// Suspense boundary at prerender time.
+//
+// The title here is the fallback for tab chrome (each section page
+// overrides it); `index: false` is inherited from the root layout
+// (spec/07 keeps every /live route out of the index).
 export const metadata: Metadata = {
   title: 'Explorer | livediagram',
 };
 
 export default function ExplorerLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return (
+    <Suspense fallback={null}>
+      <ExplorerShell>{children}</ExplorerShell>
+    </Suspense>
+  );
 }

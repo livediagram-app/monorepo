@@ -14,7 +14,7 @@ export function Header() {
               (text-slate-500) so the "Start drawing" CTA stays dominant.
               Label hides on mobile, mirroring Share's. */}
           <a
-            href="/live/explorer"
+            href="/live/explorer/recent"
             aria-label="Open Explorer"
             className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >

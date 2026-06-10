@@ -85,7 +85,7 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
             shared={sharedDiagrams}
             onDismissShared={dismissSharedDiagram}
             onOpenFullExplorer={() =>
-              window.location.assign(`${window.location.origin}/live/explorer`)
+              window.location.assign(`${window.location.origin}/live/explorer/recent`)
             }
             currentDiagramId={null}
             onMoveTo={(x, y) => setExplorerPosition({ x, y })}
@@ -143,7 +143,7 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
             shared={sharedDiagrams}
             onDismissShared={dismissSharedDiagram}
             onOpenFullExplorer={() =>
-              window.location.assign(`${window.location.origin}/live/explorer`)
+              window.location.assign(`${window.location.origin}/live/explorer/recent`)
             }
             currentDiagramId={null}
             onMoveTo={(x, y) => setExplorerPosition({ x, y })}

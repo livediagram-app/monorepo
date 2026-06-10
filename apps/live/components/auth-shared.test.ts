@@ -188,8 +188,12 @@ describe('messageOf', () => {
 
 describe('sign-in default (POST_AUTH_SIGNIN_DEFAULT)', () => {
   it('sends a verified sign-in with no redirect_url to the Explorer', () => {
-    expect(resolvePostAuthDestination(params(''), POST_AUTH_SIGNIN_DEFAULT)).toBe('/explorer');
-    expect(resolveOAuthCompleteUrl(params(''), POST_AUTH_SIGNIN_DEFAULT)).toBe('/live/explorer');
+    expect(resolvePostAuthDestination(params(''), POST_AUTH_SIGNIN_DEFAULT)).toBe(
+      '/explorer/recent',
+    );
+    expect(resolveOAuthCompleteUrl(params(''), POST_AUTH_SIGNIN_DEFAULT)).toBe(
+      '/live/explorer/recent',
+    );
   });
 
   it('still lets a valid redirect_url win over the sign-in default', () => {
@@ -212,10 +216,10 @@ describe('sign-in default (POST_AUTH_SIGNIN_DEFAULT)', () => {
         params('redirect_url=https://evil.example'),
         POST_AUTH_SIGNIN_DEFAULT,
       ),
-    ).toBe('/explorer');
+    ).toBe('/explorer/recent');
     expect(
       resolvePostAuthDestination(params('redirect_url=/live/sign-in'), POST_AUTH_SIGNIN_DEFAULT),
-    ).toBe('/explorer');
+    ).toBe('/explorer/recent');
   });
 
   it('leaves the sign-up flow (no default arg) on the welcome flow', () => {

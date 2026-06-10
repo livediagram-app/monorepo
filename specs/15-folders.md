@@ -35,6 +35,23 @@ In scope:
   flat list of every folder by breadcrumb path (`Marketing / Q3`)
   - Unsorted.
 
+## Explorer routes
+
+Every Explorer section is its own page under `/live/explorer` (the chrome — header, sidebar tree, mobile drawer — is a shared layout, so the sidebar and its loaded data persist across section navigations):
+
+| Section           | Route                        |
+| ----------------- | ---------------------------- |
+| Recent diagrams   | `/explorer/recent` (default) |
+| Shared with me    | `/explorer/shared`           |
+| All diagrams      | `/explorer/all`              |
+| Unsorted          | `/explorer/unsorted`         |
+| A folder          | `/explorer/folder?id=<id>`   |
+| A team (spec/32)  | `/explorer/team?id=<id>`     |
+| Invites (spec/32) | `/explorer/invites`          |
+| Image gallery     | `/explorer/images`           |
+
+`/live/explorer` itself redirects to `/explorer/recent` (worker-level 302 in production, client replace in dev). Folder and team ids ride the **query string**, not a path segment: `output: 'export'` can't enumerate user-minted ids, and the `/diagram/<id>` placeholder-rewrite workaround (spec/14) is deliberately kept single-purpose. Sidebar labels are sentence case ("Recent diagrams", "Image gallery").
+
 Out of scope (V1):
 
 - Drag-and-drop reordering between folders.

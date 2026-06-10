@@ -237,8 +237,8 @@ export const POST_AUTH_DEFAULT = '/';
 // Sign-in default (router.push form, so no `/live` prefix — basePath adds
 // it). A returning user with no `?redirect_url` lands on their Explorer
 // ("here's all your stuff") rather than the new-diagram welcome flow that
-// suits a fresh sign-up. See spec/04. The OAuth form derives `/live/explorer`.
-export const POST_AUTH_SIGNIN_DEFAULT = '/explorer';
+// suits a fresh sign-up. See spec/04. The OAuth form derives `/live/explorer/recent`.
+export const POST_AUTH_SIGNIN_DEFAULT = '/explorer/recent';
 
 // Default Clerk OAuth completion URL: the full editor-home path.
 // Clerk's authenticateWithRedirect navigates the browser directly,

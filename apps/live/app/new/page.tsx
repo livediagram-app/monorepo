@@ -331,7 +331,7 @@ export default function NewDiagramPage() {
           // Open to guests too: the standalone page is not gated (it
           // keys off the per-browser id for signed-out visitors, see
           // app/explorer/page.tsx), so the button surfaces for everyone.
-          onOpenFullExplorer={() => window.location.assign('/live/explorer')}
+          onOpenFullExplorer={() => window.location.assign('/live/explorer/recent')}
           currentDiagramId={null}
           onMoveTo={(x, y) => setExplorerPosition({ x, y })}
           onReset={() => setExplorerPosition(null)}

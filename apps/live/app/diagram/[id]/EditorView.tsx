@@ -514,7 +514,9 @@ export function EditorView() {
         folders={folders}
         sharedDiagrams={sharedDiagrams}
         onDismissShared={dismissSharedDiagram}
-        onOpenFullExplorer={() => window.location.assign(`${window.location.origin}/live/explorer`)}
+        onOpenFullExplorer={() =>
+          window.location.assign(`${window.location.origin}/live/explorer/recent`)
+        }
         diagramListLoading={diagramListLoading}
         changeLog={changeLog.filter((entry) => entry.tabId === activeId)}
         changeLogLoading={changeLogLoading}
