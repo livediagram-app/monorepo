@@ -81,6 +81,19 @@ export function patchTab(ts: Tab[], id: string, patch: Partial<Tab>): Tab[] {
 // (see `patchTab`), so an unchanged tab keeps its reference and is
 // skipped. `orderChanged` covers both tab add/remove count and a pure
 // reorder. `deletedIds` are tabs present at last save but gone now.
+//
+// `loadedTabIds` (when supplied) is the data-loss guard. Tabs hydrate
+// lazily (spec/13): until a tab is opened its in-memory `elements` is an
+// empty placeholder, NOT its real server content. A non-content op that
+// only bumps a background tab's object reference — a folder move, a
+// reorder, a bulk tab edit — would otherwise flag that placeholder as
+// "changed" and the autosave would `PUT` it, overwriting the real row
+// with `{ elements: [] }`. So a tab is eligible for a content write only
+// when its content is authoritative in memory: it's in the loaded set
+// (hydration's active tab, a fetched tab, or a locally-created one — see
+// `markTabLoaded`) OR it already carries elements (e.g. peer-delivered).
+// An unloaded, still-empty placeholder is never persisted. Callers that
+// don't pass the set (older tests) keep the unguarded behaviour.
 export type TabSaveDiff = {
   changedTabs: Tab[];
   deletedIds: string[];
@@ -94,9 +107,12 @@ export function computeTabSaveDiff(
   currentTabs: Tab[],
   prevName: string,
   currentName: string,
+  loadedTabIds?: ReadonlySet<string>,
 ): TabSaveDiff {
   const prevTabById = new Map(prevTabs.map((t) => [t.id, t] as const));
-  const changedTabs = currentTabs.filter((t) => prevTabById.get(t.id) !== t);
+  const changedTabs = currentTabs
+    .filter((t) => prevTabById.get(t.id) !== t)
+    .filter((t) => !loadedTabIds || loadedTabIds.has(t.id) || t.elements.length > 0);
   const orderChanged =
     currentTabs.length !== prevTabs.length || currentTabs.some((t, i) => prevTabs[i]?.id !== t.id);
   const nameChanged = currentName !== prevName;

@@ -677,6 +677,7 @@ export function useEditorState() {
     sessionShareCode,
     lastSavedTabsRef,
     lastSavedNameRef,
+    loadedTabIdsRef,
     remoteUpdateRef,
     roomRef,
     setSaveStatus,
