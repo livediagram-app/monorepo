@@ -1,6 +1,6 @@
 # 16, Marketing site
 
-The marketing app (`apps/marketing`) is the public landing site served at `/` (everything except `/live/*` and `/api/*`, see [08-router-app](08-router-app.md)). Static Next.js export, no SSR. It is the top of the acquisition funnel: its only job is to explain what livediagram is and send visitors to `/new`.
+The marketing app (`apps/marketing`) is the public landing site served at `/` (everything the router doesn't hand to the live editor's routes, `/api/*`, or `/telemetry`, see [08-router-app](08-router-app.md)). Static Next.js export, no SSR. It is the top of the acquisition funnel: its only job is to explain what livediagram is and send visitors to `/new`.
 
 ## Golden rule: claims map to shipped features
 
