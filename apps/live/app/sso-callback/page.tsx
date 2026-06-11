@@ -27,8 +27,8 @@ export default function SSOCallbackPage() {
       <div className="rounded-xl border border-slate-200 bg-white px-8 py-6 text-center shadow-lg shadow-slate-900/10">
         <p className="text-sm text-slate-600">Completing sign in…</p>
         <AuthenticateWithRedirectCallback
-          signInFallbackRedirectUrl="/"
-          signUpFallbackRedirectUrl="/"
+          signInFallbackRedirectUrl="/explorer/recent"
+          signUpFallbackRedirectUrl="/new"
         />
       </div>
     </div>

@@ -27,7 +27,20 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/', '/api/'],
+      // The live app serves at clean routes now (no `/live` prefix —
+      // spec/08), so each live route segment is Disallowed by name to
+      // keep the editor + auth surfaces out of crawlers' budget. NOT a
+      // bare '/' — that would block the marketing site itself.
+      disallow: [
+        '/diagram/',
+        '/explorer/',
+        '/new',
+        '/sign-in',
+        '/get-started',
+        '/sso-callback',
+        '/embed',
+        '/api/',
+      ],
     },
     sitemap: 'https://livediagram.app/sitemap.xml',
   };
