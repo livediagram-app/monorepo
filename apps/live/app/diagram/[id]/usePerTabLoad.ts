@@ -145,6 +145,8 @@ export function usePerTabLoad(opts: {
       // here so the next run actually fetches.
       if (!merged) loadedTabIds.delete(targetId);
     };
+    // Omitted deps are all refs + state setters (stable by React's guarantee).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, diagramId, activeId, selfId, sessionShareCode, retryNonce, resetTabs]);
 
   // One-shot parallel fetch of every not-yet-loaded tab, so element

@@ -109,6 +109,8 @@ export function useAutosave(opts: {
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
+    // Omitted deps are all refs + state setters (stable by React's guarantee).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, diagramId, isReadOnly, tabs, diagramName, selfId, sessionShareCode]);
 
   useEffect(() => {
@@ -188,5 +190,7 @@ export function useAutosave(opts: {
         });
     }, 600);
     return () => window.clearTimeout(handle);
+    // Omitted deps are all refs + state setters (stable by React's guarantee).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, diagramId, tabs, diagramName, selfId, isReadOnly, sessionShareCode]);
 }
