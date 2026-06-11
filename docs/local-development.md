@@ -37,16 +37,16 @@ pnpm dev
 
 Turbo spins up all four dev servers in parallel:
 
-| App              | Dev URL                           |
-| ---------------- | --------------------------------- |
-| `apps/marketing` | `http://localhost:3001`           |
-| `apps/live`      | `http://localhost:3002/live`      |
-| `apps/telemetry` | `http://localhost:3003/telemetry` |
-| `apps/api`       | `http://localhost:8787/api`       |
+| App              | Dev URL                                                             |
+| ---------------- | ------------------------------------------------------------------- |
+| `apps/marketing` | `http://localhost:3001`                                             |
+| `apps/live`      | `http://localhost:3002` (clean routes: /new, /explorer/recent, ...) |
+| `apps/telemetry` | `http://localhost:3003/telemetry`                                   |
+| `apps/api`       | `http://localhost:8787/api`                                         |
 
 The `router` app has no dev server: it's a one-file production worker holding service bindings, not application logic. In dev you call each app on its own port.
 
-The editor works in pure-guest mode without any auth setup: `pnpm dev` and open `http://localhost:3002/live/new`. Diagrams persist to the local D1 file the api worker creates on first start.
+The editor works in pure-guest mode without any auth setup: `pnpm dev` and open `http://localhost:3002/new`. Diagrams persist to the local D1 file the api worker creates on first start.
 
 ## Scoping commands to one workspace
 
@@ -93,7 +93,7 @@ The editor works without Clerk. To exercise the signed-in code paths:
 
 4. Restart `pnpm dev`.
 
-With these set the editor's sign-in flow at `/live/sign-in` becomes functional. The api worker verifies the Bearer JWT and derives the owner id from the `sub` claim instead of falling back to the `X-Owner-Id` header.
+With these set the editor's sign-in flow at `/sign-in` becomes functional. The api worker verifies the Bearer JWT and derives the owner id from the `sub` claim instead of falling back to the `X-Owner-Id` header.
 
 Without these set: the api worker silently treats every request as a guest (the `X-Owner-Id` header path), and the live frontend's ClerkProvider becomes a pass-through that renders the editor without any auth UI. This is the self-host default. See [spec/04](../specs/04-auth-and-guest-access.md) for the full hybrid model.
 

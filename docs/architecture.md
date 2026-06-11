@@ -5,7 +5,7 @@ A pnpm + Turborepo monorepo: five Cloudflare-deployed apps and seven shared pack
 ```
 apps/
   marketing/    static landing site (Next.js export, /)
-  live/         the editor (Next.js export, /live)
+  live/         the editor (Next.js export; clean routes)
   telemetry/    public anonymous-events dashboard (Next.js export, /telemetry)
   api/          REST + WebSocket worker (D1 + Durable Objects + R2, /api)
   router/       service-binding router stitching the apps under one hostname

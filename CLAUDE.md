@@ -29,7 +29,7 @@ Treat them as part of the change, not an afterthought:
 ```
 apps/
   marketing/    # static marketing site (Next.js, /)
-  live/         # the diagram editor app (Next.js, /live)
+  live/         # the diagram editor app (Next.js, clean routes)
   telemetry/    # public anonymous-events dashboard (Next.js, /telemetry)
   api/          # Cloudflare Worker REST + WebSocket API (D1 + Durable Objects, /api)
   router/       # Cloudflare Worker stitching the apps under one hostname
@@ -80,7 +80,7 @@ See [specs/04-auth-and-guest-access.md](specs/04-auth-and-guest-access.md).
   - **Guest path**: a per-browser participant id (`livediagram:v2:self-id` in `localStorage`) carried as `X-Owner-Id`. Default for unsigned visitors. Full feature set (persistence, share links, real-time collab).
   - **Authed path**: a Clerk session JWT in `Authorization: Bearer <token>`. The api worker verifies via `CLERK_JWKS_URL` (`apps/api/src/auth/clerk.ts`) and uses the `sub` claim as the owner id. Required for per-account sync and future team workspaces.
 - The two paths coexist forever — a signed-in user can still hand a share link to a guest who edits without auth.
-- Sign-in lives at `/live/sign-in/` and sign-up at `/live/get-started/` (custom UI; email-code or Google OAuth). On sign-up, guest diagrams migrate from the localStorage id to the Clerk user id via `POST /api/migrate`.
+- Sign-in lives at `/sign-in/` and sign-up at `/get-started/` (custom UI; email-code or Google OAuth). On sign-up, guest diagrams migrate from the localStorage id to the Clerk user id via `POST /api/migrate`.
 
 ## Core principle: reuse over duplication
 

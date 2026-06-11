@@ -2,7 +2,7 @@
 
 ## Principle
 
-**The canvas always works without signing in.** A first-time visitor can land on `/live`, create a diagram, build something real, and only later be asked to sign up. This is intentional — friction-free engagement is the acquisition strategy.
+**The canvas always works without signing in.** A first-time visitor can land on `/new`, create a diagram, build something real, and only later be asked to sign up. This is intentional — friction-free engagement is the acquisition strategy.
 
 We don't put auth in front of the core experience. We add auth where it _enables_ something the user wants (sharing, syncing, collaborating, paying).
 
@@ -21,7 +21,7 @@ The `clerkEnabled` flag (`apps/live/lib/clerk-config.ts`) is the single source o
 - `ClerkProvider` becomes a pass-through `<>{children}</>`.
 - `useClerkApiBootstrap` returns a stable stub (`isSignedIn: false`, `authLoaded: true`, `clerkUserId: null`) without ever touching `useAuth`.
 - `AuthControls` renders nothing.
-- `/live/sign-in/`, `/live/get-started/`, `/live/sso-callback/` render an `AuthDisabledNotice` with a "Continue as guest" CTA.
+- `/sign-in/`, `/get-started/`, `/sso-callback/` render an `AuthDisabledNotice` with a "Continue as guest" CTA.
 
 Because `NEXT_PUBLIC_*` vars are baked at build time, the choice is a compile-time constant — no per-render cost and Clerk-only code paths can be tree-shaken out of guest-only builds.
 
@@ -52,14 +52,14 @@ The two paths coexist forever. A signed-in user can hand a share link to a guest
 
 Four routes inside `apps/live/`:
 
-- **`/live/sign-in/`** — email-code, plus an optional Google OAuth button gated on `googleOAuthEnabled` (`apps/live/lib/clerk-config.ts`); the flag currently ships off so the button doesn't render, pending the Google Cloud OAuth client being configured against Clerk's redirect URI. On success (and for an already-signed-in visitor) it lands on the **Explorer** (`/live/explorer`) by default — a returning user wants to see their existing diagrams, not the new-diagram welcome flow — via `POST_AUTH_SIGNIN_DEFAULT` in `components/auth-shared.tsx`. A valid `?redirect_url` still wins (see below).
-- **`/live/get-started/`** — sign-up (first name + last name + email + 6-digit code), with the same flag-gated Google OAuth button. Same post-auth destination.
-- **`?redirect_url=...`** — Clerk's protected-page bounce passes this query param to both routes, and BOTH the email-code AND OAuth paths honour it. Two helpers in `components/auth-shared.tsx` share the same validation (URL must start with `/live` and must not point back at the auth routes themselves, to avoid loops):
-  - `resolvePostAuthDestination(searchParams)` returns a basePath-stripped path for `router.push` (email-code path). The `/live` prefix gets stripped because `router.push` already respects basePath.
-  - `resolveOAuthCompleteUrl(searchParams)` returns the full-path form for Clerk's `authenticateWithRedirect({ redirectUrlComplete })` (OAuth path). Clerk navigates the browser directly, so basePath isn't applied automatically and the `/live` prefix has to stay on.
-    When `redirect_url` is missing, unsafe, or pointing at an auth route, each flow falls back to its own default: **sign-in → the Explorer** (`POST_AUTH_SIGNIN_DEFAULT`, `/explorer`), **sign-up → the welcome / new-diagram flow** (`POST_AUTH_DEFAULT`, `/`). The default is passed into the shared resolvers, so a valid protected-page bounce still returns a user sent to sign-in OR sign-up, via email-code OR OAuth, back where they came from.
-- **`/live/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
-- **`/live/explorer/`**: standalone full-page Explorer (item #12). Open to both guests and signed-in users: the owner id resolves the same way every other surface in the live app does (Clerk userId when signed in, the `livediagram:v2:self-id` localStorage UUID otherwise), so a guest sees the diagrams + folders + Image Gallery their per-browser id owns. Reached from the AuthControls dropdown's "Explorer" menu item (the same label spec/07 uses for the mobile entry point) or the floating Explorer panel's expand affordance. Signed-out visitors get the same "Sign in" CTA as everywhere else (AuthControls in the page header), the page itself doesn't gate. Guest data is per-browser by definition (no cross-device sync until they sign up and migrate).
+- **`/sign-in/`** — email-code, plus an optional Google OAuth button gated on `googleOAuthEnabled` (`apps/live/lib/clerk-config.ts`); the flag currently ships off so the button doesn't render, pending the Google Cloud OAuth client being configured against Clerk's redirect URI. On success (and for an already-signed-in visitor) it lands on the **Explorer** (`/explorer`) by default — a returning user wants to see their existing diagrams, not the new-diagram welcome flow — via `POST_AUTH_SIGNIN_DEFAULT` in `components/auth-shared.tsx`. A valid `?redirect_url` still wins (see below).
+- **`/get-started/`** — sign-up (first name + last name + email + 6-digit code), with the same flag-gated Google OAuth button. Same post-auth destination.
+- **`?redirect_url=...`** — Clerk's protected-page bounce passes this query param to both routes, and BOTH the email-code AND OAuth paths honour it. Routes are clean now (no `/live` prefix — spec/08), so a valid `redirect_url` is any **same-origin path**. Two helpers in `components/auth-shared.tsx` share the same validation (`isSafeInternalPath`): the path must start with a single `/` — NOT `//` or `/\` (the protocol-relative / backslash open-redirect tricks the old `/live`-prefix check guarded against implicitly) — and must not point back at `/sign-in` or `/get-started` (loop guard):
+  - `resolvePostAuthDestination(searchParams)` returns the safe path as-is for `router.push` (email-code path) — there's no basePath to strip any more.
+  - `resolveOAuthCompleteUrl(searchParams)` returns the same destination for Clerk's `authenticateWithRedirect({ redirectUrlComplete })` (OAuth path) — with clean routing there's no `/live` prefix to re-add, so it just mirrors `resolvePostAuthDestination`.
+    When `redirect_url` is missing, unsafe, or pointing at an auth route, each flow falls back to its own default: **sign-in → the Explorer** (`POST_AUTH_SIGNIN_DEFAULT`, `/explorer/recent`), **sign-up → the welcome / new-diagram flow** (`POST_AUTH_DEFAULT`, `/new`). The default is passed into the shared resolvers, so a valid protected-page bounce still returns a user sent to sign-in OR sign-up, via email-code OR OAuth, back where they came from.
+- **`/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
+- **`/explorer/`**: standalone full-page Explorer (item #12). Open to both guests and signed-in users: the owner id resolves the same way every other surface in the live app does (Clerk userId when signed in, the `livediagram:v2:self-id` localStorage UUID otherwise), so a guest sees the diagrams + folders + Image Gallery their per-browser id owns. Reached from the AuthControls dropdown's "Explorer" menu item (the same label spec/07 uses for the mobile entry point) or the floating Explorer panel's expand affordance. Signed-out visitors get the same "Sign in" CTA as everywhere else (AuthControls in the page header), the page itself doesn't gate. Guest data is per-browser by definition (no cross-device sync until they sign up and migrate).
 
 The shared card chrome and inputs live in `apps/live/components/auth-shared.tsx` so the two pages don't drift.
 

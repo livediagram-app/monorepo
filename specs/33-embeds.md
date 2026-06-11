@@ -1,12 +1,12 @@
-# 33 — Read-only embeds (`/live/embed`)
+# 33 — Read-only embeds (`/embed`)
 
 Tracked as [issue #8](https://github.com/livediagram-app/monorepo/issues/8). Spec/00 says "diagrams may be embedded elsewhere"; this spec makes a shared diagram iframe-able in Notion, wikis, and docs. Every embedded diagram is a distribution channel for a free product whose growth model is distribution (spec/03).
 
 ## URL shape
 
-`/live/embed?s=<share-code>`.
+`/embed?s=<share-code>`.
 
-The issue sketched a path segment (`/live/embed/<code>`), but the static export (spec/14) would need a second worker rewrite rule to serve it, and the existing share view already uses the query form (`/live/diagram/shared?s=<code>`). The embed route follows the share view: one statically exported page (`apps/live/app/embed/page.tsx`), the code read client-side from `?s=`. No new infrastructure.
+The issue sketched a path segment (`/embed/<code>`), but the static export (spec/14) would need a second worker rewrite rule to serve it, and the existing share view already uses the query form (`/diagram/shared?s=<code>`). The embed route follows the share view: one statically exported page (`apps/live/app/embed/page.tsx`), the code read client-side from `?s=`. No new infrastructure.
 
 ## What renders
 
@@ -15,7 +15,7 @@ The embed route mounts the same editor page component with an `embed` flag. The 
 - **Forces read-only**, whatever role the share code carries. An edit-role code embedded in a wiki still renders a viewer; editing happens in the full editor, one click away.
 - **Hides all chrome**: header, TabBar, every floating panel (the same gates zen mode uses, spec/26). What remains: the canvas (pan / zoom / pinch), the ZoomControls dock (without the zen toggle), and the two embed affordances below.
 - **Suppresses the visitor identity screen.** A "what's your name" card inside a README iframe is wrong; embed sessions keep their default guest identity silently. They still join the realtime room like any view-role visitor, so embedded diagrams **live-update** as the diagram is edited (the room's whole-tab ops; spec/11). If the WebSocket can't connect, the embed simply shows the fetch-time content, which is the existing degradation path.
-- Renders an **embed tab switcher** (bottom-left pill row, only when the diagram has more than one tab) and an **"Open in livediagram" badge** (bottom-right) linking to the full share view (`/live/diagram/shared?s=<code>`, new tab). The badge is the acquisition loop.
+- Renders an **embed tab switcher** (bottom-left pill row, only when the diagram has more than one tab) and an **"Open in livediagram" badge** (bottom-right) linking to the full share view (`/diagram/shared?s=<code>`, new tab). The badge is the acquisition loop.
 
 The share-password gate (spec/24) renders inside the iframe exactly as it does on the share view. Browsers partition third-party iframe storage, so the cached password is per-embedding-site: visitors enter it once per site, which is acceptable for a password-protected artifact. NotFound (revoked code) and the API-error card render minimal versions inside the frame, without the app header or Explorer.
 

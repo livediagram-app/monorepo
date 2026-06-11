@@ -75,7 +75,7 @@ old monolithic module): `getDiagramSharePassword(env, id)`,
 
 ## Editor flow (apps/live, viewer)
 
-When a visitor opens `/live/diagram/shared?s=<code>` and `apiLoadShared` reports
+When a visitor opens `/diagram/shared?s=<code>` and `apiLoadShared` reports
 `passwordRequired`, the editor shows a **password gate** (`SharePasswordGate`, a
 full-screen card with a lock, a single password input, and an error line) rather
 than the canvas. On submit it calls `setSessionSharePassword(pw)` and re-runs

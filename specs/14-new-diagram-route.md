@@ -1,8 +1,16 @@
 # Dedicated route for new-diagram creation
 
-Split the welcome / template-picker flow off `/live` into its own
-route at `/live/new`. The editor route becomes editor-only;
-`/live/new` handles "I want to create a diagram" end-to-end.
+Split the welcome / template-picker flow off the editor into its own
+route at `/new`. The editor route is editor-only; `/new` handles "I
+want to create a diagram" end-to-end.
+
+> **Routing note (later change, spec/08):** the `/live` URL prefix was
+> removed — the live app serves at clean routes. So today the editor is
+> `/diagram/<id>` (not `/live/diagram/<id>`), `/new` is `/new`, and
+> there is no bare `/live` entry point (`/` is the marketing home). The
+> historical `/live...` URLs below describe the pre-cleanup scheme; map
+> each to its `/live`-stripped form. The placeholder-rewrite mechanism
+> and the `/new` split itself are unchanged.
 
 ## Motivation
 
@@ -30,19 +38,19 @@ each one own a clean state model without conditional gates.
 
 ## Goals
 
-- A dedicated `/live/new` route that owns the welcome / template /
+- A dedicated `/new` route that owns the welcome / template /
   identity-mint flow end-to-end.
 - `/live` becomes editor-only. Hydration only handles `?d=` /
   `?s=` URLs and never has to consider "do I mint an id?".
-- Visiting `/live` with no params redirects to `/live/new` instead
+- Visiting `/live` with no params redirects to `/new` instead
   of trying to be both surfaces at once.
 - "New Diagram" buttons (Explorer + NotFound CTA) navigate to
-  `/live/new`. Existing share / open flows stay on `/live`.
+  `/new`. Existing share / open flows stay on `/live`.
 
 ## Non-goals
 
 - Changing the visitor `?s=<code>` flow. Visitors still land on
-  `/live/diagram/shared?s=<code>` and confirm their name there —
+  `/diagram/shared?s=<code>` and confirm their name there —
   the `identityOnlyScreenOpen` mini-flow stays in the editor route
   because it's about the visitor's session, not about creating a
   new diagram.
@@ -56,12 +64,12 @@ each one own a clean state model without conditional gates.
 
 ## Route map
 
-| Route                       | Purpose                              | State                                                                                                                   |
-| --------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `/live`                     | Bare entry point                     | Redirect → `/live/new` (or `/live/diagram/shared?s=<code>` if a legacy visitor query is present). Renders nothing else. |
-| `/live/diagram/<id>`        | Editor for an existing owned diagram | Static placeholder file fronts every id (see "Path scheme" below). Client reads the id from `window.location.pathname`. |
-| `/live/diagram/shared?s=<>` | Visitor view of a shared diagram     | Same placeholder file. Client reads the share code from the `s` query param.                                            |
-| `/live/new`                 | Welcome / create-new flow            | Identity, template, theme picker. POSTs the diagram + navigates to `/live/diagram/<id>`.                                |
+| Route                  | Purpose                              | State                                                                                                                   |
+| ---------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `/live`                | Bare entry point                     | Redirect → `/new` (or `/diagram/shared?s=<code>` if a legacy visitor query is present). Renders nothing else.           |
+| `/diagram/<id>`        | Editor for an existing owned diagram | Static placeholder file fronts every id (see "Path scheme" below). Client reads the id from `window.location.pathname`. |
+| `/diagram/shared?s=<>` | Visitor view of a shared diagram     | Same placeholder file. Client reads the share code from the `s` query param.                                            |
+| `/new`                 | Welcome / create-new flow            | Identity, template, theme picker. POSTs the diagram + navigates to `/diagram/<id>`.                                     |
 
 ## Path scheme
 
@@ -107,7 +115,7 @@ exports `<EditorPage />` directly. When the client router fires
 editor mounts, reads the real id from `window.location.pathname`
 (unchanged throughout — no URL swap means no restoration to fight
 about), and loads the diagram via the API. The address bar stays
-on `/live/diagram/<uuid>`; nothing about the URL needs to lie.
+on `/diagram/<uuid>`; nothing about the URL needs to lie.
 
 Behaviour for genuinely-unknown routes (e.g. `/live/typo`) is
 benign: the editor mounts, tries to load a diagram with id `typo`,
@@ -119,26 +127,26 @@ a "Create a new diagram" CTA.
 ### Owner creates a new diagram
 
 1. User clicks **New Diagram** in the Explorer (or lands on `/live`).
-2. Browser navigates to `/live/new`.
-3. `/live/new` renders the welcome card immediately — no spinner.
+2. Browser navigates to `/new`.
+3. `/new` renders the welcome card immediately — no spinner.
 4. User picks name + template + theme and clicks **Create** (the welcome
    screen has no Skip button; the header **X** still dismisses to a blank
    canvas).
 5. Page mints a UUID, POSTs `/api/diagrams` with the seeded tab(s),
-   then `window.location.assign('/live/diagram/<id>')` to land on
+   then `window.location.assign('/diagram/<id>')` to land on
    the editor with the new diagram already on the server.
 6. On the editor route, hydration extracts the id from the pathname
    and fetches the diagram + tab content. No mint, no welcome gate.
 
 ### Owner opens an existing diagram
 
-1. Explorer list row click → `window.location.assign('/live/diagram/<id>')`.
+1. Explorer list row click → `window.location.assign('/diagram/<id>')`.
 2. Editor route hydrates as today. The welcome / templates / identity
    modes never load.
 
 ### Visitor follows a share link
 
-1. URL is `/live/diagram/shared?s=<code>`.
+1. URL is `/diagram/shared?s=<code>`.
 2. Editor route hydrates via the existing `apiLoadShared` branch.
 3. Visitor identity confirmation (the `identityOnlyScreenOpen` mini-flow)
    stays on the editor route — it's about the visitor, not the diagram.
@@ -152,9 +160,9 @@ a "Create a new diagram" CTA.
 
 ### Diagram not found
 
-1. URL is `/live/diagram/<id>` but the API returns 404.
+1. URL is `/diagram/<id>` but the API returns 404.
 2. NotFound surface renders as today, but its "Create new diagram"
-   CTA now navigates to `/live/new`.
+   CTA now navigates to `/new`.
 
 ## State changes in `/live`
 
@@ -167,7 +175,7 @@ Removed from the editor route:
   `skipTemplatePicker`, `chooseTemplate`).
 - The "no URL params" branch of hydration. If the pathname's id
   segment resolves to the build-time placeholder and no `?s=` code
-  is set, the editor route redirects to `/live/new` (via
+  is set, the editor route redirects to `/new` (via
   `window.location.assign`) and renders the spinner until the
   navigation completes.
 
@@ -179,7 +187,7 @@ Kept on the editor route:
 - Everything else: autosave, room, activity, tab management,
   diagram metadata, share dialog, etc.
 
-## `/live/new` state
+## `/new` state
 
 The new route owns:
 
@@ -190,14 +198,14 @@ The new route owns:
 - The "name confirmed" persistence (same
   `livediagram:v2:name-confirmed` localStorage key).
 - On commit: mint a UUID, POST `/api/diagrams` with the
-  templated tab(s) inline, navigate to `/live/diagram/<id>`.
+  templated tab(s) inline, navigate to `/diagram/<id>`.
 - On skip / X: mint a UUID, POST an empty-tab diagram, navigate to
-  `/live/diagram/<id>` so the user lands on the editor with a
+  `/diagram/<id>` so the user lands on the editor with a
   fresh diagram already persisted.
 
 ## Responsive layout
 
-The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welcome / template / identity surface used by `/live/new` AND by per-tab template picks in the editor. On `sm:` and up it renders as a centred floating card (max 44rem for templates, 26rem for identity), with rounded corners + shadow over the canvas. On mobile (below `sm`) it fills the viewport edge-to-edge: full width, full dynamic-viewport height, no border / radius / shadow, so the user can read every row and click through without zoom. The footer's Create button (plus a Cancel button in the in-editor template / identity modes — the welcome screen drops it, leaving only Create and the header X) stays reachable because the body scrolls inside the card while the header + footer remain pinned (mobile and desktop alike).
+The TemplatePicker card (`apps/live/components/TemplatePicker.tsx`) is the welcome / template / identity surface used by `/new` AND by per-tab template picks in the editor. On `sm:` and up it renders as a centred floating card (max 44rem for templates, 26rem for identity), with rounded corners + shadow over the canvas. On mobile (below `sm`) it fills the viewport edge-to-edge: full width, full dynamic-viewport height, no border / radius / shadow, so the user can read every row and click through without zoom. The footer's Create button (plus a Cancel button in the in-editor template / identity modes — the welcome screen drops it, leaving only Create and the header X) stays reachable because the body scrolls inside the card while the header + footer remain pinned (mobile and desktop alike).
 
 This is the only welcome surface so it sets the mobile floor for the rest of the editor's panel chrome (Palette / Context / Explorer / Activity, see [07-live-app](07-live-app.md)). Those are addressed separately.
 
@@ -234,18 +242,18 @@ flag-gated order — only the new-diagram / template picker shuffles.
 
 ## Tests / sanity-check checklist
 
-- `/live` with no params → redirects to `/live/new`, no flash.
-- `/live/new` → welcome card on first paint.
-- Pick template → Create → editor loads on `/live/diagram/<id>`.
-- Dismiss welcome via the header X → editor loads on `/live/diagram/<id>`
+- `/live` with no params → redirects to `/new`, no flash.
+- `/new` → welcome card on first paint.
+- Pick template → Create → editor loads on `/diagram/<id>`.
+- Dismiss welcome via the header X → editor loads on `/diagram/<id>`
   with an empty starter tab (the welcome screen has no Skip button).
-- `/live/diagram/<id>` (existing) → editor hydrates as before.
-- `/live/diagram/shared?s=<code>` (visitor) → editor + identity-confirm modal.
-- NotFound CTA → goes to `/live/new`.
-- "New Diagram" from Explorer → goes to `/live/new`.
+- `/diagram/<id>` (existing) → editor hydrates as before.
+- `/diagram/shared?s=<code>` (visitor) → editor + identity-confirm modal.
+- NotFound CTA → goes to `/new`.
+- "New Diagram" from Explorer → goes to `/new`.
 
 ## Out of scope for V1
 
 - Animations for the route transition. A spinner is fine.
-- A dedicated `/live/new` landing-page mode for unauthenticated
+- A dedicated `/new` landing-page mode for unauthenticated
   users. Auth lands in a future spec.

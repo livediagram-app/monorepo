@@ -113,11 +113,11 @@ Extend by adding to the `TELEMETRY_CATEGORIES` / `TELEMETRY_ACTIONS` enums (if n
 
 ## Dashboard app (`apps/telemetry`)
 
-A new Next.js static-export app (same stack as the others), mounted by the router at **`/telemetry`** (`basePath: '/telemetry'`, prefix stripped by the router exactly like `/live`). Public, read-only. A timeframe toggle (Today / Last 7 days / Last month) switches which window of the single `GET /api/telemetry/summary` payload it shows: headline totals + breakdowns grouped by category → action → type, plus a 30-day overall sparkline and a per-category stacked-area chart driven by the `daily` field on the same response. Charts render in inline SVG; no charting library, no extra request. Explains in-page that the data is anonymous, first-party, no vendors. Degrades to an "analytics not enabled" state when the summary returns `enabled: false`.
+A new Next.js static-export app (same stack as the others), mounted by the router at **`/telemetry`** (`basePath: '/telemetry'`, prefix stripped by the router, like the live app's assets). Public, read-only. A timeframe toggle (Today / Last 7 days / Last month) switches which window of the single `GET /api/telemetry/summary` payload it shows: headline totals + breakdowns grouped by category → action → type, plus a 30-day overall sparkline and a per-category stacked-area chart driven by the `daily` field on the same response. Charts render in inline SVG; no charting library, no extra request. Explains in-page that the data is anonymous, first-party, no vendors. Degrades to an "analytics not enabled" state when the summary returns `enabled: false`.
 
 ## Routing & deploy
 
-- **Router** ([08](08-router-app.md)): a `TELEMETRY` service binding and a `/telemetry` route that strips the prefix and forwards (mirrors `/live`).
+- **Router** ([08](08-router-app.md)): a `TELEMETRY` service binding and a `/telemetry` route that strips the prefix and forwards (mirrors the live-asset strip).
 - **Deploy** ([10](10-deployment.md)): build + upload `apps/telemetry/out`, a `deploy-telemetry` job in parallel with marketing/live/api, and `deploy-router` gains it as a dependency. The `events` migration applies in the existing `wrangler d1 migrations apply DB` step.
 
 ## Provisioning (one-time, owner only)

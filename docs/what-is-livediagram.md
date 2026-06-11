@@ -24,9 +24,9 @@ The unit of value is the team, not the individual. See [spec/00](../specs/00-pur
 - **Multiplayer**: live presence, cursors, selection rings, comments, laser-pointer broadcast via per-diagram Durable Object rooms.
 - **Audit log**: every change recorded per-tab; one-click revert on any entry, even after later edits.
 - **Tabs**: every diagram is a stack of tabs (link across them; copy a tab into another diagram).
-- **Folders**: nested folders in the Explorer; full-page `/live/explorer` for signed-in users.
+- **Folders**: nested folders in the Explorer; full-page `/explorer` for signed-in users.
 - **Sharing**: editor or view-only share links per diagram, with an optional password gate that applies to every link on the diagram; revoke individually or in bulk at any time.
-- **Embeds**: a read-only `/live/embed` view of any share link, iframe-able into wikis, Notion, and docs (copy the snippet from the Share dialog); live-updates as the diagram is edited. See [spec/33](../specs/33-embeds.md).
+- **Embeds**: a read-only `/embed` view of any share link, iframe-able into wikis, Notion, and docs (copy the snippet from the Share dialog); live-updates as the diagram is edited. See [spec/33](../specs/33-embeds.md).
 - **Hybrid auth**: guests get everything (full persistence keyed to a per-browser id); signed-in users (Clerk) get cross-device sync and account self-delete.
 - **Export / import**: active tab to Markdown / PDF / PNG / JSON file; import the JSON envelope back as a new tab.
 - **"Shared with you" Explorer accordion**: visitors can make their own copy of a shared diagram.

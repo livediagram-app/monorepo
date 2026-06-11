@@ -26,7 +26,7 @@ marketing/   off-site copy + media for listings and promotion (see specs/23)
 ## The 30-second tour
 
 - **Marketing** at `/` is the pitch and feature tour.
-- **Editor** at `/live` is the canvas. Guests get a per-browser identity and full persistence; signed-in users get the same plus cross-device sync.
+- **Editor** is the canvas, served at clean routes (`/new`, `/diagram/<id>`, `/explorer/...`; no `/live` prefix). Guests get a per-browser identity and full persistence; signed-in users get the same plus cross-device sync.
 - **API** at `/api/*` is a Cloudflare Worker (REST + WebSocket realtime room per diagram, backed by D1).
 - **Telemetry** at `/telemetry` is the public anonymous-events dashboard (off in OSS forks by default).
 - **Router** stitches the four under one hostname.

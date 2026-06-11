@@ -472,7 +472,7 @@ A global search modal (`apps/live/components/SearchPanel.tsx`; matching logic in
 Result sections, in order, each capped (8 per section, 12 for elements):
 
 1. **Diagrams** — the owner's diagram names. Picking one opens it.
-2. **Shared with you** — diagrams shared with the current owner, matched by name. Rows carry their still-live share code; picking one opens the visitor URL (`/live/diagram/<id>?s=<code>`), the only path a non-owner can open the diagram on.
+2. **Shared with you** — diagrams shared with the current owner, matched by name. Rows carry their still-live share code; picking one opens the visitor URL (`/diagram/<id>?s=<code>`), the only path a non-owner can open the diagram on.
 3. **Folders** — personal folder names, then **team-library folders** (spec/35) shown with an "in `<team>`" suffix and matched by path or team name; each kind capped separately so neither crowds the other. Picking a personal folder selects it on `/explorer`; picking a team folder deep-links to `/explorer/team?id=<team>&folder=<id>` (the team page reads the param at mount). Team folders are swept lazily, one library fetch per team, the first time search opens (`useTeamFoldersForSearch`).
 4. **Teams** — teams the signed-in user belongs to (spec/32), matched by name. Picking one lands on `/explorer/team?id=<id>`. Guests have none; the editor fetches the list lazily the first time search opens so non-searching sessions never pay the request.
 5. **Tabs** — the open diagram's tab names (editor only; `/explorer` has no active diagram).

@@ -44,7 +44,7 @@ In scope:
 
 ## Explorer routes
 
-Every Explorer section is its own page under `/live/explorer` (the chrome — header, sidebar tree, mobile drawer — is a shared layout, so the sidebar and its loaded data persist across section navigations):
+Every Explorer section is its own page under `/explorer` (the chrome — header, sidebar tree, mobile drawer — is a shared layout, so the sidebar and its loaded data persist across section navigations):
 
 | Section           | Route                                                       |
 | ----------------- | ----------------------------------------------------------- |
@@ -57,7 +57,7 @@ Every Explorer section is its own page under `/live/explorer` (the chrome — he
 | Invites (spec/32) | `/explorer/invites`                                         |
 | Image gallery     | `/explorer/images`                                          |
 
-`/live/explorer` itself redirects to `/explorer/recent` (worker-level 302 in production, client replace in dev). Folder and team ids ride the **query string**, not a path segment: `output: 'export'` can't enumerate user-minted ids, and the `/diagram/<id>` placeholder-rewrite workaround (spec/14) is deliberately kept single-purpose. Sidebar row labels are sentence case ("Recent diagrams", "Image gallery"). Section headers, top to bottom: **"Quick find"** (Recent diagrams + Shared with you), **"My Work"** (the personal tree — Unsorted + the root folders directly, no "All diagrams" parent row; contrasts with team libraries, spec/35), **"Teams"** (spec/32), and **"Library"**.
+`/explorer` itself redirects to `/explorer/recent` (worker-level 302 in production, client replace in dev). Folder and team ids ride the **query string**, not a path segment: `output: 'export'` can't enumerate user-minted ids, and the `/diagram/<id>` placeholder-rewrite workaround (spec/14) is deliberately kept single-purpose. Sidebar row labels are sentence case ("Recent diagrams", "Image gallery"). Section headers, top to bottom: **"Quick find"** (Recent diagrams + Shared with you), **"My Work"** (the personal tree — Unsorted + the root folders directly, no "All diagrams" parent row; contrasts with team libraries, spec/35), **"Teams"** (spec/32), and **"Library"**.
 
 Out of scope (V1):
 

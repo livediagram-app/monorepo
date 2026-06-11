@@ -1,10 +1,10 @@
 # 21, Comparison / "alternative" pages
 
-SEO landing pages that capture high-intent "is there a `<tool>` alternative?" searches and convert them into `/live/new` visits. They live on the marketing site (`apps/marketing`) and follow every rule in [16-marketing-site](16-marketing-site.md); this spec adds the rules specific to comparisons.
+SEO landing pages that capture high-intent "is there a `<tool>` alternative?" searches and convert them into `/new` visits. They live on the marketing site (`apps/marketing`) and follow every rule in [16-marketing-site](16-marketing-site.md); this spec adds the rules specific to comparisons.
 
 ## Why they exist
 
-The marketing site's biggest organic-growth ceiling is content footprint: the editor at `/live/*` is intentionally `noindex`, so the only indexable surface is `/`, `/faq`, and the legal pages. Comparison pages add indexable, intent-matched content targeting queries like "Miro alternative", "open source Excalidraw alternative", "draw.io alternative", "diagrams in Google Slides". They are the first deliberate expansion of that footprint.
+The marketing site's biggest organic-growth ceiling is content footprint: the editor's routes are intentionally `noindex`, so the only indexable surface is `/`, `/faq`, and the legal pages. Comparison pages add indexable, intent-matched content targeting queries like "Miro alternative", "open source Excalidraw alternative", "draw.io alternative", "diagrams in Google Slides". They are the first deliberate expansion of that footprint.
 
 ## Routes
 
@@ -29,7 +29,7 @@ Per competitor, rendered by the shared template:
 - **Lede**: one or two honest sentences positioning livediagram against that tool.
 - **Comparison table**: livediagram vs `<competitor>` across a handful of dimensions, with per-cell text authored in the data (so every claim is deliberate and accurate, no blanket "we win").
 - **Why livediagram** (shipped differentiators) + **Where `<competitor>` is the better pick** (the fairness section).
-- **CTA** → `/live/new` ("Start drawing", the page-wide primary CTA).
+- **CTA** → `/new` ("Start drawing", the page-wide primary CTA).
 
 ## Metadata
 

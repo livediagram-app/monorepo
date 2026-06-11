@@ -3,18 +3,18 @@
 The diagram editor — where users actually build diagrams and mindmaps.
 
 - **Workspace:** `apps/live` (`@livediagram/live`).
-- **Public URL:** `https://livediagram.app/live` (via the [router app](08-router-app.md)).
-- **Tech:** Next.js (static export), React, TypeScript, Tailwind. `basePath: '/live'` in `next.config.ts` so internal URLs and asset paths are correctly prefixed.
+- **Public URL:** `https://livediagram.app` — the app serves at **clean routes** (`/diagram/...`, `/explorer/...`, `/new`, ...); the [router app](08-router-app.md) selects it by route. There's no `/live` URL prefix.
+- **Tech:** Next.js (static export), React, TypeScript, Tailwind. No `basePath` (pages serve at clean root paths). A prod-only `assetPrefix: '/live'` keeps the bundled `_next` assets from colliding with marketing's `/_next`; the router strips `/live` from those asset requests (see [08-router-app.md](08-router-app.md)). Dev runs standalone with clean asset paths.
 
 ## Always available without sign-in
 
-A guest can open `/live`, create a diagram, and use the full canvas without an account. See [04-auth-and-guest-access.md](04-auth-and-guest-access.md).
+A guest can open `/new`, create a diagram, and use the full canvas without an account. See [04-auth-and-guest-access.md](04-auth-and-guest-access.md).
 
 ## Routes
 
-- `/live/new` — welcome / template-picker flow for creating a new diagram. See [14-new-diagram-route.md](14-new-diagram-route.md).
-- `/live/diagram/<id>` — the editor itself, scoped to one diagram id. Static-exports a single `/diagram/placeholder` page that the router rewrites all `/diagram/<id>` paths to at the edge.
-- `/live/` — landing redirect into the welcome flow.
+- `/new` — welcome / template-picker flow for creating a new diagram (the app's entry point). See [14-new-diagram-route.md](14-new-diagram-route.md).
+- `/diagram/<id>` — the editor itself, scoped to one diagram id. Static-exports a single `/diagram/placeholder` page; the live worker rewrites all `/diagram/<id>` paths to it at the edge, and the client reads the real id from the path.
+- `/explorer/*`, `/sign-in`, `/get-started`, `/sso-callback`, `/embed` — the library, auth, and read-only embed surfaces.
 
 ## Persistence
 
@@ -67,13 +67,13 @@ To cut down on two people fighting over the same element, an element another par
 
 ## SEO and indexing
 
-The live app is the product, not a content surface. Every page under `/live/*` is one of:
+The live app is the product, not a content surface. Every page the live app serves is one of:
 
 - A signed-in workspace (`/explorer`, `/diagram/[id]`) carrying private user data that must not appear in search results.
 - An auth flow (`/sign-in`, `/get-started`, `/sso-callback`) that's worthless to crawlers and pointless to index.
 - The new-diagram welcome flow (`/new`) that needs the user's runtime identity to mean anything.
 
-`apps/live/app/layout.tsx` declares `robots: { index: false, follow: false }` in the root metadata so every route under `/live/*` inherits the directive. Cascades correctly through the static-export pages: each rendered HTML head carries `<meta name="robots" content="noindex,nofollow">`.
+`apps/live/app/layout.tsx` declares `robots: { index: false, follow: false }` in the root metadata so every live-app route inherits the directive. Cascades correctly through the static-export pages: each rendered HTML head carries `<meta name="robots" content="noindex,nofollow">`.
 
 This complements the marketing site's SEO policy (see [16-marketing-site.md](16-marketing-site.md)): marketing is the indexable surface, the live app is explicitly off-limits to crawlers. The two policies meet at the router worker, which serves them on the same hostname but distinct paths.
 
@@ -83,10 +83,10 @@ The editor ships with a UI **light / dark mode** toggle, distinct from the per-t
 
 - The toggle lives on the right edge of the TabBar (sun / moon icon button). Hover tooltips ("Switch to dark mode" / "Switch to light mode") spell out the next state.
 - Preference persists in `localStorage` under `livediagram:v2:ui-mode` (values `'light'` / `'dark'`). `hooks/useUiMode.ts` owns the toggle + the `.dark` class on `documentElement`.
-- The choice is applied on **every** route by a tiny inline script in the root layout (`app/layout.tsx`) that runs before first paint. This matters because `useUiMode` is only mounted by the TabBar — the welcome / template-picker flow and the standalone `/live/new` route never render it, so without the layout script they'd render light over the dark body. The script reads the same localStorage key and adds `.dark` synchronously, so there's no light-mode flash on any surface.
+- The choice is applied on **every** route by a tiny inline script in the root layout (`app/layout.tsx`) that runs before first paint. This matters because `useUiMode` is only mounted by the TabBar — the welcome / template-picker flow and the standalone `/new` route never render it, so without the layout script they'd render light over the dark body. The script reads the same localStorage key and adds `.dark` synchronously, so there's no light-mode flash on any surface.
 - Default is light. There is no auto-prefers-color-scheme detection in v1 (the toggle is explicit so the choice is the user's, not the OS's) — the layout script likewise only honours the stored value, it never reads the OS preference.
 - The `@custom-variant dark (&:where(.dark, .dark *))` declaration in `packages/tailwind-config/theme.css` configures Tailwind v4's `dark:` variant to use the class selector rather than the media query.
-- **Surfaces covered:** body backdrop, TabBar, EditorHeader, the TemplatePicker modal (the welcome / "Quick Start" / "Pick a template" flow) and the `/live/new` backdrop. Template **preview tiles** keep a light backdrop in dark mode on purpose — they're illustrative mini-canvases whose SVG content is light, so a light tile keeps them legible. Panel chromes (`MovablePanel`) carry the toggle's effect on the outer frame; per-panel content (Palette, Context, Explorer, Activity) lights up incrementally as the `dark:` variants get added to each accordion / row. Until that's done, an open panel reads light over a dark backdrop — usable, not yet polished.
+- **Surfaces covered:** body backdrop, TabBar, EditorHeader, the TemplatePicker modal (the welcome / "Quick Start" / "Pick a template" flow) and the `/new` backdrop. Template **preview tiles** keep a light backdrop in dark mode on purpose — they're illustrative mini-canvases whose SVG content is light, so a light tile keeps them legible. Panel chromes (`MovablePanel`) carry the toggle's effect on the outer frame; per-panel content (Palette, Context, Explorer, Activity) lights up incrementally as the `dark:` variants get added to each accordion / row. Until that's done, an open panel reads light over a dark backdrop — usable, not yet polished.
 
 ## Share dialog
 
@@ -132,7 +132,7 @@ They ARE used for actions that finish off-surface from the gesture: clicking "Ad
 
 The editor's floating panels (Palette, Explorer, Editor/Context, Activity) were designed for desktop where they overlap a wide canvas comfortably. On a phone-sized viewport they crowd each other and the canvas. The first responsive pass tightens the chrome so a mobile visitor can at least read the canvas and tap through:
 
-- **A compact mobile dock replaces the per-panel banners.** Below `sm:` the floating panels don't render at their desktop corners. A single button row pinned **top-right** of the canvas exposes **Explorer / Palette / Editor** (ContextPanel), plus **AI** when the assistant is enabled and the session is editable. Tapping a button opens that panel as a popover anchored beneath it; tapping the active button again closes it (and adding a shape or tool from the Palette popover auto-closes it so the user can draw immediately). The Explorer is reachable here too, so it is no longer hidden on mobile; the `/live/explorer/` page and the AuthControls menu item are alternate routes, open to guests and signed-in users alike. Activity keeps its own minimise path. On desktop nothing changes by default: panels sit at their own corners and collapse to a banner via the header +/- button (see spec/09 "Collapse to banner"), unless the user opts into the minimal panel layout (spec/09), which brings this same dock to desktop.
+- **A compact mobile dock replaces the per-panel banners.** Below `sm:` the floating panels don't render at their desktop corners. A single button row pinned **top-right** of the canvas exposes **Explorer / Palette / Editor** (ContextPanel), plus **AI** when the assistant is enabled and the session is editable. Tapping a button opens that panel as a popover anchored beneath it; tapping the active button again closes it (and adding a shape or tool from the Palette popover auto-closes it so the user can draw immediately). The Explorer is reachable here too, so it is no longer hidden on mobile; the `/explorer/` page and the AuthControls menu item are alternate routes, open to guests and signed-in users alike. Activity keeps its own minimise path. On desktop nothing changes by default: panels sit at their own corners and collapse to a banner via the header +/- button (see spec/09 "Collapse to banner"), unless the user opts into the minimal panel layout (spec/09), which brings this same dock to desktop.
 - **EditorHeader** drops the `livediagram` wordmark on mobile via the Brand component's new `wordmarkClassName` prop (set to `hidden sm:inline`). The mark stays for orientation. The header's reserved width shrinks accordingly so the diagram title centres correctly.
 - **TabBar** hides the leading `Tabs` label, the keyboard-shortcuts button, and the Settings button below `sm`. Tabs themselves, the +-add and the dark-mode toggle stay. The shortcuts dialog is keyboard-driven anyway; on a touch device its UI value is low.
 
