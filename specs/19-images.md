@@ -136,7 +136,7 @@ R2 is a Cloudflare-only binding. Self-hosters on alternative runtimes (Node, Bun
 - `apps/api/src/types.ts`: `Env.IMAGES` is optional. When unbound, every `/api/images*` endpoint returns 503 with `{ error: 'images-unavailable' }`.
 - `apps/live/components/ImagePicker.tsx`: a 503 response surfaces as a friendly "Image uploads aren't enabled on this deployment" notice instead of a generic error.
 - The Image palette entry hides entirely when a probe `GET /api/images` returns 503, so self-hosters without R2 don't see a dead-end button.
-- A future "S3-compatible storage" adapter can land alongside without changing the schema or the client (the R2 calls are wrapped in a thin `apps/api/src/storage/r2.ts` module so a Node-fs / S3 alternative slots in).
+- A future "S3-compatible storage" adapter can land alongside without changing the schema or the client (the R2 calls are localized to a handful of `env.IMAGES` put / get / delete calls in `apps/api/src/routes/images.ts`, so a Node-fs / S3 alternative could be slotted in from there).
 
 ## Realtime
 
