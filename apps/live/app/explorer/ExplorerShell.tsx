@@ -141,8 +141,8 @@ function ShellChrome({ children }: { children: ReactNode }) {
 
       {/* Move-destination modal (spec/15 + spec/35): one ownership-
           aware indented tree for every diagram (personal or team) and
-          for folder re-parenting. It shows "All diagrams" + the
-          personal folder tree, plus each team + its folder tree (for
+          for folder re-parenting. It shows "My Work" (the personal
+          root) + the folder tree, plus each team + its folder tree (for
           diagram moves); `moveDiagramTo` routes the pick from the
           subject's current placement. Folder moves are personal-only,
           so they pass no teams. */}

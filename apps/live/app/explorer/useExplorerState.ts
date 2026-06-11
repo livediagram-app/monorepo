@@ -513,7 +513,7 @@ export function useExplorerState() {
       return teams.find((t) => t.id === selected.id)?.name ?? 'Team';
     }
     if (selected.kind === 'invites') return 'Invites';
-    if (selected.kind === 'all') return 'All diagrams';
+    if (selected.kind === 'all') return 'My Work';
     if (selected.kind === 'unsorted') return 'Unsorted';
     return folderById.get(selected.id)?.name ?? 'Folder';
   }, [selected, folderById, teams]);
@@ -523,13 +523,13 @@ export function useExplorerState() {
   // text so the user can't navigate to where they already are.
   type Crumb = { name: string; onClick?: () => void };
   const paneCrumbs = useMemo<Crumb[]>(() => {
-    const all: Crumb = { name: 'All diagrams', onClick: () => go({ kind: 'all' }) };
+    const all: Crumb = { name: 'My Work', onClick: () => go({ kind: 'all' }) };
     if (selected.kind === 'recent') return [{ name: 'Recent diagrams' }];
     if (selected.kind === 'shared') return [{ name: 'Shared with you' }];
     if (selected.kind === 'gallery') return [{ name: 'Image gallery' }];
     if (selected.kind === 'team') return [{ name: paneTitle }];
     if (selected.kind === 'invites') return [{ name: 'Invites' }];
-    if (selected.kind === 'all') return [{ name: 'All diagrams' }];
+    if (selected.kind === 'all') return [{ name: 'My Work' }];
     if (selected.kind === 'unsorted') return [all, { name: 'Unsorted' }];
     const chain = breadcrumb(selected.id);
     return [
