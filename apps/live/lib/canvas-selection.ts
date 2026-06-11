@@ -113,6 +113,11 @@ export function deriveCanvasSelection(input: {
   const showPlus = !!(
     selected &&
     selectedIsBoxed &&
+    // Quick-connect only makes sense for a single element: with a
+    // multi-select or a multi-member group there's no one shape to
+    // duplicate-and-connect from, so the plus buttons are suppressed.
+    multiSelectedIds.size === 0 &&
+    memberIds.size === 1 &&
     // Tables don't expose the quick-connect plus buttons (connecting a
     // connector to a grid is an unlikely flow, and they clash with the
     // table's own in-cell controls).

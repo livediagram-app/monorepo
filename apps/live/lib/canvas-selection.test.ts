@@ -112,6 +112,8 @@ describe('deriveCanvasSelection', () => {
     expect(s.unionResizePrimaryId).toBe('a');
     // Per-element single-handles stay off when the selection is a group/multi.
     expect(s.showHandlesFor('a')).toBe(false);
+    // Quick-connect plus buttons are single-element only.
+    expect(s.showPlus).toBe(false);
   });
 
   it('a group selection (>1 member) shows union resize, not per-element handles', () => {
@@ -122,6 +124,7 @@ describe('deriveCanvasSelection', () => {
     expect(s.showUnionResize).toBe(true);
     expect(s.unionResizePrimaryId).toBe('a');
     expect(s.showHandlesFor('a')).toBe(false); // memberIds.size !== 1
+    expect(s.showPlus).toBe(false); // multi-member group: no single shape to connect from
   });
 });
 

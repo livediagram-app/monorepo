@@ -443,6 +443,28 @@ export function Canvas(props: CanvasProps) {
     return { x: px + snap.dx, y: py + snap.dy };
   };
 
+  // Starts a draw-to-size / freehand gesture from a primary-button
+  // pointer-down when an intent is pending, converting to canvas
+  // coords first. Returns true once a gesture began so callers can
+  // stop there. Shared by the capture-phase intercept (which fires
+  // over elements too) and the background bubble handlers; a freehand
+  // intent seeds the polyline accumulator, every other intent seeds
+  // the box / line drag.
+  const beginPendingDrawGesture = (e: React.PointerEvent): boolean => {
+    if (!pendingDraw) return false;
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (!rect) return false;
+    const sx = (e.clientX - rect.left) / viewportZoom;
+    const sy = (e.clientY - rect.top) / viewportZoom;
+    if (pendingDraw.type === 'freehand') {
+      setPenPoints([{ x: sx, y: sy }]);
+    } else {
+      const start = snapDrawStart(sx, sy);
+      setDrawDrag({ startX: start.x, startY: start.y, currentX: start.x, currentY: start.y });
+    }
+    return true;
+  };
+
   // Pre-press snap preview: while a draw is armed but not yet started,
   // snap the hovered pointer to nearby element edges / centres and stash
   // it, so the user can land the shape's FIRST corner on an alignment
@@ -676,16 +698,31 @@ export function Canvas(props: CanvasProps) {
         // capture phase runs before the element + background
         // pointerdown handlers, so it wins over selection / drag.
         // Mirrors Figma + the browser's own middle-drag scroll.
-        if (e.button !== 1) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setPan({
-          startClientX: e.clientX,
-          startClientY: e.clientY,
-          startOffsetX: viewportOffset.x,
-          startOffsetY: viewportOffset.y,
-          movedRef: { current: false },
-        });
+        if (e.button === 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPan({
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            startOffsetX: viewportOffset.x,
+            startOffsetY: viewportOffset.y,
+            movedRef: { current: false },
+          });
+          return;
+        }
+        // Draw-to-size intercept must run in the capture phase so a
+        // queued draw can begin ON TOP of an existing element. An
+        // element's own bubble-phase pointerdown selects / drags it and
+        // stops propagation, which would otherwise make it impossible
+        // to draw a new element over another. Capturing here lets the
+        // draw win regardless of what's under the pointer; the
+        // background bubble handlers still cover the rect-less edge
+        // case where this returns false.
+        if (e.button === 0 && pendingDraw) {
+          const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+          node?.focus({ preventScroll: true });
+          if (beginPendingDrawGesture(e)) e.stopPropagation();
+        }
       }}
       onContextMenu={(e) => {
         // BoxedElementView's onContextMenu calls e.stopPropagation()
@@ -719,28 +756,10 @@ export function Canvas(props: CanvasProps) {
         // through to pan / marquee. Coords convert immediately to
         // canvas coords so the rest of the gesture (the window-
         // level move + up listeners above) operates in one space.
-        if (pendingDraw) {
-          const rect = wrapperRef.current?.getBoundingClientRect();
-          if (rect) {
-            const sx = (e.clientX - rect.left) / viewportZoom;
-            const sy = (e.clientY - rect.top) / viewportZoom;
-            if (pendingDraw.type === 'freehand') {
-              // Pen gesture: start a polyline accumulator. Subsequent
-              // pointermoves append to it via the effect below; on
-              // release the polyline is handed to onCommitFreehand.
-              setPenPoints([{ x: sx, y: sy }]);
-            } else {
-              const start = snapDrawStart(sx, sy);
-              setDrawDrag({
-                startX: start.x,
-                startY: start.y,
-                currentX: start.x,
-                currentY: start.y,
-              });
-            }
-            return;
-          }
-        }
+        // Usually the capture-phase intercept above has already started
+        // the gesture (and stopped propagation); this is the fallback
+        // for the rect-less edge case where it didn't.
+        if (pendingDraw && beginPendingDrawGesture(e)) return;
         // Auto-fit on load can scale the wrapper below 1, which
         // shrinks its hit region inside `main`. Without this mirror
         // handler, clicks in the "outside the shrunken wrapper but
@@ -823,36 +842,15 @@ export function Canvas(props: CanvasProps) {
           const node = mainRef && 'current' in mainRef ? mainRef.current : null;
           node?.focus({ preventScroll: true });
           // Draw-to-size intercept (mirror of the outer handler).
-          // Must branch on `freehand` the same way the outer one
-          // does: a freehand intent starts a polyline accumulator
-          // (penPoints), every other intent starts the box / line
-          // drag (drawDrag). The previous version always started a
-          // drawDrag, so a pen click landed BOTH a penPoints state
-          // (from the outer handler) AND a drawDrag (from this
-          // inner one); the drawDrag preview rendered a marquee-
-          // like box and its onUp routed the gesture into
-          // onCommitDraw, which dropped through commitDraw's
-          // ternary fallback to createImage. Three symptoms in
-          // one missing branch.
-          if (pendingDraw) {
-            const rect = wrapperRef.current?.getBoundingClientRect();
-            if (rect) {
-              const sx = (e.clientX - rect.left) / viewportZoom;
-              const sy = (e.clientY - rect.top) / viewportZoom;
-              if (pendingDraw.type === 'freehand') {
-                setPenPoints([{ x: sx, y: sy }]);
-              } else {
-                const start = snapDrawStart(sx, sy);
-                setDrawDrag({
-                  startX: start.x,
-                  startY: start.y,
-                  currentX: start.x,
-                  currentY: start.y,
-                });
-              }
-              return;
-            }
-          }
+          // beginPendingDrawGesture branches on `freehand` internally:
+          // a freehand intent seeds the polyline accumulator, every
+          // other intent seeds the box / line drag. (An earlier inline
+          // version always started a drawDrag, so a pen click landed
+          // BOTH a penPoints state and a drawDrag and mis-routed into
+          // createImage; the shared helper has the single correct
+          // branch.) Usually the capture-phase intercept has already
+          // handled this; kept as the rect-less fallback.
+          if (pendingDraw && beginPendingDrawGesture(e)) return;
           // Tool decides the gesture:
           //  - Pan tool / Space / Laser tool → drag scrolls. Laser
           //    drags pan because mid-presentation a click-drag is far

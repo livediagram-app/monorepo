@@ -816,8 +816,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
           mounting before that would let MovablePanel fall back to
           its static top-[15rem], landing the panel BEHIND the
           Editor pane (Editor renders later in the DOM and wins
-          z-order) instead of stacking cleanly under it. */}
-      {!chromeHidden && commentRows.length > 0 && contextBottomY > 0 ? (
+          z-order) instead of stacking cleanly under it. Suppressed
+          entirely under minimalPanels: the per-element comment popover
+          stays available for viewing / replying. */}
+      {!chromeHidden && !minimalPanels && commentRows.length > 0 && contextBottomY > 0 ? (
         <div className="hidden sm:contents">
           <CommentsPanel
             position={commentsPanelPosition}

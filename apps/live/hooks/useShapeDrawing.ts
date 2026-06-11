@@ -227,6 +227,12 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
     // addBoxed's note for the rationale).
     commit((els) => [...els, sized]);
     setSelectedId(sized.id);
+    // A freshly added text element drops straight into typing mode
+    // (matches the double-click-to-add-text path in useElementCreation):
+    // an empty text box is only useful once you type into it, so save the
+    // user the extra click. Other element kinds stay selected-but-not-
+    // editing so their format popover is the immediate next interaction.
+    if (intent.type === 'text') setEditingId(sized.id);
     setPendingDraw(null);
     const label =
       intent.type === 'shape'

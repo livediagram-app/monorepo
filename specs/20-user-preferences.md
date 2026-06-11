@@ -168,7 +168,10 @@ Missing key === undefined === default behaviour. Concretely:
   Settings when the api worker advertises AI capability.
 - `minimalPanels` undefined → floating panels on desktop (the
   default). Setting it to `true` switches desktop to the dock /
-  popover layout. Mobile ignores the flag — it is always docked.
+  popover layout. Mobile ignores the flag — it is always docked. In
+  this layout the floating comments panel (the cheat sheet of threads)
+  is suppressed entirely; the per-element comment popover stays
+  available for viewing and replying.
 - `alignmentGuides` undefined → guides on (the default). Setting it
   to `false` hides the faint guide lines during a move / resize; the
   snap behaviour itself is unchanged.

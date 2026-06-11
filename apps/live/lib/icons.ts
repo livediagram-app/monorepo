@@ -701,6 +701,371 @@ export const ICON_CATALOG: IconDef[] = [
     keywords: 'pulse heartbeat monitor health graph',
     prims: [{ t: 'polyline', points: '22 12 18 12 15 21 9 3 6 12 2 12' }],
   },
+  // --- Tech ---
+  {
+    id: 'hard-drive',
+    label: 'Hard drive',
+    keywords: 'disk storage hdd ssd volume',
+    prims: [
+      { t: 'line', x1: 22, y1: 12, x2: 2, y2: 12 },
+      {
+        t: 'path',
+        d: 'M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z',
+      },
+      { t: 'line', x1: 6, y1: 16, x2: 6.01, y2: 16 },
+      { t: 'line', x1: 10, y1: 16, x2: 10.01, y2: 16 },
+    ],
+  },
+  {
+    id: 'bluetooth',
+    label: 'Bluetooth',
+    keywords: 'wireless pairing connection signal',
+    prims: [{ t: 'polyline', points: '6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5' }],
+  },
+  {
+    id: 'battery',
+    label: 'Battery',
+    keywords: 'power charge energy level',
+    prims: [
+      { t: 'rect', x: 1, y: 6, w: 18, h: 12, rx: 2 },
+      { t: 'line', x1: 23, y1: 13, x2: 23, y2: 11 },
+    ],
+  },
+  {
+    id: 'cast',
+    label: 'Cast',
+    keywords: 'stream airplay screen mirror broadcast',
+    prims: [
+      {
+        t: 'path',
+        d: 'M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6',
+      },
+      { t: 'line', x1: 2, y1: 20, x2: 2.01, y2: 20 },
+    ],
+  },
+  {
+    id: 'command',
+    label: 'Command',
+    keywords: 'cmd key shortcut mac control',
+    prims: [
+      {
+        t: 'path',
+        d: 'M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z',
+      },
+    ],
+  },
+  {
+    id: 'share-2',
+    label: 'Share',
+    keywords: 'network nodes connect distribute social',
+    prims: [
+      { t: 'circle', cx: 18, cy: 5, r: 3 },
+      { t: 'circle', cx: 6, cy: 12, r: 3 },
+      { t: 'circle', cx: 18, cy: 19, r: 3 },
+      { t: 'line', x1: 8.59, y1: 13.51, x2: 15.42, y2: 17.49 },
+      { t: 'line', x1: 15.41, y1: 6.51, x2: 8.59, y2: 10.49 },
+    ],
+  },
+  // --- People ---
+  {
+    id: 'user-plus',
+    label: 'Add user',
+    keywords: 'person invite new member signup',
+    prims: [
+      { t: 'path', d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' },
+      { t: 'circle', cx: 8.5, cy: 7, r: 4 },
+      { t: 'line', x1: 20, y1: 8, x2: 20, y2: 14 },
+      { t: 'line', x1: 23, y1: 11, x2: 17, y2: 11 },
+    ],
+  },
+  {
+    id: 'user-check',
+    label: 'User verified',
+    keywords: 'person approved confirmed member check',
+    prims: [
+      { t: 'path', d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' },
+      { t: 'circle', cx: 8.5, cy: 7, r: 4 },
+      { t: 'polyline', points: '17 11 19 13 23 9' },
+    ],
+  },
+  {
+    id: 'smile',
+    label: 'Smile',
+    keywords: 'happy face emoji satisfied feedback',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 10 },
+      { t: 'path', d: 'M8 14s1.5 2 4 2 4-2 4-2' },
+      { t: 'line', x1: 9, y1: 9, x2: 9.01, y2: 9 },
+      { t: 'line', x1: 15, y1: 9, x2: 15.01, y2: 9 },
+    ],
+  },
+  {
+    id: 'award',
+    label: 'Award',
+    keywords: 'medal prize badge winner achievement',
+    prims: [
+      { t: 'circle', cx: 12, cy: 8, r: 7 },
+      { t: 'polyline', points: '8.21 13.89 7 23 12 20 17 23 15.79 13.88' },
+    ],
+  },
+  {
+    id: 'thumbs-up',
+    label: 'Thumbs up',
+    keywords: 'like approve vote positive good',
+    prims: [
+      {
+        t: 'path',
+        d: 'M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3',
+      },
+    ],
+  },
+  // --- Security ---
+  {
+    id: 'unlock',
+    label: 'Unlock',
+    keywords: 'open security unsecure access padlock',
+    prims: [
+      { t: 'rect', x: 3, y: 11, w: 18, h: 11, rx: 2 },
+      { t: 'path', d: 'M7 11V7a5 5 0 0 1 9.9-1' },
+    ],
+  },
+  {
+    id: 'eye-off',
+    label: 'Hidden',
+    keywords: 'hide invisible private conceal eye',
+    prims: [
+      {
+        t: 'path',
+        d: 'M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24',
+      },
+      { t: 'line', x1: 1, y1: 1, x2: 23, y2: 23 },
+    ],
+  },
+  // --- Files ---
+  {
+    id: 'file-text',
+    label: 'Document',
+    keywords: 'file page text lines paper doc',
+    prims: [
+      { t: 'path', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' },
+      { t: 'polyline', points: '14 2 14 8 20 8' },
+      { t: 'line', x1: 16, y1: 13, x2: 8, y2: 13 },
+      { t: 'line', x1: 16, y1: 17, x2: 8, y2: 17 },
+      { t: 'polyline', points: '10 9 9 9 8 9' },
+    ],
+  },
+  {
+    id: 'file-plus',
+    label: 'New file',
+    keywords: 'file add create document new',
+    prims: [
+      { t: 'path', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' },
+      { t: 'polyline', points: '14 2 14 8 20 8' },
+      { t: 'line', x1: 12, y1: 18, x2: 12, y2: 12 },
+      { t: 'line', x1: 9, y1: 15, x2: 15, y2: 15 },
+    ],
+  },
+  {
+    id: 'folder-plus',
+    label: 'New folder',
+    keywords: 'folder add create directory new',
+    prims: [
+      {
+        t: 'path',
+        d: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z',
+      },
+      { t: 'line', x1: 12, y1: 11, x2: 12, y2: 17 },
+      { t: 'line', x1: 9, y1: 14, x2: 15, y2: 14 },
+    ],
+  },
+  {
+    id: 'save',
+    label: 'Save',
+    keywords: 'disk store floppy persist write',
+    prims: [
+      { t: 'path', d: 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z' },
+      { t: 'polyline', points: '17 21 17 13 7 13 7 21' },
+      { t: 'polyline', points: '7 3 7 8 15 8' },
+    ],
+  },
+  {
+    id: 'archive',
+    label: 'Archive',
+    keywords: 'box store backup inbox old',
+    prims: [
+      { t: 'polyline', points: '21 8 21 21 3 21 3 8' },
+      { t: 'rect', x: 1, y: 3, w: 22, h: 5 },
+      { t: 'line', x1: 10, y1: 12, x2: 14, y2: 12 },
+    ],
+  },
+  {
+    id: 'paperclip',
+    label: 'Attachment',
+    keywords: 'paperclip attach file clip link',
+    prims: [
+      {
+        t: 'path',
+        d: 'M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48',
+      },
+    ],
+  },
+  // --- Charts ---
+  {
+    id: 'trending-down',
+    label: 'Trending down',
+    keywords: 'decline decrease arrow graph analytics loss',
+    prims: [
+      { t: 'polyline', points: '23 18 13.5 8.5 8.5 13.5 1 6' },
+      { t: 'polyline', points: '17 18 23 18 23 12' },
+    ],
+  },
+  {
+    id: 'percent',
+    label: 'Percent',
+    keywords: 'percentage discount rate ratio share',
+    prims: [
+      { t: 'line', x1: 19, y1: 5, x2: 5, y2: 19 },
+      { t: 'circle', cx: 6.5, cy: 6.5, r: 2.5 },
+      { t: 'circle', cx: 17.5, cy: 17.5, r: 2.5 },
+    ],
+  },
+  {
+    id: 'target',
+    label: 'Target',
+    keywords: 'goal aim bullseye objective focus',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 10 },
+      { t: 'circle', cx: 12, cy: 12, r: 6 },
+      { t: 'circle', cx: 12, cy: 12, r: 2 },
+    ],
+  },
+  // --- UI ---
+  {
+    id: 'menu',
+    label: 'Menu',
+    keywords: 'hamburger lines navigation list bars',
+    prims: [
+      { t: 'line', x1: 3, y1: 12, x2: 21, y2: 12 },
+      { t: 'line', x1: 3, y1: 6, x2: 21, y2: 6 },
+      { t: 'line', x1: 3, y1: 18, x2: 21, y2: 18 },
+    ],
+  },
+  {
+    id: 'more-horizontal',
+    label: 'More',
+    keywords: 'ellipsis dots overflow options menu',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 1 },
+      { t: 'circle', cx: 19, cy: 12, r: 1 },
+      { t: 'circle', cx: 5, cy: 12, r: 1 },
+    ],
+  },
+  {
+    id: 'refresh-cw',
+    label: 'Refresh',
+    keywords: 'reload sync update retry cycle',
+    prims: [
+      { t: 'polyline', points: '23 4 23 10 17 10' },
+      { t: 'polyline', points: '1 20 1 14 7 14' },
+      { t: 'path', d: 'M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' },
+    ],
+  },
+  {
+    id: 'info',
+    label: 'Info',
+    keywords: 'information detail about help note',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 10 },
+      { t: 'line', x1: 12, y1: 16, x2: 12, y2: 12 },
+      { t: 'line', x1: 12, y1: 8, x2: 12.01, y2: 8 },
+    ],
+  },
+  {
+    id: 'help-circle',
+    label: 'Help',
+    keywords: 'question support faq query unknown',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 10 },
+      { t: 'path', d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' },
+      { t: 'line', x1: 12, y1: 17, x2: 12.01, y2: 17 },
+    ],
+  },
+  {
+    id: 'sliders',
+    label: 'Sliders',
+    keywords: 'controls adjust settings filters mixer',
+    prims: [
+      { t: 'line', x1: 4, y1: 21, x2: 4, y2: 14 },
+      { t: 'line', x1: 4, y1: 10, x2: 4, y2: 3 },
+      { t: 'line', x1: 12, y1: 21, x2: 12, y2: 12 },
+      { t: 'line', x1: 12, y1: 8, x2: 12, y2: 3 },
+      { t: 'line', x1: 20, y1: 21, x2: 20, y2: 16 },
+      { t: 'line', x1: 20, y1: 12, x2: 20, y2: 3 },
+      { t: 'line', x1: 1, y1: 14, x2: 7, y2: 14 },
+      { t: 'line', x1: 9, y1: 8, x2: 15, y2: 8 },
+      { t: 'line', x1: 17, y1: 16, x2: 23, y2: 16 },
+    ],
+  },
+  {
+    id: 'bookmark',
+    label: 'Bookmark',
+    keywords: 'save favourite ribbon flag mark',
+    prims: [{ t: 'path', d: 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z' }],
+  },
+  {
+    id: 'share',
+    label: 'Export',
+    keywords: 'share send out upload arrow',
+    prims: [
+      { t: 'path', d: 'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8' },
+      { t: 'polyline', points: '16 6 12 2 8 6' },
+      { t: 'line', x1: 12, y1: 2, x2: 12, y2: 15 },
+    ],
+  },
+  {
+    id: 'copy',
+    label: 'Copy',
+    keywords: 'duplicate clone clipboard paste files',
+    prims: [
+      { t: 'rect', x: 9, y: 9, w: 13, h: 13, rx: 2 },
+      { t: 'path', d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' },
+    ],
+  },
+  {
+    id: 'sun',
+    label: 'Sun',
+    keywords: 'light day bright weather theme',
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 5 },
+      { t: 'line', x1: 12, y1: 1, x2: 12, y2: 3 },
+      { t: 'line', x1: 12, y1: 21, x2: 12, y2: 23 },
+      { t: 'line', x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 },
+      { t: 'line', x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 },
+      { t: 'line', x1: 1, y1: 12, x2: 3, y2: 12 },
+      { t: 'line', x1: 21, y1: 12, x2: 23, y2: 12 },
+      { t: 'line', x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 },
+      { t: 'line', x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 },
+    ],
+  },
+  {
+    id: 'moon',
+    label: 'Moon',
+    keywords: 'night dark theme sleep weather',
+    prims: [{ t: 'path', d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' }],
+  },
+  {
+    id: 'alert-octagon',
+    label: 'Alert',
+    keywords: 'error stop critical danger warning blocked',
+    prims: [
+      {
+        t: 'polygon',
+        points: '7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2',
+      },
+      { t: 'line', x1: 12, y1: 8, x2: 12, y2: 12 },
+      { t: 'line', x1: 12, y1: 16, x2: 12.01, y2: 16 },
+    ],
+  },
 ];
 
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved
@@ -763,18 +1128,54 @@ export const ICON_CATEGORIES: IconCategory[] = [
       'box',
       'power',
       'external-link',
+      'hard-drive',
+      'bluetooth',
+      'battery',
+      'cast',
+      'command',
+      'share-2',
     ],
   },
   {
     id: 'people',
     label: 'People',
-    iconIds: ['user', 'users', 'heart', 'message', 'mail', 'phone'],
+    iconIds: [
+      'user',
+      'users',
+      'heart',
+      'message',
+      'mail',
+      'phone',
+      'user-plus',
+      'user-check',
+      'smile',
+      'award',
+      'thumbs-up',
+    ],
   },
-  { id: 'security', label: 'Security', iconIds: ['shield', 'lock', 'key'] },
+  {
+    id: 'security',
+    label: 'Security',
+    iconIds: ['shield', 'lock', 'key', 'unlock', 'eye-off'],
+  },
   {
     id: 'files',
     label: 'Files',
-    iconIds: ['folder', 'file', 'image', 'clipboard', 'book', 'download', 'upload'],
+    iconIds: [
+      'folder',
+      'file',
+      'image',
+      'clipboard',
+      'book',
+      'download',
+      'upload',
+      'file-text',
+      'file-plus',
+      'folder-plus',
+      'save',
+      'archive',
+      'paperclip',
+    ],
   },
   {
     id: 'charts',
@@ -788,6 +1189,9 @@ export const ICON_CATEGORIES: IconCategory[] = [
       'credit-card',
       'cart',
       'briefcase',
+      'trending-down',
+      'percent',
+      'target',
     ],
   },
   {
@@ -822,6 +1226,18 @@ export const ICON_CATEGORIES: IconCategory[] = [
       'x',
       'camera',
       'tool',
+      'menu',
+      'more-horizontal',
+      'refresh-cw',
+      'info',
+      'help-circle',
+      'sliders',
+      'bookmark',
+      'share',
+      'copy',
+      'sun',
+      'moon',
+      'alert-octagon',
     ],
   },
 ];
