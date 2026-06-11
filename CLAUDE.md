@@ -151,7 +151,7 @@ All deploys happen via **GitHub Actions** to **Cloudflare Workers** (with Static
 
 Worker names: `livediagram-marketing`, `livediagram-live`, `livediagram-telemetry`, `livediagram-api`, `livediagram-router`, matching the service-binding targets in `apps/router/wrangler.toml`. Deploy order: marketing + live + telemetry + api in parallel, then router last (its service bindings depend on the other four existing).
 
-Production is live at **https://livediagram.app** (`/` → marketing, `/live` → editor, `/telemetry` → telemetry dashboard, `/api/*` → api).
+Production is live at **https://livediagram.app** (`/` → marketing; `/diagram`, `/explorer`, `/new`, `/join`, ... → editor at clean routes, with only its `_next` assets under `/live`; `/telemetry` → telemetry dashboard; `/api/*` → api).
 
 Secrets needed in the GitHub repo: `CF_API_TOKEN`, `CF_ACCOUNT_ID`. See [secrets policy](specs/06-secrets-policy.md).
 
