@@ -259,16 +259,29 @@ export function TeamPane({
         {/* ---------- Header: context line + overflow menu ---------- */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
           <p className="min-w-0 truncate text-xs text-slate-500">{headline}</p>
-          <button
-            ref={menuRef}
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Team actions"
-            aria-expanded={menuOpen}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-          >
-            <EllipsisIcon />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => setLinkOpen(true)}
+                aria-label="Invite by link"
+                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition hover:bg-brand-50"
+              >
+                <LinkIcon />
+                <span className="hidden sm:inline">Invite by link</span>
+              </button>
+            ) : null}
+            <button
+              ref={menuRef}
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Team actions"
+              aria-expanded={menuOpen}
+              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+            >
+              <EllipsisIcon />
+            </button>
+          </div>
           {menuOpen ? (
             <PortalMenu
               anchor={menuRef.current}
@@ -395,50 +408,32 @@ export function TeamPane({
           </p>
         ) : null}
         {isAdmin ? (
-          <>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void invite();
-              }}
-              className="flex items-center gap-2 border-t border-slate-200 bg-slate-50/40 px-4 py-2.5"
-            >
-              <span className="shrink-0 text-slate-300">
-                <PlusIcon />
-              </span>
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Add your team by email address, they will receive an invite."
-                aria-label="Invite by email address"
-                className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-              />
-              <button
-                type="submit"
-                disabled={!inviteEmail.trim() || inviteBusy}
-                className="shrink-0 rounded-md bg-brand-500 px-3 py-1 text-xs font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Invite
-              </button>
-            </form>
-            {/* Shareable join link (spec/32): an alternative to per-address
-                invites. A dot indicates the link is currently on. */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void invite();
+            }}
+            className="flex items-center gap-2 border-t border-slate-200 bg-slate-50/40 px-4 py-2.5"
+          >
+            <span className="shrink-0 text-slate-300">
+              <PlusIcon />
+            </span>
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="Add your team by email address, they will receive an invite."
+              aria-label="Invite by email address"
+              className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+            />
             <button
-              type="button"
-              onClick={() => setLinkOpen(true)}
-              className="flex w-full items-center gap-2 border-t border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-brand-600 transition hover:bg-brand-50/60"
+              type="submit"
+              disabled={!inviteEmail.trim() || inviteBusy}
+              className="shrink-0 rounded-md bg-brand-500 px-3 py-1 text-xs font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <LinkIcon />
-              <span className="flex-1">Invite by link</span>
-              {detail.inviteLink ? (
-                <span className="inline-flex items-center gap-1 text-xs font-normal text-emerald-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                  On
-                </span>
-              ) : null}
+              Invite
             </button>
-          </>
+          </form>
         ) : null}
       </div>
 
