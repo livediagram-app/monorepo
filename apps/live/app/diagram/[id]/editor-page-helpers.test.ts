@@ -338,4 +338,18 @@ describe('deriveTabLoadState', () => {
   it('is ready for an unloaded tab whose template picker was dismissed', () => {
     expect(deriveTabLoadState({ ...base, templateChosen: true })).toBe('ready');
   });
+
+  it('gates editing: only the ready state is editable, loading + error are not', () => {
+    // useEditorState folds this into `editsBlocked` (editable iff
+    // 'ready'), so EVERY commit-based mutator — keyboard shortcuts, paste,
+    // AI apply, import, clear — is refused while a tab loads or errors.
+    // The pointer-only canvas overlay can't block window keydown / paste,
+    // so this derived gate is the real lock; the two must agree.
+    const editable = (i: Parameters<typeof deriveTabLoadState>[0]) =>
+      deriveTabLoadState(i) === 'ready';
+    expect(editable(base)).toBe(false); // loading
+    expect(editable({ ...base, errored: true })).toBe(false); // error
+    expect(editable({ ...base, loaded: true })).toBe(true); // ready
+    expect(editable({ ...base, elementsLength: 3 })).toBe(true); // peer content
+  });
 });

@@ -120,7 +120,7 @@ import {
 } from '@/lib/api-client';
 import { commentRowsFromElements } from '@/components/CommentsPanel';
 import { autoAlignElements } from '@/lib/auto-align';
-import { createTab, patchTab } from './editor-page-helpers';
+import { createTab, deriveTabLoadState, patchTab } from './editor-page-helpers';
 import { useAutosave } from './useAutosave';
 import { usePerTabLoad } from './usePerTabLoad';
 import { useRoomConnection } from './useRoomConnection';
@@ -984,13 +984,34 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // tick / element-add helpers all consult this early-return guard
   // so a single check covers drag, edit, paint, delete, etc.
   const activeTabLocked = activeTab.locked === true;
+  // Lazy per-tab load gate (spec/13). Until the active tab's content has
+  // landed it's an empty placeholder, NOT its real server row. The canvas
+  // shows a blocking overlay over this state — but that overlay only
+  // captures POINTER events; window/document keyboard + paste listeners
+  // (shape shortcuts, Cmd+V) sail past it. So an edit could land on the
+  // placeholder, which then (a) makes the lazy fetch discard the real
+  // server content as "user already edited" and (b) re-arms the autosave
+  // to PUT the near-empty body over the real row — wiping it. Folding the
+  // load state into editsBlocked blocks EVERY commit-based mutator
+  // (keyboard, paste, AI, import, clear) at one chokepoint, not just the
+  // pointer paths the overlay covers. 'ready' is the only editable state
+  // (a loaded tab, a locally-created/peer-delivered tab with content, or
+  // a dismissed template picker — see deriveTabLoadState).
+  const activeTabLoadState = deriveTabLoadState({
+    hydrated,
+    hasDiagram: !!diagramId,
+    loaded: loadedTabIds.has(activeId),
+    errored: tabLoadErrors.has(activeId),
+    elementsLength: activeTab.elements.length,
+    templateChosen: activeTab.templateChosen === true,
+  });
   // A view-only session (a 'view' share role) is read-only in exactly
   // the same way a locked tab is: no element or tab mutation may land.
-  // Folding both flags into one guard means every mutation helper
+  // Folding the flags into one guard means every mutation helper
   // below stays blocked with a single check, and the interaction
   // starters (beginDrag, beginEdit, ...) layer on their own isReadOnly
   // checks so a viewer can still select and inspect.
-  const editsBlocked = activeTabLocked || isReadOnly;
+  const editsBlocked = activeTabLocked || isReadOnly || activeTabLoadState !== 'ready';
 
   const commit = (mapElements: (els: Element[]) => Element[]) => {
     if (editsBlocked) return;
@@ -1858,6 +1879,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setCellLinkPickerOpenFor,
     openCellLinkPicker,
     applyCellLink,
+    activeTabLoadState,
     livePresence,
     loadAllTabs,
     loadedTabIds,

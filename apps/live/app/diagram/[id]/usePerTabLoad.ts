@@ -87,14 +87,21 @@ export function usePerTabLoad(opts: {
       .then((tab) => {
         if (cancelled) return;
         if (!tab) {
-          // 404: the tab genuinely has no server content (e.g. deleted
-          // between the summary fetch and now). Not a failure — mark it
-          // loaded so the canvas drops its loader and shows the empty /
-          // template-picker state instead of spinning forever.
-          merged = true;
-          loadedTabIds.add(targetId);
-          setLoadedTabIds((prev) => (prev.has(targetId) ? prev : new Set(prev).add(targetId)));
-          clearError();
+          // A null result is a 404 — the tab ROW is missing. We used to
+          // treat that as "genuinely empty", mark the tab loaded, and drop
+          // the loader. That was a data-loss trap: a *legitimately* empty
+          // tab returns 200 with `{ elements: [] }` (the row still
+          // exists), and the tab we're loading is the active tab, which is
+          // ALWAYS in the diagram summary we hydrated from. So a 404 here
+          // is anomalous — a mis-routed / transient 404, a share-code /
+          // auth edge, or a row deleted out from under a stale summary —
+          // NOT proof the tab is empty. Marking it loaded-and-empty would
+          // arm the autosave to overwrite the real row with `{ elements:
+          // [] }`. Route it to the same blocking retry overlay as a 5xx so
+          // a wrong 404 can never wipe content; merged stays false so the
+          // cleanup drops the optimistic id and Retry refetches.
+          loadedTabIds.delete(targetId);
+          setTabLoadErrors((prev) => (prev.has(targetId) ? prev : new Set(prev).add(targetId)));
           return;
         }
         clearError();

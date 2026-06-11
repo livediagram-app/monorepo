@@ -15,7 +15,6 @@ import { SignInBanner, SIGNIN_BANNER_DISMISS_KEY } from '@/components/SignInBann
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useDismissibleBanner } from '@/hooks/useDismissibleBanner';
 import { useDelayedReveal } from '@/hooks/useDelayedReveal';
-import { deriveTabLoadState } from './editor-page-helpers';
 import { useEditorContext } from './EditorContext';
 
 // How long a guest edits before the sign-in nudge appears (spec/36).
@@ -59,6 +58,7 @@ export function EditorView() {
   const {
     activeId,
     activeTab,
+    activeTabLoadState,
     activeTabLocked,
     activityMinimized,
     activityPosition,
@@ -301,7 +301,6 @@ export function EditorView() {
     snapGuides,
     distGuides,
     tabAccordionsOpen,
-    tabLoadErrors,
     tabs,
     tabSummaries,
     teamFolders,
@@ -344,18 +343,13 @@ export function EditorView() {
     () => changeLog.filter((entry) => entry.tabId === activeId),
     [changeLog, activeId],
   );
-  // Lazy per-tab load gate (spec/13): show a blocking loader / error
-  // over the canvas while the active tab's content is still being
-  // fetched, so the user never edits a blank placeholder whose autosave
-  // would overwrite the real server row.
-  const tabLoadState = deriveTabLoadState({
-    hydrated,
-    hasDiagram: !!diagramId,
-    loaded: loadedTabIds.has(activeId),
-    errored: tabLoadErrors.has(activeId),
-    elementsLength: activeTab.elements.length,
-    templateChosen: activeTab.templateChosen === true,
-  });
+  // Lazy per-tab load gate (spec/13): show a blocking loader / error over
+  // the canvas while the active tab's content is still being fetched, so
+  // the user never edits a blank placeholder whose autosave would
+  // overwrite the real server row. Derived once in useEditorState (it also
+  // gates editsBlocked there, so the pointer overlay and the edit lock
+  // can't disagree); consumed here for the overlay.
+  const tabLoadState = activeTabLoadState;
   return (
     <div className="flex h-dvh flex-col">
       {/* Arrow click-to-connect hint (spec/09): shown while the gesture

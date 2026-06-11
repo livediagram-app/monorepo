@@ -108,14 +108,27 @@ blank canvas the autosave persists the empty-plus-new tab and **wipes
 the real server row**. So while the active tab's content is outstanding:
 
 - **Loading**: an opaque, pointer-capturing overlay covers the canvas
-  (palette included) with a spinner. It blocks all canvas interaction so
-  no edit can race the fetch. The header + TabBar stay live, so the user
-  can still switch tabs or navigate away.
-- **Error**: if the fetch _fails_ (network down / 5xx — distinct from a
-  legitimate 404, which means the tab genuinely has no content) the same
-  overlay shows a "couldn't load this tab" card with a **Retry** that
-  re-issues the fetch. Editing stays blocked so the blank canvas can't
-  overwrite the unfetched content.
+  (palette included) with a spinner. The header + TabBar stay live, so the
+  user can still switch tabs or navigate away.
+- **Error**: if the fetch _fails_ the same overlay shows a "couldn't load
+  this tab" card with a **Retry** that re-issues the fetch. Both network /
+  5xx **and a 404** take this path: a legitimately-empty tab returns 200
+  with `{ elements: [] }` (the row exists), and the tab being fetched is
+  the active tab, which is always in the hydrated summary — so a 404 means
+  the row is unexpectedly missing (a transient / mis-routed 404, a
+  share-code edge, a row deleted under a stale summary), NOT that the tab
+  is empty. Treating a 404 as authoritative-empty would mark the tab
+  loaded and arm the autosave to overwrite the real row; routing it to
+  Retry instead means a wrong 404 can never wipe content.
+
+The overlay is **pointer-only** — it cannot block `window` keydown or
+`document` paste, so the spinner alone is not the edit lock. The actual
+guard is that the active tab's load state feeds the editor's single
+`editsBlocked` gate (alongside locked-tab and view-only), so EVERY
+commit-based mutator — shape shortcuts, paste, AI apply, Markdown import,
+clear-canvas, drag — is refused until the tab is `ready`. The overlay and
+the edit lock derive from the same `deriveTabLoadState`, so they can't
+disagree.
 
 Only tabs that originate on the server take part in this. A tab created
 locally (add / duplicate / import) is treated as already-loaded — its
