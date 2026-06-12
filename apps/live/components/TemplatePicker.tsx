@@ -92,13 +92,17 @@ export function TemplatePicker({
   // for the top-level overview (Blank quick-pick + a card per category).
   // A non-empty search query overrides this and shows flat results.
   const [openCategory, setOpenCategory] = useState<TemplateCategory | null>(null);
-  // New-diagram flow defaults to the Basic ('brand') theme — the plain
-  // un-themed default — and shows it pre-selected as the overview's
-  // quick-pick. Applying to an existing tab keeps that tab's theme.
-  const [themeId, setThemeId] = useState<ThemeId>(isWelcome ? 'brand' : currentThemeId);
+  // Initial theme is whatever the caller hands us: the /new flow passes
+  // 'brand' (so Basic is pre-selected for a fresh diagram), while a new
+  // tab copying an existing one passes that tab's theme.
+  const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
   // Theme browse drill-in, mirroring `openCategory` for templates: null
-  // is the overview (Brand quick-pick + a card per theme category).
-  const [openThemeCategory, setOpenThemeCategory] = useState<ThemeCategory | null>(null);
+  // is the overview (Basic quick-pick + a card per theme category). If
+  // the pre-selected theme isn't Basic, open its category on mount so the
+  // user can see their current theme highlighted rather than buried.
+  const [openThemeCategory, setOpenThemeCategory] = useState<ThemeCategory | null>(() =>
+    currentThemeId !== 'brand' ? themeCategory(currentThemeId) : null,
+  );
   // Rotate which templates + themes greet the user on each open so
   // people keep discovering options beyond the usual first rows, but
   // always pin the sensible default first (Blank diagram, Brand theme).
@@ -407,6 +411,7 @@ export function TemplatePicker({
                           description={cat.description}
                           count={items.length}
                           themes={items}
+                          selected={themeId !== 'brand' && themeCategory(themeId) === cat.id}
                           onOpen={() => setOpenThemeCategory(cat.id)}
                         />
                       );
