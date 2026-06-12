@@ -6,6 +6,9 @@ type MultiSelectionToolbarProps = {
   // Lock button toggles them all to the inverse state — if anything is
   // unlocked, the click locks everything; otherwise it unlocks.
   anyLocked: boolean;
+  // True when EVERY member is locked. Delete protects locked members and
+  // removes the rest, so it only goes fully dead when nothing's deletable.
+  allLocked: boolean;
   // When true, drop the toolbar 40px so it doesn't collide with the
   // Owner / Editing badge row that visitor sessions render at top-3.
   // Owners don't see that row, so default (top-4) is fine for them.
@@ -26,6 +29,7 @@ type MultiSelectionToolbarProps = {
 export function MultiSelectionToolbar({
   count,
   anyLocked,
+  allLocked,
   offsetForOwnerRow = false,
   onDuplicate,
   onDelete,
@@ -99,12 +103,22 @@ export function MultiSelectionToolbar({
         </button>
       </Tooltip>
       <span aria-hidden className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
-      <Tooltip title="Delete" description="Delete selected (arrows too).">
+      <Tooltip
+        title="Delete"
+        description={
+          allLocked ? 'All locked. Unlock to delete.' : 'Delete selected (locked ones are kept).'
+        }
+      >
         <button
           type="button"
           onClick={onDelete}
+          disabled={allLocked}
           aria-label="Delete selected elements"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+          className={
+            allLocked
+              ? 'flex h-7 w-7 items-center justify-center rounded-md text-slate-300 dark:text-slate-600'
+              : 'flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
+          }
         >
           <TrashIcon />
         </button>

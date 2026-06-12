@@ -232,8 +232,8 @@ export function SelectionPopover({
           title={locked ? 'Unlock' : 'Lock'}
           description={
             locked
-              ? 'Allow this element to be moved and resized again.'
-              : 'Prevent accidental moves and resizes. You can still delete or unlock.'
+              ? 'Allow this element to be moved, resized, and deleted again.'
+              : 'Protect from moves, resizes, and deletion. You can still unlock it.'
           }
         >
           <button
@@ -254,12 +254,22 @@ export function SelectionPopover({
       {onDelete ? (
         <>
           <Divider />
-          <Tooltip title="Delete" description="Delete this element (arrows too).">
+          <Tooltip
+            title="Delete"
+            description={
+              locked ? 'Locked. Unlock it to delete.' : 'Delete this element (arrows too).'
+            }
+          >
             <button
               type="button"
               onClick={onDelete}
+              disabled={locked}
               aria-label="Delete"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+              className={
+                locked
+                  ? 'flex h-8 w-8 items-center justify-center rounded-md text-slate-300 dark:text-slate-600'
+                  : 'flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
+              }
             >
               <TrashIcon />
             </button>

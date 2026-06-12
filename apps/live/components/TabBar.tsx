@@ -742,10 +742,14 @@ function PortalMenu({
                 <MenuToolButton
                   icon={<TrashIcon />}
                   label="Delete"
-                  description="Delete this tab. Its content can't be recovered."
+                  description={
+                    locked
+                      ? 'This tab is locked. Unlock it before deleting.'
+                      : "Delete this tab. Its content can't be recovered."
+                  }
                   onClick={() => setConfirmingDelete(true)}
                   danger
-                  disabled={!canDelete}
+                  disabled={!canDelete || locked}
                 />
               </div>
             </MenuToolbar>

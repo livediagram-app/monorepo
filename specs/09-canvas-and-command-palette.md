@@ -283,7 +283,7 @@ Arrows with one pinned endpoint and one free endpoint are deleted in the same wa
 
 ### Locking arrows
 
-A locked arrow's endpoint handles are not draggable. Same semantics as a locked shape — accidents prevented, deletion still explicit.
+A locked arrow's endpoint handles are not draggable. Same semantics as a locked shape — it can't be moved or deleted (including via another element's [cascade](#cascading-delete)); unlock it first.
 
 ### Data model
 
@@ -565,7 +565,7 @@ Relationships:
 State + destructive:
 
 - **Lock / Unlock** — toggles the element's locked state. Icon flips between an open and closed padlock.
-- **Delete** — removes the selected element from the active tab and clears selection. Trash icon.
+- **Delete** — removes the selected element from the active tab and clears selection. Trash icon. Disabled when the element (or its tab) is locked.
 
 Bring to Front, Send to Back, **Lock aspect ratio**, and the colour swatches all live in the palette's [Selected Element](#selected-element-section) accordions — they were in the popover at one point and got moved out so the floating widget stays compact.
 
@@ -602,7 +602,7 @@ A multi-selection is mutually exclusive with the single-element selection:
 While multi-selected:
 
 - **Press-and-drag any member** moves the whole group in lockstep. The drag handler reads `multiSelectedIds` and pre-populates `startBounds` with every member.
-- **Delete / Backspace** removes every multi-selected element and any arrows that reference one of them. Single-element delete falls back to the same logic when there's no multi-selection. The keyboard handler is suppressed while a label is being edited or focus is inside any text input.
+- **Delete / Backspace** removes every multi-selected element and any arrows that reference one of them. **Locked members are kept** (and a locked arrow survives its endpoint going); if every member is locked it's a no-op. Single-element delete falls back to the same logic when there's no multi-selection. The keyboard handler is suppressed while a label is being edited or focus is inside any text input.
 - **Plain click on a non-member** adds it to the multi-selection (the marquee mode is "sticky" once active — the user is clearly refining a bundle, not starting over). This applies to arrows as well as boxed elements.
 - **Shift-click any element** toggles its membership — adds if absent, removes if present. Folds the current single selection in first so "I had A selected, now also B and C" works without losing A.
 - **Click empty canvas** or **switch tabs** clears the multi-selection.
@@ -870,7 +870,7 @@ The active tab carries a **`⋯` ellipsis button** to the right of its name. Cli
 - **Rename** — enters inline rename mode.
 - **Duplicate** — creates a copy of the tab (same elements, same pattern, name suffixed with " copy") inserted directly after the source, and switches to it.
 - **Clear content** — wipes every element from the tab in one undoable commit. Disabled when the tab is already empty or when the tab is locked.
-- **Lock / Unlock** — toggles `tab.locked`. While locked, every element on the tab is read-only (matches per-element lock semantics), the palette's Add buttons stop firing, theme / canvas changes are blocked, and the tab pill shows the padlock icon (see above).
+- **Lock / Unlock** — toggles `tab.locked`. While locked, every element on the tab is read-only (matches per-element lock semantics), the palette's Add buttons stop firing, theme / canvas changes are blocked, **the tab itself can't be deleted** (the Delete row is disabled — unlock first), and the tab pill shows the padlock icon (see above).
 - **Add to another diagram** — submenu listing every other diagram the participant owns. Picking one links the tab into that diagram via `POST /api/diagrams/:id/tabs/:tabId/link` (the source tab stays put; both diagrams now share the same `tabs.data` row so edits propagate, see [spec/17](17-tab-diagram-many-to-many.md)).
 - **Delete** — removes the tab and falls back to a neighbouring tab. Disabled when only one tab remains.
 
@@ -967,8 +967,8 @@ A shape can be **locked** to prevent accidental movement or resizing.
   - Can still be **selected** (so the user can unlock it).
   - **Cannot be moved** — dragging the shape body does nothing.
   - **Cannot be resized** — corner handles **are hidden entirely** while locked, so they can't be grabbed.
-  - Can still be **deleted** from the popover — deletion is explicit, not an "accident".
-  - Can still be **labelled** (double-click) — locking protects position, not content.
+  - **Cannot be deleted** — the popover's Delete button is disabled while locked, the keyboard Delete / Backspace skips it, and a multi-select Delete keeps locked members while removing the rest. The arrow cascade also leaves a locked arrow in place. Unlock first to delete.
+  - Can still be **labelled** (double-click) — locking protects position and existence, not content.
 - A small **lock indicator** badge sits in the shape's top-left corner whenever it's locked, so the state is visible even when the shape is not selected.
 - Locked state lives on the element: `locked?: boolean` (defaults to `false` / `undefined`).
 

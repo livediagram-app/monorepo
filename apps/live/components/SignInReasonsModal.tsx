@@ -86,11 +86,11 @@ export function SignInReasonsModal({
           aria-modal="true"
           aria-labelledby="signin-reasons-title"
           onClick={(e) => e.stopPropagation()}
-          className="flex w-full max-w-lg animate-fly-up-in flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+          className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg animate-fly-up-in flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
         >
           {/* Header with a brand gradient wash so the modal reads as a
               celebratory upsell, not a system dialog. */}
-          <div className="relative bg-gradient-to-br from-brand-500 to-brand-600 px-6 pb-5 pt-6 text-white">
+          <div className="relative shrink-0 bg-gradient-to-br from-brand-500 to-brand-600 px-6 pb-5 pt-6 text-white">
             <button
               type="button"
               onClick={onClose}
@@ -111,7 +111,7 @@ export function SignInReasonsModal({
             </p>
           </div>
 
-          <ul className="flex flex-col gap-1 px-3 py-3 sm:px-4">
+          <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-3 sm:px-4">
             {REASONS.map((r) => (
               <li
                 key={r.title}
@@ -132,7 +132,7 @@ export function SignInReasonsModal({
             ))}
           </ul>
 
-          <div className="flex flex-col-reverse items-center gap-2 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end dark:border-slate-800">
+          <div className="flex shrink-0 flex-col-reverse items-center gap-2 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}

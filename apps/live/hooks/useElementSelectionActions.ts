@@ -67,18 +67,37 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
   } = deps;
 
   const deleteSelected = () => {
+    // A locked tab protects everything on it — nothing is deletable.
+    if (activeTab.locked === true) return;
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
+    // Locked elements can't be deleted: drop them from the delete set so
+    // only the unlocked part of the selection (and arrows pinned to it)
+    // goes. If the whole selection is locked, the delete is a no-op.
+    const targetIds = deletableIds(ids);
+    if (targetIds.size === 0) return;
     commit((els) =>
       els.filter((el) => {
-        if (ids.has(el.id)) return false;
-        if (el.type === 'arrow' && arrowReferencesAny(el, ids)) return false;
+        // Belt-and-suspenders: never drop a locked element, even via the
+        // arrow cascade (a locked arrow survives its endpoint going).
+        if (el.locked === true) return true;
+        if (targetIds.has(el.id)) return false;
+        if (el.type === 'arrow' && arrowReferencesAny(el, targetIds)) return false;
         return true;
       }),
     );
     setSelectedId(null);
     setEditingId(null);
     track('Element', 'Deleted');
+  };
+
+  // The deletable subset of a selection: ids whose element isn't locked.
+  // Locked elements are protected from deletion (spec/09 Locking).
+  const deletableIds = (ids: Set<string>): Set<string> => {
+    const lockedIds = new Set(
+      activeTab.elements.filter((el) => el.locked === true).map((el) => el.id),
+    );
+    return new Set([...ids].filter((id) => !lockedIds.has(id)));
   };
 
   // Marquee box-select committed by Canvas on pointer-up. Mutex with
@@ -196,11 +215,16 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
   // when there's no active multi-selection.
   const deleteMultiSelected = () => {
     if (multiSelectedIds.size === 0) return;
-    const ids = multiSelectedIds;
+    if (activeTab.locked === true) return;
+    // Same lock rule as deleteSelected: protect locked members, delete the
+    // rest. A fully-locked marquee is a no-op (selection stays put).
+    const targetIds = deletableIds(multiSelectedIds);
+    if (targetIds.size === 0) return;
     commit((els) =>
       els.filter((el) => {
-        if (ids.has(el.id)) return false;
-        if (el.type === 'arrow' && arrowReferencesAny(el, ids)) return false;
+        if (el.locked === true) return true;
+        if (targetIds.has(el.id)) return false;
+        if (el.type === 'arrow' && arrowReferencesAny(el, targetIds)) return false;
         return true;
       }),
     );

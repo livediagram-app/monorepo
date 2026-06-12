@@ -298,6 +298,10 @@ export function useTabActions(deps: TabActionsDeps) {
     if (tabs.length <= 1) return;
     const idx = tabs.findIndex((t) => t.id === id);
     if (idx < 0) return;
+    // A locked tab is protected: its elements can't be deleted, so the
+    // tab that holds them can't be deleted out from under them either.
+    // Unlock it first. (The TabBar also gates the Delete row on this.)
+    if (tabs[idx]?.locked === true) return;
     track('Tab', 'Deleted');
     // Drop the tab AND strip any links on remaining elements that point to
     // it, so we don't leave dangling cross-tab references. Bundled into one

@@ -371,6 +371,9 @@ export function CanvasChrome(props: CanvasChromeProps) {
         <MultiSelectionToolbar
           count={multiSelectedIds.size}
           anyLocked={elements.some((el) => multiSelectedIds.has(el.id) && el.locked === true)}
+          allLocked={elements
+            .filter((el) => multiSelectedIds.has(el.id))
+            .every((el) => el.locked === true)}
           offsetForOwnerRow={!isOwner}
           onDuplicate={onDuplicateMultiSelected}
           onDelete={onDeleteMultiSelected}
