@@ -422,6 +422,13 @@ type IconButtonProps = {
   // one of ~60 glyphs is noise. `label` is still applied as the button's
   // aria-label so the control stays accessible.
   hideTooltip?: boolean;
+  // Suppress the caption under the icon. The icon-picker grid sets this:
+  // its glyphs are a dense gallery where per-tile names would be noise (and
+  // it stays a 6-up grid), unlike the shape / tool / device grids.
+  hideCaption?: boolean;
+  // Override the caption text (default is derived from `label`). Used where
+  // the derived name is too long for the tile, e.g. "Bubble".
+  caption?: string;
 };
 
 export function IconButton({
@@ -435,12 +442,23 @@ export function IconButton({
   draggable,
   onDragStart,
   hideTooltip,
+  hideCaption,
+  caption: captionOverride,
 }: IconButtonProps) {
   const modHeld = useModKeyHeld();
   const showBadge = !disabled && !!shortcut && modHeld;
   const tone = active
     ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300 dark:bg-brand-500/20 dark:text-brand-200 dark:ring-brand-500/50'
     : 'text-slate-600 enabled:hover:bg-slate-100 enabled:hover:text-slate-900 dark:text-slate-100 dark:enabled:hover:bg-slate-800 dark:enabled:hover:text-white';
+  // Short caption under the icon, derived from the action label: drop a
+  // leading "Add " and any parenthetical, then sentence-case. "Add web
+  // browser" → "Web browser", "Pencil (freehand)" → "Pencil". An explicit
+  // `caption` prop overrides this where the derived name is too long.
+  const captionBase = label
+    .replace(/^add\s+/i, '')
+    .replace(/\s*\([^)]*\)/g, '')
+    .trim();
+  const caption = captionOverride ?? captionBase.charAt(0).toUpperCase() + captionBase.slice(1);
   const button = (
     <button
       type="button"
@@ -450,9 +468,20 @@ export function IconButton({
       disabled={disabled}
       draggable={draggable}
       onDragStart={onDragStart}
-      className={`relative flex h-9 w-9 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-50 ${tone}`}
+      className={
+        hideCaption
+          ? `relative flex h-9 w-9 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-50 ${tone}`
+          : `relative flex w-full flex-col items-center justify-start gap-0.5 rounded-md px-0.5 py-1 transition disabled:cursor-not-allowed disabled:opacity-50 ${tone}`
+      }
     >
-      {children}
+      {hideCaption ? (
+        children
+      ) : (
+        <>
+          <span className="flex h-6 items-center justify-center">{children}</span>
+          <span className="w-full truncate text-center text-[9px] leading-none">{caption}</span>
+        </>
+      )}
       {showBadge ? (
         <kbd
           aria-hidden
@@ -463,7 +492,9 @@ export function IconButton({
       ) : null}
     </button>
   );
-  if (disabled || hideTooltip) return button;
+  // A visible caption already names the action, so skip the tooltip there;
+  // only the caption-less tiles (the icon-picker grid) keep it.
+  if (disabled || hideTooltip || !hideCaption) return button;
   return (
     <Tooltip title={label} description={description}>
       {button}

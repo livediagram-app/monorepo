@@ -475,7 +475,10 @@ export function Canvas(props: CanvasProps) {
     const sx = (e.clientX - rect.left) / viewportZoom;
     const sy = (e.clientY - rect.top) / viewportZoom;
     if (pendingDraw.type === 'freehand') {
-      setPenPoints([{ x: sx, y: sy }]);
+      // Snap the first stroke point to nearby alignments (same as a shape's
+      // first corner) so the sketch can begin from an aligned start.
+      const start = snapDrawStart(sx, sy);
+      setPenPoints([{ x: start.x, y: start.y }]);
     } else {
       const start = snapDrawStart(sx, sy);
       setDrawDrag({ startX: start.x, startY: start.y, currentX: start.x, currentY: start.y });
@@ -491,7 +494,7 @@ export function Canvas(props: CanvasProps) {
   // in CanvasChrome) appears exactly when the start would latch.
   const [drawHover, setDrawHover] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
-    if (!pendingDraw || drawDrag || penPoints || pendingDraw.type === 'freehand') {
+    if (!pendingDraw || drawDrag || penPoints) {
       setDrawHover(null);
       return;
     }

@@ -116,11 +116,12 @@ export function PaletteTabBar({
                 onClick={() => select(tab.id)}
                 className={
                   isShown
-                    ? 'flex h-9 flex-1 items-center justify-center bg-brand-500 text-white transition'
-                    : 'flex h-9 flex-1 items-center justify-center text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white'
+                    ? 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 bg-brand-500 text-white transition'
+                    : 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white'
                 }
               >
                 {tab.icon}
+                <span className="text-[10px] font-medium leading-none">{tab.label}</span>
               </button>
             );
           })}

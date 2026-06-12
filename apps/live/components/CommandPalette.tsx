@@ -418,7 +418,7 @@ export function CommandPalette({
               // into six equal cells and centres each tile. overflow-x-hidden
               // absorbs the few-px slack when six fixed tiles slightly exceed
               // the cell width, exactly as the Icons grid does.
-              <div className="grid grid-cols-6 justify-items-center gap-1 overflow-x-hidden">
+              <div className="grid grid-cols-3 justify-items-center gap-1 overflow-x-hidden">
                 <IconButton
                   label="Add square"
                   description="Drop a new square shape on the canvas."
@@ -628,6 +628,7 @@ export function CommandPalette({
                 </IconButton>
                 <IconButton
                   label="Add speech bubble"
+                  caption="Bubble"
                   description="Speech bubble. A callout with a tail."
                   onClick={() => addShape('speech-bubble')}
                   active={pendingShapeKind === 'speech-bubble'}
@@ -675,7 +676,7 @@ export function CommandPalette({
               // fixed tiles wrap into even rows. A single-row flex used to
               // overflow the palette width and silently clip the last
               // buttons (user / frame / annotation) off the right edge.
-              <div className="grid grid-cols-6 justify-items-center gap-1 overflow-x-hidden">
+              <div className="grid grid-cols-3 justify-items-center gap-1 overflow-x-hidden">
                 <IconButton
                   label="Add text"
                   description="Text element. Double-click to edit."
@@ -742,6 +743,7 @@ export function CommandPalette({
                 </IconButton>
                 <IconButton
                   label="Add sticky note"
+                  caption="Note"
                   description="Sticky note for short annotations."
                   onClick={addSticky}
                   active={pendingDraw?.type === 'sticky'}
@@ -913,9 +915,10 @@ export function CommandPalette({
             Six-column grid (like Icons / Shapes) so all six device tiles
             sit on one full row instead of flex-wrap pushing the smartwatch
             onto its own line with a gap on the right. */}
-                <div className="grid grid-cols-6 justify-items-center gap-1 overflow-x-hidden">
+                <div className="grid grid-cols-3 justify-items-center gap-1 overflow-x-hidden">
                   <IconButton
                     label="Add web browser"
+                    caption="Browser"
                     description="Browser window. Wireframe a web page or a web-app screen."
                     onClick={() => addShape('browser')}
                     active={pendingShapeKind === 'browser'}
@@ -936,6 +939,7 @@ export function CommandPalette({
                   </IconButton>
                   <IconButton
                     label="Add computer monitor"
+                    caption="Monitor"
                     description="Desktop monitor with stand. Wireframe a desktop app."
                     onClick={() => addShape('monitor')}
                     active={pendingShapeKind === 'monitor'}
@@ -1015,6 +1019,7 @@ export function CommandPalette({
                   </IconButton>
                   <IconButton
                     label="Add smartwatch"
+                    caption="Watch"
                     description="Smartwatch. A wrist-device frame for watch-app wireframes."
                     onClick={() => addShape('smartwatch')}
                     active={pendingShapeKind === 'smartwatch'}
@@ -1131,6 +1136,7 @@ export function CommandPalette({
                       label={`Add ${icon.label}`}
                       description={`Click to add, or drag onto a shape to set its icon.`}
                       hideTooltip
+                      hideCaption
                       onClick={() => addIcon(icon.id)}
                       draggable
                       onDragStart={(e) => {
