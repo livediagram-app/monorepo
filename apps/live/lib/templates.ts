@@ -45,9 +45,9 @@ export type TemplateKind =
   | 'system-architecture'
   | 'er-diagram'
   | 'sequence-diagram'
-  // Impact / Effort prioritisation matrix: a 2×2 decision grid (Quick
-  // wins / Major projects / Fill-ins / Time sinks). A SWOT-shaped quick
-  // win for product / planning work.
+  // Impact / Effort prioritisation chart: crossed value / effort axes
+  // with items scattered across the field to drag into the right
+  // quadrant. A product / planning starter.
   | 'prioritization-matrix';
 
 export type TemplateDescriptor = {
@@ -201,7 +201,7 @@ export const TEMPLATES: TemplateDescriptor[] = [
   {
     kind: 'prioritization-matrix',
     title: 'Prioritization matrix',
-    description: 'Impact vs Effort 2×2: Quick wins, Major projects, Fill-ins and Time sinks.',
+    description: 'Value vs Effort chart with crossed axes and items to scatter into quadrants.',
     extra: true,
   },
 ];
@@ -214,11 +214,19 @@ export const TEMPLATES: TemplateDescriptor[] = [
 // renders sections in TEMPLATE_CATEGORIES order and skips empties.
 export type TemplateCategory = 'general' | 'planning' | 'design' | 'technical';
 
-export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string }[] = [
-  { id: 'general', label: 'Diagrams' },
-  { id: 'planning', label: 'Planning' },
-  { id: 'design', label: 'Design' },
-  { id: 'technical', label: 'Technical' },
+export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; description: string }[] = [
+  { id: 'general', label: 'Diagrams', description: 'Flowcharts, mind maps, org charts and more.' },
+  {
+    id: 'planning',
+    label: 'Planning',
+    description: 'Boards and charts for strategy and delivery.',
+  },
+  { id: 'design', label: 'Design', description: 'Wireframes, slides and product mock-ups.' },
+  {
+    id: 'technical',
+    label: 'Technical',
+    description: 'Architecture, ER and sequence diagrams.',
+  },
 ];
 
 const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
@@ -307,6 +315,7 @@ export function templateCanvasOverrides(kind: TemplateKind): Partial<Tab> {
   const overrides: Partial<Tab> = {};
   const pattern = TEMPLATE_PATTERNS[kind];
   if (pattern) overrides.backgroundPattern = pattern;
-  if (kind === 'mindmap' || kind === 'journey') overrides.backgroundOpacity = 0.8;
+  if (kind === 'mindmap' || kind === 'journey' || kind === 'prioritization-matrix')
+    overrides.backgroundOpacity = 0.8;
   return overrides;
 }

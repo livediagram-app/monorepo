@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { useEscape } from '@/hooks/useEscape';
 import type { Participant } from '@/lib/identity';
@@ -115,6 +115,31 @@ export function TemplatePicker({
   const blankTemplate = TEMPLATES.find((t) => t.kind === 'blank');
   const categoryTemplates = (category: TemplateCategory) =>
     templates.filter((t) => t.kind !== 'blank' && templateCategory(t.kind) === category);
+
+  // Smooth the template body's height between views (overview ⇆ a
+  // category ⇆ search) so swapping doesn't snap the modal taller/shorter.
+  // We measure the (stable, non-keyed) content wrapper and ease the outer
+  // height toward it, capped at TEMPLATE_BODY_MAX_PX where it starts to
+  // scroll instead. `animateBody` gates the transition on after the first
+  // measured frame so the modal doesn't animate its own open.
+  const TEMPLATE_BODY_MAX_PX = 304; // 19rem
+  const templateBodyRef = useRef<HTMLDivElement>(null);
+  const [templateBodyHeight, setTemplateBodyHeight] = useState<number | null>(null);
+  const [animateBody, setAnimateBody] = useState(false);
+  useEffect(() => {
+    const el = templateBodyRef.current;
+    if (!el) return;
+    const measure = () => setTemplateBodyHeight(el.scrollHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const raf = requestAnimationFrame(() => setAnimateBody(true));
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  const bodyExceedsCap = templateBodyHeight !== null && templateBodyHeight > TEMPLATE_BODY_MAX_PX;
 
   return (
     <div
@@ -237,80 +262,101 @@ export function TemplatePicker({
                   catalogue. Blank is special-cased out of the category
                   grouping — it's a "start from scratch", not a category
                   template — and lives only on the overview row. */}
-              <div className="mt-2 max-h-[19rem] overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                {templateFilter ? (
-                  filteredTemplates.length === 0 ? (
-                    <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                      No templates match “{templateQuery.trim()}”.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {filteredTemplates.map((t) => (
-                        <TemplateCard
-                          key={t.kind}
-                          template={t}
-                          active={templateKind === t.kind}
-                          onSelect={() => setTemplateKind(t.kind)}
-                          onCommit={() => onPick(t.kind, effectiveName, themeId)}
-                        />
-                      ))}
-                    </div>
-                  )
-                ) : openCategory ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setOpenCategory(null)}
-                      className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                        <path
-                          d="M7.5 2.5 4 6l3.5 3.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      All templates
-                    </button>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {categoryTemplates(openCategory).map((t) => (
-                        <TemplateCard
-                          key={t.kind}
-                          template={t}
-                          active={templateKind === t.kind}
-                          onSelect={() => setTemplateKind(t.kind)}
-                          onCommit={() => onPick(t.kind, effectiveName, themeId)}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {blankTemplate ? (
-                      <TemplateCard
-                        template={blankTemplate}
-                        active={templateKind === 'blank'}
-                        onSelect={() => setTemplateKind('blank')}
-                        onCommit={() => onPick('blank', effectiveName, themeId)}
-                      />
-                    ) : null}
-                    {TEMPLATE_CATEGORIES.map((cat) => {
-                      const items = categoryTemplates(cat.id);
-                      if (items.length === 0) return null;
-                      return (
-                        <CategoryCard
-                          key={cat.id}
-                          label={cat.label}
-                          count={items.length}
-                          previews={items.map((t) => t.kind)}
-                          onOpen={() => setOpenCategory(cat.id)}
-                        />
-                      );
-                    })}
+              <div
+                className={`mt-2 ${bodyExceedsCap ? 'overflow-y-auto' : 'overflow-hidden'}${
+                  animateBody ? ' transition-[height] duration-200 ease-out' : ''
+                }`}
+                style={{
+                  height:
+                    templateBodyHeight === null
+                      ? undefined
+                      : Math.min(templateBodyHeight, TEMPLATE_BODY_MAX_PX),
+                }}
+              >
+                {/* Stable (non-keyed) wrapper so the ResizeObserver keeps
+                    measuring across view swaps; its keyed child remounts +
+                    soft-fades while the outer height eases to the new size. */}
+                <div ref={templateBodyRef}>
+                  <div
+                    key={templateFilter ? 'search' : (openCategory ?? 'overview')}
+                    className="animate-fade-in"
+                  >
+                    {templateFilter ? (
+                      filteredTemplates.length === 0 ? (
+                        <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                          No templates match “{templateQuery.trim()}”.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {filteredTemplates.map((t) => (
+                            <TemplateCard
+                              key={t.kind}
+                              template={t}
+                              active={templateKind === t.kind}
+                              onSelect={() => setTemplateKind(t.kind)}
+                              onCommit={() => onPick(t.kind, effectiveName, themeId)}
+                            />
+                          ))}
+                        </div>
+                      )
+                    ) : openCategory ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setOpenCategory(null)}
+                          className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+                            <path
+                              d="M7.5 2.5 4 6l3.5 3.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          All templates
+                        </button>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {categoryTemplates(openCategory).map((t) => (
+                            <TemplateCard
+                              key={t.kind}
+                              template={t}
+                              active={templateKind === t.kind}
+                              onSelect={() => setTemplateKind(t.kind)}
+                              onCommit={() => onPick(t.kind, effectiveName, themeId)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {blankTemplate ? (
+                          <TemplateCard
+                            template={blankTemplate}
+                            active={templateKind === 'blank'}
+                            onSelect={() => setTemplateKind('blank')}
+                            onCommit={() => onPick('blank', effectiveName, themeId)}
+                          />
+                        ) : null}
+                        {TEMPLATE_CATEGORIES.map((cat) => {
+                          const items = categoryTemplates(cat.id);
+                          if (items.length === 0) return null;
+                          return (
+                            <CategoryCard
+                              key={cat.id}
+                              label={cat.label}
+                              description={cat.description}
+                              count={items.length}
+                              previews={items.map((t) => t.kind)}
+                              onOpen={() => setOpenCategory(cat.id)}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </>
           ) : null}

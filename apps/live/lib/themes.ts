@@ -38,11 +38,17 @@ export type ThemeId =
   | 'steel'
   | 'mocha'
   | 'charcoal'
+  // Further dark-backdrop themes (the picker's Dark category).
+  | 'plum'
+  | 'abyss'
+  | 'espresso'
   // Multi-colour ("rainbow") themes — see spec/29. Each carries a
   // `palette` so branches of the hierarchy get distinct hues.
   | 'rainbow'
   | 'pastel'
-  | 'tropical';
+  | 'tropical'
+  | 'autumn'
+  | 'jewel';
 
 // One branch colour for a multi-colour theme: the fill / stroke / text
 // triple a single limb of the hierarchy is painted with. Unlike the
@@ -280,6 +286,45 @@ export const THEMES: ThemeDefinition[] = [
     elementText: '#f4f4f5',
     extra: true,
   },
+  {
+    id: 'plum',
+    label: 'Plum',
+    // Deep violet dark theme — the purple counterpart to Midnight's
+    // navy and Pine's forest green.
+    backgroundColor: '#241436',
+    backgroundPattern: 'grid',
+    patternColor: '#3b2563',
+    elementFill: '#3b2563',
+    elementStroke: '#c4b5fd',
+    elementText: '#ede9fe',
+    extra: true,
+  },
+  {
+    id: 'abyss',
+    label: 'Abyss',
+    // Deep teal dark theme — a cold underwater base with bright
+    // aqua foliage tones on elements.
+    backgroundColor: '#042f2e',
+    backgroundPattern: 'grid',
+    patternColor: '#134e4a',
+    elementFill: '#134e4a',
+    elementStroke: '#5eead4',
+    elementText: '#ccfbf1',
+    extra: true,
+  },
+  {
+    id: 'espresso',
+    label: 'Espresso',
+    // Dark warm brown — the dark counterpart to Mocha, for a cosy
+    // coffee-toned canvas.
+    backgroundColor: '#231a12',
+    backgroundPattern: 'grid',
+    patternColor: '#3b2a1a',
+    elementFill: '#3b2a1a',
+    elementStroke: '#d6b78f',
+    elementText: '#f5e9da',
+    extra: true,
+  },
   // --- Multi-colour themes (spec/29) ---------------------------------
   // Each tints a different branch of the hierarchy with its own hue.
   // `elementFill / -Stroke / -Text` mirror the `rootColor` so any code
@@ -360,6 +405,52 @@ export const THEMES: ThemeDefinition[] = [
     ],
     extra: true,
   },
+  {
+    id: 'autumn',
+    label: 'Autumn',
+    // Warm seasonal multi-colour: reds, oranges, ambers and golds
+    // through to brown and olive, on a faint warm canvas. Reads
+    // cohesively "autumnal" rather than spanning the full wheel.
+    backgroundColor: '#fffaf5',
+    backgroundPattern: 'grid',
+    patternColor: '#fed7aa',
+    elementFill: '#fffaf5',
+    elementStroke: '#7c2d12',
+    elementText: '#431407',
+    rootColor: { fill: '#fffaf5', stroke: '#7c2d12', text: '#431407' },
+    palette: [
+      { fill: '#fee2e2', stroke: '#dc2626', text: '#7f1d1d' },
+      { fill: '#ffedd5', stroke: '#ea580c', text: '#7c2d12' },
+      { fill: '#fef3c7', stroke: '#d97706', text: '#78350f' },
+      { fill: '#fef9c3', stroke: '#ca8a04', text: '#713f12' },
+      { fill: '#f5ede0', stroke: '#92400e', text: '#451a03' },
+      { fill: '#ecfccb', stroke: '#65a30d', text: '#365314' },
+    ],
+    extra: true,
+  },
+  {
+    id: 'jewel',
+    label: 'Jewel',
+    // Rich, saturated gem tones — emerald, sapphire, amethyst, ruby,
+    // topaz, teal — deeper and more luxurious than Rainbow's primary
+    // wheel, on a faint neutral canvas.
+    backgroundColor: '#fbfbfd',
+    backgroundPattern: 'grid',
+    patternColor: '#e2e8f0',
+    elementFill: '#fbfbfd',
+    elementStroke: '#334155',
+    elementText: '#0f172a',
+    rootColor: { fill: '#fbfbfd', stroke: '#334155', text: '#0f172a' },
+    palette: [
+      { fill: '#d1fae5', stroke: '#059669', text: '#064e3b' },
+      { fill: '#dbeafe', stroke: '#1d4ed8', text: '#1e3a8a' },
+      { fill: '#f3e8ff', stroke: '#7e22ce', text: '#581c87' },
+      { fill: '#ffe4e6', stroke: '#e11d48', text: '#881337' },
+      { fill: '#fef9c3', stroke: '#ca8a04', text: '#713f12' },
+      { fill: '#cffafe', stroke: '#0e7490', text: '#155e75' },
+    ],
+    extra: true,
+  },
 ];
 
 // Picker grouping, mirroring the template catalogue's categories. Themes
@@ -385,7 +476,6 @@ const THEME_CATEGORY: Record<ThemeId, ThemeCategory> = {
   sky: 'cool',
   lavender: 'cool',
   indigo: 'cool',
-  pine: 'cool',
   steel: 'cool',
   mono: 'cool',
   // Warm: reds / oranges / pinks / earthy browns.
@@ -399,10 +489,16 @@ const THEME_CATEGORY: Record<ThemeId, ThemeCategory> = {
   // Dark: dark-backdrop themes.
   midnight: 'dark',
   charcoal: 'dark',
+  pine: 'dark',
+  plum: 'dark',
+  abyss: 'dark',
+  espresso: 'dark',
   // Multi-colour "rainbow" themes (spec/29).
   rainbow: 'multicolour',
   pastel: 'multicolour',
   tropical: 'multicolour',
+  autumn: 'multicolour',
+  jewel: 'multicolour',
 };
 
 export function themeCategory(id: ThemeId): ThemeCategory {

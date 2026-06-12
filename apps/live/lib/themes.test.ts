@@ -44,23 +44,19 @@ describe('THEMES catalogue', () => {
     }
   });
 
-  // spec/16-marketing-site.md claims "21 themes (12 default + 9
-  // extra)". The marketing site cites the number directly in its
-  // copy and the welcome picker gates the extras behind a "Show
-  // more" toggle (apps/live/components/TemplatePicker.tsx +
-  // hooks/useShowMoreList.ts). If the catalogue drifts from those
-  // counts the spec stops being accurate. The nine extras include the
-  // three multi-colour themes added in spec/29. Mirrors the equivalent
-  // assertions in templates.test.ts.
-  it('lists exactly 21 themes (matches spec/16)', () => {
-    expect(THEMES).toHaveLength(21);
+  // spec/16-marketing-site.md cites the theme count directly in its
+  // copy. If the catalogue drifts from this the spec stops being
+  // accurate. The extras include the multi-colour themes from spec/29.
+  // Mirrors the equivalent assertions in templates.test.ts.
+  it('lists exactly 26 themes (matches spec/16)', () => {
+    expect(THEMES).toHaveLength(26);
   });
 
-  it('splits cleanly into 12 default + 9 extra (retained as catalogue metadata)', () => {
+  it('splits cleanly into 12 default + 14 extra (retained as catalogue metadata)', () => {
     const defaults = THEMES.filter((t) => !t.extra);
     const extras = THEMES.filter((t) => t.extra);
     expect(defaults).toHaveLength(12);
-    expect(extras).toHaveLength(9);
+    expect(extras).toHaveLength(14);
   });
 
   it('leads with the brand theme (the un-themed default is the most common pick)', () => {
@@ -708,10 +704,10 @@ describe('deriveNewBoxedColours', () => {
 });
 
 describe('multi-colour (rainbow) themes', () => {
-  it('ships three palette themes, all behind the "Show more" toggle', () => {
-    for (const id of ['rainbow', 'pastel', 'tropical'] as const) {
-      const t = THEMES.find((x) => x.id === id)!;
-      expect(t).toBeTruthy();
+  it('ships five palette themes (all in the Multi-colour category, all extra)', () => {
+    const palettes = THEMES.filter((t) => themeCategory(t.id) === 'multicolour');
+    expect(palettes).toHaveLength(5);
+    for (const t of palettes) {
       expect(t.extra).toBe(true);
       expect(t.palette && t.palette.length).toBeGreaterThan(0);
       expect(t.rootColor).toBeTruthy();
@@ -733,8 +729,7 @@ describe('multi-colour (rainbow) themes', () => {
     // unchanged (and did nothing visible on an empty diagram). Each must
     // shift the canvas colour and/or pattern away from the brand default.
     const brand = THEMES.find((t) => t.id === 'brand')!;
-    for (const id of ['rainbow', 'pastel', 'tropical'] as const) {
-      const t = THEMES.find((x) => x.id === id)!;
+    for (const t of THEMES.filter((x) => themeCategory(x.id) === 'multicolour')) {
       const changed =
         t.backgroundColor !== brand.backgroundColor ||
         t.backgroundPattern !== brand.backgroundPattern;

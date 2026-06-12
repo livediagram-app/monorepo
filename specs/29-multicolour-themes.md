@@ -11,13 +11,15 @@ A multi-colour theme is an ordinary `ThemeDefinition` with two extra fields:
 
 A theme with no `palette` is a single-colour theme and behaves exactly as before. The backdrop half (background colour + pattern + pattern colour) is unchanged — multi-colour applies only to **element** colours.
 
-The catalogue ships three multi-colour themes, all behind the picker's "Show more themes" toggle:
+The catalogue ships five multi-colour themes, all extra (grouped under the picker's Multi-colour category):
 
-| Theme    | Feel                                                   |
-| -------- | ------------------------------------------------------ |
-| Rainbow  | Saturated six-hue spectrum (red → orange → … → purple) |
-| Pastel   | Soft, low-saturation version of the same wheel         |
-| Tropical | Vivid teal / cyan / lime / orange / pink / violet      |
+| Theme    | Feel                                                           |
+| -------- | -------------------------------------------------------------- |
+| Rainbow  | Saturated six-hue spectrum (red → orange → … → purple)         |
+| Pastel   | Soft, low-saturation version of the same wheel                 |
+| Tropical | Vivid teal / cyan / lime / orange / pink / violet              |
+| Autumn   | Warm seasonal palette: reds, oranges, ambers, browns, olive    |
+| Jewel    | Rich gem tones: emerald, sapphire, amethyst, ruby, topaz, teal |
 
 ## How a branch is decided
 
@@ -39,7 +41,7 @@ Multi-colour assignment needs the **whole element list** (to see the arrow graph
 - `switchThemeElements(elements, prev, next)` — the Theme accordion / welcome picker "apply a theme" path. Preserves a field the user hand-customised away from the previous theme, same per-field rule as the single-colour `switchThemeElement`.
 - `resetThemeElementsToTheme(elements, theme)` — the "Reset elements to theme" button; force-repaints every branch from the palette, overwriting customs.
 
-Each computes the branch map once, then reuses the existing per-element transforms by handing them a **synthetic per-element theme** whose `elementFill / elementStroke / elementText` are that element's resolved branch colours. This keeps every existing rule (sticky notes keep their amber, `themeLockFill` fills survive, tables track the backdrop) working without a parallel code path. For a single-colour theme the wrappers fall straight through to the per-element helpers, so nothing changes for the other 18 themes.
+Each computes the branch map once, then reuses the existing per-element transforms by handing them a **synthetic per-element theme** whose `elementFill / elementStroke / elementText` are that element's resolved branch colours. This keeps every existing rule (sticky notes keep their amber, `themeLockFill` fills survive, tables track the backdrop) working without a parallel code path. For a single-colour theme the wrappers fall straight through to the per-element helpers, so nothing changes for the other 21 single-colour themes.
 
 ### Newly-added elements
 
@@ -55,4 +57,4 @@ Applying any theme already emits `track('Theme', 'Changed', <label>)` ([spec/22]
 
 ## Counts
 
-Adding three multi-colour themes takes the catalogue from 18 to **21 themes** (12 default + 9 extra). The counts are pinned by `apps/live/lib/themes.test.ts` and cited in [spec/09](09-canvas-and-command-palette.md), [spec/16](16-marketing-site.md), and [spec/23](23-marketing-assets.md); all four move together.
+The catalogue ships **26 themes** (12 default + 14 extra), the extras including a Dark category (Pine, Charcoal, Plum, Abyss, Espresso) and five multi-colour themes (Rainbow, Pastel, Tropical, Autumn, Jewel). The counts are pinned by `apps/live/lib/themes.test.ts` and cited in [spec/09](09-canvas-and-command-palette.md), [spec/16](16-marketing-site.md), and [spec/23](23-marketing-assets.md); all four move together.

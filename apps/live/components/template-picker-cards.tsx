@@ -56,11 +56,13 @@ export function TemplateCard({
 // preview SVG scale down to fit its quarter cell.
 export function CategoryCard({
   label,
+  description,
   count,
   previews,
   onOpen,
 }: {
   label: string;
+  description: string;
   count: number;
   previews: TemplateKind[];
   onOpen: () => void;
@@ -82,11 +84,18 @@ export function CategoryCard({
           </div>
         ))}
       </div>
-      <div className="flex w-full items-center justify-between gap-1">
-        <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">{label}</p>
-        <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-          {count}
-        </span>
+      <div className="min-w-0">
+        <div className="flex items-center justify-between gap-1">
+          <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+            {label}
+          </p>
+          <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+            {count}
+          </span>
+        </div>
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
       </div>
     </button>
   );
