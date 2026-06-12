@@ -1162,26 +1162,50 @@ export function TemplatePreview({ kind }: { kind: TemplateKind }) {
       );
     case 'prioritization-matrix':
       return (
-        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
-          {/* axis hints down the left + along the bottom */}
-          <line x1="3" y1="3" x2="3" y2="47" stroke="rgb(148 163 184)" strokeWidth="0.8" />
-          <line x1="3" y1="47" x2="77" y2="47" stroke="rgb(148 163 184)" strokeWidth="0.8" />
-          {[
-            { x: 8, y: 3, fill: 'rgb(220 252 231)', stroke: 'rgb(134 239 172)' },
-            { x: 44, y: 3, fill: 'rgb(219 234 254)', stroke: 'rgb(147 197 253)' },
-            { x: 8, y: 23, fill: 'rgb(254 243 199)', stroke: 'rgb(252 211 77)' },
-            { x: 44, y: 23, fill: 'rgb(254 226 226)', stroke: 'rgb(252 165 165)' },
-          ].map((q, i) => (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {/* Crossed value / effort axes (a centred quadrant divider plus
+              an L-frame) with a few items scattered across the field —
+              matching the builder's drag-into-a-quadrant layout. */}
+          {/* L-frame: left + bottom axes with arrowheads toward "more". */}
+          <path
+            d="M9 44 L9 6 M7 9 L9 6 L11 9"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M9 44 L74 44 M71 42 L74 44 L71 46"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Centred quadrant cross (double-headed). */}
+          <line x1="14" y1="25" x2="70" y2="25" stroke="rgb(14 165 233)" strokeWidth="0.7" />
+          <line x1="42" y1="11" x2="42" y2="41" stroke="rgb(14 165 233)" strokeWidth="0.7" />
+          {/* Scattered item boxes, one per quadrant + one near centre. */}
+          {(
+            [
+              [24, 15],
+              [58, 13],
+              [60, 33],
+              [30, 36],
+              [47, 22],
+            ] as [number, number][]
+          ).map(([x, y], i) => (
             <rect
               key={i}
-              x={q.x}
-              y={q.y}
-              width="32"
-              height="20"
-              rx="2"
-              fill={q.fill}
-              stroke={q.stroke}
-              strokeWidth="0.75"
+              x={x - 6.5}
+              y={y - 3.5}
+              width="13"
+              height="7"
+              rx="1"
+              fill="white"
+              stroke="rgb(100 116 139)"
+              strokeWidth="0.7"
             />
           ))}
         </svg>
