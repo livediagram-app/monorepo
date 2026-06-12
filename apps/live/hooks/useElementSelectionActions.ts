@@ -29,6 +29,7 @@ import {
   type QuickConnectKind,
 } from '@/lib/canvas';
 import { paintableBoxedFields } from '@/lib/format-painter';
+import { getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
 
 // A fresh shape for a quick-connect spawn: the chosen kind at the
@@ -368,12 +369,21 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
       above: ['n', 's'],
     };
     const [fromAnchor, toAnchor] = anchors[direction];
+    // Connector inherits the source's stroke (else the tab theme's element
+    // stroke) so it belongs with the chain instead of rendering as the
+    // built-in default (which read as black on a themed canvas).
+    const connectorStroke =
+      source.strokeColor ?? getTheme(activeTab.theme).elementStroke ?? undefined;
+    const connectorWith = (toId: string) => {
+      const arrow = createPinnedArrow(source.id, fromAnchor, toId, toAnchor);
+      return connectorStroke ? { ...arrow, strokeColor: connectorStroke } : arrow;
+    };
 
     if (kind === 'duplicate') {
       const { newElements, idMap } = duplicateGroupedElements(activeTab.elements, ids, dx, dy);
       const sourceCopyId = idMap.get(source.id);
       if (!sourceCopyId) return;
-      const connector = createPinnedArrow(source.id, fromAnchor, sourceCopyId, toAnchor);
+      const connector = connectorWith(sourceCopyId);
       commit((els) => [...els, ...newElements, connector]);
       setSelectedId(sourceCopyId);
       track(
@@ -384,12 +394,12 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
       return;
     }
 
-    // Fresh shape (square / diamond / circle) matching the source's size +
+    // Fresh shape (square / circle) matching the source's size +
     // styling, so a chain of connected nodes reads uniformly. Built from
     // the source's own box (the plus only shows for a single element, so
     // baseBounds is that element's bounds).
     const shape = connectedShapeFrom(kind, source, dx, dy);
-    const connector = createPinnedArrow(source.id, fromAnchor, shape.id, toAnchor);
+    const connector = connectorWith(shape.id);
     commit((els) => [...els, shape, connector]);
     setSelectedId(shape.id);
     track('Element', 'Added', titleCaseType(kind));

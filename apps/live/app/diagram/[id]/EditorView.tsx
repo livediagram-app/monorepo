@@ -359,11 +359,12 @@ export function EditorView() {
   // gates editsBlocked there, so the pointer overlay and the edit lock
   // can't disagree); consumed here for the overlay.
   const tabLoadState = activeTabLoadState;
-  // Quick add + connect Arrow option (spec/09). Desktop (mouse / pen):
-  // start a drag from the picked side's anchor — the existing anchor-drag
-  // makes a pinned→free arrow the user drags to its target. Touch: there's
-  // no hover-drag, so arm the click-to-connect gesture (the next shape tap
-  // sets the other end), reusing addArrow's connect-from-selection path.
+  // Quick add + connect Arrow option (spec/09). Desktop (mouse / pen): make
+  // a pinned→free arrow from the picked side's anchor in click-to-place
+  // mode — a plain click then has the endpoint trail the cursor until the
+  // next click lands it (a press-drag still works too). Touch: no hover, so
+  // arm the click-to-connect gesture (the next shape tap sets the other
+  // end), reusing addArrow's connect-from-selection path.
   const handleStartArrow = (direction: QuickConnectDirection, e: ReactPointerEvent) => {
     if (selectedId === null) return;
     if (e.pointerType === 'touch') {
@@ -372,7 +373,7 @@ export function EditorView() {
     }
     const anchor: Anchor =
       direction === 'right' ? 'e' : direction === 'left' ? 'w' : direction === 'below' ? 's' : 'n';
-    beginAnchorDrag(selectedId, anchor, e);
+    beginAnchorDrag(selectedId, anchor, e, { clickToPlace: true });
   };
   return (
     <div className="flex h-dvh flex-col">

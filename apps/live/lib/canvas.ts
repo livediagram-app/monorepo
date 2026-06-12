@@ -149,6 +149,18 @@ export type DragState =
       startClientY: number;
       startCanvasX: number;
       startCanvasY: number;
+      // Quick-connect "click to place": the gesture started from a click
+      // (not a press-drag). `clickToPlace` means we're still waiting on the
+      // first pointer-up to decide — a real drag commits as usual, a plain
+      // click flips to `following`, where the endpoint trails the cursor and
+      // the NEXT click places it. Absent for normal anchor drags.
+      clickToPlace?: boolean;
+      following?: boolean;
+      // Where the pointer actually went DOWN, for the click-vs-drag test.
+      // Distinct from startClient* in click-to-place mode, where startClient
+      // is anchored to the element's anchor (not the far-out ring button).
+      pressClientX?: number;
+      pressClientY?: number;
     }
   | {
       // Whole-arrow translation. Only fires for arrows with both

@@ -214,7 +214,12 @@ type EditorDragApi = {
     centerClientY: number,
     e: ReactPointerEvent,
   ) => void;
-  beginAnchorDrag: (elementId: string, anchor: Anchor, e: ReactPointerEvent) => void;
+  beginAnchorDrag: (
+    elementId: string,
+    anchor: Anchor,
+    e: ReactPointerEvent,
+    opts?: { clickToPlace?: boolean },
+  ) => void;
   beginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   beginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   beginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
@@ -380,7 +385,12 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     });
   };
 
-  const beginAnchorDrag = (elementId: string, anchor: Anchor, e: ReactPointerEvent) => {
+  const beginAnchorDrag = (
+    elementId: string,
+    anchor: Anchor,
+    e: ReactPointerEvent,
+    opts?: { clickToPlace?: boolean },
+  ) => {
     const d = depsRef.current;
     if (d.formatSourceId !== null || d.groupSourceId !== null) return;
     const element = d.activeTab.elements.find((el) => el.id === elementId);
@@ -403,14 +413,33 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     d.commit((els) => [...els, arrow]);
     d.setSelectedId(arrow.id);
     track('Element', 'Added', 'Arrow');
+    // The move handler tracks (startCanvas + (client - startClient)). For a
+    // press-drag from the anchor handle the pointer IS at the anchor, so
+    // e.client is the right origin. A click-to-place from the ring starts
+    // far out on the ring button, so anchor that origin to the anchor's
+    // own screen position instead (derived from the element's DOM rect) —
+    // otherwise the endpoint would trail the cursor by the button offset.
+    let startClientX = e.clientX;
+    let startClientY = e.clientY;
+    if (opts?.clickToPlace && element.width > 0 && element.height > 0) {
+      const node = document.querySelector(`[data-element-id="${elementId}"]`);
+      if (node) {
+        const r = node.getBoundingClientRect();
+        startClientX = r.left + ((start.x - element.x) / element.width) * r.width;
+        startClientY = r.top + ((start.y - element.y) / element.height) * r.height;
+      }
+    }
     setDrag({
       kind: 'arrow-endpoint',
       arrowId: arrow.id,
       end: 'to',
-      startClientX: e.clientX,
-      startClientY: e.clientY,
+      startClientX,
+      startClientY,
       startCanvasX: start.x,
       startCanvasY: start.y,
+      clickToPlace: opts?.clickToPlace ?? false,
+      pressClientX: e.clientX,
+      pressClientY: e.clientY,
     });
   };
 
@@ -998,6 +1027,21 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     };
     const onUp = (e: PointerEvent) => {
       const d = depsRef.current;
+      // Quick-connect arrow "click to place": if the arrow was started by a
+      // click (clickToPlace) and this release ends a gesture that never
+      // really moved, don't commit — flip into `following` so the endpoint
+      // trails the cursor and the NEXT click (handled in capture below)
+      // places it. A real press-drag (moved past the threshold) falls
+      // through and commits like any anchor drag.
+      if (drag?.kind === 'arrow-endpoint' && drag.clickToPlace && !drag.following) {
+        const px = drag.pressClientX ?? drag.startClientX;
+        const py = drag.pressClientY ?? drag.startClientY;
+        const moved = Math.hypot(e.clientX - px, e.clientY - py) > 6;
+        if (!moved) {
+          setDrag({ ...drag, clickToPlace: false, following: true });
+          return;
+        }
+      }
       // Fold a dragged standalone icon shape into the shape it was
       // released over. Only on a real move (not a click), only when the
       // dragged element is an 'icon' shape, and only when the element
@@ -1053,13 +1097,39 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       // flag. (Cancelling the flush isn't wanted — that's the entry.)
       logGestureRef.current = false;
     };
+    // Quick-connect arrow follow mode: the placing click. Captured on the
+    // way DOWN (capture phase) so it commits the endpoint and is swallowed
+    // before the canvas can read it as a marquee / deselect.
+    const onPlaceClick = (e: PointerEvent) => {
+      if (!(drag?.kind === 'arrow-endpoint' && drag.following)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // The endpoint already tracks the cursor (last pointermove); this
+      // click just lands it. Clear guides and end the gesture.
+      setDrag(null);
+      scheduleGuides([]);
+    };
+    // Escape cancels follow mode, removing the half-drawn arrow.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (!(drag?.kind === 'arrow-endpoint' && drag.following)) return;
+      const arrowId = drag.arrowId;
+      depsRef.current.commit((els) => els.filter((el) => el.id !== arrowId));
+      depsRef.current.setSelectedId(null);
+      setDrag(null);
+      scheduleGuides([]);
+    };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointerdown', onSecondTouch);
+    window.addEventListener('pointerdown', onPlaceClick, true);
+    window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointerdown', onSecondTouch);
+      window.removeEventListener('pointerdown', onPlaceClick, true);
+      window.removeEventListener('keydown', onKey);
     };
   }, [drag]);
 
