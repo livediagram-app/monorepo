@@ -132,13 +132,45 @@ export function ShapeSvgOverlay({
           <path d="M 32 88 L 68 88 L 76 99 L 24 99 Z" {...common} />
         </g>
       ) : null}
-      {/* Laptop: inset screen + wider keyboard trapezoid below. The
-          hinge gap between screen and keyboard reads as the
-          fold-line. */}
+      {/* Laptop: an open clamshell. A lid panel with an inset display
+          bezel sits above a keyboard deck, joined by a hinge bar so
+          the two read as one device (rather than two stacked shapes),
+          with a trackpad on the deck. The deck flares wider toward the
+          front edge for a touch of perspective. */}
       {shape === 'laptop' ? (
         <g>
-          <rect x={8} y={2} width={84} height={68} rx={3} {...common} />
-          <path d="M 0 78 L 100 78 L 95 96 L 5 96 Z" {...common} />
+          {/* Lid / screen panel. */}
+          <rect x={8} y={2} width={84} height={64} rx={4} {...common} />
+          {/* Display bezel: an inset outline so the screen reads as a
+              framed panel (matches the phone / tablet inner line).
+              Stroke-only so content layered on top still shows. */}
+          <rect
+            x={12}
+            y={5}
+            width={76}
+            height={58}
+            rx={2}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={0.8}
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Hinge bar bridging the lid and the keyboard deck. */}
+          <rect x={4} y={66} width={92} height={6} rx={2} {...common} />
+          {/* Keyboard deck: a shallow trapezoid, wider at the front. */}
+          <path d="M 6 72 L 94 72 L 100 96 L 0 96 Z" {...common} />
+          {/* Trackpad. */}
+          <rect
+            x={42}
+            y={80}
+            width={16}
+            height={9}
+            rx={1}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={0.8}
+            vectorEffect="non-scaling-stroke"
+          />
         </g>
       ) : null}
       {/* Phone: tall pill silhouette. Heavily rounded corners are the
