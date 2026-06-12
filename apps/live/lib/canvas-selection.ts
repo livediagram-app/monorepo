@@ -246,7 +246,12 @@ export function deriveSelectedElementFields(
   // They keep Colours (the stroke colour tints the glyph) + Text.
   const isIcon = selected.type === 'shape' && selected.shape === 'icon';
   return {
-    textSize: isBoxed(selected) && selected.type !== 'image' ? (selected.textSize ?? 'md') : null,
+    textSize:
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textSize ?? 'md')
+        : selected.type === 'arrow'
+          ? (selected.textSize ?? 'sm')
+          : null,
     textAlignX:
       isBoxed(selected) && selected.type !== 'image' && selectedDefaultAlign
         ? (selected.textAlignX ?? selectedDefaultAlign.x)
@@ -258,7 +263,9 @@ export function deriveSelectedElementFields(
     textColor:
       isBoxed(selected) && selected.type !== 'image'
         ? (selected.textColor ?? defaultTextColor(selected))
-        : null,
+        : selected.type === 'arrow'
+          ? (selected.textColor ?? selected.strokeColor ?? 'rgb(51 65 85)')
+          : null,
     fillColor:
       selectionSupportsColours && isBoxed(selected) && !isIcon
         ? (selected.fillColor ?? defaultFillColor(selected))
@@ -272,20 +279,44 @@ export function deriveSelectedElementFields(
       : null,
     opacity: selected.opacity ?? 1,
     padding: isBoxed(selected) ? (selected.padding ?? defaultPadding(selected)) : null,
-    textBold: isBoxed(selected) && selected.type !== 'image' ? (selected.textBold ?? false) : null,
+    textBold:
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textBold ?? false)
+        : selected.type === 'arrow'
+          ? (selected.textBold ?? false)
+          : null,
     textItalic:
-      isBoxed(selected) && selected.type !== 'image' ? (selected.textItalic ?? false) : null,
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textItalic ?? false)
+        : selected.type === 'arrow'
+          ? (selected.textItalic ?? false)
+          : null,
     textUnderline:
-      isBoxed(selected) && selected.type !== 'image' ? (selected.textUnderline ?? false) : null,
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textUnderline ?? false)
+        : selected.type === 'arrow'
+          ? (selected.textUnderline ?? false)
+          : null,
     textStrikethrough:
-      isBoxed(selected) && selected.type !== 'image' ? (selected.textStrikethrough ?? false) : null,
-    font: isBoxed(selected) && selected.type !== 'image' ? (selected.font ?? null) : null,
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.textStrikethrough ?? false)
+        : selected.type === 'arrow'
+          ? (selected.textStrikethrough ?? false)
+          : null,
+    font:
+      isBoxed(selected) && selected.type !== 'image'
+        ? (selected.font ?? null)
+        : selected.type === 'arrow'
+          ? (selected.font ?? null)
+          : null,
     hasText:
       selected.type === 'table'
         ? true
         : isBoxed(selected) && selected.type !== 'image'
           ? (selected.label?.trim().length ?? 0) > 0
-          : false,
+          : selected.type === 'arrow'
+            ? (selected.label?.trim().length ?? 0) > 0
+            : false,
     arrowEnds: selected.type === 'arrow' ? (selected.arrowEnds ?? 'to') : null,
     arrowThickness: selected.type === 'arrow' ? arrowThicknessOf(selected) : null,
     arrowheadSize: selected.type === 'arrow' ? arrowheadSizeOf(selected) : null,

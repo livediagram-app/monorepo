@@ -160,7 +160,7 @@ describe('deriveSelectedElementFields (per-type control gating)', () => {
     expect(f.padding).not.toBeNull();
   });
 
-  it('an arrow exposes arrow fields, no shape/text/box fields', () => {
+  it('an arrow exposes arrow + label-text fields, but no shape/box fields', () => {
     const arrowEl = {
       id: 'a',
       type: 'arrow',
@@ -172,9 +172,31 @@ describe('deriveSelectedElementFields (per-type control gating)', () => {
     expect(f.arrowThickness).not.toBeNull();
     expect(f.arrowStyle).not.toBeNull();
     expect(f.shapeKind).toBeNull();
-    expect(f.textSize).toBeNull();
+    // Arrows now carry label-text formatting (applied to the arrow's
+    // label), so the text fields are populated...
+    expect(f.textSize).not.toBeNull();
+    expect(f.textBold).not.toBeNull();
+    expect(f.textColor).not.toBeNull();
+    // ...but with no label there's nothing to format, so the Text
+    // accordion stays hidden (hasText false). Alignment / padding never
+    // apply to a midpoint label.
+    expect(f.hasText).toBe(false);
+    expect(f.textAlignX).toBeNull();
+    expect(f.padding).toBeNull();
     expect(f.aspectLocked).toBeNull(); // not boxed
     expect(f.strokeColor).not.toBeNull();
+  });
+
+  it('an arrow with a label reports hasText so the Text accordion shows', () => {
+    const arrowEl = {
+      id: 'a',
+      type: 'arrow',
+      from: { kind: 'free', x: 0, y: 0 },
+      to: { kind: 'free', x: 50, y: 50 },
+      label: 'flow',
+    } as unknown as Element;
+    const f = deriveSelectedElementFields(arrowEl, true, null);
+    expect(f.hasText).toBe(true);
   });
 
   it('a text element shows text but no shape kind or border radius', () => {

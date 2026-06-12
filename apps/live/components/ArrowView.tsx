@@ -19,6 +19,7 @@ import {
   type ArrowheadShape,
   type ArrowheadSize,
   type ElementIndex,
+  type TextSize,
 } from '@livediagram/diagram';
 import type { ArrowEnd } from '@/lib/canvas';
 
@@ -162,7 +163,7 @@ function ArrowViewImpl({
           arrow.elbowOffset,
           arrow.labelOffset,
         )
-      : placeLabel(midpoint, labelText, elementIndex, arrow.id);
+      : placeLabel(midpoint, labelText, elementIndex, arrow.id, arrowLabelFontSize(arrow.textSize));
   // The label box is draggable (and shows its dashed selection box)
   // when the arrow is selected and editable.
   const labelDraggable = isSelected && !isPaintMode && !readOnly && !isLocked && !isEditing;
@@ -255,10 +256,15 @@ function ArrowViewImpl({
           x={labelPos.x}
           y={labelPos.y}
           text={labelText}
-          color={baseStroke}
+          color={arrow.textColor ?? baseStroke}
           isEditing={isEditing}
           cursorAtEnd={editCursorAtEnd}
           fontFamily={fontFamily}
+          textSize={arrow.textSize}
+          textBold={arrow.textBold}
+          textItalic={arrow.textItalic}
+          textUnderline={arrow.textUnderline}
+          textStrikethrough={arrow.textStrikethrough}
           draggable={labelDraggable && !!onBeginLabelDrag}
           onStartDrag={(e) => onBeginLabelDrag?.(arrow.id, e)}
           onEdit={() => onBeginEdit(arrow.id)}
@@ -407,11 +413,12 @@ const LABEL_HEIGHT_PX = 16;
 const LABEL_CHAR_WIDTH_PX = 7;
 const LABEL_GAP_PX = 8;
 
-function labelSize(text: string): { width: number; height: number } {
+function labelSize(text: string, fontSize = 12): { width: number; height: number } {
   const trimmed = text || ' ';
+  const scale = fontSize / 12;
   return {
-    width: Math.max(24, trimmed.length * LABEL_CHAR_WIDTH_PX) + 8,
-    height: LABEL_HEIGHT_PX + 4,
+    width: Math.max(24, trimmed.length * LABEL_CHAR_WIDTH_PX * scale) + 8,
+    height: LABEL_HEIGHT_PX * scale + 4,
   };
 }
 
@@ -426,8 +433,9 @@ function placeLabel(
   text: string,
   elements: ElementIndex,
   selfId: string,
+  fontSize = 12,
 ): { x: number; y: number } {
-  const size = labelSize(text);
+  const size = labelSize(text, fontSize);
   const halfH = size.height / 2;
   const halfW = size.width / 2;
   const candidates: { x: number; y: number }[] = [
@@ -462,6 +470,22 @@ function collidesWithBoxed(
   return false;
 }
 
+// Arrow-label font size by preset, mirroring the boxed-label scale
+// (sm 12 / md 14 / lg 20 / scale 18). Default 'sm' keeps the historic
+// 12px label size for arrows authored before the field existed.
+function arrowLabelFontSize(size: TextSize | undefined): number {
+  switch (size) {
+    case 'lg':
+      return 20;
+    case 'md':
+      return 14;
+    case 'scale':
+      return 18;
+    default:
+      return 12;
+  }
+}
+
 type ArrowLabelProps = {
   x: number;
   y: number;
@@ -472,6 +496,13 @@ type ArrowLabelProps = {
   cursorAtEnd?: boolean;
   // Resolved CSS font-family for the label text + editor (spec/28).
   fontFamily?: string;
+  // Label-text formatting (spec/09): size preset + inline styles, applied
+  // to the rendered <text>. Absent → default small / unstyled.
+  textSize?: TextSize;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textStrikethrough?: boolean;
   // When true (arrow selected + editable) the label shows a dashed
   // box + move cursor and can be dragged along / across the line.
   draggable?: boolean;
@@ -495,6 +526,11 @@ function ArrowLabel({
   isEditing,
   cursorAtEnd = false,
   fontFamily,
+  textSize,
+  textBold,
+  textItalic,
+  textUnderline,
+  textStrikethrough,
   draggable = false,
   onStartDrag,
   onEdit,
@@ -518,7 +554,13 @@ function ArrowLabel({
     // not a dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
-  const size = labelSize(text);
+  const fontSize = arrowLabelFontSize(textSize);
+  const size = labelSize(text, fontSize);
+  // Underline + strikethrough combine into one text-decoration value.
+  const decoration =
+    [textUnderline ? 'underline' : '', textStrikethrough ? 'line-through' : '']
+      .filter(Boolean)
+      .join(' ') || undefined;
   if (isEditing) {
     return (
       <foreignObject
@@ -561,7 +603,10 @@ function ArrowLabel({
         y={y}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={12}
+        fontSize={fontSize}
+        fontWeight={textBold ? 600 : undefined}
+        fontStyle={textItalic ? 'italic' : undefined}
+        textDecoration={decoration}
         fill={color}
         style={{ pointerEvents: 'none', userSelect: 'none', fontFamily }}
       >

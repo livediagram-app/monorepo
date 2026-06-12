@@ -124,7 +124,9 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) =>
-      els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, textSize: size } : el)),
+      els.map((el) =>
+        ids.has(el.id) && (isBoxed(el) || el.type === 'arrow') ? { ...el, textSize: size } : el,
+      ),
     );
     track('Element', 'Changed', 'TextSize');
   };
@@ -137,7 +139,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     if (ids.size === 0) return;
     commit((els) =>
       els.map((el) => {
-        if (!ids.has(el.id) || !isBoxed(el)) return el;
+        if (!ids.has(el.id) || !(isBoxed(el) || el.type === 'arrow')) return el;
         if (!font) {
           const copy = { ...el };
           delete (copy as { font?: string }).font;
@@ -168,11 +170,13 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     field: 'textBold' | 'textItalic' | 'textUnderline' | 'textStrikethrough',
   ) => {
     const primary = selectionPrimary();
-    if (!primary || !isBoxed(primary)) return;
+    if (!primary || !(isBoxed(primary) || primary.type === 'arrow')) return;
     const next = !(primary[field] ?? false);
     const ids = currentSelectionIds();
     commit((els) =>
-      els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, [field]: next } : el)),
+      els.map((el) =>
+        ids.has(el.id) && (isBoxed(el) || el.type === 'arrow') ? { ...el, [field]: next } : el,
+      ),
     );
     // Telemetry type is the style name (Bold / Italic / Underline /
     // Strikethrough) — `field` minus its 'text' prefix, title-cased.
@@ -218,7 +222,9 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
 
   const setTextColorSelected = (color: string) =>
-    commitSelectedStyle('textColor', (el) => (isBoxed(el) ? { ...el, textColor: color } : el));
+    commitSelectedStyle('textColor', (el) =>
+      isBoxed(el) || el.type === 'arrow' ? { ...el, textColor: color } : el,
+    );
 
   // Table header-band colours (debounced like the other colour
   // pickers). Apply only to selected tables.
