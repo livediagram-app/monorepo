@@ -148,6 +148,8 @@ type MenuToolButtonProps = {
   disabled?: boolean;
   // Highlight a toggle whose state is "on" (e.g. a locked tab).
   active?: boolean;
+  // Destructive action (e.g. Delete) — rose tone, matching MenuItem.
+  danger?: boolean;
 };
 
 export function MenuToolButton({
@@ -157,12 +159,15 @@ export function MenuToolButton({
   onClick,
   disabled,
   active,
+  danger,
 }: MenuToolButtonProps) {
   const tone = disabled
     ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
     : active
       ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300'
-      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
+      : danger
+        ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/15'
+        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
   return (
     <Tooltip title={label} description={description}>
       <button

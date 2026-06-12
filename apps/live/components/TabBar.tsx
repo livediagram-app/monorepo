@@ -717,16 +717,16 @@ function PortalMenu({
                 groups the verbose / destructive actions into sections. */}
             <MenuToolbar>
               <MenuToolButton
-                icon={<CopyIcon />}
-                label="Duplicate"
-                description="Create a copy of this tab in this diagram."
-                onClick={onDuplicate}
-              />
-              <MenuToolButton
                 icon={<PencilIcon />}
                 label="Rename"
                 description="Rename this tab."
                 onClick={onRename}
+              />
+              <MenuToolButton
+                icon={<CopyIcon />}
+                label="Duplicate"
+                description="Create a copy of this tab in this diagram."
+                onClick={onDuplicate}
               />
               <MenuToolButton
                 icon={<TabLockIcon />}
@@ -735,6 +735,19 @@ function PortalMenu({
                 onClick={onToggleLock}
                 active={locked}
               />
+              {/* Delete pinned to the right edge of the toolbar, isolated
+                  from the everyday verbs; the confirm popover anchors to
+                  this wrapper. */}
+              <div ref={deleteRowRef} className="ml-auto">
+                <MenuToolButton
+                  icon={<TrashIcon />}
+                  label="Delete"
+                  description="Delete this tab. Its content can't be recovered."
+                  onClick={() => setConfirmingDelete(true)}
+                  danger
+                  disabled={!canDelete}
+                />
+              </div>
             </MenuToolbar>
             <MenuDivider />
             <MenuSection label="Organise" />
@@ -761,22 +774,13 @@ function PortalMenu({
               disabled={locked}
             />
             <MenuItem icon={<FileExportIcon />} label="Export Contents" onClick={onExport} />
+            <MenuDivider />
             <MenuItem
               icon={<ClearIcon />}
               label="Reset Canvas"
               onClick={onClearContent}
               disabled={!canClearContent}
             />
-            <MenuDivider />
-            <div ref={deleteRowRef}>
-              <MenuItem
-                icon={<TrashIcon />}
-                label="Delete"
-                onClick={() => setConfirmingDelete(true)}
-                danger
-                disabled={!canDelete}
-              />
-            </div>
           </>
         ) : view === 'copyTo' ? (
           <>
