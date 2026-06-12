@@ -26,12 +26,11 @@ Teams are keyed by Clerk user ids and invites are keyed by email, so the whole f
 
 ### Email claim
 
-Connect-on-signup needs the user's email so a pending invite can be matched to the person. The worker resolves it from two sources, in order:
+Connect-on-signup needs the user's email so a pending invite can be matched to the person. The worker trusts **exactly one source**: the verified `email` claim on the Clerk session token (`apps/api/src/auth/clerk.ts`), because it rides inside the JWKS-verified payload. The deployment wires it via Clerk dashboard → Sessions → Customize session token → `{"email": "{{user.primary_email_address}}"}`. It has to be the **session** token, not a named JWT template — the frontend authenticates with `getToken()` (no template), so a named template is never requested.
 
-1. **The verified `email` claim on the Clerk session token** (`apps/api/src/auth/clerk.ts`). Adding it is optional: Clerk dashboard → Sessions → Customize session token → `{"email": "{{user.primary_email_address}}"}`. It has to be the session token, not a named JWT template — the frontend authenticates with `getToken()` (no template), so a named template is never requested. When present this is the trusted path.
-2. **The `X-Owner-Email` request header** — the frontend forwards the signed-in user's Clerk-verified `primaryEmailAddress` on every authenticated request (`setEmailProvider`). The worker falls back to it when the token carries no claim, so invites connect with **zero Clerk-dashboard config** out of the box.
+**Teams invite auto-connection requires this claim.** When the session token doesn't carry it, `clerkEmail` is null and the lazy connect step below is a no-op (the user still signs in and uses everything else; they just won't see invites auto-attach until the claim is configured). This is a deliberate fail-closed default.
 
-The header is consulted **only** for invite matching, never for ownership / write auth (those stay JWT-`sub` based). The trade-off: a signed-in user could hand-craft a request with someone else's address and surface / accept a team invite addressed to it. The session-token claim (path 1) closes that gap for deployments that want it; path 2 keeps the common case working without setup. A guest (no Clerk session) has no email either way, so invites are signed-in only.
+A client-supplied `X-Owner-Email` header used to be a fallback, but it was **removed** (a signed-in caller could forge another address and claim that address's pending invites — join the team and read its private library). Email is never taken from a client header; only from the verified claim. A guest (no Clerk session) has no email either way, so invites are signed-in only.
 
 ## Invites, connect-on-sign-in, and accept/decline
 

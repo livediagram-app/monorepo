@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   arrowReferencesAny,
   cornerOf,
+  framesFirst,
   inheritedSizeFor,
   MIN_SIZE,
   nextBounds,
@@ -146,6 +147,21 @@ describe('withFrameContents', () => {
   it('returns the same set untouched when no id is a frame (cheap no-op)', () => {
     const ids = new Set([inside.id]);
     expect(withFrameContents(elements, ids)).toBe(ids);
+  });
+});
+
+describe('framesFirst', () => {
+  it('moves frames ahead of everything else, preserving relative order', () => {
+    const frameA = createShape('frame', 0, 0);
+    const box = createShape('square', 0, 0);
+    const frameB = createShape('frame', 9, 9);
+    const ordered = framesFirst([box, frameA, frameB]);
+    expect(ordered.map((e) => e.id)).toEqual([frameA.id, frameB.id, box.id]);
+  });
+
+  it('returns the same array reference when there are no frames (no-op)', () => {
+    const arr = [createShape('square', 0, 0)];
+    expect(framesFirst(arr)).toBe(arr);
   });
 });
 

@@ -1,5 +1,6 @@
 import { buildElementIndex, isBoxed } from '@livediagram/diagram';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { framesFirst } from '@/lib/canvas';
 import { resolveFontStack } from '@/lib/fonts';
 import { ArrowDefs, ArrowView } from './ArrowView';
 import { BoxedElementView } from './BoxedElementView';
@@ -102,12 +103,9 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
   // Frames are section backdrops: always render them FIRST (lowest in the
   // paint + DOM order) so their contents sit on top and stay clickable.
   // Otherwise a frame painted over its contents would swallow the clicks
-  // meant for the elements inside it (spec/09). Stable partition — frames
-  // keep their relative order, then everything else keeps theirs.
-  const isFrame = (el: (typeof elements)[number]) => el.type === 'shape' && el.shape === 'frame';
-  const ordered = elements.some(isFrame)
-    ? [...elements.filter(isFrame), ...elements.filter((el) => !isFrame(el))]
-    : elements;
+  // meant for the elements inside it (spec/09). Same rule the exporters
+  // use, via the shared `framesFirst` helper.
+  const ordered = framesFirst(elements);
   return (
     <>
       {/* Shared arrowhead defs. Multiple per-arrow <svg>s below

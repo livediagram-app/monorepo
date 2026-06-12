@@ -118,18 +118,6 @@ export function setTokenProvider(provider: TokenProvider | null): void {
   currentTokenProvider = provider;
 }
 
-// The signed-in user's Clerk-verified email, sent as `X-Owner-Email`
-// so the worker can connect team invites addressed to it (spec/32)
-// without depending on the email riding inside the session-token
-// claim. Same module-level rationale as the token provider; the editor
-// + explorer register it from Clerk's `user.primaryEmailAddress` and
-// clear it on sign-out. Only ever consulted for invite matching — it
-// never affects ownership / write auth (those stay JWT-`sub` based).
-let currentEmailProvider: (() => string | null) | null = null;
-export function setEmailProvider(provider: (() => string | null) | null): void {
-  currentEmailProvider = provider;
-}
-
 // Share password for the current visitor session (spec/24). Same
 // module-level rationale as the token provider: rather than thread the
 // password through every call signature, the viewer sets it once after
@@ -184,11 +172,6 @@ export async function apiHeaders(
   const token = currentTokenProvider ? await currentTokenProvider() : null;
   if (token) {
     h['Authorization'] = `Bearer ${token}`;
-    // Signed-in only: forward the verified email for team-invite
-    // matching (spec/32). Harmless on every other request; the worker
-    // only reads it for invite connection.
-    const email = currentEmailProvider?.();
-    if (email) h['X-Owner-Email'] = email;
   } else {
     h['X-Owner-Id'] = ownerId;
   }

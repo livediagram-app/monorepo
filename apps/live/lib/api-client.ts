@@ -33,7 +33,6 @@ export {
   DIAGRAM_LIST_LOAD_SAFETY_MS,
   apiHeaders,
   setTokenProvider,
-  setEmailProvider,
   setSessionSharePassword,
   getSessionSharePassword,
   readCachedSharePassword,

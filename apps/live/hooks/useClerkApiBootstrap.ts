@@ -2,7 +2,7 @@
 
 import { useAuth, useUser } from '@clerk/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { apiMigrateGuestData, setEmailProvider, setTokenProvider } from '@/lib/api-client';
+import { apiMigrateGuestData, setTokenProvider } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { clearGuestSelfId, getGuestSelfId, getGuestSelfSig } from '@/lib/local-identity';
 
@@ -86,24 +86,19 @@ function useClerkApiBootstrapEnabled(): BootstrapResult {
     return fl || user.fullName || user.username || null;
   }, [user]);
 
-  // The signed-in user's Clerk-verified primary email, forwarded to
-  // the worker for team-invite matching (spec/32).
-  const verifiedEmail = user?.primaryEmailAddress?.emailAddress ?? null;
-
-  // 1. Token + email provider registration.
+  // 1. Token provider registration. The signed-in user's email is no
+  // longer forwarded as a header — team-invite matching trusts only the
+  // verified `email` session-token claim server-side (spec/32).
   useEffect(() => {
     if (isSignedIn) {
       setTokenProvider(() => getToken());
-      setEmailProvider(() => verifiedEmail);
     } else {
       setTokenProvider(null);
-      setEmailProvider(null);
     }
     return () => {
       setTokenProvider(null);
-      setEmailProvider(null);
     };
-  }, [isSignedIn, getToken, verifiedEmail]);
+  }, [isSignedIn, getToken]);
 
   // 2. Guest → authed migration. Fires at most once per session.
   const migrateAttemptedRef = useRef(false);

@@ -58,6 +58,18 @@ export function withFrameContents(elements: Element[], ids: Set<string>): Set<st
   return expanded;
 }
 
+// Stable reorder that puts frames FIRST (lowest paint / z-order): a frame
+// is a section backdrop that must sit behind its contents so they stay
+// visible + clickable (spec/09). Both the on-canvas render layer and the
+// exporters route element lists through this, so frame ordering is one
+// rule in one place and never depends on array position. Returns the input
+// array unchanged when there are no frames (cheap no-op).
+export function framesFirst<T extends Element>(elements: T[]): T[] {
+  const isFrameEl = (el: Element) => el.type === 'shape' && el.shape === 'frame';
+  if (!elements.some(isFrameEl)) return elements;
+  return [...elements.filter(isFrameEl), ...elements.filter((el) => !isFrameEl(el))];
+}
+
 // One of the gestures a `BoxedElementView` can be in mid-drag. `move`
 // is the body drag; the four `resize-*` corners are the bounding-box
 // handles.

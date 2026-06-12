@@ -1,7 +1,8 @@
 // Pure Tab helpers lifted out of editor-page.tsx to slim the page
 // component. No React, no editor state — just shape transforms on
 // Tab[] used by the diagram-hydration + autosave paths.
-import type { Tab } from '@livediagram/diagram';
+import type { Element, Tab } from '@livediagram/diagram';
+import { autoAlignElements } from '@/lib/auto-align';
 
 export function createTab(name: string): Tab {
   // New tabs (and a new diagram's first tab) default the per-tab text size
@@ -201,4 +202,66 @@ export function pruneMapToPresent<V>(prev: Map<string, V>, present: Set<string>)
     else changed = true;
   }
   return changed ? next : prev;
+}
+
+// Merge AI-returned elements into the existing element list as one block
+// (spec/25). Lifted out of useEditorState's `applyAiElements` so this
+// non-trivial logic (id dedup, arrow-endpoint remap, clean-vs-generate
+// merge) is unit-testable; the hook just wraps it in `commit`.
+//
+//   - `returned` elements whose id matches an existing one MODIFY it.
+//   - `returned` elements with a new id are ADDED; if the AI reused a
+//     short id (e.g. "ai-001") that clashes with an existing element or
+//     another addition, the addition is remapped to a fresh uuid and any
+//     arrow endpoints pinned to the old id are rewired to the new one so
+//     connections survive.
+//   - `mode: 'clean'` PRESERVES properties the AI never sees (colours,
+//     images, ...) by spreading the AI patch over the existing element,
+//     rather than replacing it wholesale; `'generate'` replaces in place.
+//
+// The result is run through `autoAlignElements` to snap the merged set to
+// the grid, matching the prior inline behaviour.
+export function mergeAiElements(
+  existingEls: Element[],
+  returned: Element[],
+  mode: 'generate' | 'clean',
+): Element[] {
+  const existingById = new Map(existingEls.map((e) => [e.id, e]));
+  const modifications = returned.filter((e) => existingById.has(e.id));
+  const additions = returned.filter((e) => !existingById.has(e.id));
+
+  // Deduplicate addition ids that clash with an existing element or with
+  // each other (the AI reuses short ids like "ai-001").
+  const allIds = new Set(existingEls.map((e) => e.id));
+  const idMap = new Map<string, string>();
+  for (const el of additions) {
+    if (allIds.has(el.id)) idMap.set(el.id, crypto.randomUUID());
+    else allIds.add(el.id);
+  }
+  const deduped: Element[] = additions.map((el) => {
+    const newId = idMap.get(el.id) ?? el.id;
+    if (el.type === 'arrow') {
+      const from =
+        el.from.kind === 'pinned' && idMap.has(el.from.elementId)
+          ? { ...el.from, elementId: idMap.get(el.from.elementId)! }
+          : el.from;
+      const to =
+        el.to.kind === 'pinned' && idMap.has(el.to.elementId)
+          ? { ...el.to, elementId: idMap.get(el.to.elementId)! }
+          : el.to;
+      return { ...el, id: newId, from, to };
+    }
+    return { ...el, id: newId };
+  });
+
+  const modById = new Map(modifications.map((e) => [e.id, e]));
+  // 'clean' preserves AI-invisible props by spreading the patch over the
+  // existing element; 'generate' replaces the element in place.
+  const merge = (el: Element): Element =>
+    !modById.has(el.id)
+      ? el
+      : mode === 'clean'
+        ? ({ ...el, ...(modById.get(el.id) as Element) } as Element)
+        : (modById.get(el.id) as Element);
+  return autoAlignElements([...existingEls.map(merge), ...deduped]);
 }

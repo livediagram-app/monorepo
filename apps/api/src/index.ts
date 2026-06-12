@@ -52,19 +52,16 @@ export default {
     // legacy `X-Owner-Id` header.
     const clerkIdentity = await getClerkIdentity(env, request);
     const clerkUserId = clerkIdentity?.userId ?? null;
-    // Email used for team-invite matching (spec/32). Prefer the
-    // verified `email` claim when the session token carries it;
-    // otherwise fall back to the browser-supplied `X-Owner-Email`
-    // (only meaningful with a verified Clerk session — guests can't
-    // have invites). This is consulted ONLY for invite connection,
-    // never for ownership / write auth (those stay JWT-`sub` based),
-    // so a forged header can at most surface or claim a team invite
-    // addressed to the forged address — a documented trade-off for
-    // not requiring the email to be wired into the Clerk session token.
-    const headerEmail = clerkUserId
-      ? request.headers.get('X-Owner-Email')?.trim().toLowerCase() || null
-      : null;
-    const clerkEmail = (clerkIdentity?.email ?? null) || headerEmail;
+    // Email used for team-invite matching (spec/32). ONLY the verified
+    // `email` claim from the JWKS-checked session token is trusted —
+    // never a client-supplied header. A `X-Owner-Email` fallback used to
+    // exist here, but it let a signed-in caller forge another address and
+    // claim that address's pending team invites (join the team + read its
+    // private library). Invite auto-connection now degrades gracefully to
+    // off when the deployment hasn't added the email claim to the Clerk
+    // session token (dashboard → Sessions → Customize session token →
+    // `{"email": "{{user.primary_email_address}}"}`); see auth/clerk.ts.
+    const clerkEmail = clerkIdentity?.email ?? null;
     const resolveOwner = (): string | null => clerkUserId ?? request.headers.get('X-Owner-Id');
 
     // Per-owner write rate limit. Gates POST / PUT / DELETE at a

@@ -10,12 +10,14 @@
 // rendering.
 
 import {
+  endpointPosition,
   isBoxed,
   type ArrowElement,
   type BoxedElement,
   type Element,
   type Tab,
 } from '@livediagram/diagram';
+import { framesFirst } from './canvas';
 
 // ---------------------------------------------------------------------
 // File (JSON)
@@ -178,8 +180,9 @@ function renderTabToCanvas(tab: Tab, opts: { scale?: number } = {}): HTMLCanvasE
   ctx.fillRect(bounds.x - EXPORT_PADDING, bounds.y - EXPORT_PADDING, w / scale, h / scale);
 
   // Boxed elements first so arrows draw over them with the right
-  // z-order on either end.
-  for (const el of tab.elements) {
+  // z-order on either end; framesFirst keeps frame sections behind
+  // their contents (spec/09).
+  for (const el of framesFirst(tab.elements)) {
     if (el.type === 'arrow') continue;
     drawBoxed(ctx, el);
   }
@@ -190,53 +193,123 @@ function renderTabToCanvas(tab: Tab, opts: { scale?: number } = {}): HTMLCanvasE
   return canvas;
 }
 
-function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
-  // Image elements can't draw their bitmap into a static SVG / PNG
-  // export without an async pre-load step; v1 of the export pipeline
-  // is pure-sync so we render a simple placeholder rectangle marking
-  // the image's bounds instead. The user still sees the image's
-  // position + size, with a label naming the alt text when set.
+// --- Shared boxed-element export description --------------------------
+//
+// Both visual exporters (the PNG canvas renderer + the SVG renderer)
+// make the SAME decisions — which silhouette a boxed element maps to,
+// its fill / stroke defaults, and where its label sits — then draw with
+// their own primitives. Encoding that decision ONCE here keeps the two
+// renderers from drifting (a new export-visible shape or a tweaked
+// default lands in one place, not two).
+
+// The label colour / size / weight defaults shared by both renderers.
+const EXPORT_INK = '#0f172a'; // slate-900 — default stroke + label colour
+const EXPORT_IMAGE_FILL = '#f1f5f9'; // slate-100 placeholder body
+const EXPORT_IMAGE_STROKE = '#94a3b8'; // slate-400 placeholder dashes
+const EXPORT_IMAGE_LABEL = '#64748b'; // slate-500 alt-text label
+
+type ExportLabel = {
+  text: string;
+  x: number;
+  y: number;
+  anchor: 'start' | 'middle' | 'end';
+  color: string;
+  size: number;
+  bold: boolean;
+  italic: boolean;
+};
+
+// `image` is a dashed placeholder (a static export can't embed the
+// bitmap synchronously); `none` is a label-only element (text); the
+// rest carry the resolved fill + stroke. Geometry comes from the
+// element itself at draw time — the descriptor only carries the
+// branch decision + colours + label so neither renderer re-derives them.
+type ExportShape =
+  | { kind: 'image' }
+  | { kind: 'ellipse'; fill: string; stroke: string }
+  | { kind: 'diamond'; fill: string; stroke: string }
+  | { kind: 'rect'; fill: string; stroke: string }
+  | { kind: 'none' };
+
+type BoxedExport = { opacity: number; shape: ExportShape; label: ExportLabel | null };
+
+function describeBoxedExport(el: BoxedElement): BoxedExport {
+  const opacity = el.opacity ?? 1;
   if (el.type === 'image') {
-    ctx.save();
-    ctx.globalAlpha = el.opacity ?? 1;
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#94a3b8'; // slate-400
-    ctx.fillStyle = '#f1f5f9'; // slate-100
-    ctx.setLineDash([4, 4]);
-    const r = 6;
-    roundedRect(ctx, el.x, el.y, el.width, el.height, r);
-    ctx.fill();
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#64748b'; // slate-500
-    ctx.font = '600 12px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const label = el.alt ?? 'Image';
-    ctx.fillText(label, el.x + el.width / 2, el.y + el.height / 2);
-    ctx.restore();
-    return;
+    return {
+      opacity,
+      shape: { kind: 'image' },
+      // Alt text (or "Image") centred in the placeholder.
+      label: {
+        text: el.alt ?? 'Image',
+        x: el.x + el.width / 2,
+        y: el.y + el.height / 2,
+        anchor: 'middle',
+        color: EXPORT_IMAGE_LABEL,
+        size: 12,
+        bold: true,
+        italic: false,
+      },
+    };
   }
   const fill = el.fillColor ?? (el.type === 'sticky' ? '#fef3c7' : '#ffffff');
-  const stroke = el.strokeColor ?? '#0f172a';
-  const opacity = el.opacity ?? 1;
+  const stroke = el.strokeColor ?? EXPORT_INK;
+  // Annotation markers + circles render as the themed circle; diamonds as
+  // a 4-point polygon; text as label-only; everything else as a rounded
+  // rect — the "faithful overview" simplification shared by both exporters.
+  const shape: ExportShape =
+    (el.type === 'shape' && el.shape === 'circle') || el.type === 'annotation'
+      ? { kind: 'ellipse', fill, stroke }
+      : el.type === 'shape' && el.shape === 'diamond'
+        ? { kind: 'diamond', fill, stroke }
+        : el.type === 'text'
+          ? { kind: 'none' }
+          : { kind: 'rect', fill, stroke };
+  const label: ExportLabel | null = el.label
+    ? {
+        text: el.label,
+        x:
+          el.textAlignX === 'right'
+            ? el.x + el.width - 8
+            : el.textAlignX === 'left'
+              ? el.x + 8
+              : el.x + el.width / 2,
+        y: el.y + el.height / 2,
+        anchor: el.textAlignX === 'right' ? 'end' : el.textAlignX === 'left' ? 'start' : 'middle',
+        color: el.textColor ?? EXPORT_INK,
+        size: fontSizeFor(el.textSize),
+        bold: !!el.textBold,
+        italic: !!el.textItalic,
+      }
+    : null;
+  return { opacity, shape, label };
+}
+
+function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
+  const { opacity, shape, label } = describeBoxedExport(el);
+  const cx = el.x + el.width / 2;
+  const cy = el.y + el.height / 2;
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = stroke;
-  ctx.fillStyle = fill;
-  if ((el.type === 'shape' && el.shape === 'circle') || el.type === 'annotation') {
-    // Annotation markers render as their themed circle (the note is a
-    // hover affordance, not page content — see spec/38).
-    const cx = el.x + el.width / 2;
-    const cy = el.y + el.height / 2;
+  if (shape.kind === 'image') {
+    ctx.strokeStyle = EXPORT_IMAGE_STROKE;
+    ctx.fillStyle = EXPORT_IMAGE_FILL;
+    ctx.setLineDash([4, 4]);
+    roundedRect(ctx, el.x, el.y, el.width, el.height, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (shape.kind === 'ellipse') {
+    ctx.fillStyle = shape.fill;
+    ctx.strokeStyle = shape.stroke;
     ctx.beginPath();
     ctx.ellipse(cx, cy, el.width / 2, el.height / 2, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-  } else if (el.type === 'shape' && el.shape === 'diamond') {
-    const cx = el.x + el.width / 2;
-    const cy = el.y + el.height / 2;
+  } else if (shape.kind === 'diamond') {
+    ctx.fillStyle = shape.fill;
+    ctx.strokeStyle = shape.stroke;
     ctx.beginPath();
     ctx.moveTo(cx, el.y);
     ctx.lineTo(el.x + el.width, cy);
@@ -245,31 +318,19 @@ function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-  } else if (el.type === 'text') {
-    // Text elements have no fill / stroke — pure label.
-  } else {
-    // Default rectangle (rounded corners ~ 6px for stickies + rects).
-    const r = 6;
-    roundedRect(ctx, el.x, el.y, el.width, el.height, r);
+  } else if (shape.kind === 'rect') {
+    ctx.fillStyle = shape.fill;
+    ctx.strokeStyle = shape.stroke;
+    roundedRect(ctx, el.x, el.y, el.width, el.height, 6);
     ctx.fill();
     ctx.stroke();
   }
-  if (el.label) {
-    ctx.fillStyle = el.textColor ?? '#0f172a';
-    const fontSize =
-      el.textSize === 'lg' ? 20 : el.textSize === 'sm' ? 12 : el.textSize === 'scale' ? 18 : 14;
-    ctx.font = `${el.textBold ? '600' : '400'} ${el.textItalic ? 'italic ' : ''}${fontSize}px system-ui, sans-serif`;
+  if (label) {
+    ctx.fillStyle = label.color;
+    ctx.font = `${label.bold ? '600' : '400'} ${label.italic ? 'italic ' : ''}${label.size}px system-ui, sans-serif`;
     ctx.textBaseline = 'middle';
-    ctx.textAlign =
-      el.textAlignX === 'right' ? 'right' : el.textAlignX === 'left' ? 'left' : 'center';
-    const tx =
-      el.textAlignX === 'right'
-        ? el.x + el.width - 8
-        : el.textAlignX === 'left'
-          ? el.x + 8
-          : el.x + el.width / 2;
-    const ty = el.y + el.height / 2;
-    ctx.fillText(el.label, tx, ty);
+    ctx.textAlign = label.anchor === 'end' ? 'right' : label.anchor === 'start' ? 'left' : 'center';
+    ctx.fillText(label.text, label.x, label.y);
   }
   ctx.restore();
 }
@@ -296,39 +357,9 @@ function roundedRect(
   ctx.closePath();
 }
 
-function endpointPoint(
-  endpoint: ArrowElement['from'],
-  elements: Element[],
-): { x: number; y: number } {
-  if (endpoint.kind === 'free') return { x: endpoint.x, y: endpoint.y };
-  const target = elements.find((e) => e.id === endpoint.elementId);
-  if (!target || target.type === 'arrow') return { x: 0, y: 0 };
-  // Map the anchor name to a point on the target's bounding box.
-  const cx = target.x + target.width / 2;
-  const cy = target.y + target.height / 2;
-  switch (endpoint.anchor) {
-    case 'n':
-      return { x: cx, y: target.y };
-    case 's':
-      return { x: cx, y: target.y + target.height };
-    case 'e':
-      return { x: target.x + target.width, y: cy };
-    case 'w':
-      return { x: target.x, y: cy };
-    case 'ne':
-      return { x: target.x + target.width, y: target.y };
-    case 'nw':
-      return { x: target.x, y: target.y };
-    case 'se':
-      return { x: target.x + target.width, y: target.y + target.height };
-    case 'sw':
-      return { x: target.x, y: target.y + target.height };
-  }
-}
-
 function drawArrow(ctx: CanvasRenderingContext2D, arrow: ArrowElement, elements: Element[]): void {
-  const from = endpointPoint(arrow.from, elements);
-  const to = endpointPoint(arrow.to, elements);
+  const from = endpointPosition(arrow.from, elements);
+  const to = endpointPosition(arrow.to, elements);
   const stroke = arrow.strokeColor ?? '#64748b';
   const lineWidth = arrow.strokeWidth ?? 2;
   ctx.save();
@@ -422,65 +453,36 @@ function svgLabel(
 }
 
 function svgBoxed(el: BoxedElement): string {
-  const op = el.opacity ?? 1;
-  const opAttr = op !== 1 ? ` opacity="${r2(op)}"` : '';
-  // Image: dashed placeholder rect + alt-text label (same as the canvas
-  // renderer — a static export can't embed the bitmap synchronously).
-  if (el.type === 'image') {
-    return (
-      `<g${opAttr}>` +
+  const { opacity, shape, label } = describeBoxedExport(el);
+  const opAttr = opacity !== 1 ? ` opacity="${r2(opacity)}"` : '';
+  const cx = el.x + el.width / 2;
+  const cy = el.y + el.height / 2;
+  let shapeStr = '';
+  if (shape.kind === 'image') {
+    // Dashed placeholder rect — a static export can't embed the bitmap.
+    shapeStr =
       `<rect x="${r2(el.x)}" y="${r2(el.y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6"` +
-      ` fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>` +
-      svgLabel(
-        el.alt ?? 'Image',
-        el.x + el.width / 2,
-        el.y + el.height / 2,
-        'middle',
-        '#64748b',
-        12,
-        true,
-        false,
-      ) +
-      `</g>`
-    );
+      ` fill="${EXPORT_IMAGE_FILL}" stroke="${EXPORT_IMAGE_STROKE}" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+  } else if (shape.kind === 'ellipse') {
+    shapeStr = `<ellipse cx="${r2(cx)}" cy="${r2(cy)}" rx="${r2(el.width / 2)}" ry="${r2(el.height / 2)}" fill="${xmlEscape(shape.fill)}" stroke="${xmlEscape(shape.stroke)}" stroke-width="1.5"/>`;
+  } else if (shape.kind === 'diamond') {
+    shapeStr = `<polygon points="${r2(cx)},${r2(el.y)} ${r2(el.x + el.width)},${r2(cy)} ${r2(cx)},${r2(el.y + el.height)} ${r2(el.x)},${r2(cy)}" fill="${xmlEscape(shape.fill)}" stroke="${xmlEscape(shape.stroke)}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  } else if (shape.kind === 'rect') {
+    shapeStr = `<rect x="${r2(el.x)}" y="${r2(el.y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6" fill="${xmlEscape(shape.fill)}" stroke="${xmlEscape(shape.stroke)}" stroke-width="1.5"/>`;
   }
-  const fill = el.fillColor ?? (el.type === 'sticky' ? '#fef3c7' : '#ffffff');
-  const stroke = el.strokeColor ?? '#0f172a';
-  let shape = '';
-  if ((el.type === 'shape' && el.shape === 'circle') || el.type === 'annotation') {
-    // Annotation markers render as their themed circle (spec/38).
-    shape = `<ellipse cx="${r2(el.x + el.width / 2)}" cy="${r2(el.y + el.height / 2)}" rx="${r2(el.width / 2)}" ry="${r2(el.height / 2)}" fill="${xmlEscape(fill)}" stroke="${xmlEscape(stroke)}" stroke-width="1.5"/>`;
-  } else if (el.type === 'shape' && el.shape === 'diamond') {
-    const cx = el.x + el.width / 2;
-    const cy = el.y + el.height / 2;
-    shape = `<polygon points="${r2(cx)},${r2(el.y)} ${r2(el.x + el.width)},${r2(cy)} ${r2(cx)},${r2(el.y + el.height)} ${r2(el.x)},${r2(cy)}" fill="${xmlEscape(fill)}" stroke="${xmlEscape(stroke)}" stroke-width="1.5" stroke-linejoin="round"/>`;
-  } else if (el.type !== 'text') {
-    // Default rounded rectangle (square, sticky, and every other shape —
-    // matching the canvas renderer's "faithful overview" simplification).
-    shape = `<rect x="${r2(el.x)}" y="${r2(el.y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6" fill="${xmlEscape(fill)}" stroke="${xmlEscape(stroke)}" stroke-width="1.5"/>`;
-  }
-  let labelStr = '';
-  if (el.label) {
-    const anchor =
-      el.textAlignX === 'right' ? 'end' : el.textAlignX === 'left' ? 'start' : 'middle';
-    const tx =
-      el.textAlignX === 'right'
-        ? el.x + el.width - 8
-        : el.textAlignX === 'left'
-          ? el.x + 8
-          : el.x + el.width / 2;
-    labelStr = svgLabel(
-      el.label,
-      tx,
-      el.y + el.height / 2,
-      anchor,
-      el.textColor ?? '#0f172a',
-      fontSizeFor(el.textSize),
-      !!el.textBold,
-      !!el.textItalic,
-    );
-  }
-  return `<g${opAttr}>${shape}${labelStr}</g>`;
+  const labelStr = label
+    ? svgLabel(
+        label.text,
+        label.x,
+        label.y,
+        label.anchor,
+        label.color,
+        label.size,
+        label.bold,
+        label.italic,
+      )
+    : '';
+  return `<g${opAttr}>${shapeStr}${labelStr}</g>`;
 }
 
 function svgArrowhead(
@@ -497,8 +499,8 @@ function svgArrowhead(
 }
 
 function svgArrow(arrow: ArrowElement, elements: Element[]): string {
-  const from = endpointPoint(arrow.from, elements);
-  const to = endpointPoint(arrow.to, elements);
+  const from = endpointPosition(arrow.from, elements);
+  const to = endpointPosition(arrow.to, elements);
   const stroke = arrow.strokeColor ?? '#64748b';
   const lw = arrow.strokeWidth ?? 2;
   const op = arrow.opacity ?? 1;
@@ -542,7 +544,8 @@ function renderTabToSvg(tab: Tab): string {
     `<rect x="${r2(vbX)}" y="${r2(vbY)}" width="${r2(vbW)}" height="${r2(vbH)}" fill="${xmlEscape(tab.backgroundColor ?? EXPORT_BG)}"/>`,
   );
   // Boxed elements first, then arrows on top (same z-order as the canvas).
-  for (const el of tab.elements) {
+  // framesFirst keeps frame sections behind their contents (spec/09).
+  for (const el of framesFirst(tab.elements)) {
     if (el.type !== 'arrow') parts.push(svgBoxed(el));
   }
   for (const el of tab.elements) {

@@ -1,9 +1,10 @@
-import type { Tab } from '@livediagram/diagram';
+import type { ArrowElement, Element, ShapeElement, Tab } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
 import {
   computeTabSaveDiff,
   createTab,
   deriveTabLoadState,
+  mergeAiElements,
   patchTab,
   placeholdersFromSummaries,
   pruneMapToPresent,
@@ -351,5 +352,71 @@ describe('deriveTabLoadState', () => {
     expect(editable({ ...base, errored: true })).toBe(false); // error
     expect(editable({ ...base, loaded: true })).toBe(true); // ready
     expect(editable({ ...base, elementsLength: 3 })).toBe(true); // peer content
+  });
+});
+
+describe('mergeAiElements (spec/25 AI apply)', () => {
+  // Grid-aligned coords so autoAlignElements is a no-op and assertions
+  // on geometry / structure stay stable.
+  const sq = (id: string, o: Partial<ShapeElement> = {}): ShapeElement => ({
+    id,
+    type: 'shape',
+    shape: 'square',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 80,
+    ...o,
+  });
+  const pinned = (id: string, fromId: string, toId: string): ArrowElement => ({
+    id,
+    type: 'arrow',
+    from: { kind: 'pinned', elementId: fromId, anchor: 'e' },
+    to: { kind: 'pinned', elementId: toId, anchor: 'w' },
+  });
+  const byId = (els: Element[], id: string) => els.find((e) => e.id === id);
+
+  it('generate: modifies a matching id in place and appends new elements', () => {
+    const existing = [sq('a', { label: 'Old' })];
+    const out = mergeAiElements(
+      existing,
+      [sq('a', { label: 'New' }), sq('b', { x: 200 })],
+      'generate',
+    );
+    expect(out.map((e) => e.id).sort()).toEqual(['a', 'b']);
+    expect(byId(out, 'a')?.label).toBe('New');
+  });
+
+  it('clean: preserves AI-invisible props (e.g. fillColor) by spreading the patch', () => {
+    const existing = [sq('a', { label: 'Box', fillColor: '#abcdef' })];
+    // The AI returns the element WITHOUT fillColor (it never sees colours).
+    const out = mergeAiElements(existing, [sq('a', { label: 'Renamed' })], 'clean');
+    const a = byId(out, 'a') as ShapeElement;
+    expect(a.label).toBe('Renamed'); // patch applied
+    expect(a.fillColor).toBe('#abcdef'); // colour preserved
+  });
+
+  it('appends non-clashing additions with ids intact and preserves an arrow between them', () => {
+    const existing = [sq('keep')];
+    const n1 = sq('new1', { x: 200, label: 'A' });
+    const n2 = sq('new2', { x: 400, label: 'B' });
+    const out = mergeAiElements(existing, [n1, n2, pinned('arr', 'new1', 'new2')], 'generate');
+    expect(out.map((e) => e.id).sort()).toEqual(['arr', 'keep', 'new1', 'new2']);
+    const arrow = out.find((e) => e.type === 'arrow') as ArrowElement;
+    // No id clash → endpoints keep pointing at the additions verbatim.
+    expect(arrow.from.kind === 'pinned' && arrow.from.elementId).toBe('new1');
+    expect(arrow.to.kind === 'pinned' && arrow.to.elementId).toBe('new2');
+  });
+
+  it('does not drop or duplicate elements (modifications replace, additions append)', () => {
+    const existing = [sq('a'), sq('b', { x: 200 })];
+    // One modification (id 'a') + one genuine addition (id 'c').
+    const out = mergeAiElements(
+      existing,
+      [sq('a', { label: 'mod' }), sq('c', { x: 400 })],
+      'generate',
+    );
+    expect(out.map((e) => e.id).sort()).toEqual(['a', 'b', 'c']);
+    expect((byId(out, 'a') as ShapeElement).label).toBe('mod');
   });
 });

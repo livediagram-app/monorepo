@@ -201,7 +201,7 @@ The **Tools tab** also carries a **Frame** (`frame`): a 360×260 transparent out
 
 **Frames behave as sections**, not decorations:
 
-- **Drops at the back of the z-order** (front of the `elements` array, in `commitDraw`). Its contents therefore paint on top and stay individually selectable / draggable; clicking an _element_ inside hits that element (it's above the frame), while clicking _empty space_ inside the frame — or its border / title — grabs the frame itself.
+- **Always renders behind its contents** via the shared `framesFirst` helper (`apps/live/lib/canvas.ts`), which both the canvas render layer and the PNG / SVG exporters route element lists through — so a frame is a backdrop regardless of its array position, with no special-casing at create time. Its contents therefore paint on top and stay individually selectable / draggable; clicking an _element_ inside hits that element (it's above the frame), while clicking _empty space_ inside the frame — or its border / title — grabs the frame itself.
 - **Dragging the frame moves everything inside it.** The move set is expanded with every boxed element whose centre lies within the frame at grab time (`withFrameContents` in `apps/live/lib/canvas.ts`); pinned arrows between members follow via the normal post-move anchor rebind. Membership is recomputed on each grab, so an element is "in" the section simply by sitting inside it — there's no explicit parenting to manage.
 - **Resizing the frame leaves its contents in place** — only the outline grows / shrinks, so you size the section around the elements rather than scaling them.
 - The frame does **not** show the quick-connect **+** buttons (it's a backdrop, not a node to chain from), and it isn't a morph target.

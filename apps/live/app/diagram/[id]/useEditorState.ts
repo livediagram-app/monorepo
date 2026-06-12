@@ -119,8 +119,7 @@ import {
   DIAGRAM_LIST_LOAD_SAFETY_MS,
 } from '@/lib/api-client';
 import { commentRowsFromElements } from '@/components/CommentsPanel';
-import { autoAlignElements } from '@/lib/auto-align';
-import { createTab, deriveTabLoadState, patchTab } from './editor-page-helpers';
+import { createTab, deriveTabLoadState, mergeAiElements, patchTab } from './editor-page-helpers';
 import { useAutosave } from './useAutosave';
 import { usePerTabLoad } from './usePerTabLoad';
 import { useRoomConnection } from './useRoomConnection';
@@ -1029,60 +1028,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   //     arrow endpoints to keep connections intact.
   // Clean always gets the full element list back so it replaces everything.
   const applyAiElements = (elements: Element[], mode: 'generate' | 'clean') => {
-    commit((existingEls) => {
-      const existingById = new Map(existingEls.map((e) => [e.id, e]));
-
-      // Partition: which returned elements modify existing ones vs add new.
-      const modifications = elements.filter((e) => existingById.has(e.id));
-      const additions = elements.filter((e) => !existingById.has(e.id));
-
-      // Deduplicate addition IDs that clash with each other or with
-      // existing elements (the AI reuses short IDs like "ai-001").
-      const allIds = new Set(existingEls.map((e) => e.id));
-      const idMap = new Map<string, string>();
-      for (const el of additions) {
-        if (allIds.has(el.id)) {
-          idMap.set(el.id, crypto.randomUUID());
-        } else {
-          allIds.add(el.id);
-        }
-      }
-      const deduped: Element[] = additions.map((el) => {
-        const newId = idMap.get(el.id) ?? el.id;
-        if (el.type === 'arrow') {
-          const from =
-            el.from.kind === 'pinned' && idMap.has(el.from.elementId)
-              ? { ...el.from, elementId: idMap.get(el.from.elementId)! }
-              : el.from;
-          const to =
-            el.to.kind === 'pinned' && idMap.has(el.to.elementId)
-              ? { ...el.to, elementId: idMap.get(el.to.elementId)! }
-              : el.to;
-          return { ...el, id: newId, from, to };
-        }
-        return { ...el, id: newId };
-      });
-
-      if (mode === 'clean') {
-        // Clean returns ALL elements. Merge AI changes onto existing elements
-        // so properties the AI never sees (fillColor, strokeColor, textColor,
-        // images, etc.) are preserved rather than silently wiped.
-        const modById = new Map(modifications.map((e) => [e.id, e]));
-        return autoAlignElements([
-          ...existingEls.map((el) =>
-            modById.has(el.id) ? ({ ...el, ...(modById.get(el.id) as Element) } as Element) : el,
-          ),
-          ...deduped,
-        ]);
-      }
-
-      // Generate: apply modifications in place, append new elements.
-      const modById = new Map(modifications.map((e) => [e.id, e]));
-      return autoAlignElements([
-        ...existingEls.map((el) => (modById.has(el.id) ? (modById.get(el.id) as Element) : el)),
-        ...deduped,
-      ]);
-    });
+    commit((existingEls) => mergeAiElements(existingEls, elements, mode));
   };
 
   // Click handler for Activity rows (Revert has its own button that
