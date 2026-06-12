@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { useEscape } from '@/hooks/useEscape';
 import type { Participant } from '@/lib/identity';
@@ -6,9 +6,16 @@ import { initialsOf, randomName } from '@/lib/identity';
 import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateCategory, TemplateKind } from '@/lib/templates';
 import { TEMPLATE_CATEGORIES, TEMPLATES, templateCategory } from '@/lib/templates';
-import { THEME_CATEGORIES, THEMES, type ThemeId, themeCategory } from '@/lib/themes';
+import {
+  THEME_CATEGORIES,
+  THEMES,
+  type ThemeCategory,
+  type ThemeId,
+  themeCategory,
+} from '@/lib/themes';
+import { AnimatedHeightBox } from './AnimatedHeightBox';
 import { CategoryCard, TemplateCard } from './template-picker-cards';
-import { ThemeSwatch } from './ThemeSwatch';
+import { ThemeCard, ThemeCategoryCard } from './theme-picker-cards';
 import { Tooltip } from './Tooltip';
 
 type TemplatePickerProps = {
@@ -85,7 +92,13 @@ export function TemplatePicker({
   // for the top-level overview (Blank quick-pick + a card per category).
   // A non-empty search query overrides this and shows flat results.
   const [openCategory, setOpenCategory] = useState<TemplateCategory | null>(null);
-  const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
+  // New-diagram flow defaults to the Basic ('brand') theme — the plain
+  // un-themed default — and shows it pre-selected as the overview's
+  // quick-pick. Applying to an existing tab keeps that tab's theme.
+  const [themeId, setThemeId] = useState<ThemeId>(isWelcome ? 'brand' : currentThemeId);
+  // Theme browse drill-in, mirroring `openCategory` for templates: null
+  // is the overview (Brand quick-pick + a card per theme category).
+  const [openThemeCategory, setOpenThemeCategory] = useState<ThemeCategory | null>(null);
   // Rotate which templates + themes greet the user on each open so
   // people keep discovering options beyond the usual first rows, but
   // always pin the sensible default first (Blank diagram, Brand theme).
@@ -115,31 +128,15 @@ export function TemplatePicker({
   const blankTemplate = TEMPLATES.find((t) => t.kind === 'blank');
   const categoryTemplates = (category: TemplateCategory) =>
     templates.filter((t) => t.kind !== 'blank' && templateCategory(t.kind) === category);
+  // Brand is pulled out of the theme grouping and shown as a dedicated
+  // quick-pick on the overview, the way Blank is for templates.
+  const brandTheme = THEMES.find((t) => t.id === 'brand');
+  const themeCategoryThemes = (category: ThemeCategory) =>
+    themes.filter((t) => t.id !== 'brand' && themeCategory(t.id) === category);
 
-  // Smooth the template body's height between views (overview ⇆ a
-  // category ⇆ search) so swapping doesn't snap the modal taller/shorter.
-  // We measure the (stable, non-keyed) content wrapper and ease the outer
-  // height toward it, capped at TEMPLATE_BODY_MAX_PX where it starts to
-  // scroll instead. `animateBody` gates the transition on after the first
-  // measured frame so the modal doesn't animate its own open.
-  const TEMPLATE_BODY_MAX_PX = 304; // 19rem
-  const templateBodyRef = useRef<HTMLDivElement>(null);
-  const [templateBodyHeight, setTemplateBodyHeight] = useState<number | null>(null);
-  const [animateBody, setAnimateBody] = useState(false);
-  useEffect(() => {
-    const el = templateBodyRef.current;
-    if (!el) return;
-    const measure = () => setTemplateBodyHeight(el.scrollHeight);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    const raf = requestAnimationFrame(() => setAnimateBody(true));
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-  const bodyExceedsCap = templateBodyHeight !== null && templateBodyHeight > TEMPLATE_BODY_MAX_PX;
+  // Both browsers ease their height between views so swaps don't snap the
+  // modal taller/shorter; the cap is where they switch to scrolling.
+  const BODY_MAX_PX = 304; // 19rem
 
   return (
     <div
@@ -262,154 +259,161 @@ export function TemplatePicker({
                   catalogue. Blank is special-cased out of the category
                   grouping — it's a "start from scratch", not a category
                   template — and lives only on the overview row. */}
-              <div
-                className={`mt-2 ${bodyExceedsCap ? 'overflow-y-auto' : 'overflow-hidden'}${
-                  animateBody ? ' transition-[height] duration-200 ease-out' : ''
-                }`}
-                style={{
-                  height:
-                    templateBodyHeight === null
-                      ? undefined
-                      : Math.min(templateBodyHeight, TEMPLATE_BODY_MAX_PX),
-                }}
+              <AnimatedHeightBox
+                maxPx={BODY_MAX_PX}
+                viewKey={templateFilter ? 'search' : (openCategory ?? 'overview')}
+                className="mt-2"
               >
-                {/* Stable (non-keyed) wrapper so the ResizeObserver keeps
-                    measuring across view swaps; its keyed child remounts +
-                    soft-fades while the outer height eases to the new size. */}
-                <div ref={templateBodyRef}>
-                  <div
-                    key={templateFilter ? 'search' : (openCategory ?? 'overview')}
-                    className="animate-fade-in"
-                  >
-                    {templateFilter ? (
-                      filteredTemplates.length === 0 ? (
-                        <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                          No templates match “{templateQuery.trim()}”.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                          {filteredTemplates.map((t) => (
-                            <TemplateCard
-                              key={t.kind}
-                              template={t}
-                              active={templateKind === t.kind}
-                              onSelect={() => setTemplateKind(t.kind)}
-                              onCommit={() => onPick(t.kind, effectiveName, themeId)}
-                            />
-                          ))}
-                        </div>
-                      )
-                    ) : openCategory ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setOpenCategory(null)}
-                          className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                            <path
-                              d="M7.5 2.5 4 6l3.5 3.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          All templates
-                        </button>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                          {categoryTemplates(openCategory).map((t) => (
-                            <TemplateCard
-                              key={t.kind}
-                              template={t}
-                              active={templateKind === t.kind}
-                              onSelect={() => setTemplateKind(t.kind)}
-                              onCommit={() => onPick(t.kind, effectiveName, themeId)}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {blankTemplate ? (
-                          <TemplateCard
-                            template={blankTemplate}
-                            active={templateKind === 'blank'}
-                            onSelect={() => setTemplateKind('blank')}
-                            onCommit={() => onPick('blank', effectiveName, themeId)}
-                          />
-                        ) : null}
-                        {TEMPLATE_CATEGORIES.map((cat) => {
-                          const items = categoryTemplates(cat.id);
-                          if (items.length === 0) return null;
-                          return (
-                            <CategoryCard
-                              key={cat.id}
-                              label={cat.label}
-                              description={cat.description}
-                              count={items.length}
-                              previews={items.map((t) => t.kind)}
-                              onOpen={() => setOpenCategory(cat.id)}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
+                {templateFilter ? (
+                  filteredTemplates.length === 0 ? (
+                    <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                      No templates match “{templateQuery.trim()}”.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {filteredTemplates.map((t) => (
+                        <TemplateCard
+                          key={t.kind}
+                          template={t}
+                          active={templateKind === t.kind}
+                          onSelect={() => setTemplateKind(t.kind)}
+                          onCommit={() => onPick(t.kind, effectiveName, themeId)}
+                        />
+                      ))}
+                    </div>
+                  )
+                ) : openCategory ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setOpenCategory(null)}
+                      className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+                        <path
+                          d="M7.5 2.5 4 6l3.5 3.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      All templates
+                    </button>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {categoryTemplates(openCategory).map((t) => (
+                        <TemplateCard
+                          key={t.kind}
+                          template={t}
+                          active={templateKind === t.kind}
+                          onSelect={() => setTemplateKind(t.kind)}
+                          onCommit={() => onPick(t.kind, effectiveName, themeId)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {blankTemplate ? (
+                      <TemplateCard
+                        template={blankTemplate}
+                        active={templateKind === 'blank'}
+                        onSelect={() => setTemplateKind('blank')}
+                        onCommit={() => onPick('blank', effectiveName, themeId)}
+                      />
+                    ) : null}
+                    {TEMPLATE_CATEGORIES.map((cat) => {
+                      const items = categoryTemplates(cat.id);
+                      if (items.length === 0) return null;
+                      return (
+                        <CategoryCard
+                          key={cat.id}
+                          label={cat.label}
+                          description={cat.description}
+                          count={items.length}
+                          previews={items.map((t) => t.kind)}
+                          onOpen={() => setOpenCategory(cat.id)}
+                        />
+                      );
+                    })}
                   </div>
-                </div>
-              </div>
+                )}
+              </AnimatedHeightBox>
             </>
           ) : null}
 
-          {/* Theme grid — only in the first-run welcome flow; existing
-              tabs keep whichever theme they already have. */}
+          {/* Theme picker — two-level browse mirroring the template grid:
+              a Brand quick-pick + a card per colour-temperament category;
+              clicking a category drills into its themes (with a Back
+              affordance). Only in flows that pick a theme; identity-only
+              mode skips it. */}
           {showThemes ? (
             <>
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Select a theme
               </p>
-              {/* Theme category sections in a height-capped scroll area,
-                  mirroring the template grid: bucketed by colour
-                  temperament, sections render in THEME_CATEGORIES order. */}
-              <div className="mt-2 max-h-[15rem] overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                {THEME_CATEGORIES.map((cat) => {
-                  const items = themes.filter((t) => themeCategory(t.id) === cat.id);
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={cat.id} className="mb-3 last:mb-0">
-                      <p className="px-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        {cat.label}
-                      </p>
-                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                        {items.map((t) => {
-                          const active = themeId === t.id;
-                          return (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => setThemeId(t.id)}
-                              // Double-click commits with this theme — same
-                              // shortcut the template tiles offer (select +
-                              // submit in one gesture), using the
-                              // currently-picked template + entered name.
-                              onDoubleClick={() => onPick(templateKind, effectiveName, t.id)}
-                              aria-pressed={active}
-                              className={
-                                active
-                                  ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-200'
-                                  : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
-                              }
-                            >
-                              <ThemeSwatch theme={t} size="md" />
-                              <span>{t.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+              <AnimatedHeightBox
+                maxPx={BODY_MAX_PX}
+                viewKey={openThemeCategory ?? 'overview'}
+                className="mt-2"
+              >
+                {openThemeCategory ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setOpenThemeCategory(null)}
+                      className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+                        <path
+                          d="M7.5 2.5 4 6l3.5 3.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      All themes
+                    </button>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {themeCategoryThemes(openThemeCategory).map((t) => (
+                        <ThemeCard
+                          key={t.id}
+                          theme={t}
+                          active={themeId === t.id}
+                          onSelect={() => setThemeId(t.id)}
+                          onCommit={() => onPick(templateKind, effectiveName, t.id)}
+                        />
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {brandTheme ? (
+                      <ThemeCard
+                        theme={brandTheme}
+                        active={themeId === 'brand'}
+                        onSelect={() => setThemeId('brand')}
+                        onCommit={() => onPick(templateKind, effectiveName, 'brand')}
+                      />
+                    ) : null}
+                    {THEME_CATEGORIES.map((cat) => {
+                      const items = themeCategoryThemes(cat.id);
+                      if (items.length === 0) return null;
+                      return (
+                        <ThemeCategoryCard
+                          key={cat.id}
+                          label={cat.label}
+                          description={cat.description}
+                          count={items.length}
+                          themes={items}
+                          onOpen={() => setOpenThemeCategory(cat.id)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </AnimatedHeightBox>
             </>
           ) : null}
         </div>

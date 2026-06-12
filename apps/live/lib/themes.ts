@@ -90,8 +90,10 @@ export type ThemeDefinition = {
 
 export const THEMES: ThemeDefinition[] = [
   {
+    // `id` stays 'brand' (saved diagrams reference it); only the
+    // user-facing label is "Basic" — the plain, un-themed default.
     id: 'brand',
-    label: 'Brand',
+    label: 'Basic',
     backgroundColor: '#ffffff',
     backgroundPattern: 'grid',
     patternColor: '#cbd5e1',
@@ -461,11 +463,11 @@ export const THEMES: ThemeDefinition[] = [
 // THEME_CATEGORIES order and skips empties.
 export type ThemeCategory = 'cool' | 'warm' | 'dark' | 'multicolour';
 
-export const THEME_CATEGORIES: { id: ThemeCategory; label: string }[] = [
-  { id: 'cool', label: 'Cool' },
-  { id: 'warm', label: 'Warm' },
-  { id: 'dark', label: 'Dark' },
-  { id: 'multicolour', label: 'Multi-colour' },
+export const THEME_CATEGORIES: { id: ThemeCategory; label: string; description: string }[] = [
+  { id: 'cool', label: 'Cool', description: 'Blues, greens and purples.' },
+  { id: 'warm', label: 'Warm', description: 'Reds, oranges and earthy tones.' },
+  { id: 'dark', label: 'Dark', description: 'Dark-backdrop themes.' },
+  { id: 'multicolour', label: 'Multi-colour', description: 'A different hue per branch.' },
 ];
 
 const THEME_CATEGORY: Record<ThemeId, ThemeCategory> = {
