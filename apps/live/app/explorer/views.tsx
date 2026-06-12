@@ -428,7 +428,19 @@ export function FolderRow({
     </>
   );
   return (
-    <li className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+    <li
+      className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50"
+      // Right-click anywhere on the row opens the same actions menu as the
+      // ellipsis button (anchored to it).
+      onContextMenu={
+        renaming
+          ? undefined
+          : (e) => {
+              e.preventDefault();
+              setMenuOpen(true);
+            }
+      }
+    >
       {renaming ? (
         <div className="flex min-w-0 items-center gap-2">{labelInner}</div>
       ) : (
@@ -534,6 +546,16 @@ function DiagramRow({
         (showOwner
           ? 'sm:grid-cols-[1fr_110px_90px_140px_40px]'
           : 'sm:grid-cols-[1fr_90px_140px_40px]')
+      }
+      // Right-click anywhere on the row opens the same actions menu as the
+      // ellipsis button (anchored to it).
+      onContextMenu={
+        renaming
+          ? undefined
+          : (e) => {
+              e.preventDefault();
+              setMenuOpen(true);
+            }
       }
     >
       <span className="flex min-w-0 items-center gap-2">

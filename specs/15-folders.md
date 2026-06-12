@@ -143,6 +143,7 @@ beats "browse my whole library."
   compact.
 - Each folder row shows the folder name + a count badge for the
   combined number of direct children (folders + diagrams).
+- **Right-clicking anywhere on a folder or diagram row** opens that row's ellipsis menu (suppressing the browser's default context menu), anchored to the row's ellipsis button — the same menu the `⋯` click opens. Applies in both the floating Explorer panel and the full-page `/explorer` (a no-op while a row is being renamed).
 - Folder-row ellipsis menu: Rename, Delete, "Move to folder…".
   Rename is inline (same pattern as the diagram-row rename). Delete
   pops a confirmation dialog ("Delete this folder?" with the

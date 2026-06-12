@@ -152,6 +152,16 @@ export function FolderNode({
         onDragOver={onMoveDiagramToFolder ? handleDragOver : undefined}
         onDragLeave={onMoveDiagramToFolder ? handleDragLeave : undefined}
         onDrop={onMoveDiagramToFolder ? handleDrop : undefined}
+        // Right-click anywhere on the folder row opens the same actions
+        // menu as the ellipsis button (anchored to it).
+        onContextMenu={
+          editing
+            ? undefined
+            : (e) => {
+                e.preventDefault();
+                setMenuOpen(true);
+              }
+        }
       >
         <button
           type="button"
@@ -665,6 +675,17 @@ export function DiagramRow({
       className={pillClasses}
       draggable={isDraggable && !editing}
       onDragStart={isDraggable && !editing ? handleDragStart : undefined}
+      // Right-click anywhere on the row opens the same actions menu as the
+      // ellipsis button (anchored to it). Guarded so it's a no-op while
+      // renaming or when the row has no menu.
+      onContextMenu={
+        hasMenu && !editing
+          ? (e) => {
+              e.preventDefault();
+              setMenuOpen(true);
+            }
+          : undefined
+      }
     >
       {editing ? (
         <div className={mainClass}>{mainInner}</div>
