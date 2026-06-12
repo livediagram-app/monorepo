@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export type PaletteTab = {
   id: string;
@@ -24,40 +24,94 @@ export function PaletteTabBar({
   // category open by default (Shapes, the most common entry point).
   defaultOpenId?: string | null;
 }) {
+  // Committed tab (click to pin). Hovering a tab on desktop previews
+  // its panel without committing, so the user can peek into a category
+  // for discovery and revert by moving the pointer away — no click.
   const [activeId, setActiveId] = useState<string | null>(defaultOpenId);
-  // Kept separate from activeId so the panel's content stays mounted
-  // through the collapse animation: activeId drops to null immediately
-  // on close (driving the 1fr -> 0fr grid transition), while displayedId
-  // only changes when a *different* tab opens.
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  // Desktop hover wins over the committed tab; on touch hoverId stays
+  // null (the pointer handlers below ignore non-mouse pointers, since a
+  // tap would otherwise flash a preview before the click registers).
+  const shownId = hoverId ?? activeId;
+  // Kept so the panel's content stays mounted through the collapse
+  // animation: shownId drops to null the instant the pointer leaves an
+  // unpinned preview (driving the height -> 0 transition), while
+  // displayedId holds the last shown tab so its content doesn't blank
+  // out mid-animation.
   const [displayedId, setDisplayedId] = useState<string | null>(defaultOpenId);
-  const select = (id: string) => {
-    if (activeId === id) {
-      setActiveId(null);
-      return;
-    }
-    setActiveId(id);
-    setDisplayedId(id);
+  useEffect(() => {
+    if (shownId) setDisplayedId(shownId);
+  }, [shownId]);
+  const select = (id: string) => setActiveId((prev) => (prev === id ? null : id));
+  const displayed = tabs.find((t) => t.id === (shownId ?? displayedId)) ?? null;
+
+  // Soft category-change animation. The panel's height is driven off the
+  // measured content height and eased, so switching from a short
+  // category (Tools) to a tall one (Icons) glides instead of snapping;
+  // the content itself fades in (keyed below). `animate` gates the
+  // transition on until after the first measured frame so the
+  // default-open panel doesn't animate itself open on page load.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState<number | null>(null);
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const measure = () => setHeight(el.scrollHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const raf = requestAnimationFrame(() => setAnimate(true));
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Desktop-only hover preview. onPointerOver bubbles, so we read the
+  // tab under the pointer from the event target and only update when
+  // it's actually a tab button — moving the pointer DOWN into the
+  // previewed panel finds no tab and leaves the preview untouched, so
+  // the previewed content stays usable. Leaving the whole component
+  // (tab row + panel) reverts to the committed tab.
+  const previewOver = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
+    const id = (e.target as Element | null)
+      ?.closest?.('[data-tab-id]')
+      ?.getAttribute('data-tab-id');
+    if (id) setHoverId(id);
   };
-  const displayed = tabs.find((t) => t.id === displayedId) ?? null;
+  const previewLeave = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
+    setHoverId(null);
+  };
+
   return (
-    <div className="border-t border-slate-100 dark:border-slate-800">
+    <div
+      className="border-t border-slate-100 dark:border-slate-800"
+      onPointerOver={previewOver}
+      onPointerLeave={previewLeave}
+    >
       <div
         className="flex items-center gap-1 border-b border-slate-100 px-2 py-1.5 dark:border-slate-800"
         role="tablist"
         aria-label="Palette categories"
       >
         {tabs.map((tab) => {
-          const isActive = tab.id === activeId;
+          // Highlight follows the *shown* tab so the lit icon always
+          // matches the panel below, including during a hover preview.
+          const isShown = tab.id === shownId;
           return (
             <button
               key={tab.id}
               type="button"
               role="tab"
-              aria-selected={isActive}
+              data-tab-id={tab.id}
+              aria-selected={tab.id === activeId}
               aria-label={tab.label}
               onClick={() => select(tab.id)}
               className={
-                isActive
+                isShown
                   ? 'flex h-9 w-9 items-center justify-center rounded-md bg-brand-500 text-white shadow-sm transition'
                   : 'flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white'
               }
@@ -68,11 +122,13 @@ export function PaletteTabBar({
         })}
       </div>
       <div
-        className="grid transition-[grid-template-rows] duration-200 ease-out"
-        style={{ gridTemplateRows: activeId ? '1fr' : '0fr' }}
+        className={`overflow-hidden${animate ? ' transition-[height] duration-200 ease-out' : ''}`}
+        style={{ height: shownId ? (height ?? undefined) : 0 }}
       >
-        <div className="overflow-hidden">
-          <div className="px-3 pb-3 pt-3">{displayed?.content}</div>
+        <div ref={contentRef} className="px-3 pb-3 pt-3">
+          <div key={displayed?.id ?? 'empty'} className="animate-fade-in">
+            {displayed?.content}
+          </div>
         </div>
       </div>
     </div>
