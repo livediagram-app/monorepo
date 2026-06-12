@@ -219,12 +219,13 @@ The **Tools tab** also carries a **Frame** (`frame`): a 360×260 transparent out
 - **Text** — adds a free-floating text element (see [Text element](#text-element)).
 - **Arrow** ("Add arrow") — drops / draws a plain straight connector, OR, with a shape selected, arms click-to-connect (see [Adding an arrow](#adding-an-arrow)).
 - **Sticky note** — adds a sticky-note element (see [Sticky note element](#sticky-note-element)).
+- **Annotation** — drops a note marker (a fixed-size themed circle + note glyph) at the viewport centre: hover to read its note above everything, click to edit it. See [spec/38](38-annotations.md).
 
 ### Placement on add
 
-The **Icon** and **Table** buttons place the new element at the **centre of the visible canvas viewport** (accounting for pan), auto-selected. The draw-capable buttons (shape / text / sticky / image / arrow) instead arm the combined tap-or-drag gesture — see [Adding elements](#adding-elements--tap-to-drop-or-drag-to-draw) — where a tap drops it at the tap point and a drag sizes it.
+The **Icon**, **Table**, and **Annotation** buttons place the new element at the **centre of the visible canvas viewport** (accounting for pan), auto-selected. The draw-capable buttons (shape / text / sticky / image / arrow) instead arm the combined tap-or-drag gesture — see [Adding elements](#adding-elements--tap-to-drop-or-drag-to-draw) — where a tap drops it at the tap point and a drag sizes it.
 
-If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed. This rule lives in `inheritedSizeFor` (`apps/live/lib/canvas.ts`) and applies to both the centre-drop and the tap-to-drop paths (the combined gesture captures the selection at arm-time, since arming clears it).
+If a boxed element is currently selected, the new element **inherits its width and height** so the user can chain together similarly-sized nodes quickly. Circles and diamonds are an exception — they're inherently 1:1, so they snap back to a square using the larger inherited dimension to avoid being squashed. **Annotations** are a stronger exception: they're a fixed marker size and never inherit the selection's dimensions (spec/38). This rule lives in `inheritedSizeFor` (`apps/live/lib/canvas.ts`) and applies to both the centre-drop and the tap-to-drop paths (the combined gesture captures the selection at arm-time, since arming clears it).
 
 Consecutive **icon / table** adds land at the same viewport centre and stack on top of each other; the user sees the auto-selection move to the latest, so they can drag it off or undo without trial-and-error. An earlier draft promised a "staggered default position" to spread adds out, but that was never wired up and the simpler centre-then-let-the-user-move-it path shipped instead.
 

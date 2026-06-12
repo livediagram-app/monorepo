@@ -1,6 +1,7 @@
 import {
   isBoxed,
   type Anchor,
+  type AnnotationElement,
   type ArrowElement,
   type BoxedElement,
   type Element,
@@ -142,6 +143,24 @@ export function createSticky(x: number, y: number): StickyElement {
     width: 200,
     height: 200,
     textSize: 'md',
+  };
+}
+
+// Fixed marker size for an annotation (see specs/38). It never resizes, so
+// this is its size for life; `inheritedSizeFor` keeps it at this regardless
+// of the current selection.
+export const ANNOTATION_SIZE = 44;
+
+// A note marker dropped at (x, y). The note text starts empty — the user
+// clicks the marker to add it.
+export function createAnnotation(x: number, y: number): AnnotationElement {
+  return {
+    id: crypto.randomUUID(),
+    type: 'annotation',
+    x,
+    y,
+    width: ANNOTATION_SIZE,
+    height: ANNOTATION_SIZE,
   };
 }
 

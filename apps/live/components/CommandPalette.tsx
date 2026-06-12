@@ -191,6 +191,8 @@ type CommandPaletteProps = {
   onAddSticky: () => void;
   // Drop a 3x3 editable table at the viewport centre.
   onAddTable: () => void;
+  // Drop a note marker (annotation) at the viewport centre. See spec/38.
+  onAddAnnotation: () => void;
   // Spawn an image placeholder + open the picker. Optional so
   // deployments without R2 (or view-role visitors) can omit it; the
   // Image palette entry hides when the handler is missing. See
@@ -241,6 +243,7 @@ export function CommandPalette({
   onAddText,
   onAddSticky,
   onAddTable,
+  onAddAnnotation,
   onAddImage,
   onAddArrow,
   onBeginFreehand,
@@ -273,6 +276,10 @@ export function CommandPalette({
   };
   const addTable = () => {
     onAddTable();
+    onMobileClose?.();
+  };
+  const addAnnotation = () => {
+    onAddAnnotation();
     onMobileClose?.();
   };
   const addArrow = () => {
@@ -635,7 +642,8 @@ export function CommandPalette({
           {
             id: 'tools',
             label: 'Tools',
-            description: 'Text, pencil, arrow, sticky note, table, image, user, and frame.',
+            description:
+              'Text, pencil, arrow, sticky note, table, image, user, frame, and annotation.',
             icon: (
               <svg
                 width="18"
@@ -654,7 +662,11 @@ export function CommandPalette({
               </svg>
             ),
             content: (
-              <div className="flex items-center gap-1">
+              // Six-column grid (matching the Shapes + Icons tabs) so the
+              // fixed tiles wrap into even rows. A single-row flex used to
+              // overflow the palette width and silently clip the last
+              // buttons (user / frame / annotation) off the right edge.
+              <div className="grid grid-cols-6 justify-items-center gap-1 overflow-x-hidden">
                 <IconButton
                   label="Add text"
                   description="Text element. Double-click to edit."
@@ -837,6 +849,27 @@ export function CommandPalette({
                   >
                     <rect x="2.5" y="4" width="13" height="10.5" />
                     <path d="M2.5 6.8 H8.5" />
+                  </svg>
+                </IconButton>
+                <IconButton
+                  label="Add annotation"
+                  description="Annotation. A note marker: hover to read it, click to edit."
+                  onClick={addAnnotation}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M4 5.5h16A1.5 1.5 0 0 1 21.5 7v8a1.5 1.5 0 0 1-1.5 1.5H10l-4 3v-3H4A1.5 1.5 0 0 1 2.5 15V7A1.5 1.5 0 0 1 4 5.5Z" />
+                    <path d="M6.5 9.75h11" />
+                    <path d="M6.5 12.5h7" />
                   </svg>
                 </IconButton>
               </div>

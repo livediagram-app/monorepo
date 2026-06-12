@@ -225,7 +225,9 @@ function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = stroke;
   ctx.fillStyle = fill;
-  if (el.type === 'shape' && el.shape === 'circle') {
+  if ((el.type === 'shape' && el.shape === 'circle') || el.type === 'annotation') {
+    // Annotation markers render as their themed circle (the note is a
+    // hover affordance, not page content — see spec/38).
     const cx = el.x + el.width / 2;
     const cy = el.y + el.height / 2;
     ctx.beginPath();
@@ -445,7 +447,8 @@ function svgBoxed(el: BoxedElement): string {
   const fill = el.fillColor ?? (el.type === 'sticky' ? '#fef3c7' : '#ffffff');
   const stroke = el.strokeColor ?? '#0f172a';
   let shape = '';
-  if (el.type === 'shape' && el.shape === 'circle') {
+  if ((el.type === 'shape' && el.shape === 'circle') || el.type === 'annotation') {
+    // Annotation markers render as their themed circle (spec/38).
     shape = `<ellipse cx="${r2(el.x + el.width / 2)}" cy="${r2(el.y + el.height / 2)}" rx="${r2(el.width / 2)}" ry="${r2(el.height / 2)}" fill="${xmlEscape(fill)}" stroke="${xmlEscape(stroke)}" stroke-width="1.5"/>`;
   } else if (el.type === 'shape' && el.shape === 'diamond') {
     const cx = el.x + el.width / 2;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   activeCommentCount,
+  createAnnotation,
   createArrow,
   createComment,
   createImage,
@@ -9,6 +10,7 @@ import {
   createSticky,
   createText,
   duplicateGroupedElements,
+  isBoxed,
   type ArrowElement,
   type CommentThread,
   type Element,
@@ -66,6 +68,15 @@ describe('boxed-element factories', () => {
       imageId: null,
       aspectLocked: true,
     });
+  });
+
+  it('createAnnotation is a 44x44 boxed marker with no note yet (spec/38)', () => {
+    const a = createAnnotation(7, 8);
+    expect(a).toMatchObject({ type: 'annotation', x: 7, y: 8, width: 44, height: 44 });
+    expect(a.note).toBeUndefined();
+    expect(a.id).toMatch(/[0-9a-f-]{36}/);
+    // It must count as boxed so it flows through selection / drag / layering.
+    expect(isBoxed(a)).toBe(true);
   });
 
   it('factories mint distinct ids on each call', () => {

@@ -31,6 +31,7 @@ import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { describeVariant } from './element-variant';
 import { BadgeStrip, RemoteSelectorsStrip } from './element-badges';
+import { AnnotationGlyph, AnnotationHoverNote } from './AnnotationMarker';
 import { IconGlyph } from './icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
 import { describeLink } from '@/lib/link-label';
@@ -205,6 +206,12 @@ function BoxedElementViewImpl({
   const alignX = element.textAlignX ?? defaultAlign.x;
   const alignY = element.textAlignY ?? defaultAlign.y;
   const textColor = element.textColor ?? defaultTextColor(element);
+
+  // Annotation marker (spec/38): a fixed-size note circle. Hovering it
+  // floats its note above everything; clicking it (handled in the drag
+  // engine's click-vs-drag test) opens the editable note popover.
+  const isAnnotation = element.type === 'annotation';
+  const [hovering, setHovering] = useState(false);
 
   const handleShapeDown = (e: ReactPointerEvent) => {
     if (isEditing) return;
@@ -397,6 +404,8 @@ function BoxedElementViewImpl({
       onPointerDown={handleShapeDown}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
+      onPointerEnter={isAnnotation ? () => setHovering(true) : undefined}
+      onPointerLeave={isAnnotation ? () => setHovering(false) : undefined}
       onDragOver={acceptsIconDrop ? handleIconDragOver : undefined}
       onDragLeave={acceptsIconDrop ? handleIconDragLeave : undefined}
       onDrop={acceptsIconDrop ? handleIconDrop : undefined}
@@ -459,7 +468,11 @@ function BoxedElementViewImpl({
         />
       ) : null}
 
-      {element.type === 'image' && imageContext ? (
+      {element.type === 'annotation' ? (
+        <AnnotationGlyph
+          stroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
+        />
+      ) : element.type === 'image' && imageContext ? (
         <ImageElementView
           element={element}
           ownerId={imageContext.ownerId}
@@ -531,13 +544,15 @@ function BoxedElementViewImpl({
         <RemoteSelectorsStrip zoom={zoom} selectors={remoteSelectors} />
       ) : null}
 
-      {linked || commentCount > 0 || (element.note && onOpenNote) ? (
+      {/* The annotation marker IS the note affordance, so it suppresses
+          the generic note badge (it would be redundant). */}
+      {linked || commentCount > 0 || (element.note && onOpenNote && !isAnnotation) ? (
         <BadgeStrip
           zoom={zoom}
           linked={linked}
           linkLabel={element.link ? describeLink(element.link, tabSummaries) : undefined}
           commentCount={commentCount}
-          hasNote={!!element.note && !!onOpenNote}
+          hasNote={!!element.note && !!onOpenNote && !isAnnotation}
           badgeColor={badgeColor}
           onFollowLink={() => {
             if (element.link) onFollowLink(element.link);
@@ -557,11 +572,13 @@ function BoxedElementViewImpl({
         // point of not raising z on select). pointer-events-none keeps the
         // body draggable; every handle re-enables pointer events on itself.
         <div className="pointer-events-none absolute inset-0" style={{ zIndex: 30 }}>
-          {showHandles && !isRotated ? (
+          {/* Annotations are a fixed marker size (spec/38): no resize or
+              rotate handles. They keep the arrow anchors below. */}
+          {showHandles && !isRotated && !isAnnotation ? (
             <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
           ) : null}
 
-          {showHandles ? (
+          {showHandles && !isAnnotation ? (
             <RotateHandle elementId={element.id} zoom={zoom} onBeginRotate={onBeginRotate} />
           ) : null}
 
@@ -594,6 +611,13 @@ function BoxedElementViewImpl({
             </>
           ) : null}
         </div>
+      ) : null}
+
+      {/* Hover preview: float this annotation's note above every element
+          (spec/38). Suppressed while selected — the click/edit popover owns
+          that surface then — and only when there's note text to show. */}
+      {isAnnotation && hovering && !isSelected && !isEditing && element.note ? (
+        <AnnotationHoverNote elementId={element.id} note={element.note} />
       ) : null}
     </div>
   );

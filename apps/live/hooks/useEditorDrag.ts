@@ -171,6 +171,11 @@ type EditorDragDeps = {
     targetShapeId: string,
     position: 'left' | 'right' | 'above' | 'below',
   ) => void;
+  // An annotation marker was pressed + released without moving (a click,
+  // not a drag): open its note editor (spec/38). Distinguished from a drag
+  // by the same DRAG_ENGAGE_PX travel test the icon-fold uses. Omitted when
+  // note edits are blocked (read-only / locked tab).
+  onAnnotationClicked?: (id: string) => void;
   // Per-user preference (spec/20) controlling whether connected
   // arrows re-pin to the most-natural face as a box is dragged.
   // Defaults to true; setting `false` keeps anchors frozen at
@@ -1017,6 +1022,14 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             break;
           }
         }
+      }
+      // A plain click (no engage) on an annotation marker opens its note
+      // editor (spec/38). Same travel test as the icon-fold above; runs
+      // before setDrag(null) so we still have the gesture's start coords.
+      if (drag?.kind === 'boxed' && drag.mode === 'move' && d.onAnnotationClicked) {
+        const moved = Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY) > 4;
+        const dragged = d.activeTab.elements.find((el) => el.id === drag.primaryId);
+        if (!moved && dragged?.type === 'annotation') d.onAnnotationClicked(dragged.id);
       }
       setDrag(null);
       scheduleGuides([]);

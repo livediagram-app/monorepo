@@ -1,6 +1,7 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
   bestAnchorTowards,
+  createAnnotation,
   createShape,
   createTable,
   createText,
@@ -97,6 +98,15 @@ export function useElementCreation(opts: {
     if (editsBlocked) return;
     addBoxed((x, y) => createTable(x, y));
     track('Element', 'Added', titleCaseType('table'));
+  };
+
+  // A note marker (spec/38) dropped at the viewport centre (no
+  // draw-to-size: it's a fixed-size marker, not a box you drag out). The
+  // user clicks it afterwards to add the note text.
+  const addAnnotation = () => {
+    if (editsBlocked) return;
+    addBoxed((x, y) => createAnnotation(x, y));
+    track('Element', 'Added', titleCaseType('annotation'));
   };
 
   const addText = () => {
@@ -197,6 +207,7 @@ export function useElementCreation(opts: {
     addShape,
     addIcon,
     addTable,
+    addAnnotation,
     addText,
     addSticky,
     addArrow,

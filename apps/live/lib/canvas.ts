@@ -11,6 +11,10 @@ export function inheritedSizeFor(
   base: BoxedElement,
   selected: Element | null | undefined,
 ): { width: number; height: number } {
+  // Annotations are a fixed marker size (spec/38): never inherit the
+  // selection's dimensions, so a marker added while a big shape is selected
+  // doesn't balloon. It stays its intrinsic 44×44.
+  if (base.type === 'annotation') return { width: base.width, height: base.height };
   const inherit = selected && isBoxed(selected) ? selected : null;
   let width = inherit?.width ?? base.width;
   let height = inherit?.height ?? base.height;

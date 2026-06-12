@@ -46,6 +46,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 35  | [Team shared diagrams](35-team-shared-diagrams.md)                 | Per-team folder tree + diagrams every joined member can manage                                  |
 | 36  | [Sign-in encouragement](36-sign-in-encouragement.md)               | Dismissible guest banner (Explorer + delayed in-editor) + "why sign in" modal                   |
 | 37  | [API documentation (OpenAPI)](37-api-documentation.md)             | Proposal: generated OpenAPI 3.1 doc at `/api/openapi.json`, drift-tested                        |
+| 38  | [Annotations](38-annotations.md)                                   | Palette marker (themed circle + note glyph): hover to read its note, click to edit              |
 
 ## Workflow
 

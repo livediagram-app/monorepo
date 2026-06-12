@@ -1,8 +1,9 @@
-import type { ArrowElement } from '@livediagram/diagram';
+import { createAnnotation, createShape, type ArrowElement } from '@livediagram/diagram';
 import { describe, expect, it } from 'vitest';
 import {
   arrowReferencesAny,
   cornerOf,
+  inheritedSizeFor,
   MIN_SIZE,
   nextBounds,
   snapRotation,
@@ -104,6 +105,22 @@ const bothPinnedArrow: ArrowElement = {
   from: { kind: 'pinned', elementId: 'el-from', anchor: 'e' },
   to: { kind: 'pinned', elementId: 'el-to', anchor: 'w' },
 };
+
+describe('inheritedSizeFor', () => {
+  it('inherits the selected element size for a normal shape', () => {
+    const newShape = createShape('square', 0, 0);
+    const selected = { ...createShape('square', 0, 0), width: 300, height: 90 };
+    expect(inheritedSizeFor(newShape, selected)).toEqual({ width: 300, height: 90 });
+  });
+
+  it('keeps an annotation at its fixed marker size regardless of selection (spec/38)', () => {
+    const marker = createAnnotation(0, 0);
+    const bigSelected = { ...createShape('square', 0, 0), width: 400, height: 250 };
+    // A marker added while a big shape is selected must NOT balloon.
+    expect(inheritedSizeFor(marker, bigSelected)).toEqual({ width: 44, height: 44 });
+    expect(inheritedSizeFor(marker, null)).toEqual({ width: 44, height: 44 });
+  });
+});
 
 describe('arrowReferencesAny', () => {
   it('returns false for an arrow with no pinned endpoints', () => {

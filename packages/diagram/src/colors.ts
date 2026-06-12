@@ -25,6 +25,8 @@ export function defaultPadding(element: BoxedElement): Padding {
       return 'none';
     case 'table':
       return 'sm';
+    case 'annotation':
+      return 'none';
   }
 }
 
@@ -104,6 +106,8 @@ export function defaultTextColor(element: BoxedElement): string {
       return '#1e293b'; // slate-800 (no inline label today, future-proof)
     case 'table':
       return '#1e293b'; // slate-800
+    case 'annotation':
+      return '#075985'; // brand-800 (no inline label; declared for parity)
   }
 }
 
@@ -132,6 +136,8 @@ export function defaultFillColor(element: BoxedElement): string {
       return '#f0f9ff';
     case 'table':
       return 'transparent';
+    case 'annotation':
+      return '#e0f2fe'; // brand-100 — a touch deeper than a shape so the marker reads as a chip
   }
 }
 
@@ -149,6 +155,8 @@ export function defaultStrokeColor(element: BoxedElement): string {
       return '#0ea5e9'; // brand-500, same accent as shapes
     case 'table':
       return '#94a3b8'; // slate-400 grid lines
+    case 'annotation':
+      return '#0ea5e9'; // brand-500 — ring + note glyph tint
   }
 }
 
@@ -158,7 +166,8 @@ export function supportsColours(element: Element): boolean {
     element.type === 'sticky' ||
     element.type === 'arrow' ||
     element.type === 'freehand' ||
-    element.type === 'table'
+    element.type === 'table' ||
+    element.type === 'annotation'
   );
 }
 

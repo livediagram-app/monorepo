@@ -72,6 +72,7 @@ export function EditorView() {
     addShape,
     addSticky,
     addTable,
+    addAnnotation,
     addTab,
     addText,
     aiCapable,
@@ -555,6 +556,7 @@ export function EditorView() {
         onDropIcon={isReadOnly ? undefined : dropIconOnElement}
         onLinkCell={isReadOnly ? undefined : openCellLinkPicker}
         onAddTable={addTable}
+        onAddAnnotation={addAnnotation}
         onAddText={addText}
         onAddSticky={addSticky}
         onAddImage={addImage}

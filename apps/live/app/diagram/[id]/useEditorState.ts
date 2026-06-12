@@ -1393,6 +1393,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addShape,
     addIcon,
     addTable,
+    addAnnotation,
     addText,
     addSticky,
     addArrow,
@@ -1662,6 +1663,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     markCheckpoint,
     scheduleElementChangeLog,
     onIconElementDroppedOnShape: editsBlocked ? undefined : dropIconElementOnShape,
+    // Click (not drag) on an annotation marker opens its note editor
+    // (spec/38). Blocked alongside other edits on a locked / read-only tab.
+    onAnnotationClicked: editsBlocked ? undefined : openNote,
     autoRebindArrowsRef,
     alignmentGuidesRef,
     isPinchingRef,
@@ -1774,6 +1778,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addShape,
     addSticky,
     addTable,
+    addAnnotation,
     addTab,
     addText,
     aiCapable,

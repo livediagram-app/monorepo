@@ -550,6 +550,12 @@ const THEME_COLOUR_FIELDS: Record<Element['type'], ThemeColourField[]> = {
   arrow: [{ element: 'strokeColor', theme: 'elementStroke' }],
   sticky: [],
   image: [],
+  // Annotation markers theme their circle fill + ring/glyph stroke like a
+  // shape; no themed text (the note is plain). See spec/38.
+  annotation: [
+    { element: 'fillColor', theme: 'elementFill' },
+    { element: 'strokeColor', theme: 'elementStroke' },
+  ],
 };
 
 // The colour fields a given element actually exposes to theming. Starts
@@ -829,7 +835,9 @@ export function deriveNewBoxedColours(
   const colours: { fillColor?: string; strokeColor?: string; textColor?: string } = {};
   const bg = tab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
   const patternColor = tab.patternColor ?? DEFAULT_PATTERN_COLOR;
-  if (base.type === 'shape') {
+  if (base.type === 'shape' || base.type === 'annotation') {
+    // Annotation markers derive fill + stroke from the backdrop the same
+    // way a shape does (text isn't used — the note is plain). See spec/38.
     const derived = deriveShapeColours(patternColor, bg);
     if (derived) {
       colours.fillColor = derived.fill;
@@ -851,7 +859,7 @@ export function deriveNewBoxedColours(
   // Theme overrides win. Sticky stays untouched (returns colours
   // empty for that branch).
   const theme = getTheme(tab.theme);
-  if (base.type === 'shape') {
+  if (base.type === 'shape' || base.type === 'annotation') {
     if (theme.elementFill) colours.fillColor = theme.elementFill;
     if (theme.elementStroke) colours.strokeColor = theme.elementStroke;
     if (theme.elementText) colours.textColor = theme.elementText;

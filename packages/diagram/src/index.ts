@@ -536,6 +536,58 @@ export type FreehandElement = {
   note?: string;
 };
 
+// --- Annotations -----------------------------------------------------------
+
+// See specs/38-annotations.md. A fixed-size themed circle holding a note
+// glyph: hover it to read its `note` floating above the canvas, click it to
+// edit the note. It is a boxed element so it flows through every generic
+// path (selection, drag, layering, lock, group, link, colours, comments,
+// the note feature), but it does NOT resize (no handles) — it stays a tidy
+// marker. There is no inline label; the content lives entirely in `note`.
+// The shared boxed fields are declared (mostly always-undefined here) so the
+// union code paths compile without per-type guards, mirroring ImageElement.
+export type AnnotationElement = {
+  id: ElementId;
+  type: 'annotation';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  // The note this marker carries. Edited via NotePopover / useEditorNotes,
+  // previewed on hover. Empty string strips the field on commit.
+  note?: string;
+  // fillColor tints the circle; strokeColor draws the ring + the note glyph.
+  // textColor is unused (no inline label) but declared for the generic
+  // colour code paths.
+  fillColor?: string;
+  strokeColor?: string;
+  textColor?: string;
+  // An annotation has no editable label; declared always-undefined so the
+  // generic "boxed element has a label" paths compile (mirrors Table/Image).
+  label?: string;
+  locked?: boolean;
+  groupId?: ElementId;
+  opacity?: number; // 0..1, defaults to 1
+  link?: ElementLink;
+  commentThread?: CommentThread;
+  // Shared boxed-element fields that the generic union code paths (format
+  // painter, geometry, search) read uniformly. An annotation doesn't expose
+  // UI for these — it's a fixed, non-rotating marker with no inline text —
+  // so they stay undefined in practice; declared for parity the same way
+  // ImageElement / TableElement declare their always-undefined text fields.
+  rotation?: number;
+  aspectLocked?: boolean;
+  padding?: Padding;
+  textSize?: TextSize;
+  textAlignX?: TextAlignX;
+  textAlignY?: TextAlignY;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textStrikethrough?: boolean;
+  font?: string;
+};
+
 // --- Arrows ----------------------------------------------------------------
 
 export type Anchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
@@ -756,7 +808,8 @@ export type BoxedElement =
   | StickyElement
   | ImageElement
   | FreehandElement
-  | TableElement;
+  | TableElement
+  | AnnotationElement;
 export type Element = BoxedElement | ArrowElement;
 
 export type Tab = {
@@ -875,7 +928,8 @@ export function isBoxed(element: Element): element is BoxedElement {
     element.type === 'sticky' ||
     element.type === 'image' ||
     element.type === 'freehand' ||
-    element.type === 'table'
+    element.type === 'table' ||
+    element.type === 'annotation'
   );
 }
 

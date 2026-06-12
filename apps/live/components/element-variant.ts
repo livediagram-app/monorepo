@@ -153,5 +153,20 @@ export function describeVariant(
           : {},
       };
     }
+    case 'annotation': {
+      // A themed circle marker (spec/38): fill + ring from the element's
+      // colours, fully round. The note glyph paints as the child content.
+      const ring = `${singleRing('ring-2 ring-brand-200')} ${multiRing}`.trim();
+      return {
+        className: `shadow-sm ${ring}`,
+        style: {
+          borderRadius: '50%',
+          backgroundColor: element.fillColor ?? defaultFillColor(element),
+          borderColor: remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element),
+          borderWidth: remoteBorderColor ? remoteBorderWidth : 2,
+          borderStyle: 'solid',
+        },
+      };
+    }
   }
 }

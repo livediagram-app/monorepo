@@ -101,6 +101,7 @@ export type CanvasProps = {
   onAddShape: (kind: ShapeKind) => void;
   onAddIcon: (iconId: string) => void;
   onAddTable: () => void;
+  onAddAnnotation: () => void;
   onAddText: () => void;
   onAddSticky: () => void;
   // Spawn an empty image placeholder + open the picker. Optional so
