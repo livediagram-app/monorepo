@@ -958,12 +958,19 @@ export function CommandPalette({
                     </button>
                   ))}
                 </div>
-                <div className="grid max-h-44 grid-cols-6 gap-1 overflow-y-auto">
+                {/* overflow-x-hidden: a vertical scrollbar narrows the row
+                    enough that six fixed-width tiles overflow by a few px,
+                    and `overflow-y-auto` would otherwise also surface a
+                    horizontal scrollbar (CSS resolves the other axis to
+                    auto). justify-items-center keeps the slack symmetric so
+                    nothing visible clips. */}
+                <div className="grid max-h-44 grid-cols-6 justify-items-center gap-1 overflow-y-auto overflow-x-hidden">
                   {iconResults.map((icon) => (
                     <IconButton
                       key={icon.id}
                       label={`Add ${icon.label}`}
                       description={`Click to add, or drag onto a shape to set its icon.`}
+                      hideTooltip
                       onClick={() => addIcon(icon.id)}
                       draggable
                       onDragStart={(e) => {

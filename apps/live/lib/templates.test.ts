@@ -42,17 +42,21 @@ describe('TEMPLATES catalogue', () => {
     'gantt',
     'live-card',
     'comparison-table',
+    'system-architecture',
+    'er-diagram',
+    'sequence-diagram',
+    'prioritization-matrix',
   ];
 
-  it('lists exactly 20 templates (8 default + 12 extra, matches spec/16 and spec/09)', () => {
-    expect(TEMPLATES).toHaveLength(20);
+  it('lists exactly 24 templates (8 default + 16 extra, matches spec/16 and spec/09)', () => {
+    expect(TEMPLATES).toHaveLength(24);
   });
 
-  it('splits cleanly into 8 default + 12 extra (the picker uses `extra` to gate behind "Show more")', () => {
+  it('splits cleanly into 8 default + 16 extra (the picker uses `extra` to gate behind "Show more")', () => {
     const defaults = TEMPLATES.filter((t) => !t.extra);
     const extras = TEMPLATES.filter((t) => t.extra);
     expect(defaults).toHaveLength(8);
-    expect(extras).toHaveLength(12);
+    expect(extras).toHaveLength(16);
   });
 
   it('has no duplicate kinds (guards against accidental copy-paste in the catalogue)', () => {
@@ -107,7 +111,10 @@ describe('templateCanvasOverrides', () => {
   it('gives the logo sheet a checkerboard design board and timelines ruled lines', () => {
     expect(templateCanvasOverrides('logo-design')).toEqual({ backgroundPattern: 'checkerboard' });
     expect(templateCanvasOverrides('timeline')).toEqual({ backgroundPattern: 'lines' });
-    expect(templateCanvasOverrides('journey')).toEqual({ backgroundPattern: 'lines' });
+    expect(templateCanvasOverrides('journey')).toEqual({
+      backgroundPattern: 'lines',
+      backgroundOpacity: 0.8,
+    });
   });
 
   it('leaves the blank template to inherit the theme backdrop', () => {
@@ -335,7 +342,7 @@ describe('board templates', () => {
     expect(labels.filter((l) => l === 'High priority').length).toBe(24);
   });
 
-  it('swot drops a 2x2 grid with the four classic quadrants around a subject centre', () => {
+  it('swot drops a 2x2 grid with the four classic quadrants, each with a role icon', () => {
     const tab = buildTemplatedTab('swot', 'brand', 'tab-1', 'swot');
     const labels = tab.elements
       .map((el) => ('label' in el ? el.label : undefined))
@@ -344,7 +351,9 @@ describe('board templates', () => {
     expect(labels).toContain('Weaknesses');
     expect(labels).toContain('Opportunities');
     expect(labels).toContain('Threats');
-    expect(labels).toContain('Subject');
+    // One role glyph per quadrant (icon shapes), no centre subject pill.
+    const icons = tab.elements.filter((el) => el.type === 'shape' && el.shape === 'icon');
+    expect(icons).toHaveLength(4);
     // Bullet starters inside each quadrant (formatted with the
     // bullet glyph). Pinning that they exist confirms the
     // quadrants aren't empty frames.

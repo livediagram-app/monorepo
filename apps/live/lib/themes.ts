@@ -18,13 +18,16 @@ import { assignBranches, branchOfArrow, ROOT_BRANCH } from './hierarchy';
 
 export type ThemeId =
   | 'brand'
+  // 'slate' is a legacy id: the theme it points at is now Pink (the old
+  // grey Slate was too close to Steel / Charcoal / Mono). Kept as the id
+  // so diagrams saved against it keep resolving.
   | 'slate'
   | 'forest'
   | 'sunset'
   | 'lavender'
   | 'mono'
   | 'ocean'
-  | 'crimson'
+  | 'sky'
   | 'midnight'
   | 'cream'
   | 'rose'
@@ -91,14 +94,17 @@ export const THEMES: ThemeDefinition[] = [
     elementText: null,
   },
   {
+    // Pink. The id stays 'slate' for save-compatibility (see the ThemeId
+    // union) — the original grey Slate was dropped for being a near-dupe
+    // of Steel / Charcoal / Mono.
     id: 'slate',
-    label: 'Slate',
-    backgroundColor: '#f8fafc',
+    label: 'Pink',
+    backgroundColor: '#fdf2f8',
     backgroundPattern: 'grid',
-    patternColor: '#cbd5e1',
-    elementFill: '#f1f5f9',
-    elementStroke: '#475569',
-    elementText: '#0f172a',
+    patternColor: '#fbcfe8',
+    elementFill: '#fce7f3',
+    elementStroke: '#db2777',
+    elementText: '#9d174d',
   },
   {
     id: 'forest',
@@ -151,14 +157,14 @@ export const THEMES: ThemeDefinition[] = [
     elementText: '#164e63',
   },
   {
-    id: 'crimson',
-    label: 'Crimson',
-    backgroundColor: '#fef2f2',
+    id: 'sky',
+    label: 'Sky',
+    backgroundColor: '#f0f9ff',
     backgroundPattern: 'grid',
-    patternColor: '#fecaca',
-    elementFill: '#fee2e2',
-    elementStroke: '#b91c1c',
-    elementText: '#7f1d1d',
+    patternColor: '#bae6fd',
+    elementFill: '#e0f2fe',
+    elementStroke: '#0369a1',
+    elementText: '#0c4a6e',
   },
   {
     id: 'midnight',
@@ -282,12 +288,13 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'rainbow',
     label: 'Rainbow',
-    // Confetti backdrop — a fixed multi-colour scatter (ignores
-    // patternColor) so picking Rainbow visibly turns the canvas
-    // colourful even before any element is added, on a faint warm tint
-    // that reads as "not the default white".
+    // Rainbow tints the ELEMENTS (the per-branch palette below); the
+    // canvas stays a plain grid on a faint warm tint. The Confetti
+    // backdrop is deliberately NOT used here — it's an "out there"
+    // canvas that users should opt into by hand from the background
+    // picker, not get foisted on them by choosing a colourful theme.
     backgroundColor: '#fffdf7',
-    backgroundPattern: 'confetti',
+    backgroundPattern: 'grid',
     patternColor: '#e2e8f0',
     elementFill: '#f8fafc',
     elementStroke: '#475569',

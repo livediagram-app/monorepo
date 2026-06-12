@@ -176,14 +176,13 @@ export function buildKanban(cx: number, cy: number): Element[] {
   return elements;
 }
 
-// SWOT 2×2 grid sized to give each quadrant real working room, with
-// a subject pill in the middle (the thing being analysed) and 3
-// starter bullets per quadrant the user can swap for their own.
-// Quadrant tints follow the conventional emotional weighting —
-// Strengths green / Opportunities blue (positives), Weaknesses red /
+// SWOT 2×2 grid sized to give each quadrant real working room. Each
+// quadrant carries a role icon in its top-right (award / trending-down
+// / sun / alert-octagon) and 3 starter bullets the user can swap for
+// their own. Quadrant tints follow the conventional emotional weighting
+// — Strengths green / Opportunities blue (positives), Weaknesses red /
 // Threats amber (concerns). Each bullet is its own Text element so
-// users can move/delete individual lines without breaking the
-// scaffold.
+// users can move/delete individual lines without breaking the scaffold.
 export function buildSwot(cx: number, cy: number): Element[] {
   const cellW = 560;
   const cellH = 440;
@@ -192,8 +191,7 @@ export function buildSwot(cx: number, cy: number): Element[] {
   const headerPadding = 20;
   const bulletGap = 14;
   const bulletH = 56;
-  const subjectW = 220;
-  const subjectH = 64;
+  const iconSize = 58;
 
   const quadrants: {
     label: string;
@@ -202,6 +200,9 @@ export function buildSwot(cx: number, cy: number): Element[] {
     fill: string;
     stroke: string;
     headerColor: string;
+    // A glyph in the quadrant's top-right that signals its role at a
+    // glance (award = strengths, trending-down = weaknesses, etc.).
+    icon: string;
     bullets: string[];
   }[] = [
     {
@@ -211,6 +212,7 @@ export function buildSwot(cx: number, cy: number): Element[] {
       fill: '#dcfce7',
       stroke: '#86efac',
       headerColor: '#15803d',
+      icon: 'award',
       bullets: ['Strong brand recognition', 'Loyal customer base', 'Proven, profitable product'],
     },
     {
@@ -220,6 +222,7 @@ export function buildSwot(cx: number, cy: number): Element[] {
       fill: '#fee2e2',
       stroke: '#fca5a5',
       headerColor: '#b91c1c',
+      icon: 'trending-down',
       bullets: ['Limited geographic reach', 'High operational costs', 'Slow product delivery'],
     },
     {
@@ -229,6 +232,7 @@ export function buildSwot(cx: number, cy: number): Element[] {
       fill: '#dbeafe',
       stroke: '#93c5fd',
       headerColor: '#1d4ed8',
+      icon: 'sun',
       bullets: ['Expand to new markets', 'Strategic partnerships', 'Emerging tech trends'],
     },
     {
@@ -238,6 +242,7 @@ export function buildSwot(cx: number, cy: number): Element[] {
       fill: '#fef3c7',
       stroke: '#fcd34d',
       headerColor: '#a16207',
+      icon: 'alert-octagon',
       bullets: ['Aggressive competitors', 'Regulatory changes', 'Economic downturn'],
     },
   ];
@@ -269,6 +274,15 @@ export function buildSwot(cx: number, cy: number): Element[] {
       textColor: q.headerColor,
     });
 
+    // Role glyph in the top-right corner, tinted to match the header.
+    elements.push({
+      ...createShape('icon', x + cellW - headerPadding - iconSize, y + headerPadding),
+      width: iconSize,
+      height: iconSize,
+      iconId: q.icon,
+      strokeColor: q.headerColor,
+    });
+
     // Starter bullets sit under the header. Width matches the header
     // so the text rail aligns crisply down the quadrant's left edge.
     q.bullets.forEach((bullet, i) => {
@@ -286,18 +300,165 @@ export function buildSwot(cx: number, cy: number): Element[] {
     });
   }
 
-  // Subject pill at the centre — sits on top of the quadrants at the
-  // grid's intersection so the analysis subject is visible at a
-  // glance without scanning each cell.
+  return elements;
+}
+
+// Impact / Effort prioritisation matrix. Same 2×2 scaffold as SWOT, but
+// the quadrants encode a decision rule (Quick wins / Major projects /
+// Fill-ins / Time sinks) and two axis labels orient the grid: Effort
+// runs left→right along the top, Impact runs bottom→top down the left.
+// A PM favourite and a cheap variant of the SWOT builder.
+export function buildPrioritizationMatrix(cx: number, cy: number): Element[] {
+  const cellW = 520;
+  const cellH = 400;
+  const gap = 28;
+  const headerH = 60;
+  const subH = 40;
+  const headerPadding = 20;
+  const bulletGap = 12;
+  const bulletH = 52;
+  const iconSize = 54;
+
+  const quadrants: {
+    label: string;
+    sub: string;
+    col: 0 | 1;
+    row: 0 | 1;
+    fill: string;
+    stroke: string;
+    headerColor: string;
+    icon: string;
+    bullets: string[];
+  }[] = [
+    {
+      label: 'Quick wins',
+      sub: 'High impact · Low effort',
+      col: 0,
+      row: 0,
+      fill: '#dcfce7',
+      stroke: '#86efac',
+      headerColor: '#15803d',
+      icon: 'zap',
+      bullets: ['Do these first', 'Highest value for the cost'],
+    },
+    {
+      label: 'Major projects',
+      sub: 'High impact · High effort',
+      col: 1,
+      row: 0,
+      fill: '#dbeafe',
+      stroke: '#93c5fd',
+      headerColor: '#1d4ed8',
+      icon: 'layers',
+      bullets: ['Plan and resource', 'Break into phases'],
+    },
+    {
+      label: 'Fill-ins',
+      sub: 'Low impact · Low effort',
+      col: 0,
+      row: 1,
+      fill: '#fef3c7',
+      stroke: '#fcd34d',
+      headerColor: '#a16207',
+      icon: 'box',
+      bullets: ['Nice to have', 'Batch when idle'],
+    },
+    {
+      label: 'Time sinks',
+      sub: 'Low impact · High effort',
+      col: 1,
+      row: 1,
+      fill: '#fee2e2',
+      stroke: '#fca5a5',
+      headerColor: '#b91c1c',
+      icon: 'clock',
+      bullets: ['Avoid or defer', 'Question the value'],
+    },
+  ];
+
+  const elements: Element[] = [];
+
+  // Axis labels frame the grid. Effort along the top, Impact down the
+  // left, each pointing toward the "more" direction.
+  const gridLeft = cx - cellW - gap / 2;
+  const gridTop = cy - cellH - gap / 2;
+  const gridW = cellW * 2 + gap;
   elements.push({
-    ...createShape('circle', cx - subjectW / 2, cy - subjectH / 2),
-    width: subjectW,
-    height: subjectH,
-    label: 'Subject',
-    fillColor: '#ffffff',
-    strokeColor: '#475569',
-    textSize: 'lg',
+    ...createText(gridLeft, gridTop - 56),
+    width: gridW,
+    height: 40,
+    label: 'Effort  →',
+    textSize: 'md',
+    textBold: true,
+    textAlignX: 'center',
   });
+  elements.push({
+    ...createText(gridLeft - 150, cy - 20),
+    width: 130,
+    height: 40,
+    label: 'Impact  ↑',
+    textSize: 'md',
+    textBold: true,
+    textAlignX: 'right',
+  });
+
+  for (const q of quadrants) {
+    const x = cx - cellW - gap / 2 + q.col * (cellW + gap);
+    const y = cy - cellH - gap / 2 + q.row * (cellH + gap);
+
+    // Quadrant container.
+    elements.push({
+      ...createShape('square', x, y),
+      width: cellW,
+      height: cellH,
+      fillColor: q.fill,
+      strokeColor: q.stroke,
+      textSize: 'md',
+    });
+
+    // Title + the impact/effort reading beneath it.
+    elements.push({
+      ...createText(x + headerPadding, y + headerPadding),
+      width: cellW - headerPadding * 2 - iconSize,
+      height: headerH,
+      label: q.label,
+      textSize: 'lg',
+      textAlignX: 'left',
+      textColor: q.headerColor,
+    });
+    elements.push({
+      ...createText(x + headerPadding, y + headerPadding + headerH),
+      width: cellW - headerPadding * 2,
+      height: subH,
+      label: q.sub,
+      textSize: 'sm',
+      textAlignX: 'left',
+    });
+
+    // Role glyph in the top-right corner, tinted to match the header.
+    elements.push({
+      ...createShape('icon', x + cellW - headerPadding - iconSize, y + headerPadding),
+      width: iconSize,
+      height: iconSize,
+      iconId: q.icon,
+      strokeColor: q.headerColor,
+    });
+
+    // Starter bullets under the header band.
+    q.bullets.forEach((bullet, i) => {
+      elements.push({
+        ...createText(
+          x + headerPadding,
+          y + headerPadding + headerH + subH + bulletGap + i * (bulletH + bulletGap),
+        ),
+        width: cellW - headerPadding * 2,
+        height: bulletH,
+        label: `• ${bullet}`,
+        textSize: 'md',
+        textAlignX: 'left',
+      });
+    });
+  }
 
   return elements;
 }

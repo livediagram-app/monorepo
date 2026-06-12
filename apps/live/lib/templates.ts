@@ -36,7 +36,19 @@ export type TemplateKind =
   // "Show more".
   | 'live-card'
   // Comparison table: a plan-comparison grid (the table element).
-  | 'comparison-table';
+  | 'comparison-table'
+  // Technical / developer-diagram starters (spec/09 "Templates"). They
+  // reuse the existing shape vocabulary — cylinders for datastores, the
+  // table element for entities, dashed arrows for lifelines / returns —
+  // so a dev audience has a first-class starting point. All sit under
+  // "Show more".
+  | 'system-architecture'
+  | 'er-diagram'
+  | 'sequence-diagram'
+  // Impact / Effort prioritisation matrix: a 2×2 decision grid (Quick
+  // wins / Major projects / Fill-ins / Time sinks). A SWOT-shaped quick
+  // win for product / planning work.
+  | 'prioritization-matrix';
 
 export type TemplateDescriptor = {
   kind: TemplateKind;
@@ -82,7 +94,7 @@ export const TEMPLATES: TemplateDescriptor[] = [
   {
     kind: 'swot',
     title: 'SWOT',
-    description: 'Spacious 2×2 with bullet starters in each quadrant and a centre subject.',
+    description: 'Spacious 2×2 with a role icon and bullet starters in each quadrant.',
   },
   {
     kind: 'timeline',
@@ -165,7 +177,84 @@ export const TEMPLATES: TemplateDescriptor[] = [
     description: 'A plan-comparison grid with header row + column and zebra striping.',
     extra: true,
   },
+  {
+    kind: 'system-architecture',
+    title: 'System architecture',
+    description:
+      'A request path through a small service topology: client → API gateway → services → database + cache.',
+    extra: true,
+  },
+  {
+    kind: 'er-diagram',
+    title: 'ER diagram',
+    description:
+      'Four entity tables (Users / Orders / Products / OrderItems) wired by relationships.',
+    extra: true,
+  },
+  {
+    kind: 'sequence-diagram',
+    title: 'Sequence diagram',
+    description:
+      'Participant lifelines with request / response messages stepping down a login flow.',
+    extra: true,
+  },
+  {
+    kind: 'prioritization-matrix',
+    title: 'Prioritization matrix',
+    description: 'Impact vs Effort 2×2: Quick wins, Major projects, Fill-ins and Time sinks.',
+    extra: true,
+  },
 ];
+
+// Picker grouping. Templates are organised into a handful of
+// categories so the picker reads as titled sections (Diagrams /
+// Planning / Design / Technical) instead of one long flat grid. The
+// mapping lives beside the catalogue (mirroring TEMPLATE_PATTERNS) so a
+// new template slots into a section with a one-line edit; the picker
+// renders sections in TEMPLATE_CATEGORIES order and skips empties.
+export type TemplateCategory = 'general' | 'planning' | 'design' | 'technical';
+
+export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string }[] = [
+  { id: 'general', label: 'Diagrams' },
+  { id: 'planning', label: 'Planning' },
+  { id: 'design', label: 'Design' },
+  { id: 'technical', label: 'Technical' },
+];
+
+const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
+  // General-purpose diagrams: the everyday shapes-and-arrows starters.
+  blank: 'general',
+  mindmap: 'general',
+  orgchart: 'general',
+  flowchart: 'general',
+  timeline: 'general',
+  venn: 'general',
+  fishbone: 'general',
+  pyramid: 'general',
+  journey: 'general',
+  // Planning / strategy boards + charts.
+  kanban: 'planning',
+  gantt: 'planning',
+  swot: 'planning',
+  'prioritization-matrix': 'planning',
+  retrospective: 'planning',
+  flywheel: 'planning',
+  'comparison-table': 'planning',
+  // Design / product mock-ups.
+  'mobile-wireframe': 'design',
+  'laptop-wireframe': 'design',
+  'slide-deck': 'design',
+  'logo-design': 'design',
+  'live-card': 'design',
+  // Technical / developer diagrams.
+  'system-architecture': 'technical',
+  'er-diagram': 'technical',
+  'sequence-diagram': 'technical',
+};
+
+export function templateCategory(kind: TemplateKind): TemplateCategory {
+  return TEMPLATE_CATEGORY[kind];
+}
 
 // The canvas backdrop pattern that best suits each template's layout.
 // Applied on top of the chosen theme (which only supplies the colours),
@@ -201,16 +290,23 @@ const TEMPLATE_PATTERNS: Partial<Record<TemplateKind, BackgroundPattern>> = {
   fishbone: 'grid',
   'live-card': 'grid',
   mindmap: 'grid',
+  // Technical diagrams are alignment-heavy (boxes + tables snap to a
+  // grid), so they ride graph paper like the flow / org / SWOT scaffolds.
+  'system-architecture': 'graph',
+  'er-diagram': 'graph',
+  'sequence-diagram': 'graph',
+  'prioritization-matrix': 'graph',
 };
 
 // Canvas-level overrides a specific template ships with, applied on top
 // of whatever theme is selected. Each template carries its preferred
-// backdrop pattern (see TEMPLATE_PATTERNS); Mind map additionally
-// softens the canvas opacity so its radiating branches read better.
+// backdrop pattern (see TEMPLATE_PATTERNS); Mind map and User journey
+// additionally soften the canvas opacity so the pattern recedes behind
+// the radiating branches / the stage row.
 export function templateCanvasOverrides(kind: TemplateKind): Partial<Tab> {
   const overrides: Partial<Tab> = {};
   const pattern = TEMPLATE_PATTERNS[kind];
   if (pattern) overrides.backgroundPattern = pattern;
-  if (kind === 'mindmap') overrides.backgroundOpacity = 0.8;
+  if (kind === 'mindmap' || kind === 'journey') overrides.backgroundOpacity = 0.8;
   return overrides;
 }

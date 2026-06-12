@@ -412,6 +412,11 @@ type IconButtonProps = {
   // unset the button isn't draggable.
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  // Suppress the hover/focus tooltip. The icon-picker grid sets this:
+  // its tiles already read as a labelled gallery and a tooltip on every
+  // one of ~60 glyphs is noise. `label` is still applied as the button's
+  // aria-label so the control stays accessible.
+  hideTooltip?: boolean;
 };
 
 export function IconButton({
@@ -424,6 +429,7 @@ export function IconButton({
   shortcut,
   draggable,
   onDragStart,
+  hideTooltip,
 }: IconButtonProps) {
   const modHeld = useModKeyHeld();
   const showBadge = !disabled && !!shortcut && modHeld;
@@ -452,7 +458,7 @@ export function IconButton({
       ) : null}
     </button>
   );
-  if (disabled) return button;
+  if (disabled || hideTooltip) return button;
   return (
     <Tooltip title={label} description={description}>
       {button}

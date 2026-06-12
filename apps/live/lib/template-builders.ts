@@ -27,7 +27,17 @@ import {
   buildMobileWireframe,
   buildSlideDeck,
 } from './template-builders-wireframes';
-import { buildKanban, buildRetrospective, buildSwot } from './template-builders-boards';
+import {
+  buildKanban,
+  buildPrioritizationMatrix,
+  buildRetrospective,
+  buildSwot,
+} from './template-builders-boards';
+import {
+  buildErDiagram,
+  buildSequenceDiagram,
+  buildSystemArchitecture,
+} from './template-builders-technical';
 import { buildLogoDesign } from './template-builders-logo';
 import { buildGanttChart } from './template-builders-gantt';
 import { buildLiveCard } from './template-builders-livecard';
@@ -102,6 +112,14 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildLiveCard(cx, cy);
     case 'comparison-table':
       return buildComparisonTable(cx, cy);
+    case 'system-architecture':
+      return buildSystemArchitecture(cx, cy);
+    case 'er-diagram':
+      return buildErDiagram(cx, cy);
+    case 'sequence-diagram':
+      return buildSequenceDiagram(cx, cy);
+    case 'prioritization-matrix':
+      return buildPrioritizationMatrix(cx, cy);
   }
 }
 
@@ -562,27 +580,30 @@ function buildJourney(cx: number, cy: number): Element[] {
     { label: 'Onboarding', feeling: 'Eager but uncertain' },
     { label: 'Loyalty', feeling: 'Advocate' },
   ];
-  const cardW = 150;
-  const cardH = 60;
-  const stickyW = 150;
-  const stickyH = 80;
-  const gap = 40;
+  const cardW = 208;
+  const cardH = 94;
+  const stickyW = 208;
+  const stickyH = 126;
+  const gap = 56;
+  const vGap = 44;
   const totalW = stages.length * cardW + (stages.length - 1) * gap;
   const startX = cx - totalW / 2;
-  const cardY = cy - cardH - 30;
-  const stickyY = cardY + cardH + 28;
+  const blockH = cardH + vGap + stickyH;
+  const cardY = cy - blockH / 2;
+  const stickyY = cardY + cardH + vGap;
 
-  const elements: Element[] = [];
+  const cards: Element[] = [];
+  const stickies: Element[] = [];
   stages.forEach((s, i) => {
     const x = startX + i * (cardW + gap);
-    elements.push({
+    cards.push({
       ...createShape('square', x, cardY),
       width: cardW,
       height: cardH,
       label: s.label,
       textSize: 'md',
     });
-    elements.push({
+    stickies.push({
       ...createSticky(x, stickyY),
       width: stickyW,
       height: stickyH,
@@ -590,14 +611,13 @@ function buildJourney(cx: number, cy: number): Element[] {
       textSize: 'sm',
     });
   });
-  // Connector arrows between adjacent stages.
-  for (let i = 0; i < stages.length - 1; i++) {
-    const fromX = startX + i * (cardW + gap) + cardW;
-    const toX = startX + (i + 1) * (cardW + gap);
-    const midY = cardY + cardH / 2;
-    elements.push(createArrow(fromX, midY, toX, midY));
+  // Connectors PINNED between adjacent stage cards, so they reflow when
+  // the user repositions a stage rather than floating free.
+  const arrows: Element[] = [];
+  for (let i = 0; i < cards.length - 1; i++) {
+    arrows.push(createPinnedArrow(cards[i]!.id, 'e', cards[i + 1]!.id, 'w'));
   }
-  return elements;
+  return [...cards, ...stickies, ...arrows];
 }
 
 // Cause-and-effect (Ishikawa) skeleton: a horizontal spine arrow

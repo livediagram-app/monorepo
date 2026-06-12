@@ -6,14 +6,13 @@ import type { Participant } from '@/lib/identity';
 import { initialsOf, randomName } from '@/lib/identity';
 import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateKind } from '@/lib/templates';
-import { TEMPLATES } from '@/lib/templates';
+import { TEMPLATE_CATEGORIES, TEMPLATES, templateCategory } from '@/lib/templates';
 import { THEMES, type ThemeId } from '@/lib/themes';
 
-// First-batch sizes for the shuffled grids — kept equal to the curated
-// default set (the non-`extra` entries) so the picker still opens to two
-// tidy rows. Shuffling only changes WHICH options fill those slots, not
-// how many; "Show more" then reveals the full catalogue.
-const TEMPLATE_VISIBLE_COUNT = TEMPLATES.filter((t) => !t.extra).length;
+// First-batch size for the shuffled THEME grid — kept equal to the
+// curated default set (the non-`extra` entries) so it opens to two tidy
+// rows; "Show more themes" reveals the rest. Templates use category
+// sections inside a scroll area instead of a show-more batch.
 const THEME_VISIBLE_COUNT = THEMES.filter((t) => !t.extra).length;
 import { ShowMoreButton } from './ShowMoreButton';
 import { TemplatePreview } from './template-preview';
@@ -95,15 +94,10 @@ export function TemplatePicker({
   // grid never reshuffles it underfoot.
   const [templates] = useState(() => shufflePinned(TEMPLATES, (t) => t.kind === 'blank'));
   const [themes] = useState(() => shufflePinned(THEMES, (t) => t.id === 'brand'));
-  // "Show more" opt-ins for the templates + themes grids. Count mode
-  // keeps the first batch compact while letting shuffled extras surface
-  // up front; the hook auto-expands when the active pick lands in the
-  // hidden tail so the user always sees their current selection.
-  const templatePicker = useShowMoreList(
-    templates,
-    (t) => t.kind === templateKind,
-    TEMPLATE_VISIBLE_COUNT,
-  );
+  // "Show more" opt-in for the THEME grid. Count mode keeps the first
+  // batch compact while letting shuffled extras surface up front; the
+  // hook auto-expands when the active theme lands in the hidden tail.
+  // Templates instead render as category sections in a scroll area.
   const themePicker = useShowMoreList(themes, (t) => t.id === themeId, THEME_VISIBLE_COUNT);
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
@@ -211,49 +205,62 @@ export function TemplatePicker({
               >
                 Pick a template
               </p>
-              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {templatePicker.visible.map((t) => {
-                  const active = templateKind === t.kind;
+              {/* Category sections inside a height-capped scroll area, so
+                  the full catalogue stays one tidy, bounded block instead
+                  of stretching the modal as more templates land. Sections
+                  render in TEMPLATE_CATEGORIES order; empties are skipped. */}
+              <div className="mt-2 max-h-[19rem] overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-700">
+                {TEMPLATE_CATEGORIES.map((cat) => {
+                  const items = templates.filter((t) => templateCategory(t.kind) === cat.id);
+                  if (items.length === 0) return null;
                   return (
-                    <button
-                      key={t.kind}
-                      type="button"
-                      onClick={() => setTemplateKind(t.kind)}
-                      // Double-click is a "commit shortcut" — same as
-                      // clicking the template to select it + then
-                      // clicking the primary Create button. Picks up
-                      // whichever theme is currently selected and the
-                      // entered name; saves a click for users who
-                      // know what they want.
-                      onDoubleClick={() => onPick(t.kind, effectiveName, themeId)}
-                      aria-pressed={active}
-                      className={
-                        active
-                          ? 'flex flex-col items-start gap-1.5 rounded-lg border-2 border-brand-400 bg-brand-50 p-2 text-left dark:border-brand-500 dark:bg-brand-500/15'
-                          : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
-                      }
-                    >
-                      {/* Preview tiles are illustrative mini-canvases (light
-                          SVG content), so the tile keeps a light backdrop in
-                          dark mode to stay legible. */}
-                      <div className="flex h-14 w-full items-center justify-center rounded-md bg-slate-50 dark:bg-slate-200">
-                        <TemplatePreview kind={t.kind} />
+                    <div key={cat.id} className="mb-3 last:mb-0">
+                      <p className="px-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {cat.label}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {items.map((t) => {
+                          const active = templateKind === t.kind;
+                          return (
+                            <button
+                              key={t.kind}
+                              type="button"
+                              onClick={() => setTemplateKind(t.kind)}
+                              // Double-click is a "commit shortcut" — same
+                              // as selecting the template then clicking the
+                              // primary Create button. Picks up whichever
+                              // theme + name are entered; saves a click for
+                              // users who know what they want.
+                              onDoubleClick={() => onPick(t.kind, effectiveName, themeId)}
+                              aria-pressed={active}
+                              className={
+                                active
+                                  ? 'flex flex-col items-start gap-1.5 rounded-lg border-2 border-brand-400 bg-brand-50 p-2 text-left dark:border-brand-500 dark:bg-brand-500/15'
+                                  : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
+                              }
+                            >
+                              {/* Preview tiles are illustrative mini-canvases
+                                  (light SVG), so the tile keeps a light
+                                  backdrop in dark mode to stay legible. */}
+                              <div className="flex h-14 w-full items-center justify-center rounded-md bg-slate-50 dark:bg-slate-200">
+                                <TemplatePreview kind={t.kind} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                                  {t.title}
+                                </p>
+                                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                  {t.description}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
-                          {t.title}
-                        </p>
-                        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                          {t.description}
-                        </p>
-                      </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-              {templatePicker.hasMore && !templatePicker.showAll ? (
-                <ShowMoreButton label="Show more templates" onClick={templatePicker.reveal} />
-              ) : null}
             </>
           ) : null}
 

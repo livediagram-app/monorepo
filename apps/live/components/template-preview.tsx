@@ -1004,5 +1004,187 @@ export function TemplatePreview({ kind }: { kind: TemplateKind }) {
           ))}
         </svg>
       );
+    case 'system-architecture':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {/* client → gateway → two services → two datastores */}
+          {[
+            [40, 11, 40, 16],
+            [40, 24, 21, 29],
+            [40, 24, 59, 29],
+            [21, 37, 19, 42],
+            [59, 37, 56, 42],
+          ].map(([x1, y1, x2, y2], i) => (
+            <line
+              key={i}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.7"
+            />
+          ))}
+          {[
+            { x: 31, y: 3, w: 18 },
+            { x: 31, y: 16, w: 18 },
+            { x: 10, y: 29, w: 22 },
+            { x: 48, y: 29, w: 22 },
+          ].map((b, i) => (
+            <rect
+              key={i}
+              x={b.x}
+              y={b.y}
+              width={b.w}
+              height="8"
+              rx="1.5"
+              fill="white"
+              stroke="rgb(100 116 139)"
+              strokeWidth="0.75"
+            />
+          ))}
+          {[19, 56].map((cxv) => (
+            <g key={cxv}>
+              <rect
+                x={cxv - 7}
+                y="42"
+                width="14"
+                height="6"
+                fill="rgb(226 232 240)"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.75"
+              />
+              <ellipse
+                cx={cxv}
+                cy="42"
+                rx="7"
+                ry="1.6"
+                fill="white"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.75"
+              />
+            </g>
+          ))}
+        </svg>
+      );
+    case 'er-diagram':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {[
+            [34, 13, 46, 13],
+            [60, 21, 60, 29],
+            [34, 37, 46, 37],
+          ].map(([x1, y1, x2, y2], i) => (
+            <line
+              key={i}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.7"
+            />
+          ))}
+          {[
+            { x: 6, y: 5 },
+            { x: 46, y: 5 },
+            { x: 6, y: 29 },
+            { x: 46, y: 29 },
+          ].map((t, i) => (
+            <g key={i}>
+              <rect
+                x={t.x}
+                y={t.y}
+                width="28"
+                height="16"
+                rx="1.5"
+                fill="white"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.75"
+              />
+              <rect x={t.x} y={t.y} width="28" height="5" fill="rgb(226 232 240)" />
+              <line
+                x1={t.x}
+                y1={t.y + 10}
+                x2={t.x + 28}
+                y2={t.y + 10}
+                stroke="rgb(203 213 225)"
+                strokeWidth="0.5"
+              />
+            </g>
+          ))}
+        </svg>
+      );
+    case 'sequence-diagram':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {[10, 30, 50, 70].map((mx) => (
+            <g key={mx}>
+              <line
+                x1={mx}
+                y1="11"
+                x2={mx}
+                y2="47"
+                stroke="rgb(148 163 184)"
+                strokeWidth="0.6"
+                strokeDasharray="2 2"
+              />
+              <rect
+                x={mx - 7}
+                y="3"
+                width="14"
+                height="8"
+                rx="1.5"
+                fill="white"
+                stroke="rgb(100 116 139)"
+                strokeWidth="0.75"
+              />
+            </g>
+          ))}
+          {[
+            { x1: 10, x2: 30, y: 18, dash: false },
+            { x1: 30, x2: 50, y: 26, dash: false },
+            { x1: 50, x2: 70, y: 34, dash: false },
+            { x1: 50, x2: 30, y: 42, dash: true },
+          ].map((m, i) => (
+            <line
+              key={i}
+              x1={m.x1}
+              y1={m.y}
+              x2={m.x2}
+              y2={m.y}
+              stroke="rgb(100 116 139)"
+              strokeWidth="0.8"
+              strokeDasharray={m.dash ? '2 2' : undefined}
+            />
+          ))}
+        </svg>
+      );
+    case 'prioritization-matrix':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* axis hints down the left + along the bottom */}
+          <line x1="3" y1="3" x2="3" y2="47" stroke="rgb(148 163 184)" strokeWidth="0.8" />
+          <line x1="3" y1="47" x2="77" y2="47" stroke="rgb(148 163 184)" strokeWidth="0.8" />
+          {[
+            { x: 8, y: 3, fill: 'rgb(220 252 231)', stroke: 'rgb(134 239 172)' },
+            { x: 44, y: 3, fill: 'rgb(219 234 254)', stroke: 'rgb(147 197 253)' },
+            { x: 8, y: 23, fill: 'rgb(254 243 199)', stroke: 'rgb(252 211 77)' },
+            { x: 44, y: 23, fill: 'rgb(254 226 226)', stroke: 'rgb(252 165 165)' },
+          ].map((q, i) => (
+            <rect
+              key={i}
+              x={q.x}
+              y={q.y}
+              width="32"
+              height="20"
+              rx="2"
+              fill={q.fill}
+              stroke={q.stroke}
+              strokeWidth="0.75"
+            />
+          ))}
+        </svg>
+      );
   }
 }
