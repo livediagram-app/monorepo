@@ -14,11 +14,13 @@ export function ThemeSwatch({
   size = 'sm',
 }: {
   theme: ThemeDefinition;
-  size?: 'sm' | 'md';
+  // 'sm' compact palette grid, 'md' welcome picker, 'lg' the Basic
+  // quick-pick card's hero swatch (fills a category-card-sized preview).
+  size?: 'sm' | 'md' | 'lg';
 }) {
-  const boxH = size === 'md' ? 'h-8' : 'h-7';
-  const stripeH = size === 'md' ? 'h-3.5' : 'h-3';
-  const dotSize = size === 'md' ? 'h-3.5 w-3.5' : 'h-3 w-3';
+  const boxH = size === 'lg' ? 'h-14' : size === 'md' ? 'h-8' : 'h-7';
+  const stripeH = size === 'lg' ? 'h-7' : size === 'md' ? 'h-3.5' : 'h-3';
+  const dotSize = size === 'lg' ? 'h-5 w-5' : size === 'md' ? 'h-3.5 w-3.5' : 'h-3 w-3';
 
   return (
     <span

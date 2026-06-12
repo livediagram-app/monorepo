@@ -212,16 +212,21 @@ export const TEMPLATES: TemplateDescriptor[] = [
 // mapping lives beside the catalogue (mirroring TEMPLATE_PATTERNS) so a
 // new template slots into a section with a one-line edit; the picker
 // renders sections in TEMPLATE_CATEGORIES order and skips empties.
-export type TemplateCategory = 'general' | 'planning' | 'design' | 'technical';
+export type TemplateCategory = 'general' | 'planning' | 'strategy' | 'design' | 'technical';
 
 export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; description: string }[] = [
   { id: 'general', label: 'Diagrams', description: 'Flowcharts, mind maps, org charts and more.' },
   {
     id: 'planning',
     label: 'Planning',
-    description: 'Boards and charts for strategy and delivery.',
+    description: 'Boards, schedules and roadmaps for delivery.',
   },
-  { id: 'design', label: 'Design', description: 'Wireframes, slides and product mock-ups.' },
+  {
+    id: 'strategy',
+    label: 'Strategy',
+    description: 'Frameworks for analysis and decisions.',
+  },
+  { id: 'design', label: 'Design', description: 'Wireframes, slides and visual mock-ups.' },
   {
     id: 'technical',
     label: 'Technical',
@@ -230,25 +235,27 @@ export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; descrip
 ];
 
 const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
-  // General-purpose diagrams: the everyday shapes-and-arrows starters.
+  // General-purpose diagrams: the everyday shapes-and-arrows starters
+  // (structure + relationships, no specific domain).
   blank: 'general',
   mindmap: 'general',
   orgchart: 'general',
   flowchart: 'general',
-  timeline: 'general',
   venn: 'general',
   fishbone: 'general',
   pyramid: 'general',
-  journey: 'general',
-  // Planning / strategy boards + charts.
+  // Planning: agile boards, project schedules + roadmaps, prioritisation.
   kanban: 'planning',
   gantt: 'planning',
-  swot: 'planning',
-  'prioritization-matrix': 'planning',
+  timeline: 'planning',
   retrospective: 'planning',
-  flywheel: 'planning',
-  'comparison-table': 'planning',
-  // Design / product mock-ups.
+  'prioritization-matrix': 'planning',
+  // Strategy: business / product analysis + decision frameworks.
+  swot: 'strategy',
+  flywheel: 'strategy',
+  journey: 'strategy',
+  'comparison-table': 'strategy',
+  // Design: wireframes, slides + visual mock-ups.
   'mobile-wireframe': 'design',
   'laptop-wireframe': 'design',
   'slide-deck': 'design',

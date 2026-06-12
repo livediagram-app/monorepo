@@ -38,6 +38,51 @@ export function ThemeCard({
   );
 }
 
+// The Basic quick-pick on the theme overview, sized + laid out exactly
+// like a ThemeCategoryCard (hero swatch + label + description) so it
+// doesn't read as an odd small tile next to the category cards. Unlike a
+// category card it's directly selectable (click selects; double-click
+// commits) and shows an active state.
+export function ThemeQuickPickCard({
+  theme,
+  label,
+  description,
+  active,
+  onSelect,
+  onCommit,
+}: {
+  theme: ThemeDefinition;
+  label: string;
+  description: string;
+  active: boolean;
+  onSelect: () => void;
+  onCommit: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      onDoubleClick={onCommit}
+      aria-pressed={active}
+      className={
+        active
+          ? 'flex flex-col items-start gap-1.5 rounded-lg border-2 border-brand-400 bg-brand-50 p-2 text-left dark:border-brand-500 dark:bg-brand-500/15'
+          : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
+      }
+    >
+      <div className="w-full">
+        <ThemeSwatch theme={theme} size="lg" />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">{label}</p>
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 // A category tile on the theme overview: a 2×2 sampler of the category's
 // swatches as the illustration, plus the label, a count and a one-line
 // description. Clicking it drills into the category.

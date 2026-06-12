@@ -15,7 +15,7 @@ import {
 } from '@/lib/themes';
 import { AnimatedHeightBox } from './AnimatedHeightBox';
 import { CategoryCard, TemplateCard } from './template-picker-cards';
-import { ThemeCard, ThemeCategoryCard } from './theme-picker-cards';
+import { ThemeCard, ThemeCategoryCard, ThemeQuickPickCard } from './theme-picker-cards';
 import { Tooltip } from './Tooltip';
 
 type TemplatePickerProps = {
@@ -291,7 +291,7 @@ export function TemplatePicker({
                     <button
                       type="button"
                       onClick={() => setOpenCategory(null)}
-                      className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+                      className="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
                         <path
@@ -317,7 +317,7 @@ export function TemplatePicker({
                     </div>
                   </>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {blankTemplate ? (
                       <TemplateCard
                         template={blankTemplate}
@@ -369,7 +369,7 @@ export function TemplatePicker({
                     <button
                       type="button"
                       onClick={() => setOpenThemeCategory(null)}
-                      className="mb-2 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-brand-700 transition hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+                      className="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
                         <path
@@ -397,8 +397,10 @@ export function TemplatePicker({
                 ) : (
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     {brandTheme ? (
-                      <ThemeCard
+                      <ThemeQuickPickCard
                         theme={brandTheme}
+                        label="Basic"
+                        description="The plain, un-themed default."
                         active={themeId === 'brand'}
                         onSelect={() => setThemeId('brand')}
                         onCommit={() => onPick(templateKind, effectiveName, 'brand')}
