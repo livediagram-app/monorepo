@@ -42,7 +42,21 @@ export function PaletteTabBar({
   useEffect(() => {
     if (shownId) setDisplayedId(shownId);
   }, [shownId]);
-  const select = (id: string) => setActiveId((prev) => (prev === id ? null : id));
+  // When the user collapses the open tab, suppress the hover-peek for that
+  // tab until the pointer leaves the palette — otherwise the peek would
+  // immediately re-open the category they just closed, so it never reads as
+  // deselected.
+  const suppressHoverRef = useRef<string | null>(null);
+  const select = (id: string) => {
+    if (activeId === id) {
+      suppressHoverRef.current = id;
+      setHoverId(null);
+      setActiveId(null);
+    } else {
+      suppressHoverRef.current = null;
+      setActiveId(id);
+    }
+  };
   const displayed = tabs.find((t) => t.id === (shownId ?? displayedId)) ?? null;
 
   // Soft category-change animation. The panel's height is driven off the
@@ -79,11 +93,12 @@ export function PaletteTabBar({
     const id = (e.target as Element | null)
       ?.closest?.('[data-tab-id]')
       ?.getAttribute('data-tab-id');
-    if (id) setHoverId(id);
+    if (id && id !== suppressHoverRef.current) setHoverId(id);
   };
   const previewLeave = (e: React.PointerEvent) => {
     if (e.pointerType !== 'mouse') return;
     setHoverId(null);
+    suppressHoverRef.current = null;
   };
 
   return (

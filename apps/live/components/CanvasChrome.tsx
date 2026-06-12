@@ -93,6 +93,27 @@ export type CanvasChromeProps = CanvasProps & ChromeExtras;
 // exist yet, so every neighbour is a candidate.
 const NO_GUIDE_EXCLUDE: Set<string> = new Set();
 
+// Axis-aligned bounding box of a point list, single pass (a freehand
+// stroke can hold thousands of samples, so avoid Math.min(...spread)).
+function boundingBoxOf(points: { x: number; y: number }[]): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  let minX = points[0]!.x;
+  let minY = points[0]!.y;
+  let maxX = minX;
+  let maxY = minY;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    else if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    else if (p.y > maxY) maxY = p.y;
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
 export function CanvasChrome(props: CanvasChromeProps) {
   const {
     activeDockAnchor,
@@ -297,9 +318,15 @@ export function CanvasChrome(props: CanvasChromeProps) {
         NO_GUIDE_EXCLUDE,
       )
     : [];
+  // Freehand: guide off the live stroke's bounding box so its edges /
+  // centre line up with neighbours as you draw — combined with the
+  // pre-press start snap, that lets a sketch match a nearby element's
+  // width / height (draw until the far edge latches the neighbour's edge).
+  const penBox = penPoints && penPoints.length > 0 ? boundingBoxOf(penPoints) : null;
+  const drawPenGuides = penBox ? alignmentGuides(penBox, elements, NO_GUIDE_EXCLUDE) : [];
   const alignGuides =
-    drawBoxGuides.length > 0 || drawHoverGuides.length > 0
-      ? [...snapGuides, ...drawBoxGuides, ...drawHoverGuides]
+    drawBoxGuides.length > 0 || drawHoverGuides.length > 0 || drawPenGuides.length > 0
+      ? [...snapGuides, ...drawBoxGuides, ...drawHoverGuides, ...drawPenGuides]
       : snapGuides;
   return (
     <>

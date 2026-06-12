@@ -91,10 +91,10 @@ const OPTIONS: Option[] = [
     icon: <PencilIcon />,
   },
   {
-    kind: 'circle',
-    label: 'Circle',
-    description: 'Add a connected circle.',
-    icon: <CircleIcon />,
+    kind: 'text',
+    label: 'Text',
+    description: 'Add a text label to the side (no connector).',
+    icon: <TextIcon />,
   },
 ];
 
@@ -196,9 +196,15 @@ export function QuickConnectRing({
                       width: OPTION_SIZE,
                       height: OPTION_SIZE,
                       opacity: active ? 1 : 0,
-                      transform: `scale(${active ? 1 : 0.3})`,
+                      // Grow OUT of the plus: when closed each option sits at
+                      // the plus centre (translated back by its own offset)
+                      // and shrunk; opening slides + scales it to its slot,
+                      // closing reverses it. Staggered for a fan effect.
+                      transform: active
+                        ? 'translate(0px, 0px) scale(1)'
+                        : `translate(${-ox}px, ${-oy}px) scale(0.4)`,
                       transition:
-                        'opacity 150ms ease, transform 190ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        'opacity 160ms ease, transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1)',
                       transitionDelay: `${delay}ms`,
                     }}
                     onPointerDown={(e) => {
@@ -280,10 +286,10 @@ function PencilIcon() {
   );
 }
 
-function CircleIcon() {
+function TextIcon() {
   return (
     <svg {...iconProps()}>
-      <circle cx="8" cy="8" r="5" />
+      <path d="M4 4h8M8 4v9M6.5 13h3" />
     </svg>
   );
 }

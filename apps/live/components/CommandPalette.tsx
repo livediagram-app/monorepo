@@ -1129,7 +1129,7 @@ export function CommandPalette({
                     horizontal scrollbar (CSS resolves the other axis to
                     auto). justify-items-center keeps the slack symmetric so
                     nothing visible clips. */}
-                <div className="grid max-h-44 grid-cols-6 justify-items-center gap-1 overflow-y-auto overflow-x-hidden">
+                <div className="grid max-h-44 grid-cols-5 justify-items-center gap-1 overflow-y-auto overflow-x-hidden">
                   {iconResults.map((icon) => (
                     <IconButton
                       key={icon.id}

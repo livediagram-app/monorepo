@@ -12,6 +12,7 @@
 import {
   createPinnedArrow,
   createShape,
+  createText,
   duplicateGroupedElements,
   isBoxed,
   ungroup,
@@ -38,7 +39,7 @@ import { track, titleCaseType } from '@/lib/telemetry';
 // so "match the source" copies the same styling surface the painter does
 // (size, colours, border presets, font, opacity) without re-listing it.
 function connectedShapeFrom(
-  kind: Exclude<QuickConnectKind, 'duplicate'>,
+  kind: 'square',
   source: BoxedElement,
   dx: number,
   dy: number,
@@ -394,10 +395,21 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
       return;
     }
 
-    // Fresh shape (square / circle) matching the source's size +
-    // styling, so a chain of connected nodes reads uniformly. Built from
-    // the source's own box (the plus only shows for a single element, so
-    // baseBounds is that element's bounds).
+    // Text: drop a text element to the side and open it for editing — but
+    // do NOT connect it with an arrow (a caption / label next to a node
+    // isn't a flow edge, so a connector would be noise).
+    if (kind === 'text') {
+      const text = createText(baseBounds.x + dx, baseBounds.y + dy);
+      commit((els) => [...els, text]);
+      setSelectedId(text.id);
+      setEditingId(text.id);
+      track('Element', 'Added', titleCaseType('text'));
+      return;
+    }
+
+    // Fresh shape (square) matching the source's size + styling, so a chain
+    // of connected nodes reads uniformly. Built from the source's own box
+    // (the plus only shows for a single element, so baseBounds is its box).
     const shape = connectedShapeFrom(kind, source, dx, dy);
     const connector = connectorWith(shape.id);
     commit((els) => [...els, shape, connector]);
