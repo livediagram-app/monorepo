@@ -11,7 +11,13 @@
 // Each builder is still pure: takes a centre (cx, cy), returns a
 // fresh Element[]. See spec/09 "Templates" for the catalogue.
 
-import { createShape, createSticky, createText, type Element } from '@livediagram/diagram';
+import {
+  createArrow,
+  createShape,
+  createSticky,
+  createText,
+  type Element,
+} from '@livediagram/diagram';
 
 // Classic "Mad / Sad / Glad" retro. Each column lives inside its own
 // tinted container shape (red / blue / green) so the framework's
@@ -303,160 +309,62 @@ export function buildSwot(cx: number, cy: number): Element[] {
   return elements;
 }
 
-// Impact / Effort prioritisation matrix. Same 2×2 scaffold as SWOT, but
-// the quadrants encode a decision rule (Quick wins / Major projects /
-// Fill-ins / Time sinks) and two axis labels orient the grid: Effort
-// runs left→right along the top, Impact runs bottom→top down the left.
-// A PM favourite and a cheap variant of the SWOT builder.
+// Impact / Effort prioritisation chart. Two crossed value/effort axes
+// (a centred double-headed quadrant divider plus an L-frame of single-
+// headed axes along the left + bottom) with a handful of items
+// scattered across the field for the user to drag into the right
+// quadrant. Geometry mirrors a hand-built reference (its bounding box
+// spans 0..1542 x 0..1218), re-centred on the supplied canvas point.
+// The axes carry the brand accent; items + labels are left to the theme.
 export function buildPrioritizationMatrix(cx: number, cy: number): Element[] {
-  const cellW = 520;
-  const cellH = 400;
-  const gap = 28;
-  const headerH = 60;
-  const subH = 40;
-  const headerPadding = 20;
-  const bulletGap = 12;
-  const bulletH = 52;
-  const iconSize = 54;
-
-  const quadrants: {
-    label: string;
-    sub: string;
-    col: 0 | 1;
-    row: 0 | 1;
-    fill: string;
-    stroke: string;
-    headerColor: string;
-    icon: string;
-    bullets: string[];
-  }[] = [
-    {
-      label: 'Quick wins',
-      sub: 'High impact · Low effort',
-      col: 0,
-      row: 0,
-      fill: '#dcfce7',
-      stroke: '#86efac',
-      headerColor: '#15803d',
-      icon: 'zap',
-      bullets: ['Do these first', 'Highest value for the cost'],
-    },
-    {
-      label: 'Major projects',
-      sub: 'High impact · High effort',
-      col: 1,
-      row: 0,
-      fill: '#dbeafe',
-      stroke: '#93c5fd',
-      headerColor: '#1d4ed8',
-      icon: 'layers',
-      bullets: ['Plan and resource', 'Break into phases'],
-    },
-    {
-      label: 'Fill-ins',
-      sub: 'Low impact · Low effort',
-      col: 0,
-      row: 1,
-      fill: '#fef3c7',
-      stroke: '#fcd34d',
-      headerColor: '#a16207',
-      icon: 'box',
-      bullets: ['Nice to have', 'Batch when idle'],
-    },
-    {
-      label: 'Time sinks',
-      sub: 'Low impact · High effort',
-      col: 1,
-      row: 1,
-      fill: '#fee2e2',
-      stroke: '#fca5a5',
-      headerColor: '#b91c1c',
-      icon: 'clock',
-      bullets: ['Avoid or defer', 'Question the value'],
-    },
-  ];
+  const ox = cx - 771;
+  const oy = cy - 609;
+  const AXIS = '#0ea5e9'; // brand accent
 
   const elements: Element[] = [];
 
-  // Axis labels frame the grid. Effort along the top, Impact down the
-  // left, each pointing toward the "more" direction.
-  const gridLeft = cx - cellW - gap / 2;
-  const gridTop = cy - cellH - gap / 2;
-  const gridW = cellW * 2 + gap;
-  elements.push({
-    ...createText(gridLeft, gridTop - 56),
-    width: gridW,
-    height: 40,
-    label: 'Effort  →',
-    textSize: 'md',
-    textBold: true,
-    textAlignX: 'center',
+  // Axes: a centred double-headed divider (the quadrant cross) and an
+  // L-frame whose single arrowheads point toward "more" on each axis.
+  const axis = (x1: number, y1: number, x2: number, y2: number, ends: 'both' | 'to'): Element => ({
+    ...createArrow(x1 + ox, y1 + oy, x2 + ox, y2 + oy),
+    arrowEnds: ends,
+    strokeColor: AXIS,
   });
-  elements.push({
-    ...createText(gridLeft - 150, cy - 20),
-    width: 130,
-    height: 40,
-    label: 'Impact  ↑',
-    textSize: 'md',
+  elements.push(axis(394, 627, 1568, 627, 'both'));
+  elements.push(axis(981, 1131, 981, 158, 'both'));
+  elements.push(axis(373, 1152, 1547, 1152, 'to'));
+  elements.push(axis(373, 1152, 373, 179, 'to'));
+
+  // Axis labels at the ends of the value (vertical) + effort (horizontal) axes.
+  const label = (x: number, y: number, text: string): Element => ({
+    ...createText(x + ox, y + oy),
+    width: 190,
+    height: 42,
+    label: text,
+    textSize: 'lg',
     textBold: true,
-    textAlignX: 'right',
   });
+  elements.push(label(158, 183, 'High Value'));
+  elements.push(label(158, 1107, 'Low Value'));
+  elements.push(label(372, 1176, 'Low Effort'));
+  elements.push(label(1352, 1176, 'High Effort'));
 
-  for (const q of quadrants) {
-    const x = cx - cellW - gap / 2 + q.col * (cellW + gap);
-    const y = cy - cellH - gap / 2 + q.row * (cellH + gap);
-
-    // Quadrant container.
+  // Items scattered across the field — the user drags each into the
+  // quadrant that matches its value / effort.
+  const items: { x: number; y: number; label: string }[] = [
+    { x: 1408, y: 183, label: 'Item 1' },
+    { x: 824, y: 679, label: 'Item 2' },
+    { x: 1325, y: 770, label: 'Item 3' },
+    { x: 1147, y: 932, label: 'Item 4' },
+    { x: 621, y: 183, label: 'Item 5' },
+  ];
+  for (const it of items) {
     elements.push({
-      ...createShape('square', x, y),
-      width: cellW,
-      height: cellH,
-      fillColor: q.fill,
-      strokeColor: q.stroke,
-      textSize: 'md',
-    });
-
-    // Title + the impact/effort reading beneath it.
-    elements.push({
-      ...createText(x + headerPadding, y + headerPadding),
-      width: cellW - headerPadding * 2 - iconSize,
-      height: headerH,
-      label: q.label,
-      textSize: 'lg',
-      textAlignX: 'left',
-      textColor: q.headerColor,
-    });
-    elements.push({
-      ...createText(x + headerPadding, y + headerPadding + headerH),
-      width: cellW - headerPadding * 2,
-      height: subH,
-      label: q.sub,
+      ...createShape('square', it.x + ox, it.y + oy),
+      width: 122,
+      height: 49,
+      label: it.label,
       textSize: 'sm',
-      textAlignX: 'left',
-    });
-
-    // Role glyph in the top-right corner, tinted to match the header.
-    elements.push({
-      ...createShape('icon', x + cellW - headerPadding - iconSize, y + headerPadding),
-      width: iconSize,
-      height: iconSize,
-      iconId: q.icon,
-      strokeColor: q.headerColor,
-    });
-
-    // Starter bullets under the header band.
-    q.bullets.forEach((bullet, i) => {
-      elements.push({
-        ...createText(
-          x + headerPadding,
-          y + headerPadding + headerH + subH + bulletGap + i * (bulletH + bulletGap),
-        ),
-        width: cellW - headerPadding * 2,
-        height: bulletH,
-        label: `• ${bullet}`,
-        textSize: 'md',
-        textAlignX: 'left',
-      });
     });
   }
 
