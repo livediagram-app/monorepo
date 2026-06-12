@@ -693,6 +693,15 @@ export function Canvas(props: CanvasProps) {
       onPointerMove={handlePointerMoveCanvas}
       onPointerLeave={handlePointerLeaveCanvas}
       onPointerDownCapture={(e) => {
+        // Pointer-downs that land on a floating panel (palette, context
+        // panel, ...) are UI interactions, not canvas gestures. The
+        // panels live inside <main> for layout, so their bubble-phase
+        // stopPropagation can't stop this ancestor capture handler from
+        // firing first. Without this guard, clicking a palette button
+        // while a draw is armed lets the draw-to-size intercept below
+        // start a gesture at the click point and drop the pending shape
+        // behind the panel. Bail before any canvas gesture starts.
+        if ((e.target as Element | null)?.closest?.('[data-floating-panel]')) return;
         // Middle-mouse drag pans from anywhere on the canvas — empty
         // space OR over elements — regardless of the active tool. The
         // capture phase runs before the element + background

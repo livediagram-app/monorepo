@@ -421,6 +421,7 @@ export function MovablePanel({
     return (
       <div
         ref={ref}
+        data-floating-panel=""
         onPointerDown={(e) => e.stopPropagation()}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -443,6 +444,7 @@ export function MovablePanel({
   return (
     <div
       ref={ref}
+      data-floating-panel=""
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => {
         // Swallow the right-click so it doesn't bubble to the canvas
