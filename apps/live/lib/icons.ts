@@ -1066,6 +1066,176 @@ export const ICON_CATALOG: IconDef[] = [
       { t: 'line', x1: 12, y1: 16, x2: 12.01, y2: 16 },
     ],
   },
+
+  // --- Furniture / room (spec/09) -----------------------------------------
+  // Top-down floor-plan symbols for sketching room layouts: same single-
+  // weight 0..24 outline style as the rest, drawn as if looking straight
+  // down on the piece. Grouped under the "Furniture" category chip.
+  {
+    id: 'bed',
+    label: 'Bed',
+    keywords: 'bedroom sleep mattress double furniture room',
+    prims: [
+      { t: 'rect', x: 3, y: 3, w: 18, h: 18, rx: 2 },
+      { t: 'line', x1: 3, y1: 9, x2: 21, y2: 9 },
+      { t: 'rect', x: 5, y: 5, w: 5, h: 3, rx: 1 },
+      { t: 'rect', x: 14, y: 5, w: 5, h: 3, rx: 1 },
+    ],
+  },
+  {
+    id: 'sofa',
+    label: 'Sofa',
+    keywords: 'couch settee lounge living room furniture seating',
+    prims: [
+      { t: 'rect', x: 2, y: 6, w: 20, h: 12, rx: 2 },
+      { t: 'rect', x: 5, y: 10, w: 14, h: 8, rx: 1 },
+    ],
+  },
+  {
+    id: 'armchair',
+    label: 'Armchair',
+    keywords: 'chair seat lounge living room furniture',
+    prims: [
+      { t: 'rect', x: 6, y: 6, w: 12, h: 12, rx: 2 },
+      { t: 'rect', x: 9, y: 10, w: 6, h: 8, rx: 1 },
+    ],
+  },
+  {
+    id: 'chair',
+    label: 'Chair',
+    keywords: 'seat dining furniture',
+    prims: [
+      { t: 'rect', x: 7, y: 5, w: 10, h: 3, rx: 1 },
+      { t: 'rect', x: 7, y: 9, w: 10, h: 9, rx: 1 },
+    ],
+  },
+  {
+    id: 'dining-table',
+    label: 'Dining table',
+    keywords: 'table dining kitchen furniture',
+    prims: [{ t: 'rect', x: 5, y: 6, w: 14, h: 12, rx: 2 }],
+  },
+  {
+    id: 'coffee-table',
+    label: 'Coffee table',
+    keywords: 'table living room low furniture',
+    prims: [{ t: 'rect', x: 4, y: 9, w: 16, h: 6, rx: 2 }],
+  },
+  {
+    id: 'tv',
+    label: 'TV',
+    keywords: 'television screen entertainment monitor',
+    prims: [
+      { t: 'rect', x: 2, y: 4, w: 20, h: 12, rx: 2 },
+      { t: 'line', x1: 12, y1: 16, x2: 12, y2: 19 },
+      { t: 'line', x1: 8, y1: 19, x2: 16, y2: 19 },
+    ],
+  },
+  {
+    id: 'desk',
+    label: 'Desk',
+    keywords: 'office workspace table drawers furniture',
+    prims: [
+      { t: 'rect', x: 3, y: 8, w: 18, h: 4, rx: 1 },
+      { t: 'rect', x: 14, y: 12, w: 7, h: 7, rx: 1 },
+      { t: 'line', x1: 5, y1: 12, x2: 5, y2: 18 },
+    ],
+  },
+  {
+    id: 'wardrobe',
+    label: 'Wardrobe',
+    keywords: 'closet cupboard storage clothes furniture',
+    prims: [
+      { t: 'rect', x: 4, y: 3, w: 16, h: 18, rx: 1 },
+      { t: 'line', x1: 12, y1: 3, x2: 12, y2: 21 },
+      { t: 'line', x1: 10, y1: 11, x2: 10, y2: 13 },
+      { t: 'line', x1: 14, y1: 11, x2: 14, y2: 13 },
+    ],
+  },
+  {
+    id: 'bathtub',
+    label: 'Bathtub',
+    keywords: 'bath tub bathroom washroom',
+    prims: [
+      { t: 'rect', x: 3, y: 6, w: 18, h: 12, rx: 4 },
+      { t: 'rect', x: 6, y: 8, w: 11, h: 8, rx: 3 },
+      { t: 'circle', cx: 8, cy: 12, r: 1 },
+    ],
+  },
+  {
+    id: 'toilet',
+    label: 'Toilet',
+    keywords: 'wc bathroom loo washroom',
+    prims: [
+      { t: 'rect', x: 8, y: 3, w: 8, h: 4, rx: 1 },
+      { t: 'ellipse', cx: 12, cy: 14, rx: 4, ry: 5 },
+    ],
+  },
+  {
+    id: 'sink',
+    label: 'Sink',
+    keywords: 'basin washbasin bathroom kitchen tap',
+    prims: [
+      { t: 'rect', x: 5, y: 6, w: 14, h: 11, rx: 3 },
+      { t: 'circle', cx: 12, cy: 11, r: 1 },
+      { t: 'line', x1: 12, y1: 6, x2: 12, y2: 4 },
+    ],
+  },
+  {
+    id: 'stove',
+    label: 'Stove',
+    keywords: 'cooker hob oven kitchen burners',
+    prims: [
+      { t: 'rect', x: 4, y: 4, w: 16, h: 16, rx: 2 },
+      { t: 'circle', cx: 9, cy: 9, r: 2 },
+      { t: 'circle', cx: 15, cy: 9, r: 2 },
+      { t: 'circle', cx: 9, cy: 15, r: 2 },
+      { t: 'circle', cx: 15, cy: 15, r: 2 },
+    ],
+  },
+  {
+    id: 'fridge',
+    label: 'Fridge',
+    keywords: 'refrigerator freezer kitchen cold',
+    prims: [
+      { t: 'rect', x: 6, y: 2, w: 12, h: 20, rx: 2 },
+      { t: 'line', x1: 6, y1: 9, x2: 18, y2: 9 },
+      { t: 'line', x1: 9, y1: 5, x2: 9, y2: 7 },
+      { t: 'line', x1: 9, y1: 12, x2: 9, y2: 15 },
+    ],
+  },
+  {
+    id: 'plant',
+    label: 'Plant',
+    keywords: 'pot houseplant greenery decor tree',
+    prims: [
+      { t: 'path', d: 'M9 14 H15 L14 21 H10 Z' },
+      { t: 'line', x1: 12, y1: 14, x2: 12, y2: 8 },
+      { t: 'path', d: 'M12 10 C 8 9 8 4 11 3' },
+      { t: 'path', d: 'M12 10 C 16 9 16 4 13 3' },
+    ],
+  },
+  {
+    id: 'door',
+    label: 'Door',
+    keywords: 'doorway entrance swing opening',
+    prims: [
+      { t: 'line', x1: 5, y1: 20, x2: 5, y2: 6 },
+      { t: 'path', d: 'M5 6 A 14 14 0 0 1 19 20' },
+      { t: 'line', x1: 5, y1: 20, x2: 19, y2: 20 },
+    ],
+  },
+  {
+    id: 'stairs',
+    label: 'Stairs',
+    keywords: 'staircase steps stairway floor',
+    prims: [
+      { t: 'rect', x: 5, y: 3, w: 14, h: 18, rx: 1 },
+      { t: 'line', x1: 5, y1: 7, x2: 19, y2: 7 },
+      { t: 'line', x1: 5, y1: 11, x2: 19, y2: 11 },
+      { t: 'line', x1: 5, y1: 15, x2: 19, y2: 15 },
+    ],
+  },
 ];
 
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved
@@ -1198,6 +1368,29 @@ export const ICON_CATEGORIES: IconCategory[] = [
     id: 'arrows',
     label: 'Arrows',
     iconIds: ['arrow-right', 'arrow-left', 'arrow-up', 'arrow-down', 'send'],
+  },
+  {
+    id: 'furniture',
+    label: 'Furniture',
+    iconIds: [
+      'bed',
+      'sofa',
+      'armchair',
+      'chair',
+      'dining-table',
+      'coffee-table',
+      'tv',
+      'desk',
+      'wardrobe',
+      'bathtub',
+      'toilet',
+      'sink',
+      'stove',
+      'fridge',
+      'plant',
+      'door',
+      'stairs',
+    ],
   },
   {
     id: 'ui',
