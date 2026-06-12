@@ -3,7 +3,8 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 
-// Pinch-to-zoom on touch screens + trackpad pinch / Ctrl+scroll on desktop.
+// Pinch-to-zoom on touch screens + trackpad pinch / Ctrl- or Cmd-scroll
+// on desktop.
 //
 // All listeners are registered on `document` rather than on the canvas
 // element so registration never depends on canvasMainRef.current being
@@ -115,12 +116,15 @@ export function useCanvasPinchZoom(deps: Deps): Api {
       isPinchingRef.current = false;
     };
 
-    // ── Wheel (trackpad pinch / Ctrl+scroll on desktop) ───────────────
+    // ── Wheel (trackpad pinch / Ctrl- or Cmd-scroll on desktop) ───────
     // Capture phase on document beats the browser's built-in page zoom.
-    // We only act when the cursor is over the canvas so Ctrl+scroll
-    // elsewhere (address bar, DevTools) keeps normal browser behaviour.
+    // We only act when the cursor is over the canvas so the modifier +
+    // scroll elsewhere (address bar, DevTools) keeps normal browser
+    // behaviour. Ctrl covers trackpad pinch (synthesised ctrlKey) and
+    // the Windows / Linux zoom modifier; Cmd (metaKey) is the modifier
+    // Mac users reach for with a mouse wheel.
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) return;
+      if (!e.ctrlKey && !e.metaKey) return;
       const canvasEl = depsRef.current.canvasMainRef.current;
       if (!canvasEl || !canvasEl.contains(e.target as Node)) return;
       e.preventDefault();
