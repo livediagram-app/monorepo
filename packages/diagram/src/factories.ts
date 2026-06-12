@@ -42,6 +42,14 @@ const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: number }> =
   // Cloud: a container shape (networking / architecture). Stretches to
   // fit its label like the other flowchart shapes.
   cloud: { width: 180, height: 140 },
+  triangle: { width: 130, height: 120 },
+  trapezoid: { width: 160, height: 110 },
+  star: { width: 130, height: 130 },
+  // Speech bubble: wider than tall, with room for the tail beneath the body.
+  'speech-bubble': { width: 180, height: 130 },
+  // Frame / section: a large container drawn around content, so it starts
+  // big. Transparent body (see shape-svg-overlay) with a top-left label.
+  frame: { width: 360, height: 260 },
   // UI device frames. Sized to evoke each device's natural aspect
   // ratio at a glance: browser + monitor land on a 4:3-ish landscape
   // (with the monitor a touch taller to leave room for its stand);
@@ -53,6 +61,8 @@ const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: number }> =
   laptop: { width: 240, height: 150 },
   phone: { width: 90, height: 170 },
   tablet: { width: 140, height: 180 },
+  // Smartwatch: a square-ish face with bands above + below, so portrait.
+  smartwatch: { width: 110, height: 150 },
   // Curated glyph. Square + aspect-locked on create (set in
   // createShape) so the line art never distorts; the label sits below.
   icon: { width: 88, height: 88 },
@@ -81,6 +91,13 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
   // the glyph (the icon fills the box, text below reads as a caption).
   if (kind === 'icon') {
     return { ...base, aspectLocked: true, textAlignY: 'bottom' };
+  }
+  // Frame: a container drawn around other elements. Its label sits in the
+  // top-left (like a section title) rather than centred, and the body is
+  // transparent (rendered fill-less in shape-svg-overlay) so content shows
+  // through.
+  if (kind === 'frame') {
+    return { ...base, textAlignY: 'top', textAlignX: 'left' };
   }
   return base;
 }
@@ -404,20 +421,41 @@ export function duplicateGroupedElements(
     return el;
   });
 
+  const existingIds = new Set(elements.map((e) => e.id));
+  // Re-point one endpoint of a duplicated arrow: a FREE end translates by
+  // (dx, dy) so a free-floating arrow copies in place like any boxed
+  // element; a PINNED end follows its duplicate when the target was
+  // copied, otherwise keeps the original pin (still a real element, so no
+  // orphan). A pin to an element that's gone entirely (e.g. a cross-tab
+  // paste where the target wasn't carried over) returns null and the
+  // whole arrow is skipped rather than left dangling.
+  const remapEndpoint = (end: ArrowElement['from']): ArrowElement['from'] | null => {
+    if (end.kind === 'free') return { kind: 'free', x: end.x + dx, y: end.y + dy };
+    const dup = idMap.get(end.elementId);
+    if (dup) return { kind: 'pinned', elementId: dup, anchor: end.anchor };
+    return existingIds.has(end.elementId) ? end : null;
+  };
+
   const newArrows: ArrowElement[] = [];
   for (const el of elements) {
     if (el.type !== 'arrow') continue;
-    if (el.from.kind !== 'pinned' || el.to.kind !== 'pinned') continue;
-    const newFromId = idMap.get(el.from.elementId);
-    const newToId = idMap.get(el.to.elementId);
-    if (!newFromId || !newToId) continue;
-    newArrows.push({
-      id: crypto.randomUUID(),
-      type: 'arrow',
-      from: { kind: 'pinned', elementId: newFromId, anchor: el.from.anchor },
-      to: { kind: 'pinned', elementId: newToId, anchor: el.to.anchor },
-      ...(el.locked === true ? { locked: true } : {}),
-    });
+    // An arrow copies when it's explicitly in the duplicated set, OR when
+    // both endpoints pin to elements that were duplicated — the latter is
+    // the group / quick-connect case where an internal connector should
+    // ride along with its group even if the marquee didn't catch the
+    // arrow itself.
+    const bothEndsDuplicated =
+      el.from.kind === 'pinned' &&
+      el.to.kind === 'pinned' &&
+      idMap.has(el.from.elementId) &&
+      idMap.has(el.to.elementId);
+    if (!ids.has(el.id) && !bothEndsDuplicated) continue;
+    const from = remapEndpoint(el.from);
+    const to = remapEndpoint(el.to);
+    if (!from || !to) continue;
+    // Spread the source so styling (stroke, ends, dash, arrowhead, curve,
+    // label) survives the copy; only the id + endpoints are replaced.
+    newArrows.push({ ...el, id: crypto.randomUUID(), from, to });
   }
 
   return { newElements: [...finalBoxed, ...newArrows], idMap };

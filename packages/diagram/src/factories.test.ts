@@ -179,7 +179,7 @@ describe('duplicateGroupedElements', () => {
     expect(dupArrow!.to).toEqual({ kind: 'pinned', elementId: idMap.get('b'), anchor: 'w' });
   });
 
-  it('drops an arrow when only one endpoint is in the duplicated set', () => {
+  it('drops a non-selected arrow when only one endpoint is in the duplicated set', () => {
     const a = shape('a');
     const b = shape('b', { x: 100 });
     const arrow: ArrowElement = {
@@ -188,9 +188,75 @@ describe('duplicateGroupedElements', () => {
       from: { kind: 'pinned', elementId: 'a', anchor: 'e' },
       to: { kind: 'pinned', elementId: 'b', anchor: 'w' },
     };
-    // Only 'a' selected → arrow can't be remapped → omitted.
+    // Only 'a' selected (NOT the arrow) → the internal-connector rule
+    // needs both ends duplicated, so the arrow doesn't ride along.
     const { newElements } = duplicateGroupedElements([a, b, arrow], new Set(['a']), 0, 0);
     expect(newElements.some((e) => e.type === 'arrow')).toBe(false);
+  });
+
+  it('copies a selected free arrow, translating both endpoints', () => {
+    const arrow: ArrowElement = {
+      id: 'arrow',
+      type: 'arrow',
+      from: { kind: 'free', x: 10, y: 10 },
+      to: { kind: 'free', x: 60, y: 40 },
+    };
+    const { newElements } = duplicateGroupedElements([arrow], new Set(['arrow']), 5, 7);
+    const dup = newElements.find((e): e is ArrowElement => e.type === 'arrow');
+    expect(dup).toBeDefined();
+    expect(dup!.id).not.toBe('arrow');
+    expect(dup!.from).toEqual({ kind: 'free', x: 15, y: 17 });
+    expect(dup!.to).toEqual({ kind: 'free', x: 65, y: 47 });
+  });
+
+  it('keeps a selected arrow pinned to elements that exist but were not copied', () => {
+    const a = shape('a');
+    const b = shape('b', { x: 100 });
+    const arrow: ArrowElement = {
+      id: 'arrow',
+      type: 'arrow',
+      from: { kind: 'pinned', elementId: 'a', anchor: 'e' },
+      to: { kind: 'pinned', elementId: 'b', anchor: 'w' },
+    };
+    // Only the arrow is selected; a + b stay put → the copy keeps the
+    // original pins (still real elements, so no orphan).
+    const { newElements } = duplicateGroupedElements([a, b, arrow], new Set(['arrow']), 0, 0);
+    const dup = newElements.find((e): e is ArrowElement => e.type === 'arrow');
+    expect(dup).toBeDefined();
+    expect(dup!.from).toEqual({ kind: 'pinned', elementId: 'a', anchor: 'e' });
+    expect(dup!.to).toEqual({ kind: 'pinned', elementId: 'b', anchor: 'w' });
+  });
+
+  it('skips a selected arrow whose pinned target no longer exists (no orphan)', () => {
+    const arrow: ArrowElement = {
+      id: 'arrow',
+      type: 'arrow',
+      from: { kind: 'free', x: 0, y: 0 },
+      to: { kind: 'pinned', elementId: 'gone', anchor: 'w' },
+    };
+    const { newElements } = duplicateGroupedElements([arrow], new Set(['arrow']), 0, 0);
+    expect(newElements.some((e) => e.type === 'arrow')).toBe(false);
+  });
+
+  it('preserves arrow styling (stroke / ends / label) on copy', () => {
+    const arrow: ArrowElement = {
+      id: 'arrow',
+      type: 'arrow',
+      from: { kind: 'free', x: 0, y: 0 },
+      to: { kind: 'free', x: 50, y: 0 },
+      strokeColor: '#ff0000',
+      arrowEnds: 'both',
+      strokeStyle: 'dashed',
+      label: 'flow',
+    };
+    const { newElements } = duplicateGroupedElements([arrow], new Set(['arrow']), 1, 1);
+    const dup = newElements.find((e): e is ArrowElement => e.type === 'arrow')!;
+    expect(dup).toMatchObject({
+      strokeColor: '#ff0000',
+      arrowEnds: 'both',
+      strokeStyle: 'dashed',
+      label: 'flow',
+    });
   });
 
   it('leaves the source list untouched', () => {

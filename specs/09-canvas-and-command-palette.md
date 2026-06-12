@@ -131,7 +131,7 @@ When **any** element is selected, the palette grows a fourth section at the bott
 Accordion groups (rendered in this order top-to-bottom, hidden when their gate doesn't apply):
 
 - **Shape** _(shape elements only)_
-  - Shape grid (Square, Circle, Diamond, Cylinder, Parallelogram, Hexagon, Document, Stadium, User, Cloud, plus the device frames Web browser, Computer monitor, Laptop, Phone, Tablet) — clicking morphs the selected element into that kind in place, preserving size + colour overrides. Circle and diamond force the bounding box square; the rest preserve free aspect.
+  - Shape grid (Square, Circle, Diamond, Cylinder, Parallelogram, Hexagon, Document, Stadium, User, Cloud, Triangle, Trapezoid, Star, Speech bubble, plus the device frames Web browser, Computer monitor, Laptop, Phone, Tablet, Smartwatch) — clicking morphs the selected element into that kind in place, preserving size + colour overrides. (The Frame container is not a morph target.) Circle and diamond force the bounding box square; the rest preserve free aspect.
   - **Lock aspect ratio** toggle — when on, resize handles enforce the current width:height ratio.
   - **Padding** preset (None / Small / Medium / Large) — distance between the label and the element box, snapped to a preset for round-trip simplicity.
 - **Layer**
@@ -192,6 +192,12 @@ The palette is laid out top-to-bottom as: canvas-tool toggle (Select / Hand / La
 - **Stadium** — adds a 160×64 pill (flowchart Start / End terminator).
 - **User** — adds a 90×130 UML actor (stickman + label band below).
 - **Cloud** — adds a 180×140 cloud container (networking / architecture).
+- **Triangle** — adds a 130×120 upward triangle (SVG polygon).
+- **Trapezoid** — adds a 160×110 trapezoid (wider at the base; flowchart manual operation).
+- **Star** — adds a 130×130 five-pointed star.
+- **Speech bubble** — adds a 180×130 callout: a rounded body with a tail dropping from the bottom-left.
+
+The **Tools tab** also carries a **Frame** (`frame`): a 360×260 transparent outlined container with its label in the top-left, drawn around a cluster of elements (a FigJam-style section). Its body is rendered fill-less so the elements inside show through.
 
 **Devices tab** (UI-device frames for wireframing). Each renders as the device's silhouette so users can drop them on the canvas as containers and arrange interface elements inside:
 
@@ -200,6 +206,7 @@ The palette is laid out top-to-bottom as: canvas-tool toggle (Select / Hand / La
 - **Laptop** — adds a 240×150 laptop (screen + keyboard base).
 - **Phone** — adds a 90×170 phone (tall portrait with rounded corners).
 - **Tablet** — adds a 140×180 tablet (medium portrait with rounded corners).
+- **Smartwatch** — adds a 110×150 smartwatch (rounded face with straps above + below and a crown button).
 
 **Icons tab** (curated single-colour glyphs). A search box filters a scrollable grid of line icons (tech / cloud / UI / people: server, database, cloud, user, lock, globe, ...). Clicking one drops an `icon` shape (88×88, aspect-locked) at the viewport centre carrying the chosen `iconId`. Icons are line art tinted by the element's **stroke colour** (Colours accordion), with a constant on-screen line weight (non-scaling stroke) so they stay crisp at any size; the label sits in a band beneath the glyph. The glyph catalogue (id + label + keywords + SVG primitives) lives in `apps/live/lib/icons.ts`; `iconId` is a plain string in the model (not a closed enum), so adding an icon is a one-file change and an unknown id renders a placeholder glyph. The **Shape** accordion (morph grid / aspect / padding) and the **Border** accordion (strength / pattern / radius) are both hidden for a selected icon: an icon is a glyph you pick from the Icons picker, not a box you morph or border. Icons keep the Text accordion and the Colours accordion, but the latter shows only the **stroke** (glyph tint) and **text** (label) swatches — the **fill / background** swatch is hidden because an icon is `fill="none"` line art with no fill to colour. Icons drop at the centre rather than via draw-to-size (a glyph is a fixed-aspect mark, not a box you size by dragging). Above the grid sit **theme chips** (All, Tech, People, Security, Files, Charts, Arrows, UI — `ICON_CATEGORIES` in `lib/icons.ts`) that narrow the catalogue (~100 glyphs) to a related set; the search box filters within the selected chip. The catalogue grows by appending to `ICON_CATALOG` (and the relevant category's id-list) — single-stroke, 0–24 viewBox, Feather / Lucide-flavoured so additions stay visually consistent.
 
@@ -350,7 +357,7 @@ type Element = ShapeElement | ArrowElement;
 
 ## Shape primitives
 
-Fifteen shape kinds, all rendered as absolutely positioned elements on the canvas. The table below covers the seven general-purpose primitives the spec originally shipped with; three more general shapes (`stadium`, `actor`, `cloud`) and five UI device frames (`browser`, `monitor`, `laptop`, `phone`, `tablet`) landed alongside the wireframe templates and are documented in the [Devices tab](#main-palette-sections) above. The canonical list lives in `packages/diagram/src/index.ts` `ShapeKind`; the test in `apps/live/lib/templates.test.ts` pins shape coverage indirectly via the template catalogue.
+Twenty-one shape kinds (plus `icon`), all rendered as absolutely positioned elements on the canvas. The table below covers the seven general-purpose primitives the spec originally shipped with; the rest — general shapes (`stadium`, `actor`, `cloud`, `triangle`, `trapezoid`, `star`, `speech-bubble`), the `frame` container, and six UI device frames (`browser`, `monitor`, `laptop`, `phone`, `tablet`, `smartwatch`) — landed alongside / after the wireframe templates and are documented in the [Devices tab](#main-palette-sections) above. The canonical list lives in `packages/diagram/src/index.ts` `ShapeKind`; the test in `apps/live/lib/templates.test.ts` pins shape coverage indirectly via the template catalogue.
 
 | Kind            | Rendering                                                                                                                        | Aspect lock |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------- |
@@ -526,7 +533,7 @@ Animations only fire on mount, so they naturally trigger once per element. Switc
 
 - **Click a shape** to select it. Selection is visible as a thicker brand-tinted outline plus four corner handles.
 - **Click the empty canvas background** (anywhere not on a shape, palette, or popover) to deselect.
-- Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group accordion). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over.
+- Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group accordion). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over. Its buttons are Duplicate, Group, Lock / Unlock, **Export**, and Delete. **Export** opens the same Export dialog as the tab-level export, but scoped to just the selected elements (a derived tab whose `elements` are the multi-selection); the heading reads "Export selection" and every format (Markdown / PDF / PNG / File) renders only those elements. Pinned arrow endpoints that reference an element outside the selection keep their reference but render from the origin in the visual exports.
 - Clicking the command palette never affects selection.
 
 ### Selection popover
@@ -545,7 +552,7 @@ Action set (grouped by a thin divider):
 Format + duplication:
 
 - **Format painter** — copies the selected element's formatting onto the next element clicked. Paintbrush icon. See [Format painter](#format-painter). (Shown for boxed elements only — not arrows.)
-- **Duplicate** — clones the selected element in place (offset slightly). Arrows are skipped in the duplicate to avoid orphaned endpoints.
+- **Duplicate** — clones the selected element(s) in place (offset slightly). Arrows in the selection copy too (`duplicateGroupedElements` in `packages/diagram/src/factories.ts`): a free endpoint translates with the offset, a pinned endpoint follows its duplicate when the target was copied or else keeps its original pin (still a real element, so never orphaned); an arrow whose pinned target no longer exists (e.g. a cross-tab paste) is dropped rather than dangled. The same helper backs Cmd-C / Cmd-V (`useClipboard`), so copy-pasting a selection that includes arrows (including free-floating ones) now carries them with their styling + label intact.
 
 Relationships:
 
@@ -1021,7 +1028,7 @@ Always-on palette tool (the pencil is gestural by definition — no tap-to-drop 
 
 ### Shape recognition (opt-in)
 
-A sparkle / magic-wand icon button (with a `Tooltip` describing the on / off state) sits in the pencil `ModeBanner` (to the left of Cancel) and toggles **shape recognition**. When on, the commit handler runs the simplified polyline through `recogniseShape` (`packages/diagram/src/recognise-shape.ts`) and, if the score clears the confidence threshold, mints a real shape primitive instead of a `FreehandElement`. The toggle is persisted as a user preference (`recogniseShapes` in spec/20) so flipping it sticks across pencil sessions and across devices for signed-in users; it is deliberately NOT surfaced in the Settings dialog (a per-tool toggle belongs where the tool is, not in global settings).
+A sparkle / magic-wand icon button (with a `Tooltip` describing the on / off state) sits in the pencil `ModeBanner` (to the left of Cancel) and toggles **shape recognition**. When on, the commit handler runs the simplified polyline through `recogniseShape` (`packages/diagram/src/recognise-shape.ts`) and, if the score clears the confidence threshold, mints a real shape primitive instead of a `FreehandElement`. Recognised kinds: rectangle (square), circle, diamond, triangle, 5-pointed star, and line (→ arrow). Trapezoid / speech bubble / frame / the device frames aren't recognised — they're ambiguous or not freehand-drawable, so they stay palette-only. The toggle is persisted as a user preference (`recogniseShapes` in spec/20) so flipping it sticks across pencil sessions and across devices for signed-in users; it is deliberately NOT surfaced in the Settings dialog (a per-tool toggle belongs where the tool is, not in global settings).
 
 - Detected kinds: **rectangle / square** (axis-aligned 4-corner outline) → `ShapeElement` with kind `square`; **circle / oval** (closed curve hugging the inscribed ellipse) → `ShapeElement` with kind `circle`; **diamond** (4 corners at bbox edge midpoints) → `ShapeElement` with kind `diamond`; **line** (straight open polyline) → `ArrowElement` with `arrowEnds: 'none'`.
 - Heuristics, not template matching: each scorer measures the mean perpendicular distance from every sample to the idealised shape's edges (or to the inscribed-ellipse boundary), so the detector is rotation- and scale-tolerant without per-shape templates.
