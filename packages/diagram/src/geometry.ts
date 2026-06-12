@@ -69,30 +69,98 @@ export function anchorPosition(element: BoxedElement, anchor: Anchor): Point {
   return rotatePoint(local, { x: x + width / 2, y: y + height / 2 }, rotation);
 }
 
-// Pick the anchor on `element` that faces `towards` most naturally.
-// Used during drag to keep an arrow visually attached as one of its
-// connected elements moves: e.g. if A's arrow ends at B's west side,
-// and the user drags B to be above and right of A, the arrow's
-// endpoint should re-pin to B's south-west or south so the line
-// still arrives at a sensible face.
+// How decisively the off-axis direction must win before an arrow that is
+// already bound to a face abandons it. Without this dead-band a connector
+// flips between (say) the east and south face on every sub-pixel wobble
+// when the target sits near the box's corner diagonal; the margin holds the
+// choice steady while dragging and only commits to the new face once the
+// target is clearly past the corner.
+const ANCHOR_SWITCH_MARGIN = 0.2;
+
+type Cardinal = 'n' | 'e' | 's' | 'w';
+const CARDINALS: readonly Cardinal[] = ['n', 'e', 's', 'w'];
+
+function isCardinal(anchor: Anchor): anchor is Cardinal {
+  return anchor === 'n' || anchor === 'e' || anchor === 's' || anchor === 'w';
+}
+
+function centreOf(el: BoxedElement): Point {
+  return { x: el.x + el.width / 2, y: el.y + el.height / 2 };
+}
+
+// For a centre->`towards` direction, the parametric distance `t` at which
+// the ray leaves the box through each cardinal face (smaller = the ray
+// reaches that face sooner, so that's the face it actually exits through).
+// A face the ray points away from is unreachable (`Infinity`). This slab /
+// ray-box test underpins both face selection and ranking and is
+// aspect-ratio aware: a short, wide box exits top/bottom for everything but
+// near-horizontal targets, a tall box through its sides, where the earlier
+// "nearest edge-midpoint to the far centre" metric picked whichever
+// midpoint sat closest in raw distance even when the connecting line never
+// crossed that face. Rotation is handled by bringing the direction into the
+// element's unrotated frame first; anchorPosition rotates the chosen face
+// back out to world space when the endpoint is resolved.
+function faceExitTimes(element: BoxedElement, towards: Point): Record<Cardinal, number> {
+  const c = centreOf(element);
+  let dx = towards.x - c.x;
+  let dy = towards.y - c.y;
+  const rotation = element.rotation ?? 0;
+  if (rotation) {
+    const local = rotatePoint({ x: dx, y: dy }, { x: 0, y: 0 }, -rotation);
+    dx = local.x;
+    dy = local.y;
+  }
+  // `|| 1` guards a degenerate zero dimension; real elements clamp to MIN_SIZE.
+  const halfWidth = element.width / 2 || 1;
+  const halfHeight = element.height / 2 || 1;
+  return {
+    e: dx > 0 ? halfWidth / dx : Infinity,
+    w: dx < 0 ? halfWidth / -dx : Infinity,
+    s: dy > 0 ? halfHeight / dy : Infinity,
+    n: dy < 0 ? halfHeight / -dy : Infinity,
+  };
+}
+
+// The cardinal faces ranked best-first for a centre->`towards` direction
+// (`ranked[0]` is the face the connecting line exits through, i.e. what
+// bestAnchorTowards picks), plus a `commitment` ratio: how decisively the
+// best face beats the runner-up (>= 1; `Infinity` when the box is faced
+// head-on). Distribution uses the ordering to fall back to the next-best
+// FREE face when several arrows land on one element, and the commitment to
+// decide which arrow keeps a contested face (the most committed one wins it,
+// the rest step aside).
+export function rankAnchorsTowards(
+  element: BoxedElement,
+  towards: Point,
+): { ranked: Cardinal[]; commitment: number; times: Record<Cardinal, number> } {
+  const times = faceExitTimes(element, towards);
+  // Stable base order so ties (a square faced at exactly 45deg) resolve
+  // deterministically instead of depending on the sort implementation.
+  const ranked = [...CARDINALS].sort((a, b) => times[a] - times[b]);
+  const t0 = times[ranked[0]!];
+  const t1 = times[ranked[1]!];
+  const commitment = t0 === Infinity ? 0 : t1 === Infinity ? Infinity : t1 / t0;
+  return { ranked, commitment, times };
+}
+
+// Re-pin arrows whose either endpoint is anchored to a moved box, pointing
+// each end at the face the connector now leaves through. Pure: takes the
+// already-translated element list and the set of ids that just moved,
+// returns the same list with each affected arrow's from/to anchors
+// recomputed.
 //
-// Biased toward cardinals (n / e / s / w): if either axis dominates
-// the direction by 2x or more, we pick the matching cardinal even
-// though the corner anchor is geometrically closer. Cardinals read
-// as the "middle of a side", which the user has explicitly preferred
-// over corners.
-// Re-pin arrows whose either endpoint is anchored to a moved box,
-// pointing each end at the face that now reads most naturally
-// (cardinals preferred via bestAnchorTowards). Pure: takes the
-// already-translated element list and the set of ids that just
-// moved, returns the same list with each affected arrow's
-// from/to anchors recomputed.
+// Only re-anchors arrows where BOTH ends are pinned to a box. from/to pairs
+// that mix free + pinned (one floating end) keep their anchors as-is: the
+// free end already dictates the visual direction, and rebinding the pinned
+// end against a floating point would jitter as the user drags.
 //
-// Only re-anchors arrows where BOTH ends are pinned to a box.
-// from/to pairs that mix free + pinned (one floating end) keep
-// their anchors as-is; the freely-positioned end already
-// dictates the visual direction, and rebinding the pinned end
-// against a free point would jitter as the user drags.
+// When several arrows attach to the SAME element they're distributed across
+// its faces rather than stacked: the endpoint most committed to a contested
+// face keeps it and the others fall to their next-best free face, so two
+// arrows that both want a shape's north face end up on north + east. Faces
+// held by pinned arrows we are NOT re-anchoring this pass (a mixed arrow's
+// pinned end, or an arrow on a box that didn't move) are reserved so the
+// re-pinned arrows route around them too.
 export function rebindArrowAnchorsAfterMove(
   elements: Element[],
   movingIds: ReadonlySet<ElementId> | Map<ElementId, unknown>,
@@ -102,50 +170,144 @@ export function rebindArrowAnchorsAfterMove(
   // are O(1) instead of two `find` scans of the whole list per arrow
   // (this runs on every box-drag frame).
   const byId = buildElementIndex(elements);
+
+  // Plan every endpoint we'll re-anchor, ranking each toward the OTHER
+  // end's centre. Eligible arrows have both ends pinned to a box with at
+  // least one box in the moving set.
+  type EndPlan = {
+    arrowId: ElementId;
+    end: 'from' | 'to';
+    elementId: ElementId;
+    current: Anchor;
+    ranked: Cardinal[];
+    commitment: number;
+    times: Record<Cardinal, number>;
+  };
+  const plans: EndPlan[] = [];
+  const reassigning = new Set<ElementId>();
+  for (const el of elements) {
+    if (el.type !== 'arrow') continue;
+    if (el.from.kind !== 'pinned' || el.to.kind !== 'pinned') continue;
+    if (!includes(el.from.elementId) && !includes(el.to.elementId)) continue;
+    const fromEl = byId.get(el.from.elementId);
+    const toEl = byId.get(el.to.elementId);
+    if (!fromEl || !isBoxed(fromEl) || !toEl || !isBoxed(toEl)) continue;
+    reassigning.add(el.id);
+    plans.push({
+      arrowId: el.id,
+      end: 'from',
+      elementId: fromEl.id,
+      current: el.from.anchor,
+      ...rankAnchorsTowards(fromEl, centreOf(toEl)),
+    });
+    plans.push({
+      arrowId: el.id,
+      end: 'to',
+      elementId: toEl.id,
+      current: el.to.anchor,
+      ...rankAnchorsTowards(toEl, centreOf(fromEl)),
+    });
+  }
+  if (plans.length === 0) return elements;
+
+  // Faces already occupied on an element by pinned arrows we are NOT
+  // touching this pass, so the re-anchored arrows don't stack onto them.
+  const reserved = new Map<ElementId, Set<Anchor>>();
+  const reserve = (id: ElementId, anchor: Anchor) => {
+    if (!isCardinal(anchor)) return;
+    let set = reserved.get(id);
+    if (!set) reserved.set(id, (set = new Set()));
+    set.add(anchor);
+  };
+  for (const el of elements) {
+    if (el.type !== 'arrow' || reassigning.has(el.id)) continue;
+    if (el.from.kind === 'pinned') reserve(el.from.elementId, el.from.anchor);
+    if (el.to.kind === 'pinned') reserve(el.to.elementId, el.to.anchor);
+  }
+
+  // Greedy per element: most-committed endpoint claims its best face first,
+  // the rest take their next free face. Deterministic tie-break by arrow id.
+  const byElement = new Map<ElementId, EndPlan[]>();
+  for (const p of plans) {
+    let list = byElement.get(p.elementId);
+    if (!list) byElement.set(p.elementId, (list = []));
+    list.push(p);
+  }
+  const assigned = new Map<string, Anchor>();
+  for (const [elementId, eps] of byElement) {
+    const taken = new Set<Anchor>(reserved.get(elementId) ?? []);
+    const ordered = [...eps].sort((a, b) =>
+      a.commitment === b.commitment
+        ? a.arrowId < b.arrowId
+          ? -1
+          : a.arrowId > b.arrowId
+            ? 1
+            : a.end < b.end
+              ? -1
+              : 1
+        : b.commitment - a.commitment,
+    );
+    for (const p of ordered) {
+      let face: Cardinal = p.ranked.find((f) => !taken.has(f)) ?? p.ranked[0]!;
+      // Stability: stay on the current face while it's still free and within
+      // the corner dead-band of the best free face, so a drag doesn't make
+      // the arrow hop faces under tiny direction changes.
+      if (
+        isCardinal(p.current) &&
+        !taken.has(p.current) &&
+        p.times[p.current] <= p.times[face] * (1 + ANCHOR_SWITCH_MARGIN)
+      ) {
+        face = p.current;
+      }
+      taken.add(face);
+      assigned.set(`${p.arrowId}:${p.end}`, face);
+    }
+  }
+
   return elements.map((el) => {
-    if (el.type !== 'arrow') return el;
-    const fromMoved = el.from.kind === 'pinned' && includes(el.from.elementId);
-    const toMoved = el.to.kind === 'pinned' && includes(el.to.elementId);
-    if (!fromMoved && !toMoved) return el;
-    if (el.from.kind !== 'pinned' || el.to.kind !== 'pinned') return el;
-    const fromEnd = el.from;
-    const toEnd = el.to;
-    const fromEl = byId.get(fromEnd.elementId);
-    const toEl = byId.get(toEnd.elementId);
-    if (!fromEl || !isBoxed(fromEl) || !toEl || !isBoxed(toEl)) return el;
-    const toCenter = { x: toEl.x + toEl.width / 2, y: toEl.y + toEl.height / 2 };
-    const fromCenter = { x: fromEl.x + fromEl.width / 2, y: fromEl.y + fromEl.height / 2 };
+    if (el.type !== 'arrow' || !reassigning.has(el.id)) return el;
+    const fromFace = assigned.get(`${el.id}:from`);
+    const toFace = assigned.get(`${el.id}:to`);
     return {
       ...el,
-      from: { ...fromEnd, anchor: bestAnchorTowards(fromEl, toCenter) },
-      to: { ...toEnd, anchor: bestAnchorTowards(toEl, fromCenter) },
+      from: fromFace ? { ...el.from, anchor: fromFace } : el.from,
+      to: toFace ? { ...el.to, anchor: toFace } : el.to,
     };
   });
 }
 
-// Pick the edge-midpoint anchor (n/e/s/w) whose actual position is
-// closest to `towards` (the other endpoint / element centre). This is
-// the auto-anchor used when an arrow's pinned end is (re)bound. It uses
-// real anchor positions rather than a centre-direction heuristic, so it
-// never picks the far edge when a nearer one faces the target — the bug
-// where a tall/offset neighbour got its bottom anchor when the top was
-// closer. Corners are intentionally not auto-chosen: the manual anchor
-// dots are cardinal-only too, and arrows read cleaner from edge middles.
-// anchorPosition already accounts for rotation, so a rotated element's
-// faces are compared in world space.
-export function bestAnchorTowards(element: BoxedElement, towards: Point): Anchor {
-  const cardinals: Anchor[] = ['n', 'e', 's', 'w'];
-  let best: Anchor = 'n';
-  let bestDistSq = Infinity;
-  for (const anchor of cardinals) {
-    const p = anchorPosition(element, anchor);
-    const distSq = (p.x - towards.x) ** 2 + (p.y - towards.y) ** 2;
-    if (distSq < bestDistSq) {
-      bestDistSq = distSq;
-      best = anchor;
-    }
+// Pick the single cardinal face (n/e/s/w) the centre->`towards` line leaves
+// the box through (`ranked[0]` from rankAnchorsTowards). Corners are never
+// auto-chosen: the manual anchor dots are cardinal-only too, and arrows read
+// cleaner from edge middles.
+//
+// `current` (the face the arrow already sits on, when re-binding) adds
+// hysteresis: the choice only switches axes once the target is decisively
+// past the box corner (ANCHOR_SWITCH_MARGIN), so dragging a connected shape
+// along the diagonal doesn't make the arrow flicker. A sign flip on the same
+// axis (e<->w, n<->s) always commits — the target has crossed the centre, so
+// the old face now points away (Infinity) and loses outright.
+//
+// `avoid` excludes faces already taken by another arrow on the same element,
+// so a second connector lands on a free face instead of stacking onto the
+// first. A corner `current` falls through to the exact geometric face.
+export function bestAnchorTowards(
+  element: BoxedElement,
+  towards: Point,
+  current?: Anchor,
+  avoid?: ReadonlySet<Anchor>,
+): Anchor {
+  const { ranked, times } = rankAnchorsTowards(element, towards);
+  const top = (avoid ? ranked.find((f) => !avoid.has(f)) : ranked[0]) ?? ranked[0]!;
+  if (
+    current &&
+    isCardinal(current) &&
+    (!avoid || !avoid.has(current)) &&
+    times[current] <= times[top] * (1 + ANCHOR_SWITCH_MARGIN)
+  ) {
+    return current;
   }
-  return best;
+  return top;
 }
 
 // An id -> element lookup. Callers that resolve many endpoints over
