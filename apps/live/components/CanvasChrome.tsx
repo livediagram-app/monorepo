@@ -153,6 +153,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onDismissShared,
     onDuplicateDiagram,
     onDuplicateMultiSelected,
+    onExportMultiSelected,
     onFitToScreen,
     onGroupMultiSelected,
     onMoveActivity,
@@ -375,6 +376,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onDelete={onDeleteMultiSelected}
           onGroup={onGroupMultiSelected}
           onToggleLock={onToggleLockMultiSelected}
+          onExport={onExportMultiSelected}
         />
       ) : null}
 

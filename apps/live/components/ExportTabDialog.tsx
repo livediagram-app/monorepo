@@ -24,6 +24,12 @@ type ExportTabDialogProps = {
   tab: Tab;
   diagramName: string;
   onClose: () => void;
+  // 'tab' (default) exports the whole active tab; 'selection' exports a
+  // derived tab whose `elements` are just the multi-selection. The caller
+  // does the element filtering and hands us the already-scoped `tab`; this
+  // flag only drives the copy, filename suffix, and telemetry so the dialog
+  // stays a dumb renderer over whatever Tab it's given.
+  scope?: 'tab' | 'selection';
 };
 
 type Format = 'markdown' | 'pdf' | 'png' | 'file';
@@ -33,12 +39,19 @@ type Format = 'markdown' | 'pdf' | 'png' | 'file';
 // Each card kicks off the matching helper from lib/export-tab and
 // closes the dialog on success — the visible signal is the browser's
 // own download notification, so the modal doesn't need to linger.
-export function ExportTabDialog({ tab, diagramName, onClose }: ExportTabDialogProps) {
+export function ExportTabDialog({
+  tab,
+  diagramName,
+  onClose,
+  scope = 'tab',
+}: ExportTabDialogProps) {
   const [busyFormat, setBusyFormat] = useState<Format | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEscape(onClose);
 
-  const baseName = sanitizeFilename(`${diagramName || 'diagram'} - ${tab.name || 'tab'}`);
+  const isSelection = scope === 'selection';
+  const suffix = isSelection ? ' - selection' : '';
+  const baseName = sanitizeFilename(`${diagramName || 'diagram'} - ${tab.name || 'tab'}${suffix}`);
 
   const handle = async (format: Format) => {
     if (busyFormat) return;
@@ -73,14 +86,18 @@ export function ExportTabDialog({ tab, diagramName, onClose }: ExportTabDialogPr
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Export tab"
+        aria-label={isSelection ? 'Export selection' : 'Export tab'}
         className="pointer-events-auto flex max-h-[90vh] w-[36rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Export tab</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {isSelection ? 'Export selection' : 'Export tab'}
+            </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Pick a format to download the current tab.
+              {isSelection
+                ? 'Pick a format to download the selected elements.'
+                : 'Pick a format to download the current tab.'}
             </p>
           </div>
           <button

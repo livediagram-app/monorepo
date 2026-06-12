@@ -85,6 +85,8 @@ export type CanvasProps = {
   onDeleteMultiSelected: () => void;
   onGroupMultiSelected: () => void;
   onToggleLockMultiSelected: () => void;
+  // Opens the Export dialog scoped to just the multi-selection.
+  onExportMultiSelected: () => void;
   editingId: string | null;
   // True when the active label edit began via type-to-edit (spec/09):
   // the editor places the caret at the end instead of select-all so the

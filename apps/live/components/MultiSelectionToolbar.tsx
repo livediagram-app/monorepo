@@ -14,6 +14,8 @@ type MultiSelectionToolbarProps = {
   onDelete: () => void;
   onGroup: () => void;
   onToggleLock: () => void;
+  // Opens the Export dialog scoped to just the selected elements.
+  onExport: () => void;
 };
 
 // Floating action toolbar shown at the top-middle of the canvas while a
@@ -29,6 +31,7 @@ export function MultiSelectionToolbar({
   onDelete,
   onGroup,
   onToggleLock,
+  onExport,
 }: MultiSelectionToolbarProps) {
   return (
     <div
@@ -85,6 +88,17 @@ export function MultiSelectionToolbar({
           <LockIcon closed={anyLocked} />
         </button>
       </Tooltip>
+      <Tooltip title="Export" description="Export just these elements.">
+        <button
+          type="button"
+          onClick={onExport}
+          aria-label="Export selected elements"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        >
+          <ExportIcon />
+        </button>
+      </Tooltip>
+      <span aria-hidden className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
       <Tooltip title="Delete" description="Delete selected (arrows too).">
         <button
           type="button"
@@ -154,6 +168,26 @@ function LockIcon({ closed }: { closed: boolean }) {
       ) : (
         <path d="M5.25 7.5V5a2.75 2.75 0 0 1 5.4-.7" />
       )}
+    </svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2v8" />
+      <path d="M5 6.5 8 10l3-3.5" />
+      <path d="M2.75 11.5v1.25a1 1 0 0 0 1 1h8.5a1 1 0 0 0 1-1V11.5" />
     </svg>
   );
 }

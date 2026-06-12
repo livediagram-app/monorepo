@@ -11,6 +11,11 @@ export function useEditorDialogs() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  // Whether the open Export dialog targets the whole active tab or just
+  // the current multi-selection. A plain enum flag (no element data) so
+  // this slice stays diagram-data-free; EditorView derives the scoped
+  // tab live from `multiSelectedIds` when scope is 'selection'.
+  const [exportScope, setExportScope] = useState<'tab' | 'selection'>('tab');
   const [importOpen, setImportOpen] = useState(false);
 
   return {
@@ -24,6 +29,8 @@ export function useEditorDialogs() {
     setShareDialogOpen,
     exportOpen,
     setExportOpen,
+    exportScope,
+    setExportScope,
     importOpen,
     setImportOpen,
   };

@@ -156,6 +156,7 @@ export function EditorView() {
     exitGroupMode,
     explorerPosition,
     exportOpen,
+    exportScope,
     extendShareLink,
     fitToScreen,
     folders,
@@ -255,6 +256,7 @@ export function EditorView() {
     setEditingId,
     setExplorerPosition,
     setExportOpen,
+    setExportScope,
     setFillColorSelected,
     setFormatSourceId,
     setGroupSourceId,
@@ -410,7 +412,15 @@ export function EditorView() {
       )}
       {exportOpen ? (
         <ExportTabDialog
-          tab={activeTab}
+          tab={
+            exportScope === 'selection'
+              ? {
+                  ...activeTab,
+                  elements: activeTab.elements.filter((el) => multiSelectedIds.has(el.id)),
+                }
+              : activeTab
+          }
+          scope={exportScope}
           diagramName={diagramName}
           onClose={() => setExportOpen(false)}
         />
@@ -528,6 +538,10 @@ export function EditorView() {
         onDeleteMultiSelected={deleteMultiSelected}
         onGroupMultiSelected={groupMultiSelected}
         onToggleLockMultiSelected={toggleLockMultiSelected}
+        onExportMultiSelected={() => {
+          setExportScope('selection');
+          setExportOpen(true);
+        }}
         editingId={editingId}
         editCursorAtEnd={editCursorAtEnd}
         formatSourceId={formatSourceId}
@@ -833,7 +847,10 @@ export function EditorView() {
           onDelete={deleteTab}
           onClearContent={clearTabContent}
           onImportTab={() => setImportOpen(true)}
-          onExportTab={() => setExportOpen(true)}
+          onExportTab={() => {
+            setExportScope('tab');
+            setExportOpen(true);
+          }}
           otherDiagrams={diagramList.filter((d) => d.id !== diagramId)}
           onCopyTabTo={linkActiveTabTo}
           onToggleLockTab={toggleActiveTabLock}
