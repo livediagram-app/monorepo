@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { useEscape } from '@/hooks/useEscape';
-import { useShowMoreList } from '@/hooks/useShowMoreList';
 import type { Participant } from '@/lib/identity';
 import { initialsOf, randomName } from '@/lib/identity';
 import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateKind } from '@/lib/templates';
 import { TEMPLATE_CATEGORIES, TEMPLATES, templateCategory } from '@/lib/templates';
-import { THEMES, type ThemeId } from '@/lib/themes';
-
-// First-batch size for the shuffled THEME grid — kept equal to the
-// curated default set (the non-`extra` entries) so it opens to two tidy
-// rows; "Show more themes" reveals the rest. Templates use category
-// sections inside a scroll area instead of a show-more batch.
-const THEME_VISIBLE_COUNT = THEMES.filter((t) => !t.extra).length;
-import { ShowMoreButton } from './ShowMoreButton';
+import { THEME_CATEGORIES, THEMES, type ThemeId, themeCategory } from '@/lib/themes';
 import { TemplatePreview } from './template-preview';
 import { ThemeSwatch } from './ThemeSwatch';
 import { Tooltip } from './Tooltip';
@@ -86,6 +78,9 @@ export function TemplatePicker({
   const [name, setName] = useState(lockedName ?? participant.name);
   const nameLocked = !!lockedName;
   const [templateKind, setTemplateKind] = useState<TemplateKind>('blank');
+  // Free-text filter for the template grid (title / description / kind /
+  // category label). Empty = show the whole catalogue.
+  const [templateQuery, setTemplateQuery] = useState('');
   const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
   // Rotate which templates + themes greet the user on each open so
   // people keep discovering options beyond the usual first rows, but
@@ -94,13 +89,21 @@ export function TemplatePicker({
   // grid never reshuffles it underfoot.
   const [templates] = useState(() => shufflePinned(TEMPLATES, (t) => t.kind === 'blank'));
   const [themes] = useState(() => shufflePinned(THEMES, (t) => t.id === 'brand'));
-  // "Show more" opt-in for the THEME grid. Count mode keeps the first
-  // batch compact while letting shuffled extras surface up front; the
-  // hook auto-expands when the active theme lands in the hidden tail.
-  // Templates instead render as category sections in a scroll area.
-  const themePicker = useShowMoreList(themes, (t) => t.id === themeId, THEME_VISIBLE_COUNT);
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
+  // Keyword filter over the shuffled catalogue. Matches title /
+  // description / kind / category label so "design", "uml", "wireframe"
+  // etc. all narrow the grid; empty query passes everything through.
+  const templateFilter = templateQuery.trim().toLowerCase();
+  const filteredTemplates = templateFilter
+    ? templates.filter((t) => {
+        const catLabel =
+          TEMPLATE_CATEGORIES.find((c) => c.id === templateCategory(t.kind))?.label ?? '';
+        return [t.title, t.description, t.kind, catLabel].some((field) =>
+          field.toLowerCase().includes(templateFilter),
+        );
+      })
+    : templates;
 
   return (
     <div
@@ -200,18 +203,36 @@ export function TemplatePicker({
               modal width instead of stretching cards vertically. */}
           {showTemplates ? (
             <>
-              <p
-                className={`text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ${showIdentity ? 'mt-5' : ''}`}
+              <div
+                className={`flex items-center justify-between gap-3 ${showIdentity ? 'mt-5' : ''}`}
               >
-                Pick a template
-              </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Pick a template
+                </p>
+                <input
+                  type="text"
+                  value={templateQuery}
+                  onChange={(e) => setTemplateQuery(e.target.value)}
+                  placeholder="Search templates"
+                  aria-label="Search templates"
+                  className="w-44 max-w-[55%] rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                />
+              </div>
               {/* Category sections inside a height-capped scroll area, so
                   the full catalogue stays one tidy, bounded block instead
                   of stretching the modal as more templates land. Sections
-                  render in TEMPLATE_CATEGORIES order; empties are skipped. */}
+                  render in TEMPLATE_CATEGORIES order; empties are skipped
+                  (so an active search collapses to just the hits). */}
               <div className="mt-2 max-h-[19rem] overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-700">
+                {filteredTemplates.length === 0 ? (
+                  <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                    No templates match “{templateQuery.trim()}”.
+                  </p>
+                ) : null}
                 {TEMPLATE_CATEGORIES.map((cat) => {
-                  const items = templates.filter((t) => templateCategory(t.kind) === cat.id);
+                  const items = filteredTemplates.filter(
+                    (t) => templateCategory(t.kind) === cat.id,
+                  );
                   if (items.length === 0) return null;
                   return (
                     <div key={cat.id} className="mb-3 last:mb-0">
@@ -271,35 +292,48 @@ export function TemplatePicker({
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Select a theme
               </p>
-              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {themePicker.visible.map((t) => {
-                  const active = themeId === t.id;
+              {/* Theme category sections in a height-capped scroll area,
+                  mirroring the template grid: bucketed by colour
+                  temperament, sections render in THEME_CATEGORIES order. */}
+              <div className="mt-2 max-h-[15rem] overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-700">
+                {THEME_CATEGORIES.map((cat) => {
+                  const items = themes.filter((t) => themeCategory(t.id) === cat.id);
+                  if (items.length === 0) return null;
                   return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setThemeId(t.id)}
-                      // Double-click commits with this theme — same
-                      // shortcut the template tiles offer (select + submit
-                      // in one gesture), using the currently-picked
-                      // template + entered name.
-                      onDoubleClick={() => onPick(templateKind, effectiveName, t.id)}
-                      aria-pressed={active}
-                      className={
-                        active
-                          ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-200'
-                          : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
-                      }
-                    >
-                      <ThemeSwatch theme={t} size="md" />
-                      <span>{t.label}</span>
-                    </button>
+                    <div key={cat.id} className="mb-3 last:mb-0">
+                      <p className="px-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {cat.label}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {items.map((t) => {
+                          const active = themeId === t.id;
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setThemeId(t.id)}
+                              // Double-click commits with this theme — same
+                              // shortcut the template tiles offer (select +
+                              // submit in one gesture), using the
+                              // currently-picked template + entered name.
+                              onDoubleClick={() => onPick(templateKind, effectiveName, t.id)}
+                              aria-pressed={active}
+                              className={
+                                active
+                                  ? 'flex flex-col items-center gap-1 rounded-md border-2 border-brand-400 bg-brand-50 p-1.5 text-[10px] font-medium text-brand-800 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-200'
+                                  : 'flex flex-col items-center gap-1 rounded-md border border-slate-200 bg-white p-1.5 text-[10px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
+                              }
+                            >
+                              <ThemeSwatch theme={t} size="md" />
+                              <span>{t.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-              {themePicker.hasMore && !themePicker.showAll ? (
-                <ShowMoreButton label="Show more themes" onClick={themePicker.reveal} />
-              ) : null}
             </>
           ) : null}
         </div>

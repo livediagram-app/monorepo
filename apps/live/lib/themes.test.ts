@@ -11,8 +11,10 @@ import { describe, expect, it } from 'vitest';
 import { createPinnedArrow, createShape } from '@livediagram/diagram';
 import {
   THEMES,
+  THEME_CATEGORIES,
   deriveNewBoxedColours,
   getTheme,
+  themeCategory,
   recolourElementForTheme,
   recolourElementsForTheme,
   resetThemeElement,
@@ -54,19 +56,23 @@ describe('THEMES catalogue', () => {
     expect(THEMES).toHaveLength(21);
   });
 
-  it('splits cleanly into 12 default + 9 extra (the picker uses `extra` to gate behind "Show more")', () => {
+  it('splits cleanly into 12 default + 9 extra (retained as catalogue metadata)', () => {
     const defaults = THEMES.filter((t) => !t.extra);
     const extras = THEMES.filter((t) => t.extra);
     expect(defaults).toHaveLength(12);
     expect(extras).toHaveLength(9);
   });
 
-  it('keeps the brand theme out of the "extras" bucket (it must be visible without expanding)', () => {
-    // The default picker view always shows brand on its first row,
-    // since the un-themed default is the most common pick. Hiding
-    // it behind "Show more" would be a visible regression.
+  it('leads with the brand theme (the un-themed default is the most common pick)', () => {
     const brand = THEMES.find((t) => t.id === 'brand');
     expect(brand?.extra).toBeFalsy();
+  });
+
+  it('assigns every theme to a known category (the picker groups themes by category)', () => {
+    const known = new Set(THEME_CATEGORIES.map((c) => c.id));
+    for (const t of THEMES) {
+      expect(known.has(themeCategory(t.id))).toBe(true);
+    }
   });
 });
 

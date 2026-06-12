@@ -362,6 +362,53 @@ export const THEMES: ThemeDefinition[] = [
   },
 ];
 
+// Picker grouping, mirroring the template catalogue's categories. Themes
+// are bucketed by colour temperament so the picker reads as titled
+// sections (Cool / Warm / Neutral / Multi-colour) instead of one flat
+// grid. The mapping lives beside the catalogue so a new theme slots into
+// a section with a one-line edit; the picker renders sections in
+// THEME_CATEGORIES order and skips empties.
+export type ThemeCategory = 'cool' | 'warm' | 'neutral' | 'multicolour';
+
+export const THEME_CATEGORIES: { id: ThemeCategory; label: string }[] = [
+  { id: 'cool', label: 'Cool' },
+  { id: 'warm', label: 'Warm' },
+  { id: 'neutral', label: 'Neutral' },
+  { id: 'multicolour', label: 'Multi-colour' },
+];
+
+const THEME_CATEGORY: Record<ThemeId, ThemeCategory> = {
+  // Cool: blues / greens / purples.
+  brand: 'cool',
+  forest: 'cool',
+  ocean: 'cool',
+  sky: 'cool',
+  lavender: 'cool',
+  indigo: 'cool',
+  pine: 'cool',
+  midnight: 'cool',
+  steel: 'cool',
+  // Warm: reds / oranges / pinks / earthy browns.
+  slate: 'warm', // legacy id, now the Pink theme
+  sunset: 'warm',
+  rose: 'warm',
+  cream: 'warm',
+  sand: 'warm',
+  mocha: 'warm',
+  olive: 'warm',
+  // Neutral: greyscale.
+  mono: 'neutral',
+  charcoal: 'neutral',
+  // Multi-colour "rainbow" themes (spec/29).
+  rainbow: 'multicolour',
+  pastel: 'multicolour',
+  tropical: 'multicolour',
+};
+
+export function themeCategory(id: ThemeId): ThemeCategory {
+  return THEME_CATEGORY[id];
+}
+
 export function getTheme(id: string | undefined): ThemeDefinition {
   const found = THEMES.find((t) => t.id === id);
   return found ?? THEMES[0]!;
