@@ -113,6 +113,15 @@ type = "ratelimit"
 namespace_id = "1004"
 simple = { limit = 30, period = 60 }
 
+# Per-IP throttle for GET /api/unfurl (spec/40): an unauthenticated outbound
+# page fetch for link-card previews. 60/60s is plenty for a user dropping
+# bookmark cards. Separate namespace. Absent binding → check skipped (self-host).
+[[unsafe.bindings]]
+name = "UNFURL_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1005"
+simple = { limit = 60, period = 60 }
+
 # OPENAI_API_KEY and OPENAI_MODEL are provisioned out-of-band (spec/25):
 #
 #   - Local dev: drop `OPENAI_API_KEY=sk-...` into `apps/api/.dev.vars`

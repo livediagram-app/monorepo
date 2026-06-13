@@ -65,6 +65,10 @@ export type Env = {
   // password / share-code guessing. Keyed on CF-Connecting-IP. Optional:
   // absent (self-host) → "allow".
   SHARE_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
+  // Per-IP throttle for GET /api/unfurl (spec/40) — an unauthenticated
+  // outbound page fetch, so bound abuse. Keyed on CF-Connecting-IP. Optional:
+  // absent (self-host) → "allow".
+  UNFURL_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
   // Telemetry on/off switch (spec/22). Authoritative: gates both
   // POST /api/events and GET /api/telemetry/summary. A plain
   // wrangler.toml [vars] string; only the literal "true" enables it.

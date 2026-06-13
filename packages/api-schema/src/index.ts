@@ -612,3 +612,20 @@ export type TelemetrySummary = {
   // parse. Present whenever `enabled` is true.
   daily?: TelemetryDaily;
 };
+
+// -----
+// Unfurl (spec/40) — link-card preview metadata extracted server-side by
+// GET /api/unfurl?url=… (the static client can't read cross-origin page
+// HTML). Every field is optional: an unfurl that finds nothing still
+// returns 200 with the resolved url, and the card falls back to the bare
+// URL. `image` / `favicon` are absolute URLs referenced directly by the
+// client (no bytes proxied in v1).
+// -----
+export type UnfurlResult = {
+  url: string;
+  title?: string;
+  siteName?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+};

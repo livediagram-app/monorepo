@@ -5,6 +5,7 @@ import { CORS_HEADERS, json, notFound, rateLimited } from './responses';
 import { handleAccount } from './routes/account';
 import { handleAi } from './routes/ai';
 import { handleCapabilities } from './routes/capabilities';
+import { handleUnfurl } from './routes/unfurl';
 import type { RouteContext } from './routes/context';
 import { handleDiagrams } from './routes/diagrams';
 import { handleEvents } from './routes/events';
@@ -110,6 +111,8 @@ export default {
       switch (segments[1]) {
         case 'capabilities':
           return handleCapabilities(ctx);
+        case 'unfurl':
+          return await handleUnfurl(ctx);
         case 'ai':
           return await handleAi(ctx);
         case 'events':
