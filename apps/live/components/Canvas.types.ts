@@ -101,6 +101,8 @@ export type CanvasProps = {
   canRedo: boolean;
   onAddShape: (kind: ShapeKind) => void;
   onAddIcon: (iconId: string) => void;
+  // Add a Technology (brand) icon as a standalone element (spec/41).
+  onAddTechIcon: (iconId: string) => void;
   onAddTable: () => void;
   onAddAnnotation: () => void;
   onAddLinkCard: () => void;

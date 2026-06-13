@@ -39,7 +39,9 @@ import { BadgeStrip, RemoteSelectorsStrip } from './element-badges';
 import { AnnotationGlyph, AnnotationHoverNote } from './AnnotationMarker';
 import { LinkCardView } from './LinkCardView';
 import { IconGlyph } from './icon-glyph';
+import { TechIconGlyph } from './tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
+import { isTechIconId } from '@/lib/tech-icons';
 import { describeLink } from '@/lib/link-label';
 import { TableView } from './TableView';
 
@@ -485,7 +487,13 @@ function BoxedElementViewImpl({
         ...(isEditing ? { zIndex: 10 } : {}),
       }}
     >
-      {element.type === 'shape' && element.shape === 'icon' ? (
+      {element.type === 'shape' && element.shape === 'icon' && isTechIconId(element.iconId) ? (
+        // Technology (brand) icon: a fixed-colour tile + white glyph
+        // (spec/41). Same shape kind as a curated icon, but the id
+        // resolves in the tech catalogue, so it renders coloured rather
+        // than stroke-tinted.
+        <TechIconGlyph iconId={element.iconId} hasLabel={(element.label ?? '').trim().length > 0} />
+      ) : element.type === 'shape' && element.shape === 'icon' ? (
         // Curated glyph: line art tinted by the element's stroke
         // colour. Rendered separately from ShapeSvgOverlay because it
         // keeps aspect ratio (the catalogue art must not warp) and is

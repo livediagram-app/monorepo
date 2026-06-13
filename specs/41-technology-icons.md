@@ -1,0 +1,112 @@
+# 41 — Technology icons
+
+A **Technology** category in the command palette: full-colour brand icons for the
+infrastructure services people put on system-architecture diagrams (AWS S3,
+Lambda, EC2, Azure Functions, Kubernetes, Postgres, ...). They sit beside the
+existing **Icons** category but are deliberately a separate surface, because
+they are coloured filled marks rather than the single-weight, stroke-tinted line
+art the Icons catalogue holds. Mixing them would break the consistent line-art
+look of that catalogue.
+
+## Why a separate category, not more entries in Icons
+
+The Icons catalogue (`apps/live/lib/icons.ts`, spec/09) is Feather/Lucide-style:
+each glyph is a set of stroke primitives in a 0..24 box, drawn `fill="none"` and
+**tinted by the element's stroke colour** so it themes like a line drawing.
+Brand service icons are the opposite: fixed multi-colour fills that must NOT be
+recoloured (an orange Lambda is only recognisable orange). They need their own
+model (raw coloured SVG markup, not stroke prims) and their own render path
+(no stroke tint), so they live in their own catalogue and palette tab.
+
+## The element — reuses the `icon` shape kind
+
+A Technology icon is the **same `shape: 'icon'` element** the Icons category
+produces — no new element type, no schema migration. `element.iconId` keys the
+icon; the only difference is the id resolves in the **tech-icon registry**
+instead of the line-art catalogue. The shared `createShape('icon', …)` already
+gives icons the two properties this feature needs:
+
+- `aspectLocked: true` — the brand mark never warps on resize.
+- `textAlignY: 'bottom'` — the label sits in a band **below** the glyph, the
+  architecture-diagram convention (icon on top, caption beneath). This is why
+  double-clicking a Technology icon to type drops the text under it, which is
+  exactly the desired behaviour for labelling `S3`, `Orders DB`, etc.
+
+`getIcon` (line-art) falls back to a placeholder for an unknown id, so the
+render path **dispatches on the id**: `isTechIconId(iconId)` picks the coloured
+brand renderer, otherwise the stroke-tinted line renderer.
+
+## The catalogue — `apps/live/lib/tech-icons.ts`
+
+```ts
+type TechIconDef = {
+  id: string; // e.g. 'aws-s3', 'azure-functions', 'k8s'
+  label: string; // 'S3', 'Azure Functions', 'Kubernetes'
+  provider: TechProvider; // 'aws' | 'azure' | 'generic'
+  keywords: string; // extra search terms
+  color: string; // tile fill — the service / brand colour
+  glyph: string; // inner SVG markup (0..24 box) drawn white on the tile
+};
+```
+
+- `iconId` stays a plain string in the data model (as today), so adding an icon
+  is a one-file change with no migration. An id present in neither catalogue
+  renders the existing placeholder.
+- The mark is a **brand-coloured rounded tile + a white line-art glyph** — the
+  AWS resource-icon visual language, applied uniformly across AWS / Azure /
+  generic for a cohesive palette, using each service's **official brand /
+  category colour**. It is authored in-repo as compact SVG, not the verbatim
+  vendor asset packs — keeps the bundle small, renders crisply at icon size, and
+  sidesteps redistributing proprietary SVGs from a public MIT repo (see spec/03,
+  spec/06). Swapping in a vendor's official SVG later is a per-id edit.
+
+### v1 coverage (curated common set, ~38)
+
+- **AWS:** S3, EC2, Lambda, RDS, DynamoDB, API Gateway, CloudFront, Route 53,
+  VPC, SQS, SNS, ECS, EKS, CloudWatch, IAM.
+- **Azure:** Virtual Machines, Blob Storage, App Service, Functions, SQL
+  Database, Cosmos DB, AKS, Virtual Network, Load Balancer, Service Bus, Key
+  Vault, Monitor.
+- **Generic infra:** Kubernetes, Docker, PostgreSQL, MySQL, Redis, MongoDB,
+  Kafka, Nginx, RabbitMQ, Elasticsearch, GraphQL.
+
+The set is intentionally the services people reach for first; it expands by
+adding `TechIconDef` entries.
+
+## Palette — the Technology tab
+
+A new tab in `PaletteTabBar` (`CommandPalette.tsx`), alongside Shapes / Tools /
+Devices / Icons. It mirrors the Icons tab: a search box plus a **provider**
+filter dropdown (All / AWS / Azure / Generic) over a grid of coloured
+thumbnails. Clicking a tile adds the icon at the viewport centre; dragging a
+tile onto the canvas drops it at the pointer.
+
+Unlike the Icons tab, a Technology tile is **always a standalone element** — it
+never drops _inside_ a selected shape as an inline icon (a coloured brand tile
+beside a shape's text is not meaningful, and the inline-icon renderer only knows
+line-art prims). It therefore carries its own DnD MIME (`TECH_ICON_DND_MIME`),
+which the canvas drop handler routes to a standalone-icon create and which the
+shape drop target ignores.
+
+## Rendering — `apps/live/components/tech-icon-glyph.tsx`
+
+`TechIconGlyph` paints the brand-coloured tile + the icon's white `glyph` markup
+inside an `<svg>` whose viewBox expands from `0 0 24 24` to `0 0 24 40` when the
+element has a label (glyph pinned to the top 60%, label band beneath) — the same
+label-room trick `IconGlyph` uses, so the coloured and line-art icons place
+captions identically. No stroke tint is applied; the brand colour is the tile
+fill and the glyph is white.
+
+## Telemetry
+
+Adding a Technology icon fires `track('Element', 'Added', 'TechIcon')` — a
+distinct `type` from line-art icons (`'Icon'`) so the dashboard can tell
+architecture-icon usage apart, while reusing the closed `Element` / `Added`
+category/action pair (spec/22). The `type` is the constant `'TechIcon'`, never
+the specific service id, keeping telemetry free of content.
+
+## Out of scope (v1)
+
+- GCP (the provider model already allows adding it later).
+- Recolouring brand icons (they keep their fixed brand colours).
+- Verbatim vendor asset packs / a downloadable icon-pack importer.

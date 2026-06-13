@@ -29,7 +29,14 @@ import { PaletteDropdown } from './PaletteDropdown';
 import { LaserIcon, PanIcon, SelectIcon } from './palette-icons';
 import { Tooltip } from './Tooltip';
 import { ICON_CATALOG, ICON_CATEGORIES, ICON_DND_MIME, iconsInCategory } from '@/lib/icons';
+import {
+  searchTechIcons,
+  TECH_ICON_DND_MIME,
+  TECH_PROVIDERS,
+  type TechProvider,
+} from '@/lib/tech-icons';
 import { IconPrims } from './icon-glyph';
+import { TechIconArt } from './tech-icon-glyph';
 
 export type SelectedElementControls = {
   textSize: TextSize | null;
@@ -202,6 +209,10 @@ type CommandPaletteProps = {
   // catalogue id at the viewport centre. Picked from the Icons
   // accordion's searchable grid.
   onAddIcon: (iconId: string) => void;
+  // Drops a Technology (brand) icon (spec/41) as a STANDALONE 'icon'
+  // element carrying the chosen tech-catalogue id. Picked from the
+  // Technology tab's searchable grid; never dropped inside a shape.
+  onAddTechIcon: (iconId: string) => void;
   onAddText: () => void;
   onAddSticky: () => void;
   // Drop a 3x3 editable table at the viewport centre.
@@ -261,6 +272,7 @@ export function CommandPalette({
   onReset,
   onAddShape,
   onAddIcon,
+  onAddTechIcon,
   onAddText,
   onAddSticky,
   onAddTable,
@@ -290,6 +302,10 @@ export function CommandPalette({
   };
   const addIcon = (iconId: string) => {
     onAddIcon(iconId);
+    onMobileClose?.();
+  };
+  const addTechIcon = (iconId: string) => {
+    onAddTechIcon(iconId);
     onMobileClose?.();
   };
   const addText = () => {
@@ -352,6 +368,13 @@ export function CommandPalette({
     if (!q) return true;
     return i.label.toLowerCase().includes(q) || i.keywords.includes(q) || i.id.includes(q);
   });
+  // Technology tab (spec/41): full-colour brand icons. Mirrors the Icons
+  // tab — a search box plus a provider filter ('all' = no narrowing) over a
+  // grid of coloured thumbnails.
+  const [techQuery, setTechQuery] = useState('');
+  const [techProvider, setTechProvider] = useState<TechProvider | 'all'>('all');
+  const techFilters = [{ id: 'all', label: 'All' }, ...TECH_PROVIDERS];
+  const techResults = searchTechIcons(techQuery, techProvider);
   return (
     <MovablePanel
       title="Palette"
@@ -1223,6 +1246,131 @@ export function CommandPalette({
                   {iconResults.length === 0 ? (
                     <p className="col-span-6 px-1 py-2 text-center text-[11px] text-slate-400">
                       No icons match “{iconQuery}”.
+                    </p>
+                  ) : null}
+                </div>
+              </>
+            ),
+          },
+          {
+            id: 'technology',
+            label: 'Technology',
+            description:
+              'Full-colour AWS, Azure, and generic-infrastructure icons for system-architecture diagrams.',
+            icon: (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                {/* Stacked servers / racks: the universal "infrastructure"
+                    mark, distinct from the smiley used for line-art icons. */}
+                <rect x="3" y="4" width="18" height="7" rx="1.5" />
+                <rect x="3" y="13" width="18" height="7" rx="1.5" />
+                <path d="M7 7.5h.01M7 16.5h.01" />
+              </svg>
+            ),
+            content: (
+              <>
+                {/* Searchable catalogue of brand icons. Clicking one drops it
+                    at the viewport centre as a standalone 'icon' shape with
+                    fixed brand colours; dragging drops it at the pointer. See
+                    spec/41. */}
+                <div className="relative mb-2 flex items-center gap-1.5">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={techQuery}
+                      onChange={(e) => setTechQuery(e.target.value)}
+                      placeholder="Search technology"
+                      aria-label="Search technology icons"
+                      className="w-full rounded-md border border-slate-200 bg-white py-1 pl-2 pr-7 text-xs text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    />
+                    {techQuery ? (
+                      <Tooltip
+                        title="Clear search"
+                        description="Clear the technology search query."
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setTechQuery('')}
+                          aria-label="Clear technology search"
+                          className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            aria-hidden
+                          >
+                            <path d="M3 3 L9 9 M9 3 L3 9" />
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  {/* Provider filter: narrow to AWS / Azure / Generic; "All"
+                      clears it. Combines with the search box. */}
+                  <div className="shrink-0">
+                    <PaletteDropdown
+                      ariaLabel="Filter technology icons by provider"
+                      value={techProvider}
+                      onChange={(id) => setTechProvider(id as TechProvider | 'all')}
+                      align="right"
+                      accent={techProvider !== 'all'}
+                      options={techFilters}
+                      triggerLeading={
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden
+                          className="shrink-0"
+                        >
+                          <path d="M2 4h12M4.5 8h7M7 12h2" />
+                        </svg>
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="grid max-h-72 grid-cols-5 justify-items-center gap-1 overflow-y-auto overflow-x-hidden">
+                  {techResults.map((icon) => (
+                    <IconButton
+                      key={icon.id}
+                      label={`Add ${icon.label}`}
+                      description="Click to add, or drag onto the canvas."
+                      hideTooltip
+                      hideCaption
+                      onClick={() => addTechIcon(icon.id)}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(TECH_ICON_DND_MIME, icon.id);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+                        <TechIconArt iconId={icon.id} />
+                      </svg>
+                    </IconButton>
+                  ))}
+                  {techResults.length === 0 ? (
+                    <p className="col-span-5 px-1 py-2 text-center text-[11px] text-slate-400">
+                      No technology icons match “{techQuery}”.
                     </p>
                   ) : null}
                 </div>

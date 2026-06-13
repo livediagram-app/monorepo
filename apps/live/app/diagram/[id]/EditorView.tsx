@@ -73,6 +73,7 @@ export function EditorView() {
     addImage,
     addImageFromGallery,
     addIcon,
+    addTechIcon,
     dropIconOnElement,
     removeIconFromElement,
     addShape,
@@ -591,6 +592,7 @@ export function EditorView() {
         canRedo={canRedo && !activeTabLocked}
         onAddShape={addShape}
         onAddIcon={addIcon}
+        onAddTechIcon={addTechIcon}
         onDropIcon={isReadOnly ? undefined : dropIconOnElement}
         onLinkCell={isReadOnly ? undefined : openCellLinkPicker}
         onAddTable={addTable}

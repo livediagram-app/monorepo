@@ -150,6 +150,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onAddImage,
     onAddShape,
     onAddIcon,
+    onAddTechIcon,
     onAddTable,
     onAddAnnotation,
     onAddLinkCard,
@@ -807,6 +808,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onReset={onResetPalette}
           onAddShape={onAddShape}
           onAddIcon={onAddIcon}
+          onAddTechIcon={onAddTechIcon}
           onAddTable={onAddTable}
           onAddAnnotation={onAddAnnotation}
           onAddLinkCard={onAddLinkCard}

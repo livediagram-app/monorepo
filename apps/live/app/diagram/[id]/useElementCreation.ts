@@ -14,6 +14,7 @@ import {
   type Tab,
 } from '@livediagram/diagram';
 import { getTheme } from '@/lib/themes';
+import { isTechIconId } from '@/lib/tech-icons';
 import { track, titleCaseType } from '@/lib/telemetry';
 import type { PendingDraw } from '@/lib/draw-mode';
 
@@ -99,6 +100,18 @@ export function useElementCreation(opts: {
     }
     addBoxed((x, y) => ({ ...createShape('icon', x, y), iconId }));
     track('Element', 'Added', titleCaseType('icon'));
+  };
+
+  // Technology (brand) icon (spec/41). Reuses the 'icon' shape kind but is
+  // ALWAYS a standalone element — never dropped inside a selected shape as
+  // an inline icon (a coloured brand tile beside a shape's text is not
+  // meaningful, and the inline-icon renderer only knows line-art prims). The
+  // distinct 'TechIcon' telemetry type separates architecture-icon usage
+  // from line-art icons while reusing the closed Element/Added pair.
+  const addTechIcon = (iconId: string) => {
+    if (editsBlocked) return;
+    addBoxed((x, y) => ({ ...createShape('icon', x, y), iconId }));
+    track('Element', 'Added', 'TechIcon');
   };
 
   // A 3x3 table dropped at the viewport centre (no draw-to-size:
@@ -207,7 +220,13 @@ export function useElementCreation(opts: {
     addBoxedAt(canvasX, canvasY, (x, y) =>
       iconId ? { ...createShape('icon', x, y), iconId } : createShape(kind, x, y),
     );
-    track('Element', 'Added', titleCaseType(iconId ? 'icon' : kind));
+    // A tech-icon id maps to its own telemetry type (see addTechIcon);
+    // line-art icons + shapes use the kind.
+    track(
+      'Element',
+      'Added',
+      iconId && isTechIconId(iconId) ? 'TechIcon' : titleCaseType(iconId ? 'icon' : kind),
+    );
   };
 
   const handleCanvasDoubleClick = (x: number, y: number) => {
@@ -226,6 +245,7 @@ export function useElementCreation(opts: {
   return {
     addShape,
     addIcon,
+    addTechIcon,
     addTable,
     addAnnotation,
     addLinkCard,

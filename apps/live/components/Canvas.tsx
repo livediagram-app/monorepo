@@ -15,6 +15,7 @@ import {
   type ShapeKind,
 } from '@livediagram/diagram';
 import { ICON_DND_MIME, PALETTE_DND_MIME } from '@/lib/icons';
+import { TECH_ICON_DND_MIME } from '@/lib/tech-icons';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 import { deriveCanvasSelection, deriveSelectedElementFields } from '@/lib/canvas-selection';
@@ -731,7 +732,8 @@ export function Canvas(props: CanvasProps) {
         // Allow dropping palette tiles (shapes / devices / icons).
         if (
           e.dataTransfer.types.includes(PALETTE_DND_MIME) ||
-          e.dataTransfer.types.includes(ICON_DND_MIME)
+          e.dataTransfer.types.includes(ICON_DND_MIME) ||
+          e.dataTransfer.types.includes(TECH_ICON_DND_MIME)
         ) {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'copy';
@@ -739,7 +741,10 @@ export function Canvas(props: CanvasProps) {
       }}
       onDrop={(e) => {
         const shapeKind = e.dataTransfer.getData(PALETTE_DND_MIME);
-        const iconId = e.dataTransfer.getData(ICON_DND_MIME);
+        // A line-art icon and a tech (brand) icon both drop as an 'icon'
+        // shape carrying the id; dropPaletteItem picks the telemetry type.
+        const iconId =
+          e.dataTransfer.getData(ICON_DND_MIME) || e.dataTransfer.getData(TECH_ICON_DND_MIME);
         if (!shapeKind && !iconId) return;
         e.preventDefault();
         const rect = e.currentTarget.getBoundingClientRect();
