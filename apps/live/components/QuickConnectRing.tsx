@@ -9,12 +9,12 @@ import {
 } from './floating-controls';
 
 // Quick add + connect (spec/09). One of these floats on each edge of the
-// selected element. The plus is a click *trigger*: clicking it opens a
-// radial ring of five quick actions fanning outward from it — Duplicate /
-// Arrow / Square / Diamond / Circle — each acting on this edge. Clicking
-// the plus again (now an ×) or anywhere outside closes it. Open state is
-// owned by the parent (Canvas) so only one ring opens at a time and the
-// selection toolbar can dodge the top ring.
+// selected element. The plus is a click *trigger*: clicking it unfolds a
+// single connected menu strip of five quick actions out of the plus —
+// Duplicate / Arrow / Square / Pencil / Text — each acting on this edge.
+// Clicking the plus again (now an ×) or anywhere outside closes it. Open
+// state is owned by the parent (Canvas) so only one ring opens at a time
+// and the selection toolbar can hide while it's open.
 
 type Props = {
   // Edge midpoint in canvas coords (same anchor the resize handles use).
@@ -36,25 +36,59 @@ type Props = {
 };
 
 // The plus trigger stays in the shared floating-control family (matching
-// the resize / rotate handles); the ring options are deliberately larger
-// so they're easy to see and tap.
+// the resize / rotate handles). The options form ONE horizontal segmented
+// control (flush sub-buttons, dividers) that unfolds out of the plus.
 const SIZE = FLOATING_CONTROL_SIZE;
 const GAP = FLOATING_CONTROL_GAP;
-const OPTION_SIZE = 36;
-const OPTION_ICON_SIZE = 20;
-// Distance (screen px) from the plus centre out to each ring option.
-const RING_RADIUS = 70;
-// Angular spread of the five options, centred on the outward direction.
-const RING_SPREAD = 126;
-// How long the exit transition runs before the options unmount.
+const OPTION_SIZE = 34;
+const OPTION_ICON_SIZE = 19;
+// Gap (screen px) between the plus and the near edge of the control.
+const MENU_GAP = 8;
+// How long the exit transition runs before the control unmounts.
 const EXIT_MS = 200;
+// Distance from the plus centre to the control's near edge.
+const NEAR = SIZE / 2 + MENU_GAP;
 
-// Unit outward vector + the screen-space angle (y-down) the arc centres on.
-const OUTWARD: Record<QuickConnectDirection, { x: number; y: number; angle: number }> = {
-  right: { x: 1, y: 0, angle: 0 },
-  below: { x: 0, y: 1, angle: 90 },
-  left: { x: -1, y: 0, angle: 180 },
-  above: { x: 0, y: -1, angle: -90 },
+// Unit outward vector (which way the control sits from the plus).
+const OUTWARD: Record<QuickConnectDirection, { x: number; y: number }> = {
+  right: { x: 1, y: 0 },
+  below: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  above: { x: 0, y: -1 },
+};
+
+// Per-side placement of the single horizontal control: where it sits
+// relative to the plus centre (0,0), the edge it unfolds from, and a `base`
+// transform (a centring translate for the top / bottom sides) folded into
+// both the collapsed and open transforms.
+const MENU: Record<
+  QuickConnectDirection,
+  { pos: React.CSSProperties; origin: string; base: string; collapsed: string }
+> = {
+  right: {
+    pos: { left: NEAR, top: -OPTION_SIZE / 2 },
+    origin: 'left center',
+    base: '',
+    collapsed: 'scaleX(0)',
+  },
+  left: {
+    pos: { right: NEAR, top: -OPTION_SIZE / 2 },
+    origin: 'right center',
+    base: '',
+    collapsed: 'scaleX(0)',
+  },
+  below: {
+    pos: { top: NEAR, left: 0 },
+    origin: 'center top',
+    base: 'translateX(-50%)',
+    collapsed: 'scaleY(0)',
+  },
+  above: {
+    pos: { bottom: NEAR, left: 0 },
+    origin: 'center bottom',
+    base: 'translateX(-50%)',
+    collapsed: 'scaleY(0)',
+  },
 };
 
 type Option = {
@@ -135,7 +169,7 @@ export function QuickConnectRing({
   const cx = x + out.x * reach;
   const cy = y + out.y * reach;
 
-  const step = OPTIONS.length > 1 ? RING_SPREAD / (OPTIONS.length - 1) : 0;
+  const menu = MENU[placement];
 
   return (
     <div
@@ -143,46 +177,6 @@ export function QuickConnectRing({
       className="pointer-events-none absolute z-20"
       style={{ left: cx, top: cy, transform: `translate(-50%, -50%) scale(${1 / zoom})` }}
     >
-      {/* Connector spokes: a line from the plus centre out to each option so
-          the ring reads as one connected cluster. Drawn first (behind the
-          buttons) and "grows" out via stroke-dashoffset in sync with each
-          option's slide, staggered the same way. overflow-visible lets the
-          left / up spokes (negative coords) paint outside the 0×0 svg. */}
-      {rendered ? (
-        <svg
-          className="pointer-events-none absolute"
-          width="0"
-          height="0"
-          style={{ left: 0, top: 0, overflow: 'visible' }}
-          aria-hidden
-        >
-          {OPTIONS.map((option, i) => {
-            const angle = ((out.angle - RING_SPREAD / 2 + i * step) * Math.PI) / 180;
-            const ox = Math.cos(angle) * RING_RADIUS;
-            const oy = Math.sin(angle) * RING_RADIUS;
-            const delay = (active ? i : OPTIONS.length - 1 - i) * 24;
-            return (
-              <line
-                key={option.kind}
-                x1={0}
-                y1={0}
-                x2={ox}
-                y2={oy}
-                className="stroke-brand-300 dark:stroke-brand-500/60"
-                strokeWidth={2}
-                strokeLinecap="round"
-                style={{
-                  strokeDasharray: RING_RADIUS,
-                  strokeDashoffset: active ? 0 : RING_RADIUS,
-                  opacity: active ? 1 : 0,
-                  transition: `stroke-dashoffset 220ms cubic-bezier(0.34, 1.4, 0.64, 1) ${delay}ms, opacity 160ms ease ${delay}ms`,
-                }}
-              />
-            );
-          })}
-        </svg>
-      ) : null}
-
       {/* The plus trigger, centred at (cx, cy). Click toggles the ring. */}
       <button
         type="button"
@@ -213,64 +207,53 @@ export function QuickConnectRing({
         </svg>
       </button>
 
-      {rendered
-        ? OPTIONS.map((option, i) => {
-            const angle = ((out.angle - RING_SPREAD / 2 + i * step) * Math.PI) / 180;
-            const ox = Math.cos(angle) * RING_RADIUS;
-            const oy = Math.sin(angle) * RING_RADIUS;
+      {/* One horizontal segmented control: flush sub-buttons with dividers,
+          rounded ends, a single border + shadow — clearly one control. It
+          unfolds out of the plus (scales from the plus-side edge) on open. */}
+      {rendered ? (
+        <div
+          className="pointer-events-auto absolute flex divide-x divide-brand-100 overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-md dark:divide-slate-700 dark:border-brand-500/50 dark:bg-slate-900"
+          style={{
+            ...menu.pos,
+            transformOrigin: menu.origin,
+            transform: active ? `${menu.base} scale(1)` : `${menu.base} ${menu.collapsed}`,
+            opacity: active ? 1 : 0,
+            transition: 'transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 140ms ease',
+          }}
+        >
+          {OPTIONS.map((option) => {
             const isArrow = option.kind === 'arrow';
-            // Reverse the stagger on exit so the ring retracts in order.
-            const delay = (active ? i : OPTIONS.length - 1 - i) * 24;
             return (
-              <div
-                key={option.kind}
-                className="pointer-events-auto absolute"
-                style={{ left: ox, top: oy, transform: 'translate(-50%, -50%)' }}
-              >
-                <Tooltip title={option.label} description={option.description}>
-                  <button
-                    type="button"
-                    aria-label={option.label}
-                    className={`flex items-center justify-center ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS}`}
-                    style={{
-                      width: OPTION_SIZE,
-                      height: OPTION_SIZE,
-                      opacity: active ? 1 : 0,
-                      // Grow OUT of the plus: when closed each option sits at
-                      // the plus centre (translated back by its own offset)
-                      // and shrunk; opening slides + scales it to its slot,
-                      // closing reverses it. Staggered for a fan effect.
-                      transform: active
-                        ? 'translate(0px, 0px) scale(1)'
-                        : `translate(${-ox}px, ${-oy}px) scale(0.4)`,
-                      transition:
-                        'opacity 160ms ease, transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1)',
-                      transitionDelay: `${delay}ms`,
-                    }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      // Arrow starts on pointer-down so it's a single
-                      // press-drag gesture: a desktop drag from this anchor,
-                      // or (on touch) arming the tap-target connect.
-                      if (isArrow) {
-                        onArrowPointerDown(e);
-                        onClose();
-                      }
-                    }}
-                    onClick={() => {
-                      if (isArrow) return;
-                      if (option.kind === 'pencil') onPencil();
-                      else onSpawn(option.kind as QuickConnectKind);
+              <Tooltip key={option.kind} title={option.label} description={option.description}>
+                <button
+                  type="button"
+                  aria-label={option.label}
+                  className="flex shrink-0 items-center justify-center text-brand-600 transition hover:bg-brand-50 hover:text-brand-700 dark:text-brand-200 dark:hover:bg-slate-800 dark:hover:text-brand-100"
+                  style={{ width: OPTION_SIZE, height: OPTION_SIZE }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    // Arrow starts on pointer-down so it's a single press-drag
+                    // gesture: a desktop drag from this anchor, or (on touch)
+                    // arming the tap-target connect.
+                    if (isArrow) {
+                      onArrowPointerDown(e);
                       onClose();
-                    }}
-                  >
-                    {option.icon}
-                  </button>
-                </Tooltip>
-              </div>
+                    }
+                  }}
+                  onClick={() => {
+                    if (isArrow) return;
+                    if (option.kind === 'pencil') onPencil();
+                    else onSpawn(option.kind as QuickConnectKind);
+                    onClose();
+                  }}
+                >
+                  {option.icon}
+                </button>
+              </Tooltip>
             );
-          })
-        : null}
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

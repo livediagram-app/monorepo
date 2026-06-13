@@ -976,23 +976,26 @@ export function Canvas(props: CanvasProps) {
           Diagram elements stay in the original wrapper at z-auto
           and continue to be visually covered by panels where they
           overlap. */}
+      {/* Hide the selection toolbar while a quick-connect ring is open — its
+          options own the space around the element, and a toolbar on top just
+          competes for clicks. Kept mounted and faded out (not unmounted) so
+          it animates away as the ring opens and back in when it closes. */}
       {showPopover && selectionBounds ? (
         <div
           className="pointer-events-none absolute inset-0 z-40 origin-center"
           style={{
             transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
+            opacity: quickRingOpen ? 0 : 1,
+            // Transition visibility too so it stays interactive through the
+            // fade-out then goes non-interactive (hidden) at the end.
+            visibility: quickRingOpen ? 'hidden' : 'visible',
+            transition: 'opacity 150ms ease, visibility 150ms ease',
           }}
         >
           <SelectionPopover
             bounds={selectionBounds}
             canvasOffset={viewportOffset}
             zoom={viewportZoom}
-            // When a quick-connect ring is open on the toolbar's side
-            // (top on desktop, bottom on mobile), flip the toolbar to the
-            // opposite side so it doesn't cover the pop-out menu.
-            avoidVertical={
-              quickRingOpen === 'above' || quickRingOpen === 'below' ? quickRingOpen : null
-            }
             // In view-only mode we mount the popover with just
             // `onOpenComments`: visitors should be able to read +
             // post comments on a diagram they don't own, but no
