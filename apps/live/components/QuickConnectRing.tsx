@@ -143,6 +143,46 @@ export function QuickConnectRing({
       className="pointer-events-none absolute z-20"
       style={{ left: cx, top: cy, transform: `translate(-50%, -50%) scale(${1 / zoom})` }}
     >
+      {/* Connector spokes: a line from the plus centre out to each option so
+          the ring reads as one connected cluster. Drawn first (behind the
+          buttons) and "grows" out via stroke-dashoffset in sync with each
+          option's slide, staggered the same way. overflow-visible lets the
+          left / up spokes (negative coords) paint outside the 0×0 svg. */}
+      {rendered ? (
+        <svg
+          className="pointer-events-none absolute"
+          width="0"
+          height="0"
+          style={{ left: 0, top: 0, overflow: 'visible' }}
+          aria-hidden
+        >
+          {OPTIONS.map((option, i) => {
+            const angle = ((out.angle - RING_SPREAD / 2 + i * step) * Math.PI) / 180;
+            const ox = Math.cos(angle) * RING_RADIUS;
+            const oy = Math.sin(angle) * RING_RADIUS;
+            const delay = (active ? i : OPTIONS.length - 1 - i) * 24;
+            return (
+              <line
+                key={option.kind}
+                x1={0}
+                y1={0}
+                x2={ox}
+                y2={oy}
+                className="stroke-brand-300 dark:stroke-brand-500/60"
+                strokeWidth={2}
+                strokeLinecap="round"
+                style={{
+                  strokeDasharray: RING_RADIUS,
+                  strokeDashoffset: active ? 0 : RING_RADIUS,
+                  opacity: active ? 1 : 0,
+                  transition: `stroke-dashoffset 220ms cubic-bezier(0.34, 1.4, 0.64, 1) ${delay}ms, opacity 160ms ease ${delay}ms`,
+                }}
+              />
+            );
+          })}
+        </svg>
+      ) : null}
+
       {/* The plus trigger, centred at (cx, cy). Click toggles the ring. */}
       <button
         type="button"
