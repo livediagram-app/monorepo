@@ -73,7 +73,17 @@ export function framesFirst<T extends Element>(elements: T[]): T[] {
 // One of the gestures a `BoxedElementView` can be in mid-drag. `move`
 // is the body drag; the four `resize-*` corners are the bounding-box
 // handles.
-export type DragMode = 'move' | 'resize-nw' | 'resize-ne' | 'resize-sw' | 'resize-se';
+export type DragMode =
+  | 'move'
+  | 'resize-nw'
+  | 'resize-ne'
+  | 'resize-sw'
+  | 'resize-se'
+  // Edge handles: single-axis resize. n/s change height only, e/w width only.
+  | 'resize-n'
+  | 'resize-s'
+  | 'resize-e'
+  | 'resize-w';
 
 export type ArrowEnd = 'from' | 'to';
 
@@ -294,6 +304,19 @@ export function nextBounds(
   const compute = aspectLocked ? lockedForCorner : freeForCorner;
 
   switch (mode) {
+    // Edge handles resize a single axis only (aspect-lock doesn't apply).
+    case 'resize-e':
+      return { x, y, width: Math.max(MIN_SIZE, width + dx), height };
+    case 'resize-w': {
+      const newW = Math.max(MIN_SIZE, width - dx);
+      return { x: x + (width - newW), y, width: newW, height };
+    }
+    case 'resize-s':
+      return { x, y, width, height: Math.max(MIN_SIZE, height + dy) };
+    case 'resize-n': {
+      const newH = Math.max(MIN_SIZE, height - dy);
+      return { x, y: y + (height - newH), width, height: newH };
+    }
     case 'resize-se': {
       const { newW, newH } = compute(1, 1);
       return { x, y, width: newW, height: newH };
@@ -380,7 +403,8 @@ export function cornerOf(mode: DragMode): 'nw' | 'ne' | 'sw' | 'se' | null {
       return 'sw';
     case 'resize-se':
       return 'se';
-    case 'move':
+    // move + the single-axis edge handles have no corner anchor.
+    default:
       return null;
   }
 }

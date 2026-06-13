@@ -20,7 +20,6 @@ import {
   defaultTextAlign,
   defaultTextColor,
   PADDING_PX,
-  type Anchor,
   type BoxedElement,
   type FreehandElement,
   type ShapeElement,
@@ -76,7 +75,6 @@ type BoxedElementViewProps = {
   // Shift-click on an element fires this with the element id so the
   // page can toggle membership in the marquee multi-selection.
   onShiftSelect?: (id: string) => void;
-  onBeginAnchorDrag: (id: string, anchor: Anchor, e: ReactPointerEvent) => void;
   // Element-id-bearing signatures so the parent can pass a single
   // stable callback per kind (rather than recreating a closure per
   // element on every render). The child has `element.id` in scope
@@ -174,7 +172,6 @@ function BoxedElementViewImpl({
   onBeginDrag,
   onBeginRotate,
   onShiftSelect,
-  onBeginAnchorDrag,
   onBeginEdit,
   onCommitLabel,
   onCommitTable,
@@ -611,29 +608,29 @@ function BoxedElementViewImpl({
 
           {showAnchors ? (
             <>
-              <AnchorDot
+              <EdgeResizeHandle
                 anchor="n"
                 elementId={element.id}
                 zoom={zoom}
-                onBeginAnchorDrag={onBeginAnchorDrag}
+                onBeginDrag={onBeginDrag}
               />
-              <AnchorDot
+              <EdgeResizeHandle
                 anchor="e"
                 elementId={element.id}
                 zoom={zoom}
-                onBeginAnchorDrag={onBeginAnchorDrag}
+                onBeginDrag={onBeginDrag}
               />
-              <AnchorDot
+              <EdgeResizeHandle
                 anchor="s"
                 elementId={element.id}
                 zoom={zoom}
-                onBeginAnchorDrag={onBeginAnchorDrag}
+                onBeginDrag={onBeginDrag}
               />
-              <AnchorDot
+              <EdgeResizeHandle
                 anchor="w"
                 elementId={element.id}
                 zoom={zoom}
-                onBeginAnchorDrag={onBeginAnchorDrag}
+                onBeginDrag={onBeginDrag}
               />
             </>
           ) : null}
@@ -737,31 +734,37 @@ const ANCHOR_STYLE: Record<'n' | 'e' | 's' | 'w', React.CSSProperties> = {
 // visible; subsequent ones overlap with a small negative margin so a
 // busy element doesn't push the stack across the canvas. Counter-scaled
 // like the other badges so the on-screen size doesn't change with zoom.
-function AnchorDot({
+// Edge-midpoint handle: a single-axis resize grip (arrows are drawn from
+// the quick-connect menu now, so these no longer start a connector). N / S
+// resize height, E / W resize width — a small bar oriented along the edge.
+function EdgeResizeHandle({
   anchor,
   elementId,
   zoom,
-  onBeginAnchorDrag,
+  onBeginDrag,
 }: {
   anchor: 'n' | 'e' | 's' | 'w';
   elementId: string;
   zoom: number;
-  onBeginAnchorDrag: (id: string, anchor: Anchor, e: ReactPointerEvent) => void;
+  onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
 }) {
+  const vertical = anchor === 'n' || anchor === 's';
   return (
     <div
       role="button"
-      aria-label={`Create arrow from ${anchor} anchor`}
+      aria-label={`Resize ${vertical ? 'height' : 'width'}`}
       onPointerDown={(e) => {
         e.stopPropagation();
-        onBeginAnchorDrag(elementId, anchor, e);
+        onBeginDrag(elementId, `resize-${anchor}`, e);
       }}
       style={{
         ...ANCHOR_STYLE[anchor],
-        // Counter-scale so the dot stays the same on-screen size at any zoom.
+        // Counter-scale so the grip stays the same on-screen size at any zoom.
         transform: `translate(-50%, -50%) scale(${1 / zoom})`,
       }}
-      className="pointer-events-auto absolute h-2.5 w-2.5 cursor-crosshair rounded-full border-2 border-white bg-brand-500 shadow-sm transition"
+      className={`pointer-events-auto absolute rounded-full border border-brand-400 bg-white opacity-80 shadow-sm transition hover:opacity-100 dark:border-brand-300 dark:bg-slate-900 ${
+        vertical ? 'h-1.5 w-4 cursor-ns-resize' : 'h-4 w-1.5 cursor-ew-resize'
+      }`}
     />
   );
 }

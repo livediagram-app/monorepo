@@ -63,7 +63,6 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
     laserTrails,
     memberIds,
     multiSelectedIds,
-    onBeginAnchorDrag,
     onBeginArrowCurveDrag,
     onBeginArrowElbowDrag,
     onBeginArrowLabelDrag,
@@ -186,7 +185,6 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             onBeginDrag={onBeginDrag}
             onBeginRotate={onBeginRotate}
             onShiftSelect={onShiftSelect}
-            onBeginAnchorDrag={onBeginAnchorDrag}
             onBeginEdit={onBeginEdit}
             onCommitLabel={onCommitLabel}
             onCommitTable={onCommitTable}
