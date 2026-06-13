@@ -837,7 +837,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     canvasMainRef,
     getViewportCenter,
     fitToScreen,
-  } = useEditorViewport({ activeTab });
+  } = useEditorViewport({ activeTab, selectedId });
 
   // Server capabilities (spec/25). Fetched once at mount; determines
   // whether the AI panel option is shown in Settings and rendered.

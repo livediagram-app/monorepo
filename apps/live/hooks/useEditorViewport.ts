@@ -24,7 +24,17 @@ const DESKTOP_DEFAULT_ZOOM = 1;
 
 type EditorViewportDeps = {
   activeTab: Tab;
+  // The single-selected element id. Used to scroll a freshly-added element
+  // into view on mobile (the add handlers select what they create).
+  selectedId: string | null;
 };
+
+// Screen-px margins kept clear when scrolling an element into view: room
+// above for the selection toolbar + top chrome, below for the tab bar /
+// dock, and a little on the sides.
+const VIEW_MARGIN_TOP = 96;
+const VIEW_MARGIN_BOTTOM = 88;
+const VIEW_MARGIN_SIDE = 20;
 
 type EditorViewportApi = {
   // Pan offset in canvas-coords. The canvas wrapper applies
@@ -62,6 +72,12 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
   useEffect(() => {
     zoomRef.current = viewportZoom;
   }, [viewportZoom]);
+  // Latest pan offset in a ref so the scroll-into-view animation reads the
+  // current value without re-creating its stable callback.
+  const viewportOffsetRef = useRef(viewportOffset);
+  useEffect(() => {
+    viewportOffsetRef.current = viewportOffset;
+  }, [viewportOffset]);
 
   // depsRef means the helpers below can be stable across renders
   // (useCallback empty-dep) AND always read the latest activeTab.
@@ -76,6 +92,70 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
     if (!rect) return { x: 0, y: 0 };
     return computeViewportCenter(rect, viewportOffset);
   }, [viewportOffset]);
+
+  // Smoothly pan so an element (plus toolbar room) is fully on-screen.
+  // No-op if it already is. Used by the mobile new-element scroll below.
+  const scrollIntoView = useCallback((bx: number, by: number, bw: number, bh: number) => {
+    const rect = canvasMainRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const zoom = zoomRef.current;
+    // Canvas transform is `scale(z) translate(o)`, so a canvas point p
+    // renders at rect.origin + z*(p + offset).
+    const off = viewportOffsetRef.current;
+    const sl = rect.left + zoom * (bx + off.x);
+    const st = rect.top + zoom * (by + off.y);
+    const sr = sl + zoom * bw;
+    const sb = st + zoom * bh;
+    const visLeft = rect.left + VIEW_MARGIN_SIDE;
+    const visRight = rect.right - VIEW_MARGIN_SIDE;
+    const visTop = rect.top + VIEW_MARGIN_TOP;
+    const visBottom = rect.bottom - VIEW_MARGIN_BOTTOM;
+    let dxs = 0;
+    let dys = 0;
+    if (sl < visLeft) dxs = visLeft - sl;
+    else if (sr > visRight) dxs = visRight - sr;
+    if (st < visTop) dys = visTop - st;
+    else if (sb > visBottom) dys = visBottom - sb;
+    if (dxs === 0 && dys === 0) return;
+    const start = off;
+    const target = { x: off.x + dxs / zoom, y: off.y + dys / zoom };
+    const t0 = performance.now();
+    const DUR = 280;
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / DUR);
+      const e = 1 - Math.pow(1 - k, 3); // ease-out cubic
+      setViewportOffset({
+        x: start.x + (target.x - start.x) * e,
+        y: start.y + (target.y - start.y) * e,
+      });
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, []);
+
+  // Mobile: when a new element is added (the add handlers select it),
+  // scroll it into view if it isn't fully visible. Tracks the id set so a
+  // move / resize / remote change doesn't trigger it.
+  const prevIdsRef = useRef<Set<string>>(new Set());
+  const offFirstRunRef = useRef(true);
+  useEffect(() => {
+    const els = deps.activeTab.elements;
+    const ids = new Set(els.map((el) => el.id));
+    const prev = prevIdsRef.current;
+    prevIdsRef.current = ids;
+    // Seed on the first run (tab load) without scrolling.
+    if (offFirstRunRef.current) {
+      offFirstRunRef.current = false;
+      return;
+    }
+    if (typeof window === 'undefined' || window.innerWidth > MOBILE_BREAKPOINT_PX) return;
+    const sel = deps.selectedId;
+    if (!sel || prev.has(sel) || !ids.has(sel)) return;
+    const el = els.find((e) => e.id === sel);
+    if (!el || !isBoxed(el)) return;
+    scrollIntoView(el.x, el.y, el.width, el.height);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deps.activeTab.elements, deps.selectedId]);
 
   const fitToScreen = useCallback(() => {
     const rect = canvasMainRef.current?.getBoundingClientRect();
