@@ -125,13 +125,24 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
       ? Math.max(MIN_FIT_ZOOM, Math.min(z0, Math.min(visW / bw, visH / bh) * FIT_SAFETY))
       : z0;
 
+    // Canvas transform is `scale(z) translate(o)` with the scale centred
+    // on the wrapper (`origin-center`, see Canvas.tsx), so a canvas point
+    // p renders at screen x = rect.left + z*(p + off) + (W/2)*(1 - z). The
+    // last term is 0 at z = 1 (desktop) but ~70-130px at the 0.6 mobile
+    // zoom, so it MUST be included or the pan lands in the wrong place.
+    // screenX / screenY map a canvas coord to screen px at a given zoom.
+    const screenX = (cx: number, offX: number, z: number) =>
+      rect.left + z * (cx + offX) + (rect.width / 2) * (1 - z);
+    const screenY = (cy: number, offY: number, z: number) =>
+      rect.top + z * (cy + offY) + (rect.height / 2) * (1 - z);
+
     let target: { x: number; y: number };
     if (z1 === z0) {
-      // Fits at the current zoom: minimal pan. Canvas transform is
-      // `scale(z) translate(o)`, so canvas point p renders at
-      // rect.origin + z*(p + offset).
-      const sl = rect.left + z0 * (bx + off0.x);
-      const st = rect.top + z0 * (by + off0.y);
+      // Fits at the current zoom: minimal pan to pull any off-screen edge
+      // in. The centre-origin term is constant, so it cancels in the delta
+      // (target = off + dxs/z) but is required for the off-screen test.
+      const sl = screenX(bx, off0.x, z0);
+      const st = screenY(by, off0.y, z0);
       const sr = sl + z0 * bw;
       const sb = st + z0 * bh;
       let dxs = 0;
@@ -144,11 +155,15 @@ export function useEditorViewport(deps: EditorViewportDeps): EditorViewportApi {
       target = { x: off0.x + dxs / z0, y: off0.y + dys / z0 };
     } else {
       // Zoomed to fit: centre the element in the band so all of it shows.
+      // Invert screenX/screenY at z1 for the band centre → the offset that
+      // puts the element centre there.
       const ecx = bx + bw / 2;
       const ecy = by + bh / 2;
+      const bcx = (visLeft + visRight) / 2;
+      const bcy = (visTop + visBottom) / 2;
       target = {
-        x: ((visLeft + visRight) / 2 - rect.left) / z1 - ecx,
-        y: ((visTop + visBottom) / 2 - rect.top) / z1 - ecy,
+        x: (bcx - rect.left - (rect.width / 2) * (1 - z1)) / z1 - ecx,
+        y: (bcy - rect.top - (rect.height / 2) * (1 - z1)) / z1 - ecy,
       };
     }
 
