@@ -27,6 +27,8 @@ export function defaultPadding(element: BoxedElement): Padding {
       return 'sm';
     case 'annotation':
       return 'none';
+    case 'link-card':
+      return 'none';
   }
 }
 
@@ -108,6 +110,8 @@ export function defaultTextColor(element: BoxedElement): string {
       return '#1e293b'; // slate-800
     case 'annotation':
       return '#075985'; // brand-800 (no inline label; declared for parity)
+    case 'link-card':
+      return '#1e293b'; // slate-800 — card title text
   }
 }
 
@@ -138,6 +142,8 @@ export function defaultFillColor(element: BoxedElement): string {
       return 'transparent';
     case 'annotation':
       return '#e0f2fe'; // brand-100 — a touch deeper than a shape so the marker reads as a chip
+    case 'link-card':
+      return '#ffffff'; // white card surface
   }
 }
 
@@ -157,6 +163,8 @@ export function defaultStrokeColor(element: BoxedElement): string {
       return '#94a3b8'; // slate-400 grid lines
     case 'annotation':
       return '#0ea5e9'; // brand-500 — ring + note glyph tint
+    case 'link-card':
+      return '#e2e8f0'; // slate-200 — card border
   }
 }
 
@@ -167,7 +175,8 @@ export function supportsColours(element: Element): boolean {
     element.type === 'arrow' ||
     element.type === 'freehand' ||
     element.type === 'table' ||
-    element.type === 'annotation'
+    element.type === 'annotation' ||
+    element.type === 'link-card'
   );
 }
 

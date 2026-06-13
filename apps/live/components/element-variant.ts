@@ -179,5 +179,21 @@ export function describeVariant(
         },
       };
     }
+    case 'link-card': {
+      // A bookmark card (spec/40): fill background + 1px border, rounded.
+      // The favicon / title / image render as the child content
+      // (LinkCardView); overflow-hidden clips the image to the rounded box.
+      const ring = `${singleRing('ring-2 ring-brand-200')} ${multiRing}`.trim();
+      return {
+        className: `overflow-hidden shadow-sm ${ring}`,
+        style: {
+          borderRadius: '10px',
+          backgroundColor: element.fillColor ?? defaultFillColor(element),
+          borderColor: remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element),
+          borderWidth: remoteBorderColor ? remoteBorderWidth : 1,
+          borderStyle: 'solid',
+        },
+      };
+    }
   }
 }

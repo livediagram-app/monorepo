@@ -64,7 +64,16 @@ type ElementItem = {
   // Element.type literal so callers can show a per-type icon.
   // 'shape' / 'text' / 'sticky' / 'image' / 'freehand' / 'arrow'
   // line up with the boxed + arrow unions in packages/diagram.
-  type: 'shape' | 'text' | 'sticky' | 'image' | 'freehand' | 'table' | 'annotation' | 'arrow';
+  type:
+    | 'shape'
+    | 'text'
+    | 'sticky'
+    | 'image'
+    | 'freehand'
+    | 'table'
+    | 'annotation'
+    | 'link-card'
+    | 'arrow';
 };
 
 export type SearchResultItem =

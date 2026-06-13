@@ -2,6 +2,7 @@ import {
   isBoxed,
   type Anchor,
   type AnnotationElement,
+  type LinkCardElement,
   type ArrowElement,
   type BoxedElement,
   type Element,
@@ -161,6 +162,20 @@ export function createAnnotation(x: number, y: number): AnnotationElement {
     y,
     width: ANNOTATION_SIZE,
     height: ANNOTATION_SIZE,
+  };
+}
+
+// A link-card / bookmark (spec/40) at (x, y). No link yet — the user sets
+// the URL via the link picker, and the editor fills `meta` from the unfurl
+// endpoint. Default size suits a favicon + title row above an optional image.
+export function createLinkCard(x: number, y: number): LinkCardElement {
+  return {
+    id: crypto.randomUUID(),
+    type: 'link-card',
+    x,
+    y,
+    width: 280,
+    height: 120,
   };
 }
 

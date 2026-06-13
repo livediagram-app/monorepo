@@ -601,6 +601,64 @@ export type AnnotationElement = {
   font?: string;
 };
 
+// --- Link cards ------------------------------------------------------------
+
+// See specs/40-link-cards.md. A rectangular bookmark element: the user sets
+// its URL via the normal element-link UI (`link` with `{ kind: 'url' }`),
+// and the editor fetches a preview (title / site / favicon / image) through
+// the api worker's `/api/unfurl` endpoint and caches it in `meta`. The
+// metadata rides the normal tab sync, so peers + reloads get it for free.
+// Resizable like a shape; carries the shared boxed fields (mostly
+// always-undefined, mirroring AnnotationElement) for the generic code paths.
+export type LinkCardMeta = {
+  // The URL this metadata was fetched for — guards against showing stale
+  // preview after the link changes.
+  url: string;
+  title?: string;
+  siteName?: string;
+  image?: string; // og:image URL (referenced directly, not stored)
+  favicon?: string; // resolved favicon URL
+  description?: string;
+};
+
+export type LinkCardElement = {
+  id: ElementId;
+  type: 'link-card';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  // Cached unfurl preview for `link` (a url-kind ElementLink). Absent until
+  // a URL is set + fetched; the card shows the bare URL meanwhile.
+  meta?: LinkCardMeta;
+  // fillColor = card background; strokeColor = card border; textColor = the
+  // title/site text.
+  fillColor?: string;
+  strokeColor?: string;
+  textColor?: string;
+  // The URL source + everyday boxed fields.
+  link?: ElementLink;
+  label?: string;
+  locked?: boolean;
+  groupId?: ElementId;
+  opacity?: number;
+  rotation?: number;
+  aspectLocked?: boolean;
+  commentThread?: CommentThread;
+  note?: string;
+  // Declared for the generic union code paths (format painter, geometry,
+  // search), unused by the card UI — mirrors AnnotationElement.
+  padding?: Padding;
+  textSize?: TextSize;
+  textAlignX?: TextAlignX;
+  textAlignY?: TextAlignY;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textStrikethrough?: boolean;
+  font?: string;
+};
+
 // --- Arrows ----------------------------------------------------------------
 
 export type Anchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
@@ -822,7 +880,8 @@ export type BoxedElement =
   | ImageElement
   | FreehandElement
   | TableElement
-  | AnnotationElement;
+  | AnnotationElement
+  | LinkCardElement;
 export type Element = BoxedElement | ArrowElement;
 
 export type Tab = {
@@ -949,7 +1008,8 @@ export function isBoxed(element: Element): element is BoxedElement {
     element.type === 'image' ||
     element.type === 'freehand' ||
     element.type === 'table' ||
-    element.type === 'annotation'
+    element.type === 'annotation' ||
+    element.type === 'link-card'
   );
 }
 

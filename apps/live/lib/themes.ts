@@ -556,6 +556,9 @@ const THEME_COLOUR_FIELDS: Record<Element['type'], ThemeColourField[]> = {
     { element: 'fillColor', theme: 'elementFill' },
     { element: 'strokeColor', theme: 'elementStroke' },
   ],
+  // Link cards keep their neutral bookmark-card look regardless of theme
+  // (like sticky / image); the user can still recolour per-card. See spec/40.
+  'link-card': [],
 };
 
 // The colour fields a given element actually exposes to theming. Starts
