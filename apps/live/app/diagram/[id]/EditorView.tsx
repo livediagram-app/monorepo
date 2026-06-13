@@ -587,12 +587,14 @@ export function EditorView() {
         pendingDraw={pendingDraw}
         onCommitDraw={commitDraw}
         onCommitFreehand={commitFreehand}
-        recogniseShapes={userPreferences.recogniseShapes === true}
+        recogniseShapes={userPreferences.recogniseShapes !== false}
         minimalPanels={userPreferences.minimalPanels === true}
         onToggleRecogniseShapes={() => {
           const next: UserPreferences = {
             ...userPreferences,
-            recogniseShapes: userPreferences.recogniseShapes !== true,
+            // Default-on: undefined / true read as on, so toggling off
+            // stores an explicit false.
+            recogniseShapes: userPreferences.recogniseShapes === false,
           };
           // Telemetry (spec/22): emit BEFORE persistence so the
           // flip itself reaches the wire even when the new state

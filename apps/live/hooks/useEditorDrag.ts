@@ -52,6 +52,7 @@ import { getTheme } from '@/lib/themes';
 import {
   ALIGN_SNAP_THRESHOLD,
   cornerOf,
+  snapModeOf,
   MIN_SIZE,
   nextBounds,
   snapRotation,
@@ -762,6 +763,9 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
           //   through the same proportional scale around the anchor
           //   (corner opposite the drag handle).
           const corner = cornerOf(drag.mode);
+          // Corner OR single edge — so edge resizes snap + dimension-match
+          // on their axis (multi-member scaling below stays corner-only).
+          const snapMode = snapModeOf(drag.mode);
           const memberIds = new Set(drag.startBounds.keys());
 
           // Shift-held during resize is the standard "constrain
@@ -775,10 +779,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             if (!start) return;
             const raw = nextBounds(start, drag.mode, dx, dy, constrain);
             const next =
-              !constrain && corner
+              !constrain && snapMode
                 ? snapResizeBounds(
                     raw,
-                    corner,
+                    snapMode,
                     activeTab.elements,
                     memberIds,
                     ALIGN_SNAP_THRESHOLD,

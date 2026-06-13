@@ -421,16 +421,18 @@ export function snapToAlignment(
 // right + bottom edges move; etc.).
 export function snapResizeBounds(
   candidate: { x: number; y: number; width: number; height: number },
-  mode: 'se' | 'sw' | 'ne' | 'nw',
+  // Corner modes move two edges; single-edge modes (n/s/e/w) move one,
+  // snapping (and dimension-matching) on that axis only.
+  mode: 'se' | 'sw' | 'ne' | 'nw' | 'n' | 's' | 'e' | 'w',
   elements: Element[],
   excludeIds: Set<ElementId>,
   threshold: number,
   minSize: number,
 ): { x: number; y: number; width: number; height: number } {
-  const movesRight = mode === 'se' || mode === 'ne';
-  const movesLeft = mode === 'sw' || mode === 'nw';
-  const movesBottom = mode === 'se' || mode === 'sw';
-  const movesTop = mode === 'ne' || mode === 'nw';
+  const movesRight = mode === 'se' || mode === 'ne' || mode === 'e';
+  const movesLeft = mode === 'sw' || mode === 'nw' || mode === 'w';
+  const movesBottom = mode === 'se' || mode === 'sw' || mode === 's';
+  const movesTop = mode === 'ne' || mode === 'nw' || mode === 'n';
 
   // Anchored coordinates, the corner that should NOT move.
   const anchorRight = movesLeft ? candidate.x + candidate.width : null;

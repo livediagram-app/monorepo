@@ -52,11 +52,10 @@ export function useEditorPreferences(deps: EditorPreferencesDeps) {
 
   // Load the cached preferences once on mount. Missing or unparseable
   // entries collapse to `{}`; the per-flag default then depends on
-  // the consumer's comparison: `autoRebindArrows` and
-  // `telemetryEnabled` read via `!== false` so undefined = on (the
-  // historical "everything on" default), while `drawToAdd` and
-  // `recogniseShapes` read via `=== true` so undefined = off
-  // (matches spec/20's "drop-at-centre" + "raw-sketch" defaults).
+  // the consumer's comparison: `autoRebindArrows`, `telemetryEnabled`
+  // and `recogniseShapes` read via `!== false` so undefined = on, while
+  // `drawToAdd` reads via `=== true` so undefined = off (matches
+  // spec/20's "drop-at-centre" default).
   useEffect(() => {
     setUserPreferences(readUserPreferences());
   }, []);

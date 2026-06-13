@@ -409,6 +409,14 @@ export function cornerOf(mode: DragMode): 'nw' | 'ne' | 'sw' | 'se' | null {
   }
 }
 
+// Map a DragMode to the snap mode `snapResizeBounds` understands (the
+// corner OR single edge being dragged), or null for 'move'. Lets edge
+// resizes snap + dimension-match on their one axis just like corners do.
+export type ResizeSnapMode = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
+export function snapModeOf(mode: DragMode): ResizeSnapMode | null {
+  return mode === 'move' ? null : (mode.slice('resize-'.length) as ResizeSnapMode);
+}
+
 // True when either of the arrow's endpoints is pinned to one of the
 // given element ids. Used by the deletion / cascading-update paths so
 // arrows attached to a removed box can be cleaned up alongside it.
