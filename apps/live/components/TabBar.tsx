@@ -40,6 +40,11 @@ type TabBarProps = {
   // toggle. Available in every role: even view-role visitors can
   // adjust their own browser-local preferences.
   onOpenSettings?: () => void;
+  // Desktop-only one-click panel-layout toggle (normal ↔ minimal),
+  // sitting just left of Settings. `minimalPanels` is the current state
+  // (drives the icon + tooltip); omit the toggle to hide the button.
+  minimalPanels?: boolean;
+  onToggleMinimalPanels?: () => void;
   // Optional callback that pops the global search panel. The
   // button sits to the LEFT of the dark-mode toggle.
   onOpenSearch?: () => void;
@@ -129,6 +134,8 @@ export function TabBar({
   selfRole,
   onOpenShortcuts,
   onOpenSettings,
+  minimalPanels,
+  onToggleMinimalPanels,
   onOpenSearch,
 }: TabBarProps) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -356,6 +363,34 @@ export function TabBar({
           </Tooltip>
         </span>
       ) : null}
+      {onToggleMinimalPanels ? (
+        // Desktop only: minimal mode is forced on mobile, so the toggle is
+        // moot there. Sits just left of Settings.
+        <span className="hidden sm:contents">
+          <Tooltip
+            title={minimalPanels ? 'Normal panels' : 'Minimal panels'}
+            description={
+              minimalPanels
+                ? 'Switch back to the floating Palette / Editor panels.'
+                : 'Collapse the panels into a compact button bar.'
+            }
+          >
+            <button
+              type="button"
+              onClick={onToggleMinimalPanels}
+              aria-label={minimalPanels ? 'Use normal panel layout' : 'Use minimal panel layout'}
+              aria-pressed={!!minimalPanels}
+              className={`ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition sm:ml-1 ${
+                minimalPanels
+                  ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <PanelLayoutIcon />
+            </button>
+          </Tooltip>
+        </span>
+      ) : null}
       {onOpenSettings ? (
         // Settings stays visible on mobile too: it's where users go
         // to flip drawToAdd / arrow-auto-rebind / telemetry opt-out,
@@ -412,6 +447,26 @@ function KeyboardIcon() {
     >
       <rect x="2" y="5.5" width="16" height="10" rx="1.5" />
       <path d="M5 9h.01M8 9h.01M11 9h.01M14 9h.01M5 12.5h10" />
+    </svg>
+  );
+}
+
+// A panel layout glyph: a frame with a sidebar, hinting "panels".
+function PanelLayoutIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="14" height="12" rx="1.5" />
+      <path d="M8 4v12" />
     </svg>
   );
 }

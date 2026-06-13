@@ -898,6 +898,18 @@ export function EditorView() {
             setSettingsOpen(true);
             track('UI', 'Opened', 'Settings');
           }}
+          // Desktop one-click panel-layout toggle (normal ↔ minimal),
+          // mirroring the Settings switch but on the footer.
+          minimalPanels={userPreferences.minimalPanels === true}
+          onToggleMinimalPanels={() => {
+            const next: UserPreferences = {
+              ...userPreferences,
+              minimalPanels: !(userPreferences.minimalPanels === true),
+            };
+            track('UI', 'Toggled', next.minimalPanels ? 'MinimalPanelsOn' : 'MinimalPanelsOff');
+            setUserPreferences(next);
+            writeUserPreferences(next, selfParticipant?.id ?? null);
+          }}
           onOpenSearch={() => {
             setSearchOpen(true);
             // Element search walks local tab state; pull every
