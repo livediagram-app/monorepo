@@ -24,40 +24,20 @@ export function PaletteTabBar({
   // category open by default (Shapes, the most common entry point).
   defaultOpenId?: string | null;
 }) {
-  // Committed tab (click to pin). Hovering a tab on desktop previews
-  // its panel without committing, so the user can peek into a category
-  // for discovery and revert by moving the pointer away — no click.
+  // Committed tab — changed ONLY by click (no hover preview). Clicking the
+  // open tab collapses it; clicking another switches. One active tab at a
+  // time keeps the categories mutually exclusive.
   const [activeId, setActiveId] = useState<string | null>(defaultOpenId);
-  const [hoverId, setHoverId] = useState<string | null>(null);
-  // Desktop hover wins over the committed tab; on touch hoverId stays
-  // null (the pointer handlers below ignore non-mouse pointers, since a
-  // tap would otherwise flash a preview before the click registers).
-  const shownId = hoverId ?? activeId;
   // Kept so the panel's content stays mounted through the collapse
-  // animation: shownId drops to null the instant the pointer leaves an
-  // unpinned preview (driving the height -> 0 transition), while
-  // displayedId holds the last shown tab so its content doesn't blank
-  // out mid-animation.
+  // animation: `activeId` drops to null the instant the user closes a tab
+  // (driving the height -> 0 transition), while `displayedId` holds the
+  // last shown tab so its content doesn't blank out mid-animation.
   const [displayedId, setDisplayedId] = useState<string | null>(defaultOpenId);
   useEffect(() => {
-    if (shownId) setDisplayedId(shownId);
-  }, [shownId]);
-  // When the user collapses the open tab, suppress the hover-peek for that
-  // tab until the pointer leaves the palette — otherwise the peek would
-  // immediately re-open the category they just closed, so it never reads as
-  // deselected.
-  const suppressHoverRef = useRef<string | null>(null);
-  const select = (id: string) => {
-    if (activeId === id) {
-      suppressHoverRef.current = id;
-      setHoverId(null);
-      setActiveId(null);
-    } else {
-      suppressHoverRef.current = null;
-      setActiveId(id);
-    }
-  };
-  const displayed = tabs.find((t) => t.id === (shownId ?? displayedId)) ?? null;
+    if (activeId) setDisplayedId(activeId);
+  }, [activeId]);
+  const select = (id: string) => setActiveId((cur) => (cur === id ? null : id));
+  const displayed = tabs.find((t) => t.id === (activeId ?? displayedId)) ?? null;
 
   // Soft category-change animation. The panel's height is driven off the
   // measured content height and eased, so switching from a short
@@ -82,31 +62,8 @@ export function PaletteTabBar({
     };
   }, []);
 
-  // Desktop-only hover preview. onPointerOver bubbles, so we read the
-  // tab under the pointer from the event target and only update when
-  // it's actually a tab button — moving the pointer DOWN into the
-  // previewed panel finds no tab and leaves the preview untouched, so
-  // the previewed content stays usable. Leaving the whole component
-  // (tab row + panel) reverts to the committed tab.
-  const previewOver = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'mouse') return;
-    const id = (e.target as Element | null)
-      ?.closest?.('[data-tab-id]')
-      ?.getAttribute('data-tab-id');
-    if (id && id !== suppressHoverRef.current) setHoverId(id);
-  };
-  const previewLeave = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'mouse') return;
-    setHoverId(null);
-    suppressHoverRef.current = null;
-  };
-
   return (
-    <div
-      className="border-t border-slate-100 dark:border-slate-800"
-      onPointerOver={previewOver}
-      onPointerLeave={previewLeave}
-    >
+    <div className="border-t border-slate-100 dark:border-slate-800">
       <div className="border-b border-slate-100 px-2 py-1.5 dark:border-slate-800">
         {/* Joined segmented control: the categories are mutually exclusive
             (one panel open at a time), so the tabs sit flush in one
@@ -117,15 +74,14 @@ export function PaletteTabBar({
           aria-label="Palette categories"
         >
           {tabs.map((tab) => {
-            // Highlight follows the *shown* tab so the lit icon always
-            // matches the panel below, including during a hover preview.
-            const isShown = tab.id === shownId;
+            // Highlight the active (clicked) tab so the lit icon matches
+            // the panel below.
+            const isShown = tab.id === activeId;
             return (
               <button
                 key={tab.id}
                 type="button"
                 role="tab"
-                data-tab-id={tab.id}
                 aria-selected={tab.id === activeId}
                 aria-label={tab.label}
                 onClick={() => select(tab.id)}
@@ -144,7 +100,7 @@ export function PaletteTabBar({
       </div>
       <div
         className={`overflow-hidden${animate ? ' transition-[height] duration-200 ease-out' : ''}`}
-        style={{ height: shownId ? (height ?? undefined) : 0 }}
+        style={{ height: activeId ? (height ?? undefined) : 0 }}
       >
         <div ref={contentRef} className="px-3 pb-3 pt-3">
           <div key={displayed?.id ?? 'empty'} className="animate-fade-in">
