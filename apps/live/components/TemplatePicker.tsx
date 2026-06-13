@@ -138,10 +138,6 @@ export function TemplatePicker({
   const themeCategoryThemes = (category: ThemeCategory) =>
     themes.filter((t) => t.id !== 'brand' && themeCategory(t.id) === category);
 
-  // Both browsers ease their height between views so swaps don't snap the
-  // modal taller/shorter; the cap is where they switch to scrolling.
-  const BODY_MAX_PX = 304; // 19rem
-
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
@@ -264,7 +260,6 @@ export function TemplatePicker({
                   grouping — it's a "start from scratch", not a category
                   template — and lives only on the overview row. */}
               <AnimatedHeightBox
-                maxPx={BODY_MAX_PX}
                 viewKey={templateFilter ? 'search' : (openCategory ?? 'overview')}
                 className="mt-2"
               >
@@ -359,11 +354,7 @@ export function TemplatePicker({
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Select a theme
               </p>
-              <AnimatedHeightBox
-                maxPx={BODY_MAX_PX}
-                viewKey={openThemeCategory ?? 'overview'}
-                className="mt-2"
-              >
+              <AnimatedHeightBox viewKey={openThemeCategory ?? 'overview'} className="mt-2">
                 {openThemeCategory ? (
                   <>
                     <button
