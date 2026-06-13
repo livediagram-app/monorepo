@@ -27,7 +27,7 @@ import {
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
 import { renderLabel } from './element-labels';
-import { LockBadge, ResizeHandles, RotateHandle } from './element-parts';
+import { LockBadge, ResizeHandles, RotateHandle, resizeCursor } from './element-parts';
 import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { BoxBorderOverlay } from './BoxBorderOverlay';
@@ -601,7 +601,12 @@ function BoxedElementViewImpl({
               handles show even when rotated — the resize math projects the
               drag into the element's local frame (useEditorDrag). */}
           {showHandles && !isAnnotation ? (
-            <ResizeHandles elementId={element.id} zoom={zoom} onBeginDrag={onBeginDrag} />
+            <ResizeHandles
+              elementId={element.id}
+              zoom={zoom}
+              rotation={rotation}
+              onBeginDrag={onBeginDrag}
+            />
           ) : null}
 
           {showHandles && !isAnnotation && !suppressRotate ? (
@@ -610,30 +615,16 @@ function BoxedElementViewImpl({
 
           {showAnchors ? (
             <>
-              <EdgeResizeHandle
-                anchor="n"
-                elementId={element.id}
-                zoom={zoom}
-                onBeginDrag={onBeginDrag}
-              />
-              <EdgeResizeHandle
-                anchor="e"
-                elementId={element.id}
-                zoom={zoom}
-                onBeginDrag={onBeginDrag}
-              />
-              <EdgeResizeHandle
-                anchor="s"
-                elementId={element.id}
-                zoom={zoom}
-                onBeginDrag={onBeginDrag}
-              />
-              <EdgeResizeHandle
-                anchor="w"
-                elementId={element.id}
-                zoom={zoom}
-                onBeginDrag={onBeginDrag}
-              />
+              {(['n', 'e', 's', 'w'] as const).map((a) => (
+                <EdgeResizeHandle
+                  key={a}
+                  anchor={a}
+                  elementId={element.id}
+                  zoom={zoom}
+                  rotation={rotation}
+                  onBeginDrag={onBeginDrag}
+                />
+              ))}
             </>
           ) : null}
         </div>
@@ -743,11 +734,13 @@ function EdgeResizeHandle({
   anchor,
   elementId,
   zoom,
+  rotation = 0,
   onBeginDrag,
 }: {
   anchor: 'n' | 'e' | 's' | 'w';
   elementId: string;
   zoom: number;
+  rotation?: number;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
 }) {
   const vertical = anchor === 'n' || anchor === 's';
@@ -763,9 +756,11 @@ function EdgeResizeHandle({
         ...ANCHOR_STYLE[anchor],
         // Counter-scale so the grip stays the same on-screen size at any zoom.
         transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+        // Rotation-aware cursor so it points the right way once turned.
+        cursor: resizeCursor(anchor, rotation),
       }}
       className={`pointer-events-auto absolute rounded-full border border-brand-400 bg-white opacity-80 shadow-sm transition hover:opacity-100 dark:border-brand-300 dark:bg-slate-900 ${
-        vertical ? 'h-1.5 w-4 cursor-ns-resize' : 'h-4 w-1.5 cursor-ew-resize'
+        vertical ? 'h-1.5 w-4' : 'h-4 w-1.5'
       }`}
     />
   );

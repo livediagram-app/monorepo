@@ -41,13 +41,44 @@ type HandlePosition = 'nw' | 'ne' | 'sw' | 'se';
 
 // -1.5 (6px) offset centres a 12px (h-3) handle on the corner. Same round
 // white style as the plus buttons (FLOATING_CONTROL_CLASS), kept small so
-// the four corner grips stay unobtrusive.
+// the four corner grips stay unobtrusive. The cursor is computed from the
+// rotation (resizeCursor), not baked in, so it stays correct when rotated.
 const positionClasses: Record<HandlePosition, string> = {
-  nw: '-top-1.5 -left-1.5 cursor-nwse-resize',
-  ne: '-top-1.5 -right-1.5 cursor-nesw-resize',
-  sw: '-bottom-1.5 -left-1.5 cursor-nesw-resize',
-  se: '-bottom-1.5 -right-1.5 cursor-nwse-resize',
+  nw: '-top-1.5 -left-1.5',
+  ne: '-top-1.5 -right-1.5',
+  sw: '-bottom-1.5 -left-1.5',
+  se: '-bottom-1.5 -right-1.5',
 };
+
+// Resize axis angle (degrees, y-down, mod 180) for each corner / edge, used
+// to pick the right resize cursor once the element's rotation is added.
+const HANDLE_AXIS: Record<string, number> = {
+  nw: 45,
+  se: 45,
+  ne: 135,
+  sw: 135,
+  // Edge handles: n/s resize height (vertical axis), e/w width (horizontal).
+  n: 90,
+  s: 90,
+  e: 0,
+  w: 0,
+};
+
+// The CSS resize cursor for a handle whose resize axis sits at `baseAngle`,
+// rotated by `rotation` degrees. Snaps to the nearest of the four cursors
+// browsers offer for diagonal / orthogonal resizing.
+export function resizeCursor(handle: string, rotation: number): string {
+  const base = HANDLE_AXIS[handle] ?? 0;
+  const a = (((base + rotation) % 180) + 180) % 180;
+  const bucket = (Math.round(a / 45) * 45) % 180; // 0 | 45 | 90 | 135
+  return bucket === 0
+    ? 'ew-resize'
+    : bucket === 45
+      ? 'nwse-resize'
+      : bucket === 90
+        ? 'ns-resize'
+        : 'nesw-resize';
+}
 
 // Pseudo-element that extends each handle's pointer-capture region on
 // touch devices without altering the visual size of the white-fill
@@ -63,10 +94,13 @@ const HIT_PAD_CLASSES =
 type ResizeHandlesProps = {
   elementId: string;
   zoom: number;
+  // Element rotation in degrees, so the resize cursor matches the visual
+  // diagonal once the box is turned.
+  rotation?: number;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
 };
 
-export function ResizeHandles({ elementId, zoom, onBeginDrag }: ResizeHandlesProps) {
+export function ResizeHandles({ elementId, zoom, rotation = 0, onBeginDrag }: ResizeHandlesProps) {
   return (
     <>
       {(Object.keys(positionClasses) as HandlePosition[]).map((pos) => (
@@ -76,7 +110,11 @@ export function ResizeHandles({ elementId, zoom, onBeginDrag }: ResizeHandlesPro
             e.stopPropagation();
             onBeginDrag(elementId, `resize-${pos}`, e);
           }}
-          style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'center' }}
+          style={{
+            transform: `scale(${1 / zoom})`,
+            transformOrigin: 'center',
+            cursor: resizeCursor(pos, rotation),
+          }}
           className={`pointer-events-auto absolute h-3 w-3 opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${positionClasses[pos]} ${HIT_PAD_CLASSES}`}
         />
       ))}
