@@ -44,7 +44,14 @@ import { Tooltip } from './Tooltip';
 import { ZoomControls } from './ZoomControls';
 import { CanvasMobileDock } from './CanvasMobileDock';
 import type { CanvasProps } from './Canvas.types';
-import { useCallback, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type Dispatch,
+  type RefObject,
+  type SetStateAction,
+} from 'react';
 import { useStableCallbacks } from '@/hooks/useStableCallbacks';
 import type { TabSectionControls } from './CommandPalette';
 import type { DockAnchor, MobilePanel } from '@/hooks/useCanvasMobileDock';
@@ -282,6 +289,19 @@ export function CanvasChrome(props: CanvasChromeProps) {
     setActiveMobilePanel(null);
     setActiveDockAnchor(null);
   }, [setActiveMobilePanel, setActiveDockAnchor]);
+  // Dock-mode palette reopen: when a draw tool is armed FROM the palette it
+  // closes so the user can draw; once the draw lands (pendingDraw clears),
+  // reopen the palette so they can pick the next thing without re-tapping.
+  const reopenPaletteAfterDrawRef = useRef(false);
+  const prevPendingDrawRef = useRef(pendingDraw);
+  useEffect(() => {
+    const prev = prevPendingDrawRef.current;
+    prevPendingDrawRef.current = pendingDraw;
+    if (prev && !pendingDraw && reopenPaletteAfterDrawRef.current) {
+      reopenPaletteAfterDrawRef.current = false;
+      if (minimalPanels || isMobileViewportSync()) setActiveMobilePanel('palette');
+    }
+  }, [pendingDraw, minimalPanels, setActiveMobilePanel]);
   // Zen / focus mode (spec/26): hide all floating chrome. `chromeHidden`
   // folds it in next to the welcome-flow gate that already suppresses
   // the same panels, so each panel stays hidden in either state.
@@ -971,6 +991,11 @@ export function CanvasChrome(props: CanvasChromeProps) {
           mobileOpenOverride={activeMobilePanel === 'palette'}
           mobileDockAnchor={activeDockAnchor ?? undefined}
           forceDockMode={!!minimalPanels}
+          onDrawArmed={() => {
+            // Only remember to reopen if the palette was actually the open
+            // dock panel when the draw was armed.
+            reopenPaletteAfterDrawRef.current = activeMobilePanel === 'palette';
+          }}
           onMobileClose={() => {
             setActiveMobilePanel(null);
             setActiveDockAnchor(null);

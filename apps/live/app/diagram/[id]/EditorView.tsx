@@ -367,12 +367,15 @@ export function EditorView() {
   // end), reusing addArrow's connect-from-selection path.
   const handleStartArrow = (direction: QuickConnectDirection, e: ReactPointerEvent) => {
     if (selectedId === null) return;
-    if (e.pointerType === 'touch') {
-      addArrow();
-      return;
-    }
     const anchor: Anchor =
       direction === 'right' ? 'e' : direction === 'left' ? 'w' : direction === 'below' ? 's' : 'n';
+    if (e.pointerType === 'touch') {
+      // Touch: drop a free arrow running straight out from the anchor (~50px)
+      // and select it, so the user can drag it where they want — no
+      // tap-target step.
+      beginAnchorDrag(selectedId, anchor, e, { placeOutPx: 50 });
+      return;
+    }
     beginAnchorDrag(selectedId, anchor, e, { clickToPlace: true });
   };
   return (

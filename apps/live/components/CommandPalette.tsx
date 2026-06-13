@@ -228,6 +228,10 @@ type CommandPaletteProps = {
   // Mobile dock control — forwarded to the inner MovablePanel.
   mobileOpenOverride?: boolean;
   onMobileClose?: () => void;
+  // Fired when a draw-to-place tool (shape / text / sticky / arrow /
+  // freehand) is armed FROM the palette in dock mode, so the parent can
+  // reopen the palette once the draw finishes.
+  onDrawArmed?: () => void;
   mobileDockAnchor?: { left: number; top: number; arrowOffset: number };
   forceDockMode?: boolean;
 };
@@ -252,14 +256,18 @@ export function CommandPalette({
   mobileTopOverridePx,
   mobileOpenOverride,
   onMobileClose,
+  onDrawArmed,
   mobileDockAnchor,
   forceDockMode,
 }: CommandPaletteProps) {
   const pendingShapeKind = pendingDraw && pendingDraw.type === 'shape' ? pendingDraw.kind : null;
   // On mobile (dock popover mode) close the palette after adding a
   // shape/tool so the user can draw immediately without dismissing manually.
+  // Draw-to-place tools also signal onDrawArmed so the parent can reopen the
+  // palette once the draw lands; immediate drops (icon/table/...) don't.
   const addShape = (kind: import('@livediagram/diagram').ShapeKind) => {
     onAddShape(kind);
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addIcon = (iconId: string) => {
@@ -268,10 +276,12 @@ export function CommandPalette({
   };
   const addText = () => {
     onAddText();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addSticky = () => {
     onAddSticky();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addTable = () => {
@@ -284,10 +294,12 @@ export function CommandPalette({
   };
   const addArrow = () => {
     onAddArrow();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const beginFreehand = () => {
     onBeginFreehand();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addImage = () => {

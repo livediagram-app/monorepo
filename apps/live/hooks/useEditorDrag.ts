@@ -219,7 +219,7 @@ type EditorDragApi = {
     elementId: string,
     anchor: Anchor,
     e: ReactPointerEvent,
-    opts?: { clickToPlace?: boolean },
+    opts?: { clickToPlace?: boolean; placeOutPx?: number },
   ) => void;
   beginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;
   beginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
@@ -390,7 +390,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     elementId: string,
     anchor: Anchor,
     e: ReactPointerEvent,
-    opts?: { clickToPlace?: boolean },
+    opts?: { clickToPlace?: boolean; placeOutPx?: number },
   ) => {
     const d = depsRef.current;
     if (d.formatSourceId !== null || d.groupSourceId !== null) return;
@@ -404,6 +404,37 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     // the tab theme's element stroke, then the built-in arrow default.
     const theme = getTheme(d.activeTab.theme);
     const inheritedStroke = element.strokeColor ?? theme.elementStroke ?? undefined;
+    // placeOutPx (mobile Arrow option): don't enter a drag — drop a free
+    // arrow that runs straight out from the anchor by that many px and
+    // select it so the user can reposition it by hand.
+    if (opts?.placeOutPx) {
+      const out: Record<Anchor, { x: number; y: number }> = {
+        n: { x: 0, y: -1 },
+        s: { x: 0, y: 1 },
+        e: { x: 1, y: 0 },
+        w: { x: -1, y: 0 },
+        ne: { x: 0.707, y: -0.707 },
+        nw: { x: -0.707, y: -0.707 },
+        se: { x: 0.707, y: 0.707 },
+        sw: { x: -0.707, y: 0.707 },
+      };
+      const dir = out[anchor];
+      const placed: ArrowElement = {
+        id: crypto.randomUUID(),
+        type: 'arrow',
+        from: { kind: 'pinned', elementId, anchor },
+        to: {
+          kind: 'free',
+          x: start.x + dir.x * opts.placeOutPx,
+          y: start.y + dir.y * opts.placeOutPx,
+        },
+        ...(inheritedStroke ? { strokeColor: inheritedStroke } : {}),
+      };
+      d.commit((els) => [...els, placed]);
+      d.setSelectedId(placed.id);
+      track('Element', 'Added', 'Arrow');
+      return;
+    }
     const arrow: ArrowElement = {
       id: crypto.randomUUID(),
       type: 'arrow',

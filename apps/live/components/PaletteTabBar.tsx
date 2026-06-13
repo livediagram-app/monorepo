@@ -64,12 +64,12 @@ export function PaletteTabBar({
 
   return (
     <div className="border-t border-slate-100 dark:border-slate-800">
-      <div className="border-b border-slate-100 px-2 py-1.5 dark:border-slate-800">
-        {/* Joined segmented control: the categories are mutually exclusive
-            (one panel open at a time), so the tabs sit flush in one
-            bordered group with dividers rather than separate buttons. */}
+      {/* Categories stretch edge-to-edge: no side padding, no rounded
+          container border, and no separator below (the panel that expands
+          underneath provides its own visual break). */}
+      <div className="py-1">
         <div
-          className="flex items-stretch divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 dark:divide-slate-700 dark:border-slate-700"
+          className="flex items-stretch divide-x divide-slate-200 dark:divide-slate-700"
           role="tablist"
           aria-label="Palette categories"
         >
