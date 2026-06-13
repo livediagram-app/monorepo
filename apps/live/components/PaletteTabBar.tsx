@@ -63,40 +63,37 @@ export function PaletteTabBar({
   }, []);
 
   return (
-    <div className="border-t border-slate-100 dark:border-slate-800">
-      {/* Categories stretch edge-to-edge: no side padding, no rounded
-          container border, and no separator below (the panel that expands
-          underneath provides its own visual break). */}
-      <div className="py-1">
-        <div
-          className="flex items-stretch divide-x divide-slate-200 dark:divide-slate-700"
-          role="tablist"
-          aria-label="Palette categories"
-        >
-          {tabs.map((tab) => {
-            // Highlight the active (clicked) tab so the lit icon matches
-            // the panel below.
-            const isShown = tab.id === activeId;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={tab.id === activeId}
-                aria-label={tab.label}
-                onClick={() => select(tab.id)}
-                className={
-                  isShown
-                    ? 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 bg-brand-500 text-white transition'
-                    : 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white'
-                }
-              >
-                {tab.icon}
-                <span className="text-[10px] font-medium leading-none">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+    <div>
+      {/* Categories stretch edge-to-edge: no side padding and no rounding,
+          but a top + bottom border so the row reads as a distinct band. */}
+      <div
+        className="flex items-stretch divide-x divide-slate-200 border-y border-slate-200 dark:divide-slate-700 dark:border-slate-700"
+        role="tablist"
+        aria-label="Palette categories"
+      >
+        {tabs.map((tab) => {
+          // Highlight the active (clicked) tab so the lit icon matches
+          // the panel below.
+          const isShown = tab.id === activeId;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={tab.id === activeId}
+              aria-label={tab.label}
+              onClick={() => select(tab.id)}
+              className={
+                isShown
+                  ? 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 bg-brand-500 text-white transition'
+                  : 'flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white'
+              }
+            >
+              {tab.icon}
+              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
       <div
         className={`overflow-hidden${animate ? ' transition-[height] duration-200 ease-out' : ''}`}
