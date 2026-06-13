@@ -23,7 +23,10 @@ describe('timerDisplayMs / timerDone', () => {
 
   it('countdown paused shows the frozen remaining (or the duration before any run)', () => {
     expect(
-      timerDisplayMs({ mode: 'countdown', running: false, durationMs: 60_000, frozenMs: 42_000 }, 0),
+      timerDisplayMs(
+        { mode: 'countdown', running: false, durationMs: 60_000, frozenMs: 42_000 },
+        0,
+      ),
     ).toBe(42_000);
     // Never started: fall back to the configured duration.
     expect(timerDisplayMs({ mode: 'countdown', running: false, durationMs: 60_000 }, 0)).toBe(
