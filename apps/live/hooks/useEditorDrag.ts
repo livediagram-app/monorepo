@@ -808,6 +808,33 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
           if (drag.startBounds.size <= 1) {
             const start = drag.startBounds.get(drag.primaryId);
             if (!start) return;
+            const primary = activeTab.elements.find((el) => el.id === drag.primaryId);
+            const rotation = (primary && isBoxed(primary) ? primary.rotation : 0) ?? 0;
+            if (rotation) {
+              // Rotated: project the screen drag into the element's local
+              // (unrotated) frame so the size changes along its own axes,
+              // and keep the centre fixed (axis-aligned snapping doesn't
+              // apply to a rotated box).
+              const r = (rotation * Math.PI) / 180;
+              const dxl = dx * Math.cos(r) + dy * Math.sin(r);
+              const dyl = -dx * Math.sin(r) + dy * Math.cos(r);
+              const sized = nextBounds(start, drag.mode, dxl, dyl, constrain);
+              const cx = start.x + start.width / 2;
+              const cy = start.y + start.height / 2;
+              const next = {
+                x: cx - sized.width / 2,
+                y: cy - sized.height / 2,
+                width: sized.width,
+                height: sized.height,
+              };
+              scheduleGuides([]);
+              tick((els) =>
+                els.map((el) =>
+                  el.id === drag.primaryId && isBoxed(el) ? { ...el, ...next } : el,
+                ),
+              );
+              return;
+            }
             const raw = nextBounds(start, drag.mode, dx, dy, constrain);
             const next =
               !constrain && snapMode
