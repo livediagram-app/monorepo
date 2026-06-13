@@ -3,6 +3,12 @@
 // handles diagram data. See specs/05-diagram-structure.md and
 // specs/09-canvas-and-command-palette.md.
 
+// Live session-tool types used by the `Tab.timer` / `Tab.vote` fields
+// below. Type-only import (erased at build) so the index <-> session
+// circular reference is fine. The runtime helpers are re-exported lower
+// down via `export * from './session'`.
+import type { TabTimer, TabVote } from './session';
+
 // Documentary type aliases for ids that internal helpers thread
 // around. Not exported because no caller outside this package
 // imports them by name (they all just use plain `string`); keeping
@@ -864,6 +870,13 @@ export type Tab = {
   // loose in another. Unset / empty = loose. See tab-folders.ts for
   // the normalize + grouping helpers.
   folder?: string;
+  // Live session tools (spec/39), facilitator-run + synced to every
+  // participant via the normal tab sync. `timer` is a countdown /
+  // stopwatch; `vote` is a dot-voting session. Both are edit-role
+  // controlled (the room drops view-role mutations) and absent until a
+  // facilitator starts one. See session.ts for the pure helpers.
+  timer?: TabTimer;
+  vote?: TabVote;
 };
 
 export type Diagram = {
@@ -956,6 +969,10 @@ export * from './groups';
 // server route so the contiguous-run invariant has a single
 // implementation.
 export * from './tab-folders';
+
+// Live session tools (spec/39): the TabTimer / TabVote types used by the
+// Tab fields above, plus the pure timer + vote helpers.
+export * from './session';
 
 // Pencil-tool shape recognition (spec/09 Pencil (freehand)
 // subsection's recognise mode). Re-exported so callers import

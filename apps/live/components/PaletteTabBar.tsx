@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { readLocalStorageSafe, writeLocalStorageSafe } from '@/lib/local-storage-safe';
 
 export type PaletteTab = {
   id: string;
@@ -17,17 +18,36 @@ export type PaletteTab = {
 export function PaletteTabBar({
   tabs,
   defaultOpenId = null,
+  storageKey,
 }: {
   tabs: PaletteTab[];
   // Tab to expand on first render. `null` (the default) opens the
   // palette with every panel collapsed; pass an id to have that
   // category open by default (Shapes, the most common entry point).
   defaultOpenId?: string | null;
+  // When set, the chosen category is remembered in localStorage under
+  // this key so it survives the palette being closed + reopened (the
+  // mobile / minimal dock unmounts the popover) and page reloads. An
+  // empty stored value means "collapsed"; a stale id (category removed)
+  // falls back to `defaultOpenId`.
+  storageKey?: string;
 }) {
   // Committed tab — changed ONLY by click (no hover preview). Clicking the
   // open tab collapses it; clicking another switches. One active tab at a
-  // time keeps the categories mutually exclusive.
-  const [activeId, setActiveId] = useState<string | null>(defaultOpenId);
+  // time keeps the categories mutually exclusive. Seeded from the
+  // remembered category when `storageKey` is set so reopening the palette
+  // lands back where the user left off.
+  const [activeId, setActiveId] = useState<string | null>(() => {
+    if (!storageKey) return defaultOpenId;
+    const saved = readLocalStorageSafe(storageKey);
+    if (saved === null) return defaultOpenId; // never chosen yet
+    if (saved === '') return null; // explicitly collapsed
+    return tabs.some((t) => t.id === saved) ? saved : defaultOpenId; // guard stale id
+  });
+  // Persist the choice (empty string = collapsed) so the next mount restores it.
+  useEffect(() => {
+    if (storageKey) writeLocalStorageSafe(storageKey, activeId ?? '');
+  }, [storageKey, activeId]);
   // Kept so the panel's content stays mounted through the collapse
   // animation: `activeId` drops to null the instant the user closes a tab
   // (driving the height -> 0 transition), while `displayedId` holds the

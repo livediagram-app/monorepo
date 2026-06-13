@@ -103,6 +103,27 @@ export function SelectedElementSection({
 
   return (
     <div className="flex flex-col">
+      {/* Aspect-lock for elements without the Shape accordion (icons, text,
+          sticky, ...). Icons default to locked so the glyph never warps, but
+          the user can unlock to size the box freely — the morphable shapes
+          keep their copy inside the Shape accordion below. */}
+      {selection.aspectLocked !== null && selection.shapeKind === null ? (
+        <div className="flex items-center justify-between px-3 py-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+              Lock aspect ratio
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              Keep width-to-height fixed when resizing.
+            </span>
+          </div>
+          <ToggleSwitch
+            checked={selection.aspectLocked}
+            onChange={selection.onToggleAspectLock}
+            label="Lock aspect ratio"
+          />
+        </div>
+      ) : null}
       {selection.shapeKind !== null ? (
         <Accordion title="Shape" open={open.shape} onToggle={() => toggle('shape')}>
           <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Change shape</p>

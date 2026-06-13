@@ -398,6 +398,7 @@ export function CommandPalette({
           familiarity: primitive geometry first, then flowchart shapes. */}
       <PaletteTabBar
         defaultOpenId="shapes"
+        storageKey="livediagram:palette-category"
         tabs={[
           {
             id: 'shapes',
