@@ -44,7 +44,7 @@ export function MultiSelectionToolbar({
       }}
     >
       <span className="select-none pr-1 text-xs font-medium text-slate-700 dark:text-slate-200">
-        Selected Elements
+        Selection
         <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">({count})</span>
       </span>
       <span aria-hidden className="h-5 w-px bg-slate-200 dark:bg-slate-700" />

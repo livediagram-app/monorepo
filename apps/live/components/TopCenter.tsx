@@ -52,7 +52,7 @@ export function TopCenterRow({
 }) {
   return (
     <div
-      className={`flex flex-wrap items-start justify-center gap-2${className ? ` ${className}` : ''}`}
+      className={`flex flex-wrap items-center justify-center gap-2${className ? ` ${className}` : ''}`}
     >
       {children}
     </div>

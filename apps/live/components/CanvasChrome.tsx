@@ -719,9 +719,11 @@ export function CanvasChrome(props: CanvasChromeProps) {
         ) : null}
 
         {/* Active mode banner / multi-selection toolbar + the session
-            timer, sharing one wrapping row. `empty:hidden` collapses the
-            row (and its stack gap) when nothing in it is active. */}
-        <TopCenterRow className="empty:hidden">
+            timer. The timer sits to the RIGHT of the banner on desktop
+            (sm:flex-row) and stacks UNDERNEATH it on mobile (flex-col).
+            `empty:hidden` collapses the row (and its stack gap) when
+            nothing in it is active. */}
+        <TopCenterRow className="flex-col sm:flex-row empty:hidden">
           {multiSelectedIds.size >= 2 && !readOnly ? (
             <MultiSelectionToolbar
               count={multiSelectedIds.size}
