@@ -237,3 +237,16 @@
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/*
+ * Empty-state placeholder for the rich-text label editor (spec/09). A
+ * contentEditable can't use the native `placeholder` attribute, so when the
+ * editor has no children (:empty) we render its `data-rt-placeholder` text
+ * as a faded ::before. Typing inserts spans, so :empty stops matching and
+ * the placeholder disappears.
+ */
+[data-rt-placeholder]:empty::before {
+  content: attr(data-rt-placeholder);
+  opacity: 0.5;
+  pointer-events: none;
+}

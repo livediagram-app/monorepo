@@ -13,57 +13,26 @@
 // of every exported label. The element-parts.tsx import block in
 // BoxedElementView is split here in the same change.
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   hasRichFormatting,
   type BoxedElement,
-  type RunSize,
   type TextAlignX,
   type TextAlignY,
   type TextRun,
   type TextSize,
 } from '@livediagram/diagram';
-
-const ALIGN_ITEMS: Record<TextAlignY, 'flex-start' | 'center' | 'flex-end'> = {
-  top: 'flex-start',
-  middle: 'center',
-  bottom: 'flex-end',
-};
-
-const TEXT_ALIGN: Record<TextAlignX, 'left' | 'center' | 'right'> = {
-  left: 'left',
-  center: 'center',
-  right: 'right',
-};
-
-// Inline label-style props applied by every label renderer (scaling,
-// fixed, multiline). Stored independently so any combination, e.g.
-// bold + italic + strikethrough, works.
-type LabelTextStyle = {
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strikethrough?: boolean;
-  // Resolved CSS font-family stack (spec/28). Undefined = inherit the
-  // editor default. Applied to both the committed label and its live
-  // editor so there's no font jump on commit.
-  fontFamily?: string;
-};
-
-// Build the CSS payload for a LabelTextStyle. text-decoration combines
-// underline + line-through into a single value (a space-separated list
-// is the canonical multi-decoration syntax).
-function labelTextStyleCss(style: LabelTextStyle): React.CSSProperties {
-  const decorations: string[] = [];
-  if (style.underline) decorations.push('underline');
-  if (style.strikethrough) decorations.push('line-through');
-  return {
-    fontStyle: style.italic ? 'italic' : undefined,
-    fontWeight: style.bold ? 700 : undefined,
-    textDecoration: decorations.length > 0 ? decorations.join(' ') : undefined,
-    fontFamily: style.fontFamily,
-  };
-}
+import {
+  ALIGN_ITEMS,
+  effectiveRunStyle,
+  FIXED_FONT_PX,
+  labelTextStyleCss,
+  MULTI_FONT_PX,
+  MULTI_RUN_PX,
+  TEXT_ALIGN,
+  type LabelTextStyle,
+} from './label-style';
+import { RichTextEditor } from './RichTextEditor';
 
 function svgPreserve(alignX: TextAlignX, alignY: TextAlignY): string {
   const ax = alignX === 'left' ? 'xMin' : alignX === 'right' ? 'xMax' : 'xMid';
@@ -142,12 +111,6 @@ function ScalingLabel({
 
 // --- Fixed-size single-line label (sm/md/lg) -------------------------------
 
-const FIXED_FONT_PX: Record<Exclude<TextSize, 'scale'>, number> = {
-  sm: 14,
-  md: 22,
-  lg: 32,
-};
-
 function FixedSizeLabel({
   text,
   size,
@@ -183,151 +146,7 @@ function FixedSizeLabel({
   );
 }
 
-// --- Single-line editor (used by shape and text) ---------------------------
-
-type SingleLineLabelEditorProps = {
-  initial: string;
-  placeholder: string;
-  // The committed label's typography, threaded through so the live
-  // editor renders the text identically to how it'll look on commit
-  // (no size / weight / position jump when the user finishes typing).
-  textSize: TextSize;
-  alignX: TextAlignX;
-  alignY: TextAlignY;
-  padding: number;
-  style?: LabelTextStyle;
-  onCommit: (label: string) => void;
-  onCancel: () => void;
-  textClassName?: string;
-  // When true, place the caret at the END on focus instead of
-  // selecting all. Used by type-to-edit (spec/09 Labels), where the
-  // label was just seeded with the first typed character: select-all
-  // would let the next keystroke replace that seed, dropping the first
-  // letter. Defaults to false so normal edit (double-click / Space)
-  // keeps its select-all-then-retype behaviour.
-  cursorAtEnd?: boolean;
-};
-
-function SingleLineLabelEditor({
-  initial,
-  placeholder,
-  textSize,
-  alignX,
-  alignY,
-  padding,
-  style,
-  onCommit,
-  onCancel,
-  textClassName = 'text-brand-800 placeholder:text-brand-300',
-  cursorAtEnd = false,
-}: SingleLineLabelEditorProps) {
-  const [value, setValue] = useState(initial);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const valueRef = useRef(value);
-  const onCommitRef = useRef(onCommit);
-  const settled = useRef(false);
-
-  valueRef.current = value;
-  onCommitRef.current = onCommit;
-
-  useEffect(() => {
-    const node = ref.current;
-    if (node) {
-      node.focus();
-      if (cursorAtEnd) {
-        const end = node.value.length;
-        node.setSelectionRange(end, end);
-      } else {
-        node.select();
-      }
-    }
-    // cursorAtEnd is fixed for the lifetime of an edit session (the
-    // editor remounts per session), so reading it once on mount is
-    // correct; intentionally not a dep.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Safety net: if the editor unmounts without an explicit commit/cancel
-  // (e.g. clicking the non-focusable canvas, which can skip the blur event),
-  // commit the latest value so the user's typing isn't lost.
-  // Skip when the value hasn't changed from `initial`, this avoids a
-  // spurious commit during React StrictMode's mount-unmount-mount cycle
-  // (Next.js dev defaults to strict mode), which would otherwise clear
-  // editingId before the editor truly mounts.
-  useEffect(() => {
-    const original = initial;
-    return () => {
-      if (settled.current) return;
-      if (valueRef.current === original) return;
-      onCommitRef.current(valueRef.current);
-    };
-  }, [initial]);
-
-  const handleCommit = () => {
-    if (settled.current) return;
-    settled.current = true;
-    onCommit(valueRef.current);
-  };
-
-  const handleCancel = () => {
-    settled.current = true;
-    onCancel();
-  };
-
-  // Match the committed label's font size. 'scale' has no fixed px
-  // (the renderer auto-fits an SVG to the box, which a live input
-  // can't replicate), so it falls back to a sensible mid size.
-  const fontSizePx = textSize === 'scale' ? 16 : FIXED_FONT_PX[textSize];
-
-  // Mirror FixedSizeLabel's layout (flex box with the element's
-  // padding + vertical alignment) so the caret sits exactly where the
-  // committed text will. pointer-events stay off the padding so a
-  // click outside the input still falls through to the shape (commit
-  // via blur), matching the previous behaviour.
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 flex overflow-hidden"
-      style={{ alignItems: ALIGN_ITEMS[alignY], padding }}
-    >
-      <textarea
-        ref={ref}
-        value={value}
-        placeholder={placeholder}
-        // rows track the line count so the box grows as the user adds
-        // lines (Enter inserts a newline now instead of committing) and
-        // the flex container keeps it vertically aligned.
-        rows={Math.max(1, value.split('\n').length)}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={handleCommit}
-        onKeyDown={(e) => {
-          // Enter inserts a newline (textarea default); Escape cancels;
-          // committing happens on blur / clicking away.
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            handleCancel();
-          }
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onDoubleClick={(e) => e.stopPropagation()}
-        style={{
-          fontSize: `${fontSizePx}px`,
-          textAlign: TEXT_ALIGN[alignX],
-          ...labelTextStyleCss(style ?? {}),
-        }}
-        className={`pointer-events-auto w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-medium leading-tight outline-none ${textClassName}`}
-      />
-    </div>
-  );
-}
-
-// --- Multi-line display + editor (used by sticky) --------------------------
-
-const MULTI_FONT_PX: Record<TextSize, number> = {
-  scale: 14,
-  sm: 12,
-  md: 16,
-  lg: 22,
-};
+// --- Multi-line display (used by sticky) -----------------------------------
 
 type MultilineLabelProps = {
   text: string;
@@ -380,37 +199,6 @@ function MultilineLabel({
 }
 
 // --- Per-range rich label (spec/09) ---------------------------------------
-
-// Per-run sm/md/lg map to the same px table the element's base size uses,
-// so a run's size override reads consistently against its neighbours.
-const MULTI_RUN_PX: Record<RunSize, number> = {
-  sm: MULTI_FONT_PX.sm,
-  md: MULTI_FONT_PX.md,
-  lg: MULTI_FONT_PX.lg,
-};
-
-// Resolve one run ⊕ the element's whole-element defaults into a span
-// style. Boolean attrs inherit the element field when the run leaves them
-// unset (runs are deltas). Colour + size are only emitted when the run
-// overrides them — otherwise the span inherits the wrapper's base font and
-// the element's resolved text colour (set as `color`/currentColor on the
-// parent element view, same as the legacy label path).
-function effectiveRunStyle(
-  run: TextRun,
-  el: BoxedElement,
-  runSizePx: Record<RunSize, number>,
-): React.CSSProperties {
-  const css = labelTextStyleCss({
-    bold: run.bold ?? el.textBold,
-    italic: run.italic ?? el.textItalic,
-    underline: run.underline ?? el.textUnderline,
-    strikethrough: run.strikethrough ?? el.textStrikethrough,
-    // fontFamily is applied once on the wrapper, not per span.
-  });
-  if (run.color) css.color = run.color;
-  if (run.size) css.fontSize = `${runSizePx[run.size]}px`;
-  return css;
-}
 
 // Display renderer for a label carrying per-range formatting. Mirrors the
 // FixedSizeLabel / MultilineLabel wrapper (alignment + padding + base font
@@ -466,101 +254,22 @@ function RichLabel({
   );
 }
 
-type MultilineLabelEditorProps = {
-  initial: string;
-  placeholder: string;
-  textSize: TextSize;
-  alignX: TextAlignX;
-  style?: LabelTextStyle;
-  onCommit: (label: string) => void;
-  onCancel: () => void;
-  textClassName?: string;
-};
-
-function MultilineLabelEditor({
-  initial,
-  placeholder,
-  textSize,
-  alignX,
-  style,
-  onCommit,
-  onCancel,
-  textClassName = '',
-}: MultilineLabelEditorProps) {
-  const [value, setValue] = useState(initial);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const valueRef = useRef(value);
-  const onCommitRef = useRef(onCommit);
-  const settled = useRef(false);
-
-  valueRef.current = value;
-  onCommitRef.current = onCommit;
-
-  useEffect(() => {
-    const node = ref.current;
-    if (node) {
-      node.focus();
-      node.select();
-    }
-  }, []);
-
-  // See SingleLineLabelEditor for the rationale; same fix here.
-  useEffect(() => {
-    const original = initial;
-    return () => {
-      if (settled.current) return;
-      if (valueRef.current === original) return;
-      onCommitRef.current(valueRef.current);
-    };
-  }, [initial]);
-
-  const handleCommit = () => {
-    if (settled.current) return;
-    settled.current = true;
-    onCommit(valueRef.current);
-  };
-
-  const handleCancel = () => {
-    settled.current = true;
-    onCancel();
-  };
-
-  return (
-    <textarea
-      ref={ref}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleCommit}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          handleCancel();
-        }
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-      style={{
-        fontSize: `${MULTI_FONT_PX[textSize]}px`,
-        textAlign: TEXT_ALIGN[alignX],
-        ...labelTextStyleCss(style ?? {}),
-      }}
-      className={`absolute inset-3 w-[calc(100%-1.5rem)] resize-none bg-transparent outline-none ${textClassName}`}
-    />
-  );
-}
-
 export function renderLabel(
   element: BoxedElement,
   label: string,
   textSize: TextSize,
-  alignX: import('@livediagram/diagram').TextAlignX,
-  alignY: import('@livediagram/diagram').TextAlignY,
+  alignX: TextAlignX,
+  alignY: TextAlignY,
   padding: number,
   isEditing: boolean,
-  onCommitLabel: (label: string) => void,
+  // Commits the edited label: the plain-text mirror plus the per-range
+  // runs (spec/09). Runs are normalized + may be empty for plain text.
+  onCommitLabel: (label: string, runs: TextRun[]) => void,
   onCancelEdit: () => void,
   editCursorAtEnd: boolean,
+  // Canvas zoom, so the floating edit toolbar counter-scales to a constant
+  // on-screen size inside the world transform.
+  zoom: number,
   fontFamily?: string,
 ) {
   const isSticky = element.type === 'sticky';
@@ -580,40 +289,34 @@ export function renderLabel(
     fontFamily,
   };
 
+  const richText = (element as { richText?: TextRun[] }).richText;
+
   if (isEditing) {
-    if (isSticky) {
-      return (
-        <MultilineLabelEditor
-          initial={label}
-          placeholder={placeholder}
-          textSize={textSize}
-          alignX={alignX}
-          style={textStyle}
-          onCommit={onCommitLabel}
-          onCancel={onCancelEdit}
-          textClassName="text-amber-950 placeholder:text-amber-700/50"
-        />
-      );
-    }
-    // Only the placeholder colour is pinned; the typed text inherits
-    // the element's resolved textColor (set as `color` on the wrapper)
-    // via currentColor, so editing shows the same colour as the
-    // committed label instead of snapping to black / brand.
-    const textClass =
-      element.type === 'text' ? 'placeholder:text-slate-400' : 'placeholder:text-brand-300';
+    // Per-element placeholder colour: typed text inherits the element's
+    // resolved textColor via currentColor (set on the parent view), so the
+    // editor matches the committed label instead of snapping to a default.
+    const textClass = isSticky
+      ? 'text-amber-950'
+      : element.type === 'text'
+        ? 'placeholder:text-slate-400'
+        : 'placeholder:text-brand-300';
     return (
-      <SingleLineLabelEditor
-        initial={label}
+      <RichTextEditor
+        element={element}
+        initialLabel={label}
+        initialRuns={richText}
         placeholder={placeholder}
         textSize={textSize}
         alignX={alignX}
         alignY={alignY}
         padding={padding}
-        style={textStyle}
+        fontFamily={fontFamily}
+        multiline={isSticky}
+        cursorAtEnd={editCursorAtEnd}
+        zoom={zoom}
+        textClassName={textClass}
         onCommit={onCommitLabel}
         onCancel={onCancelEdit}
-        textClassName={textClass}
-        cursorAtEnd={editCursorAtEnd}
       />
     );
   }
@@ -622,7 +325,6 @@ export function renderLabel(
   // runs, render them as styled spans regardless of size (the `scale`
   // auto-fit opt-out). Empty / single override-free runs fall through to
   // the legacy whole-element renderers below.
-  const richText = (element as { richText?: TextRun[] }).richText;
   if (hasRichFormatting(richText)) {
     return (
       <RichLabel

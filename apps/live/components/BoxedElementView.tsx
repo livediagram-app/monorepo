@@ -24,6 +24,7 @@ import {
   type BoxedElement,
   type FreehandElement,
   type ShapeElement,
+  type TextRun,
   type TextSize,
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
@@ -85,7 +86,7 @@ type BoxedElementViewProps = {
   // every parent render would invalidate the memo via fresh function
   // identities.
   onBeginEdit: (id: string) => void;
-  onCommitLabel: (id: string, label: string) => void;
+  onCommitLabel: (id: string, label: string, runs?: TextRun[]) => void;
   onCommitTable: (
     id: string,
     patch: Partial<
@@ -365,9 +366,10 @@ function BoxedElementViewImpl({
     alignY,
     PADDING_PX[element.padding ?? defaultPadding(element)],
     isEditing,
-    (next) => onCommitLabel(element.id, next),
+    (next, runs) => onCommitLabel(element.id, next, runs),
     onCancelEdit,
     editCursorAtEnd,
+    zoom,
     fontFamily,
   );
   // An inline icon sits beside the label on a regular shape (the

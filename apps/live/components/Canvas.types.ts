@@ -12,6 +12,7 @@ import type {
   ShapeKind,
   TextAlignX,
   TextAlignY,
+  TextRun,
   TextSize,
 } from '@livediagram/diagram';
 import type { ImageSummary } from '@livediagram/api-schema';
@@ -247,7 +248,7 @@ export type CanvasProps = {
   ) => void;
   onBeginAnchorDrag: (id: string, anchor: Anchor, e: ReactPointerEvent) => void;
   onBeginEdit: (id: string) => void;
-  onCommitLabel: (id: string, label: string) => void;
+  onCommitLabel: (id: string, label: string, runs?: TextRun[]) => void;
   // Single combined table commit (cells + the parallel colWidths /
   // rowHeights / cellStyles arrays) applied in ONE commit, so structural
   // ops can't drop a side array or clobber each other off a stale base.

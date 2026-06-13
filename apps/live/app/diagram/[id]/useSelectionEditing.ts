@@ -1,5 +1,13 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { isBoxed, type Element, type TableElement, type Tab } from '@livediagram/diagram';
+import {
+  hasRichFormatting,
+  isBoxed,
+  normalizeRuns,
+  type Element,
+  type TableElement,
+  type Tab,
+  type TextRun,
+} from '@livediagram/diagram';
 import { patchTab } from './editor-page-helpers';
 
 type SetState<T> = Dispatch<SetStateAction<T>>;
@@ -107,14 +115,23 @@ export function useSelectionEditing(opts: {
     );
   };
 
-  const commitLabel = (elementId: string, label: string) => {
+  const commitLabel = (elementId: string, label: string, runs?: TextRun[]) => {
+    // Per-range formatting (spec/09): keep `richText` only when it carries
+    // real overrides, otherwise strip it so a plain label round-trips as
+    // plain JSON. `label` stays the plain-text mirror either way.
+    const richText = runs ? normalizeRuns(runs) : undefined;
+    const keepRich = hasRichFormatting(richText);
     commit((els) =>
       els.map((el) => {
         if (el.id !== elementId) return el;
         // Boxed elements always carry a label; arrows treat an empty
         // string as "no label" and drop the field so the data model
         // round-trips cleanly through API JSON.
-        if (isBoxed(el)) return { ...el, label };
+        if (isBoxed(el)) {
+          const { richText: _prev, ...base } = el as typeof el & { richText?: TextRun[] };
+          void _prev;
+          return keepRich ? { ...base, label, richText } : { ...base, label };
+        }
         if (el.type === 'arrow') {
           if (label.length === 0) {
             const { label: _drop, ...rest } = el;

@@ -1,0 +1,173 @@
+// DOM <-> runs glue for the rich-text editor (spec/09). Kept separate from
+// the React component so the offset mapping is small, framework-free, and
+// easy to reason about. The pure runs algebra lives in @livediagram/diagram
+// (rich-text.ts); this module only bridges it to a live contentEditable.
+//
+// Invariant the whole design rests on: the editor renders runs as a flat
+// list of sibling <span>s and inserts newlines as literal '\n' text (never
+// <br>/<div>), so `runsPlainText(runs).length === editorEl.textContent.length`
+// and a single string-length walk converts between DOM points and character
+// offsets in both directions.
+
+import { normalizeRuns, type RunSize, type TextRun } from '@livediagram/diagram';
+
+// data-* attribute names carried on each rendered span. Render
+// (`dataAttrsForRun`) and read-back (`readRunsFromDom`) must agree, so they
+// share these constants. The values are the RUN's own deltas (not the
+// effective appearance) — newly typed characters land inside a span and so
+// inherit exactly the deltas read back here.
+const DATA = {
+  bold: 'data-rt-bold',
+  italic: 'data-rt-italic',
+  underline: 'data-rt-underline',
+  strikethrough: 'data-rt-strike',
+  size: 'data-rt-size',
+  color: 'data-rt-color',
+} as const;
+
+/** React props (data-* attrs) describing a run's deltas, for the editor to spread onto its span. */
+export function dataAttrsForRun(run: TextRun): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (run.bold !== undefined) out[DATA.bold] = String(run.bold);
+  if (run.italic !== undefined) out[DATA.italic] = String(run.italic);
+  if (run.underline !== undefined) out[DATA.underline] = String(run.underline);
+  if (run.strikethrough !== undefined) out[DATA.strikethrough] = String(run.strikethrough);
+  if (run.size !== undefined) out[DATA.size] = run.size;
+  if (run.color !== undefined) out[DATA.color] = run.color;
+  return out;
+}
+
+// Parse a span's data-* attrs back into a run's deltas. A "true"/"false"
+// string is the explicit boolean delta; absent means inherit (undefined).
+function attrsFromElement(el: HTMLElement): Omit<TextRun, 'text'> {
+  const out: Omit<TextRun, 'text'> = {};
+  const bool = (name: string): boolean | undefined => {
+    const v = el.getAttribute(name);
+    return v === null ? undefined : v === 'true';
+  };
+  const b = bool(DATA.bold);
+  const i = bool(DATA.italic);
+  const u = bool(DATA.underline);
+  const s = bool(DATA.strikethrough);
+  if (b !== undefined) out.bold = b;
+  if (i !== undefined) out.italic = i;
+  if (u !== undefined) out.underline = u;
+  if (s !== undefined) out.strikethrough = s;
+  const size = el.getAttribute(DATA.size);
+  if (size === 'sm' || size === 'md' || size === 'lg') out.size = size as RunSize;
+  const color = el.getAttribute(DATA.color);
+  if (color) out.color = color;
+  return out;
+}
+
+/**
+ * Read the editor's current DOM back into a normalized runs array. Walks
+ * the direct children: our spans contribute text + their data-* deltas
+ * (so typed characters inherit the span they landed in); bare text nodes
+ * and any foreign markup the browser injected contribute plain (inherited)
+ * text, flattening anything we don't recognise.
+ */
+export function readRunsFromDom(editorEl: HTMLElement): TextRun[] {
+  const runs: TextRun[] = [];
+  for (const node of Array.from(editorEl.childNodes)) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? '';
+      if (text) runs.push({ text });
+    } else if (node instanceof HTMLElement) {
+      if (node.tagName === 'BR') {
+        runs.push({ text: '\n' });
+        continue;
+      }
+      const text = node.textContent ?? '';
+      if (text) runs.push({ text, ...attrsFromElement(node) });
+    }
+  }
+  return normalizeRuns(runs);
+}
+
+/**
+ * Convert the live selection to character offsets into the editor's plain
+ * text. Returns null when there's no selection or it isn't fully inside the
+ * editor. Reads `range.start/end` (always document-ordered) so a
+ * right-to-left drag still yields start <= end.
+ */
+export function domSelectionToOffsets(
+  editorEl: HTMLElement,
+): { start: number; end: number } | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  if (!editorEl.contains(range.startContainer) || !editorEl.contains(range.endContainer)) {
+    return null;
+  }
+  const offsetOf = (container: Node, off: number): number => {
+    const pre = document.createRange();
+    pre.selectNodeContents(editorEl);
+    pre.setEnd(container, off);
+    return pre.toString().length;
+  };
+  return {
+    start: offsetOf(range.startContainer, range.startOffset),
+    end: offsetOf(range.endContainer, range.endOffset),
+  };
+}
+
+/**
+ * Inverse of `domSelectionToOffsets`: build a Range spanning the character
+ * offsets [start, end) across the freshly-rendered spans, used to restore
+ * the selection after React re-renders the runs. Offsets are clamped so a
+ * runs-shrink between read and restore can't throw.
+ */
+export function offsetsToDomRange(editorEl: HTMLElement, start: number, end: number): Range {
+  const range = document.createRange();
+  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT);
+  let acc = 0;
+  let startNode: Node | null = null;
+  let startOff = 0;
+  let endNode: Node | null = null;
+  let endOff = 0;
+  let last: Node | null = null;
+  let node = walker.nextNode();
+  while (node) {
+    const len = node.textContent?.length ?? 0;
+    last = node;
+    if (startNode === null && acc + len >= start) {
+      startNode = node;
+      startOff = start - acc;
+    }
+    if (acc + len >= end) {
+      endNode = node;
+      endOff = end - acc;
+      break;
+    }
+    acc += len;
+    node = walker.nextNode();
+  }
+  // No text nodes at all (empty editor): collapse inside the element.
+  if (!last) {
+    range.selectNodeContents(editorEl);
+    range.collapse(true);
+    return range;
+  }
+  // Offsets ran past the content (runs shrank): clamp to the last node.
+  if (startNode === null) {
+    startNode = last;
+    startOff = last.textContent?.length ?? 0;
+  }
+  if (endNode === null) {
+    endNode = last;
+    endOff = last.textContent?.length ?? 0;
+  }
+  const clamp = (n: Node, o: number) => Math.max(0, Math.min(o, n.textContent?.length ?? 0));
+  range.setStart(startNode, clamp(startNode, startOff));
+  range.setEnd(endNode, clamp(endNode, endOff));
+  return range;
+}
+
+/** Replace the live selection with the given range (focus must already be in the editor). */
+export function selectRange(range: Range): void {
+  const sel = window.getSelection();
+  if (!sel) return;
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
