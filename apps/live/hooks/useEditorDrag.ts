@@ -117,6 +117,20 @@ function sameDistGuides(a: DistributionGuide[], b: DistributionGuide[]): boolean
 // gated.
 const DRAG_ENGAGE_PX = 4;
 
+// The corner / edge OPPOSITE each resize handle, in element-local sign space
+// (±1 per axis from the centre). Used to anchor that point while resizing a
+// rotated element so it grows from the dragged side only, not the centre.
+const FIXED_SIGN: Partial<Record<DragMode, { sx: number; sy: number }>> = {
+  'resize-e': { sx: -1, sy: 0 },
+  'resize-w': { sx: 1, sy: 0 },
+  'resize-s': { sx: 0, sy: -1 },
+  'resize-n': { sx: 0, sy: 1 },
+  'resize-se': { sx: -1, sy: -1 },
+  'resize-sw': { sx: 1, sy: -1 },
+  'resize-ne': { sx: -1, sy: 1 },
+  'resize-nw': { sx: 1, sy: 1 },
+};
+
 // External state + callbacks the drag machine reads on every move.
 // Bundled into one object so the hook signature doesn't sprout
 // positional arguments as more inputs land; tracked via a ref so the
@@ -813,17 +827,33 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             if (rotation) {
               // Rotated: project the screen drag into the element's local
               // (unrotated) frame so the size changes along its own axes,
-              // and keep the centre fixed (axis-aligned snapping doesn't
-              // apply to a rotated box).
+              // then keep the edge / corner OPPOSITE the handle visually
+              // fixed — so it grows from the dragged side only, not the
+              // centre. (Axis-aligned snapping doesn't apply to a rotated
+              // box.) FIXED_SIGN points at that opposite anchor in local
+              // coords (±half-width, ±half-height).
               const r = (rotation * Math.PI) / 180;
-              const dxl = dx * Math.cos(r) + dy * Math.sin(r);
-              const dyl = -dx * Math.sin(r) + dy * Math.cos(r);
+              const cos = Math.cos(r);
+              const sin = Math.sin(r);
+              const dxl = dx * cos + dy * sin;
+              const dyl = -dx * sin + dy * cos;
               const sized = nextBounds(start, drag.mode, dxl, dyl, constrain);
-              const cx = start.x + start.width / 2;
-              const cy = start.y + start.height / 2;
+              const sign = FIXED_SIGN[drag.mode] ?? { sx: 0, sy: 0 };
+              const cx0 = start.x + start.width / 2;
+              const cy0 = start.y + start.height / 2;
+              // World position of the fixed anchor before the resize.
+              const ax0 = (sign.sx * start.width) / 2;
+              const ay0 = (sign.sy * start.height) / 2;
+              const anchorX = cx0 + (ax0 * cos - ay0 * sin);
+              const anchorY = cy0 + (ax0 * sin + ay0 * cos);
+              // Same anchor after the resize, relative to the new centre.
+              const ax1 = (sign.sx * sized.width) / 2;
+              const ay1 = (sign.sy * sized.height) / 2;
+              const cx1 = anchorX - (ax1 * cos - ay1 * sin);
+              const cy1 = anchorY - (ax1 * sin + ay1 * cos);
               const next = {
-                x: cx - sized.width / 2,
-                y: cy - sized.height / 2,
+                x: cx1 - sized.width / 2,
+                y: cy1 - sized.height / 2,
                 width: sized.width,
                 height: sized.height,
               };
