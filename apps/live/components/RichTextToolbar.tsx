@@ -4,7 +4,7 @@
 // (which owns the selection + the apply handlers); this component is pure
 // presentation + the critical focus-preservation detail.
 
-import { BoldIcon, ItalicIcon, StrikethroughIcon, UnderlineIcon } from './palette-icons';
+import { BoldIcon, DotsIcon, ItalicIcon, StrikethroughIcon, UnderlineIcon } from './palette-icons';
 import type { RunBoolKey, RunSize } from '@livediagram/diagram';
 
 // The resolved formatting of the current selection: each boolean is true
@@ -19,10 +19,12 @@ export type ActiveFormat = {
   color: string | null;
 };
 
-const SIZES: { key: RunSize; label: string }[] = [
-  { key: 'sm', label: 'S' },
-  { key: 'md', label: 'M' },
-  { key: 'lg', label: 'L' },
+// Same dot glyphs the Selected Element panel's text-size control uses
+// (1 / 2 / 3 dots = small / medium / large), so the two surfaces match.
+const SIZES: { key: RunSize; label: string; dots: 1 | 2 | 3 }[] = [
+  { key: 'sm', label: 'Small', dots: 1 },
+  { key: 'md', label: 'Medium', dots: 2 },
+  { key: 'lg', label: 'Large', dots: 3 },
 ];
 
 // Default 6-hex for the native colour input when the selection's colour is
@@ -87,7 +89,7 @@ export function RichTextToolbar({
           onClick={() => onSize(s.key)}
           className={btnClass(active.size === s.key)}
         >
-          {s.label}
+          <DotsIcon count={s.dots} />
         </button>
       ))}
       <span className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />

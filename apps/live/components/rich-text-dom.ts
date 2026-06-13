@@ -60,28 +60,37 @@ function attrsFromElement(el: HTMLElement): Omit<TextRun, 'text'> {
   return out;
 }
 
+// Does this element carry any of our run data-* attributes?
+function hasRunData(el: HTMLElement): boolean {
+  return Object.values(DATA).some((name) => el.hasAttribute(name));
+}
+
 /**
  * Read the editor's current DOM back into a normalized runs array. Walks
- * the direct children: our spans contribute text + their data-* deltas
- * (so typed characters inherit the span they landed in); bare text nodes
- * and any foreign markup the browser injected contribute plain (inherited)
- * text, flattening anything we don't recognise.
+ * the tree depth-first: our spans contribute their data-* deltas to their
+ * subtree (so typed characters inherit the span they landed in); a <br>
+ * (which a browser may still inject despite our newline handling)
+ * contributes a literal '\n'; bare text nodes and foreign wrappers
+ * contribute plain (inherited) text. This is robust to nesting so a line
+ * break never silently collapses on commit.
  */
 export function readRunsFromDom(editorEl: HTMLElement): TextRun[] {
   const runs: TextRun[] = [];
-  for (const node of Array.from(editorEl.childNodes)) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent ?? '';
-      if (text) runs.push({ text });
-    } else if (node instanceof HTMLElement) {
-      if (node.tagName === 'BR') {
-        runs.push({ text: '\n' });
-        continue;
+  const visit = (node: Node, attrs: Omit<TextRun, 'text'>) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const text = child.textContent ?? '';
+        if (text) runs.push({ text, ...attrs });
+      } else if (child instanceof HTMLElement) {
+        if (child.tagName === 'BR') {
+          runs.push({ text: '\n' });
+          continue;
+        }
+        visit(child, hasRunData(child) ? attrsFromElement(child) : attrs);
       }
-      const text = node.textContent ?? '';
-      if (text) runs.push({ text, ...attrsFromElement(node) });
     }
-  }
+  };
+  visit(editorEl, {});
   return normalizeRuns(runs);
 }
 
@@ -162,6 +171,28 @@ export function offsetsToDomRange(editorEl: HTMLElement, start: number, end: num
   range.setStart(startNode, clamp(startNode, startOff));
   range.setEnd(endNode, clamp(endNode, endOff));
   return range;
+}
+
+/**
+ * Insert plain text at the caret as a real text node (splitting the current
+ * text node in place), instead of `execCommand('insertText')` which inserts
+ * a <br>/<div> for newlines that `textContent` then drops on read-back. Used
+ * for Enter ('\n') and paste so newlines survive as literal characters and
+ * the plain-text-length invariant holds. Programmatic, so the caller must
+ * re-sync runs afterwards (no input event fires).
+ */
+export function insertTextAtCaret(text: string): void {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  const node = document.createTextNode(text);
+  range.insertNode(node);
+  // Caret just after the inserted text.
+  range.setStartAfter(node);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
 
 /** Replace the live selection with the given range (focus must already be in the editor). */

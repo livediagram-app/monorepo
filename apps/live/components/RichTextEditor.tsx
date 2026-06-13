@@ -41,6 +41,7 @@ import {
 import {
   dataAttrsForRun,
   domSelectionToOffsets,
+  insertTextAtCaret,
   offsetsToDomRange,
   readRunsFromDom,
   selectRange,
@@ -177,6 +178,11 @@ export function RichTextEditor({
   const initialKey = useRef(JSON.stringify(runsRef.current));
   const settledRef = useRef(false);
   const composingRef = useRef(false);
+  // True from a pointerdown anywhere in the toolbar until the matching
+  // pointerup. The colour <input> must take focus to open its OS picker,
+  // which blurs the editor with an unreliable relatedTarget; this flag is
+  // the robust "don't commit, we're using the toolbar" signal for onBlur.
+  const pointerInToolbarRef = useRef(false);
   const selectionRef = useRef<{ start: number; end: number } | null>(null);
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
   const skipFirstVersionEffect = useRef(true);
@@ -213,6 +219,15 @@ export function RichTextEditor({
     const offsets = domSelectionToOffsets(el);
     if (offsets) selectionRef.current = offsets;
     setActive(computeActiveFormat(runsRef.current, offsets ?? selectionRef.current, element));
+  };
+
+  // Read the live DOM back into runs + refresh the toolbar. Used after every
+  // edit (input, Enter, paste, IME end) since our programmatic inserts don't
+  // fire React's onInput.
+  const syncFromDom = () => {
+    const el = editorRef.current;
+    if (el) runsRef.current = readRunsFromDom(el);
+    refreshActive();
   };
 
   // Mount: paint, focus, place the caret (select-all on double-click,
@@ -258,7 +273,16 @@ export function RichTextEditor({
       refreshActive();
     };
     document.addEventListener('selectionchange', onSel);
-    return () => document.removeEventListener('selectionchange', onSel);
+    // Clear the toolbar-interaction flag once the pointer is released, so a
+    // later click on the canvas blurs + commits normally.
+    const onUp = () => {
+      pointerInToolbarRef.current = false;
+    };
+    document.addEventListener('pointerup', onUp);
+    return () => {
+      document.removeEventListener('selectionchange', onSel);
+      document.removeEventListener('pointerup', onUp);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -365,13 +389,13 @@ export function RichTextEditor({
         spellCheck={false}
         onInput={() => {
           if (composingRef.current) return;
-          const el = editorRef.current;
-          if (el) runsRef.current = readRunsFromDom(el);
-          refreshActive();
+          syncFromDom();
         }}
         onBlur={(e) => {
-          // Stay editing if focus moved into the toolbar (e.g. the native
-          // colour input opening its OS dialog).
+          // Stay editing if the blur is part of a toolbar interaction: a
+          // pointer is down in the toolbar (e.g. the colour input grabbing
+          // focus for its OS dialog), or focus landed inside the toolbar.
+          if (pointerInToolbarRef.current) return;
           if (
             toolbarWrapRef.current &&
             e.relatedTarget &&
@@ -388,25 +412,28 @@ export function RichTextEditor({
             return;
           }
           if (e.key === 'Enter') {
-            // Insert a newline as text (never <br>) to keep the plain-text
-            // length === DOM textContent length invariant.
+            // Insert a newline as a real '\n' text node (never <br>/<div>)
+            // so it survives read-back and keeps plain-text length == DOM
+            // textContent length.
             e.preventDefault();
-            document.execCommand('insertText', false, '\n');
+            insertTextAtCaret('\n');
+            syncFromDom();
           }
         }}
         onPaste={(e) => {
           e.preventDefault();
           const text = e.clipboardData.getData('text/plain');
-          if (text) document.execCommand('insertText', false, text);
+          if (text) {
+            insertTextAtCaret(text);
+            syncFromDom();
+          }
         }}
         onCompositionStart={() => {
           composingRef.current = true;
         }}
         onCompositionEnd={() => {
           composingRef.current = false;
-          const el = editorRef.current;
-          if (el) runsRef.current = readRunsFromDom(el);
-          refreshActive();
+          syncFromDom();
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onDoubleClick={(e) => e.stopPropagation()}
@@ -426,9 +453,13 @@ export function RichTextEditor({
         // Stop pointer events reaching the canvas — otherwise a click on a
         // toolbar button reads as a click-off the editing element and the
         // canvas commits + exits edit mode (the same guard the editable div
-        // carries). Button mousedown additionally preventDefaults to keep
-        // the text selection; this just keeps the canvas out of it.
-        onPointerDown={(e) => e.stopPropagation()}
+        // carries). Also flag the interaction so the editor's onBlur doesn't
+        // commit when the colour input grabs focus. Button mousedown
+        // additionally preventDefaults to keep the text selection.
+        onPointerDown={(e) => {
+          pointerInToolbarRef.current = true;
+          e.stopPropagation();
+        }}
         className={`pointer-events-auto absolute left-1/2 z-50 ${
           placeBelow ? 'top-full mt-1' : 'bottom-full mb-1'
         }`}
