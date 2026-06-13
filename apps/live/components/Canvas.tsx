@@ -376,6 +376,18 @@ export function Canvas(props: CanvasProps) {
     imageDiagramId,
     imageShareCode,
     onAddImageFromGallery,
+    // Live session tools (spec/39): timer + vote facilitator controls.
+    timer: props.tabTimer,
+    vote: props.tabVote,
+    onStartTimer: props.onStartTimer,
+    onPauseTimer: props.onPauseTimer,
+    onResumeTimer: props.onResumeTimer,
+    onResetTimer: props.onResetTimer,
+    onClearTimer: props.onClearTimer,
+    onStartVote: props.onStartVote,
+    onEndVote: props.onEndVote,
+    onRevealVote: props.onRevealVote,
+    onClearVote: props.onClearVote,
   };
 
   // Colour for the link / comment badges. The active theme's

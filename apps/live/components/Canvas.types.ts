@@ -375,6 +375,23 @@ export type CanvasProps = {
   // CommandPalette's Cleanup accordion + lib/auto-align.ts.
   onAutoAlign?: () => void;
   canAutoAlign?: boolean;
+  // Live session tools (spec/39): the active tab's timer / vote state +
+  // the facilitator controls (Tab Settings) and the per-element dot
+  // cast/retract used by the canvas vote interaction. State is read off
+  // the tab; handlers no-op when edits are blocked.
+  tabTimer?: import('@livediagram/diagram').TabTimer;
+  tabVote?: import('@livediagram/diagram').TabVote;
+  onStartTimer: (mode: import('@livediagram/diagram').TimerMode, durationMs?: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onResetTimer: () => void;
+  onClearTimer: () => void;
+  onStartVote: (votesPerPerson: number) => void;
+  onEndVote: () => void;
+  onRevealVote: () => void;
+  onClearVote: () => void;
+  onCastVote: (elementId: string) => void;
+  onRetractVote: (elementId: string) => void;
   aiPanel?: {
     position: { x: number; y: number } | null;
     onMove: (x: number, y: number) => void;

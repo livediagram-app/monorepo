@@ -90,6 +90,17 @@ export function EditorView() {
     embedMode,
     applyImageToElement,
     autoAlignTab,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
+    clearTimer,
+    startVote,
+    endVote,
+    revealVote,
+    clearVote,
+    castVote,
+    retractVote,
     beginAnchorDrag,
     beginArrowCurveDrag,
     beginArrowLabelDrag,
@@ -795,6 +806,19 @@ export function EditorView() {
         importError={importError}
         onAutoAlign={hydrated && !anyWelcomeOpen && !isReadOnly ? autoAlignTab : undefined}
         canAutoAlign={activeTab.elements.length > 0 && !activeTabLocked}
+        tabTimer={activeTab.timer}
+        tabVote={activeTab.vote}
+        onStartTimer={startTimer}
+        onPauseTimer={pauseTimer}
+        onResumeTimer={resumeTimer}
+        onResetTimer={resetTimer}
+        onClearTimer={clearTimer}
+        onStartVote={startVote}
+        onEndVote={endVote}
+        onRevealVote={revealVote}
+        onClearVote={clearVote}
+        onCastVote={castVote}
+        onRetractVote={retractVote}
         imageDiagramId={!isReadOnly && diagramId ? diagramId : undefined}
         imageShareCode={sessionShareCode}
         onAddImageFromGallery={!isReadOnly && diagramId ? addImageFromGallery : undefined}

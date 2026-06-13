@@ -136,6 +136,7 @@ export function ContextPanel({
     theme: false,
     canvas: false,
     cleanup: false,
+    session: false,
   });
   const tabOpen = tabAccordionsOpen ?? localTabOpen;
   const setTabOpen = setTabAccordionsOpen ?? setLocalTabOpen;
@@ -156,7 +157,7 @@ export function ContextPanel({
     if (showingSelected) {
       setSelectedAccordionsOpen(ALL_SELECTED_ACCORDIONS_CLOSED);
     } else {
-      setTabOpen({ text: false, theme: false, canvas: false, cleanup: false });
+      setTabOpen({ text: false, theme: false, canvas: false, cleanup: false, session: false });
     }
   }, [showingSelected, setTabOpen]);
 

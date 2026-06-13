@@ -110,6 +110,7 @@ export function useEditorHistory(opts: {
         theme: true,
         canvas: false,
         cleanup: false,
+        session: false,
       });
     } else if (lower.includes('canvas') || lower.includes('pattern') || lower.includes('opacity')) {
       setSelectedId(null);
@@ -120,6 +121,7 @@ export function useEditorHistory(opts: {
         theme: false,
         canvas: true,
         cleanup: false,
+        session: false,
       });
     }
   };

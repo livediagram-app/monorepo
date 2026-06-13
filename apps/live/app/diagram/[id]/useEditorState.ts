@@ -221,7 +221,8 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     theme: boolean;
     canvas: boolean;
     cleanup: boolean;
-  }>({ text: false, theme: false, canvas: false, cleanup: false });
+    session: boolean;
+  }>({ text: false, theme: false, canvas: false, cleanup: false, session: false });
   // Canvas tool (Pan / Select / Laser). See useCanvasTool: the raw
   // setter serves internal auto-switches, the tracked selectCanvasTool
   // serves the user-facing pickers.
@@ -1243,6 +1244,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
       theme: which === 'theme',
       canvas: which === 'canvas',
       cleanup: false,
+      session: false,
     });
   };
 
