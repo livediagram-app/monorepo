@@ -89,6 +89,11 @@ const COMMON_SHAPES: ShapeKind[] = [
   'cylinder',
 ];
 
+// Fixed rotation snap points offered in the context menu's Rotation
+// category. 0 doubles as "reset to upright". The freeform rotate handle
+// still covers arbitrary angles; these are the common ones.
+const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
+
 // Cursor position + which menu to show. `element` carries the clicked
 // element id; `canvas` is the empty-canvas right-click. Exported so
 // the page can type its own context-menu state against it.
@@ -149,6 +154,8 @@ type EditorContextMenuProps = {
   onSetArrowheadShape: (v: ArrowheadShape) => void;
   // Morph a shape element to another kind in place (preserving size/colour).
   onSetShapeKind: (kind: ShapeKind) => void;
+  // Rotate the selected element to a fixed angle (degrees clockwise).
+  onSetRotation: (deg: number) => void;
   // Preset colour swatches for the colour pickers, derived from the active
   // theme so the offered presets match it.
   presetColors: string[];
@@ -334,6 +341,31 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   onClick={() => props.onSetShapeKind(kind)}
                 >
                   <ShapeIcon kind={kind} />
+                </SizeButton>
+              ))}
+            </div>
+          </MenuAccordionSection>
+        ) : null}
+        {/* Rotation — fixed snap angles. Each tile previews the orientation
+            (an upright marker rotated by the angle) so the effect is legible
+            before clicking; 0° resets to upright. */}
+        {boxed ? (
+          <MenuAccordionSection
+            title="Rotation"
+            icon={<RotationGlyph deg={45} />}
+            {...sectionProps('rotation')}
+          >
+            <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
+              {ROTATION_ANGLES.map((deg) => (
+                <SizeButton
+                  key={deg}
+                  active={((target as { rotation?: number }).rotation ?? 0) % 360 === deg}
+                  onClick={() => props.onSetRotation(deg)}
+                >
+                  <span className="flex flex-col items-center gap-0.5">
+                    <RotationGlyph deg={deg} />
+                    <span className="text-[9px] leading-none tabular-nums">{deg}°</span>
+                  </span>
                 </SizeButton>
               ))}
             </div>
@@ -1208,6 +1240,31 @@ function BorderButton({
     <SizeButton active={active} onClick={onClick}>
       {children}
     </SizeButton>
+  );
+}
+
+// Orientation preview for the Rotation category: a small square with a
+// marker on its top edge, rotated by `deg` about its centre. The tilt shows
+// at a glance which way the element will end up facing.
+function RotationGlyph({ deg }: { deg: number }) {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <g transform={`rotate(${deg} 8 8)`}>
+        <rect x="3.5" y="3.5" width="9" height="9" rx="1.5" />
+        {/* Filled tab centred on the top edge marks "up". */}
+        <circle cx="8" cy="3.5" r="1.3" fill="currentColor" stroke="none" />
+      </g>
+    </svg>
   );
 }
 

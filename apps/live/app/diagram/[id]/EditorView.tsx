@@ -263,6 +263,7 @@ export function EditorView() {
     setArrowStyleSelected,
     setArrowThicknessSelected,
     setShapeKindSelected,
+    setRotationSelected,
     setBackgroundColor,
     setBackgroundOpacity,
     setBackgroundPattern,
@@ -1152,6 +1153,7 @@ export function EditorView() {
           onSetArrowheadSize={setArrowheadSizeSelected}
           onSetArrowheadShape={setArrowheadShapeSelected}
           onSetShapeKind={setShapeKindSelected}
+          onSetRotation={setRotationSelected}
           presetColors={themePresetColors(getTheme(activeTab.theme))}
           onToggleTableHeaderRow={setTableHeaderRowSelected}
           onToggleTableHeaderColumn={setTableHeaderColumnSelected}

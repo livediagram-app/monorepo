@@ -148,7 +148,7 @@ export function MenuAccordionSection({
   // from a contentEditable behind it (the rich-text toolbar's ⋯ menu needs
   // the live text selection to survive a category toggle).
   preserveFocus = false,
-  // Desktop affordance: hovering a category header with a mouse opens it
+  // Desktop affordance: moving the mouse over a category header opens it
   // (accordion follows the pointer). Touch never fires this, so tap still
   // toggles via onToggle. Omit to keep click-only behaviour.
   onHoverOpen,
@@ -166,7 +166,12 @@ export function MenuAccordionSection({
       <button
         type="button"
         onClick={onToggle}
-        onPointerEnter={
+        // Use pointerMOVE, not pointerEnter: opening a section collapses its
+        // sibling and shifts the others under a stationary cursor, which
+        // would fire a spurious pointerenter on whatever header slid beneath
+        // and cascade open/close. pointermove only fires on real cursor
+        // motion, so a layout shift alone never re-triggers the switch.
+        onPointerMove={
           onHoverOpen
             ? (e) => {
                 if (e.pointerType === 'mouse' && !open) onHoverOpen();

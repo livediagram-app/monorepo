@@ -360,6 +360,23 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'ShapeMorph');
   };
 
+  // Set the selected element's rotation to a fixed angle (degrees clockwise
+  // about its centre), normalised to 0..359. Drives the context menu's
+  // Rotation category — the freeform rotate handle still covers arbitrary
+  // angles; these are the common snap points. Boxed elements only.
+  const setRotationSelected = (deg: number) => {
+    if (!selectedId) return;
+    const next = ((Math.round(deg) % 360) + 360) % 360;
+    commit((els) =>
+      els.map((el) =>
+        el.id === selectedId && isBoxed(el)
+          ? { ...el, rotation: next === 0 ? undefined : next }
+          : el,
+      ),
+    );
+    track('Element', 'Changed', 'Rotation');
+  };
+
   // Border-preset setters. Each writes the field on any element
   // that `supportsBorder` accepts (today: shapes + the freehand
   // pen tool); non-supporting elements are ignored. Routing
@@ -500,6 +517,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setArrowStyleSelected,
     setArrowStrokeStyleSelected,
     setShapeKindSelected,
+    setRotationSelected,
     setBorderStrokeSelected,
     setBorderStyleSelected,
     setBorderRadiusSelected,
