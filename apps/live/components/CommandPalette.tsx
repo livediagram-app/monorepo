@@ -6,7 +6,6 @@ import type {
   ArrowheadSize,
   ArrowStyle,
   ArrowThickness,
-  BackgroundPattern,
   BorderRadius,
   BorderStroke,
   BorderStyle,
@@ -16,7 +15,6 @@ import type {
   TextAlignY,
   TextSize,
 } from '@livediagram/diagram';
-import { type ThemeId } from '@/lib/themes';
 import { MovablePanel } from './MovablePanel';
 import { PaletteTabBar } from './PaletteTabBar';
 import { PaletteDropdown } from './PaletteDropdown';
@@ -134,60 +132,6 @@ export type SelectedElementControls = {
   tableHeaderTextColor: string | null;
   onSetTableHeaderFill: (color: string) => void;
   onSetTableHeaderTextColor: (color: string) => void;
-};
-
-export type TabSectionControls = {
-  backgroundPattern: BackgroundPattern;
-  backgroundColor: string;
-  patternColor: string;
-  themeId: ThemeId;
-  // Tab default font id (spec/28), or null for the editor default.
-  // `onSetTabFont(null)` clears it.
-  font: string | null;
-  onSetTabFont: (font: string | null) => void;
-  // Tab default text size for NEW palette elements (spec/28). Unset =
-  // the per-type factory default; the picker shows 'md' as the baseline.
-  defaultTextSize: TextSize | null;
-  onSetTabDefaultTextSize: (size: TextSize) => void;
-  onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
-  onSetBackgroundColor: (color: string) => void;
-  backgroundOpacity: number;
-  onSetBackgroundOpacity: (opacity: number) => void;
-  onSetPatternColor: (color: string) => void;
-  onSetTheme: (id: ThemeId) => void;
-  // Forcibly re-apply the active theme to every element on the tab,
-  // overwriting any per-element custom colours the user set. Opt-in
-  // counterpart to the normal Theme-pick flow, which preserves
-  // customs. Surfaces as a "Reset elements to theme" button under
-  // the theme grid.
-  onResetElementsToTheme: () => void;
-  // Surfaces the "import .json failed" message that used to live
-  // inside the now-removed Import/Export accordion. The error itself
-  // still originates from the TabBar's ellipsis-menu Import action;
-  // we just render the inline note here when one's pending.
-  importError?: string | null;
-  // "Auto align" pass: snaps every element's position + dimensions
-  // to the 10px grid so almost-aligned shapes become exactly aligned
-  // and minor size drift collapses. See lib/auto-align.ts. Lives in
-  // the Assistant accordion. Hidden when missing.
-  onAutoAlign?: () => void;
-  // True when the active tab has at least one boxed element. When
-  // false the button is disabled, the action would be a no-op.
-  canAutoAlign?: boolean;
-  // Live session tools (spec/39). `timer` / `vote` are the active tab's
-  // current state (undefined when none is running); the handlers are the
-  // facilitator controls. Dot CASTING is a canvas interaction, not here.
-  timer?: import('@livediagram/diagram').TabTimer;
-  vote?: import('@livediagram/diagram').TabVote;
-  onStartTimer: (mode: import('@livediagram/diagram').TimerMode, durationMs?: number) => void;
-  onPauseTimer: () => void;
-  onResumeTimer: () => void;
-  onResetTimer: () => void;
-  onClearTimer: () => void;
-  onStartVote: (votesPerPerson: number) => void;
-  onEndVote: () => void;
-  onRevealVote: () => void;
-  onClearVote: () => void;
 };
 
 export type CanvasTool = 'pan' | 'select' | 'laser' | 'eraser';
