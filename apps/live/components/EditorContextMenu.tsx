@@ -44,7 +44,7 @@ import {
   SquareMenuIcon,
   StickyMenuIcon,
 } from '@/components/context-menu-icons';
-import { MenuItem } from '@/components/PortalMenu';
+import { MenuAccordionSection, MenuItem } from '@/components/PortalMenu';
 
 // Cursor position + which menu to show. `element` carries the clicked
 // element id; `canvas` is the empty-canvas right-click. Exported so
@@ -129,59 +129,22 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
       target.type === 'shape' && target.shape !== 'icon' && target.iconId !== undefined;
     return (
       <ContextMenu position={position} onClose={onClose} flush>
-        {/* Links — webpage / tab / diagram. Arrows can't be linked. */}
-        {boxed ? (
-          <MenuAccordionSection title="Links" icon={<LinkMenuIcon />} {...sectionProps('links')}>
-            <MenuItem
-              icon={<LinkMenuIcon />}
-              label="Link to webpage"
-              onClick={() => {
-                props.onLinkElement(target.id, 'url');
-                onClose();
-              }}
-            />
-            <MenuItem
-              icon={<LinkMenuIcon />}
-              label="Link to tab"
-              onClick={() => {
-                props.onLinkElement(target.id, 'tab');
-                onClose();
-              }}
-            />
-            <MenuItem
-              icon={<LinkMenuIcon />}
-              label="Link to diagram"
-              onClick={() => {
-                props.onLinkElement(target.id, 'diagram');
-                onClose();
-              }}
-            />
-          </MenuAccordionSection>
-        ) : null}
         {/* Icon — re-place or remove a shape's inline icon. */}
         {hasInlineIcon ? (
           <MenuAccordionSection title="Icon" icon={<IconCategoryGlyph />} {...sectionProps('icon')}>
-            <div className="grid grid-cols-2 gap-1 px-2 py-1.5">
-              {ICON_POSITIONS.map((p) => {
-                const current = (target as { iconPosition?: string }).iconPosition ?? 'left';
-                const iconId = (target as { iconId?: string }).iconId ?? '';
-                return (
-                  <button
-                    key={p.key}
-                    type="button"
-                    aria-pressed={current === p.key}
-                    onClick={() => props.onSetIconPosition(target.id, iconId, p.key)}
-                    className={`rounded px-2 py-1 text-xs font-medium transition ${
-                      current === p.key
-                        ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
+            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Icon position
+            </p>
+            <IconPositionGrid
+              current={(target as { iconPosition?: string }).iconPosition ?? 'left'}
+              onPick={(pos) =>
+                props.onSetIconPosition(
+                  target.id,
+                  (target as { iconId?: string }).iconId ?? '',
+                  pos,
+                )
+              }
+            />
             <ContextMenuDivider />
             <MenuItem
               icon={<RemoveIconGlyph />}
@@ -342,6 +305,17 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           icon={<CommentMenuIcon />}
           {...sectionProps('collaborate')}
         >
+          {/* Link to Source — arrows can't be linked. */}
+          {boxed ? (
+            <MenuItem
+              icon={<LinkMenuIcon />}
+              label={target.link ? 'Edit link' : 'Link to Source'}
+              onClick={() => {
+                props.onLinkElement(target.id);
+                onClose();
+              }}
+            />
+          ) : null}
           {boxed ? (
             <MenuItem
               icon={<NoteMenuIcon />}
@@ -430,73 +404,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   );
 }
 
-// A collapsible section inside the context menu: an uppercase header (with
-// a chevron) that toggles its content. Controlled by the parent so only one
-// section is open at a time. Toggling doesn't close the menu (the header
-// isn't a MenuItem; the click stays inside the menu, so the outside-click
-// guard leaves it open). The content height animates via the grid-rows
-// 0fr<->1fr trick (no fixed height needed).
-function MenuAccordionSection({
-  title,
-  icon,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    // border-t on the wrapper (not a margin'd divider) so headers butt up to
-    // the separator with no gap; `first:border-t-0` drops the stray line at
-    // the very top of the menu.
-    <div className="border-t border-slate-100 first:border-t-0 dark:border-slate-800">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
-      >
-        <span className="flex items-center gap-2">
-          {icon}
-          {title}
-        </span>
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
-        >
-          <path d="M3 4.5 6 7.5 9 4.5" />
-        </svg>
-      </button>
-      <div
-        className={`grid transition-all duration-200 ease-out ${
-          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-        }`}
-      >
-        {/* Faint tint on the expanded content so a category's body reads as
-            distinct from the menu / headers around it. The clipped wrapper
-            stays padding-free (padding wouldn't collapse with the 0fr grid
-            trick); top/bottom breathing room lives on the inner div, which is
-            fully clipped when collapsed. */}
-        <div className="overflow-hidden bg-slate-50/70 dark:bg-slate-800/30">
-          <div className="py-1.5">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // 6-hex or fall back to white for the native colour input (it can't take
 // 'transparent' or named colours).
 function hexish(color: string): string {
@@ -547,12 +454,67 @@ const BORDER_STYLES: readonly BorderStyle[] = [
 ];
 const BORDER_RADII: readonly BorderRadius[] = ['none', 'sm', 'md', 'lg'];
 
-const ICON_POSITIONS: { key: 'left' | 'above' | 'right' | 'below'; label: string }[] = [
-  { key: 'left', label: 'Left' },
-  { key: 'above', label: 'Top' },
-  { key: 'right', label: 'Right' },
-  { key: 'below', label: 'Bottom' },
-];
+type IconPos = 'left' | 'right' | 'above' | 'below';
+
+// A small arrow pointing in `dir` (one up-arrow path, rotated).
+function DirArrow({ dir }: { dir: 'up' | 'down' | 'left' | 'right' }) {
+  const rot = { up: 0, right: 90, down: 180, left: 270 }[dir];
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      style={{ transform: `rotate(${rot}deg)` }}
+    >
+      <path d="M6 2.5V9.5M3 5.5 6 2.5 9 5.5" />
+    </svg>
+  );
+}
+
+// The inline-icon placement picker laid out as a cross (Top / Left / Right /
+// Bottom around an empty centre), each cell an arrow + label.
+function IconPositionGrid({
+  current,
+  onPick,
+}: {
+  current: string;
+  onPick: (pos: IconPos) => void;
+}) {
+  const cell = (key: IconPos, label: string, dir: 'up' | 'down' | 'left' | 'right') => (
+    <button
+      type="button"
+      aria-pressed={current === key}
+      onClick={() => onPick(key)}
+      className={`flex items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] font-medium transition ${
+        current === key
+          ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+      }`}
+    >
+      <DirArrow dir={dir} />
+      {label}
+    </button>
+  );
+  return (
+    <div className="grid grid-cols-3 gap-1 px-2 pb-1.5">
+      <span />
+      {cell('above', 'Top', 'up')}
+      <span />
+      {cell('left', 'Left', 'left')}
+      <span />
+      {cell('right', 'Right', 'right')}
+      <span />
+      {cell('below', 'Bottom', 'down')}
+      <span />
+    </div>
+  );
+}
 
 // One labelled button grid in the Border section. Literal column classes so
 // Tailwind keeps them.

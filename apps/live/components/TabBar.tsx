@@ -15,7 +15,7 @@ import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
 import { PencilIcon, TrashIcon } from './explorer-icons';
 import { FileExportIcon, FileImportIcon } from './palette-icons';
-import { MenuDivider, MenuItem, MenuSection, MenuToolbar, MenuToolButton } from './PortalMenu';
+import { MenuAccordionSection, MenuItem, MenuToolbar, MenuToolButton } from './PortalMenu';
 import { TabFolderChip } from './TabFolderChip';
 import { TabPresenceStack } from './TabPresenceStack';
 import { Tooltip } from './Tooltip';
@@ -695,6 +695,13 @@ function PortalMenu({
   // work unchanged.
   const [view, setView] = useState<'actions' | 'copyTo' | 'folder'>('actions');
   const [newFolder, setNewFolder] = useState('');
+  // Which collapsible category is open in the actions view — at most one at a
+  // time, all closed by default (matches the element context menu).
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const sectionProps = (id: string) => ({
+    open: openSection === id,
+    onToggle: () => setOpenSection((s) => (s === id ? null : id)),
+  });
   // Delete confirmation: an inline popover anchored to the Delete row
   // (rather than the jarring full-screen modal). Rendered inside this
   // menu's container so the outside-click handler treats it as "inside".
@@ -725,7 +732,7 @@ function PortalMenu({
     const next = clampToViewport(node.getBoundingClientRect(), adjust);
     if (next.x !== adjust.x || next.y !== adjust.y) setAdjust(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pos, view]);
+  }, [pos, view, openSection]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -808,38 +815,47 @@ function PortalMenu({
                 />
               </div>
             </MenuToolbar>
-            <MenuDivider />
-            <MenuSection label="Organise" />
-            <MenuItem
+            {/* Verbose actions live in collapsible categories (closed by
+                default, one open at a time), matching the element menu. */}
+            <MenuAccordionSection
+              title="Organise"
               icon={<FolderMenuIcon />}
-              label="Add to Folder"
-              onClick={() => {
-                setNewFolder('');
-                setView('folder');
-              }}
-            />
-            <MenuItem
-              icon={<MoveIcon />}
-              label="Add to Diagram"
-              onClick={() => setView('copyTo')}
-              disabled={otherDiagrams.length === 0}
-            />
-            <MenuDivider />
-            <MenuSection label="Content" />
-            <MenuItem
-              icon={<FileImportIcon />}
-              label="Import Content"
-              onClick={onImport}
-              disabled={locked}
-            />
-            <MenuItem icon={<FileExportIcon />} label="Export Contents" onClick={onExport} />
-            <MenuDivider />
-            <MenuItem
-              icon={<ClearIcon />}
-              label="Reset Canvas"
-              onClick={onClearContent}
-              disabled={!canClearContent}
-            />
+              {...sectionProps('organise')}
+            >
+              <MenuItem
+                icon={<FolderMenuIcon />}
+                label="Add to Folder"
+                onClick={() => {
+                  setNewFolder('');
+                  setView('folder');
+                }}
+              />
+              <MenuItem
+                icon={<MoveIcon />}
+                label="Add to Diagram"
+                onClick={() => setView('copyTo')}
+                disabled={otherDiagrams.length === 0}
+              />
+            </MenuAccordionSection>
+            <MenuAccordionSection
+              title="Content"
+              icon={<FileExportIcon />}
+              {...sectionProps('content')}
+            >
+              <MenuItem
+                icon={<FileImportIcon />}
+                label="Import Content"
+                onClick={onImport}
+                disabled={locked}
+              />
+              <MenuItem icon={<FileExportIcon />} label="Export Contents" onClick={onExport} />
+              <MenuItem
+                icon={<ClearIcon />}
+                label="Reset Canvas"
+                onClick={onClearContent}
+                disabled={!canClearContent}
+              />
+            </MenuAccordionSection>
           </>
         ) : view === 'copyTo' ? (
           <>

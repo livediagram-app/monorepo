@@ -132,6 +132,65 @@ export function MenuDivider() {
   return <div className="my-1 border-t border-slate-100 dark:border-slate-800" />;
 }
 
+// A collapsible category inside a menu: an uppercase header (icon + chevron)
+// that toggles its content. Controlled by the parent so only one section is
+// open at a time. The border-t (with `first:border-t-0`) butts the header up
+// to a flush separator, and the content height animates via the grid-rows
+// 0fr<->1fr trick (no fixed height needed). Shared by the element context
+// menu + the tab menu so both read alike.
+export function MenuAccordionSection({
+  title,
+  icon,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="border-t border-slate-100 first:border-t-0 dark:border-slate-800">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
+      >
+        <span className="flex items-center gap-2">
+          {icon}
+          {title}
+        </span>
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+        >
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-out ${
+          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden bg-slate-50/70 dark:bg-slate-800/30">
+          <div className="py-1.5">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // A compact icon-button row pinned to the top of a menu for the most
 // common quick actions (lock / rename / duplicate), keeping them one
 // glance away while the verbose actions move into labelled sections below.
