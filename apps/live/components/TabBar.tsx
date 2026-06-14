@@ -48,6 +48,10 @@ type TabBarProps = {
   // Optional callback that pops the global search panel. The
   // button sits to the LEFT of the dark-mode toggle.
   onOpenSearch?: () => void;
+  // Optional callback that opens the canvas context menu at a screen point.
+  // The trigger sits just right of Search (desktop only — touch users reach
+  // it by long-pressing the canvas).
+  onOpenCanvasMenu?: (x: number, y: number) => void;
   tabs: Tab[];
   activeId: string;
   // The current diagram id — used to key per-folder collapse state in
@@ -148,6 +152,7 @@ export function TabBar({
   selfRole,
   onOpenShortcuts,
   onOpenSettings,
+  onOpenCanvasMenu,
   minimalPanels,
   onToggleMinimalPanels,
   onOpenSearch,
@@ -366,6 +371,28 @@ export function TabBar({
           </button>
         </Tooltip>
       ) : null}
+      {onOpenCanvasMenu ? (
+        <span className="hidden sm:contents">
+          <Tooltip
+            title="Canvas menu"
+            description="Theme, background, add elements, session tools."
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                // Anchor at the button's top-left; the menu's viewport clamp
+                // pulls it up + left so it sits above the footer.
+                onOpenCanvasMenu(r.left, r.top);
+              }}
+              aria-label="Canvas menu"
+              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <CanvasGlyph />
+            </button>
+          </Tooltip>
+        </span>
+      ) : null}
       {onOpenShortcuts ? (
         <span className="hidden sm:contents">
           <Tooltip
@@ -448,6 +475,27 @@ function SearchGlyph() {
     >
       <circle cx="7" cy="7" r="4" />
       <path d="M10 10l3.5 3.5" />
+    </svg>
+  );
+}
+
+// Dotted-canvas glyph for the canvas-menu trigger.
+function CanvasGlyph() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
+      <circle cx="6" cy="6" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="6" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="6" cy="10" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="10" r="0.6" fill="currentColor" stroke="none" />
     </svg>
   );
 }

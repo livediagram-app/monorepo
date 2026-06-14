@@ -988,6 +988,9 @@ export function EditorView() {
             // and fire-and-forget: results refresh as tabs land.
             void loadAllTabs();
           }}
+          onOpenCanvasMenu={
+            isReadOnly ? undefined : (x, y) => setContextMenu({ mode: 'canvas', x, y })
+          }
         />
       )}
       {searchOpen ? (
