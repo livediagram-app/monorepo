@@ -1,10 +1,10 @@
 import { FONTS } from '@/lib/fonts';
 
-// Shared font dropdown (spec/28) used by both the per-element Text
-// accordion and the tab-level Current Tab section. A styled native
+// Shared font dropdown (spec/28) used by the rich-text toolbar's font
+// flyout and the Tab Appearance modal's Font tab. A styled native
 // <select> so keyboard + accessibility come for free; each option
 // previews in its own face. The closed control stays in the compact UI
-// font (matching the panel's other tiny labels) rather than rendering
+// font (matching the surrounding tiny labels) rather than rendering
 // the selected value in its own typeface, which read oversized next to
 // them. `value` is the stored font id (or null for the default option).
 export function FontSelect({

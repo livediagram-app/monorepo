@@ -45,8 +45,8 @@ export type ActiveFormat = {
   color: string | null;
 };
 
-// Mirrors the Selected Element panel's text-size control: a Scale (auto-fit)
-// option + the 1/2/3-dot small / medium / large glyphs.
+// The editor's text-size control: a Scale (auto-fit) option + the
+// 1/2/3-dot small / medium / large glyphs.
 const SIZES: { key: SizeKey; label: string; icon: React.ReactNode }[] = [
   { key: 'scale', label: 'Scale', icon: <ScaleIcon /> },
   { key: 'sm', label: 'Small', icon: <DotsIcon count={1} /> },

@@ -1,7 +1,7 @@
-// Shared Line + Pointer controls for arrows. Rendered inside both the
-// Selected Element panel's Line / Pointer accordions and the editor context
-// menu's Line / Pointer categories so the two stay byte-identical (CLAUDE.md:
-// no duplication). Pure presentation: values in, setters out. Each sub-grid
+// Shared Line + Pointer controls for arrows. Rendered inside the editor
+// context menu's Line / Pointer categories (kept as a standalone, reusable
+// unit so a second caller can drop them in without duplication, per
+// CLAUDE.md). Pure presentation: values in, setters out. Each sub-grid
 // is gated on its value being non-null, so a caller can pass null to hide a
 // row (the panel does this for elements that don't carry that field).
 

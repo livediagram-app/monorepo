@@ -418,7 +418,7 @@ export function TabBar({
             title={minimalPanels ? 'Normal panels' : 'Minimal panels'}
             description={
               minimalPanels
-                ? 'Switch back to the floating Palette / Editor panels.'
+                ? 'Switch back to the floating Palette / Explorer panels.'
                 : 'Collapse the panels into a compact button bar.'
             }
           >

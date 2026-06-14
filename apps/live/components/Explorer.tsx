@@ -152,7 +152,7 @@ function ExplorerImpl({
   // small enough that the panel ate the whole screen), but signed-out
   // users had no other way to switch diagrams, so the panel now also
   // shows on mobile, banner-collapsed at the very top of the viewport
-  // above the Palette + Editor stack.
+  // above the Palette.
   const [isMobile, setIsMobile] = useState(isMobileViewportSync);
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -287,7 +287,7 @@ function ExplorerImpl({
 
   // (Previously: `if (hideOnMobile) return null;` — Explorer now
   // renders on mobile too, banner-collapsed by default. The panel
-  // sits at the top of the canvas above Palette + Editor.)
+  // sits at the top of the canvas above the Palette.)
 
   // All derived collections below are useMemo'd against their real
   // inputs (diagrams, folders, currentDiagramId): Explorer holds a
@@ -435,7 +435,7 @@ function ExplorerImpl({
       title="Explorer"
       position={position}
       // On mobile the panel becomes a full-width top banner (matches
-      // the Palette / Editor pattern) so users can switch diagrams
+      // the Palette's banner pattern) so users can switch diagrams
       // without leaving the canvas. On desktop it stays in the
       // top-left corner.
       defaultCorner={isMobile ? 'top-banner' : 'top-left'}

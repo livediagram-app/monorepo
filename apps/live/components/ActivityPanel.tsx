@@ -29,9 +29,8 @@ type ActivityPanelProps = {
   onRedo: () => void;
   onRevert: (entry: ChangeLogEntry) => void;
   // Click anywhere on a row (outside the Revert button) — used by
-  // the editor to jump to the related element or open the matching
-  // accordion (e.g. a "Changed theme to X" entry pops the Theme
-  // accordion in the Editor panel).
+  // the editor to jump to the related element (tab-meta entries like
+  // "Changed theme to X" just clear the selection).
   onRowClick: (entry: ChangeLogEntry) => void;
   // Wipe every audit entry for the active tab. The diagram state is
   // untouched (only the log dies). Disabled when the list is empty
