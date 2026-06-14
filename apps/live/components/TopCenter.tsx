@@ -80,6 +80,14 @@ export function TopCenterBanner({
 }) {
   return (
     <div
+      // Marks this pill as floating UI so the canvas capture-phase
+      // pointerdown handler bails before arming a gesture. Without it,
+      // pressing a banner control (e.g. the draw-mode Cancel button)
+      // while a draw is queued starts a draw-to-size gesture at the
+      // button and drops the pending shape there on release; the
+      // bubble-phase stopPropagation below can't stop the ancestor
+      // capture handler that runs first.
+      data-floating-panel=""
       onPointerDown={onPointerDown}
       onContextMenu={onContextMenu}
       className={`pointer-events-auto flex animate-fade-in items-center rounded-full border shadow-md ${TONE_CLASS[tone]}${className ? ` ${className}` : ''}`}

@@ -118,7 +118,7 @@ Each boxed element can have its **aspect ratio locked**. Stored as `aspectLocked
 
 ### Current Tab section
 
-> **Status (superseded):** the floating editor side panel (this Current Tab section + the Selected Element section below) has been **removed**. Every control it hosted now lives in **right-click context menus** — the element/multi-selection menu, the canvas menu (Theme / Canvas / Add / Session, also reachable from the desktop footer's canvas-menu button), and the tab context menu — plus the **Tab Appearance** modal (Canvas / Theme / Font tabs, see [spec/42](42-canvas-and-theme-dialog.md)). The descriptions below document the controls themselves (still accurate) but no longer their panel home; this section is pending a fuller rewrite.
+> **Status (superseded):** the floating editor side panel (this Current Tab section + the Selected Element section below) has been **removed**. Every control it hosted now lives in **right-click context menus** — the element/multi-selection menu and the **tab menu** (the ellipsis / tab right-click menu, which the empty-canvas right-click and the desktop footer's canvas-menu button also open, with extra **Canvas** (Theme / Canvas background / Auto-align) and **Add** (Square / Sticky / Pencil / Annotation) sections folded in for those surfaces) — plus the **Tab Appearance** modal (Canvas / Theme / Font tabs, see [spec/42](42-canvas-and-theme-dialog.md)). The descriptions below document the controls themselves (still accurate) but no longer their panel home; this section is pending a fuller rewrite.
 
 Tab-level appearance + tools (no longer a panel section): **Theme**, **Canvas** (background) and **Font** live in the **Tab Appearance** modal ([spec/42](42-canvas-and-theme-dialog.md)); **Auto-align** and the **Session** tools live in the canvas / tab context menu; **Remove all content** lives in the tab's context menu. What each does:
 
@@ -631,21 +631,20 @@ Marquee hits include both boxed elements (shape, text, sticky) and arrows whose 
 
 When a **boxed element** (shape, text, sticky note) is selected and not in edit/paint mode, **four plus buttons** float around its bounding box — one centred on each edge (right, bottom, left, top).
 
-Each plus is a **click trigger** for a **radial quick-action ring**, not an instant action. **Clicking / tapping** a plus animates a ring of five options in around the button: each option grows **out of the plus** (slides from the plus centre to its slot + scales up), staggered for a fan effect, fanning **outward** from the element so it never overlaps the shape; closing reverses the same motion back into the plus. While open the plus becomes an **×**. The ring closes when the plus (×) is clicked again, when another plus is opened (only one ring is open at a time), or on any pointer-down outside a ring. There is **no hover-to-open** — the trigger is a deliberate click so it doesn't fire while the pointer just passes over the element. The plus no longer performs a one-click duplicate; every action is chosen from the ring. Each option carries a tooltip.
+Each plus is a **click trigger** for a **radial quick-action ring**, not an instant action. **Clicking / tapping** a plus animates a ring of four options in around the button: each option grows **out of the plus** (slides from the plus centre to its slot + scales up), staggered for a fan effect, fanning **outward** from the element so it never overlaps the shape; closing reverses the same motion back into the plus. While open the plus becomes an **×**. The ring closes when the plus (×) is clicked again, when another plus is opened (only one ring is open at a time), or on any pointer-down outside a ring. There is **no hover-to-open** — the trigger is a deliberate click so it doesn't fire while the pointer just passes over the element. The plus no longer performs a one-click duplicate; every action is chosen from the ring. Each option carries a tooltip.
 
 A ring open on the **same side as the selection toolbar** would collide with it (the toolbar sits above the element on desktop, below on mobile), so while a top **or** bottom ring is open the toolbar is forced to the **opposite** side. The element's **rotate handle** is also hidden while any ring is open (its handle above the element would clash with the ring).
 
-All five options act on the **clicked side** (the side's anchor is `e` / `s` / `w` / `n`):
+All four options act on the **clicked side** (the side's anchor is `e` / `s` / `w` / `n`):
 
 1. **Duplicate** — clones the selected element to that side (same size, content, style, locked state; fresh id) and connects the two with a pinned arrow between the adjacent anchors (`e ↔ w`, `s ↔ n`). This is the former one-click behaviour, now the first ring option.
 2. **Arrow** — starts a new arrow pinned at that side's anchor. It begins on **pointer-down** so it's a single press-drag gesture. **Desktop:** press-and-drag the free endpoint to its target (snaps to an element anchor, or drops free on empty canvas) — the existing anchor-drag flow. **Mobile:** the press arms a "pick target" mode; the next tap on an element (or empty canvas) sets the endpoint, and a tap elsewhere cancels.
-3. **Square** — adds a new square to that side, connected by a pinned arrow.
-4. **Pencil** — enters freehand (pencil) draw mode (spec/09 "Pencil"); not a connected element.
-5. **Text** — drops a text element to that side and opens it for editing. **No connector arrow** — a caption next to a node isn't a flow edge, so an arrow would be noise.
+3. **Pencil** — enters freehand (pencil) draw mode (spec/09 "Pencil"); not a connected element.
+4. **Text** — drops a text element to that side and opens it for editing. **No connector arrow** — a caption next to a node isn't a flow edge, so an arrow would be noise.
 
-For the **Square** option the new shape **matches the source**: same width/height and inherited theme styling (fill / stroke / text colours, border width / style / radius, font, opacity), carrying no label, so a chain of connected nodes stays visually uniform. Placement reuses the duplicate's overlap-avoidance stepping (step further in the chosen direction until the new box clears existing elements). The newly added element is selected afterward so the user can keep building outward; the Arrow option selects the new arrow instead. Open ring state is owned by the Canvas (not the individual plus) so the single-open rule and the toolbar dodge can be coordinated.
+Placement (for Duplicate) reuses overlap-avoidance stepping (step further in the chosen direction until the new box clears existing elements). The newly added element is selected afterward so the user can keep building outward; the Arrow option selects the new arrow instead. Open ring state is owned by the Canvas (not the individual plus) so the single-open rule and the toolbar dodge can be coordinated.
 
-Each chosen option emits telemetry (the quick-connect buttons previously emitted nothing): Duplicate → `track('Element', 'Duplicated', <kind>)`; Square / Circle → `track('Element', 'Added', <Square|Circle>)`; Arrow / Pencil fire their existing creation events (`'Arrow'`, freehand on commit).
+Each chosen option emits telemetry (the quick-connect buttons previously emitted nothing): Duplicate → `track('Element', 'Duplicated', <kind>)`; Text → `track('Element', 'Added', 'Text')`; Arrow / Pencil fire their existing creation events (`'Arrow'`, freehand on commit).
 
 The plus buttons are hidden while the element is being edited or while format-painter / group mode is active. They are also single-element only: a marquee multi-selection or a multi-member group hides them (there's no one shape to duplicate-and-connect from). Not shown for arrows, tables, annotation markers, or frame sections.
 
@@ -911,7 +910,7 @@ A tab can be renamed in two ways:
 
 ### Tab menu (ellipsis)
 
-The active tab carries a **`⋯` ellipsis button** to the right of its name. Clicking opens a small floating menu (right-clicking any tab opens the same menu, suppressing the browser's default context menu and switching to that tab first if it isn't active so the menu's actions operate on the tab the user pointed at) with:
+The active tab carries a **`⋯` ellipsis button** to the right of its name. Clicking opens a small floating menu (right-clicking any tab opens the same menu, suppressing the browser's default context menu and switching to that tab first if it isn't active so the menu's actions operate on the tab the user pointed at). A **quick-action toolbar** (Rename / Duplicate / Lock / Delete) sits at the top; the verbose actions group into collapsible **Organise** / **Content** / **Session** categories. The same menu — scoped to the active tab — is what the **empty-canvas right-click** and the desktop **footer canvas-menu button** open, except those surfaces also fold in **Canvas** (Change Theme / Change Canvas / Auto-align) and **Add** (Square / Sticky / Pencil / Annotation) categories. (The empty-canvas right-click used to open a separate canvas-only menu; it now shares this one so a right-click manages the tab as well as the canvas.) Actions:
 
 - **Rename** — enters inline rename mode.
 - **Duplicate** — creates a copy of the tab (same elements, same pattern, name suffixed with " copy") inserted directly after the source, and switches to it.
@@ -920,7 +919,7 @@ The active tab carries a **`⋯` ellipsis button** to the right of its name. Cli
 - **Add to another diagram** — submenu listing every other diagram the participant owns. Picking one links the tab into that diagram via `POST /api/diagrams/:id/tabs/:tabId/link` (the source tab stays put; both diagrams now share the same `tabs.data` row so edits propagate, see [spec/17](17-tab-diagram-many-to-many.md)).
 - **Delete** — removes the tab and falls back to a neighbouring tab. Disabled when only one tab remains.
 
-The menu renders through a **portal** to `document.body` and positions itself from the ellipsis button's bounding rect, so it isn't clipped by the tab bar's horizontal scroll.
+The menu renders through a **portal** to `document.body` so it isn't clipped by the tab bar's horizontal scroll. It positions itself from the ellipsis button's bounding rect (tab surface) or at the cursor / footer-button point (canvas surface), clamping back on-screen at every viewport edge.
 
 ### Reordering
 

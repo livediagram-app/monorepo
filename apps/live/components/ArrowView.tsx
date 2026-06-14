@@ -363,7 +363,12 @@ function ArrowViewImpl({
                   cy={a.y}
                   disabled={isLocked}
                   onPointerDown={(e) => {
-                    if (isLocked) return;
+                    // Primary button only. A right-click must fall through to
+                    // onContextMenu (delete this point) WITHOUT arming a drag:
+                    // arming one and then deleting the point on the same press
+                    // leaves the drag pointing at a now-missing index, which
+                    // crashes the snap maths on the next move.
+                    if (isLocked || e.button !== 0) return;
                     e.stopPropagation();
                     onBeginCurvePointDrag(arrow.id, i, e);
                   }}

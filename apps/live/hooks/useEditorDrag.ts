@@ -661,9 +661,15 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     const to = endpointPosition(arrow.to, els);
     const anchors = arrow.curvePoints ? curveAnchorPoints(from, to, arrow.curvePoints) : [];
     const poly = [from, ...anchors, to];
+    // The dragged vertex sits at poly[pointIndex + 1], so its neighbours are
+    // poly[pointIndex] and poly[pointIndex + 2]. Filter out any miss: if the
+    // point was removed mid-drag the index can fall off the end, and an
+    // undefined neighbour would crash snapArrowPoint reading `.x`.
     const neighbours =
       pointIndex != null && arrow.curvePoints
-        ? [poly[pointIndex]!, poly[pointIndex + 2]!]
+        ? [poly[pointIndex], poly[pointIndex + 2]].filter(
+            (p): p is { x: number; y: number } => p != null,
+          )
         : [from, to];
     const exclude = new Set<string>();
     if (arrow.from.kind === 'pinned') exclude.add(arrow.from.elementId);

@@ -2,9 +2,10 @@
 
 // Right-click context menu for the editor, lifted out of
 // editor-page.tsx. Renders one of two menus depending on what was
-// clicked: an element-scoped menu (link / layer order / note /
-// comment) or a canvas-scoped menu (change theme / canvas,
-// auto-align, add shape / sticky). Duplicate lives in the selection
+// clicked: a single-element menu (link / layer order / note /
+// comment) or a whole-selection 'multi' menu. The canvas (empty-space)
+// right-click opens the tab menu with its canvas sections folded in,
+// rendered by the TabBar — not here. Duplicate lives in the selection
 // toolbar (SelectionPopover), not here.
 //
 // Purely presentational: every action is a callback prop, and each
@@ -36,10 +37,7 @@ import {
   type BoxedElement,
   type Element,
   type ShapeKind,
-  type TabTimer,
-  type TabVote,
   type TextSize,
-  type TimerMode,
 } from '@livediagram/diagram';
 import { ArrowLineControls, ArrowPointerControls } from '@/components/arrow-controls';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
@@ -51,7 +49,6 @@ import {
   BorderStyleIcon,
   DotsIcon,
   FileExportIcon,
-  FileImportIcon,
   ItalicIcon,
   ScaleIcon,
   StrikethroughIcon,
@@ -59,21 +56,15 @@ import {
 } from '@/components/palette-icons';
 import { TrashIcon } from '@/components/explorer-icons';
 import {
-  AnnotationMenuIcon,
-  AutoAlignIcon,
-  CanvasMenuIcon,
   CommentMenuIcon,
   LayerDownIcon,
   LayerUpIcon,
   LinkMenuIcon,
   NoteMenuIcon,
   PaletteMenuIcon,
-  PencilMenuIcon,
   SquareMenuIcon,
-  StickyMenuIcon,
 } from '@/components/context-menu-icons';
 import { MenuAccordionSection, MenuTile, MenuTileGrid } from '@/components/PortalMenu';
-import { SessionToolsSection } from '@/components/SessionToolsSection';
 import { ShapeIcon } from '@/components/shape-icon';
 
 // A curated subset of the most common shapes offered for in-place morphing
@@ -173,27 +164,6 @@ type EditorContextMenuProps = {
   ) => void;
   onOpenNote: (elementId: string) => void;
   onOpenComments: (elementId: string) => void;
-  onChangeTheme: () => void;
-  onChangeCanvas: () => void;
-  onAutoAlign: () => void;
-  // Active tab name, shown as the canvas menu's "Current Tab" title so the
-  // canvas + tab right-click menus read as one surface scoped to this tab.
-  tabName: string;
-  // Tab-management actions surfaced in the canvas menu's Tab category, so the
-  // canvas right-click offers the same per-tab ops as the tab menu (the
-  // input / confirm-heavy ones — rename, delete, copy-to, move-to-folder —
-  // stay in the tab's own ellipsis menu).
-  onDuplicateTab: () => void;
-  onToggleTabLock: () => void;
-  tabLocked: boolean;
-  onClearTabContent: () => void;
-  tabHasContent: boolean;
-  onImportTab: () => void;
-  onExportTab: () => void;
-  onAddShape: (kind: ShapeKind) => void;
-  onAddSticky: () => void;
-  onDrawPencil: () => void;
-  onAddAnnotation: () => void;
   // Whole-selection actions for the 'multi' menu (a marquee multi-selection
   // or a group). The page wires these to the right handlers (multi vs group)
   // + reports the count, group state, and lock state.
@@ -211,20 +181,6 @@ type EditorContextMenuProps = {
   onExportSelection: () => void;
   onGroupSelection: () => void;
   onUngroupSelection: () => void;
-  // Session tools (spec/39) for the canvas menu's Session category. The full
-  // facilitator surface (timer mode + duration, pause/resume/reset, vote
-  // dots-per-person + reveal) lives here now, mirroring the old tab editor.
-  timer: TabTimer | null;
-  vote: TabVote | null;
-  onStartTimer: (mode: TimerMode, durationMs?: number) => void;
-  onPauseTimer: () => void;
-  onResumeTimer: () => void;
-  onResetTimer: () => void;
-  onClearTimer: () => void;
-  onStartVote: (votesPerPerson: number) => void;
-  onEndVote: () => void;
-  onRevealVote: () => void;
-  onClearVote: () => void;
 };
 
 export function EditorContextMenu(props: EditorContextMenuProps) {
@@ -932,12 +888,12 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             {...sectionProps('collaborate')}
           >
             {/* Link-cards have their own Link category (set / change / remove),
-                so the generic "Link to Source" is dropped here for them. */}
+                so the generic "Add Link" is dropped here for them. */}
             <MenuTileGrid cols={target.type === 'link-card' ? 2 : 3}>
               {target.type !== 'link-card' ? (
                 <MenuTile
                   icon={<LinkMenuIcon />}
-                  label={target.link ? 'Edit Link' : 'Link to Source'}
+                  label={target.link ? 'Edit Link' : 'Add Link'}
                   onClick={() => {
                     props.onLinkElement(target.id);
                     onClose();
@@ -954,7 +910,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               />
               <MenuTile
                 icon={<CommentMenuIcon />}
-                label="View Comments"
+                label="Comments"
                 onClick={() => {
                   props.onOpenComments(target.id);
                   onClose();
@@ -967,180 +923,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     );
   }
 
-  return (
-    <ContextMenu position={position} onClose={onClose} flush anchorBottom={menu.openUp}>
-      {/* Title: this menu is scoped to the current tab (theme / background /
-          session all live on the tab), so it reads "Current Tab: <name>",
-          matching the tab context menu. */}
-      <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-2 dark:border-slate-800">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-          Current tab
-        </span>
-        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-          {props.tabName}
-        </span>
-      </div>
-      {/* Tab — per-tab management, mirroring the tab ellipsis menu. Rename /
-          delete / copy-to / move-to-folder need an inline editor, confirm,
-          or a list subview, so they stay in the tab's own menu; the no-input
-          actions live here too. */}
-      <MenuAccordionSection title="Tab" icon={<StickyMenuIcon />} {...sectionProps('tab')}>
-        <MenuTileGrid cols={2}>
-          <MenuTile
-            icon={<DuplicateMenuIcon />}
-            label="Duplicate tab"
-            onClick={() => {
-              props.onDuplicateTab();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<LockMenuIcon />}
-            label={props.tabLocked ? 'Unlock tab' : 'Lock tab'}
-            active={props.tabLocked}
-            onClick={() => {
-              props.onToggleTabLock();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<FileImportIcon />}
-            label="Import"
-            onClick={() => {
-              props.onImportTab();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<FileExportIcon />}
-            label="Export"
-            onClick={() => {
-              props.onExportTab();
-              onClose();
-            }}
-          />
-        </MenuTileGrid>
-        {props.tabHasContent && !props.tabLocked ? (
-          <div className="px-2 pb-1.5">
-            <MenuTile
-              icon={<TrashIcon />}
-              label="Clear content"
-              danger
-              onClick={() => {
-                props.onClearTabContent();
-                onClose();
-              }}
-            />
-          </div>
-        ) : null}
-      </MenuAccordionSection>
-      {/* Canvas — theme / background / tidy. */}
-      <MenuAccordionSection title="Canvas" icon={<CanvasMenuIcon />} {...sectionProps('canvas')}>
-        <MenuTileGrid cols={3}>
-          <MenuTile
-            icon={<PaletteMenuIcon />}
-            label="Change Theme"
-            onClick={() => {
-              props.onChangeTheme();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<CanvasMenuIcon />}
-            label="Change Canvas"
-            onClick={() => {
-              props.onChangeCanvas();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<AutoAlignIcon />}
-            label="Auto-align"
-            onClick={() => {
-              props.onAutoAlign();
-              onClose();
-            }}
-          />
-        </MenuTileGrid>
-      </MenuAccordionSection>
-      {/* Add — drop a new element on the canvas. */}
-      <MenuAccordionSection title="Add" icon={<SquareMenuIcon />} {...sectionProps('add')}>
-        <MenuTileGrid cols={2}>
-          <MenuTile
-            icon={<SquareMenuIcon />}
-            label="Square"
-            onClick={() => {
-              props.onAddShape('square');
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<StickyMenuIcon />}
-            label="Sticky"
-            onClick={() => {
-              props.onAddSticky();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<PencilMenuIcon />}
-            label="Pencil"
-            onClick={() => {
-              props.onDrawPencil();
-              onClose();
-            }}
-          />
-          <MenuTile
-            icon={<AnnotationMenuIcon />}
-            label="Annotation"
-            onClick={() => {
-              props.onAddAnnotation();
-              onClose();
-            }}
-          />
-        </MenuTileGrid>
-      </MenuAccordionSection>
-      {/* Session — timer + voting facilitator tools (spec/39). The full
-          surface (mode, duration, pause/resume/reset, dots-per-person,
-          reveal) lives here; actions keep the menu open so a facilitator can
-          configure then start without re-opening. */}
-      <MenuAccordionSection title="Session" icon={<SessionGlyph />} {...sectionProps('session')}>
-        <SessionToolsSection
-          timer={props.timer}
-          vote={props.vote}
-          onStartTimer={props.onStartTimer}
-          onPauseTimer={props.onPauseTimer}
-          onResumeTimer={props.onResumeTimer}
-          onResetTimer={props.onResetTimer}
-          onClearTimer={props.onClearTimer}
-          onStartVote={props.onStartVote}
-          onEndVote={props.onEndVote}
-          onRevealVote={props.onRevealVote}
-          onClearVote={props.onClearVote}
-        />
-      </MenuAccordionSection>
-    </ContextMenu>
-  );
-}
-
-// Clock face — the Session category glyph.
-function SessionGlyph() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="8" cy="8.5" r="5.5" />
-      <path d="M8 5.5V8.5L10 10M8 2.5V1" />
-    </svg>
-  );
+  // The canvas right-click menu moved to the tab menu (TabBar) so it reuses
+  // every tab handler with the canvas sections folded in; this component now
+  // only renders the element + multi menus. `menu.mode === 'canvas'` never
+  // reaches here (the page routes it to the TabBar), so fall through to null.
+  return null;
 }
 
 // 6-hex or fall back to white for the native colour input (it can't take

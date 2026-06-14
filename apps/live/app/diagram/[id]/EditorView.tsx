@@ -962,6 +962,27 @@ export function EditorView() {
                     cur && cur.mode === 'canvas' ? null : { mode: 'canvas', x, y, openUp: true },
                   )
           }
+          // Canvas right-click + footer button open the active tab's menu with
+          // the canvas sections folded in, rendered by the TabBar so it reuses
+          // every tab handler. Element / multi context menus stay on
+          // EditorContextMenu below.
+          canvasMenu={contextMenu?.mode === 'canvas' ? contextMenu : null}
+          onCloseCanvasMenu={closeContextMenu}
+          canvasActions={{
+            onChangeTheme: () => {
+              setCanvasThemeTab('theme');
+              track('UI', 'Opened', 'ThemePicker');
+            },
+            onChangeCanvas: () => {
+              setCanvasThemeTab('canvas');
+              track('UI', 'Opened', 'CanvasStyle');
+            },
+            onAutoAlign: autoAlignTab,
+            onAddShape: addShape,
+            onAddSticky: addSticky,
+            onDrawPencil: beginFreehand,
+            onAddAnnotation: addAnnotation,
+          }}
         />
       )}
       {searchOpen ? (
@@ -1153,7 +1174,7 @@ export function EditorView() {
             );
           })()
         : null}
-      {contextMenu && !isReadOnly ? (
+      {contextMenu && contextMenu.mode !== 'canvas' && !isReadOnly ? (
         <EditorContextMenu
           menu={contextMenu}
           elements={activeTab.elements}
@@ -1194,33 +1215,9 @@ export function EditorView() {
           onToggleTableZebra={setTableZebraSelected}
           onOpenNote={openNote}
           onOpenComments={openComments}
-          onChangeTheme={() => {
-            setCanvasThemeTab('theme');
-            track('UI', 'Opened', 'ThemePicker');
-          }}
-          onChangeCanvas={() => {
-            setCanvasThemeTab('canvas');
-            track('UI', 'Opened', 'CanvasStyle');
-          }}
-          onAutoAlign={autoAlignTab}
-          onAddShape={addShape}
-          onAddSticky={addSticky}
-          onDrawPencil={beginFreehand}
-          onAddAnnotation={addAnnotation}
           selectionCount={ctxMemberIds.length}
           selectionIsGroup={ctxIsGroup}
           selectionLocked={ctxSelectionLocked}
-          tabName={activeTab.name}
-          onDuplicateTab={() => duplicateTab(activeId)}
-          onToggleTabLock={toggleActiveTabLock}
-          tabLocked={activeTabLocked}
-          onClearTabContent={clearTabContent}
-          tabHasContent={activeTab.elements.length > 0}
-          onImportTab={() => setImportOpen(true)}
-          onExportTab={() => {
-            setExportScope('tab');
-            setExportOpen(true);
-          }}
           selectionElements={ctxMemberIds
             .map((id) => activeTab.elements.find((e) => e.id === id))
             .filter((e): e is NonNullable<typeof e> => e != null)}
@@ -1233,17 +1230,6 @@ export function EditorView() {
           }}
           onGroupSelection={groupMultiSelected}
           onUngroupSelection={ungroupSelected}
-          timer={activeTab.timer ?? null}
-          vote={activeTab.vote ?? null}
-          onStartTimer={startTimer}
-          onPauseTimer={pauseTimer}
-          onResumeTimer={resumeTimer}
-          onResetTimer={resetTimer}
-          onClearTimer={clearTimer}
-          onStartVote={startVote}
-          onEndVote={endVote}
-          onRevealVote={revealVote}
-          onClearVote={clearVote}
         />
       ) : null}
       {linkPickerOpenForId !== null && !isReadOnly ? (

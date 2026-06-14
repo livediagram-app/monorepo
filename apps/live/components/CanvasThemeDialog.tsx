@@ -113,7 +113,7 @@ export function CanvasThemeDialog({
                 onClick={() => onTabChange('canvas')}
                 icon={<BackgroundTabIcon />}
               >
-                Background
+                Canvas
               </TabButton>
               <TabButton
                 active={tab === 'theme'}

@@ -99,9 +99,9 @@ export type ArrowEnd = 'from' | 'to';
 
 // Quick add + connect (spec/09): the side of a selected element a
 // quick-action targets, and which action the radial ring fired. 'duplicate'
-// clones the source; the shape kinds spawn a fresh element matching it.
+// clones the source; 'text' drops a label to the side.
 export type QuickConnectDirection = 'right' | 'below' | 'left' | 'above';
-export type QuickConnectKind = 'duplicate' | 'square' | 'text';
+export type QuickConnectKind = 'duplicate' | 'text';
 
 export const SNAP_THRESHOLD = 24;
 // Pixel range within which a dragged element's edges/centres snap to

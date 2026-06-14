@@ -11,7 +11,6 @@
 
 import {
   createPinnedArrow,
-  createShape,
   createText,
   duplicateGroupedElements,
   isBoxed,
@@ -21,7 +20,6 @@ import {
   type ArrowElement,
   type BoxedElement,
   type Element,
-  type ShapeElement,
   type Tab,
 } from '@livediagram/diagram';
 import {
@@ -29,24 +27,8 @@ import {
   type QuickConnectDirection,
   type QuickConnectKind,
 } from '@/lib/canvas';
-import { paintableBoxedFields } from '@/lib/format-painter';
 import { getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
-
-// A fresh shape for a quick-connect spawn: the chosen kind at the
-// stepped-out position, sized + styled to match the source so a chain of
-// connected nodes reads uniformly. Reuses the format-painter's projection
-// so "match the source" copies the same styling surface the painter does
-// (size, colours, border presets, font, opacity) without re-listing it.
-function connectedShapeFrom(
-  kind: 'square',
-  source: BoxedElement,
-  dx: number,
-  dy: number,
-): ShapeElement {
-  const base = createShape(kind, source.x + dx, source.y + dy);
-  return { ...base, ...paintableBoxedFields(source) } as ShapeElement;
-}
 
 type EditorSelectionActionsDeps = {
   // The active selection resolved to ids (single selection expands to
@@ -406,15 +388,6 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
       track('Element', 'Added', titleCaseType('text'));
       return;
     }
-
-    // Fresh shape (square) matching the source's size + styling, so a chain
-    // of connected nodes reads uniformly. Built from the source's own box
-    // (the plus only shows for a single element, so baseBounds is its box).
-    const shape = connectedShapeFrom(kind, source, dx, dy);
-    const connector = connectorWith(shape.id);
-    commit((els) => [...els, shape, connector]);
-    setSelectedId(shape.id);
-    track('Element', 'Added', titleCaseType(kind));
   };
 
   const ungroupSelected = () => {

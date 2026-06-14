@@ -7,6 +7,7 @@ import {
   folderNamesInDiagram,
   groupTabsIntoRuns,
   tabFolderName,
+  type ShapeKind,
   type Tab,
   type TabTimer,
   type TabVote,
@@ -18,7 +19,23 @@ import type { Participant } from '@/lib/identity';
 import { getTheme } from '@/lib/themes';
 import { PencilIcon, TrashIcon } from './explorer-icons';
 import { FileExportIcon, FileImportIcon } from './palette-icons';
-import { MenuAccordionSection, MenuItem, MenuToolbar, MenuToolButton } from './PortalMenu';
+import {
+  MenuAccordionSection,
+  MenuItem,
+  MenuTile,
+  MenuTileGrid,
+  MenuToolbar,
+  MenuToolButton,
+} from './PortalMenu';
+import {
+  AnnotationMenuIcon,
+  AutoAlignIcon,
+  CanvasMenuIcon,
+  PaletteMenuIcon,
+  PencilMenuIcon,
+  SquareMenuIcon,
+  StickyMenuIcon,
+} from './context-menu-icons';
 import { SessionToolsSection } from './SessionToolsSection';
 import { TabFolderChip } from './TabFolderChip';
 import { TabPresenceStack } from './TabPresenceStack';
@@ -34,6 +51,24 @@ const DEFAULT_TAB_ACCENT = 'rgb(2 132 199)';
 function tabAccent(tab: Tab): string {
   return getTheme(tab.theme).elementStroke ?? DEFAULT_TAB_ACCENT;
 }
+
+// Canvas-scoped actions folded into the tab menu when it opens from a canvas
+// right-click (or the footer canvas-menu button): change theme / background,
+// tidy the layout, or drop a fresh element. Absent when the menu opens from a
+// tab pill, so those tabs keep the pure tab-management surface.
+export type CanvasMenuActions = {
+  onChangeTheme: () => void;
+  onChangeCanvas: () => void;
+  onAutoAlign: () => void;
+  onAddShape: (kind: ShapeKind) => void;
+  onAddSticky: () => void;
+  onDrawPencil: () => void;
+  onAddAnnotation: () => void;
+};
+
+// Where the canvas right-click / footer-button menu should open. `openUp`
+// grows it upward from y (footer button) rather than down from the cursor.
+export type CanvasMenuTarget = { x: number; y: number; openUp?: boolean };
 
 type TabBarProps = {
   // Optional callback that pops the keyboard-shortcuts modal. Lives
@@ -51,6 +86,14 @@ type TabBarProps = {
   // The trigger sits just right of Search (desktop only — touch users reach
   // it by long-pressing the canvas).
   onOpenCanvasMenu?: (x: number, y: number) => void;
+  // When set, the active tab's menu opens at this point as the canvas
+  // right-click / footer-button menu — the same tab menu with the canvas
+  // sections (`canvasActions`) folded in. The page owns the open/close state
+  // (shared with element / multi context menus); `onCloseCanvasMenu` dismisses
+  // it. Null when no canvas menu is open.
+  canvasMenu?: CanvasMenuTarget | null;
+  onCloseCanvasMenu?: () => void;
+  canvasActions?: CanvasMenuActions;
   tabs: Tab[];
   activeId: string;
   // The current diagram id — used to key per-folder collapse state in
@@ -164,6 +207,9 @@ export function TabBar({
   onOpenSettings,
   onOpenCanvasMenu,
   onOpenSearch,
+  canvasMenu,
+  onCloseCanvasMenu,
+  canvasActions,
 }: TabBarProps) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -173,6 +219,73 @@ export function TabBar({
   // Distinct folder names in this diagram, for the "Add to Folder"
   // menu's pick list (spec/30).
   const folderNames = folderNamesInDiagram(tabs);
+
+  // The tab-menu callbacks for a given tab, shared by the per-tab ellipsis
+  // menu and the canvas right-click menu so both drive the exact same
+  // actions (rename / duplicate / folder / session / ...). `close` differs
+  // per surface — the ellipsis closes via setMenuFor, the canvas menu via
+  // onCloseCanvasMenu — so each caller passes its own.
+  const tabMenuProps = (tab: Tab, close: () => void) => ({
+    canDelete: tabs.length > 1,
+    canClearContent: activeTabHasContent && !tab.locked,
+    locked: tab.locked === true,
+    otherDiagrams,
+    folderNames,
+    currentFolder: tabFolderName(tab),
+    onMoveToFolder: (name: string) => {
+      onMoveTabToFolder(tab.id, name);
+      close();
+    },
+    onRemoveFromFolder: () => {
+      onRemoveTabFromFolder(tab.id);
+      close();
+    },
+    onRename: () => {
+      setEditingId(tab.id);
+      close();
+    },
+    onDuplicate: () => {
+      onDuplicate(tab.id);
+      close();
+    },
+    onClearContent: () => {
+      onClearContent();
+      close();
+    },
+    onImport: () => {
+      onImportTab();
+      close();
+    },
+    onExport: () => {
+      onExportTab();
+      close();
+    },
+    onCopyTo: async (targetId: string) => {
+      await onCopyTabTo(targetId);
+      close();
+    },
+    onToggleLock: () => {
+      onToggleLockTab();
+      close();
+    },
+    onDelete: () => {
+      onDelete(tab.id);
+      close();
+    },
+    timer,
+    vote,
+    onStartTimer,
+    onPauseTimer,
+    onResumeTimer,
+    onResetTimer,
+    onClearTimer,
+    onStartVote,
+    onEndVote,
+    onRevealVote,
+    onClearVote,
+  });
+
+  const activeTab = tabs.find((t) => t.id === activeId);
 
   // One tab pill. Factored out of the map so loose tabs and folder
   // members (rendered inside TabFolderChip) share the exact same pill —
@@ -265,63 +378,7 @@ export function TabBar({
             open={menuFor === tab.id}
             onToggle={() => setMenuFor(menuFor === tab.id ? null : tab.id)}
             onClose={() => setMenuFor(null)}
-            canDelete={tabs.length > 1}
-            canClearContent={activeTabHasContent && !tab.locked}
-            locked={tab.locked === true}
-            otherDiagrams={otherDiagrams}
-            folderNames={folderNames}
-            currentFolder={tabFolderName(tab)}
-            onMoveToFolder={(name) => {
-              onMoveTabToFolder(tab.id, name);
-              setMenuFor(null);
-            }}
-            onRemoveFromFolder={() => {
-              onRemoveTabFromFolder(tab.id);
-              setMenuFor(null);
-            }}
-            onRename={() => {
-              setEditingId(tab.id);
-              setMenuFor(null);
-            }}
-            onDuplicate={() => {
-              onDuplicate(tab.id);
-              setMenuFor(null);
-            }}
-            onClearContent={() => {
-              onClearContent();
-              setMenuFor(null);
-            }}
-            onImport={() => {
-              onImportTab();
-              setMenuFor(null);
-            }}
-            onExport={() => {
-              onExportTab();
-              setMenuFor(null);
-            }}
-            onCopyTo={async (targetId) => {
-              await onCopyTabTo(targetId);
-              setMenuFor(null);
-            }}
-            onToggleLock={() => {
-              onToggleLockTab();
-              setMenuFor(null);
-            }}
-            onDelete={() => {
-              onDelete(tab.id);
-              setMenuFor(null);
-            }}
-            timer={timer}
-            vote={vote}
-            onStartTimer={onStartTimer}
-            onPauseTimer={onPauseTimer}
-            onResumeTimer={onResumeTimer}
-            onResetTimer={onResetTimer}
-            onClearTimer={onClearTimer}
-            onStartVote={onStartVote}
-            onEndVote={onEndVote}
-            onRevealVote={onRevealVote}
-            onClearVote={onClearVote}
+            {...tabMenuProps(tab, () => setMenuFor(null))}
           />
         ) : null}
       </div>
@@ -329,121 +386,131 @@ export function TabBar({
   };
 
   return (
-    <div
-      data-editor-tabbar
-      className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900"
-    >
-      <span
-        className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:flex dark:text-slate-400"
-        aria-hidden
+    <>
+      <div
+        data-editor-tabbar
+        className="flex h-12 shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900"
       >
-        <TabsLabelIcon />
-        Tabs
-      </span>
-      <div className="scrollbar-slim flex flex-1 items-center gap-1 overflow-x-auto">
-        {groupTabsIntoRuns(tabs).map((run) =>
-          run.kind === 'loose' ? (
-            renderTabPill(run.tab)
-          ) : (
-            <TabFolderChip
-              key={`folder:${run.name}`}
-              name={run.name}
-              tabs={run.tabs}
-              activeId={activeId}
-              diagramId={diagramId}
-              readOnly={readOnly}
-              renderTab={renderTabPill}
-              onReorder={onReorder}
-              onRename={onRenameFolder}
-              participantsByTab={participantsByTab}
-              selfId={selfId}
-              selfRole={selfRole}
-            />
-          ),
-        )}
-        {readOnly ? null : (
-          <button
-            type="button"
-            onClick={onAdd}
-            aria-label="Add tab"
-            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-lg leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            +
-          </button>
-        )}
+        <span
+          className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:flex dark:text-slate-400"
+          aria-hidden
+        >
+          <TabsLabelIcon />
+          Tabs
+        </span>
+        <div className="scrollbar-slim flex flex-1 items-center gap-1 overflow-x-auto">
+          {groupTabsIntoRuns(tabs).map((run) =>
+            run.kind === 'loose' ? (
+              renderTabPill(run.tab)
+            ) : (
+              <TabFolderChip
+                key={`folder:${run.name}`}
+                name={run.name}
+                tabs={run.tabs}
+                activeId={activeId}
+                diagramId={diagramId}
+                readOnly={readOnly}
+                renderTab={renderTabPill}
+                onReorder={onReorder}
+                onRename={onRenameFolder}
+                participantsByTab={participantsByTab}
+                selfId={selfId}
+                selfRole={selfRole}
+              />
+            ),
+          )}
+          {readOnly ? null : (
+            <button
+              type="button"
+              onClick={onAdd}
+              aria-label="Add tab"
+              className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-lg leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              +
+            </button>
+          )}
+        </div>
+        {onOpenSearch ? (
+          <Tooltip title="Search" description="Find diagrams, folders, tabs and elements.">
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              aria-label="Search"
+              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <SearchGlyph />
+            </button>
+          </Tooltip>
+        ) : null}
+        {onOpenShortcuts ? (
+          <span className="hidden sm:contents">
+            <Tooltip
+              title="Keyboard shortcuts"
+              description="See every shortcut. Toggle them off if they get in the way."
+            >
+              <button
+                type="button"
+                onClick={onOpenShortcuts}
+                aria-label="Keyboard shortcuts"
+                className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              >
+                <KeyboardIcon />
+              </button>
+            </Tooltip>
+          </span>
+        ) : null}
+        {onOpenCanvasMenu ? (
+          <span className="hidden sm:contents">
+            <Tooltip
+              title="Canvas menu"
+              description="Theme, background, add elements, session tools."
+            >
+              <button
+                type="button"
+                data-context-menu-trigger
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  // Anchor the menu's BOTTOM edge at the button's top (openUp),
+                  // so it opens above the footer rather than over it.
+                  onOpenCanvasMenu(r.left, r.top);
+                }}
+                aria-label="Canvas menu"
+                className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              >
+                <CanvasGlyph />
+              </button>
+            </Tooltip>
+          </span>
+        ) : null}
+        {onOpenSettings ? (
+          // Settings stays visible on mobile too: it's where users go
+          // to flip drawToAdd / arrow-auto-rebind / telemetry opt-out,
+          // and there's no other surface for those toggles. Keyboard
+          // shortcuts above stay hidden on mobile because they're moot
+          // on a touch device, but Settings is a real entry point on
+          // every viewport.
+          <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              aria-label="Diagram settings"
+              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <GearIcon />
+            </button>
+          </Tooltip>
+        ) : null}
+        <UiModeToggle />
       </div>
-      {onOpenSearch ? (
-        <Tooltip title="Search" description="Find diagrams, folders, tabs and elements.">
-          <button
-            type="button"
-            onClick={onOpenSearch}
-            aria-label="Search"
-            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            <SearchGlyph />
-          </button>
-        </Tooltip>
+      {canvasMenu && !readOnly && activeTab && onCloseCanvasMenu && canvasActions ? (
+        <PortalMenu
+          point={canvasMenu}
+          onClose={onCloseCanvasMenu}
+          canvas={canvasActions}
+          {...tabMenuProps(activeTab, onCloseCanvasMenu)}
+        />
       ) : null}
-      {onOpenShortcuts ? (
-        <span className="hidden sm:contents">
-          <Tooltip
-            title="Keyboard shortcuts"
-            description="See every shortcut. Toggle them off if they get in the way."
-          >
-            <button
-              type="button"
-              onClick={onOpenShortcuts}
-              aria-label="Keyboard shortcuts"
-              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <KeyboardIcon />
-            </button>
-          </Tooltip>
-        </span>
-      ) : null}
-      {onOpenCanvasMenu ? (
-        <span className="hidden sm:contents">
-          <Tooltip
-            title="Canvas menu"
-            description="Theme, background, add elements, session tools."
-          >
-            <button
-              type="button"
-              data-context-menu-trigger
-              onClick={(e) => {
-                const r = e.currentTarget.getBoundingClientRect();
-                // Anchor the menu's BOTTOM edge at the button's top (openUp),
-                // so it opens above the footer rather than over it.
-                onOpenCanvasMenu(r.left, r.top);
-              }}
-              aria-label="Canvas menu"
-              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <CanvasGlyph />
-            </button>
-          </Tooltip>
-        </span>
-      ) : null}
-      {onOpenSettings ? (
-        // Settings stays visible on mobile too: it's where users go
-        // to flip drawToAdd / arrow-auto-rebind / telemetry opt-out,
-        // and there's no other surface for those toggles. Keyboard
-        // shortcuts above stay hidden on mobile because they're moot
-        // on a touch device, but Settings is a real entry point on
-        // every viewport.
-        <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            aria-label="Diagram settings"
-            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            <GearIcon />
-          </button>
-        </Tooltip>
-      ) : null}
-      <UiModeToggle />
-    </div>
+    </>
   );
 }
 
@@ -719,6 +786,8 @@ function EllipsisMenuButton({
 
 function PortalMenu({
   anchor,
+  point,
+  canvas,
   onClose,
   onRename,
   onDuplicate,
@@ -748,7 +817,14 @@ function PortalMenu({
   onRevealVote,
   onClearVote,
 }: {
-  anchor: HTMLButtonElement | null;
+  // Positioned EITHER above an anchor button (tab ellipsis) OR at a screen
+  // point (canvas right-click / footer button). Exactly one is provided.
+  anchor?: HTMLButtonElement | null;
+  point?: CanvasMenuTarget;
+  // When set, the canvas sections (theme / background / add element) render
+  // below the tab-management sections, turning the tab menu into the merged
+  // canvas right-click menu.
+  canvas?: CanvasMenuActions;
   onClose: () => void;
   onRename: () => void;
   onDuplicate: () => void;
@@ -802,13 +878,18 @@ function PortalMenu({
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [adjust, setAdjust] = useState({ x: 0, y: 0 });
 
-  // Position above the anchor button, right-aligned to it. Measured each
-  // time the menu opens so it stays attached even after layout shifts.
+  // Position at the given point (canvas right-click / footer button) or, for
+  // the tab ellipsis, above the anchor button right-aligned to it. Measured
+  // each time the menu opens so it stays attached even after layout shifts.
   useReposition(() => {
+    if (point) {
+      setPos({ left: point.x, top: point.y });
+      return;
+    }
     if (!anchor) return;
     const r = anchor.getBoundingClientRect();
     setPos({ left: r.right, top: r.top });
-  }, [anchor]);
+  }, [anchor, point]);
 
   // After the menu mounts, nudge it back on-screen if it overflows any
   // edge (e.g. Tab 1 is near the left and the menu opens left of its
@@ -833,17 +914,31 @@ function PortalMenu({
       // whole menu before the confirm registers. Treat it as inside.
       const inConfirm =
         e.target instanceof Element && e.target.closest('[data-confirm-popover]') !== null;
+      // A mousedown on the button that OPENED this menu (the footer
+      // canvas-menu trigger) must not trip the outside-close, or the
+      // button's own onClick toggle would just reopen it. The trigger
+      // marks itself with data-context-menu-trigger and toggles in onClick.
+      const onTrigger =
+        e.target instanceof Element && e.target.closest('[data-context-menu-trigger]') !== null;
       if (
         e.target instanceof Node &&
         !ref.current.contains(e.target) &&
         e.target !== anchor &&
-        !inConfirm
+        !inConfirm &&
+        !onTrigger
       ) {
         onClose();
       }
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [onClose, anchor]);
 
   if (!pos) return null;
@@ -853,14 +948,20 @@ function PortalMenu({
       <div
         ref={ref}
         role="menu"
-        className={`fixed z-50 flex ${view === 'actions' ? 'w-44' : 'w-56'} flex-col rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40`}
+        onContextMenu={(e) => e.preventDefault()}
+        className={`fixed z-50 flex ${view === 'actions' && !canvas ? 'w-44' : 'w-56'} flex-col rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40`}
         style={{
-          // pos pins the menu's right edge to the ellipsis button's right edge,
-          // then translate shifts it left and up. adjust nudges back on-screen
-          // when the menu would otherwise overflow a viewport edge.
+          // adjust nudges the box back on-screen when it would overflow an edge.
+          // Anchor mode pins the menu's right edge to the ellipsis button and
+          // grows up-left; point mode pins its top-left to the cursor and grows
+          // down (or up from the footer button, which passes openUp).
           left: pos.left + adjust.x,
           top: pos.top + adjust.y,
-          transform: 'translate(-100%, calc(-100% - 4px))',
+          transform: point
+            ? point.openUp
+              ? 'translate(0, calc(-100% - 4px))'
+              : 'none'
+            : 'translate(-100%, calc(-100% - 4px))',
         }}
       >
         {view === 'actions' ? (
@@ -913,40 +1014,124 @@ function PortalMenu({
               icon={<FolderMenuIcon />}
               {...sectionProps('organise')}
             >
-              <MenuItem
-                icon={<FolderMenuIcon />}
-                label="Add to Folder"
-                onClick={() => {
-                  setNewFolder('');
-                  setView('folder');
-                }}
-              />
-              <MenuItem
-                icon={<MoveIcon />}
-                label="Add to Diagram"
-                onClick={() => setView('copyTo')}
-                disabled={otherDiagrams.length === 0}
-              />
+              <MenuTileGrid cols={2}>
+                <MenuTile
+                  icon={<FolderMenuIcon />}
+                  label="Add to Folder"
+                  onClick={() => {
+                    setNewFolder('');
+                    setView('folder');
+                  }}
+                />
+                <MenuTile
+                  icon={<MoveIcon />}
+                  label="Add to Diagram"
+                  onClick={() => setView('copyTo')}
+                  disabled={otherDiagrams.length === 0}
+                />
+              </MenuTileGrid>
             </MenuAccordionSection>
             <MenuAccordionSection
               title="Content"
               icon={<FileExportIcon />}
               {...sectionProps('content')}
             >
-              <MenuItem
-                icon={<FileImportIcon />}
-                label="Import Content"
-                onClick={onImport}
-                disabled={locked}
-              />
-              <MenuItem icon={<FileExportIcon />} label="Export Contents" onClick={onExport} />
-              <MenuItem
-                icon={<ClearIcon />}
-                label="Reset Canvas"
-                onClick={onClearContent}
-                disabled={!canClearContent}
-              />
+              <MenuTileGrid cols={3}>
+                <MenuTile
+                  icon={<FileImportIcon />}
+                  label="Import"
+                  onClick={onImport}
+                  disabled={locked}
+                />
+                <MenuTile icon={<FileExportIcon />} label="Export" onClick={onExport} />
+                <MenuTile
+                  icon={<ClearIcon />}
+                  label="Clear"
+                  danger
+                  onClick={onClearContent}
+                  disabled={!canClearContent}
+                />
+              </MenuTileGrid>
             </MenuAccordionSection>
+            {/* Canvas + Add only render when this is the canvas right-click
+                menu (canvasActions passed). Tab pills omit them, keeping the
+                ellipsis menu purely about tab management. */}
+            {canvas ? (
+              <>
+                <MenuAccordionSection
+                  title="Canvas"
+                  icon={<CanvasMenuIcon />}
+                  {...sectionProps('canvas')}
+                >
+                  <MenuTileGrid cols={3}>
+                    <MenuTile
+                      icon={<PaletteMenuIcon />}
+                      label="Change Theme"
+                      onClick={() => {
+                        canvas.onChangeTheme();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<CanvasMenuIcon />}
+                      label="Change Canvas"
+                      onClick={() => {
+                        canvas.onChangeCanvas();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<AutoAlignIcon />}
+                      label="Auto-align"
+                      onClick={() => {
+                        canvas.onAutoAlign();
+                        onClose();
+                      }}
+                    />
+                  </MenuTileGrid>
+                </MenuAccordionSection>
+                <MenuAccordionSection
+                  title="Add"
+                  icon={<SquareMenuIcon />}
+                  {...sectionProps('add')}
+                >
+                  <MenuTileGrid cols={2}>
+                    <MenuTile
+                      icon={<SquareMenuIcon />}
+                      label="Square"
+                      onClick={() => {
+                        canvas.onAddShape('square');
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<StickyMenuIcon />}
+                      label="Sticky"
+                      onClick={() => {
+                        canvas.onAddSticky();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<PencilMenuIcon />}
+                      label="Pencil"
+                      onClick={() => {
+                        canvas.onDrawPencil();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<AnnotationMenuIcon />}
+                      label="Annotation"
+                      onClick={() => {
+                        canvas.onAddAnnotation();
+                        onClose();
+                      }}
+                    />
+                  </MenuTileGrid>
+                </MenuAccordionSection>
+              </>
+            ) : null}
             <MenuAccordionSection
               title="Session"
               icon={<SessionTabIcon />}

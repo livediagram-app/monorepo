@@ -120,12 +120,6 @@ const OPTIONS: Option[] = [
     icon: <ArrowIcon />,
   },
   {
-    kind: 'square',
-    label: 'Square',
-    description: 'Add a connected square.',
-    icon: <SquareIcon />,
-  },
-  {
     kind: 'pencil',
     label: 'Pencil',
     description: 'Draw a freehand sketch.',
@@ -309,14 +303,6 @@ function ArrowIcon() {
     <svg {...iconProps()}>
       <path d="M3 13 13 3" />
       <path d="M7 3h6v6" />
-    </svg>
-  );
-}
-
-function SquareIcon() {
-  return (
-    <svg {...iconProps()}>
-      <rect x="3" y="3" width="10" height="10" rx="1.5" />
     </svg>
   );
 }
