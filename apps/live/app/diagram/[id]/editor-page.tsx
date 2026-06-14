@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import type { ReactNode } from 'react';
 import { setSessionSharePassword } from '@/lib/api-client';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
@@ -14,6 +15,9 @@ const ApiErrorPage = dynamic(() => import('@/components/ApiErrorPage').then((m) 
 const SharePasswordGate = dynamic(() =>
   import('@/components/SharePasswordGate').then((m) => m.SharePasswordGate),
 );
+
+const LOAD_ERROR_MESSAGE =
+  'We couldn’t load this diagram: the server didn’t respond. Check your connection and try again.';
 
 // `embed` mounts the read-only embed view (spec/33): same state, same
 // EditorView, with the chrome / identity / edit gates flipped by the
@@ -46,154 +50,86 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
     setPasswordRetry,
   } = state;
 
+  // The full Explorer panel that sits behind the error / not-found status
+  // screens (identical in both), built once from state. Just a React
+  // element until a branch returns it, so building it on every render is
+  // free when no status screen shows.
+  const fullExplorer = (
+    <Explorer
+      position={explorerPosition}
+      diagrams={diagramList}
+      folders={folders}
+      loading={diagramListLoading}
+      shared={sharedDiagrams}
+      onDismissShared={dismissSharedDiagram}
+      onOpenFullExplorer={() => window.location.assign(`${window.location.origin}/explorer/recent`)}
+      currentDiagramId={null}
+      onMoveTo={(x, y) => setExplorerPosition({ x, y })}
+      onReset={() => setExplorerPosition(null)}
+      onOpenDiagram={openDiagram}
+      onNewDiagram={newDiagram}
+      onDeleteDiagram={deleteDiagram}
+      onDuplicateDiagram={(id) => void duplicateDiagram(id)}
+      onCreateFolder={createFolder}
+      onRenameFolder={renameFolder}
+      onDeleteFolder={deleteFolder}
+      onMoveDiagramToFolder={moveDiagramToFolder}
+    />
+  );
+
   // The load FAILED (network / 5xx) rather than 404'd. Retryable, so
   // show the error card (with the Explorer behind it for navigation)
   // instead of NotFound. Retry re-runs hydration via a full reload.
   if (loadError) {
+    const card = (
+      <ApiErrorPage onRetry={() => window.location.reload()} message={LOAD_ERROR_MESSAGE} />
+    );
     // Embed frames get the bare retry card: an app header + Explorer
     // panel inside someone else's page is noise (spec/33).
-    if (embed) {
-      return (
-        <main className="relative h-dvh bg-slate-50 dark:bg-slate-950">
-          <ApiErrorPage
-            onRetry={() => window.location.reload()}
-            message="We couldn’t load this diagram: the server didn’t respond. Check your connection and try again."
-          />
-        </main>
-      );
-    }
-    return (
-      <div className="flex h-dvh flex-col">
-        <EditorHeader
-          diagramName="Couldn’t load diagram"
-          hideTitle
-          showShare={false}
-          shareable={false}
-          onOpenShare={() => {}}
-          onRename={() => {}}
-        />
-        <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
-          <ApiErrorPage
-            onRetry={() => window.location.reload()}
-            message="We couldn’t load this diagram: the server didn’t respond. Check your connection and try again."
-          />
-          <Explorer
-            position={explorerPosition}
-            diagrams={diagramList}
-            folders={folders}
-            loading={diagramListLoading}
-            shared={sharedDiagrams}
-            onDismissShared={dismissSharedDiagram}
-            onOpenFullExplorer={() =>
-              window.location.assign(`${window.location.origin}/explorer/recent`)
-            }
-            currentDiagramId={null}
-            onMoveTo={(x, y) => setExplorerPosition({ x, y })}
-            onReset={() => setExplorerPosition(null)}
-            onOpenDiagram={openDiagram}
-            onNewDiagram={newDiagram}
-            onDeleteDiagram={deleteDiagram}
-            onDuplicateDiagram={(id) => void duplicateDiagram(id)}
-            onCreateFolder={createFolder}
-            onRenameFolder={renameFolder}
-            onDeleteFolder={deleteFolder}
-            onMoveDiagramToFolder={moveDiagramToFolder}
-          />
-        </main>
-      </div>
+    return embed ? (
+      <EmbedShell>{card}</EmbedShell>
+    ) : (
+      <StatusShell title="Couldn’t load diagram" explorer={fullExplorer}>
+        {card}
+      </StatusShell>
     );
   }
 
   if (diagramNotFound) {
-    // Same bare-card rule as the embed loadError branch above; the
-    // create-new escape opens the full app in a new tab rather than
-    // navigating the host page's iframe.
-    if (embed) {
-      return (
-        <main className="relative h-dvh bg-slate-50 dark:bg-slate-950">
-          <NotFound
-            onCreateNew={() => {
-              window.open(`${window.location.origin}/new`, '_blank', 'noopener');
-            }}
-          />
-        </main>
-      );
-    }
-    return (
-      <div className="flex h-dvh flex-col">
-        <EditorHeader
-          diagramName="Diagram not found"
-          hideTitle
-          showShare={false}
-          shareable={false}
-          onOpenShare={() => {}}
-          onRename={() => {}}
+    // The create-new escape opens the full app in a new tab from an embed
+    // (rather than navigating the host page's iframe), in place otherwise.
+    return embed ? (
+      <EmbedShell>
+        <NotFound
+          onCreateNew={() => window.open(`${window.location.origin}/new`, '_blank', 'noopener')}
         />
-        <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
-          <NotFound
-            onCreateNew={() => {
-              window.location.assign(`${window.location.origin}/new`);
-            }}
-          />
-          <Explorer
-            position={explorerPosition}
-            diagrams={diagramList}
-            folders={folders}
-            loading={diagramListLoading}
-            shared={sharedDiagrams}
-            onDismissShared={dismissSharedDiagram}
-            onOpenFullExplorer={() =>
-              window.location.assign(`${window.location.origin}/explorer/recent`)
-            }
-            currentDiagramId={null}
-            onMoveTo={(x, y) => setExplorerPosition({ x, y })}
-            onReset={() => setExplorerPosition(null)}
-            onOpenDiagram={openDiagram}
-            onNewDiagram={newDiagram}
-            onDeleteDiagram={deleteDiagram}
-            onDuplicateDiagram={(id) => void duplicateDiagram(id)}
-            onCreateFolder={createFolder}
-            onRenameFolder={renameFolder}
-            onDeleteFolder={deleteFolder}
-            onMoveDiagramToFolder={moveDiagramToFolder}
-          />
-        </main>
-      </div>
+      </EmbedShell>
+    ) : (
+      <StatusShell title="Diagram not found" explorer={fullExplorer}>
+        <NotFound onCreateNew={() => window.location.assign(`${window.location.origin}/new`)} />
+      </StatusShell>
     );
   }
 
   // Password gate (spec/24): a visitor opened a protected diagram's
   // share link and hasn't supplied a valid password yet. Submitting
   // sets the session password and bumps passwordRetry to re-run the
-  // bootstrap, which now carries the password on every request.
+  // bootstrap, which now carries the password on every request. In an
+  // embed the gate renders headerless inside the iframe (spec/33).
   if (sharePasswordGate) {
-    // In an embed the gate renders inside the iframe, headerless
-    // (spec/33): the host page provides the surrounding context.
     return (
-      <div className="flex h-dvh flex-col">
-        {embed ? null : (
-          <EditorHeader
-            diagramName="Password required"
-            hideTitle
-            showShare={false}
-            shareable={false}
-            onOpenShare={() => {}}
-            onRename={() => {}}
-          />
-        )}
-        <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
-          <SharePasswordGate
-            invalid={sharePasswordGate.invalid}
-            ownerName={diagramOwnerName}
-            onSubmit={(pw) => {
-              setSharePasswordGate(null);
-              setSessionSharePassword(pw);
-              setLoadingDiagram(true);
-              setPasswordRetry((n) => n + 1);
-            }}
-          />
-        </main>
-      </div>
+      <StatusShell title="Password required" showHeader={!embed}>
+        <SharePasswordGate
+          invalid={sharePasswordGate.invalid}
+          ownerName={diagramOwnerName}
+          onSubmit={(pw) => {
+            setSharePasswordGate(null);
+            setSessionSharePassword(pw);
+            setLoadingDiagram(true);
+            setPasswordRetry((n) => n + 1);
+          }}
+        />
+      </StatusShell>
     );
   }
 
@@ -210,4 +146,46 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
       <EditorView />
     </EditorContext.Provider>
   );
+}
+
+// Full-height status chrome (error / not-found / password gate): the
+// editor header (title-only, every action disabled) over a slate surface
+// that holds the status card and, optionally, the Explorer for
+// navigation. Shared by the status branches so the header + main wrapper
+// (and the Explorer behind it) isn't repeated per branch.
+function StatusShell({
+  title,
+  showHeader = true,
+  explorer,
+  children,
+}: {
+  title: string;
+  showHeader?: boolean;
+  explorer?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex h-dvh flex-col">
+      {showHeader ? (
+        <EditorHeader
+          diagramName={title}
+          hideTitle
+          showShare={false}
+          shareable={false}
+          onOpenShare={() => {}}
+          onRename={() => {}}
+        />
+      ) : null}
+      <main className="relative flex-1 bg-slate-50 dark:bg-slate-950">
+        {children}
+        {explorer}
+      </main>
+    </div>
+  );
+}
+
+// The bare embed status surface (spec/33): no header, no Explorer — an
+// app header + Explorer inside someone else's iframe would be noise.
+function EmbedShell({ children }: { children: ReactNode }) {
+  return <main className="relative h-dvh bg-slate-50 dark:bg-slate-950">{children}</main>;
 }
