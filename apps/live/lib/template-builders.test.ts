@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Element } from '@livediagram/diagram';
+import { runsPlainText, type Element } from '@livediagram/diagram';
 import type { TemplateKind } from './templates';
 import { buildTemplate, buildTemplatedTab } from './template-builders';
 import { isTechIconId } from './tech-icons';
@@ -210,5 +210,56 @@ describe('system architecture uses full-colour technology icons', () => {
     // Gateway (nginx), two services (docker / k8s), database (postgres),
     // cache (redis) — the client glyph (globe) is line-art, not branded.
     expect(new Set(techIds)).toEqual(new Set(['nginx', 'docker', 'k8s', 'postgres', 'redis']));
+  });
+});
+
+describe('board templates seed per-range rich text', () => {
+  // The label is the plain-text mirror of its runs (spec/09); every
+  // richText-carrying element must keep `label === runsPlainText(richText)`
+  // or legacy readers (search / export / auto-rename) drift from what
+  // renders. Asserted across every board element that opts into runs.
+  const labelMirrorsRuns = (kind: TemplateKind) => {
+    const withRuns = buildTemplate(kind, 0, 0).filter(
+      (el): el is Extract<Element, { richText?: unknown }> & { richText: NonNullable<unknown> } =>
+        Array.isArray((el as { richText?: unknown }).richText),
+    );
+    expect(withRuns.length).toBeGreaterThan(0);
+    for (const el of withRuns) {
+      const runs = (el as { richText: Parameters<typeof runsPlainText>[0] }).richText;
+      expect((el as { label?: string }).label).toBe(runsPlainText(runs));
+    }
+  };
+
+  it('kanban ticket cards bold the id lead-in, leaving the summary plain', () => {
+    labelMirrorsRuns('kanban');
+    const cards = buildTemplate('kanban', 0, 0).filter((el) =>
+      Array.isArray((el as { richText?: unknown }).richText),
+    );
+    // Six cards per lane across four lanes.
+    expect(cards.length).toBe(24);
+    for (const card of cards) {
+      const runs = (card as { richText: { text: string; bold?: boolean }[] }).richText;
+      expect(runs[0]).toEqual({ text: 'TICKET-001:', bold: true });
+      expect(runs[1]?.bold).toBeUndefined();
+    }
+  });
+
+  it('swot bullets tint the marker to the quadrant hue, leaving the text plain', () => {
+    labelMirrorsRuns('swot');
+    const bullets = buildTemplate('swot', 0, 0).filter((el) =>
+      Array.isArray((el as { richText?: unknown }).richText),
+    );
+    // Four quadrants, three starter bullets each.
+    expect(bullets.length).toBe(12);
+    const markerColours = new Set<string>();
+    for (const bullet of bullets) {
+      const runs = (bullet as { richText: { text: string; color?: string }[] }).richText;
+      expect(runs[0]!.text).toBe('• ');
+      expect(typeof runs[0]!.color).toBe('string');
+      expect(runs[1]?.color).toBeUndefined();
+      markerColours.add(runs[0]!.color!);
+    }
+    // One distinct hue per quadrant.
+    expect(markerColours.size).toBe(4);
   });
 });

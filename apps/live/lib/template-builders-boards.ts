@@ -16,7 +16,9 @@ import {
   createShape,
   createSticky,
   createText,
+  runsPlainText,
   type Element,
+  type TextRun,
 } from '@livediagram/diagram';
 
 // Classic "Mad / Sad / Glad" retro. Each column lives inside its own
@@ -120,7 +122,13 @@ export function buildKanban(cx: number, cy: number): Element[] {
   const firstCardTop = 71; // relative to the column top
   const cardPitch = 125;
   const cardBodyH = 112;
-  const ticket = 'TICKET-001: Investigate and implement a solution while measuring the outcome';
+  // The ticket reference reads as a bold lead-in (the id) followed by the
+  // plain summary — the per-range rich-text model (spec/09). A fresh run
+  // array is built per card so no two cards share a mutable reference.
+  const ticketRuns = (): TextRun[] => [
+    { text: 'TICKET-001:', bold: true },
+    { text: ' Investigate and implement a solution while measuring the outcome' },
+  ];
 
   const elements: Element[] = [];
 
@@ -161,11 +169,13 @@ export function buildKanban(cx: number, cy: number): Element[] {
         height: cardBodyH,
         textSize: 'md',
       });
+      const runs = ticketRuns();
       elements.push({
         ...createText(colX + 32, cardTop + 6),
         width: 441,
         height: 64,
-        label: ticket,
+        label: runsPlainText(runs),
+        richText: runs,
         textSize: 'sm',
         textAlignX: 'left',
       });
@@ -290,8 +300,12 @@ export function buildSwot(cx: number, cy: number): Element[] {
     });
 
     // Starter bullets sit under the header. Width matches the header
-    // so the text rail aligns crisply down the quadrant's left edge.
+    // so the text rail aligns crisply down the quadrant's left edge. The
+    // bullet marker is tinted to the quadrant's header hue (per-range
+    // rich text, spec/09) so each line ties back to its quadrant while
+    // the body text stays theme-neutral.
     q.bullets.forEach((bullet, i) => {
+      const runs: TextRun[] = [{ text: '• ', color: q.headerColor }, { text: bullet }];
       elements.push({
         ...createText(
           x + headerPadding,
@@ -299,7 +313,8 @@ export function buildSwot(cx: number, cy: number): Element[] {
         ),
         width: cellW - headerPadding * 2,
         height: bulletH,
-        label: `• ${bullet}`,
+        label: runsPlainText(runs),
+        richText: runs,
         textSize: 'md',
         textAlignX: 'left',
       });

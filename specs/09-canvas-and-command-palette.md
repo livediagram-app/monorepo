@@ -458,8 +458,8 @@ Below the welcome section, the template cards are a **two-level browse** inside 
 - **Org chart** — a leader rectangle with three direct-report rectangles pinned beneath it.
 - **Retrospective** — three columns ("Mad", "Sad", "Glad") each with three blank stickies in tinted containers.
 - **Flowchart** — Start → Step → Decision → Step → End vertical chain with shape-kind variety (stadium / square / diamond).
-- **Kanban** — five lanes (Backlog / To do / In progress / Review / Done) with four ticket cards each. Every card pairs a title block with a priority chip (high / medium / low). Board carries a "Sprint board" title above the columns so the diagram has an anchor and a natural rename target.
-- **SWOT** — Strengths / Weaknesses / Opportunities / Threats 2×2 grid in tinted quadrants, with three bullet starters per quadrant and a centre "Subject" pill that names the thing being analysed.
+- **Kanban** — five lanes (Backlog / To do / In progress / Review / Done) with four ticket cards each. Every card pairs a title block with a priority chip (high / medium / low). The ticket text uses **per-range rich text** (spec/09's run model): the id (`TICKET-001:`) is a bold lead-in ahead of the plain summary. Board carries a "Sprint board" title above the columns so the diagram has an anchor and a natural rename target.
+- **SWOT** — Strengths / Weaknesses / Opportunities / Threats 2×2 grid in tinted quadrants, with three bullet starters per quadrant and a centre "Subject" pill that names the thing being analysed. Each bullet uses **per-range rich text** to tint just its `•` marker to the quadrant's header hue, tying the line back to its quadrant while the body text stays theme-neutral.
 - **Timeline** — horizontal line with five milestone circles, labels alternating above and below.
 
 Extras (behind Show more):
