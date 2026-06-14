@@ -594,6 +594,35 @@ export function recolourElementForTheme(el: Element, theme: ThemeDefinition): El
   return { ...el, ...patch } as Element;
 }
 
+// Preset colour swatches that relate to a theme — used by the context-menu
+// colour pickers so the offered presets match the active theme rather than a
+// fixed rainbow. Leads with the theme's own element colours (and every branch
+// hue for multi-colour themes), then pads with neutrals so there's always a
+// usable spread. Deduped (case-insensitive), capped for a tidy grid.
+export function themePresetColors(theme: ThemeDefinition): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (c: string | null | undefined) => {
+    if (!c) return;
+    const key = c.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(c);
+  };
+  push(theme.elementText);
+  push(theme.elementStroke);
+  push(theme.elementFill);
+  for (const entry of theme.palette ?? []) {
+    push(entry.stroke);
+    push(entry.fill);
+  }
+  // Neutrals that are always useful (dark ink, slate, white).
+  push('#0f172a');
+  push('#64748b');
+  push('#ffffff');
+  return out.slice(0, 12);
+}
+
 // Soft theme switch: change the diagram's theme but preserve every
 // per-element colour the user has CUSTOMISED. A field counts as
 // "still on the old theme" (and is therefore safe to replace) when

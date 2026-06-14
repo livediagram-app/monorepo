@@ -11,7 +11,7 @@ import {
 } from '@livediagram/diagram';
 import type { QuickConnectDirection } from '@/lib/canvas';
 import { track } from '@/lib/telemetry';
-import { getTheme, type ThemeId } from '@/lib/themes';
+import { getTheme, themePresetColors, type ThemeId } from '@/lib/themes';
 import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/Canvas';
@@ -1150,6 +1150,7 @@ export function EditorView() {
           onSetArrowheadSize={setArrowheadSizeSelected}
           onSetArrowheadShape={setArrowheadShapeSelected}
           onSetShapeKind={setShapeKindSelected}
+          presetColors={themePresetColors(getTheme(activeTab.theme))}
           onToggleTableHeaderRow={setTableHeaderRowSelected}
           onToggleTableHeaderColumn={setTableHeaderColumnSelected}
           onToggleTableZebra={setTableZebraSelected}

@@ -147,6 +147,9 @@ type EditorContextMenuProps = {
   onSetArrowheadShape: (v: ArrowheadShape) => void;
   // Morph a shape element to another kind in place (preserving size/colour).
   onSetShapeKind: (kind: ShapeKind) => void;
+  // Preset colour swatches for the colour pickers, derived from the active
+  // theme so the offered presets match it.
+  presetColors: string[];
   // Table structure toggles (header row / column, zebra), mirroring the
   // panel's Table accordion.
   onToggleTableHeaderRow: () => void;
@@ -530,6 +533,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               value={target.textColor ?? '#0f172a'}
               onChange={props.onSetTextColor}
               {...colorProps('text')}
+              presets={props.presetColors}
             />
           </MenuAccordionSection>
         ) : null}
@@ -596,6 +600,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 }
                 onChange={props.onSetTextColor}
                 {...colorProps('text')}
+                presets={props.presetColors}
               />
               {!isTechIcon && defaultFillColor(target as BoxedElement) !== 'transparent' ? (
                 <ColourRow
@@ -606,6 +611,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   }
                   onChange={props.onSetFillColor}
                   {...colorProps('background')}
+                  presets={props.presetColors}
                 />
               ) : null}
               {!isTechIcon && defaultStrokeColor(target as BoxedElement) !== 'transparent' ? (
@@ -617,6 +623,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   }
                   onChange={props.onSetStrokeColor}
                   {...colorProps('border')}
+                  presets={props.presetColors}
                 />
               ) : null}
               <div className="px-2 pb-1 pt-1.5">
@@ -1018,19 +1025,6 @@ function hexish(color: string): string {
 
 // A small preset palette for the inline colour picker. The "+" custom chip
 // still opens the OS picker for anything off-palette.
-const PRESET_COLORS = [
-  '#0f172a',
-  '#64748b',
-  '#ffffff',
-  '#ef4444',
-  '#f97316',
-  '#f59e0b',
-  '#22c55e',
-  '#0ea5e9',
-  '#6366f1',
-  '#ec4899',
-];
-
 // One labelled colour row inside the Colours section: the label + current
 // swatch toggle an inline preset palette (clicking the row again closes it,
 // so the picker never gets stuck open). A "+" chip opens the OS picker for a
@@ -1041,12 +1035,15 @@ function ColourRow({
   open,
   onToggle,
   onChange,
+  presets,
 }: {
   label: string;
   value: string;
   open: boolean;
   onToggle: () => void;
   onChange: (color: string) => void;
+  // Preset swatches to offer — derived from the active theme so they match it.
+  presets: string[];
 }) {
   return (
     <div>
@@ -1064,14 +1061,15 @@ function ColourRow({
         />
       </button>
       {open ? (
-        <div className="flex flex-wrap items-center gap-1 px-3 pb-2 pt-0.5">
-          {PRESET_COLORS.map((c) => (
+        // Swatches are sized for a comfortable touch target on mobile.
+        <div className="flex flex-wrap items-center gap-1.5 px-3 pb-2.5 pt-1">
+          {presets.map((c) => (
             <button
               key={c}
               type="button"
               aria-label={c}
               onClick={() => onChange(c)}
-              className={`h-5 w-5 cursor-pointer rounded border transition ${
+              className={`h-7 w-7 cursor-pointer rounded-md border transition ${
                 value.toLowerCase() === c.toLowerCase()
                   ? 'border-brand-500 ring-1 ring-brand-400'
                   : 'border-slate-300 hover:scale-110 dark:border-slate-600'
@@ -1080,7 +1078,7 @@ function ColourRow({
             />
           ))}
           <label
-            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[11px] leading-none text-slate-500 dark:border-slate-600"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-dashed border-slate-300 text-sm leading-none text-slate-500 dark:border-slate-600"
             aria-label={`Custom ${label} colour`}
           >
             +
