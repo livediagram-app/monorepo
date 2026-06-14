@@ -9,13 +9,10 @@ type Pos = { x: number; y: number };
 // useState calls.
 //
 // Positions are null until the user drags a panel, after which it
-// remembers its spot. `editorExpandSignal` is a monotonic counter the
-// Editor accordion watches so callers can pop it open on demand via
-// `requestEditorOpen()` without holding a ref to the panel.
+// remembers its spot.
 export function usePanelLayout() {
   const [palettePosition, setPalettePosition] = useState<Pos | null>(null);
   const [explorerPosition, setExplorerPosition] = useState<Pos | null>(null);
-  const [contextPosition, setContextPosition] = useState<Pos | null>(null);
   const [activityPosition, setActivityPosition] = useState<Pos | null>(null);
   const [commentsPanelPosition, setCommentsPanelPosition] = useState<Pos | null>(null);
   const [aiPanelPosition, setAiPanelPosition] = useState<Pos | null>(null);
@@ -27,16 +24,12 @@ export function usePanelLayout() {
   // bar, panels, docks) so only the canvas content + zoom controls
   // remain. Purely a view flag — not persisted, not synced.
   const [zenMode, setZenMode] = useState(false);
-  const [editorExpandSignal, setEditorExpandSignal] = useState(0);
-  const requestEditorOpen = () => setEditorExpandSignal((n) => n + 1);
 
   return {
     palettePosition,
     setPalettePosition,
     explorerPosition,
     setExplorerPosition,
-    contextPosition,
-    setContextPosition,
     activityPosition,
     setActivityPosition,
     commentsPanelPosition,
@@ -49,7 +42,5 @@ export function usePanelLayout() {
     setActivityMinimized,
     zenMode,
     setZenMode,
-    editorExpandSignal,
-    requestEditorOpen,
   };
 }

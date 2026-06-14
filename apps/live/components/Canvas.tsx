@@ -7,24 +7,21 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
-  defaultTextAlign,
   elementKindLabel,
   isBoxed,
   snapResizeBounds,
   snapToAlignment,
-  supportsColours,
   type ShapeKind,
 } from '@livediagram/diagram';
 import { ICON_DND_MIME, PALETTE_DND_MIME } from '@/lib/icons';
 import { TECH_ICON_DND_MIME } from '@/lib/tech-icons';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
-import { deriveCanvasSelection, deriveSelectedElementFields } from '@/lib/canvas-selection';
+import { deriveCanvasSelection } from '@/lib/canvas-selection';
 import { canvasCursorClass } from '@/lib/canvas-chrome';
 import { useCanvasMobileDock } from '@/hooks/useCanvasMobileDock';
 import { drawIntentCursor } from '@/lib/draw-mode';
 import { track } from '@/lib/telemetry';
-import { type SelectedElementControls } from './CommandPalette';
 // Lazy-load CommentsPanel: only mounts when the active tab has at
 // least one element with comments AND the ContextPanel has reported
 // its bottom edge (so we don't paint the panel at the legacy fallback
@@ -66,10 +63,6 @@ export function Canvas(props: CanvasProps) {
     tabBackgroundColor,
     tabBackgroundOpacity,
     tabPatternColor,
-    tabFont,
-    onSetTabFont,
-    tabDefaultTextSize,
-    onSetTabDefaultTextSize,
     mainRef,
     isPinchingRef,
     viewportOffset,
@@ -98,56 +91,9 @@ export function Canvas(props: CanvasProps) {
     onBeginFormatPainter,
     onBeginGroup,
     onUngroup,
-    onBringToFront,
-    onSendToBack,
-    onSetTextSize,
-    onSetTextAlign,
-    onToggleTextBold,
-    onToggleTextItalic,
-    onToggleTextUnderline,
-    onToggleTextStrikethrough,
-    onSetFont,
-    onSetFillColor,
-    onSetStrokeColor,
-    onSetTextColor,
-    onSetOpacity,
-    onResetColors,
-    onSetPadding,
-    onSetArrowEnds,
-    onSetArrowThickness,
-    onSetArrowheadSize,
-    onSetArrowheadShape,
-    onToggleTableHeaderRow,
-    onToggleTableHeaderColumn,
-    onToggleTableZebra,
-    onSetTableHeaderFill,
-    onSetTableHeaderTextColor,
-    onSetArrowStyle,
-    onSetArrowStrokeStyle,
-    onSetShapeKind,
-    onSetBorderStroke,
-    onSetBorderStyle,
-    onSetBorderRadius,
     onOpenComments,
     onOpenElementContextMenu,
     tabThemeId,
-    onSetTheme,
-    onResetElementsToTheme,
-    onExportTab,
-    onImportTab,
-    importError,
-    onAutoAlign,
-    canAutoAlign,
-    recentImages,
-    imageOwnerId,
-    imageDiagramId,
-    imageShareCode,
-    onAddImageFromGallery,
-    onSetBackgroundPattern,
-    onSetBackgroundColor,
-    onSetBackgroundOpacity,
-    onSetPatternColor,
-    onToggleAspectLock,
     onToggleLockSelected,
     onDeleteSelected,
     onDuplicateSelected,
@@ -181,7 +127,6 @@ export function Canvas(props: CanvasProps) {
   // top-right-stacked positioning so it lands directly under the
   // Editor pane on first paint and slides when Editor expands /
   // collapses.
-  const [contextBottomY, setContextBottomY] = useState<number>(0);
   // Which quick-connect ring (if any) is currently open, lifted here so
   // only one opens at a time and the selection toolbar can dodge the
   // top ring (see SelectionPopover forceBelow below). Reset whenever the
@@ -306,88 +251,6 @@ export function Canvas(props: CanvasProps) {
     isPaintMode,
     isGroupMode,
   });
-
-  const selectionSupportsColours = selected ? supportsColours(selected) : false;
-  const selectedDefaultAlign = selected && isBoxed(selected) ? defaultTextAlign(selected) : null;
-  const paletteSelection: SelectedElementControls | null = selected
-    ? {
-        // Field values are the pure, type-gated projection
-        // (deriveSelectedElementFields); the on* handlers are bundled in
-        // around them here.
-        ...deriveSelectedElementFields(selected, selectionSupportsColours, selectedDefaultAlign),
-        onBringToFront,
-        onSendToBack,
-        onSetTextSize,
-        onSetTextAlign,
-        onToggleTextBold,
-        onToggleTextItalic,
-        onToggleTextUnderline,
-        onToggleTextStrikethrough,
-        onSetFont,
-        onSetTextColor,
-        onSetFillColor,
-        onSetStrokeColor,
-        onSetOpacity,
-        onResetColors,
-        onSetPadding,
-        onSetArrowEnds,
-        onSetArrowThickness,
-        onSetArrowheadSize,
-        onSetArrowheadShape,
-        onToggleTableHeaderRow,
-        onToggleTableHeaderColumn,
-        onToggleTableZebra,
-        onSetTableHeaderFill,
-        onSetTableHeaderTextColor,
-        onSetArrowStyle,
-        onSetArrowStrokeStyle,
-        onSetShapeKind,
-        onToggleAspectLock,
-        onSetBorderStroke,
-        onSetBorderStyle,
-        onSetBorderRadius,
-      }
-    : null;
-
-  const tabSection = {
-    backgroundPattern: tabBackgroundPattern,
-    backgroundColor: tabBackgroundColor,
-    backgroundOpacity: tabBackgroundOpacity,
-    patternColor: tabPatternColor,
-    onSetBackgroundOpacity,
-    themeId: tabThemeId,
-    font: tabFont ?? null,
-    onSetTabFont,
-    defaultTextSize: tabDefaultTextSize ?? null,
-    onSetTabDefaultTextSize,
-    onSetBackgroundPattern,
-    onSetBackgroundColor,
-    onSetPatternColor,
-    onSetTheme,
-    onResetElementsToTheme,
-    onExportTab,
-    onImportTab,
-    importError,
-    onAutoAlign,
-    canAutoAlign,
-    recentImages,
-    imageOwnerId,
-    imageDiagramId,
-    imageShareCode,
-    onAddImageFromGallery,
-    // Live session tools (spec/39): timer + vote facilitator controls.
-    timer: props.tabTimer,
-    vote: props.tabVote,
-    onStartTimer: props.onStartTimer,
-    onPauseTimer: props.onPauseTimer,
-    onResumeTimer: props.onResumeTimer,
-    onResetTimer: props.onResetTimer,
-    onClearTimer: props.onClearTimer,
-    onStartVote: props.onStartVote,
-    onEndVote: props.onEndVote,
-    onRevealVote: props.onRevealVote,
-    onClearVote: props.onClearVote,
-  };
 
   // Colour for the link / comment badges. The active theme's
   // elementStroke is the obvious "this theme's accent" — it's what
@@ -1143,9 +1006,6 @@ export function Canvas(props: CanvasProps) {
 
       <CanvasChrome
         {...props}
-        paletteSelection={paletteSelection}
-        tabSection={tabSection}
-        selectionScope={selectionScope}
         isPaintMode={isPaintMode}
         isGroupMode={isGroupMode}
         marquee={marquee}
@@ -1157,8 +1017,6 @@ export function Canvas(props: CanvasProps) {
         setPaletteBottomY={setPaletteBottomY}
         explorerBottomY={explorerBottomY}
         setExplorerBottomY={setExplorerBottomY}
-        contextBottomY={contextBottomY}
-        setContextBottomY={setContextBottomY}
         activeMobilePanel={activeMobilePanel}
         setActiveMobilePanel={setActiveMobilePanel}
         dockButtonRefs={dockButtonRefs}

@@ -1,6 +1,6 @@
 import { alignmentGuides, deriveTextColorForBg } from '@livediagram/diagram';
 import { getTheme } from '@/lib/themes';
-import { CommandPalette, type SelectedElementControls } from './CommandPalette';
+import { CommandPalette } from './CommandPalette';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel';
 // Lazy-load CommentsPanel: only mounts when the active tab has at
@@ -10,7 +10,6 @@ import { ActivityIcon, ActivityPanel, RedoIcon, UndoIcon } from './ActivityPanel
 // the 164-line panel + its formatRelativeTimeShort + useRelativeTimeTick
 // dependencies keeps the editor's initial chunk lean.
 const CommentsPanel = dynamic(() => import('./CommentsPanel').then((m) => m.CommentsPanel));
-import { ContextPanel } from './ContextPanel';
 import { Explorer } from './Explorer';
 import { isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel } from './MovablePanel';
@@ -42,15 +41,11 @@ import {
   type SetStateAction,
 } from 'react';
 import { useStableCallbacks } from '@/hooks/useStableCallbacks';
-import type { TabSectionControls } from './CommandPalette';
 import type { DockAnchor, MobilePanel } from '@/hooks/useCanvasMobileDock';
 
 // Values the Canvas computes (selection projection + layout/dock/zoom
 // state) and threads into the chrome alongside its own props.
 type ChromeExtras = {
-  paletteSelection: SelectedElementControls | null;
-  tabSection: TabSectionControls;
-  selectionScope: 'single' | 'multi' | 'group';
   isPaintMode: boolean;
   isGroupMode: boolean;
   marquee: { startX: number; startY: number; currentX: number; currentY: number } | null;
@@ -64,8 +59,6 @@ type ChromeExtras = {
   setPaletteBottomY: Dispatch<SetStateAction<number>>;
   explorerBottomY: number;
   setExplorerBottomY: Dispatch<SetStateAction<number>>;
-  contextBottomY: number;
-  setContextBottomY: Dispatch<SetStateAction<number>>;
   activeMobilePanel: MobilePanel | null;
   setActiveMobilePanel: Dispatch<SetStateAction<MobilePanel | null>>;
   dockButtonRefs: RefObject<Record<string, HTMLButtonElement | null>>;
@@ -124,8 +117,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
     changeLogLoading,
     commentRows,
     commentsPanelPosition,
-    contextBottomY,
-    contextPosition,
     currentDiagramId,
     diagramList,
     diagramListLoading,
@@ -133,7 +124,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
     dockButtonRefs,
     drawDrag,
     drawHover,
-    editorExpandSignal,
     elements,
     explorerBottomY,
     explorerPosition,
@@ -167,7 +157,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onFitToScreen,
     onMoveActivity,
     onMoveCommentsPanel,
-    onMoveContext,
     onMoveDiagramToFolder,
     onMoveExplorer,
     onMovePalette,
@@ -181,7 +170,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onRenameFolder,
     onResetActivity,
     onResetCommentsPanel,
-    onResetContext,
     onResetExplorer,
     onResetPalette,
     onRevertChange,
@@ -191,31 +179,25 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onUndo,
     paletteBottomY,
     palettePosition,
-    paletteSelection,
     pendingDraw,
     penPoints,
     readOnly,
     savedAt,
     saveStatus,
-    selectionScope,
     selfParticipant,
     snapGuides,
     distGuides,
     setActiveDockAnchor,
     setActiveMobilePanel,
-    setContextBottomY,
     setExplorerBottomY,
     setPaletteBottomY,
-    setTabAccordionsOpen,
     sharedDiagrams,
     teams,
     teamFolders,
     teamDiagrams,
     showTemplatePicker,
-    tabAccordionsOpen,
     tabLocked,
     tabName,
-    tabSection,
     tabThemeId,
     templatePickerLockedName,
     templatePickerMode,
@@ -724,12 +706,14 @@ export function CanvasChrome(props: CanvasChromeProps) {
           z-order) instead of stacking cleanly under it. Suppressed
           entirely under minimalPanels: the per-element comment popover
           stays available for viewing / replying. */}
-      {!chromeHidden && !minimalPanels && commentRows.length > 0 && contextBottomY > 0 ? (
+      {!chromeHidden && !minimalPanels && commentRows.length > 0 ? (
         <div className="hidden sm:contents">
           <CommentsPanel
             position={commentsPanelPosition}
             rows={commentRows}
-            stackBelowY={contextBottomY}
+            stackBelowY={
+              palettePosition !== null || paletteBottomY === 0 ? undefined : paletteBottomY
+            }
             onMoveTo={onMoveCommentsPanel}
             onReset={onResetCommentsPanel}
             onRowClick={onOpenCommentsForElement}
@@ -742,7 +726,9 @@ export function CanvasChrome(props: CanvasChromeProps) {
           title="AI Assistant"
           position={aiPanel.position}
           defaultCorner="top-right-stacked"
-          stackBelowY={contextBottomY}
+          stackBelowY={
+            palettePosition !== null || paletteBottomY === 0 ? undefined : paletteBottomY
+          }
           width="w-auto sm:w-64"
           collapsible
           onReset={aiPanel.onReset}
@@ -828,31 +814,6 @@ export function CanvasChrome(props: CanvasChromeProps) {
             // dock panel when the draw was armed.
             reopenPaletteAfterDrawRef.current = activeMobilePanel === 'palette';
           }}
-          onMobileClose={() => {
-            setActiveMobilePanel(null);
-            setActiveDockAnchor(null);
-          }}
-        />
-      )}
-
-      {chromeHidden || readOnly ? null : (
-        <ContextPanel
-          position={contextPosition}
-          selection={paletteSelection}
-          selectionScope={selectionScope}
-          tab={tabSection}
-          tabAccordionsOpen={tabAccordionsOpen}
-          setTabAccordionsOpen={setTabAccordionsOpen}
-          expandSignal={editorExpandSignal}
-          onMoveTo={onMoveContext}
-          onReset={onResetContext}
-          stackBelowY={
-            palettePosition !== null || paletteBottomY === 0 ? undefined : paletteBottomY
-          }
-          onSize={(size) => setContextBottomY(size.bottomY)}
-          mobileOpenOverride={activeMobilePanel === 'editor'}
-          mobileDockAnchor={activeDockAnchor ?? undefined}
-          forceDockMode={!!minimalPanels}
           onMobileClose={() => {
             setActiveMobilePanel(null);
             setActiveDockAnchor(null);

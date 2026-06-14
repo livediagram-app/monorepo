@@ -11,7 +11,6 @@ import {
 import { applyRevert } from '@/lib/change-log';
 import { track } from '@/lib/telemetry';
 import { HISTORY_LIMIT } from '@/hooks/useDiagramHistory';
-import type { TabAccordionState } from '@/components/CommandPalette';
 import { patchTab } from './editor-page-helpers';
 
 type SetState<T> = Dispatch<SetStateAction<T>>;
@@ -30,7 +29,6 @@ export function useEditorHistory(opts: {
   editsBlocked: boolean;
   canUndo: boolean;
   canRedo: boolean;
-  requestEditorOpen: () => void;
   commitTabs: (updater: (tabs: Tab[]) => Tab[]) => void;
   tickTabs: (updater: (tabs: Tab[]) => Tab[]) => void;
   undoHistory: () => void;
@@ -44,7 +42,6 @@ export function useEditorHistory(opts: {
     setSelectedId: SetState<string | null>;
     setMultiSelectedIds: SetState<Set<string>>;
     setEditingId: SetState<string | null>;
-    setTabAccordionsOpen: SetState<TabAccordionState>;
     setChangeLog: SetState<ChangeLogEntry[]>;
     setFormatSourceId: SetState<string | null>;
     setGroupSourceId: SetState<string | null>;
@@ -59,7 +56,6 @@ export function useEditorHistory(opts: {
     editsBlocked,
     canUndo,
     canRedo,
-    requestEditorOpen,
     commitTabs,
     tickTabs,
     undoHistory,
@@ -96,13 +92,11 @@ export function useEditorHistory(opts: {
       setEditingId(null);
       return;
     }
-    // Tab-meta entries (theme / background tweaks) have no element ids.
-    // Theme + Canvas now live in the Tab Appearance modal rather than the
-    // tab-editor accordions, so there's no accordion to expand here; just
-    // clear any selection and surface the editor panel.
+    // Tab-meta entries (theme / background tweaks) have no element ids, and
+    // the editor side panel is gone (everything's in context menus now), so
+    // there's nothing to expand — just clear any selection.
     setSelectedId(null);
     setMultiSelectedIds(new Set());
-    requestEditorOpen();
   };
 
   // Drop every audit entry for the currently active tab. The diagram

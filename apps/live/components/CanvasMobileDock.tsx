@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 
-export type DockPanelId = 'explorer' | 'palette' | 'editor' | 'ai';
+export type DockPanelId = 'explorer' | 'palette' | 'ai';
 
 // Top-right mobile dock (spec/07 "Mobile chrome"): a compact button row
 // that replaces the four full-width collapse banners on mobile, opening
@@ -90,20 +90,6 @@ export function CanvasMobileDock({
                     </svg>
                   ),
                 },
-                {
-                  id: 'editor' as const,
-                  label: 'Editor',
-                  icon: (
-                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <path
-                        d="M2 10.5V12h1.5l5-5-1.5-1.5-5 5zM10.8 3.7a1 1 0 0 0 0-1.4l-.1-.1a1 1 0 0 0-1.4 0L8 3.5 9.5 5l1.3-1.3z"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  ),
-                },
               ]
             : []),
           ...(!readOnly && hasAi
@@ -126,7 +112,7 @@ export function CanvasMobileDock({
               ]
             : []),
         ] as {
-          id: 'explorer' | 'palette' | 'editor' | 'ai';
+          id: 'explorer' | 'palette' | 'ai';
           label: string;
           icon: ReactNode;
         }[]

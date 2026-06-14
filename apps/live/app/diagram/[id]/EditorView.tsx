@@ -148,7 +148,6 @@ export function EditorView() {
     commitLabel,
     commitTable,
     contextMenu,
-    contextPosition,
     copying,
     createFolder,
     createShareLink,
@@ -176,7 +175,6 @@ export function EditorView() {
     duplicateTab,
     editCursorAtEnd,
     editingId,
-    editorExpandSignal,
     effectiveTemplatePickerMode,
     exitFormatPainter,
     exitGroupMode,
@@ -277,7 +275,6 @@ export function EditorView() {
     setCanvasTool,
     setCommentsPanelPosition,
     setContextMenu,
-    setContextPosition,
     setDiagramName,
     setDiagramSharePassword,
     setEditingId,
@@ -309,7 +306,6 @@ export function EditorView() {
     setShortcutsEnabled,
     setShortcutsOpen,
     setStrokeColorSelected,
-    setTabAccordionsOpen,
     setTextAlignSelected,
     setFontSelected,
     setTextColorSelected,
@@ -331,7 +327,6 @@ export function EditorView() {
     skipTemplatePicker,
     snapGuides,
     distGuides,
-    tabAccordionsOpen,
     tabs,
     tabSummaries,
     teamFolders,
@@ -692,12 +687,6 @@ export function EditorView() {
           setSelectedId(id);
           openComments(id);
         }}
-        contextPosition={contextPosition}
-        tabAccordionsOpen={tabAccordionsOpen}
-        setTabAccordionsOpen={setTabAccordionsOpen}
-        editorExpandSignal={editorExpandSignal}
-        onMoveContext={(x, y) => setContextPosition({ x, y })}
-        onResetContext={() => setContextPosition(null)}
         onRevertChange={revertChange}
         onActivityRowClick={handleActivityRowClick}
         onClearActivity={isReadOnly ? undefined : clearActivityForActiveTab}

@@ -201,20 +201,6 @@ export type CanvasProps = {
   onResetCommentsPanel: () => void;
   // Row click: editor selects the element + opens its thread popover.
   onOpenCommentsForElement: (elementId: string) => void;
-  contextPosition: { x: number; y: number } | null;
-  onMoveContext: (x: number, y: number) => void;
-  onResetContext: () => void;
-  // Lifted accordion state for the Editor panel's Current Tab
-  // section so external triggers (Activity row click) can pop the
-  // matching accordion.
-  tabAccordionsOpen: import('./CommandPalette').TabAccordionState;
-  setTabAccordionsOpen: React.Dispatch<
-    React.SetStateAction<import('./CommandPalette').TabAccordionState>
-  >;
-  // Counter bumped by editor-page whenever something external (Activity
-  // row click, tab-context-menu Change Theme/Canvas) wants the Editor
-  // banner expanded. Forwarded through to ContextPanel → MovablePanel.
-  editorExpandSignal: number;
   onRevertChange: (entry: ChangeLogEntry) => void;
   onActivityRowClick: (entry: ChangeLogEntry) => void;
   onClearActivity?: () => void;

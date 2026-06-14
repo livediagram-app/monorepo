@@ -205,21 +205,10 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // `applyFormatFromSource` and the rest of the drag dependencies
   // exist).
   // Floating-panel layout (positions + open/visible flags) is one
-  // cohesive slice — see usePanelLayout. requestEditorOpen bumps a
-  // counter the Editor accordion watches so external actions (Activity
-  // row navigation, tab-context-menu Change Theme / Canvas) can pop it
-  // open; the panel resets its collapsed state on each change so
-  // navigation always lands on a visible accordion (spec/09).
-  // Spread wholesale into the returned view-model (see the return below);
-  // only requestEditorOpen is consumed internally, off the slice object.
+  // cohesive slice — see usePanelLayout. Spread wholesale into the
+  // returned view-model (see the return below).
   const panelLayout = usePanelLayout();
   const dialogs = useEditorDialogs();
-  // Tab-section accordion state lifted here. Only the Session accordion
-  // remains (Theme / Canvas / Font moved to the Tab Appearance modal,
-  // Auto-align to the context menu).
-  const [tabAccordionsOpen, setTabAccordionsOpen] = useState<{ session: boolean }>({
-    session: false,
-  });
   // Canvas tool (Pan / Select / Laser). See useCanvasTool: the raw
   // setter serves internal auto-switches, the tracked selectCanvasTool
   // serves the user-facing pickers.
@@ -1054,7 +1043,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
       editsBlocked,
       canUndo,
       canRedo,
-      requestEditorOpen: panelLayout.requestEditorOpen,
       commitTabs,
       tickTabs,
       undoHistory,
@@ -1065,7 +1053,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
         setSelectedId,
         setMultiSelectedIds,
         setEditingId,
-        setTabAccordionsOpen,
         setChangeLog,
         setFormatSourceId,
         setGroupSourceId,
@@ -1976,7 +1963,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setShortcutsEnabled,
     setStrokeColorSelected,
     setFontSelected,
-    setTabAccordionsOpen,
     setTextAlignSelected,
     setTextColorSelected,
     setTextSizeSelected,
@@ -1993,7 +1979,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     skipTemplatePicker,
     snapGuides,
     distGuides,
-    tabAccordionsOpen,
     tabLoadErrors,
     tabs,
     tabSummaries,

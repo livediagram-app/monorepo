@@ -1,11 +1,5 @@
 import { useState } from 'react';
 import { IconButton } from './palette-controls';
-export {
-  SelectedElementSection,
-  ALL_SELECTED_ACCORDIONS_CLOSED,
-  type SelectedAccordionState,
-} from './SelectedElementSection';
-export { TabSection, type TabAccordionState } from './TabSection';
 import type {
   ArrowEnds,
   ArrowheadShape,
