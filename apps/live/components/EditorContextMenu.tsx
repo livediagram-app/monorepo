@@ -12,9 +12,10 @@
 // inline version used). The page owns the open/closed state + the
 // handlers; this component only decides which items to show.
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { isBoxed, type Element, type ShapeKind } from '@livediagram/diagram';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
+import { ToggleSwitch } from '@/components/palette-controls';
 import {
   AnnotationMenuIcon,
   AutoAlignIcon,
@@ -99,46 +100,50 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           />
         ) : null}
         <ContextMenuDivider />
-        {/* Layer order — Front / Back share one row. */}
-        <div className="flex gap-1 px-2 py-0.5">
-          <MenuRowButton
-            icon={<LayerUpIcon />}
-            label="Front"
-            onClick={() => {
-              props.onBringToFront();
-              onClose();
-            }}
-          />
-          <MenuRowButton
-            icon={<LayerDownIcon />}
-            label="Back"
-            onClick={() => {
-              props.onSendToBack();
-              onClose();
-            }}
-          />
-        </div>
-        {boxed ? (
-          <>
-            <ContextMenuDivider />
-            <MenuItem
-              icon={<AspectLockMenuIcon />}
-              label={
-                (target as { aspectLocked?: boolean }).aspectLocked
-                  ? 'Unlock aspect ratio'
-                  : 'Lock aspect ratio'
-              }
+        {/* Layer — a collapsible section grouping front/back + opacity. */}
+        <MenuAccordionSection title="Layer">
+          <div className="flex gap-1 px-2 py-0.5">
+            <MenuRowButton
+              icon={<LayerUpIcon />}
+              label="Front"
               onClick={() => {
-                props.onToggleAspectLock();
+                props.onBringToFront();
                 onClose();
               }}
             />
-            {/* Opacity slider — a non-closing row (dragging stays inside the
-                menu, so the outside-click guard leaves it open). */}
-            <OpacityRow
-              value={(target as { opacity?: number }).opacity ?? 1}
-              onChange={props.onSetOpacity}
+            <MenuRowButton
+              icon={<LayerDownIcon />}
+              label="Back"
+              onClick={() => {
+                props.onSendToBack();
+                onClose();
+              }}
             />
+          </div>
+          {/* Opacity slider — a non-closing row (dragging stays inside the
+              menu, so the outside-click guard leaves it open). */}
+          <OpacityRow
+            value={(target as { opacity?: number }).opacity ?? 1}
+            onChange={props.onSetOpacity}
+          />
+        </MenuAccordionSection>
+        {boxed ? (
+          <>
+            <ContextMenuDivider />
+            {/* Lock aspect ratio — iOS-style switch, matching the panel. */}
+            <div className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+              <span className="flex items-center gap-2">
+                <span className="text-slate-400 dark:text-slate-500">
+                  <AspectLockMenuIcon />
+                </span>
+                Lock aspect ratio
+              </span>
+              <ToggleSwitch
+                checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
+                onChange={props.onToggleAspectLock}
+                label="Lock aspect ratio"
+              />
+            </div>
           </>
         ) : null}
         <ContextMenuDivider />
@@ -226,6 +231,41 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         }}
       />
     </ContextMenu>
+  );
+}
+
+// A collapsible section inside the context menu: an uppercase header (with
+// a chevron) that toggles its content. Toggling doesn't close the menu (the
+// header isn't a MenuItem; the click stays inside the menu, so the
+// outside-click guard leaves it open). Open by default.
+function MenuAccordionSection({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+      >
+        <span>{title}</span>
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className={`transition-transform ${open ? '' : '-rotate-90'}`}
+        >
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      {open ? children : null}
+    </div>
   );
 }
 
