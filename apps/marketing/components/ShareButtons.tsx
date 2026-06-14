@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { SITE_URL as SHARE_URL } from '@/lib/site';
 
-/** Canonical production URL and the line we want people to pass along. */
-const SHARE_URL = 'https://livediagram.app';
+/** The line we want people to pass along; the URL is the shared site origin. */
 const SHARE_TEXT =
   'livediagram: a real-time multiplayer canvas for diagrams and mindmaps. No sign-up needed.';
 

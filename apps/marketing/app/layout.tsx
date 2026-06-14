@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { JsonLd } from '@/components/JsonLd';
+import { SITE_URL } from '@/lib/site';
 
 // SEO and social-card metadata. See spec/16-marketing-site.md
 // for the policy. metadataBase lets the per-page canonical and
@@ -9,7 +10,6 @@ import { JsonLd } from '@/components/JsonLd';
 // against the production origin; without it Next logs a warning
 // and falls back to localhost in dev (which would otherwise leak
 // into preview builds).
-const SITE_URL = 'https://livediagram.app';
 const SITE_NAME = 'livediagram';
 const TITLE = 'livediagram: Diagrams your team builds together';
 const DESCRIPTION =

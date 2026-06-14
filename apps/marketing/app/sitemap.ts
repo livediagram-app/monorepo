@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { ALTERNATIVE_SLUGS, ALTERNATIVES_LAST_UPDATED } from '@/lib/alternatives';
 import { LEGAL_LAST_UPDATED } from '@/lib/legal-revisions';
+import { SITE_URL } from '@/lib/site';
 
 // Required for `output: 'export'` (same reason as robots.ts):
 // route handlers must declare themselves fully static so Next
@@ -35,7 +36,7 @@ export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const base = 'https://livediagram.app';
+  const base = SITE_URL;
   return [
     {
       // No trailing slash, to match the homepage canonical / og:url /

@@ -7,8 +7,7 @@
 // validator is strict about.
 
 import { JsonLd } from './JsonLd';
-
-const SITE_URL = 'https://livediagram.app';
+import { SITE_URL } from '@/lib/site';
 
 type Crumb = { name: string; path: string };
 

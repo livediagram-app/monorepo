@@ -4,8 +4,7 @@ import { Header } from '@/components/Header';
 import { JsonLd } from '@/components/JsonLd';
 import { ALTERNATIVES, ALTERNATIVES_LAST_UPDATED } from '@/lib/alternatives';
 import { subpageMetadata } from '@/lib/subpage-metadata';
-
-const SITE_URL = 'https://livediagram.app';
+import { SITE_URL } from '@/lib/site';
 
 // Hub page for the comparison set (see specs/21-comparison-pages.md): a
 // crawlable parent that links to every /alternatives/<slug> page.
