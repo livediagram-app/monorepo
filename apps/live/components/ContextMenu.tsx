@@ -28,9 +28,22 @@ export function ContextMenu({ position, onClose, children, flush = false }: Cont
   useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const next = clampToViewport(node.getBoundingClientRect(), adjust);
-    if (next.x !== adjust.x || next.y !== adjust.y) setAdjust(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Re-clamp on mount, on a new anchor, AND whenever the menu's size
+    // changes — expanding a collapsible category grows it downward and would
+    // otherwise spill past the viewport bottom (the clamp shifts it up to
+    // fit). The functional update reads the latest adjust so the natural-edge
+    // maths in clampToViewport stays correct, and returns prev unchanged to
+    // avoid a setState loop.
+    const recompute = () => {
+      setAdjust((prev) => {
+        const next = clampToViewport(node.getBoundingClientRect(), prev);
+        return next.x === prev.x && next.y === prev.y ? prev : next;
+      });
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(node);
+    return () => ro.disconnect();
   }, [position.x, position.y]);
 
   useEffect(() => {
