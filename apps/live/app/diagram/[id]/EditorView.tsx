@@ -1220,12 +1220,17 @@ export function EditorView() {
           }}
           onGroupSelection={groupMultiSelected}
           onUngroupSelection={ungroupSelected}
-          timerActive={!!activeTab.timer}
-          voteActive={!!activeTab.vote}
+          timer={activeTab.timer ?? null}
+          vote={activeTab.vote ?? null}
           onStartTimer={startTimer}
+          onPauseTimer={pauseTimer}
+          onResumeTimer={resumeTimer}
+          onResetTimer={resetTimer}
           onClearTimer={clearTimer}
           onStartVote={startVote}
           onEndVote={endVote}
+          onRevealVote={revealVote}
+          onClearVote={clearVote}
         />
       ) : null}
       {linkPickerOpenForId !== null && !isReadOnly ? (

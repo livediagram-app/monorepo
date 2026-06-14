@@ -20,13 +20,17 @@ import {
   isBoxed,
   supportsBorder,
   supportsBorderRadius,
+  timerDisplayMs,
   type BorderRadius,
   type BorderStroke,
   type BorderStyle,
   type BoxedElement,
   type Element,
   type ShapeKind,
+  type TabTimer,
+  type TabVote,
   type TextSize,
+  type TimerMode,
 } from '@livediagram/diagram';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
 import { SizeButton, ToggleSwitch } from '@/components/palette-controls';
@@ -57,7 +61,7 @@ import {
   SquareMenuIcon,
   StickyMenuIcon,
 } from '@/components/context-menu-icons';
-import { MenuAccordionSection, MenuItem } from '@/components/PortalMenu';
+import { MenuAccordionSection } from '@/components/PortalMenu';
 
 // Cursor position + which menu to show. `element` carries the clicked
 // element id; `canvas` is the empty-canvas right-click. Exported so
@@ -129,13 +133,20 @@ type EditorContextMenuProps = {
   onExportSelection: () => void;
   onGroupSelection: () => void;
   onUngroupSelection: () => void;
-  // Session tools (spec/39) for the canvas menu's Session category.
-  timerActive: boolean;
-  voteActive: boolean;
-  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  // Session tools (spec/39) for the canvas menu's Session category. The full
+  // facilitator surface (timer mode + duration, pause/resume/reset, vote
+  // dots-per-person + reveal) lives here now, mirroring the old tab editor.
+  timer: TabTimer | null;
+  vote: TabVote | null;
+  onStartTimer: (mode: TimerMode, durationMs?: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onResetTimer: () => void;
   onClearTimer: () => void;
   onStartVote: (votesPerPerson: number) => void;
   onEndVote: () => void;
+  onRevealVote: () => void;
+  onClearVote: () => void;
 };
 
 export function EditorContextMenu(props: EditorContextMenuProps) {
@@ -155,65 +166,75 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     open: openColor === id,
     onToggle: () => setOpenColor((c) => (c === id ? null : id)),
   });
+  // Session-tool pickers (spec/39): the chosen timer mode + countdown length
+  // and the votes-per-person budget, local until the facilitator hits Start
+  // (mirrors the old tab editor's Session accordion).
+  const [timerMode, setTimerMode] = useState<TimerMode>('countdown');
+  const [durationMin, setDurationMin] = useState(5);
+  const [votesPerPerson, setVotesPerPerson] = useState(3);
 
   if (menu.mode === 'multi') {
     const noun = props.selectionIsGroup ? 'group' : `${props.selectionCount} elements`;
     return (
-      <ContextMenu position={position} onClose={onClose}>
-        <MenuItem
-          icon={<DuplicateMenuIcon />}
-          label="Duplicate"
-          onClick={() => {
-            props.onDuplicateSelection();
-            onClose();
-          }}
-        />
-        {props.selectionIsGroup ? (
-          <MenuItem
-            icon={<UngroupMenuIcon />}
-            label="Ungroup"
+      <ContextMenu position={position} onClose={onClose} flush>
+        <MenuTileGrid cols={2}>
+          <MenuTile
+            icon={<DuplicateMenuIcon />}
+            label="Duplicate"
             onClick={() => {
-              props.onUngroupSelection();
+              props.onDuplicateSelection();
               onClose();
             }}
           />
-        ) : (
-          <MenuItem
-            icon={<GroupMenuIcon />}
-            label="Group"
+          {props.selectionIsGroup ? (
+            <MenuTile
+              icon={<UngroupMenuIcon />}
+              label="Ungroup"
+              onClick={() => {
+                props.onUngroupSelection();
+                onClose();
+              }}
+            />
+          ) : (
+            <MenuTile
+              icon={<GroupMenuIcon />}
+              label="Group"
+              onClick={() => {
+                props.onGroupSelection();
+                onClose();
+              }}
+            />
+          )}
+          <MenuTile
+            icon={<LockMenuIcon />}
+            label={props.selectionLocked ? 'Unlock' : 'Lock'}
             onClick={() => {
-              props.onGroupSelection();
+              props.onToggleLockSelection();
               onClose();
             }}
           />
-        )}
-        <MenuItem
-          icon={<LockMenuIcon />}
-          label={props.selectionLocked ? 'Unlock' : 'Lock'}
-          onClick={() => {
-            props.onToggleLockSelection();
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<FileExportIcon />}
-          label="Export selection"
-          onClick={() => {
-            props.onExportSelection();
-            onClose();
-          }}
-        />
+          <MenuTile
+            icon={<FileExportIcon />}
+            label="Export"
+            onClick={() => {
+              props.onExportSelection();
+              onClose();
+            }}
+          />
+        </MenuTileGrid>
         <ContextMenuDivider />
-        <MenuItem
-          icon={<TrashIcon />}
-          label={`Delete ${noun}`}
-          danger
-          disabled={props.selectionLocked}
-          onClick={() => {
-            props.onDeleteSelection();
-            onClose();
-          }}
-        />
+        <div className="px-2 py-1.5">
+          <MenuTile
+            icon={<TrashIcon />}
+            label={`Delete ${noun}`}
+            danger
+            disabled={props.selectionLocked}
+            onClick={() => {
+              props.onDeleteSelection();
+              onClose();
+            }}
+          />
+        </div>
       </ContextMenu>
     );
   }
@@ -257,14 +278,16 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               }
             />
             <ContextMenuDivider />
-            <MenuItem
-              icon={<RemoveIconGlyph />}
-              label="Remove icon"
-              onClick={() => {
-                props.onRemoveIcon(target.id);
-                onClose();
-              }}
-            />
+            <div className="px-2 py-1.5">
+              <MenuTile
+                icon={<RemoveIconGlyph />}
+                label="Remove icon"
+                onClick={() => {
+                  props.onRemoveIcon(target.id);
+                  onClose();
+                }}
+              />
+            </div>
           </MenuAccordionSection>
         ) : null}
         {/* Text — whole-element label formatting for a labelled arrow (boxed
@@ -330,12 +353,16 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         {/* Layer — a collapsible section grouping front/back + opacity +
             (for boxed elements) the aspect-ratio lock. */}
         <MenuAccordionSection title="Layer" icon={<LayersGlyph />} {...sectionProps('layer')}>
-          <div className="flex gap-1 px-2 py-0.5">
-            {/* Layer order tweaks keep the menu open so you can nudge
-                front/back a few times in a row. */}
-            <MenuRowButton icon={<LayerUpIcon />} label="Front" onClick={props.onBringToFront} />
-            <MenuRowButton icon={<LayerDownIcon />} label="Back" onClick={props.onSendToBack} />
-          </div>
+          {/* Layer order tweaks keep the menu open so you can nudge
+              front/back a few times in a row. */}
+          <MenuTileGrid cols={2}>
+            <MenuTile
+              icon={<LayerUpIcon />}
+              label="Bring to Front"
+              onClick={props.onBringToFront}
+            />
+            <MenuTile icon={<LayerDownIcon />} label="Send to Back" onClick={props.onSendToBack} />
+          </MenuTileGrid>
           <ContextMenuDivider />
           {/* Opacity slider — a non-closing row (dragging stays inside the
               menu, so the outside-click guard leaves it open). */}
@@ -469,150 +496,268 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             icon={<CommentMenuIcon />}
             {...sectionProps('collaborate')}
           >
-            <MenuItem
-              icon={<LinkMenuIcon />}
-              label={target.link ? 'Edit link' : 'Link to Source'}
-              onClick={() => {
-                props.onLinkElement(target.id);
-                onClose();
-              }}
-            />
-            <MenuItem
-              icon={<NoteMenuIcon />}
-              label={target.note ? 'Edit note' : 'Add note'}
-              onClick={() => {
-                props.onOpenNote(target.id);
-                onClose();
-              }}
-            />
-            <MenuItem
-              icon={<CommentMenuIcon />}
-              label="View comments"
-              onClick={() => {
-                props.onOpenComments(target.id);
-                onClose();
-              }}
-            />
+            <MenuTileGrid cols={3}>
+              <MenuTile
+                icon={<LinkMenuIcon />}
+                label={target.link ? 'Edit Link' : 'Link to Source'}
+                onClick={() => {
+                  props.onLinkElement(target.id);
+                  onClose();
+                }}
+              />
+              <MenuTile
+                icon={<NoteMenuIcon />}
+                label={target.note ? 'Edit Note' : 'Add Note'}
+                onClick={() => {
+                  props.onOpenNote(target.id);
+                  onClose();
+                }}
+              />
+              <MenuTile
+                icon={<CommentMenuIcon />}
+                label="View Comments"
+                onClick={() => {
+                  props.onOpenComments(target.id);
+                  onClose();
+                }}
+              />
+            </MenuTileGrid>
           </MenuAccordionSection>
         ) : null}
       </ContextMenu>
     );
   }
 
+  // Canvas-menu Session styles (shared by the timer + vote rows).
+  const sessChip = (on: boolean) =>
+    on
+      ? 'flex-1 rounded-md border border-brand-400 bg-brand-50 px-2 py-1 text-[11px] font-medium text-brand-800 dark:bg-brand-500/20 dark:text-brand-100'
+      : 'flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
+  const sessBtn =
+    'inline-flex w-full items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15';
+  const sessBtnPrimary =
+    'inline-flex w-full items-center justify-center gap-1 rounded-md bg-brand-500 px-2 py-1.5 text-[11px] font-semibold text-white transition hover:bg-brand-600';
+  const timer = props.timer;
+  const vote = props.vote;
+  const totalVotesCast = vote ? Object.values(vote.votes).reduce((n, ids) => n + ids.length, 0) : 0;
+
   return (
     <ContextMenu position={position} onClose={onClose} flush>
       {/* Canvas — theme / background / tidy. */}
       <MenuAccordionSection title="Canvas" icon={<CanvasMenuIcon />} {...sectionProps('canvas')}>
-        <MenuItem
-          icon={<PaletteMenuIcon />}
-          label="Change Theme"
-          onClick={() => {
-            props.onChangeTheme();
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<CanvasMenuIcon />}
-          label="Change Canvas"
-          onClick={() => {
-            props.onChangeCanvas();
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<AutoAlignIcon />}
-          label="Auto-align tab"
-          onClick={() => {
-            props.onAutoAlign();
-            onClose();
-          }}
-        />
+        <MenuTileGrid cols={3}>
+          <MenuTile
+            icon={<PaletteMenuIcon />}
+            label="Change Theme"
+            onClick={() => {
+              props.onChangeTheme();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<CanvasMenuIcon />}
+            label="Change Canvas"
+            onClick={() => {
+              props.onChangeCanvas();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<AutoAlignIcon />}
+            label="Auto-align"
+            onClick={() => {
+              props.onAutoAlign();
+              onClose();
+            }}
+          />
+        </MenuTileGrid>
       </MenuAccordionSection>
       {/* Add — drop a new element on the canvas. */}
       <MenuAccordionSection title="Add" icon={<SquareMenuIcon />} {...sectionProps('add')}>
-        <MenuItem
-          icon={<SquareMenuIcon />}
-          label="Add square"
-          onClick={() => {
-            props.onAddShape('square');
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<StickyMenuIcon />}
-          label="Add sticky"
-          onClick={() => {
-            props.onAddSticky();
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<PencilMenuIcon />}
-          label="Draw pencil"
-          onClick={() => {
-            props.onDrawPencil();
-            onClose();
-          }}
-        />
-        <MenuItem
-          icon={<AnnotationMenuIcon />}
-          label="Add annotation"
-          onClick={() => {
-            props.onAddAnnotation();
-            onClose();
-          }}
-        />
+        <MenuTileGrid cols={2}>
+          <MenuTile
+            icon={<SquareMenuIcon />}
+            label="Square"
+            onClick={() => {
+              props.onAddShape('square');
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<StickyMenuIcon />}
+            label="Sticky"
+            onClick={() => {
+              props.onAddSticky();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<PencilMenuIcon />}
+            label="Pencil"
+            onClick={() => {
+              props.onDrawPencil();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<AnnotationMenuIcon />}
+            label="Annotation"
+            onClick={() => {
+              props.onAddAnnotation();
+              onClose();
+            }}
+          />
+        </MenuTileGrid>
       </MenuAccordionSection>
-      {/* Session — timer + voting facilitator tools (spec/39). */}
+      {/* Session — timer + voting facilitator tools (spec/39). The full
+          surface (mode, duration, pause/resume/reset, dots-per-person,
+          reveal) lives here; actions keep the menu open so a facilitator can
+          configure then start without re-opening. */}
       <MenuAccordionSection title="Session" icon={<SessionGlyph />} {...sectionProps('session')}>
-        {props.timerActive ? (
-          <MenuItem
-            icon={<TimerGlyph />}
-            label="Stop timer"
-            onClick={() => {
-              props.onClearTimer();
-              onClose();
-            }}
-          />
-        ) : (
-          <>
-            <MenuItem
-              icon={<TimerGlyph />}
-              label="Start countdown (5 min)"
-              onClick={() => {
-                props.onStartTimer('countdown', 5 * 60_000);
-                onClose();
-              }}
-            />
-            <MenuItem
-              icon={<TimerGlyph />}
-              label="Start stopwatch"
-              onClick={() => {
-                props.onStartTimer('stopwatch');
-                onClose();
-              }}
-            />
-          </>
-        )}
-        {props.voteActive ? (
-          <MenuItem
-            icon={<VoteGlyph />}
-            label="End voting"
-            onClick={() => {
-              props.onEndVote();
-              onClose();
-            }}
-          />
-        ) : (
-          <MenuItem
-            icon={<VoteGlyph />}
-            label="Start voting"
-            onClick={() => {
-              props.onStartVote(3);
-              onClose();
-            }}
-          />
-        )}
+        <div className="px-2.5 pb-2 pt-1">
+          {/* Timer */}
+          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Timer
+          </p>
+          {!timer ? (
+            <div className="mt-1 flex flex-col gap-1.5">
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setTimerMode('countdown')}
+                  className={sessChip(timerMode === 'countdown')}
+                >
+                  Countdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimerMode('stopwatch')}
+                  className={sessChip(timerMode === 'stopwatch')}
+                >
+                  Stopwatch
+                </button>
+              </div>
+              {timerMode === 'countdown' ? (
+                <div className="grid grid-cols-4 gap-1">
+                  {[1, 3, 5, 10].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setDurationMin(m)}
+                      className={sessChip(durationMin === m)}
+                    >
+                      {m}m
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() =>
+                  props.onStartTimer(
+                    timerMode,
+                    timerMode === 'countdown' ? durationMin * 60_000 : undefined,
+                  )
+                }
+                className={sessBtnPrimary}
+              >
+                Start {timerMode === 'countdown' ? `${durationMin}m countdown` : 'stopwatch'}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-1 flex flex-col gap-1.5">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                {timer.mode === 'countdown' ? 'Countdown' : 'Stopwatch'} ·{' '}
+                <span className="font-semibold tabular-nums">
+                  {fmtClock(timerDisplayMs(timer, Date.now()))}
+                </span>{' '}
+                {timer.running ? 'running' : 'paused'}
+              </p>
+              <div className="grid grid-cols-3 gap-1">
+                {timer.running ? (
+                  <button type="button" onClick={props.onPauseTimer} className={sessBtn}>
+                    Pause
+                  </button>
+                ) : (
+                  <button type="button" onClick={props.onResumeTimer} className={sessBtn}>
+                    Resume
+                  </button>
+                )}
+                <button type="button" onClick={props.onResetTimer} className={sessBtn}>
+                  Reset
+                </button>
+                <button type="button" onClick={props.onClearTimer} className={sessBtn}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+          {/* Vote */}
+          <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            Vote
+          </p>
+          {!vote ? (
+            <div className="mt-1 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                  Dots per person
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    aria-label="Fewer dots"
+                    onClick={() => setVotesPerPerson((n) => Math.max(1, n - 1))}
+                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                  >
+                    −
+                  </button>
+                  <span className="w-4 text-center text-[12px] font-semibold tabular-nums">
+                    {votesPerPerson}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="More dots"
+                    onClick={() => setVotesPerPerson((n) => Math.min(20, n + 1))}
+                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => props.onStartVote(votesPerPerson)}
+                className={sessBtnPrimary}
+              >
+                Start vote
+              </button>
+            </div>
+          ) : (
+            <div className="mt-1 flex flex-col gap-1.5">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                {vote.active ? 'Voting open' : vote.revealed ? 'Results shown' : 'Voting ended'} ·{' '}
+                <span className="font-semibold tabular-nums">{totalVotesCast}</span> cast ·{' '}
+                {vote.votesPerPerson} each
+              </p>
+              <div className="grid grid-cols-2 gap-1">
+                {vote.active ? (
+                  <button type="button" onClick={props.onEndVote} className={sessBtn}>
+                    End vote
+                  </button>
+                ) : !vote.revealed ? (
+                  <button type="button" onClick={props.onRevealVote} className={sessBtn}>
+                    Show results
+                  </button>
+                ) : (
+                  <span />
+                )}
+                <button type="button" onClick={props.onClearVote} className={sessBtn}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </MenuAccordionSection>
     </ContextMenu>
   );
@@ -638,20 +783,11 @@ function SessionGlyph() {
   );
 }
 
-// A timer glyph (reuses the clock face) for the timer rows.
-function TimerGlyph() {
-  return <SessionGlyph />;
-}
-
-// Three dots — the voting glyph.
-function VoteGlyph() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <circle cx="4.5" cy="8" r="1.6" />
-      <circle cx="8" cy="8" r="1.6" />
-      <circle cx="11.5" cy="8" r="1.6" />
-    </svg>
-  );
+// m:ss for the active-timer readout (a static snapshot — the live ticking
+// countdown lives in the floating TimerWidget).
+function fmtClock(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 // 6-hex or fall back to white for the native colour input (it can't take
@@ -870,28 +1006,60 @@ function BorderGlyph() {
   );
 }
 
-// A compact menu button used where two actions share one row (Front /
-// Back). Mirrors MenuItem's tone but centres its icon + label and flexes
-// to fill half the row.
-function MenuRowButton({
+// A tile button: icon stacked OVER its label, centred. The action shape
+// every simple menu command now uses (Link / Note / Comments / Front /
+// Back / Add … / Duplicate …) so the menus read as a grid of buttons
+// rather than a list of rows. `danger` tints it red (Delete); `active`
+// gives it the brand-fill pressed tone.
+function MenuTile({
   icon,
   label,
   onClick,
+  danger = false,
+  disabled = false,
+  active = false,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+      disabled={disabled}
+      aria-pressed={active}
+      className={`flex flex-col items-center justify-start gap-1.5 rounded-md px-1.5 py-2 text-center text-[11px] font-medium leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 ${
+        danger
+          ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/15'
+          : active
+            ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+      }`}
     >
-      <span className="text-slate-400 dark:text-slate-500">{icon}</span>
-      {label}
+      <span
+        className={
+          danger
+            ? 'text-rose-500 dark:text-rose-300'
+            : active
+              ? ''
+              : 'text-slate-400 dark:text-slate-500'
+        }
+      >
+        {icon}
+      </span>
+      <span>{label}</span>
     </button>
   );
+}
+
+// Grid wrapper for MenuTiles. Literal column classes so Tailwind keeps them.
+function MenuTileGrid({ cols = 3, children }: { cols?: 2 | 3 | 4; children: ReactNode }) {
+  const colClass = cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-4' : 'grid-cols-3';
+  return <div className={`grid gap-1 px-2 py-1.5 ${colClass}`}>{children}</div>;
 }
 
 // Opacity slider row inside the context menu. Doesn't close the menu on
