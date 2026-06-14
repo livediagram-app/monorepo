@@ -193,7 +193,7 @@ export function PaletteDropdown({
             ref={menuRef}
             role="listbox"
             data-palette-dropdown-menu
-            className={`fixed z-50 max-h-56 overflow-y-auto border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+            className={`fixed z-50 max-h-56 w-max overflow-y-auto border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
               // Connected pickers drop the corner that meets the trigger so the
               // menu reads as one piece with it; bordered pills stay fully
               // rounded + hug their content via menuClassName.
@@ -207,9 +207,11 @@ export function PaletteDropdown({
               left: coords?.left,
               right: coords?.right,
               top: coords?.top ?? -9999,
-              // Match the trigger's width so the connected control is one
-              // continuous column.
-              ...(connected && coords ? { width: coords.width } : {}),
+              // Use the trigger width as a FLOOR (so the menu reads as one
+              // continuous column with it) but let it grow to fit the option
+              // labels — clamping to the trigger width truncated names like
+              // "Eraser" to "Er...".
+              ...(connected && coords ? { minWidth: coords.width } : {}),
             }}
           >
             {/* The trigger already shows the current option, so the menu lists
