@@ -19,7 +19,6 @@ export type PaletteDropdownOption = {
 const ICON_WRAP =
   'flex h-[14px] w-[14px] shrink-0 items-center justify-center [&>svg]:h-[14px] [&>svg]:w-[14px]';
 
-const GAP = 4; // space between the trigger and the menu
 const EDGE = 8; // keep the menu this far from the viewport edge
 
 // A compact select-style dropdown for the palette: a bordered trigger that
@@ -80,7 +79,18 @@ export function PaletteDropdown({
   // Fixed-position coords for the portalled menu. `left`/`right` is picked
   // by `align`; `top` flips above the trigger when the menu would spill off
   // the bottom of the viewport.
-  const [coords, setCoords] = useState<{ left?: number; right?: number; top: number } | null>(null);
+  const [coords, setCoords] = useState<{
+    left?: number;
+    right?: number;
+    top: number;
+    width: number;
+    flipUp: boolean;
+  } | null>(null);
+  // 'flush' pickers (the palette tool + category rows) read as one connected
+  // control: the menu sits flush against the trigger (no gap) and matches its
+  // width. Bordered filter pills keep a small gap and hug their content.
+  const connected = variant === 'flush';
+  const gap = connected ? 0 : 4;
 
   // Outside-click closes — but the menu lives in a portal, so a click in it
   // is NOT inside `triggerRef`; check the menu too or selecting an option
@@ -105,13 +115,14 @@ export function PaletteDropdown({
       const trig = triggerRef.current?.getBoundingClientRect();
       if (!trig) return;
       const menuH = menuRef.current?.offsetHeight ?? 0;
-      const below = trig.bottom + GAP;
-      const flipUp = below + menuH > window.innerHeight - EDGE && trig.top - GAP - menuH > EDGE;
-      const top = flipUp ? trig.top - GAP - menuH : below;
+      const below = trig.bottom + gap;
+      const flipUp = below + menuH > window.innerHeight - EDGE && trig.top - gap - menuH > EDGE;
+      const top = flipUp ? trig.top - gap - menuH : below;
+      const base = { top, width: trig.width, flipUp };
       setCoords(
         align === 'right'
-          ? { right: window.innerWidth - trig.right, top }
-          : { left: trig.left, top },
+          ? { ...base, right: window.innerWidth - trig.right }
+          : { ...base, left: trig.left },
       );
     };
     place();
@@ -124,7 +135,7 @@ export function PaletteDropdown({
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
     };
-  }, [open, align]);
+  }, [open, align, gap]);
 
   // Click-only: the dropdown opens on click and closes on click / outside
   // pointer-down (see the effect above). No hover-open — hovering across a
@@ -182,25 +193,45 @@ export function PaletteDropdown({
             ref={menuRef}
             role="listbox"
             data-palette-dropdown-menu
-            className={`fixed z-50 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${menuClassName}`}
-            style={{ left: coords?.left, right: coords?.right, top: coords?.top ?? -9999 }}
+            className={`fixed z-50 max-h-56 overflow-y-auto border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+              // Connected pickers drop the corner that meets the trigger so the
+              // menu reads as one piece with it; bordered pills stay fully
+              // rounded + hug their content via menuClassName.
+              connected
+                ? coords?.flipUp
+                  ? 'rounded-t-md'
+                  : 'rounded-b-md'
+                : `rounded-md ${menuClassName}`
+            }`}
+            style={{
+              left: coords?.left,
+              right: coords?.right,
+              top: coords?.top ?? -9999,
+              // Match the trigger's width so the connected control is one
+              // continuous column.
+              ...(connected && coords ? { width: coords.width } : {}),
+            }}
           >
-            {options.map((opt) => {
-              const isSelected = value === opt.id;
-              return (
+            {/* The trigger already shows the current option, so the menu lists
+                only the OTHER options to switch to (no duplicate of the
+                selected one). */}
+            {options
+              .filter((opt) => opt.id !== value)
+              .map((opt) => (
                 <button
                   key={opt.id}
                   type="button"
                   role="option"
-                  aria-selected={isSelected}
+                  aria-selected={false}
                   onClick={() => {
                     onChange(opt.id);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[11px] ${
-                    isSelected
-                      ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  className={`flex w-full items-center gap-2 text-left text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${
+                    // Match the trigger's sizing so the options read as the
+                    // same control (flush pickers are roomier than the
+                    // compact filter pills).
+                    connected ? 'px-3.5 py-2 text-xs' : 'px-2.5 py-1.5 text-[11px]'
                   }`}
                 >
                   {opt.icon ? <span className={ICON_WRAP}>{opt.icon}</span> : null}
@@ -211,8 +242,7 @@ export function PaletteDropdown({
                     </kbd>
                   ) : null}
                 </button>
-              );
-            })}
+              ))}
           </div>
         </Portal>
       ) : null}
