@@ -106,6 +106,13 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     open: openSection === id,
     onToggle: () => setOpenSection((s) => (s === id ? null : id)),
   });
+  // Which colour row's inline palette is open (text / background / border) —
+  // at most one, toggled by re-clicking the row so it never sticks open.
+  const [openColor, setOpenColor] = useState<string | null>(null);
+  const colorProps = (id: string) => ({
+    open: openColor === id,
+    onToggle: () => setOpenColor((c) => (c === id ? null : id)),
+  });
 
   if (menu.mode === 'element') {
     const target = elements.find((el) => el.id === menu.elementId);
@@ -207,6 +214,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   defaultTextColor(target as BoxedElement)
                 }
                 onChange={props.onSetTextColor}
+                {...colorProps('text')}
               />
               {defaultFillColor(target as BoxedElement) !== 'transparent' ? (
                 <ColourRow
@@ -216,6 +224,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                     defaultFillColor(target as BoxedElement)
                   }
                   onChange={props.onSetFillColor}
+                  {...colorProps('background')}
                 />
               ) : null}
               {defaultStrokeColor(target as BoxedElement) !== 'transparent' ? (
@@ -226,6 +235,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                     defaultStrokeColor(target as BoxedElement)
                   }
                   onChange={props.onSetStrokeColor}
+                  {...colorProps('border')}
                 />
               ) : null}
               <div className="px-2 pb-1 pt-1.5">
@@ -328,66 +338,69 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   }
 
   return (
-    <ContextMenu position={position} onClose={onClose}>
-      <MenuItem
-        icon={<PaletteMenuIcon />}
-        label="Change Theme"
-        onClick={() => {
-          props.onChangeTheme();
-          onClose();
-        }}
-      />
-      <MenuItem
-        icon={<CanvasMenuIcon />}
-        label="Change Canvas"
-        onClick={() => {
-          props.onChangeCanvas();
-          onClose();
-        }}
-      />
-      <ContextMenuDivider />
-      <MenuItem
-        icon={<AutoAlignIcon />}
-        label="Auto-align tab"
-        onClick={() => {
-          props.onAutoAlign();
-          onClose();
-        }}
-      />
-      <ContextMenuDivider />
-      <MenuItem
-        icon={<SquareMenuIcon />}
-        label="Add square"
-        onClick={() => {
-          props.onAddShape('square');
-          onClose();
-        }}
-      />
-      <MenuItem
-        icon={<StickyMenuIcon />}
-        label="Add sticky"
-        onClick={() => {
-          props.onAddSticky();
-          onClose();
-        }}
-      />
-      <ContextMenuDivider />
-      <MenuItem
-        icon={<PencilMenuIcon />}
-        label="Draw pencil"
-        onClick={() => {
-          props.onDrawPencil();
-          onClose();
-        }}
-      />
-      <MenuItem
-        icon={<AnnotationMenuIcon />}
-        label="Add annotation"
-        onClick={() => {
-          props.onAddAnnotation();
-          onClose();
-        }}
-      />
+    <ContextMenu position={position} onClose={onClose} flush>
+      {/* Canvas — theme / background / tidy. */}
+      <MenuAccordionSection title="Canvas" icon={<CanvasMenuIcon />} {...sectionProps('canvas')}>
+        <MenuItem
+          icon={<PaletteMenuIcon />}
+          label="Change Theme"
+          onClick={() => {
+            props.onChangeTheme();
+            onClose();
+          }}
+        />
+        <MenuItem
+          icon={<CanvasMenuIcon />}
+          label="Change Canvas"
+          onClick={() => {
+            props.onChangeCanvas();
+            onClose();
+          }}
+        />
+        <MenuItem
+          icon={<AutoAlignIcon />}
+          label="Auto-align tab"
+          onClick={() => {
+            props.onAutoAlign();
+            onClose();
+          }}
+        />
+      </MenuAccordionSection>
+      {/* Add — drop a new element on the canvas. */}
+      <MenuAccordionSection title="Add" icon={<SquareMenuIcon />} {...sectionProps('add')}>
+        <MenuItem
+          icon={<SquareMenuIcon />}
+          label="Add square"
+          onClick={() => {
+            props.onAddShape('square');
+            onClose();
+          }}
+        />
+        <MenuItem
+          icon={<StickyMenuIcon />}
+          label="Add sticky"
+          onClick={() => {
+            props.onAddSticky();
+            onClose();
+          }}
+        />
+        <MenuItem
+          icon={<PencilMenuIcon />}
+          label="Draw pencil"
+          onClick={() => {
+            props.onDrawPencil();
+            onClose();
+          }}
+        />
+        <MenuItem
+          icon={<AnnotationMenuIcon />}
+          label="Add annotation"
+          onClick={() => {
+            props.onAddAnnotation();
+            onClose();
+          }}
+        />
+      </MenuAccordionSection>
     </ContextMenu>
   );
 }
@@ -398,36 +411,84 @@ function hexish(color: string): string {
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#ffffff';
 }
 
-// One labelled colour row inside the Colours section: the label on the left,
-// the colour shown as a square on the RIGHT, with the native picker behind it.
+// A small preset palette for the inline colour picker. The "+" custom chip
+// still opens the OS picker for anything off-palette.
+const PRESET_COLORS = [
+  '#0f172a',
+  '#64748b',
+  '#ffffff',
+  '#ef4444',
+  '#f97316',
+  '#f59e0b',
+  '#22c55e',
+  '#0ea5e9',
+  '#6366f1',
+  '#ec4899',
+];
+
+// One labelled colour row inside the Colours section: the label + current
+// swatch toggle an inline preset palette (clicking the row again closes it,
+// so the picker never gets stuck open). A "+" chip opens the OS picker for a
+// custom colour.
 function ColourRow({
   label,
   value,
+  open,
+  onToggle,
   onChange,
 }: {
   label: string;
   value: string;
+  open: boolean;
+  onToggle: () => void;
   onChange: (color: string) => void;
 }) {
   return (
-    <label
-      className="flex cursor-pointer items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-      aria-label={`${label} colour`}
-    >
-      <span>{label}</span>
-      <span
-        className="h-4 w-4 rounded border border-slate-300 dark:border-slate-600"
-        style={{ backgroundColor: hexish(value) }}
-        aria-hidden
-      />
-      <input
-        type="color"
-        value={hexish(value)}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={`${label} colour`}
-        className="absolute h-0 w-0 opacity-0"
-      />
-    </label>
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+      >
+        <span>{label}</span>
+        <span
+          className="h-4 w-4 rounded border border-slate-300 dark:border-slate-600"
+          style={{ backgroundColor: hexish(value) }}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div className="flex flex-wrap items-center gap-1 px-3 pb-2 pt-0.5">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-label={c}
+              onClick={() => onChange(c)}
+              className={`h-5 w-5 rounded border transition ${
+                value.toLowerCase() === c.toLowerCase()
+                  ? 'border-brand-500 ring-1 ring-brand-400'
+                  : 'border-slate-300 hover:scale-110 dark:border-slate-600'
+              }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <label
+            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[11px] leading-none text-slate-500 dark:border-slate-600"
+            aria-label={`Custom ${label} colour`}
+          >
+            +
+            <input
+              type="color"
+              value={hexish(value)}
+              onChange={(e) => onChange(e.target.value)}
+              className="absolute h-0 w-0 opacity-0"
+            />
+          </label>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
