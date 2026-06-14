@@ -509,6 +509,16 @@ export function RichTextEditor({
           transformOrigin: placeBelow ? 'top center' : 'bottom center',
         }}
       >
+        {/* Title line on the far side from the element (above the bar when the
+            bar sits above the element, below it when below), matching every
+            other floating toolbar's caption. */}
+        <span
+          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm dark:bg-slate-700 ${
+            placeBelow ? 'top-full mt-1' : 'bottom-full mb-1'
+          }`}
+        >
+          Selected Text
+        </span>
         <RichTextToolbar
           active={active}
           alignX={alignX}
