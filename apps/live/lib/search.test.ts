@@ -307,4 +307,37 @@ describe('buildSearchResults — team library (spec/35)', () => {
       { kind: 'diagram', id: 'td', name: 'Roadmap', team: { id: 'team1', name: 'Platform' } },
     ]);
   });
+
+  it('surfaces palette items as an "Add to canvas" group, matched on name + keywords', () => {
+    const paletteItems = [
+      {
+        id: 'shape:cylinder',
+        name: 'Cylinder',
+        keywords: 'shape database storage',
+        add: { type: 'shape' as const, shapeKind: 'cylinder' as const },
+      },
+      {
+        id: 'tech:aws-s3',
+        name: 'S3',
+        keywords: 'technology amazon storage bucket',
+        add: { type: 'tech' as const, iconId: 'aws-s3' },
+      },
+    ];
+    const out = buildSearchResults({ query: 'storage', diagrams: [], folders: [], paletteItems });
+    const palette = out.find((g) => g.key === 'palette')!;
+    expect(palette.items.map((i) => i.id)).toEqual(['shape:cylinder', 'tech:aws-s3']);
+  });
+
+  it('does not surface palette items on an empty query (no catalogue dump)', () => {
+    const paletteItems = [
+      {
+        id: 'shape:square',
+        name: 'Rectangle',
+        keywords: 'shape box',
+        add: { type: 'shape' as const, shapeKind: 'square' as const },
+      },
+    ];
+    const out = buildSearchResults({ query: '', diagrams: [], folders: [], paletteItems });
+    expect(out.find((g) => g.key === 'palette')).toBeUndefined();
+  });
 });

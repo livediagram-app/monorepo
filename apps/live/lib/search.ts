@@ -10,7 +10,7 @@
 // suite can import it directly without the 'use client' boundary
 // + the dynamic-import wrapping.
 
-import type { Tab } from '@livediagram/diagram';
+import type { ShapeKind, Tab } from '@livediagram/diagram';
 
 const DIAGRAM_LIMIT = 8;
 const SHARED_LIMIT = 8;
@@ -18,6 +18,7 @@ const FOLDER_LIMIT = 8;
 const TEAM_LIMIT = 8;
 const TAB_LIMIT = 8;
 const ELEMENT_LIMIT = 12;
+const PALETTE_LIMIT = 10;
 
 // Internal-only input shapes for the by-name match inputs. Several
 // share the same {id, name} shape but stay distinct so a future
@@ -76,19 +77,35 @@ type ElementItem = {
     | 'arrow';
 };
 
+// What a picked palette result should add to the canvas. The panel hands
+// this back so the editor routes it to the matching add handler (which arms
+// the same tap-to-drop / drag-to-size placement the palette uses).
+export type PaletteAdd =
+  | { type: 'shape'; shapeKind: ShapeKind }
+  | { type: 'icon'; iconId: string }
+  | { type: 'tech'; iconId: string };
+type PaletteItem = { kind: 'palette'; id: string; name: string; add: PaletteAdd };
+
 export type SearchResultItem =
   | DiagramItem
   | SharedItem
   | FolderItem
   | TeamItem
   | TabItem
-  | ElementItem;
+  | ElementItem
+  | PaletteItem;
 
 export type SearchGroup = {
-  key: 'diagrams' | 'shared' | 'folders' | 'teams' | 'tabs' | 'elements';
+  key: 'diagrams' | 'shared' | 'folders' | 'teams' | 'tabs' | 'elements' | 'palette';
   label: string;
   items: SearchResultItem[];
 };
+
+// A searchable palette entry the editor passes in (shapes / icons / tech
+// icons). `keywords` widens matching beyond the visible name (so "database"
+// finds the cylinder / RDS). Kept catalogue-agnostic so this lib stays free
+// of the icon data + the Explorer (which omits it) pays nothing.
+export type PaletteSearchItem = { id: string; name: string; keywords: string; add: PaletteAdd };
 
 // `buildSearchResults`' parameter type. Local because callers (the
 // SearchPanel) pass an object literal; TypeScript infers the shape
@@ -115,6 +132,10 @@ type SearchInput = {
   // diagram's tabs.
   tabs?: Tab[];
   currentTabId?: string;
+  // Palette catalogue (shapes / icons / tech icons) the editor offers as
+  // "Add to canvas" results. Only the editor passes it; matched only when
+  // the query is non-empty (you don't browse the whole palette via search).
+  paletteItems?: PaletteSearchItem[];
 };
 
 // Case-insensitive substring match. Empty query matches everything,
@@ -265,6 +286,21 @@ export function buildSearchResults(input: SearchInput): SearchGroup[] {
     }
     if (elementMatches.length > 0) {
       groups.push({ key: 'elements', label: 'Elements', items: elementMatches });
+    }
+  }
+
+  // Palette: shapes / icons / tech icons to add. Only on a non-empty query
+  // (an empty one would dump the whole catalogue), matched on name + keywords.
+  if (q && input.paletteItems && input.paletteItems.length > 0) {
+    const paletteMatches = input.paletteItems
+      .filter((p) => matches(q, p.name) || matches(q, p.keywords))
+      .slice(0, PALETTE_LIMIT);
+    if (paletteMatches.length > 0) {
+      groups.push({
+        key: 'palette',
+        label: 'Add to canvas',
+        items: paletteMatches.map((p) => ({ kind: 'palette', id: p.id, name: p.name, add: p.add })),
+      });
     }
   }
 

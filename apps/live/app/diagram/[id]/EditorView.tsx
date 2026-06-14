@@ -12,6 +12,7 @@ import {
 import type { QuickConnectDirection } from '@/lib/canvas';
 import { track } from '@/lib/telemetry';
 import { getTheme, themePresetColors, type ThemeId } from '@/lib/themes';
+import { PALETTE_SEARCH_ITEMS } from '@/lib/palette-search';
 import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/Canvas';
@@ -1000,6 +1001,16 @@ export function EditorView() {
             setActiveId(tabId);
             setSelectedId(elementId);
           }}
+          paletteItems={isReadOnly ? undefined : PALETTE_SEARCH_ITEMS}
+          onAddPaletteItem={
+            isReadOnly
+              ? undefined
+              : (add) => {
+                  if (add.type === 'shape') addShape(add.shapeKind);
+                  else if (add.type === 'icon') addIcon(add.iconId);
+                  else addTechIcon(add.iconId);
+                }
+          }
           onClose={() => setSearchOpen(false)}
         />
       ) : null}

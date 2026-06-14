@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tab } from '@livediagram/diagram';
-import { buildSearchResults, type SearchGroup, type SearchResultItem } from '@/lib/search';
+import {
+  buildSearchResults,
+  type PaletteAdd,
+  type PaletteSearchItem,
+  type SearchGroup,
+  type SearchResultItem,
+} from '@/lib/search';
 import { titleCaseType, track } from '@/lib/telemetry';
 import { useEscape } from '@/hooks/useEscape';
 
@@ -61,6 +67,11 @@ type SearchPanelProps = {
   // element match. The host route is responsible for switching
   // tabs + selecting the element.
   onSelectElement?: (tabId: string, elementId: string) => void;
+  // Editor-only: the palette catalogue to surface as "Add to canvas"
+  // results, plus the handler that adds the picked one (it arms the same
+  // placement gesture the palette uses, then the panel closes).
+  paletteItems?: PaletteSearchItem[];
+  onAddPaletteItem?: (add: PaletteAdd) => void;
   onClose: () => void;
 };
 
@@ -83,6 +94,8 @@ export function SearchPanel({
   onSelectTeamFolder,
   onSelectTab,
   onSelectElement,
+  paletteItems,
+  onAddPaletteItem,
   onClose,
 }: SearchPanelProps) {
   const [query, setQuery] = useState('');
@@ -116,8 +129,20 @@ export function SearchPanel({
         teamDiagrams,
         tabs,
         currentTabId,
+        paletteItems,
       }),
-    [query, diagrams, folders, shared, teams, teamFolders, teamDiagrams, tabs, currentTabId],
+    [
+      query,
+      diagrams,
+      folders,
+      shared,
+      teams,
+      teamFolders,
+      teamDiagrams,
+      tabs,
+      currentTabId,
+      paletteItems,
+    ],
   );
 
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
@@ -138,6 +163,7 @@ export function SearchPanel({
     else if (item.kind === 'tab' && onSelectTab) onSelectTab(item.id);
     else if (item.kind === 'element' && onSelectElement)
       onSelectElement(item.tabId, item.elementId);
+    else if (item.kind === 'palette' && onAddPaletteItem) onAddPaletteItem(item.add);
     track('Search', 'Selected', titleCaseType(item.kind));
     onClose();
   };
@@ -344,6 +370,24 @@ function SearchResultIcon({ item }: { item: SearchResultItem }) {
         aria-hidden
       >
         <path d="M2.5 6.5h4l1-2h6v9h-11z" />
+      </svg>
+    );
+  }
+  if (item.kind === 'palette') {
+    // Plus-in-a-box: this result ADDS an element rather than navigating.
+    return (
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        aria-hidden
+      >
+        <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
+        <path d="M8 5.5v5M5.5 8h5" />
       </svg>
     );
   }
