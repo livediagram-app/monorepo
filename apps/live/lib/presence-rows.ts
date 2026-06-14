@@ -8,9 +8,12 @@
 import { statusFromIdleMs, type Participant } from './identity';
 import type { LaserPoint } from './laser-buffer';
 
-export type CursorRow = { id: string; name: string; color: string; x: number; y: number };
-export type LaserTrailRow = { participantId: string; color: string; points: LaserPoint[] };
-export type RemoteSelector = { id: string; name: string; color: string };
+// Row shapes the builders below return. Module-private: only this file's own
+// functions name them, so they carry no `export` (consumers get the inferred
+// return types).
+type CursorRow = { id: string; name: string; color: string; x: number; y: number };
+type LaserTrailRow = { participantId: string; color: string; points: LaserPoint[] };
+type RemoteSelector = { id: string; name: string; color: string };
 
 // Group participants by the tab they're focused on, so each TabBar entry
 // renders the right avatar dots. Always includes the local participant on
