@@ -20,6 +20,12 @@ import type { TextRun } from './rich-text';
 // whole module is re-exported lower down via `export * from './arrow-style'`.
 import type { ArrowheadSize, ArrowheadShape, ArrowStyle } from './arrow-style';
 
+// Border preset types used by the boxed-element + arrow field definitions
+// below. The px / dasharray maps + defaults that go with them live in
+// border-style.ts; type-only import (erasable), and the whole module is
+// re-exported lower down via `export * from './border-style'`.
+import type { BorderStroke, BorderStyle, BorderRadius } from './border-style';
+
 // Documentary type aliases for ids that internal helpers thread
 // around. Not exported because no caller outside this package
 // imports them by name (they all just use plain `string`); keeping
@@ -183,56 +189,6 @@ export type ShapeElement = {
   // override-free run => the legacy whole-element render. `label` is
   // always kept === runsPlainText(richText). See rich-text.ts.
   richText?: TextRun[];
-};
-
-// Border styling presets. Keep these as small unions so the
-// CommandPalette can render them as 3-to-4-button icon rows that
-// match the Pointer accordion's pattern (Line thickness /
-// Arrowhead size / etc).
-export type BorderStroke = 'none' | 'thin' | 'medium' | 'thick' | 'extra-thick';
-export type BorderStyle = 'solid' | 'dashed' | 'dotted' | 'dash-dot' | 'long-dash' | 'dash-dot-dot';
-export type BorderRadius = 'none' | 'sm' | 'md' | 'lg';
-
-export const BORDER_STROKE_PX: Record<BorderStroke, number> = {
-  none: 0,
-  thin: 1,
-  medium: 2,
-  thick: 4,
-  'extra-thick': 7,
-};
-
-// Default for shapes that don't carry a strokeWidth field. Picked to
-// match what the renderer was hardcoding before this field existed
-// so old diagrams render exactly the same.
-export const DEFAULT_BORDER_STROKE: BorderStroke = 'medium';
-
-// SVG `stroke-dasharray` values in absolute user units, applied
-// directly by the renderer (shapes + arrows). 'solid' maps to no
-// dasharray (omit the attribute) so the default solid stroke path
-// stays the same.
-export const BORDER_DASH_ARRAY: Record<BorderStyle, string | null> = {
-  solid: null,
-  // Tuned so each pattern reads as distinct at a glance: short even
-  // dashes vs tiny dots vs clearly-longer dashes vs the dash/dot
-  // composites (whose dash segment is longer than plain `dashed` so
-  // the two never look alike).
-  dashed: '6 5',
-  dotted: '1 4',
-  'long-dash': '18 7',
-  'dash-dot': '10 5 1 5',
-  'dash-dot-dot': '10 5 1 5 1 5',
-};
-
-export const DEFAULT_BORDER_STYLE: BorderStyle = 'solid';
-
-// Corner radius in pixels. Only meaningful on shapes whose silhouette
-// has user-visible corners (square / stadium and the device frames);
-// the SVG-overlay shapes (diamond, hexagon, cloud etc) ignore it.
-export const BORDER_RADIUS_PX: Record<BorderRadius, number> = {
-  none: 0,
-  sm: 4,
-  md: 12,
-  lg: 24,
 };
 
 // --- Text ------------------------------------------------------------------
@@ -959,6 +915,7 @@ export function isBoxed(element: Element): element is BoxedElement {
 // --- Re-exported resource modules -----------------------------------------
 export * from './arrow-path';
 export * from './arrow-style';
+export * from './border-style';
 export * from './colors';
 
 // Per-range label formatting (spec/09): the runs-as-delta model + pure
