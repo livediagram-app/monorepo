@@ -81,9 +81,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
       target.type === 'shape' && target.shape !== 'icon' && target.iconId !== undefined;
     return (
       <ContextMenu position={position} onClose={onClose}>
+        {/* Single actions first; collapsible sections always sit at the
+            bottom so the menu's top stays a stable list of direct items. */}
         <MenuItem
           icon={<LinkMenuIcon />}
-          label={target.link ? 'Edit link' : 'Link Element'}
+          label={target.link ? 'Edit link' : 'Create link'}
           onClick={() => {
             props.onLinkElement(target.id);
             onClose();
@@ -98,6 +100,22 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               onClose();
             }}
           />
+        ) : null}
+        {boxed ? (
+          // Lock aspect ratio — iOS-style switch, matching the panel.
+          <div className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+            <span className="flex items-center gap-2">
+              <span className="text-slate-400 dark:text-slate-500">
+                <AspectLockMenuIcon />
+              </span>
+              Lock aspect ratio
+            </span>
+            <ToggleSwitch
+              checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
+              onChange={props.onToggleAspectLock}
+              label="Lock aspect ratio"
+            />
+          </div>
         ) : null}
         <ContextMenuDivider />
         {/* Layer — a collapsible section grouping front/back + opacity. */}
@@ -127,26 +145,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             onChange={props.onSetOpacity}
           />
         </MenuAccordionSection>
-        {boxed ? (
-          <>
-            <ContextMenuDivider />
-            {/* Lock aspect ratio — iOS-style switch, matching the panel. */}
-            <div className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
-              <span className="flex items-center gap-2">
-                <span className="text-slate-400 dark:text-slate-500">
-                  <AspectLockMenuIcon />
-                </span>
-                Lock aspect ratio
-              </span>
-              <ToggleSwitch
-                checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
-                onChange={props.onToggleAspectLock}
-                label="Lock aspect ratio"
-              />
-            </div>
-          </>
-        ) : null}
-        <ContextMenuDivider />
         {/* Collaborate — notes + comments grouped under one collapsible header. */}
         <MenuAccordionSection title="Collaborate">
           {boxed ? (
