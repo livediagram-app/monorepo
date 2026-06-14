@@ -95,13 +95,14 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
     return { ...base, aspectLocked: true, textAlignY: 'bottom' };
   }
   // Frame: a container drawn around other elements. Its label sits in the
-  // top-left (like a section title) rather than centred, and the body is
+  // top-right (like a section title) rather than centred, and the body is
   // transparent (rendered fill-less in shape-svg-overlay) so content shows
   // through.
   if (kind === 'frame') {
-    // Frames start with a "Frame" section title (top-left) so they read as a
+    // Frames start with a "Frame" section title in the top-right, padded in
+    // off the border so it doesn't touch the outline, so they read as a
     // labelled container the moment they're dropped.
-    return { ...base, label: 'Frame', textAlignY: 'top', textAlignX: 'left' };
+    return { ...base, label: 'Frame', textAlignY: 'top', textAlignX: 'right', padding: 'lg' };
   }
   return base;
 }
