@@ -79,14 +79,9 @@ export function CanvasThemeDialog({
           className="flex max-h-[calc(100%-2rem)] w-[44rem] max-w-[calc(100%-2rem)] flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
         >
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-            <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
-              <TabButton active={tab === 'canvas'} onClick={() => onTabChange('canvas')}>
-                Canvas
-              </TabButton>
-              <TabButton active={tab === 'theme'} onClick={() => onTabChange('theme')}>
-                Theme
-              </TabButton>
-            </div>
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Canvas &amp; theme
+            </h2>
             <button
               type="button"
               onClick={onClose}
@@ -96,6 +91,17 @@ export function CanvasThemeDialog({
               <CloseIcon size={16} strokeWidth={1.6} />
             </button>
           </header>
+
+          <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-800">
+            <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
+              <TabButton active={tab === 'canvas'} onClick={() => onTabChange('canvas')}>
+                Canvas
+              </TabButton>
+              <TabButton active={tab === 'theme'} onClick={() => onTabChange('theme')}>
+                Theme
+              </TabButton>
+            </div>
+          </div>
 
           <div className="overflow-y-auto px-5 py-4">
             {tab === 'canvas' ? (
@@ -108,6 +114,7 @@ export function CanvasThemeDialog({
                 onSetBackgroundColor={onSetBackgroundColor}
                 onSetPatternColor={onSetPatternColor}
                 onSetBackgroundOpacity={onSetBackgroundOpacity}
+                patternColumns={7}
               />
             ) : (
               <>

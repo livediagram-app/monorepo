@@ -48,6 +48,7 @@ import {
   type Tab,
 } from '@livediagram/diagram';
 import { titleCaseType, track } from '@/lib/telemetry';
+import { isTechIconId } from '@/lib/tech-icons';
 import { getTheme } from '@/lib/themes';
 import {
   ALIGN_SNAP_THRESHOLD,
@@ -1136,13 +1137,22 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       }
       // Fold a dragged standalone icon shape into the shape it was
       // released over. Only on a real move (not a click), only when the
-      // dragged element is an 'icon' shape, and only when the element
-      // directly beneath the cursor (skipping the dragged icon itself)
-      // is a non-icon shape.
+      // dragged element is a line-art 'icon' shape, and only when the
+      // element directly beneath the cursor (skipping the dragged icon
+      // itself) is a non-icon shape. Technology icons (spec/41) reuse the
+      // 'icon' shape but are ALWAYS standalone — a coloured brand tile
+      // folded beside a shape's text isn't meaningful and the inline-icon
+      // renderer only knows line-art prims — so they're excluded here.
       if (drag?.kind === 'boxed' && drag.mode === 'move' && d.onIconElementDroppedOnShape) {
         const moved = Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY) > 4;
         const dragged = d.activeTab.elements.find((el) => el.id === drag.primaryId);
-        if (moved && dragged && dragged.type === 'shape' && dragged.shape === 'icon') {
+        if (
+          moved &&
+          dragged &&
+          dragged.type === 'shape' &&
+          dragged.shape === 'icon' &&
+          !isTechIconId(dragged.iconId)
+        ) {
           for (const node of document.elementsFromPoint(e.clientX, e.clientY)) {
             const host = node.closest('[data-element-id]');
             const id = host?.getAttribute('data-element-id');

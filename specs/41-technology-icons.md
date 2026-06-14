@@ -95,7 +95,10 @@ never drops _inside_ a selected shape as an inline icon (a coloured brand tile
 beside a shape's text is not meaningful, and the inline-icon renderer only knows
 line-art prims). It therefore carries its own DnD MIME (`TECH_ICON_DND_MIME`),
 which the canvas drop handler routes to a standalone-icon create and which the
-shape drop target ignores.
+shape drop target ignores. The same rule holds _after_ placement: dragging an
+existing standalone tech icon over a shape leaves it standalone — the
+icon-fold-into-shape gesture (`useEditorDrag`, which absorbs a dragged line-art
+`icon` shape into the shape beneath it) excludes tech icons via `isTechIconId`.
 
 ## Rendering — `apps/live/components/tech-icon-glyph.tsx`
 

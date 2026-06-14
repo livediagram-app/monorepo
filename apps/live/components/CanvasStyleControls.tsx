@@ -24,6 +24,7 @@ export function CanvasStyleControls({
   onSetBackgroundColor,
   onSetPatternColor,
   onSetBackgroundOpacity,
+  patternColumns = 4,
 }: {
   backgroundPattern: BackgroundPattern;
   backgroundColor: string;
@@ -33,15 +34,23 @@ export function CanvasStyleControls({
   onSetBackgroundColor: (color: string) => void;
   onSetPatternColor: (color: string) => void;
   onSetBackgroundOpacity: (opacity: number) => void;
+  // Pattern-grid density. The narrow palette accordion uses 4; the wide
+  // dialog passes 7 so the tiles aren't marooned with empty gutters.
+  // Discrete values keep the class names static for Tailwind.
+  patternColumns?: 4 | 7;
 }) {
   // Auto-expands when the active pattern sits behind the toggle so the
   // current selection is always visible.
   const patternsList = useShowMoreList(PATTERNS, (p) => p.id === backgroundPattern);
+  const patternGridClass =
+    patternColumns === 7
+      ? 'mt-1 grid grid-cols-4 gap-1 sm:grid-cols-7'
+      : 'mt-1 grid grid-cols-4 gap-1';
 
   return (
     <>
       <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">Pattern</p>
-      <div className="mt-1 grid grid-cols-4 gap-1">
+      <div className={patternGridClass}>
         {patternsList.visible.map((p) => (
           <Tooltip key={p.id} title={p.label} description={p.description}>
             <PatternButton
