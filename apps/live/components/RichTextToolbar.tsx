@@ -18,6 +18,7 @@ import {
   UnderlineIcon,
 } from './palette-icons';
 import { Tooltip } from './Tooltip';
+import { MenuAccordionSection } from './PortalMenu';
 import { FONTS, resolveFontStack } from '@/lib/fonts';
 import type { Padding, RunBoolKey, RunSize, TextAlignX, TextAlignY } from '@livediagram/diagram';
 
@@ -112,46 +113,125 @@ const optionClass = (selected: boolean) =>
       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
   }`;
 
-// A submenu row inside the ⋯ menu: a labelled header that reveals its options
-// in a flyout to the right on hover. Used by Font + Padding so the overflow
-// menu stays a tidy list of expandable categories.
-function MenuFlyout({
-  icon,
-  label,
-  children,
-  menuClassName = 'min-w-[8rem]',
+// The ⋯ overflow menu: the less-common text options (Strikethrough, Font,
+// Padding) grouped into collapsible category sections, matching the element /
+// canvas context menus rather than a flat list. Kept INLINE (not portalled)
+// so the editor's focus + canvas-propagation guards apply; every control
+// preventDefaults mousedown so the live text selection survives a click, and
+// the category headers do too (via MenuAccordionSection's preserveFocus).
+function OverflowMenu({
+  active,
+  currentFont,
+  padding,
+  onToggle,
+  onSetFont,
+  onSetPadding,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-  menuClassName?: string;
+  active: ActiveFormat;
+  currentFont: string | null;
+  padding: Padding;
+  onToggle: (key: RunBoolKey) => void;
+  onSetFont: (font: string | null) => void;
+  onSetPadding: (padding: Padding) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [open]);
+  const close = () => setOpen(false);
+  const catProps = (id: string) => ({
+    open: openCat === id,
+    onToggle: () => setOpenCat((c) => (c === id ? null : id)),
+    preserveFocus: true,
+  });
   return (
-    <div className="group relative">
-      <div className={`${optionClass(false)} cursor-default justify-between`}>
-        <span className="flex items-center gap-2">
-          {icon}
-          {label}
-        </span>
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
+    <div className="relative" ref={rootRef}>
+      <Tooltip title="More" description="More text options.">
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="More"
+          onMouseDown={noFocusSteal}
+          onClick={() => setOpen((o) => !o)}
+          className={`flex h-8 items-center gap-0.5 rounded-md px-1.5 transition ${
+            open
+              ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+          }`}
         >
-          <path d="M4.5 3 7.5 6 4.5 9" />
-        </svg>
-      </div>
-      <div
-        className={`invisible absolute left-full top-0 z-10 ml-0.5 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-900 ${menuClassName}`}
-      >
-        {children}
-      </div>
+          <EllipsisIcon />
+        </button>
+      </Tooltip>
+      {open ? (
+        <div className="absolute left-0 top-full z-10 mt-1 w-44 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          <MenuAccordionSection title="Format" icon={<StrikethroughIcon />} {...catProps('format')}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={active.strikethrough}
+              onMouseDown={noFocusSteal}
+              onClick={() => {
+                onToggle('strikethrough');
+                close();
+              }}
+              className={optionClass(active.strikethrough)}
+            >
+              <StrikethroughIcon />
+              <span className="flex-1">Strikethrough</span>
+            </button>
+          </MenuAccordionSection>
+          <MenuAccordionSection title="Font" icon={<FontGlyph />} {...catProps('font')}>
+            {FONTS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                role="option"
+                aria-selected={currentFont === f.id}
+                onMouseDown={noFocusSteal}
+                onClick={() => {
+                  onSetFont(f.id);
+                  close();
+                }}
+                style={{ fontFamily: resolveFontStack(f.id) }}
+                className={optionClass(currentFont === f.id)}
+              >
+                <span className="flex-1">{f.label}</span>
+              </button>
+            ))}
+          </MenuAccordionSection>
+          <MenuAccordionSection
+            title="Padding"
+            icon={padding === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={padding} />}
+            {...catProps('padding')}
+          >
+            {PADDINGS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                role="option"
+                aria-selected={padding === p.key}
+                onMouseDown={noFocusSteal}
+                onClick={() => {
+                  onSetPadding(p.key);
+                  close();
+                }}
+                className={optionClass(padding === p.key)}
+              >
+                {p.key === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={p.key} />}
+                <span className="flex-1">{p.label}</span>
+              </button>
+            ))}
+          </MenuAccordionSection>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -271,64 +351,16 @@ export function RichTextToolbar({
 
   return (
     <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40">
-      {/* ⋯ overflow menu (left) — holds the less-common Strikethrough. The
-          ⋯ already signals a menu, so no chevron. */}
-      <ToolbarDropdown
-        label="More"
-        description="More text options."
-        hideChevron
-        trigger={<EllipsisIcon />}
-      >
-        <button
-          type="button"
-          role="option"
-          aria-selected={active.strikethrough}
-          onMouseDown={noFocusSteal}
-          onClick={() => onToggle('strikethrough')}
-          className={optionClass(active.strikethrough)}
-        >
-          <StrikethroughIcon />
-          <span className="flex-1">Strikethrough</span>
-        </button>
-        {/* Font — hover to reveal the font list. */}
-        <MenuFlyout icon={<FontGlyph />} label="Font">
-          {FONTS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="option"
-              aria-selected={currentFont === f.id}
-              onMouseDown={noFocusSteal}
-              onClick={() => onSetFont(f.id)}
-              style={{ fontFamily: resolveFontStack(f.id) }}
-              className={optionClass(currentFont === f.id)}
-            >
-              <span className="flex-1">{f.label}</span>
-            </button>
-          ))}
-        </MenuFlyout>
-        {/* Padding — hover to reveal the spacing options. */}
-        <MenuFlyout
-          icon={padding === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={padding} />}
-          label="Padding"
-          menuClassName="min-w-[8rem]"
-        >
-          {PADDINGS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              role="option"
-              aria-selected={padding === p.key}
-              onMouseDown={noFocusSteal}
-              onClick={() => onSetPadding(p.key)}
-              className={optionClass(padding === p.key)}
-            >
-              {p.key === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={p.key} />}
-              <span className="flex-1">{p.label}</span>
-            </button>
-          ))}
-        </MenuFlyout>
-      </ToolbarDropdown>
+      {/* ⋯ overflow menu (left) — the less-common Strikethrough / Font /
+          Padding, grouped into collapsible category sections. */}
+      <OverflowMenu
+        active={active}
+        currentFont={currentFont}
+        padding={padding}
+        onToggle={onToggle}
+        onSetFont={onSetFont}
+        onSetPadding={onSetPadding}
+      />
       {divider}
       {toggles.map((t) => (
         <Tooltip key={t.key} title={t.label} description={t.description}>

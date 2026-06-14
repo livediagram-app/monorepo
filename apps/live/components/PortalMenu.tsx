@@ -144,18 +144,24 @@ export function MenuAccordionSection({
   open,
   onToggle,
   children,
+  // When true the header preventDefaults mousedown so it can't steal focus
+  // from a contentEditable behind it (the rich-text toolbar's ⋯ menu needs
+  // the live text selection to survive a category toggle).
+  preserveFocus = false,
 }: {
   title: string;
   icon: ReactNode;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
+  preserveFocus?: boolean;
 }) {
   return (
     <div className="border-t border-slate-100 first:border-t-0 dark:border-slate-800">
       <button
         type="button"
         onClick={onToggle}
+        onMouseDown={preserveFocus ? (e) => e.preventDefault() : undefined}
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
       >
