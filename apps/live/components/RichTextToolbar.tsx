@@ -518,7 +518,7 @@ export function RichTextToolbar({
         ))}
       </ToolbarDropdown>
       {divider}
-      {/* Alignment — the panel's 3×3 grid, reused. */}
+      {/* Alignment — the shared 3×3 grid, reused. */}
       <ToolbarDropdown
         label="Alignment"
         description="Align the label inside the element."

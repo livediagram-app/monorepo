@@ -144,8 +144,8 @@ type EditorContextMenuProps = {
   onToggleTextUnderline: () => void;
   onToggleTextStrikethrough: () => void;
   onSetTextSize: (size: TextSize) => void;
-  // Arrow Line + Pointer controls (spec/09), surfaced for arrows to match the
-  // panel's Line / Pointer accordions.
+  // Arrow Line + Pointer controls (spec/09), surfaced for arrows via the
+  // shared ArrowLine / Pointer controls.
   onSetArrowThickness: (v: ArrowThickness) => void;
   onSetArrowStyle: (v: ArrowStyle) => void;
   onSetArrowStrokeStyle: (v: BorderStyle) => void;
@@ -159,8 +159,8 @@ type EditorContextMenuProps = {
   // Preset colour swatches for the colour pickers, derived from the active
   // theme so the offered presets match it.
   presetColors: string[];
-  // Table structure toggles (header row / column, zebra), mirroring the
-  // panel's Table accordion.
+  // Table structure toggles (header row / column, zebra) for the Table
+  // category.
   onToggleTableHeaderRow: () => void;
   onToggleTableHeaderColumn: () => void;
   onToggleTableZebra: () => void;
@@ -307,7 +307,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     // the Text colour applies (no fill / stroke colour).
     const isTechIcon = isIcon && isTechIconId((target as { iconId?: string }).iconId);
     // Border controls apply to shapes / freehand / tables (not icons),
-    // mirroring the panel's Border accordion gating + effective values.
+    // gated by the shared supportsBorderControls predicate + effective values.
     const borderable = supportsBorderControls(target) && !isIcon;
     const borderStrokeVal: BorderStroke =
       (target as { strokeWidth?: BorderStroke }).strokeWidth ??
@@ -470,8 +470,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </div>
           </MenuAccordionSection>
         ) : null}
-        {/* Line + Pointer — arrow stroke + arrowhead controls, mirroring the
-            panel's accordions (shared ArrowLine/PointerControls). */}
+        {/* Line + Pointer — arrow stroke + arrowhead controls (shared
+            ArrowLine/PointerControls). */}
         {target.type === 'arrow' ? (
           <>
             <MenuAccordionSection title="Line" icon={<LineGlyph />} {...sectionProps('line')}>
@@ -675,7 +675,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
-        {/* Border — strength / pattern / radius, same options as the panel. */}
+        {/* Border — strength / pattern / radius. */}
         {borderable ? (
           <>
             <MenuAccordionSection title="Border" icon={<BorderGlyph />} {...sectionProps('border')}>
@@ -719,8 +719,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
-        {/* Table — header row / column + zebra, mirroring the panel's Table
-            accordion. */}
+        {/* Table — header row / column + zebra. */}
         {target.type === 'table' ? (
           <MenuAccordionSection title="Table" icon={<TableGlyph />} {...sectionProps('table')}>
             <MenuToggleRow

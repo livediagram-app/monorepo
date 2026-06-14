@@ -3,7 +3,7 @@
 // unit so a second caller can drop them in without duplication, per
 // CLAUDE.md). Pure presentation: values in, setters out. Each sub-grid
 // is gated on its value being non-null, so a caller can pass null to hide a
-// row (the panel does this for elements that don't carry that field).
+// row (the context menu does this for elements that don't carry that field).
 
 import {
   ARROW_THICKNESS_PX,
