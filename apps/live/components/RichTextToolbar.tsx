@@ -18,7 +18,7 @@ import {
   UnderlineIcon,
 } from './palette-icons';
 import { Tooltip } from './Tooltip';
-import { MenuAccordionSection } from './PortalMenu';
+import { MenuAccordionSection, MenuTile, MenuTileGrid } from './PortalMenu';
 import { FONTS, resolveFontStack } from '@/lib/fonts';
 import type {
   ListStyle,
@@ -181,13 +181,6 @@ const CHEVRON = (
   </svg>
 );
 
-const optionClass = (selected: boolean) =>
-  `flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition ${
-    selected
-      ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
-      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-  }`;
-
 // The ⋯ overflow menu: the less-common text options (Strikethrough, Font,
 // Padding) grouped into collapsible category sections, matching the element /
 // canvas context menus rather than a flat list. Kept INLINE (not portalled)
@@ -202,6 +195,7 @@ function OverflowMenu({
   onApplyList,
   onSetFont,
   onSetPadding,
+  onSize,
 }: {
   active: ActiveFormat;
   currentFont: string | null;
@@ -210,6 +204,7 @@ function OverflowMenu({
   onApplyList: (style: ListStyle) => void;
   onSetFont: (font: string | null) => void;
   onSetPadding: (padding: Padding) => void;
+  onSize: (size: SizeKey) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [openCat, setOpenCat] = useState<string | null>(null);
@@ -249,102 +244,105 @@ function OverflowMenu({
       </Tooltip>
       {open ? (
         <div className="absolute left-0 top-full z-10 mt-1 w-44 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          <MenuAccordionSection title="Format" icon={<StrikethroughIcon />} {...catProps('format')}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={active.strikethrough}
-              onMouseDown={noFocusSteal}
-              onClick={() => {
-                onToggle('strikethrough');
-                close();
-              }}
-              className={optionClass(active.strikethrough)}
-            >
-              <StrikethroughIcon />
-              <span className="flex-1">Strikethrough</span>
-            </button>
-            <button
-              type="button"
-              role="option"
-              onMouseDown={noFocusSteal}
-              onClick={() => {
-                onApplyList('bullet');
-                close();
-              }}
-              className={optionClass(false)}
-            >
-              <BulletListIcon />
-              <span className="flex-1">Bullet list</span>
-            </button>
-            <button
-              type="button"
-              role="option"
-              onMouseDown={noFocusSteal}
-              onClick={() => {
-                onApplyList('numbered');
-                close();
-              }}
-              className={optionClass(false)}
-            >
-              <NumberedListIcon />
-              <span className="flex-1">Numbered list</span>
-            </button>
-            <button
-              type="button"
-              role="option"
-              onMouseDown={noFocusSteal}
-              onClick={() => {
-                onApplyList('none');
-                close();
-              }}
-              className={optionClass(false)}
-            >
-              <NoListIcon />
-              <span className="flex-1">Remove list</span>
-            </button>
+          <MenuAccordionSection title="Size" icon={<DotsIcon count={2} />} {...catProps('size')}>
+            <MenuTileGrid cols={2}>
+              {SIZES.map((s) => (
+                <MenuTile
+                  key={s.key}
+                  preserveFocus
+                  active={active.size === s.key}
+                  label={s.label}
+                  icon={s.icon}
+                  onClick={() => {
+                    onSize(s.key);
+                    close();
+                  }}
+                />
+              ))}
+            </MenuTileGrid>
           </MenuAccordionSection>
-          <MenuAccordionSection title="Font" icon={<FontGlyph />} {...catProps('font')}>
-            {FONTS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                role="option"
-                aria-selected={currentFont === f.id}
-                onMouseDown={noFocusSteal}
+          <MenuAccordionSection title="Format" icon={<StrikethroughIcon />} {...catProps('format')}>
+            <MenuTileGrid cols={2}>
+              <MenuTile
+                preserveFocus
+                active={active.strikethrough}
+                label="Strikethrough"
+                icon={<StrikethroughIcon />}
                 onClick={() => {
-                  onSetFont(f.id);
+                  onToggle('strikethrough');
                   close();
                 }}
-                style={{ fontFamily: resolveFontStack(f.id) }}
-                className={optionClass(currentFont === f.id)}
-              >
-                <span className="flex-1">{f.label}</span>
-              </button>
-            ))}
+              />
+              <MenuTile
+                preserveFocus
+                label="Bullet list"
+                icon={<BulletListIcon />}
+                onClick={() => {
+                  onApplyList('bullet');
+                  close();
+                }}
+              />
+              <MenuTile
+                preserveFocus
+                label="Numbered"
+                icon={<NumberedListIcon />}
+                onClick={() => {
+                  onApplyList('numbered');
+                  close();
+                }}
+              />
+              <MenuTile
+                preserveFocus
+                label="Remove list"
+                icon={<NoListIcon />}
+                onClick={() => {
+                  onApplyList('none');
+                  close();
+                }}
+              />
+            </MenuTileGrid>
+          </MenuAccordionSection>
+          <MenuAccordionSection title="Font" icon={<FontGlyph />} {...catProps('font')}>
+            <MenuTileGrid cols={2}>
+              {FONTS.map((f) => (
+                <MenuTile
+                  key={f.id}
+                  preserveFocus
+                  active={currentFont === f.id}
+                  label={f.label}
+                  icon={
+                    <span style={{ fontFamily: resolveFontStack(f.id) }} className="text-sm">
+                      Aa
+                    </span>
+                  }
+                  onClick={() => {
+                    onSetFont(f.id);
+                    close();
+                  }}
+                />
+              ))}
+            </MenuTileGrid>
           </MenuAccordionSection>
           <MenuAccordionSection
             title="Padding"
             icon={padding === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={padding} />}
             {...catProps('padding')}
           >
-            {PADDINGS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                role="option"
-                aria-selected={padding === p.key}
-                onMouseDown={noFocusSteal}
-                onClick={() => {
-                  onSetPadding(p.key);
-                  close();
-                }}
-                className={optionClass(padding === p.key)}
-              >
-                {p.key === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={p.key} />}
-                <span className="flex-1">{p.label}</span>
-              </button>
-            ))}
+            <MenuTileGrid cols={2}>
+              {PADDINGS.map((p) => (
+                <MenuTile
+                  key={p.key}
+                  preserveFocus
+                  active={padding === p.key}
+                  label={p.label}
+                  icon={p.key === 'none' ? <NonePaddingIcon /> : <PaddingIcon size={p.key} />}
+                  onClick={() => {
+                    onSetPadding(p.key);
+                    close();
+                  }}
+                />
+              ))}
+            </MenuTileGrid>
           </MenuAccordionSection>
         </div>
       ) : null}
@@ -461,7 +459,6 @@ export function RichTextToolbar({
         icon: <UnderlineIcon />,
       },
     ];
-  const currentSize = SIZES.find((s) => s.key === active.size) ?? null;
   // Same spacer the element toolbar's Divider uses, so both read alike.
   const divider = (
     <span className="mx-0.5 h-6 w-px shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden />
@@ -479,6 +476,7 @@ export function RichTextToolbar({
         onToggle={onToggle}
         onSetFont={onSetFont}
         onSetPadding={onSetPadding}
+        onSize={onSize}
       />
       {divider}
       {toggles.map((t) => (
@@ -495,28 +493,6 @@ export function RichTextToolbar({
           </button>
         </Tooltip>
       ))}
-      {divider}
-      {/* Size — icon-only trigger; labels live in the menu. */}
-      <ToolbarDropdown
-        label="Text size"
-        description="Size of the selected text."
-        trigger={currentSize?.icon ?? <DotsIcon count={2} />}
-      >
-        {SIZES.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            role="option"
-            aria-selected={active.size === s.key}
-            onMouseDown={noFocusSteal}
-            onClick={() => onSize(s.key)}
-            className={optionClass(active.size === s.key)}
-          >
-            {s.icon}
-            <span className="flex-1">{s.label}</span>
-          </button>
-        ))}
-      </ToolbarDropdown>
       {divider}
       {/* Alignment — the shared 3×3 grid, reused. */}
       <ToolbarDropdown

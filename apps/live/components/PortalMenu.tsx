@@ -251,3 +251,63 @@ export function MenuToolButton({
     </Tooltip>
   );
 }
+
+// A tile button: icon stacked OVER its label, centred. The action shape
+// menus use so they read as a grid of buttons rather than a list of rows.
+// `danger` tints it red (Delete); `active` gives it the brand-fill pressed
+// tone. `preserveFocus` preventDefaults mousedown so clicking it can't blur a
+// contentEditable behind it (the rich-text toolbar's menu needs the live
+// selection to survive). Shared by the editor context menu + rich-text menu.
+export function MenuTile({
+  icon,
+  label,
+  onClick,
+  danger = false,
+  disabled = false,
+  active = false,
+  preserveFocus = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+  active?: boolean;
+  preserveFocus?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseDown={preserveFocus ? (e) => e.preventDefault() : undefined}
+      disabled={disabled}
+      aria-pressed={active}
+      className={`flex cursor-pointer flex-col items-center justify-start gap-1.5 rounded-md px-1.5 py-2 text-center text-[11px] font-medium leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 ${
+        danger
+          ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/15'
+          : active
+            ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+      }`}
+    >
+      <span
+        className={
+          danger
+            ? 'text-rose-500 dark:text-rose-300'
+            : active
+              ? ''
+              : 'text-slate-400 dark:text-slate-500'
+        }
+      >
+        {icon}
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
+// Grid wrapper for MenuTile rows (2 / 3 / 4 equal columns).
+export function MenuTileGrid({ cols = 3, children }: { cols?: 2 | 3 | 4; children: ReactNode }) {
+  const colClass = cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-4' : 'grid-cols-3';
+  return <div className={`grid gap-1 px-2 py-1.5 ${colClass}`}>{children}</div>;
+}

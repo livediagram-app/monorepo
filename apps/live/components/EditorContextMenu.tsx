@@ -72,7 +72,7 @@ import {
   SquareMenuIcon,
   StickyMenuIcon,
 } from '@/components/context-menu-icons';
-import { MenuAccordionSection } from '@/components/PortalMenu';
+import { MenuAccordionSection, MenuTile, MenuTileGrid } from '@/components/PortalMenu';
 import { ShapeIcon } from '@/components/shape-icon';
 import { isTechIconId } from '@/lib/tech-icons';
 
@@ -1358,56 +1358,6 @@ function BorderGlyph() {
   );
 }
 
-// A tile button: icon stacked OVER its label, centred. The action shape
-// every simple menu command now uses (Link / Note / Comments / Front /
-// Back / Add … / Duplicate …) so the menus read as a grid of buttons
-// rather than a list of rows. `danger` tints it red (Delete); `active`
-// gives it the brand-fill pressed tone.
-function MenuTile({
-  icon,
-  label,
-  onClick,
-  danger = false,
-  disabled = false,
-  active = false,
-}: {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-  disabled?: boolean;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={`flex cursor-pointer flex-col items-center justify-start gap-1.5 rounded-md px-1.5 py-2 text-center text-[11px] font-medium leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 ${
-        danger
-          ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/15'
-          : active
-            ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
-            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
-      }`}
-    >
-      <span
-        className={
-          danger
-            ? 'text-rose-500 dark:text-rose-300'
-            : active
-              ? ''
-              : 'text-slate-400 dark:text-slate-500'
-        }
-      >
-        {icon}
-      </span>
-      <span>{label}</span>
-    </button>
-  );
-}
-
 // A full-width row whose whole surface toggles an iOS-style switch (the
 // switch is presentational so we don't nest a button in a button). Shared by
 // the Layer aspect-lock row + the Table header/zebra toggles.
@@ -1441,10 +1391,6 @@ function MenuToggleRow({
 }
 
 // Grid wrapper for MenuTiles. Literal column classes so Tailwind keeps them.
-function MenuTileGrid({ cols = 3, children }: { cols?: 2 | 3 | 4; children: ReactNode }) {
-  const colClass = cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-4' : 'grid-cols-3';
-  return <div className={`grid gap-1 px-2 py-1.5 ${colClass}`}>{children}</div>;
-}
 
 // Opacity slider row inside the context menu. Doesn't close the menu on
 // interaction (it isn't a MenuItem): dragging fires pointer events inside
