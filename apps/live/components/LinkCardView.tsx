@@ -80,18 +80,52 @@ export function LinkCardView({
   // `pointer-events-auto` + stopping pointer-down keeps it from starting a
   // drag / selection, so the lower half acts purely as a link while the top
   // half stays draggable / double-clickable to edit.
-  const followRegion = onFollow ? (
-    <button
-      type="button"
-      aria-label="Open link"
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        onFollow();
-      }}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 top-1/2 cursor-pointer transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-    />
-  ) : null;
+  // The bottom info row IS the link hotspot (only it — not a fixed bottom
+  // half, which bled into the banner). Stops pointer-down so a click follows
+  // the link instead of dragging; the banner above stays draggable.
+  const rowInner = (
+    <>
+      {url && meta?.favicon && favOk ? (
+        <img
+          src={meta.favicon}
+          alt=""
+          onError={() => setFavOk(false)}
+          referrerPolicy="no-referrer"
+          className="h-4 w-4 shrink-0 rounded-sm"
+        />
+      ) : (
+        <LinkGlyph kind={link.kind} />
+      )}
+      <div className="min-w-0 flex-1">
+        <p
+          className="line-clamp-2 text-[12px] font-semibold leading-tight"
+          style={{ color: element.textColor ?? '#1e293b' }}
+        >
+          {title}
+        </p>
+        <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">{destination}</p>
+      </div>
+      {onFollow ? (
+        // Right-arrow affordance: nudges right on hover so the row reads as a
+        // "go to link" hotspot.
+        <span className="pointer-events-none shrink-0 self-center text-slate-400 transition-transform duration-150 group-hover:translate-x-1 dark:text-slate-500">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" />
+          </svg>
+        </span>
+      ) : null}
+    </>
+  );
 
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col overflow-hidden">
@@ -125,29 +159,22 @@ export function LinkCardView({
           </svg>
         </div>
       )}
-      <div className="flex shrink-0 items-center gap-2 px-2.5 py-2">
-        {url && meta?.favicon && favOk ? (
-          <img
-            src={meta.favicon}
-            alt=""
-            onError={() => setFavOk(false)}
-            referrerPolicy="no-referrer"
-            className="h-4 w-4 shrink-0 rounded-sm"
-          />
-        ) : (
-          <LinkGlyph kind={link.kind} />
-        )}
-        <div className="min-w-0 flex-1">
-          <p
-            className="line-clamp-2 text-[12px] font-semibold leading-tight"
-            style={{ color: element.textColor ?? '#1e293b' }}
-          >
-            {title}
-          </p>
-          <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">{destination}</p>
-        </div>
-      </div>
-      {followRegion}
+      {onFollow ? (
+        <button
+          type="button"
+          aria-label="Open link"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFollow();
+          }}
+          className="group pointer-events-auto flex shrink-0 items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+        >
+          {rowInner}
+        </button>
+      ) : (
+        <div className="flex shrink-0 items-center gap-2 px-2.5 py-2">{rowInner}</div>
+      )}
     </div>
   );
 }

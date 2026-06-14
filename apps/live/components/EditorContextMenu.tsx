@@ -101,6 +101,8 @@ type EditorContextMenuProps = {
   // clear the picked image back to a placeholder.
   onOpenImagePicker: (elementId: string) => void;
   onRemoveImage: (elementId: string) => void;
+  // Clear the link off the selected element (spec/40 link-card "Remove Link").
+  onRemoveLink: () => void;
   onBringToFront: () => void;
   onSendToBack: () => void;
   // Toggle aspect-ratio lock + set opacity on the clicked element (boxed
@@ -287,8 +289,45 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     const hasInlineIcon =
       target.type === 'shape' && target.shape !== 'icon' && target.iconId !== undefined;
     const hasImage = target.type === 'image' && target.imageId != null;
+    const hasLink = target.link != null;
     return (
       <ContextMenu position={position} onClose={onClose} flush>
+        {/* Link — set / change / remove a link-card's destination (spec/40). */}
+        {target.type === 'link-card' ? (
+          <MenuAccordionSection title="Link" icon={<LinkMenuIcon />} {...sectionProps('link')}>
+            {hasLink ? (
+              <MenuTileGrid cols={2}>
+                <MenuTile
+                  icon={<LinkMenuIcon />}
+                  label="Change Link"
+                  onClick={() => {
+                    props.onLinkElement(target.id);
+                    onClose();
+                  }}
+                />
+                <MenuTile
+                  icon={<RemoveIconGlyph />}
+                  label="Remove Link"
+                  onClick={() => {
+                    props.onRemoveLink();
+                    onClose();
+                  }}
+                />
+              </MenuTileGrid>
+            ) : (
+              <div className="px-2 py-1.5">
+                <MenuTile
+                  icon={<LinkMenuIcon />}
+                  label="Set Link"
+                  onClick={() => {
+                    props.onLinkElement(target.id);
+                    onClose();
+                  }}
+                />
+              </div>
+            )}
+          </MenuAccordionSection>
+        ) : null}
         {/* Image — pick / change / clear the bitmap (spec/19). */}
         {target.type === 'image' ? (
           <MenuAccordionSection title="Image" icon={<ImageGlyph />} {...sectionProps('image')}>
@@ -601,15 +640,19 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             icon={<CommentMenuIcon />}
             {...sectionProps('collaborate')}
           >
-            <MenuTileGrid cols={3}>
-              <MenuTile
-                icon={<LinkMenuIcon />}
-                label={target.link ? 'Edit Link' : 'Link to Source'}
-                onClick={() => {
-                  props.onLinkElement(target.id);
-                  onClose();
-                }}
-              />
+            {/* Link-cards have their own Link category (set / change / remove),
+                so the generic "Link to Source" is dropped here for them. */}
+            <MenuTileGrid cols={target.type === 'link-card' ? 2 : 3}>
+              {target.type !== 'link-card' ? (
+                <MenuTile
+                  icon={<LinkMenuIcon />}
+                  label={target.link ? 'Edit Link' : 'Link to Source'}
+                  onClick={() => {
+                    props.onLinkElement(target.id);
+                    onClose();
+                  }}
+                />
+              ) : null}
               <MenuTile
                 icon={<NoteMenuIcon />}
                 label={target.note ? 'Edit Note' : 'Add Note'}
