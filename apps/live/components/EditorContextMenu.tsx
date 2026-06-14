@@ -185,6 +185,11 @@ type EditorContextMenuProps = {
   selectionCount: number;
   selectionIsGroup: boolean;
   selectionLocked: boolean;
+  // The actual selected elements (multi-selection / group members), so the
+  // multi menu can surface the formatting categories that match their types
+  // (Colours / Text / Border for boxed, Line + Pointer for arrows). The
+  // format setters above already apply to the whole selection.
+  selectionElements: Element[];
   onDuplicateSelection: () => void;
   onDeleteSelection: () => void;
   onToggleLockSelection: () => void;
@@ -293,6 +298,168 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             }}
           />
         </div>
+        {(() => {
+          // Type-aware formatting for the whole selection: only the categories
+          // that match the selected element types show, and each control
+          // applies to every matching member (the setters are selection-wide).
+          // Display values read off the first matching member.
+          const sel = props.selectionElements;
+          const boxedSel = sel.filter(isBoxed);
+          const arrowSel = sel.filter((el) => el.type === 'arrow');
+          const colourable = sel.some((el) => supportsColours(el));
+          const borderableSel = sel.some((el) => supportsBorderControls(el));
+          const textSrc = boxedSel[0] ?? arrowSel[0];
+          const fillSrc = boxedSel.find(
+            (el) => defaultFillColor(el as BoxedElement) !== 'transparent',
+          ) as BoxedElement | undefined;
+          const strokeSrc = boxedSel.find(
+            (el) => defaultStrokeColor(el as BoxedElement) !== 'transparent',
+          ) as BoxedElement | undefined;
+          const borderSrc = sel.find((el) => supportsBorderControls(el)) as
+            | { strokeWidth?: BorderStroke; strokeStyle?: BorderStyle; type: string }
+            | undefined;
+          const arrowSrc = arrowSel[0];
+          if (!colourable && !borderableSel && !arrowSel.length) return null;
+          return (
+            <>
+              {colourable ? (
+                <MenuAccordionSection
+                  title="Colours"
+                  icon={<PaletteMenuIcon />}
+                  {...sectionProps('m-colours')}
+                >
+                  {textSrc ? (
+                    <ColourRow
+                      label="Text"
+                      value={
+                        (textSrc as { textColor?: string }).textColor ??
+                        defaultTextColor(textSrc as BoxedElement)
+                      }
+                      onChange={props.onSetTextColor}
+                      {...colorProps('m-text')}
+                      presets={props.presetColors}
+                    />
+                  ) : null}
+                  {fillSrc ? (
+                    <ColourRow
+                      label="Background"
+                      value={fillSrc.fillColor ?? defaultFillColor(fillSrc)}
+                      onChange={props.onSetFillColor}
+                      {...colorProps('m-bg')}
+                      presets={props.presetColors}
+                    />
+                  ) : null}
+                  {strokeSrc ? (
+                    <ColourRow
+                      label="Border"
+                      value={strokeSrc.strokeColor ?? defaultStrokeColor(strokeSrc)}
+                      onChange={props.onSetStrokeColor}
+                      {...colorProps('m-border')}
+                      presets={props.presetColors}
+                    />
+                  ) : null}
+                </MenuAccordionSection>
+              ) : null}
+              {textSrc ? (
+                <MenuAccordionSection
+                  title="Text"
+                  icon={<TextGlyph />}
+                  {...sectionProps('m-text-size')}
+                >
+                  <p className="px-3 pb-1 pt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                    Size
+                  </p>
+                  <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
+                    {(
+                      [
+                        ['scale', <ScaleIcon key="s" />],
+                        ['sm', <DotsIcon key="1" count={1} />],
+                        ['md', <DotsIcon key="2" count={2} />],
+                        ['lg', <DotsIcon key="3" count={3} />],
+                      ] as const
+                    ).map(([size, glyph]) => (
+                      <SizeButton
+                        key={size}
+                        active={(textSrc as { textSize?: TextSize }).textSize === size}
+                        onClick={() => props.onSetTextSize(size)}
+                      >
+                        {glyph}
+                      </SizeButton>
+                    ))}
+                  </div>
+                </MenuAccordionSection>
+              ) : null}
+              {borderableSel ? (
+                <MenuAccordionSection
+                  title="Border"
+                  icon={<BorderGlyph />}
+                  {...sectionProps('m-border-style')}
+                >
+                  <div className="px-2 py-1">
+                    <BorderGrid label="Strength" cols={5}>
+                      {BORDER_STROKES.map((v) => (
+                        <BorderButton
+                          key={v}
+                          active={(borderSrc?.strokeWidth ?? 'medium') === v}
+                          onClick={() => props.onSetBorderStroke(v)}
+                        >
+                          <BorderStrokeIcon value={v} />
+                        </BorderButton>
+                      ))}
+                    </BorderGrid>
+                    <BorderGrid label="Pattern" cols={3}>
+                      {BORDER_STYLES.map((v) => (
+                        <BorderButton
+                          key={v}
+                          active={(borderSrc?.strokeStyle ?? 'solid') === v}
+                          onClick={() => props.onSetBorderStyle(v)}
+                        >
+                          <BorderStyleIcon value={v} />
+                        </BorderButton>
+                      ))}
+                    </BorderGrid>
+                  </div>
+                </MenuAccordionSection>
+              ) : null}
+              {arrowSrc ? (
+                <>
+                  <MenuAccordionSection
+                    title="Line"
+                    icon={<LineGlyph />}
+                    {...sectionProps('m-line')}
+                  >
+                    <div className="px-3 py-1.5">
+                      <ArrowLineControls
+                        thickness={arrowThicknessOf(arrowSrc)}
+                        style={arrowStyleOf(arrowSrc)}
+                        strokeStyle={arrowSrc.strokeStyle ?? 'solid'}
+                        onSetThickness={props.onSetArrowThickness}
+                        onSetStyle={props.onSetArrowStyle}
+                        onSetStrokeStyle={props.onSetArrowStrokeStyle}
+                      />
+                    </div>
+                  </MenuAccordionSection>
+                  <MenuAccordionSection
+                    title="Pointer"
+                    icon={<PointerGlyph />}
+                    {...sectionProps('m-pointer')}
+                  >
+                    <div className="px-3 py-1.5">
+                      <ArrowPointerControls
+                        ends={arrowSrc.arrowEnds ?? 'to'}
+                        headSize={arrowheadSizeOf(arrowSrc)}
+                        headShape={arrowheadShapeOf(arrowSrc)}
+                        onSetEnds={props.onSetArrowEnds}
+                        onSetHeadSize={props.onSetArrowheadSize}
+                        onSetHeadShape={props.onSetArrowheadShape}
+                      />
+                    </div>
+                  </MenuAccordionSection>
+                </>
+              ) : null}
+            </>
+          );
+        })()}
       </ContextMenu>
     );
   }

@@ -384,11 +384,15 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   // this rule (these two setters plus the matching Canvas
   // paletteSelection.borderStroke / borderStyle derivations) in
   // step when a future element variant gains a border.
+  // Border presets apply to every border-bearing member of the selection
+  // (currentSelectionIds is just {selectedId} for a single select, so this
+  // is unchanged there but also drives the multi-selection menu).
   const setBorderStrokeSelected = (value: BorderStroke) => {
-    if (!selectedId) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
     commit((els) =>
       els.map((el) =>
-        el.id === selectedId && (supportsBorder(el) || el.type === 'table')
+        ids.has(el.id) && (supportsBorder(el) || el.type === 'table')
           ? { ...el, strokeWidth: value }
           : el,
       ),
@@ -396,10 +400,11 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'BorderStroke');
   };
   const setBorderStyleSelected = (value: BorderStyle) => {
-    if (!selectedId) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
     commit((els) =>
       els.map((el) =>
-        el.id === selectedId && (supportsBorder(el) || el.type === 'table')
+        ids.has(el.id) && (supportsBorder(el) || el.type === 'table')
           ? { ...el, strokeStyle: value }
           : el,
       ),
@@ -407,10 +412,11 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'BorderStyle');
   };
   const setBorderRadiusSelected = (value: BorderRadius) => {
-    if (!selectedId) return;
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
     commit((els) =>
       els.map((el) =>
-        el.id === selectedId && el.type === 'shape' ? { ...el, borderRadius: value } : el,
+        ids.has(el.id) && el.type === 'shape' ? { ...el, borderRadius: value } : el,
       ),
     );
     track('Element', 'Changed', 'BorderRadius');

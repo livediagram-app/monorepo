@@ -1188,6 +1188,9 @@ export function EditorView() {
           selectionCount={ctxMemberIds.length}
           selectionIsGroup={ctxIsGroup}
           selectionLocked={ctxSelectionLocked}
+          selectionElements={ctxMemberIds
+            .map((id) => activeTab.elements.find((e) => e.id === id))
+            .filter((e): e is NonNullable<typeof e> => e != null)}
           onDuplicateSelection={ctxMultiActive ? duplicateMultiSelected : duplicateSelected}
           onDeleteSelection={ctxMultiActive ? deleteMultiSelected : deleteSelected}
           onToggleLockSelection={ctxMultiActive ? toggleLockMultiSelected : toggleLockSelected}
