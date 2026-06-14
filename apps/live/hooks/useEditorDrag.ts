@@ -37,6 +37,7 @@ import {
   isBoxed,
   rebindArrowAnchorsAfterMove,
   selectionMembers,
+  snapArrowPoint,
   snapResizeBounds,
   snapToAlignment,
   snapToAnchor,
@@ -641,6 +642,35 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     });
   };
 
+  // Snap a dragged arrow control point against its polyline neighbours + the
+  // nearby element edges/centres, so a bend squares up to a right angle or
+  // lines up with a shape instead of landing at an arbitrary spot. `pointIndex`
+  // selects a multi-bend slot; null is the single bow / the elbow (which line
+  // up to the endpoints). The pinned-endpoint elements are excluded so the
+  // bend doesn't cling to the box the arrow connects to. Returns the snapped
+  // point + the guide lines now in effect (for the alignment overlay).
+  const snapArrowControl = (
+    arrowId: string,
+    raw: { x: number; y: number },
+    pointIndex: number | null | undefined,
+  ): { point: { x: number; y: number }; guides: AlignmentGuide[] } => {
+    const els = depsRef.current.activeTab.elements;
+    const arrow = els.find((e): e is ArrowElement => e.id === arrowId && e.type === 'arrow');
+    if (!arrow) return { point: raw, guides: [] };
+    const from = endpointPosition(arrow.from, els);
+    const to = endpointPosition(arrow.to, els);
+    const anchors = arrow.curvePoints ? curveAnchorPoints(from, to, arrow.curvePoints) : [];
+    const poly = [from, ...anchors, to];
+    const neighbours =
+      pointIndex != null && arrow.curvePoints
+        ? [poly[pointIndex]!, poly[pointIndex + 2]!]
+        : [from, to];
+    const exclude = new Set<string>();
+    if (arrow.from.kind === 'pinned') exclude.add(arrow.from.elementId);
+    if (arrow.to.kind === 'pinned') exclude.add(arrow.to.elementId);
+    return snapArrowPoint(raw, neighbours, els, ALIGN_SNAP_THRESHOLD, exclude);
+  };
+
   // Insert a control point at a clicked canvas position, so clicking an
   // arrow's line adds a bend. Works on ANY arrow style: a straight or angled
   // arrow is switched to a smooth curve at the same time (the user clicked
@@ -1108,11 +1138,17 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
         // gesture start. Translating that into a curveOffset means
         // subtracting the chord midpoint (also captured at start so
         // a concurrent endpoint move doesn't yank the curve).
-        const controlX = drag.startMidX + drag.grabDx + dx;
-        const controlY = drag.startMidY + drag.grabDy + dy;
-        const offsetDx = controlX - drag.startMidX;
-        const offsetDy = controlY - drag.startMidY;
+        const rawX = drag.startMidX + drag.grabDx + dx;
+        const rawY = drag.startMidY + drag.grabDy + dy;
         const pointIndex = drag.pointIndex;
+        const { point: snapped, guides } = snapArrowControl(
+          drag.arrowId,
+          { x: rawX, y: rawY },
+          pointIndex,
+        );
+        const offsetDx = snapped.x - drag.startMidX;
+        const offsetDy = snapped.y - drag.startMidY;
+        scheduleGuides((depsRef.current.alignmentGuidesRef.current ?? true) ? guides : []);
         tick((els) =>
           els.map((el) => {
             if (el.id !== drag.arrowId || el.type !== 'arrow') return el;
@@ -1137,10 +1173,16 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
         // we store it as a delta from the auto-elbow position so
         // the bend survives concurrent endpoint moves the same way
         // the curveOffset does.
-        const elbowX = drag.startBaseX + drag.grabDx + dx;
-        const elbowY = drag.startBaseY + drag.grabDy + dy;
-        const offsetDx = elbowX - drag.startBaseX;
-        const offsetDy = elbowY - drag.startBaseY;
+        const rawX = drag.startBaseX + drag.grabDx + dx;
+        const rawY = drag.startBaseY + drag.grabDy + dy;
+        const { point: snapped, guides } = snapArrowControl(
+          drag.arrowId,
+          { x: rawX, y: rawY },
+          null,
+        );
+        const offsetDx = snapped.x - drag.startBaseX;
+        const offsetDy = snapped.y - drag.startBaseY;
+        scheduleGuides((depsRef.current.alignmentGuidesRef.current ?? true) ? guides : []);
         tick((els) =>
           els.map((el) =>
             el.id === drag.arrowId && el.type === 'arrow'

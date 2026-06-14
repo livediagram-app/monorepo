@@ -426,6 +426,75 @@ export function snapToAlignment(
   return { dx: bestX ?? 0, dy: bestY ?? 0, snappedX: bestX !== null, snappedY: bestY !== null };
 }
 
+// Snap a dragged arrow control point (a curve bend, the single-bow control,
+// or an angled elbow) to the alignment lines around it, so bends square up
+// instead of landing at arbitrary sub-pixel positions. Two families of
+// candidate line, both per axis, nearest-within-`threshold` wins:
+//   1. `neighbours` — the point's adjacent vertices on the rendered line
+//      (the previous + next vertex). Snapping x to a neighbour's x makes that
+//      segment vertical; snapping y makes it horizontal. Hitting one on each
+//      axis squares the bend to a right angle.
+//   2. Other elements' left / centre / right (x) and top / centre / bottom
+//      (y), so a bend lines up with nearby shapes the same way a moved box
+//      does.
+// Returns the snapped point plus the guide lines now in effect (same shape as
+// `alignmentGuides`, so the caller renders them through the existing overlay).
+// `excludeIds` are elements the arrow's own endpoints sit on, skipped so a
+// pinned arrow doesn't snap its bend to the very box it connects.
+export function snapArrowPoint(
+  point: Point,
+  neighbours: Point[],
+  elements: Element[],
+  threshold: number,
+  excludeIds: Set<ElementId> = new Set(),
+): { point: Point; guides: AlignmentGuide[] } {
+  // Each candidate carries the perpendicular coordinate of whatever it lines
+  // up with, so the emitted guide spans from the point to that reference.
+  const xLines: { pos: number; ref: number }[] = [];
+  const yLines: { pos: number; ref: number }[] = [];
+  for (const n of neighbours) {
+    xLines.push({ pos: n.x, ref: n.y });
+    yLines.push({ pos: n.y, ref: n.x });
+  }
+  for (const el of elements) {
+    if (!isBoxed(el) || excludeIds.has(el.id)) continue;
+    const cx = el.x + el.width / 2;
+    const cy = el.y + el.height / 2;
+    for (const x of [el.x, cx, el.x + el.width]) xLines.push({ pos: x, ref: cy });
+    for (const y of [el.y, cy, el.y + el.height]) yLines.push({ pos: y, ref: cx });
+  }
+  const nearest = (lines: { pos: number; ref: number }[], v: number) => {
+    let best: { pos: number; ref: number } | null = null;
+    for (const c of lines) {
+      const d = Math.abs(c.pos - v);
+      if (d <= threshold && (best === null || d < Math.abs(best.pos - v))) best = c;
+    }
+    return best;
+  };
+  const bestX = nearest(xLines, point.x);
+  const bestY = nearest(yLines, point.y);
+  const sx = bestX ? bestX.pos : point.x;
+  const sy = bestY ? bestY.pos : point.y;
+  const guides: AlignmentGuide[] = [];
+  if (bestX) {
+    guides.push({
+      axis: 'x',
+      position: sx,
+      start: Math.min(sy, bestX.ref),
+      end: Math.max(sy, bestX.ref),
+    });
+  }
+  if (bestY) {
+    guides.push({
+      axis: 'y',
+      position: sy,
+      start: Math.min(sx, bestY.ref),
+      end: Math.max(sx, bestY.ref),
+    });
+  }
+  return { point: { x: sx, y: sy }, guides };
+}
+
 // Snap candidate bounds during a resize to align with other elements'
 // edges, centres, and dimensions. Mirrors `snapToAlignment` but only
 // nudges the edges that the active resize handle actually moves

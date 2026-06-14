@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   alignmentGuides,
   distributionSnap,
+  snapArrowPoint,
   snapResizeBounds,
   snapToAlignment,
   type ShapeElement,
@@ -275,5 +276,43 @@ describe('distributionSnap', () => {
     const c = shape('c', { x: 400, y: 0, width: 100, height: 100 });
     const out = distributionSnap(box(195, 0, 100, 100), [a, c], new Set(['a']), 10);
     expect(out.dx).toBe(0); // only one neighbour left → no pair
+  });
+});
+
+describe('snapArrowPoint', () => {
+  const pt = (x: number, y: number) => ({ x, y });
+
+  it('leaves the point alone when nothing is within the threshold', () => {
+    const out = snapArrowPoint(pt(50, 50), [pt(0, 0), pt(200, 200)], [], 10);
+    expect(out.point).toEqual({ x: 50, y: 50 });
+    expect(out.guides).toEqual([]);
+  });
+
+  it('squares the bend to a right angle against its neighbours', () => {
+    // Prev vertex at x=100, next vertex at y=200. A point dragged near
+    // (104, 196) should snap to x=100 (vertical in-leg) and y=200
+    // (horizontal out-leg) → a clean corner at (100, 200).
+    const out = snapArrowPoint(pt(104, 196), [pt(100, 0), pt(300, 200)], [], 10);
+    expect(out.point).toEqual({ x: 100, y: 200 });
+    expect(out.guides.find((g) => g.axis === 'x')?.position).toBe(100);
+    expect(out.guides.find((g) => g.axis === 'y')?.position).toBe(200);
+  });
+
+  it('snaps to a nearby element centre / edge', () => {
+    const target = shape('t', { x: 200, y: 200, width: 100, height: 100 });
+    // Element centre is (250, 250); a point near it on X snaps to 250.
+    const out = snapArrowPoint(pt(246, 0), [], [target], 10);
+    expect(out.point.x).toBe(250);
+  });
+
+  it('excludes the pinned-endpoint element so the bend does not cling to it', () => {
+    const host = shape('host', { x: 200, y: 200, width: 100, height: 100 });
+    const out = snapArrowPoint(pt(246, 0), [], [host], 10, new Set(['host']));
+    expect(out.point.x).toBe(246); // host skipped → nothing to snap to
+  });
+
+  it('takes the nearest candidate when several are in range', () => {
+    const out = snapArrowPoint(pt(103, 0), [pt(100, 0), pt(108, 0)], [], 10);
+    expect(out.point.x).toBe(100); // |103-100|=3 beats |103-108|=5
   });
 });
