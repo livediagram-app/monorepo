@@ -39,7 +39,7 @@ import { isTechIconId } from '@/lib/tech-icons';
 
 type Bounds = { x: number; y: number; width: number; height: number };
 
-export type CanvasSelection = {
+type CanvasSelection = {
   // Group-expanded membership of the single selection (the element +
   // every other element sharing its groupId). Empty when nothing is
   // singly selected.
@@ -214,7 +214,7 @@ export function deriveCanvasSelection(input: {
 // editor reads these to render the selected element's context menu /
 // popover; nullable fields are null when they don't apply to the
 // selection's type.
-export type SelectedElementFields = {
+type SelectedElementFields = {
   textSize: TextSize | null;
   textAlignX: TextAlignX | null;
   textAlignY: TextAlignY | null;
