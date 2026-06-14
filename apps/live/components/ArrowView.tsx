@@ -28,6 +28,7 @@ import {
   type TextSize,
 } from '@livediagram/diagram';
 import type { ArrowEnd } from '@/lib/canvas';
+import { useLongPress } from '@/hooks/useLongPress';
 
 type ArrowViewProps = {
   arrow: ArrowElement;
@@ -119,6 +120,9 @@ function ArrowViewImpl({
   fontFamily,
 }: ArrowViewProps) {
   const isLocked = arrow.locked === true || tabLocked;
+  // Touch long-press opens the arrow's context menu (touch has no
+  // right-click); a press that moves becomes a select / drag instead.
+  const longPress = useLongPress((x, y) => onContextSelect(arrow.id, x, y));
   const from = endpointPosition(arrow.from, elementIndex);
   const to = endpointPosition(arrow.to, elementIndex);
   const markerUrl = `url(#${arrowheadMarkerId(arrowheadShapeOf(arrow), arrowheadSizeOf(arrow))})`;
@@ -247,6 +251,7 @@ function ArrowViewImpl({
           onContextSelect(arrow.id, e.clientX, e.clientY);
         }}
         onPointerDown={(e) => {
+          longPress.onPointerDown(e);
           e.stopPropagation();
           onSelect(arrow.id, e);
           // Translate gesture only fires when both ends are

@@ -42,6 +42,7 @@ import { IconGlyph } from './icon-glyph';
 import { TechIconGlyph } from './tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
 import { isTechIconId } from '@/lib/tech-icons';
+import { useLongPress } from '@/hooks/useLongPress';
 import { describeLink } from '@/lib/link-label';
 import { TableView } from './TableView';
 
@@ -349,6 +350,14 @@ function BoxedElementViewImpl({
     onContextSelect(element.id, e.clientX, e.clientY);
   };
 
+  // Touch long-press is the phone / tablet equivalent of right-click: it
+  // opens the element's context menu (touch never fires `contextmenu`). Same
+  // guards as handleContextMenu; a press that moves becomes a drag instead.
+  const longPress = useLongPress((x, y) => {
+    if (isEditing || remotelyLocked) return;
+    onContextSelect(element.id, x, y);
+  });
+
   const cursor = remotelyLocked
     ? 'cursor-not-allowed'
     : isPaintMode
@@ -481,7 +490,10 @@ function BoxedElementViewImpl({
   return (
     <div
       data-element-id={element.id}
-      onPointerDown={handleShapeDown}
+      onPointerDown={(e) => {
+        longPress.onPointerDown(e);
+        handleShapeDown(e);
+      }}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
       onPointerEnter={isAnnotation ? () => setHovering(true) : undefined}
