@@ -289,28 +289,59 @@ function mapLines(
   return fromChars(out);
 }
 
+// Strip a leading marker from one line's chars.
+function stripLine(lineChars: RunChar[]): RunChar[] {
+  const m = lineChars
+    .map((c) => c.ch)
+    .join('')
+    .match(LINE_PREFIX_RE);
+  return m ? lineChars.slice(m[0].length) : lineChars;
+}
+
+// The set of line indices a character range touches (caret included on its
+// own line). null = "every line" (no range given).
+function linesInRange(runs: TextRun[], range?: { start: number; end: number }): Set<number> | null {
+  if (!range) return null;
+  const text = runsPlainText(runs);
+  const s = Math.min(range.start, range.end);
+  const e = Math.max(range.start, range.end);
+  const set = new Set<number>();
+  let lineStart = 0;
+  let idx = 0;
+  for (let i = 0; i <= text.length; i++) {
+    if (i === text.length || text[i] === '\n') {
+      if (lineStart <= e && i >= s) set.add(idx);
+      idx++;
+      lineStart = i + 1;
+    }
+  }
+  return set;
+}
+
 /** Strip a leading bullet / number marker from every line, keeping formatting. */
 export function stripListPrefixes(runs: TextRun[]): TextRun[] {
-  return mapLines(runs, (lineChars) => {
-    const m = lineChars
-      .map((c) => c.ch)
-      .join('')
-      .match(LINE_PREFIX_RE);
-    return m ? lineChars.slice(m[0].length) : lineChars;
-  });
+  return mapLines(runs, (lineChars) => stripLine(lineChars));
 }
 
 /**
  * Turn the text into a bulleted / numbered list (or strip markers for
  * 'none'). Prepends a marker to every non-empty line, renumbering 'numbered'
  * sequentially; existing markers are stripped first so the result is clean.
+ * When `range` is given, only the lines it touches are affected (the rest
+ * keep their current markers); numbering restarts within the affected lines.
  */
-export function applyListStyle(runs: TextRun[], style: ListStyle): TextRun[] {
-  const base = stripListPrefixes(runs);
+export function applyListStyle(
+  runs: TextRun[],
+  style: ListStyle,
+  range?: { start: number; end: number },
+): TextRun[] {
+  const sel = linesInRange(runs, range);
+  const inSel = (i: number) => sel === null || sel.has(i);
+  const base = mapLines(runs, (lineChars, i) => (inSel(i) ? stripLine(lineChars) : lineChars));
   if (style === 'none') return base;
   let n = 0;
-  return mapLines(base, (lineChars) => {
-    if (lineChars.length === 0) return lineChars;
+  return mapLines(base, (lineChars, i) => {
+    if (!inSel(i) || lineChars.length === 0) return lineChars;
     const prefix = style === 'bullet' ? BULLET_PREFIX : `${++n}. `;
     const prefixChars: RunChar[] = [...prefix].map((ch) => ({ ch, attrs: {} }));
     return [...prefixChars, ...lineChars];

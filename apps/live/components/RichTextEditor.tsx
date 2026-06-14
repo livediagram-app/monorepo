@@ -424,13 +424,16 @@ export function RichTextEditor({
     onPatch({ size });
   };
 
-  // Bullet / numbered list: a whole-text transform (prepends line markers,
-  // renumbering), so it ignores the selection range. Caret lands at the end.
+  // Bullet / numbered list (prepends line markers, renumbering). Scoped to
+  // the selected lines when there's a selection; whole text on a bare caret.
   const applyList = (style: ListStyle) => {
-    const next = applyListStyle(runsRef.current, style);
+    const el = editorRef.current;
+    const sel = (el ? domSelectionToOffsets(el) : null) ?? selectionRef.current;
+    const range = sel && sel.start !== sel.end ? sel : undefined;
+    const next = applyListStyle(runsRef.current, style, range);
     runsRef.current = next;
     const len = runsPlainText(next).length;
-    pendingSelectionRef.current = { start: len, end: len };
+    pendingSelectionRef.current = range ?? { start: len, end: len };
     setVersion((v) => v + 1);
     track('Element', 'Changed', 'TextFormat');
   };

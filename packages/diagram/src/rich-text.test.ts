@@ -179,6 +179,12 @@ describe('applyListStyle / stripListPrefixes', () => {
     expect(runsPlainText(bulleted)).toBe('• a\n• b\n• c');
   });
 
+  it('with a range, only marks the lines the range touches', () => {
+    // "a\nb\nc": offsets a=0, \n=1, b=2, \n=3, c=4. Range over line 2 ("b").
+    const runs = applyListStyle(runsFromPlainText('a\nb\nc'), 'bullet', { start: 2, end: 3 });
+    expect(runsPlainText(runs)).toBe('a\n• b\nc');
+  });
+
   it("'none' strips existing markers", () => {
     const bulleted = applyListStyle(runsFromPlainText('a\nb'), 'bullet');
     expect(runsPlainText(applyListStyle(bulleted, 'none'))).toBe('a\nb');
