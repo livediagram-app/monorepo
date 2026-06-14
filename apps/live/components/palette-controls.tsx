@@ -121,7 +121,7 @@ export function ToolButton({
 }) {
   const modHeld = useModKeyHeld();
   const showBadge = !!shortcut && modHeld;
-  const base = `relative flex flex-1 items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium transition ${segmented ? '' : 'rounded-md'}`;
+  const base = `relative flex flex-1 items-center justify-center gap-1.5 px-2.5 py-2 text-xs font-medium transition ${segmented ? '' : 'rounded-md'}`;
   const tone = active
     ? `bg-brand-500 text-white ${segmented ? '' : 'shadow-sm'}`
     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';

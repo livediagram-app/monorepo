@@ -134,7 +134,7 @@ export function PaletteDropdown({
   // padding than the bordered filter dropdowns so they're a bigger, easier
   // hit target at the top of the panel.
   const shape =
-    variant === 'flush' ? 'rounded-none border-0 px-3 py-2.5' : 'h-[26px] rounded-md border px-2';
+    variant === 'flush' ? 'rounded-none border-0 px-3.5 py-3' : 'h-[26px] rounded-md border px-2';
   const trigger = (
     <button
       type="button"
@@ -142,7 +142,7 @@ export function PaletteDropdown({
       aria-haspopup="listbox"
       aria-expanded={open}
       aria-label={ariaLabel}
-      className={`flex min-w-0 items-center gap-1 ${shape} text-[11px] font-medium transition ${
+      className={`flex min-w-0 items-center gap-1.5 ${shape} ${variant === 'flush' ? 'text-xs' : 'text-[11px]'} font-medium transition ${
         accent
           ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/50 dark:bg-brand-500/15 dark:text-brand-200'
           : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
