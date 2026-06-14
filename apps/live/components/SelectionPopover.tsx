@@ -147,7 +147,7 @@ export function SelectionPopover({
     >
       {title ? (
         <span
-          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm dark:bg-slate-700 ${
+          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 shadow-sm ring-1 ring-slate-200 dark:bg-slate-700 dark:text-white dark:ring-0 ${
             placeAbove ? 'bottom-full mb-1' : 'top-full mt-1'
           }`}
         >
