@@ -528,11 +528,33 @@ export function ToggleSwitch({
   checked,
   onChange,
   label,
+  presentational = false,
 }: {
   checked: boolean;
-  onChange: () => void;
+  onChange?: () => void;
   label: string;
+  // Render a non-interactive <span> instead of a <button> — for when an
+  // enclosing row already owns the click (so the whole row toggles without
+  // nesting a button inside a button).
+  presentational?: boolean;
 }) {
+  const trackClass = checked
+    ? 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-brand-500 transition'
+    : 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-slate-300 transition dark:bg-slate-600';
+  if (presentational) {
+    return (
+      <span role="switch" aria-checked={checked} aria-label={label} className={trackClass}>
+        <span
+          aria-hidden
+          className={
+            checked
+              ? 'inline-block h-3.5 w-3.5 translate-x-[18px] rounded-full bg-white shadow-sm transition'
+              : 'inline-block h-3.5 w-3.5 translate-x-[3px] rounded-full bg-white shadow-sm transition'
+          }
+        />
+      </span>
+    );
+  }
   return (
     <button
       type="button"
@@ -540,11 +562,7 @@ export function ToggleSwitch({
       aria-checked={checked}
       aria-label={label}
       onClick={onChange}
-      className={
-        checked
-          ? 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-brand-500 transition'
-          : 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-slate-300 transition dark:bg-slate-600'
-      }
+      className={trackClass}
     >
       <span
         aria-hidden

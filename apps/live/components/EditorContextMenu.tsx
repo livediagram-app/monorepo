@@ -378,8 +378,14 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           {boxed ? (
             <>
               <ContextMenuDivider />
-              {/* Lock aspect ratio — iOS-style switch, matching the panel. */}
-              <div className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+              {/* Lock aspect ratio — the whole row toggles (the switch is a
+                  presentational <span> so we don't nest a button in a button). */}
+              <button
+                type="button"
+                onClick={props.onToggleAspectLock}
+                aria-pressed={!!(target as { aspectLocked?: boolean }).aspectLocked}
+                className="flex w-full items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
                 <span className="flex items-center gap-2">
                   <span className="text-slate-400 dark:text-slate-500">
                     <AspectLockMenuIcon />
@@ -387,11 +393,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   Lock aspect ratio
                 </span>
                 <ToggleSwitch
+                  presentational
                   checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
-                  onChange={props.onToggleAspectLock}
                   label="Lock aspect ratio"
                 />
-              </div>
+              </button>
             </>
           ) : null}
         </MenuAccordionSection>

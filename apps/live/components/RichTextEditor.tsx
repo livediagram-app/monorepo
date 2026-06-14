@@ -47,6 +47,7 @@ import {
   insertTextAtCaret,
   offsetsToDomRange,
   readRunsFromDom,
+  reconcileTrailingNewline,
   selectRange,
 } from './rich-text-dom';
 import { RichTextToolbar, type ActiveFormat } from './RichTextToolbar';
@@ -234,6 +235,8 @@ export function RichTextEditor({
       span.textContent = run.text;
       el.appendChild(span);
     }
+    // Render the empty last line when the text ends in a newline.
+    reconcileTrailingNewline(el);
   };
 
   const refreshActive = () => {
@@ -249,7 +252,12 @@ export function RichTextEditor({
   // fire React's onInput.
   const syncFromDom = () => {
     const el = editorRef.current;
-    if (el) runsRef.current = readRunsFromDom(el);
+    if (el) {
+      runsRef.current = readRunsFromDom(el);
+      // Keep the trailing-newline sentinel in step: typing past a trailing
+      // newline drops it, an Enter at the end adds it.
+      reconcileTrailingNewline(el);
+    }
     refreshActive();
   };
 

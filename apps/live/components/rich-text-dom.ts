@@ -25,6 +25,31 @@ const DATA = {
   color: 'data-rt-color',
 } as const;
 
+// Marks the render-only trailing <br>. A '\n' at the very end of the content
+// isn't drawn as an empty last line under white-space: pre-wrap (so a single
+// Enter at the end looked like nothing happened until you pressed it twice);
+// a trailing <br> forces that line to show. It carries no logical text, so
+// read-back skips it and the offset walk never sees it (it has no text).
+const RENDER_NEWLINE_ATTR = 'data-rt-render-nl';
+
+// Add or remove the render-only trailing <br> so it's present exactly when
+// the editor's text ends in a newline. Caret-safe: the sentinel always sits
+// at the very end (after any caret), so adding/removing it never moves the
+// selection. Call after any edit that may change the trailing character.
+export function reconcileTrailingNewline(editorEl: HTMLElement): void {
+  const last = editorEl.lastChild;
+  const isSentinel =
+    last instanceof HTMLElement && last.tagName === 'BR' && last.hasAttribute(RENDER_NEWLINE_ATTR);
+  const endsWithNewline = (editorEl.textContent ?? '').endsWith('\n');
+  if (endsWithNewline && !isSentinel) {
+    const br = document.createElement('br');
+    br.setAttribute(RENDER_NEWLINE_ATTR, '');
+    editorEl.appendChild(br);
+  } else if (!endsWithNewline && isSentinel) {
+    editorEl.removeChild(last);
+  }
+}
+
 /** React props (data-* attrs) describing a run's deltas, for the editor to spread onto its span. */
 export function dataAttrsForRun(run: TextRun): Record<string, string> {
   const out: Record<string, string> = {};
@@ -83,6 +108,10 @@ export function readRunsFromDom(editorEl: HTMLElement): TextRun[] {
         if (text) runs.push({ text, ...attrs });
       } else if (child instanceof HTMLElement) {
         if (child.tagName === 'BR') {
+          // A render-only sentinel (RENDER_NEWLINE_ATTR) makes a trailing
+          // newline show its empty last line under white-space: pre-wrap; it
+          // is NOT part of the logical text, so skip it on read-back.
+          if (child.hasAttribute(RENDER_NEWLINE_ATTR)) continue;
           runs.push({ text: '\n' });
           continue;
         }
