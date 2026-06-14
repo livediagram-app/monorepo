@@ -10,6 +10,10 @@ export function useEditorDialogs() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  // The right-click Canvas/Theme dialog (spec/42). null = closed; the
+  // value is which tab it opened on. A single flag drives both the open
+  // state and the active tab.
+  const [canvasThemeTab, setCanvasThemeTab] = useState<'canvas' | 'theme' | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   // Whether the open Export dialog targets the whole active tab or just
   // the current multi-selection. A plain enum flag (no element data) so
@@ -27,6 +31,8 @@ export function useEditorDialogs() {
     setSettingsOpen,
     shareDialogOpen,
     setShareDialogOpen,
+    canvasThemeTab,
+    setCanvasThemeTab,
     exportOpen,
     setExportOpen,
     exportScope,

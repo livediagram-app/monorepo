@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
-import { Accordion, PATTERNS, ColorSwatch, PatternButton, SizeButton } from './palette-controls';
+import { Accordion, SizeButton } from './palette-controls';
+import { CanvasStyleControls } from './CanvasStyleControls';
 import { timerDisplayMs, type TimerMode } from '@livediagram/diagram';
 import { THEMES } from '@/lib/themes';
 import { AutoAlignIcon, DotsIcon, ResetIcon, ScaleIcon } from './palette-icons';
@@ -46,7 +47,6 @@ export function TabSection({
   // when the current tab is already on an extra so the active swatch
   // is always visible.
   const themesList = useShowMoreList(THEMES, (t) => t.id === tab.themeId);
-  const patternsList = useShowMoreList(PATTERNS, (p) => p.id === tab.backgroundPattern);
 
   // Session-tool pickers (spec/39): the chosen timer mode + countdown
   // length, and the votes-per-person budget, are local until the
@@ -127,59 +127,16 @@ export function TabSection({
         </Tooltip>
       </Accordion>
       <Accordion title="Canvas" open={open.canvas} onToggle={() => toggle('canvas')}>
-        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">Pattern</p>
-        <div className="mt-1 grid grid-cols-4 gap-1">
-          {patternsList.visible.map((p) => (
-            <Tooltip key={p.id} title={p.label} description={p.description}>
-              <PatternButton
-                active={tab.backgroundPattern === p.id}
-                onClick={() => tab.onSetBackgroundPattern(p.id)}
-                label={p.shortLabel}
-              >
-                <p.icon />
-              </PatternButton>
-            </Tooltip>
-          ))}
-        </div>
-        {patternsList.hasMore && !patternsList.showAll ? (
-          <ShowMoreButton label="Show more patterns" onClick={patternsList.reveal} />
-        ) : null}
-        <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          Colours
-        </p>
-        <div className="mt-1 flex items-stretch gap-1">
-          <Tooltip title="Canvas colour" description="The colour of the canvas background.">
-            <ColorSwatch
-              label="Canvas"
-              value={tab.backgroundColor}
-              onChange={tab.onSetBackgroundColor}
-            />
-          </Tooltip>
-          <Tooltip title="Pattern colour" description="The colour of the grid dots or ruled lines.">
-            <ColorSwatch
-              label="Pattern"
-              value={tab.patternColor}
-              onChange={tab.onSetPatternColor}
-            />
-          </Tooltip>
-        </div>
-        <div className="mt-3 flex flex-col gap-1 border-t border-slate-100 pt-3">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Opacity</p>
-            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
-              {Math.round(tab.backgroundOpacity * 100)}%
-            </span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={tab.backgroundOpacity}
-            onChange={(e) => tab.onSetBackgroundOpacity(parseFloat(e.target.value))}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
-          />
-        </div>
+        <CanvasStyleControls
+          backgroundPattern={tab.backgroundPattern}
+          backgroundColor={tab.backgroundColor}
+          patternColor={tab.patternColor}
+          backgroundOpacity={tab.backgroundOpacity}
+          onSetBackgroundPattern={tab.onSetBackgroundPattern}
+          onSetBackgroundColor={tab.onSetBackgroundColor}
+          onSetPatternColor={tab.onSetPatternColor}
+          onSetBackgroundOpacity={tab.onSetBackgroundOpacity}
+        />
       </Accordion>
       {/* Tab text defaults (spec/28): the font every element without its
           own font inherits, and the size seeded onto new palette elements.

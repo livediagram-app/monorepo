@@ -6,16 +6,10 @@ import { initialsOf, randomName } from '@/lib/identity';
 import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateCategory, TemplateKind } from '@/lib/templates';
 import { TEMPLATE_CATEGORIES, TEMPLATES, templateCategory } from '@/lib/templates';
-import {
-  THEME_CATEGORIES,
-  THEMES,
-  type ThemeCategory,
-  type ThemeId,
-  themeCategory,
-} from '@/lib/themes';
+import { type ThemeId } from '@/lib/themes';
 import { AnimatedHeightBox } from './AnimatedHeightBox';
 import { CategoryCard, TemplateCard } from './template-picker-cards';
-import { ThemeCard, ThemeCategoryCard, ThemeQuickPickCard } from './theme-picker-cards';
+import { ThemeCategoryBrowser } from './ThemeCategoryBrowser';
 import { Tooltip } from './Tooltip';
 
 type TemplatePickerProps = {
@@ -96,20 +90,12 @@ export function TemplatePicker({
   // 'brand' (so Basic is pre-selected for a fresh diagram), while a new
   // tab copying an existing one passes that tab's theme.
   const [themeId, setThemeId] = useState<ThemeId>(currentThemeId);
-  // Theme browse drill-in, mirroring `openCategory` for templates: null
-  // is the overview (Basic quick-pick + a card per theme category). If
-  // the pre-selected theme isn't Basic, open its category on mount so the
-  // user can see their current theme highlighted rather than buried.
-  const [openThemeCategory, setOpenThemeCategory] = useState<ThemeCategory | null>(() =>
-    currentThemeId !== 'brand' ? themeCategory(currentThemeId) : null,
-  );
-  // Rotate which templates + themes greet the user on each open so
-  // people keep discovering options beyond the usual first rows, but
-  // always pin the sensible default first (Blank diagram, Brand theme).
-  // Shuffled once per mount via lazy useState so clicking around the
-  // grid never reshuffles it underfoot.
+  // Rotate which templates greet the user on each open so people keep
+  // discovering options beyond the usual first rows, but always pin Blank
+  // first. Shuffled once per mount via lazy useState so clicking around
+  // the grid never reshuffles it underfoot. (The theme grid does the same
+  // internally, see ThemeCategoryBrowser.)
   const [templates] = useState(() => shufflePinned(TEMPLATES, (t) => t.kind === 'blank'));
-  const [themes] = useState(() => shufflePinned(THEMES, (t) => t.id === 'brand'));
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
   // Keyword filter over the shuffled catalogue. Matches title /
@@ -132,11 +118,6 @@ export function TemplatePicker({
   const blankTemplate = TEMPLATES.find((t) => t.kind === 'blank');
   const categoryTemplates = (category: TemplateCategory) =>
     templates.filter((t) => t.kind !== 'blank' && templateCategory(t.kind) === category);
-  // Brand is pulled out of the theme grouping and shown as a dedicated
-  // quick-pick on the overview, the way Blank is for templates.
-  const brandTheme = THEMES.find((t) => t.id === 'brand');
-  const themeCategoryThemes = (category: ThemeCategory) =>
-    themes.filter((t) => t.id !== 'brand' && themeCategory(t.id) === category);
 
   return (
     <div
@@ -354,67 +335,12 @@ export function TemplatePicker({
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Select a theme
               </p>
-              <AnimatedHeightBox viewKey={openThemeCategory ?? 'overview'} className="mt-2">
-                {openThemeCategory ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setOpenThemeCategory(null)}
-                      className="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                        <path
-                          d="M7.5 2.5 4 6l3.5 3.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      All themes
-                    </button>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                      {themeCategoryThemes(openThemeCategory).map((t) => (
-                        <ThemeCard
-                          key={t.id}
-                          theme={t}
-                          active={themeId === t.id}
-                          onSelect={() => setThemeId(t.id)}
-                          onCommit={() => onPick(templateKind, effectiveName, t.id)}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    {brandTheme ? (
-                      <ThemeQuickPickCard
-                        theme={brandTheme}
-                        label="Basic"
-                        description="The plain, un-themed default."
-                        active={themeId === 'brand'}
-                        onSelect={() => setThemeId('brand')}
-                        onCommit={() => onPick(templateKind, effectiveName, 'brand')}
-                      />
-                    ) : null}
-                    {THEME_CATEGORIES.map((cat) => {
-                      const items = themeCategoryThemes(cat.id);
-                      if (items.length === 0) return null;
-                      return (
-                        <ThemeCategoryCard
-                          key={cat.id}
-                          label={cat.label}
-                          description={cat.description}
-                          count={items.length}
-                          themes={items}
-                          selected={themeId !== 'brand' && themeCategory(themeId) === cat.id}
-                          onOpen={() => setOpenThemeCategory(cat.id)}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </AnimatedHeightBox>
+              <ThemeCategoryBrowser
+                themeId={themeId}
+                onSelect={setThemeId}
+                onCommit={(id) => onPick(templateKind, effectiveName, id)}
+                className="mt-2"
+              />
             </>
           ) : null}
         </div>

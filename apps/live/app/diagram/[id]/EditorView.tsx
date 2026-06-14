@@ -53,6 +53,9 @@ const ShortcutsDialog = dynamic(() =>
 const SettingsDialog = dynamic(() =>
   import('@/components/SettingsDialog').then((m) => m.SettingsDialog),
 );
+const CanvasThemeDialog = dynamic(() =>
+  import('@/components/CanvasThemeDialog').then((m) => m.CanvasThemeDialog),
+);
 
 // The editor's full view (header + canvas + tab bar + all dialogs),
 // lifted out of editor-page.tsx. Every value/handler it needs is read
@@ -213,7 +216,6 @@ export function EditorView() {
     openComments,
     openDiagram,
     openNote,
-    openTabAccordion,
     openTemplatePicker,
     palettePosition,
     participantsByTab,
@@ -298,6 +300,8 @@ export function EditorView() {
     setSettingsOpen,
     setShapeKindSelected,
     setShareDialogOpen,
+    canvasThemeTab,
+    setCanvasThemeTab,
     setShortcutsEnabled,
     setShortcutsOpen,
     setStrokeColorSelected,
@@ -1023,6 +1027,24 @@ export function EditorView() {
           aiCapable={aiCapable}
         />
       ) : null}
+      {canvasThemeTab !== null && !isReadOnly ? (
+        <CanvasThemeDialog
+          tab={canvasThemeTab}
+          onTabChange={setCanvasThemeTab}
+          backgroundPattern={activeTab.backgroundPattern ?? 'grid'}
+          backgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
+          patternColor={activeTab.patternColor ?? DEFAULT_PATTERN_COLOR}
+          backgroundOpacity={activeTab.backgroundOpacity ?? 1}
+          onSetBackgroundPattern={setBackgroundPattern}
+          onSetBackgroundColor={setBackgroundColor}
+          onSetPatternColor={setPatternColor}
+          onSetBackgroundOpacity={setBackgroundOpacity}
+          themeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
+          onSetTheme={setTheme}
+          onResetElementsToTheme={resetElementsToTheme}
+          onClose={() => setCanvasThemeTab(null)}
+        />
+      ) : null}
       {commentThreadOpenId !== null
         ? (() => {
             const target = activeTab.elements.find(
@@ -1124,8 +1146,14 @@ export function EditorView() {
           onSetOpacity={setOpacitySelected}
           onOpenNote={openNote}
           onOpenComments={openComments}
-          onChangeTheme={() => openTabAccordion('theme')}
-          onChangeCanvas={() => openTabAccordion('canvas')}
+          onChangeTheme={() => {
+            setCanvasThemeTab('theme');
+            track('UI', 'Opened', 'ThemePicker');
+          }}
+          onChangeCanvas={() => {
+            setCanvasThemeTab('canvas');
+            track('UI', 'Opened', 'CanvasStyle');
+          }}
           onAutoAlign={autoAlignTab}
           onAddShape={addShape}
           onAddSticky={addSticky}

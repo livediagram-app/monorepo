@@ -50,6 +50,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 39  | [Session tools (timer + voting)](39-session-tools.md)              | Per-tab facilitator countdown/stopwatch + live dot-voting, synced to every participant                     |
 | 40  | [Link cards](40-link-cards.md)                                     | Bookmark element: URL via the element link, server-side unfurl for title/favicon/OG image                  |
 | 41  | [Technology icons](41-technology-icons.md)                         | Technology palette category: full-colour AWS / Azure / generic-infra brand icons for architecture diagrams |
+| 42  | [Canvas + theme dialog](42-canvas-and-theme-dialog.md)             | Right-click Change Canvas / Change Theme open a modal with Canvas + Theme tabs (category-browse themes)    |
 
 ## Workflow
 
