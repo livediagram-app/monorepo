@@ -131,9 +131,9 @@ When **nothing is selected**, the Selected Element section is replaced by a **Cu
 
 > **Status (superseded):** removed along with the editor side panel — these per-element controls now live in the **right-click element context menu** (Layer / Colours / Border / Text / Icon / Image / Link / Table / arrow Line + Pointer / Collaborate categories) and the floating selection toolbar. The control descriptions stay accurate; their panel home does not.
 
-When **any** element is selected, the palette grows a fourth section at the bottom titled `SELECTED ELEMENT`. It hosts per-element controls grouped into **collapsible accordions** so the palette stays compact. Each accordion is **closed by default**; clicking the header toggles it open.
+When an element is selected, these per-element controls are available from its **right-click context menu** (and the floating selection toolbar), grouped into **collapsible categories**. Each category is **closed by default**; clicking its header toggles it open.
 
-Accordion groups (rendered in this order top-to-bottom, hidden when their gate doesn't apply):
+Control groups (rendered as context-menu categories, hidden when their gate doesn't apply):
 
 - **Shape** _(shape elements only)_
   - Shape grid (Square, Circle, Diamond, Cylinder, Parallelogram, Hexagon, Document, Stadium, User, Cloud, Triangle, Trapezoid, Star, Speech bubble, plus the device frames Web browser, Computer monitor, Laptop, Phone, Tablet, Smartwatch) — clicking morphs the selected element into that kind in place, preserving size + colour overrides. (The Frame container is not a morph target.) Circle and diamond force the bounding box square; the rest preserve free aspect.
