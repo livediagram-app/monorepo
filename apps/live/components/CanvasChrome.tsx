@@ -271,6 +271,15 @@ export function CanvasChrome(props: CanvasChromeProps) {
   // folds it in next to the welcome-flow gate that already suppresses
   // the same panels, so each panel stays hidden in either state.
   const chromeHidden = welcomeOpen || zenMode === true;
+  // Theme tint for the palette tiles, so the palette previews the active
+  // tab theme: the boxed-shape tiles render filled in the theme's element
+  // fill + stroke, line-art tools + icons tint to the stroke. The Basic
+  // theme leaves elementStroke null, so we pass nothing and the palette
+  // keeps its default slate look. See spec/09.
+  const paletteTheme = getTheme(tabThemeId);
+  const paletteTint = paletteTheme.elementStroke
+    ? { stroke: paletteTheme.elementStroke, fill: paletteTheme.elementFill ?? undefined }
+    : undefined;
   // Alignment guides for the in-progress draw-to-size box, so the user
   // sees which neighbour edges / centres it latched onto — the same faint
   // lines a move / resize shows. Box intents only (arrows are a line,
@@ -800,6 +809,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onAddArrow={onAddArrow}
           onBeginFreehand={onBeginFreehand}
           pendingDraw={pendingDraw}
+          themeTint={paletteTint}
           onSize={(size) => setPaletteBottomY(size.bottomY)}
           mobileTopOverridePx={explorerBottomY > 0 ? explorerBottomY + 4 : undefined}
           mobileOpenOverride={activeMobilePanel === 'palette'}

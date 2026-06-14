@@ -24,6 +24,27 @@ import {
 import { AlignIcon } from './palette-icons';
 import { Tooltip } from './Tooltip';
 import { useModKeyHeld } from '@/hooks/useModKeyHeld';
+import { createContext, useContext } from 'react';
+
+// The active tab theme's element colours, made available to every palette
+// tile so the palette previews the theme rather than a fixed slate. `stroke`
+// tints line-art glyphs (all the `stroke="currentColor"` SVGs); `fill` is the
+// shape interior used by the filled tiles (shapes / devices / annotation),
+// applied via the `palette-tile-filled` rule in globals.css. Both are
+// undefined for the Basic theme, where the palette keeps its default look.
+export type PaletteTint = { stroke?: string; fill?: string };
+
+const PaletteTintContext = createContext<PaletteTint | undefined>(undefined);
+
+export function PaletteTintProvider({
+  tint,
+  children,
+}: {
+  tint?: PaletteTint;
+  children: React.ReactNode;
+}) {
+  return <PaletteTintContext.Provider value={tint}>{children}</PaletteTintContext.Provider>;
+}
 
 export function Accordion({
   title,
@@ -372,6 +393,16 @@ type IconButtonProps = {
   // Makes the tile draggable to place this shape kind on the canvas (drag
   // alternative to click-to-add). Wires the palette DnD payload.
   dragKind?: ShapeKind;
+  // Render the glyph as a filled mini-preview of a themed element: the
+  // theme's element fill paints the shape interior on top of the stroke
+  // tint, so the tile previews what gets dropped. Set on the boxed-shape
+  // tiles (shapes / devices / annotation); line-art tools + icons leave it
+  // off and just take the stroke tint. No-op under the Basic theme.
+  filled?: boolean;
+  // Opt out of the theme tint entirely — for tiles whose colours are fixed
+  // regardless of theme: the sticky note (always amber), the image
+  // placeholder + link card (neutral chrome), and Technology brand icons.
+  noTint?: boolean;
 };
 
 export function IconButton({
@@ -388,6 +419,8 @@ export function IconButton({
   hideCaption,
   caption: captionOverride,
   dragKind,
+  filled,
+  noTint,
 }: IconButtonProps) {
   // A dragKind tile is draggable and carries the palette DnD payload; an
   // explicit draggable/onDragStart (the icon grid) is used otherwise.
@@ -403,6 +436,23 @@ export function IconButton({
   const tone = active
     ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300 dark:bg-brand-500/20 dark:text-brand-200 dark:ring-brand-500/50'
     : 'text-slate-600 enabled:hover:bg-slate-100 enabled:hover:text-slate-900 dark:text-slate-100 dark:enabled:hover:bg-slate-800 dark:enabled:hover:text-white';
+  // Theme tint for the glyph. The active (queued) tile keeps the brand
+  // pressed treatment so it still reads as "selected"; disabled + opted-out
+  // tiles render plain. The stroke colour drives every `currentColor` glyph;
+  // the filled tiles additionally expose the fill as a CSS var consumed by
+  // the `palette-tile-filled` rule. Caption text stays on the slate `tone`
+  // (the style only lands on the glyph wrapper), so labels keep their
+  // contrast.
+  const themeTint = useContext(PaletteTintContext);
+  const tintStroke = !active && !disabled && !noTint ? themeTint?.stroke : undefined;
+  const tintFill = tintStroke && filled ? themeTint?.fill : undefined;
+  const glyphStyle: React.CSSProperties | undefined = tintStroke
+    ? ({
+        color: tintStroke,
+        ...(tintFill ? { '--tile-fill': tintFill } : {}),
+      } as React.CSSProperties)
+    : undefined;
+  const glyphClass = tintFill ? 'palette-tile-filled ' : '';
   // Short caption under the icon, derived from the action label: drop a
   // leading "Add " and any parenthetical, then sentence-case. "Add web
   // browser" → "Web browser", "Pencil (freehand)" → "Pencil". An explicit
@@ -428,10 +478,14 @@ export function IconButton({
       }
     >
       {hideCaption ? (
-        children
+        <span style={glyphStyle} className={`${glyphClass}flex items-center justify-center`}>
+          {children}
+        </span>
       ) : (
         <>
-          <span className="flex h-6 items-center justify-center">{children}</span>
+          <span style={glyphStyle} className={`${glyphClass}flex h-6 items-center justify-center`}>
+            {children}
+          </span>
           <span className="w-full truncate text-center text-[9px] leading-none">{caption}</span>
         </>
       )}
