@@ -217,8 +217,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   const sectionProps = (id: string) => ({
     open: openSection === id,
     onToggle: () => setOpenSection((s) => (s === id ? null : id)),
-    // Desktop: hovering a category switches to it automatically.
-    onHoverOpen: () => setOpenSection(id),
   });
   // Which colour row's inline palette is open (text / background / border) —
   // at most one, toggled by re-clicking the row so it never sticks open.

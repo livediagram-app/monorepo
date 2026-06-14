@@ -800,8 +800,6 @@ function PortalMenu({
   const sectionProps = (id: string) => ({
     open: openSection === id,
     onToggle: () => setOpenSection((s) => (s === id ? null : id)),
-    // Desktop: hovering a category switches to it automatically.
-    onHoverOpen: () => setOpenSection(id),
   });
   // Delete confirmation: an inline popover anchored to the Delete row
   // (rather than the jarring full-screen modal). Rendered inside this

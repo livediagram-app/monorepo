@@ -148,10 +148,6 @@ export function MenuAccordionSection({
   // from a contentEditable behind it (the rich-text toolbar's ⋯ menu needs
   // the live text selection to survive a category toggle).
   preserveFocus = false,
-  // Desktop affordance: moving the mouse over a category header opens it
-  // (accordion follows the pointer). Touch never fires this, so tap still
-  // toggles via onToggle. Omit to keep click-only behaviour.
-  onHoverOpen,
 }: {
   title: string;
   icon: ReactNode;
@@ -159,25 +155,12 @@ export function MenuAccordionSection({
   onToggle: () => void;
   children: ReactNode;
   preserveFocus?: boolean;
-  onHoverOpen?: () => void;
 }) {
   return (
     <div className="border-t border-slate-100 first:border-t-0 dark:border-slate-800">
       <button
         type="button"
         onClick={onToggle}
-        // Use pointerMOVE, not pointerEnter: opening a section collapses its
-        // sibling and shifts the others under a stationary cursor, which
-        // would fire a spurious pointerenter on whatever header slid beneath
-        // and cascade open/close. pointermove only fires on real cursor
-        // motion, so a layout shift alone never re-triggers the switch.
-        onPointerMove={
-          onHoverOpen
-            ? (e) => {
-                if (e.pointerType === 'mouse' && !open) onHoverOpen();
-              }
-            : undefined
-        }
         onMouseDown={preserveFocus ? (e) => e.preventDefault() : undefined}
         aria-expanded={open}
         className="flex w-full cursor-pointer items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
