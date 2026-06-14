@@ -14,6 +14,10 @@
 
 import { useState, type ReactNode } from 'react';
 import {
+  arrowheadShapeOf,
+  arrowheadSizeOf,
+  arrowStyleOf,
+  arrowThicknessOf,
   defaultFillColor,
   defaultStrokeColor,
   defaultTextColor,
@@ -22,6 +26,11 @@ import {
   supportsBorderRadius,
   supportsColours,
   timerDisplayMs,
+  type ArrowEnds,
+  type ArrowheadShape,
+  type ArrowheadSize,
+  type ArrowStyle,
+  type ArrowThickness,
   type BorderRadius,
   type BorderStroke,
   type BorderStyle,
@@ -33,6 +42,7 @@ import {
   type TextSize,
   type TimerMode,
 } from '@livediagram/diagram';
+import { ArrowLineControls, ArrowPointerControls } from '@/components/arrow-controls';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
 import { SizeButton, ToggleSwitch } from '@/components/palette-controls';
 import {
@@ -111,6 +121,14 @@ type EditorContextMenuProps = {
   onToggleTextUnderline: () => void;
   onToggleTextStrikethrough: () => void;
   onSetTextSize: (size: TextSize) => void;
+  // Arrow Line + Pointer controls (spec/09), surfaced for arrows to match the
+  // panel's Line / Pointer accordions.
+  onSetArrowThickness: (v: ArrowThickness) => void;
+  onSetArrowStyle: (v: ArrowStyle) => void;
+  onSetArrowStrokeStyle: (v: BorderStyle) => void;
+  onSetArrowEnds: (v: ArrowEnds) => void;
+  onSetArrowheadSize: (v: ArrowheadSize) => void;
+  onSetArrowheadShape: (v: ArrowheadShape) => void;
   // Re-place a shape's inline icon (reuses the drop handler: same iconId,
   // new side).
   onSetIconPosition: (
@@ -335,6 +353,40 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               />
             </div>
           </MenuAccordionSection>
+        ) : null}
+        {/* Line + Pointer — arrow stroke + arrowhead controls, mirroring the
+            panel's accordions (shared ArrowLine/PointerControls). */}
+        {target.type === 'arrow' ? (
+          <>
+            <MenuAccordionSection title="Line" icon={<LineGlyph />} {...sectionProps('line')}>
+              <div className="px-3 py-1.5">
+                <ArrowLineControls
+                  thickness={arrowThicknessOf(target)}
+                  style={arrowStyleOf(target)}
+                  strokeStyle={target.strokeStyle ?? 'solid'}
+                  onSetThickness={props.onSetArrowThickness}
+                  onSetStyle={props.onSetArrowStyle}
+                  onSetStrokeStyle={props.onSetArrowStrokeStyle}
+                />
+              </div>
+            </MenuAccordionSection>
+            <MenuAccordionSection
+              title="Pointer"
+              icon={<PointerGlyph />}
+              {...sectionProps('pointer')}
+            >
+              <div className="px-3 py-1.5">
+                <ArrowPointerControls
+                  ends={target.arrowEnds ?? 'to'}
+                  headSize={arrowheadSizeOf(target)}
+                  headShape={arrowheadShapeOf(target)}
+                  onSetEnds={props.onSetArrowEnds}
+                  onSetHeadSize={props.onSetArrowheadSize}
+                  onSetHeadShape={props.onSetArrowheadShape}
+                />
+              </div>
+            </MenuAccordionSection>
+          </>
         ) : null}
         {/* Text — whole-element label formatting for a labelled arrow (boxed
             elements format via the inline rich-text toolbar instead). */}
@@ -1039,6 +1091,43 @@ function BorderButton({
     <SizeButton active={active} onClick={onClick}>
       {children}
     </SizeButton>
+  );
+}
+
+// Diagonal stroke — the "Line" section glyph.
+function LineGlyph() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M3 13L13 3" />
+    </svg>
+  );
+}
+
+// Arrow → glyph — the "Pointer" section.
+function PointerGlyph() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" />
+    </svg>
   );
 }
 

@@ -1198,6 +1198,12 @@ export function EditorView() {
           onToggleTextUnderline={() => toggleTextStyleSelected('textUnderline')}
           onToggleTextStrikethrough={() => toggleTextStyleSelected('textStrikethrough')}
           onSetTextSize={setTextSizeSelected}
+          onSetArrowThickness={setArrowThicknessSelected}
+          onSetArrowStyle={setArrowStyleSelected}
+          onSetArrowStrokeStyle={setArrowStrokeStyleSelected}
+          onSetArrowEnds={setArrowEndsSelected}
+          onSetArrowheadSize={setArrowheadSizeSelected}
+          onSetArrowheadShape={setArrowheadShapeSelected}
           onOpenNote={openNote}
           onOpenComments={openComments}
           onChangeTheme={() => {

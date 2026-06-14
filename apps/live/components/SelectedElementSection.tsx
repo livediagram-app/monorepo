@@ -6,22 +6,8 @@ import {
   SizeButton,
   ToggleSwitch,
 } from './palette-controls';
-import type {
-  ArrowheadShape,
-  ArrowheadSize,
-  ArrowStyle,
-  ArrowThickness,
-  BorderRadius,
-  BorderStroke,
-  BorderStyle,
-  ShapeKind,
-} from '@livediagram/diagram';
-import { ARROW_THICKNESS_PX, ARROWHEAD_SHAPES, ARROWHEAD_SIZE_PX } from '@livediagram/diagram';
+import type { BorderRadius, BorderStroke, BorderStyle, ShapeKind } from '@livediagram/diagram';
 import {
-  ArrowEndsIcon,
-  ArrowheadShapeIcon,
-  ArrowheadSizeIcon,
-  ArrowStyleIcon,
   BoldIcon,
   BorderRadiusIcon,
   BorderStrokeIcon,
@@ -34,9 +20,9 @@ import {
   ScaleIcon,
   SendToBackIcon,
   StrikethroughIcon,
-  ThicknessIcon,
   UnderlineIcon,
 } from './palette-icons';
+import { ArrowLineControls, ArrowPointerControls } from './arrow-controls';
 import { ShapeIcon } from './shape-icon';
 import { Tooltip } from './Tooltip';
 import { FontSelect } from './FontSelect';
@@ -537,225 +523,32 @@ export function SelectedElementSection({
         selection.arrowStyle !== null ||
         selection.arrowStrokeStyle !== null) ? (
         <Accordion title="Line" open={open.line} onToggle={() => toggle('line')}>
-          {selection.arrowThickness !== null ? (
-            <>
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Thickness
-              </p>
-              <div className="mt-1 grid grid-cols-4 gap-1">
-                {(
-                  [
-                    ['thin', 'Thin'],
-                    ['medium', 'Medium'],
-                    ['thick', 'Thick'],
-                    ['extra-thick', 'Extra thick'],
-                  ] as [ArrowThickness, string][]
-                ).map(([id, label]) => (
-                  <Tooltip
-                    key={id}
-                    title={label}
-                    description={`Sets the arrow stroke width to ${ARROW_THICKNESS_PX[id]}px.`}
-                  >
-                    <SizeButton
-                      active={selection.arrowThickness === id}
-                      onClick={() => selection.onSetArrowThickness(id)}
-                    >
-                      <ThicknessIcon px={ARROW_THICKNESS_PX[id]} />
-                    </SizeButton>
-                  </Tooltip>
-                ))}
-              </div>
-              <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
-            </>
-          ) : null}
-          {selection.arrowStyle !== null ? (
-            <>
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Line style
-              </p>
-              <div className="mt-1 grid grid-cols-3 gap-1">
-                {(
-                  [
-                    ['straight', 'Straight', 'Plain straight line, the default.'],
-                    [
-                      'curved',
-                      'Curved',
-                      'Smooth bezier curve bowing perpendicular to the endpoints.',
-                    ],
-                    [
-                      'angled',
-                      'Angled',
-                      'Axis-aligned L-connector with a single right-angle bend.',
-                    ],
-                  ] as [ArrowStyle, string, string][]
-                ).map(([id, label, desc]) => (
-                  <Tooltip key={id} title={label} description={desc}>
-                    <SizeButton
-                      active={selection.arrowStyle === id}
-                      onClick={() => selection.onSetArrowStyle(id)}
-                    >
-                      <ArrowStyleIcon style={id} />
-                    </SizeButton>
-                  </Tooltip>
-                ))}
-              </div>
-              <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
-            </>
-          ) : null}
-          {selection.arrowStrokeStyle !== null ? (
-            <>
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Line pattern
-              </p>
-              <div className="mt-1 grid grid-cols-3 gap-1">
-                {BORDER_STYLE_ORDER.map((value) => (
-                  <Tooltip
-                    key={value}
-                    block
-                    title={BORDER_STYLE_LABEL[value]}
-                    description={`Line pattern: ${BORDER_STYLE_LABEL[value].toLowerCase()}.`}
-                  >
-                    <SizeButton
-                      active={selection.arrowStrokeStyle === value}
-                      onClick={() => selection.onSetArrowStrokeStyle(value)}
-                    >
-                      <BorderStyleIcon value={value} />
-                    </SizeButton>
-                  </Tooltip>
-                ))}
-              </div>
-            </>
-          ) : null}
+          <ArrowLineControls
+            thickness={selection.arrowThickness}
+            style={selection.arrowStyle}
+            strokeStyle={selection.arrowStrokeStyle}
+            onSetThickness={selection.onSetArrowThickness}
+            onSetStyle={selection.onSetArrowStyle}
+            onSetStrokeStyle={selection.onSetArrowStrokeStyle}
+          />
         </Accordion>
       ) : null}
 
       {selection.arrowEnds !== null ? (
         <Accordion title="Pointer" open={open.pointer} onToggle={() => toggle('pointer')}>
-          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-            Pick which end(s) of the arrow have a pointer.
-          </p>
-          <div className="mt-1 grid grid-cols-4 gap-1">
-            <Tooltip title="Start only" description="Arrowhead on the left / starting end only.">
-              <SizeButton
-                active={selection.arrowEnds === 'from'}
-                onClick={() => selection.onSetArrowEnds('from')}
-              >
-                <ArrowEndsIcon ends="from" />
-              </SizeButton>
-            </Tooltip>
-            <Tooltip
-              title="End only"
-              description="Arrowhead on the right / ending end only (the default)."
-            >
-              <SizeButton
-                active={selection.arrowEnds === 'to'}
-                onClick={() => selection.onSetArrowEnds('to')}
-              >
-                <ArrowEndsIcon ends="to" />
-              </SizeButton>
-            </Tooltip>
-            <Tooltip title="Both ends" description="Arrowheads on both ends (a two-way connector).">
-              <SizeButton
-                active={selection.arrowEnds === 'both'}
-                onClick={() => selection.onSetArrowEnds('both')}
-              >
-                <ArrowEndsIcon ends="both" />
-              </SizeButton>
-            </Tooltip>
-            <Tooltip
-              title="No pointers"
-              description="No arrowhead on either end: a plain connector / line."
-            >
-              <SizeButton
-                active={selection.arrowEnds === 'none'}
-                onClick={() => selection.onSetArrowEnds('none')}
-              >
-                <ArrowEndsIcon ends="none" />
-              </SizeButton>
-            </Tooltip>
-          </div>
-          {selection.arrowheadSize !== null && selection.arrowEnds !== 'none' ? (
-            <>
-              <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Arrowhead size
-              </p>
-              <div className="mt-1 grid grid-cols-4 gap-1">
-                {(
-                  [
-                    ['small', 'Small'],
-                    ['medium', 'Medium'],
-                    ['large', 'Large'],
-                    ['extra-large', 'Extra large'],
-                  ] as [ArrowheadSize, string][]
-                ).map(([id, label]) => (
-                  <Tooltip
-                    key={id}
-                    title={label}
-                    description={`Marker size ${ARROWHEAD_SIZE_PX[id]}, independent of line thickness.`}
-                  >
-                    <SizeButton
-                      active={selection.arrowheadSize === id}
-                      onClick={() => selection.onSetArrowheadSize(id)}
-                    >
-                      <ArrowheadSizeIcon px={ARROWHEAD_SIZE_PX[id]} />
-                    </SizeButton>
-                  </Tooltip>
-                ))}
-              </div>
-            </>
-          ) : null}
-          {selection.arrowheadShape !== null && selection.arrowEnds !== 'none' ? (
-            <>
-              <div className="my-2 h-px bg-slate-100 dark:bg-slate-800" />
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Arrowhead shape
-              </p>
-              <div className="mt-1 grid grid-cols-4 gap-1">
-                {ARROWHEAD_SHAPES.map((shape) => (
-                  <Tooltip
-                    key={shape}
-                    title={ARROWHEAD_SHAPE_LABEL[shape]}
-                    description={ARROWHEAD_SHAPE_DESC[shape]}
-                  >
-                    <SizeButton
-                      active={selection.arrowheadShape === shape}
-                      onClick={() => selection.onSetArrowheadShape(shape)}
-                    >
-                      <ArrowheadShapeIcon shape={shape} />
-                    </SizeButton>
-                  </Tooltip>
-                ))}
-              </div>
-            </>
-          ) : null}
+          <ArrowPointerControls
+            ends={selection.arrowEnds}
+            headSize={selection.arrowheadSize}
+            headShape={selection.arrowheadShape}
+            onSetEnds={selection.onSetArrowEnds}
+            onSetHeadSize={selection.onSetArrowheadSize}
+            onSetHeadShape={selection.onSetArrowheadShape}
+          />
         </Accordion>
       ) : null}
     </div>
   );
 }
-
-const ARROWHEAD_SHAPE_LABEL: Record<ArrowheadShape, string> = {
-  triangle: 'Filled triangle',
-  'triangle-hollow': 'Hollow triangle',
-  line: 'Open',
-  circle: 'Dot',
-  'circle-hollow': 'Hollow dot',
-  diamond: 'Filled diamond',
-  'diamond-hollow': 'Hollow diamond',
-};
-
-// Tooltips lean on the conventional UML / flowchart meanings so the
-// picker doubles as a hint for what each head is used for.
-const ARROWHEAD_SHAPE_DESC: Record<ArrowheadShape, string> = {
-  triangle: 'The classic filled arrowhead.',
-  'triangle-hollow': 'A hollow triangle: UML inheritance / "is a".',
-  line: 'An open V with no fill: dependency / flow.',
-  circle: 'A filled dot terminator.',
-  'circle-hollow': 'A hollow dot terminator.',
-  diamond: 'A filled diamond: UML composition.',
-  'diamond-hollow': 'A hollow diamond: UML aggregation.',
-};
 
 const SHAPE_LABEL: Record<ShapeKind, string> = {
   square: 'Square',
