@@ -150,6 +150,9 @@ export type CanvasProps = {
   // Minimal panel layout preference (spec/20). When true, the floating
   // panels render as dock popovers on desktop too (always on mobile).
   minimalPanels?: boolean;
+  // Toggle the minimal-panel layout. Surfaced in the Palette header
+  // (desktop) as the one-click normal <-> minimal switch.
+  onToggleMinimalPanels?: () => void;
   onCancelDraw: () => void;
   onUndo: () => void;
   onRedo: () => void;

@@ -142,6 +142,12 @@ type CommandPaletteProps = {
   onSetCanvasTool: (tool: CanvasTool) => void;
   onMoveTo: (x: number, y: number) => void;
   onReset: () => void;
+  // Desktop panel-layout toggle (normal floating panels <-> minimal compact
+  // dock), rendered in the palette header left of the reset button. Omit to
+  // hide it (e.g. view-role). The Settings dialog carries the same switch as
+  // the always-available way back out of minimal mode.
+  minimalPanels?: boolean;
+  onToggleMinimalPanels?: () => void;
   onAddShape: (kind: ShapeKind) => void;
   // Drops a curated icon glyph (shape kind 'icon') carrying the chosen
   // catalogue id at the viewport centre. Picked from the Icons
@@ -208,6 +214,8 @@ export function CommandPalette({
   onSetCanvasTool,
   onMoveTo,
   onReset,
+  minimalPanels,
+  onToggleMinimalPanels,
   onAddShape,
   onAddIcon,
   onAddTechIcon,
@@ -329,6 +337,38 @@ export function CommandPalette({
       flushTop
       onReset={onReset}
       onMoveTo={onMoveTo}
+      headerExtra={
+        onToggleMinimalPanels ? (
+          // Desktop panel-layout toggle, sat just left of the reset button.
+          // Hidden on mobile (minimal layout is forced there, so the toggle
+          // is moot). The Settings dialog mirrors it as the way back out.
+          <span className="hidden sm:contents">
+            <Tooltip
+              title={minimalPanels ? 'Normal panels' : 'Minimal panels'}
+              description={
+                minimalPanels
+                  ? 'Switch back to the floating Palette / Explorer panels.'
+                  : 'Collapse the panels into a compact button bar.'
+              }
+            >
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onToggleMinimalPanels}
+                aria-label={minimalPanels ? 'Use normal panel layout' : 'Use minimal panel layout'}
+                aria-pressed={!!minimalPanels}
+                className={`flex h-5 w-5 items-center justify-center rounded transition ${
+                  minimalPanels
+                    ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                }`}
+              >
+                <PanelLayoutIcon />
+              </button>
+            </Tooltip>
+          </span>
+        ) : null
+      }
       collapsible
       // The category / canvas-tool dropdowns portal their menus to
       // <body>, so a mobile tap on a menu option lands outside the panel
@@ -1329,5 +1369,27 @@ export function CommandPalette({
         ]}
       />
     </MovablePanel>
+  );
+}
+
+// Panel-layout glyph (a panel split into a sidebar + body) for the header
+// minimal-panels toggle. Moved here from TabBar when the toggle relocated
+// into the palette header.
+function PanelLayoutIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="14" height="12" rx="1.5" />
+      <path d="M8 4v12" />
+    </svg>
   );
 }

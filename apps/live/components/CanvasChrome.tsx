@@ -134,6 +134,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     hydrated,
     marquee,
     minimalPanels,
+    onToggleMinimalPanels,
     onActivityRowClick,
     onAddArrow,
     onAddImage,
@@ -785,6 +786,8 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onSetCanvasTool={onSetCanvasTool}
           onMoveTo={onMovePalette}
           onReset={onResetPalette}
+          minimalPanels={minimalPanels}
+          onToggleMinimalPanels={onToggleMinimalPanels}
           onAddShape={onAddShape}
           onAddIcon={onAddIcon}
           onAddTechIcon={onAddTechIcon}
