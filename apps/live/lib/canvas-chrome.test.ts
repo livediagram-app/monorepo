@@ -71,6 +71,14 @@ describe('canvasCursorClass', () => {
       'cursor-grab',
     );
   });
+  it('the eraser tool shows the eraser cursor unless Space is held', () => {
+    expect(canvasCursorClass({ ...rest, canvasTool: 'eraser' })).toBe('cursor-eraser');
+    // Space held suppresses the eraser cursor, falling through to the rest
+    // (pan tool here -> grab) for a temporary pan.
+    expect(canvasCursorClass({ ...rest, canvasTool: 'eraser', spaceHeld: true })).toBe(
+      'cursor-grab',
+    );
+  });
   it('the resting pan tool shows grab; select shows crosshair', () => {
     expect(canvasCursorClass({ ...rest, canvasTool: 'pan' })).toBe('cursor-grab');
     expect(canvasCursorClass({ ...rest, canvasTool: 'select' })).toBe('cursor-crosshair');

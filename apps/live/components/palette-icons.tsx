@@ -437,6 +437,28 @@ export function LaserIcon() {
   );
 }
 
+// Eraser tool (spec/09): a tilted block eraser sitting on the canvas
+// baseline. The diagonal band reads as the eraser's two-tone body.
+export function EraserIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 10.5l4.5-4.5a1.3 1.3 0 0 1 1.8 0l2.7 2.7a1.3 1.3 0 0 1 0 1.8l-2.7 2.7H5.2z" />
+      <path d="M6.2 7.3l3.5 3.5" />
+      <path d="M2.5 13.5h11" />
+    </svg>
+  );
+}
+
 // Zen / focus mode (spec/26): an "expand to fullscreen" glyph (four
 // corner arrows pushing outward) for the palette enter button.
 export function ZenIcon() {

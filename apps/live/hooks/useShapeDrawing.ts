@@ -50,8 +50,8 @@ type ShapeDrawingDeps = {
   // The currently-selected element id, read at arm-time so a tap-to-drop
   // inherits its size (see beginDraw / commitDraw).
   selectedId: string | null;
-  canvasTool: 'pan' | 'select' | 'laser';
-  setCanvasTool: (tool: 'pan' | 'select' | 'laser') => void;
+  canvasTool: 'pan' | 'select' | 'laser' | 'eraser';
+  setCanvasTool: (tool: 'pan' | 'select' | 'laser' | 'eraser') => void;
   activeTab: Tab;
   activeId: string;
   commit: (mapElements: (els: Element[]) => Element[]) => void;

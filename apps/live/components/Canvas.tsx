@@ -764,6 +764,19 @@ export function Canvas(props: CanvasProps) {
         // start a gesture at the click point and drop the pending shape
         // behind the panel. Bail before any canvas gesture starts.
         if ((e.target as Element | null)?.closest?.('[data-floating-panel]')) return;
+        // Eraser tool (spec/09): a primary-button press deletes whatever
+        // it lands on and starts a drag-to-erase gesture. Handled in the
+        // capture phase so it wins over an element's own select/drag and
+        // the background marquee/pan; useCanvasEraser tracks the rest of
+        // the gesture via window listeners.
+        if (e.button === 0 && canvasTool === 'eraser') {
+          const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+          node?.focus({ preventScroll: true });
+          e.preventDefault();
+          e.stopPropagation();
+          props.onEraseStart?.(e.clientX, e.clientY);
+          return;
+        }
         // Middle-mouse drag pans from anywhere on the canvas — empty
         // space OR over elements — regardless of the active tool. The
         // capture phase runs before the element + background

@@ -26,7 +26,7 @@ import { type ThemeId } from '@/lib/themes';
 import { MovablePanel } from './MovablePanel';
 import { PaletteTabBar } from './PaletteTabBar';
 import { PaletteDropdown } from './PaletteDropdown';
-import { LaserIcon, PanIcon, SelectIcon } from './palette-icons';
+import { EraserIcon, LaserIcon, PanIcon, SelectIcon } from './palette-icons';
 import { Tooltip } from './Tooltip';
 import { ICON_CATALOG, ICON_CATEGORIES, ICON_DND_MIME, iconsInCategory } from '@/lib/icons';
 import {
@@ -196,7 +196,7 @@ export type TabSectionControls = {
   onClearVote: () => void;
 };
 
-export type CanvasTool = 'pan' | 'select' | 'laser';
+export type CanvasTool = 'pan' | 'select' | 'laser' | 'eraser';
 
 type CommandPaletteProps = {
   position: { x: number; y: number } | null;
@@ -416,6 +416,7 @@ export function CommandPalette({
               { id: 'select', label: 'Select', shortcut: 'S', icon: <SelectIcon /> },
               { id: 'pan', label: 'Hand', shortcut: 'P', icon: <PanIcon /> },
               { id: 'laser', label: 'Laser', shortcut: 'L', icon: <LaserIcon /> },
+              { id: 'eraser', label: 'Eraser', shortcut: 'E', icon: <EraserIcon /> },
             ]}
           />
         }

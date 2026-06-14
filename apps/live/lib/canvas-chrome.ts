@@ -41,6 +41,9 @@ export function canvasCursorClass(input: {
   if (pan) return 'cursor-grabbing';
   if (marquee) return 'cursor-crosshair';
   if (canvasTool === 'laser' && !spaceHeld) return 'cursor-crosshair';
+  // Eraser shows a custom eraser glyph (see .cursor-eraser in globals.css),
+  // unless Space is held for a temporary pan.
+  if (canvasTool === 'eraser' && !spaceHeld) return 'cursor-eraser';
   if (canvasTool === 'pan' && !spaceHeld) return 'cursor-grab';
   if (canvasTool === 'select') return 'cursor-crosshair';
   if (isPaintMode) return 'cursor-copy';

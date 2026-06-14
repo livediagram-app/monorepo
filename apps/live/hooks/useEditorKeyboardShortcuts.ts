@@ -18,7 +18,7 @@
 
 import { useEffect, useRef } from 'react';
 
-type CanvasTool = 'pan' | 'select' | 'laser';
+type CanvasTool = 'pan' | 'select' | 'laser' | 'eraser';
 
 // Shape kind subset that has a dedicated palette button + single-key
 // shortcut. The wider ShapeKind union (cylinder, parallelogram,
@@ -282,7 +282,7 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
 
       // --- Plain key tool + element-add shortcuts ---
       // Mnemonic-first bindings:
-      //   S = Select, P = Pan, L = Laser (tools)
+      //   S = Select, P = Pan, L = Laser, E = Eraser (tools)
       //   R = Rectangle (square), O = Oval (circle), D = Diamond
       //   T = Text, N = Note (sticky), A = Arrow, I = Image
       //   F = Freehand (Pencil — P is taken by Pan)
@@ -355,6 +355,13 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
         return;
       }
       if (live.isReadOnly) return;
+      // E = Eraser. After the read-only gate (it deletes), unlike the
+      // non-mutating S / P / L tool switches above.
+      if (lower === 'e') {
+        e.preventDefault();
+        live.setCanvasTool('eraser');
+        return;
+      }
       if (lower === 'r') {
         e.preventDefault();
         live.addShape('square');

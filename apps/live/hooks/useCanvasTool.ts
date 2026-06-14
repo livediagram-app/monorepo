@@ -26,6 +26,7 @@ export function useCanvasTool() {
   // "used laser".
   const selectCanvasTool = (tool: CanvasTool) => {
     if (tool === 'laser' && canvasTool !== 'laser') track('Canvas', 'Used', 'Laser');
+    if (tool === 'eraser' && canvasTool !== 'eraser') track('Canvas', 'Used', 'Eraser');
     setCanvasTool(tool);
   };
   return { canvasTool, setCanvasTool, selectCanvasTool };

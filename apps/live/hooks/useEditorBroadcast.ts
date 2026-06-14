@@ -43,7 +43,7 @@ type EditorBroadcastDeps = {
   // Current canvas tool. The laser-trail buffer clears when the tool
   // switches away from 'laser' so a fresh laser session doesn't
   // start from a previous run's tail.
-  canvasTool: 'pan' | 'select' | 'laser';
+  canvasTool: 'pan' | 'select' | 'laser' | 'eraser';
 };
 
 type EditorBroadcastApi = {

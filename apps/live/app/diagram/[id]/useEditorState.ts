@@ -68,6 +68,7 @@ import type { SaveStatus } from '@/components/EditorHeader';
 // Lazy-load SettingsDialog: opens only when the user clicks the
 // footer gear (spec/20). Same lazy pattern as the other modals.
 // AiPanel content is rendered inside Canvas via MovablePanel (spec/25).
+import { useCanvasEraser } from '@/hooks/useCanvasEraser';
 import { useCanvasTool } from '@/hooks/useCanvasTool';
 import { useCellLinkPicker } from '@/hooks/useCellLinkPicker';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
@@ -1498,6 +1499,18 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     lockedByOther,
   });
 
+  // Eraser canvas tool (spec/09): press / drag to delete any element the
+  // pointer touches, as a single-undo gesture. Canvas calls beginErase
+  // from its capture-phase pointerdown. See useCanvasEraser.
+  const { beginErase } = useCanvasEraser({
+    editsBlocked,
+    activeTab,
+    tick,
+    markCheckpoint,
+    setSelectedId,
+    setEditingId,
+  });
+
   // Element styling / layering actions (lock, layer order, text size /
   // align / style, fill / stroke / text colour, opacity, padding, the
   // arrow + border presets, shape-kind morph, reset-to-theme). All
@@ -1814,6 +1827,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     cancelEdit,
     canvasMainRef,
     canvasTool,
+    beginErase,
     changeLog,
     changeLogLoading,
     chooseTemplate,

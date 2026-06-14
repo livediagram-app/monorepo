@@ -127,6 +127,7 @@ export function EditorView() {
     canUndo,
     canvasMainRef,
     canvasTool,
+    beginErase,
     changeLog,
     changeLogLoading,
     chooseTemplate,
@@ -580,6 +581,7 @@ export function EditorView() {
         onSelectMarquee={selectMarquee}
         canvasTool={canvasTool}
         onSetCanvasTool={setCanvasTool}
+        onEraseStart={isReadOnly ? undefined : beginErase}
         onDuplicateMultiSelected={duplicateMultiSelected}
         onDeleteMultiSelected={deleteMultiSelected}
         onGroupMultiSelected={groupMultiSelected}

@@ -237,6 +237,11 @@ export type CanvasProps = {
   // menu anchored under it. Distinct from element right-clicks
   // (those go through BoxedElementView's onContextSelect).
   onCanvasContextMenu?: (screenX: number, screenY: number) => void;
+  // Eraser tool (spec/09): a primary-button press while the eraser is
+  // active. The canvas intercepts it in the capture phase (before element
+  // select/drag) and hands the screen coords here to start an erase
+  // gesture; the gesture's move/release are tracked by useCanvasEraser.
+  onEraseStart?: (clientX: number, clientY: number) => void;
   // Right-click on an element. Forwarded from BoxedElementView's
   // own context handler — the canvas selects the element and the
   // page opens an element context menu.
