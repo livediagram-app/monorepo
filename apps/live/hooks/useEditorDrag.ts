@@ -260,6 +260,7 @@ type EditorDragApi = {
   beginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
   beginArrowCurvePointDrag: (arrowId: string, index: number, e: ReactPointerEvent) => void;
   addCurvePoint: (arrowId: string, canvasX: number, canvasY: number) => void;
+  deleteCurvePoint: (arrowId: string, index: number) => void;
   beginArrowElbowDrag: (arrowId: string, e: ReactPointerEvent) => void;
   beginArrowLabelDrag: (arrowId: string, e: ReactPointerEvent) => void;
 };
@@ -690,6 +691,25 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       all.map((el) =>
         el.id === arrowId && el.type === 'arrow'
           ? { ...el, arrowStyle: nextStyle, curvePoints: next }
+          : el,
+      ),
+    );
+    d.setSelectedId(arrowId);
+  };
+
+  // Remove a control point (right-click a point handle). Drops the slot from
+  // curvePoints; clearing it back to undefined when the last one goes, so the
+  // arrow falls back to its default single bend / straight line.
+  const deleteCurvePoint = (arrowId: string, index: number) => {
+    const r = resolveArrowDrag(arrowId);
+    if (!r) return;
+    const { d, arrow } = r;
+    if (arrow.locked === true || d.isReadOnly || !arrow.curvePoints?.[index]) return;
+    const remaining = arrow.curvePoints.filter((_, i) => i !== index);
+    d.commit((all) =>
+      all.map((el) =>
+        el.id === arrowId && el.type === 'arrow'
+          ? { ...el, curvePoints: remaining.length > 0 ? remaining : undefined }
           : el,
       ),
     );
@@ -1405,6 +1425,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     beginArrowCurveDrag,
     beginArrowCurvePointDrag,
     addCurvePoint,
+    deleteCurvePoint,
     beginArrowElbowDrag,
     beginArrowLabelDrag,
   };

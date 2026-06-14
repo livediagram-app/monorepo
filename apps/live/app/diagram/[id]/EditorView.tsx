@@ -111,6 +111,7 @@ export function EditorView() {
     beginArrowCurveDrag,
     beginArrowCurvePointDrag,
     addCurvePoint,
+    deleteCurvePoint,
     beginArrowLabelDrag,
     beginArrowElbowDrag,
     beginArrowTranslate,
@@ -769,6 +770,7 @@ export function EditorView() {
         onBeginArrowCurveDrag={beginArrowCurveDrag}
         onBeginArrowCurvePointDrag={beginArrowCurvePointDrag}
         onAddCurvePoint={addCurvePoint}
+        onDeleteCurvePoint={deleteCurvePoint}
         onBeginArrowLabelDrag={beginArrowLabelDrag}
         onBeginArrowElbowDrag={beginArrowElbowDrag}
         onShiftSelect={toggleInMultiSelect}

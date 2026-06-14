@@ -80,9 +80,11 @@ type ArrowViewProps = {
   onBeginCurveDrag?: (id: string, e: ReactPointerEvent) => void;
   // Drag one control point of a multi-bend curve (curvePoints[index]).
   onBeginCurvePointDrag?: (id: string, index: number, e: ReactPointerEvent) => void;
-  // Click the curved line (when selected) to add a control point at the
-  // clicked canvas position.
+  // Add a control point at a canvas position (fired by the "+" segment
+  // handles shown while the arrow is selected).
   onAddCurvePoint?: (id: string, canvasX: number, canvasY: number) => void;
+  // Remove the control point at `index` (right-click a point handle).
+  onDeleteCurvePoint?: (id: string, index: number) => void;
   // Same shape as curve drag, but for angled arrows: the elbow
   // handle lets the user drag the bend to a new position. Fires
   // only when the arrow is angled and the user grabs the elbow.
@@ -123,6 +125,7 @@ function ArrowViewImpl({
   onBeginCurveDrag,
   onBeginCurvePointDrag,
   onAddCurvePoint,
+  onDeleteCurvePoint,
   onBeginElbowDrag,
   onBeginLabelDrag,
   fontFamily,
@@ -283,23 +286,6 @@ function ArrowViewImpl({
           if (isLocked || isPaintMode) return;
           onBeginEdit(arrow.id);
         }}
-        onClick={(e) => {
-          // Single click on an already-selected arrow adds a control point at
-          // the click, bending the line there (a straight / angled arrow is
-          // turned into a smooth curve). e.detail === 1 skips the clicks of a
-          // double-click-to-edit; the first selecting click is a no-op here
-          // because this render's isSelected is still false at that point.
-          if (e.detail !== 1 || !isSelected || isLocked) return;
-          if (!onAddCurvePoint) return;
-          const svg = (e.currentTarget as SVGPathElement).ownerSVGElement;
-          const ctm = svg?.getScreenCTM();
-          if (!svg || !ctm) return;
-          const pt = svg.createSVGPoint();
-          pt.x = e.clientX;
-          pt.y = e.clientY;
-          const c = pt.matrixTransform(ctm.inverse());
-          onAddCurvePoint(arrow.id, c.x, c.y);
-        }}
         style={{
           pointerEvents: 'stroke',
           cursor:
@@ -381,8 +367,42 @@ function ArrowViewImpl({
                     e.stopPropagation();
                     onBeginCurvePointDrag(arrow.id, i, e);
                   }}
+                  onContextMenu={
+                    isLocked || !onDeleteCurvePoint
+                      ? undefined
+                      : (e) => {
+                          // Right-click a control point to delete it.
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteCurvePoint(arrow.id, i);
+                        }
+                  }
                 />
               ))
+            : null}
+          {/* "+" handles at each segment midpoint: a deliberate target for
+              adding a control point (so points aren't added by an accidental
+              line click). Hidden while locked / when no add handler. */}
+          {onAddCurvePoint && !isLocked
+            ? (() => {
+                const poly = [from, ...(curveAnchors ?? []), to];
+                return poly.slice(0, -1).map((p, i) => {
+                  const q = poly[i + 1]!;
+                  const mx = (p.x + q.x) / 2;
+                  const my = (p.y + q.y) / 2;
+                  return (
+                    <AddPointHandle
+                      key={`add-${i}`}
+                      cx={mx}
+                      cy={my}
+                      onAdd={(e) => {
+                        e.stopPropagation();
+                        onAddCurvePoint(arrow.id, mx, my);
+                      }}
+                    />
+                  );
+                });
+              })()
             : null}
           {elbowPoint && onBeginElbowDrag ? (
             // Angled-arrow elbow handle. Same affordance as the
@@ -449,11 +469,14 @@ function CurveHandle({
   cy,
   disabled,
   onPointerDown,
+  onContextMenu,
 }: {
   cx: number;
   cy: number;
   disabled: boolean;
   onPointerDown: (e: ReactPointerEvent) => void;
+  // Right-click handler (used by curve control points: right-click to delete).
+  onContextMenu?: (e: ReactMouseEvent) => void;
 }) {
   const size = 10;
   return (
@@ -467,11 +490,49 @@ function CurveHandle({
       strokeWidth={2}
       rx={2}
       onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
       style={{
         pointerEvents: 'all',
         cursor: disabled ? 'default' : 'grab',
       }}
     />
+  );
+}
+
+// A small "+" handle sitting on a segment of the arrow line; clicking it adds
+// a control point there. The deliberate target (vs clicking the line itself)
+// is what keeps points from being added by accident on select / connect / drag.
+function AddPointHandle({
+  cx,
+  cy,
+  onAdd,
+}: {
+  cx: number;
+  cy: number;
+  onAdd: (e: ReactMouseEvent) => void;
+}) {
+  return (
+    <g
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={onAdd}
+      style={{ pointerEvents: 'all', cursor: 'copy' }}
+    >
+      <circle
+        cx={cx}
+        cy={cy}
+        r={6}
+        fill="white"
+        stroke={BRAND_600}
+        strokeWidth={1.5}
+        opacity={0.9}
+      />
+      <path
+        d={`M ${cx - 3} ${cy} h 6 M ${cx} ${cy - 3} v 6`}
+        stroke={BRAND_600}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </g>
   );
 }
 

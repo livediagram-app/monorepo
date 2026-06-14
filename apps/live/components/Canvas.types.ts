@@ -257,6 +257,7 @@ export type CanvasProps = {
   onBeginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowCurvePointDrag: (arrowId: string, index: number, e: ReactPointerEvent) => void;
   onAddCurvePoint: (arrowId: string, canvasX: number, canvasY: number) => void;
+  onDeleteCurvePoint: (arrowId: string, index: number) => void;
   onBeginArrowElbowDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowLabelDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowTranslate: (arrowId: string, e: ReactPointerEvent) => void;

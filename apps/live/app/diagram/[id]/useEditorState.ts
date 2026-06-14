@@ -1621,6 +1621,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     beginArrowCurveDrag,
     beginArrowCurvePointDrag,
     addCurvePoint,
+    deleteCurvePoint,
     beginArrowElbowDrag,
     beginArrowLabelDrag,
   } = useEditorDrag({
@@ -1784,6 +1785,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     beginArrowCurveDrag,
     beginArrowCurvePointDrag,
     addCurvePoint,
+    deleteCurvePoint,
     beginArrowElbowDrag,
     beginArrowLabelDrag,
     beginArrowTranslate,

@@ -66,6 +66,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
     onBeginArrowCurveDrag,
     onBeginArrowCurvePointDrag,
     onAddCurvePoint,
+    onDeleteCurvePoint,
     onBeginArrowElbowDrag,
     onBeginArrowLabelDrag,
     onBeginArrowTranslate,
@@ -173,6 +174,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
                 onBeginCurveDrag={onBeginArrowCurveDrag}
                 onBeginCurvePointDrag={onBeginArrowCurvePointDrag}
                 onAddCurvePoint={onAddCurvePoint}
+                onDeleteCurvePoint={onDeleteCurvePoint}
                 onBeginElbowDrag={onBeginArrowElbowDrag}
                 onBeginLabelDrag={onBeginArrowLabelDrag}
                 fontFamily={tabFontStack}
