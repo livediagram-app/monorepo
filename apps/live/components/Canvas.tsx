@@ -897,10 +897,10 @@ export function Canvas(props: CanvasProps) {
       </div>
 
       {/* SelectionPopover rides on a sibling wrapper that mirrors
-          the canvas transform but lives AFTER the editor panels in
+          the canvas transform but lives AFTER the floating panels in
           DOM order. z-40 on every viewport: lifts the toolbar
-          above panels (Palette, Editor / Context, Explorer,
-          Activity, Zoom / ZoomControls, the TabBar footer) so it
+          above panels (Palette, Explorer, Activity, Zoom /
+          ZoomControls, the TabBar footer) so it
           stays visible whether the selected element sits near a
           panel-pinned corner on desktop OR overlaps the bottom
           dock on mobile. The previous mobile-only z-0 was an

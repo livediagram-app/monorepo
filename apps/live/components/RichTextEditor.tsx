@@ -75,7 +75,7 @@ type Props = {
   onCommit: (label: string, runs: TextRun[]) => void;
   onCancel: () => void;
   // Whole-element controls surfaced in the edit toolbar (they operate on the
-  // current selection = the editing element, same as the side panel).
+  // current selection = the editing element).
   onSetAlign?: (x: TextAlignX, y: TextAlignY) => void;
   onSetPadding?: (padding: Padding) => void;
   onSetFont?: (font: string | null) => void;

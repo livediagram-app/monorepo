@@ -11,8 +11,9 @@ import { assignBranches, branchOfArrow, ROOT_BRANCH } from './hierarchy';
 
 // A preset theme bundles a canvas backdrop (background colour + pattern +
 // pattern colour) with the default colours used for newly added boxed
-// elements. Picking a theme from the palette's Current Tab section
-// updates both halves at once; existing elements are unaffected. Themes
+// elements. Picking a theme (from the canvas context menu or the Tab
+// Appearance modal) updates both halves at once; existing elements are
+// unaffected. Themes
 // are referenced by string id (stored on Tab.theme) so they survive
 // renames + can be extended without breaking saved diagrams.
 
