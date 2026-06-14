@@ -664,7 +664,6 @@ export function EditorView() {
         teams={explorerTeams}
         teamFolders={teamFolders}
         teamDiagrams={teamDiagrams}
-        currentOwnerId={selfParticipant?.id ?? null}
         onDismissShared={dismissSharedDiagram}
         onOpenFullExplorer={() =>
           window.location.assign(`${window.location.origin}/explorer/recent`)
@@ -753,7 +752,6 @@ export function EditorView() {
         }
         onBeginDrag={beginDrag}
         onBeginRotate={beginRotate}
-        onBeginAnchorDrag={beginAnchorDrag}
         onBeginEdit={beginEdit}
         onCommitLabel={commitLabel}
         onCommitTable={commitTable}
