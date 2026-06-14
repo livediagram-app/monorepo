@@ -118,7 +118,11 @@ export function createText(x: number, y: number): TextElement {
     width: 220,
     height: 64,
     label: 'Text',
-    textSize: 'md',
+    // Standalone text renders at the fixed px for its size (sm = 14px), and a
+    // text element is plain text on the canvas, not a label inside a box, so
+    // 'md' (22px) read oversized — especially on a phone. Default to 'sm';
+    // the user can bump it from the edit toolbar.
+    textSize: 'sm',
   };
 }
 

@@ -40,7 +40,7 @@ describe('boxed-element factories', () => {
       x: 5,
       y: 6,
       label: 'Text',
-      textSize: 'md',
+      textSize: 'sm',
     });
   });
 
