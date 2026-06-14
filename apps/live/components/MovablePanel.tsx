@@ -120,6 +120,11 @@ type MovablePanelProps = {
   // panel is dock-controlled. The dock should deactivate this panel.
   onMobileClose?: () => void;
   mobileDockAnchor?: { left: number; top: number; arrowOffset: number };
+  // Drop the body's default top padding so the first child sits flush
+  // against the panel header (floating) or the popover's top edge (dock).
+  // Used by the palette, whose first child is a full-width tab band meant
+  // to be flush; applies in BOTH render paths so the layouts match.
+  flushTop?: boolean;
   children: ReactNode;
 };
 
@@ -151,6 +156,7 @@ export function MovablePanel({
   forceDockMode = false,
   onMobileClose,
   mobileDockAnchor,
+  flushTop = false,
   children,
 }: MovablePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -436,7 +442,7 @@ export function MovablePanel({
             className="absolute -top-[7px] h-3.5 w-3.5 rotate-45 rounded-tl-sm border-l border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           />
         ) : null}
-        <div className="overflow-y-auto pt-2">{children}</div>
+        <div className={`overflow-y-auto ${flushTop ? '' : 'pt-2'}`}>{children}</div>
       </div>
     );
   }
@@ -621,7 +627,7 @@ export function MovablePanel({
           style={bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
           className="overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700"
         >
-          <div className="flex flex-col pt-1">{children}</div>
+          <div className={`flex flex-col ${flushTop ? '' : 'pt-1'}`}>{children}</div>
         </div>
       </div>
     </div>

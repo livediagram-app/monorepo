@@ -387,6 +387,7 @@ export function CommandPalette({
       onMobileClose={onMobileClose}
       mobileDockAnchor={mobileDockAnchor}
       forceDockMode={forceDockMode}
+      flushTop
       onReset={onReset}
       onMoveTo={onMoveTo}
       collapsible
