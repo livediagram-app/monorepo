@@ -297,14 +297,14 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
-        {/* Collaborate — notes + comments grouped under one collapsible header. */}
-        <MenuAccordionSection
-          title="Collaborate"
-          icon={<CommentMenuIcon />}
-          {...sectionProps('collaborate')}
-        >
-          {/* Link to Source — arrows can't be linked. */}
-          {boxed ? (
+        {/* Collaborate — link / note / comments. Boxed-only: arrows can't be
+            linked, noted, or commented on. */}
+        {boxed ? (
+          <MenuAccordionSection
+            title="Collaborate"
+            icon={<CommentMenuIcon />}
+            {...sectionProps('collaborate')}
+          >
             <MenuItem
               icon={<LinkMenuIcon />}
               label={target.link ? 'Edit link' : 'Link to Source'}
@@ -313,8 +313,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 onClose();
               }}
             />
-          ) : null}
-          {boxed ? (
             <MenuItem
               icon={<NoteMenuIcon />}
               label={target.note ? 'Edit note' : 'Add note'}
@@ -323,16 +321,16 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 onClose();
               }}
             />
-          ) : null}
-          <MenuItem
-            icon={<CommentMenuIcon />}
-            label="View comments"
-            onClick={() => {
-              props.onOpenComments(target.id);
-              onClose();
-            }}
-          />
-        </MenuAccordionSection>
+            <MenuItem
+              icon={<CommentMenuIcon />}
+              label="View comments"
+              onClick={() => {
+                props.onOpenComments(target.id);
+                onClose();
+              }}
+            />
+          </MenuAccordionSection>
+        ) : null}
       </ContextMenu>
     );
   }
