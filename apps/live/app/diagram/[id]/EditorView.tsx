@@ -1205,6 +1205,16 @@ export function EditorView() {
           selectionIsGroup={ctxIsGroup}
           selectionLocked={ctxSelectionLocked}
           tabName={activeTab.name}
+          onDuplicateTab={() => duplicateTab(activeId)}
+          onToggleTabLock={toggleActiveTabLock}
+          tabLocked={activeTabLocked}
+          onClearTabContent={clearTabContent}
+          tabHasContent={activeTab.elements.length > 0}
+          onImportTab={() => setImportOpen(true)}
+          onExportTab={() => {
+            setExportScope('tab');
+            setExportOpen(true);
+          }}
           selectionElements={ctxMemberIds
             .map((id) => activeTab.elements.find((e) => e.id === id))
             .filter((e): e is NonNullable<typeof e> => e != null)}

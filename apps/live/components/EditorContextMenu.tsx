@@ -51,6 +51,7 @@ import {
   BorderStyleIcon,
   DotsIcon,
   FileExportIcon,
+  FileImportIcon,
   ItalicIcon,
   ScaleIcon,
   StrikethroughIcon,
@@ -178,6 +179,17 @@ type EditorContextMenuProps = {
   // Active tab name, shown as the canvas menu's "Current Tab" title so the
   // canvas + tab right-click menus read as one surface scoped to this tab.
   tabName: string;
+  // Tab-management actions surfaced in the canvas menu's Tab category, so the
+  // canvas right-click offers the same per-tab ops as the tab menu (the
+  // input / confirm-heavy ones — rename, delete, copy-to, move-to-folder —
+  // stay in the tab's own ellipsis menu).
+  onDuplicateTab: () => void;
+  onToggleTabLock: () => void;
+  tabLocked: boolean;
+  onClearTabContent: () => void;
+  tabHasContent: boolean;
+  onImportTab: () => void;
+  onExportTab: () => void;
   onAddShape: (kind: ShapeKind) => void;
   onAddSticky: () => void;
   onDrawPencil: () => void;
@@ -968,6 +980,60 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           {props.tabName}
         </span>
       </div>
+      {/* Tab — per-tab management, mirroring the tab ellipsis menu. Rename /
+          delete / copy-to / move-to-folder need an inline editor, confirm,
+          or a list subview, so they stay in the tab's own menu; the no-input
+          actions live here too. */}
+      <MenuAccordionSection title="Tab" icon={<StickyMenuIcon />} {...sectionProps('tab')}>
+        <MenuTileGrid cols={2}>
+          <MenuTile
+            icon={<DuplicateMenuIcon />}
+            label="Duplicate tab"
+            onClick={() => {
+              props.onDuplicateTab();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<LockMenuIcon />}
+            label={props.tabLocked ? 'Unlock tab' : 'Lock tab'}
+            active={props.tabLocked}
+            onClick={() => {
+              props.onToggleTabLock();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<FileImportIcon />}
+            label="Import"
+            onClick={() => {
+              props.onImportTab();
+              onClose();
+            }}
+          />
+          <MenuTile
+            icon={<FileExportIcon />}
+            label="Export"
+            onClick={() => {
+              props.onExportTab();
+              onClose();
+            }}
+          />
+        </MenuTileGrid>
+        {props.tabHasContent && !props.tabLocked ? (
+          <div className="px-2 pb-1.5">
+            <MenuTile
+              icon={<TrashIcon />}
+              label="Clear content"
+              danger
+              onClick={() => {
+                props.onClearTabContent();
+                onClose();
+              }}
+            />
+          </div>
+        ) : null}
+      </MenuAccordionSection>
       {/* Canvas — theme / background / tidy. */}
       <MenuAccordionSection title="Canvas" icon={<CanvasMenuIcon />} {...sectionProps('canvas')}>
         <MenuTileGrid cols={3}>
