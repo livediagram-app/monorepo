@@ -20,12 +20,11 @@ import { useEffect, useRef } from 'react';
 
 type CanvasTool = 'pan' | 'select' | 'laser' | 'eraser';
 
-// Shape kind subset that has a dedicated palette button + single-key
-// shortcut. The wider ShapeKind union (cylinder, parallelogram,
-// stadium, devices, etc.) doesn't get one: there isn't a memorable
-// letter to spare without colliding with tools / copy / etc., and
-// the palette is one click away anyway.
-type ShortcutShape = 'square' | 'circle' | 'diamond';
+// Shape kinds that have a single-key palette shortcut: the common
+// flowchart set. The rest of the ShapeKind union (stadium, document,
+// cloud, devices, etc.) has no memorable free letter and stays a click
+// away in the palette.
+type ShortcutShape = 'square' | 'circle' | 'diamond' | 'cylinder' | 'hexagon' | 'parallelogram';
 
 type EditorKeyboardShortcutsDeps = {
   // Modal-interaction state. Escape clears whichever is active.
@@ -68,8 +67,8 @@ type EditorKeyboardShortcutsDeps = {
   // anything; selecting is harmless because the popover hides for
   // view-role).
   setCanvasTool: (t: CanvasTool) => void;
-  // Element-add callbacks. R / O / D fire addShape with the matching
-  // ShortcutShape; T / N / A fire the dedicated handlers; I opens
+  // Element-add callbacks. R / O / D / C / H / G fire addShape with the
+  // matching ShortcutShape; T / N / A fire the dedicated handlers; I opens
   // the image picker. All five mirror their palette counterparts so
   // the keyboard route reaches the same code path as the click route.
   // onAddImage is nullable: pure-guest deploys without an api worker
@@ -283,9 +282,13 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       // --- Plain key tool + element-add shortcuts ---
       // Mnemonic-first bindings:
       //   S = Select, P = Pan, L = Laser, E = Eraser (tools)
-      //   R = Rectangle (square), O = Oval (circle), D = Diamond
+      //   R = Rectangle (square), O = Oval (circle), D = Diamond,
+      //   C = Cylinder, H = Hexagon, G = Parallelogram (shapes)
       //   T = Text, N = Note (sticky), A = Arrow, I = Image
       //   F = Freehand (Pencil — P is taken by Pan)
+      // The plain shape keys never collide with Cmd/Ctrl+C / +G (copy /
+      // group), which are handled in the modifier block above and return
+      // before reaching here.
       // Bail on text-input focus + editing-label state so the user
       // can still type literal letters into a label or comment.
       // Element-add shortcuts also check isReadOnly so view-role
@@ -375,6 +378,21 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
       if (lower === 'd') {
         e.preventDefault();
         live.addShape('diamond');
+        return;
+      }
+      if (lower === 'c') {
+        e.preventDefault();
+        live.addShape('cylinder');
+        return;
+      }
+      if (lower === 'h') {
+        e.preventDefault();
+        live.addShape('hexagon');
+        return;
+      }
+      if (lower === 'g') {
+        e.preventDefault();
+        live.addShape('parallelogram');
         return;
       }
       if (lower === 't') {

@@ -371,6 +371,7 @@ export function CommandPalette({
                   onClick={() => addShape('cylinder')}
                   dragKind="cylinder"
                   active={pendingShapeKind === 'cylinder'}
+                  shortcut="C"
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
                     <path
@@ -397,6 +398,7 @@ export function CommandPalette({
                   onClick={() => addShape('parallelogram')}
                   dragKind="parallelogram"
                   active={pendingShapeKind === 'parallelogram'}
+                  shortcut="G"
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
                     <polygon
@@ -414,6 +416,7 @@ export function CommandPalette({
                   onClick={() => addShape('hexagon')}
                   dragKind="hexagon"
                   active={pendingShapeKind === 'hexagon'}
+                  shortcut="H"
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
                     <polygon
