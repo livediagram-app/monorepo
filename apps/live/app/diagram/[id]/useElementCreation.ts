@@ -221,7 +221,15 @@ export function useElementCreation(opts: {
   const dropPaletteItem = (kind: ShapeKind, canvasX: number, canvasY: number, iconId?: string) => {
     if (editsBlocked) return;
     addBoxedAt(canvasX, canvasY, (x, y) =>
-      iconId ? { ...createShape('icon', x, y), iconId } : createShape(kind, x, y),
+      iconId
+        ? {
+            ...createShape('icon', x, y),
+            iconId,
+            // Tech icons land self-describing (S3, EKS, ...) on drag too,
+            // matching the click-to-add addTechIcon path.
+            ...(isTechIconId(iconId) ? { label: getTechIcon(iconId)?.label ?? '' } : {}),
+          }
+        : createShape(kind, x, y),
     );
     // A tech-icon id maps to its own telemetry type (see addTechIcon);
     // line-art icons + shapes use the kind.
