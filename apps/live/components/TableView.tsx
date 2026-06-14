@@ -801,7 +801,10 @@ export function TableView({
           dividers ride a grid that mirrors the table's column template so
           they sit exactly on each column boundary. */}
       {showControls ? (
-        <div className="pointer-events-none absolute inset-0">
+        // z-20 keeps the row / column header controls (and their menus) ABOVE
+        // the per-cell toolbar layer (z-10 below), so an open insert/delete
+        // menu isn't hidden behind the cell toolbar.
+        <div className="pointer-events-none absolute inset-0 z-20">
           {/* Column-resize dividers (between columns). */}
           <div
             className="pointer-events-none absolute inset-0 grid"
@@ -1004,7 +1007,7 @@ export function TableView({
       ) : null}
       {showControls && selectedCell && !editing ? (
         <div
-          className="pointer-events-none absolute inset-0 grid"
+          className="pointer-events-none absolute inset-0 z-10 grid"
           style={{ gridTemplateColumns: colTemplate, gridTemplateRows: rowTemplate }}
         >
           <div
