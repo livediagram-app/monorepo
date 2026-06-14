@@ -25,7 +25,6 @@ import {
   supportsBorderControls,
   supportsBorderRadius,
   supportsColours,
-  timerDisplayMs,
   type ArrowEnds,
   type ArrowheadShape,
   type ArrowheadSize,
@@ -73,6 +72,7 @@ import {
   StickyMenuIcon,
 } from '@/components/context-menu-icons';
 import { MenuAccordionSection, MenuTile, MenuTileGrid } from '@/components/PortalMenu';
+import { SessionToolsSection } from '@/components/SessionToolsSection';
 import { ShapeIcon } from '@/components/shape-icon';
 
 // A curated subset of the most common shapes offered for in-place morphing
@@ -232,9 +232,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   // Session-tool pickers (spec/39): the chosen timer mode + countdown length
   // and the votes-per-person budget, local until the facilitator hits Start
   // (mirrors the old tab editor's Session accordion).
-  const [timerMode, setTimerMode] = useState<TimerMode>('countdown');
-  const [durationMin, setDurationMin] = useState(5);
-  const [votesPerPerson, setVotesPerPerson] = useState(3);
 
   if (menu.mode === 'multi') {
     const noun = props.selectionIsGroup ? 'group' : `${props.selectionCount} elements`;
@@ -955,19 +952,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     );
   }
 
-  // Canvas-menu Session styles (shared by the timer + vote rows).
-  const sessChip = (on: boolean) =>
-    on
-      ? 'flex-1 rounded-md border border-brand-400 bg-brand-50 px-2 py-1 text-[11px] font-medium text-brand-800 dark:bg-brand-500/20 dark:text-brand-100'
-      : 'flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
-  const sessBtn =
-    'inline-flex w-full items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15';
-  const sessBtnPrimary =
-    'inline-flex w-full items-center justify-center gap-1 rounded-md bg-brand-500 px-2 py-1.5 text-[11px] font-semibold text-white transition hover:bg-brand-600';
-  const timer = props.timer;
-  const vote = props.vote;
-  const totalVotesCast = vote ? Object.values(vote.votes).reduce((n, ids) => n + ids.length, 0) : 0;
-
   return (
     <ContextMenu position={position} onClose={onClose} flush anchorBottom={menu.openUp}>
       {/* Canvas — theme / background / tidy. */}
@@ -1041,150 +1025,19 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           reveal) lives here; actions keep the menu open so a facilitator can
           configure then start without re-opening. */}
       <MenuAccordionSection title="Session" icon={<SessionGlyph />} {...sectionProps('session')}>
-        <div className="px-2.5 pb-2 pt-1">
-          {/* Timer */}
-          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Timer
-          </p>
-          {!timer ? (
-            <div className="mt-1 flex flex-col gap-1.5">
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setTimerMode('countdown')}
-                  className={sessChip(timerMode === 'countdown')}
-                >
-                  Countdown
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTimerMode('stopwatch')}
-                  className={sessChip(timerMode === 'stopwatch')}
-                >
-                  Stopwatch
-                </button>
-              </div>
-              {timerMode === 'countdown' ? (
-                <div className="grid grid-cols-4 gap-1">
-                  {[1, 3, 5, 10].map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setDurationMin(m)}
-                      className={sessChip(durationMin === m)}
-                    >
-                      {m}m
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              <button
-                type="button"
-                onClick={() =>
-                  props.onStartTimer(
-                    timerMode,
-                    timerMode === 'countdown' ? durationMin * 60_000 : undefined,
-                  )
-                }
-                className={sessBtnPrimary}
-              >
-                Start {timerMode === 'countdown' ? `${durationMin}m countdown` : 'stopwatch'}
-              </button>
-            </div>
-          ) : (
-            <div className="mt-1 flex flex-col gap-1.5">
-              <p className="text-[11px] text-slate-600 dark:text-slate-300">
-                {timer.mode === 'countdown' ? 'Countdown' : 'Stopwatch'} ·{' '}
-                <span className="font-semibold tabular-nums">
-                  {fmtClock(timerDisplayMs(timer, Date.now()))}
-                </span>{' '}
-                {timer.running ? 'running' : 'paused'}
-              </p>
-              <div className="grid grid-cols-3 gap-1">
-                {timer.running ? (
-                  <button type="button" onClick={props.onPauseTimer} className={sessBtn}>
-                    Pause
-                  </button>
-                ) : (
-                  <button type="button" onClick={props.onResumeTimer} className={sessBtn}>
-                    Resume
-                  </button>
-                )}
-                <button type="button" onClick={props.onResetTimer} className={sessBtn}>
-                  Reset
-                </button>
-                <button type="button" onClick={props.onClearTimer} className={sessBtn}>
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
-          {/* Vote */}
-          <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            Vote
-          </p>
-          {!vote ? (
-            <div className="mt-1 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-600 dark:text-slate-300">
-                  Dots per person
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    aria-label="Fewer dots"
-                    onClick={() => setVotesPerPerson((n) => Math.max(1, n - 1))}
-                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    −
-                  </button>
-                  <span className="w-4 text-center text-[12px] font-semibold tabular-nums">
-                    {votesPerPerson}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="More dots"
-                    onClick={() => setVotesPerPerson((n) => Math.min(20, n + 1))}
-                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => props.onStartVote(votesPerPerson)}
-                className={sessBtnPrimary}
-              >
-                Start vote
-              </button>
-            </div>
-          ) : (
-            <div className="mt-1 flex flex-col gap-1.5">
-              <p className="text-[11px] text-slate-600 dark:text-slate-300">
-                {vote.active ? 'Voting open' : vote.revealed ? 'Results shown' : 'Voting ended'} ·{' '}
-                <span className="font-semibold tabular-nums">{totalVotesCast}</span> cast ·{' '}
-                {vote.votesPerPerson} each
-              </p>
-              <div className="grid grid-cols-2 gap-1">
-                {vote.active ? (
-                  <button type="button" onClick={props.onEndVote} className={sessBtn}>
-                    End vote
-                  </button>
-                ) : !vote.revealed ? (
-                  <button type="button" onClick={props.onRevealVote} className={sessBtn}>
-                    Show results
-                  </button>
-                ) : (
-                  <span />
-                )}
-                <button type="button" onClick={props.onClearVote} className={sessBtn}>
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <SessionToolsSection
+          timer={props.timer}
+          vote={props.vote}
+          onStartTimer={props.onStartTimer}
+          onPauseTimer={props.onPauseTimer}
+          onResumeTimer={props.onResumeTimer}
+          onResetTimer={props.onResetTimer}
+          onClearTimer={props.onClearTimer}
+          onStartVote={props.onStartVote}
+          onEndVote={props.onEndVote}
+          onRevealVote={props.onRevealVote}
+          onClearVote={props.onClearVote}
+        />
       </MenuAccordionSection>
     </ContextMenu>
   );
@@ -1208,13 +1061,6 @@ function SessionGlyph() {
       <path d="M8 5.5V8.5L10 10M8 2.5V1" />
     </svg>
   );
-}
-
-// m:ss for the active-timer readout (a static snapshot — the live ticking
-// countdown lives in the floating TimerWidget).
-function fmtClock(ms: number): string {
-  const s = Math.round(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 // 6-hex or fall back to white for the native colour input (it can't take

@@ -8,6 +8,9 @@ import {
   groupTabsIntoRuns,
   tabFolderName,
   type Tab,
+  type TabTimer,
+  type TabVote,
+  type TimerMode,
 } from '@livediagram/diagram';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
 import { useUiMode } from '@/hooks/useUiMode';
@@ -16,6 +19,7 @@ import { getTheme } from '@/lib/themes';
 import { PencilIcon, TrashIcon } from './explorer-icons';
 import { FileExportIcon, FileImportIcon } from './palette-icons';
 import { MenuAccordionSection, MenuItem, MenuToolbar, MenuToolButton } from './PortalMenu';
+import { SessionToolsSection } from './SessionToolsSection';
 import { TabFolderChip } from './TabFolderChip';
 import { TabPresenceStack } from './TabPresenceStack';
 import { Tooltip } from './Tooltip';
@@ -77,13 +81,19 @@ type TabBarProps = {
   onImportTab: () => void;
   onExportTab: () => void;
   // Session tools (spec/39) for the active tab, surfaced in its ellipsis
-  // menu's Session category.
-  timerActive: boolean;
-  voteActive: boolean;
-  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  // menu's Session category — the same advanced SessionToolsSection the
+  // canvas context menu uses.
+  timer: TabTimer | null;
+  vote: TabVote | null;
+  onStartTimer: (mode: TimerMode, durationMs?: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onResetTimer: () => void;
   onClearTimer: () => void;
   onStartVote: (votesPerPerson: number) => void;
   onEndVote: () => void;
+  onRevealVote: () => void;
+  onClearVote: () => void;
   // The user's other diagrams (excluding the current one). Drives the
   // "Add to Diagram" submenu in the tab ellipsis.
   otherDiagrams: { id: string; name: string }[];
@@ -131,12 +141,17 @@ export function TabBar({
   onClearContent,
   onImportTab,
   onExportTab,
-  timerActive,
-  voteActive,
+  timer,
+  vote,
   onStartTimer,
+  onPauseTimer,
+  onResumeTimer,
+  onResetTimer,
   onClearTimer,
   onStartVote,
   onEndVote,
+  onRevealVote,
+  onClearVote,
   otherDiagrams,
   onCopyTabTo,
   onToggleLockTab,
@@ -296,12 +311,17 @@ export function TabBar({
               onDelete(tab.id);
               setMenuFor(null);
             }}
-            timerActive={timerActive}
-            voteActive={voteActive}
+            timer={timer}
+            vote={vote}
             onStartTimer={onStartTimer}
+            onPauseTimer={onPauseTimer}
+            onResumeTimer={onResumeTimer}
+            onResetTimer={onResetTimer}
             onClearTimer={onClearTimer}
             onStartVote={onStartVote}
             onEndVote={onEndVote}
+            onRevealVote={onRevealVote}
+            onClearVote={onClearVote}
           />
         ) : null}
       </div>
@@ -599,12 +619,17 @@ function EllipsisMenuButton({
   onCopyTo,
   onToggleLock,
   onDelete,
-  timerActive,
-  voteActive,
+  timer,
+  vote,
   onStartTimer,
+  onPauseTimer,
+  onResumeTimer,
+  onResetTimer,
   onClearTimer,
   onStartVote,
   onEndVote,
+  onRevealVote,
+  onClearVote,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -626,12 +651,17 @@ function EllipsisMenuButton({
   onToggleLock: () => void;
   onDelete: () => void;
   // Session tools (spec/39) for this (active) tab's Session category.
-  timerActive: boolean;
-  voteActive: boolean;
-  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  timer: TabTimer | null;
+  vote: TabVote | null;
+  onStartTimer: (mode: TimerMode, durationMs?: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onResetTimer: () => void;
   onClearTimer: () => void;
   onStartVote: (votesPerPerson: number) => void;
   onEndVote: () => void;
+  onRevealVote: () => void;
+  onClearVote: () => void;
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   return (
@@ -670,12 +700,17 @@ function EllipsisMenuButton({
           onDelete={onDelete}
           canDelete={canDelete}
           canClearContent={canClearContent}
-          timerActive={timerActive}
-          voteActive={voteActive}
+          timer={timer}
+          vote={vote}
           onStartTimer={onStartTimer}
+          onPauseTimer={onPauseTimer}
+          onResumeTimer={onResumeTimer}
+          onResetTimer={onResetTimer}
           onClearTimer={onClearTimer}
           onStartVote={onStartVote}
           onEndVote={onEndVote}
+          onRevealVote={onRevealVote}
+          onClearVote={onClearVote}
         />
       ) : null}
     </div>
@@ -701,12 +736,17 @@ function PortalMenu({
   onDelete,
   canClearContent,
   canDelete,
-  timerActive,
-  voteActive,
+  timer,
+  vote,
   onStartTimer,
+  onPauseTimer,
+  onResumeTimer,
+  onResetTimer,
   onClearTimer,
   onStartVote,
   onEndVote,
+  onRevealVote,
+  onClearVote,
 }: {
   anchor: HTMLButtonElement | null;
   onClose: () => void;
@@ -726,12 +766,17 @@ function PortalMenu({
   onDelete: () => void;
   canDelete: boolean;
   canClearContent: boolean;
-  timerActive: boolean;
-  voteActive: boolean;
-  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  timer: TabTimer | null;
+  vote: TabVote | null;
+  onStartTimer: (mode: TimerMode, durationMs?: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onResetTimer: () => void;
   onClearTimer: () => void;
   onStartVote: (votesPerPerson: number) => void;
   onEndVote: () => void;
+  onRevealVote: () => void;
+  onClearVote: () => void;
 }) {
   // The menu has three views — "actions" lists the verbs (Rename,
   // Duplicate, Clear…), "copyTo" lists the user's other diagrams so the
@@ -907,54 +952,19 @@ function PortalMenu({
               icon={<SessionTabIcon />}
               {...sectionProps('session')}
             >
-              {timerActive ? (
-                <MenuItem
-                  icon={<SessionTabIcon />}
-                  label="Stop timer"
-                  onClick={() => {
-                    onClearTimer();
-                    onClose();
-                  }}
-                />
-              ) : (
-                <>
-                  <MenuItem
-                    icon={<SessionTabIcon />}
-                    label="Start countdown (5 min)"
-                    onClick={() => {
-                      onStartTimer('countdown', 5 * 60_000);
-                      onClose();
-                    }}
-                  />
-                  <MenuItem
-                    icon={<SessionTabIcon />}
-                    label="Start stopwatch"
-                    onClick={() => {
-                      onStartTimer('stopwatch');
-                      onClose();
-                    }}
-                  />
-                </>
-              )}
-              {voteActive ? (
-                <MenuItem
-                  icon={<VoteTabIcon />}
-                  label="End voting"
-                  onClick={() => {
-                    onEndVote();
-                    onClose();
-                  }}
-                />
-              ) : (
-                <MenuItem
-                  icon={<VoteTabIcon />}
-                  label="Start voting"
-                  onClick={() => {
-                    onStartVote(3);
-                    onClose();
-                  }}
-                />
-              )}
+              <SessionToolsSection
+                timer={timer}
+                vote={vote}
+                onStartTimer={onStartTimer}
+                onPauseTimer={onPauseTimer}
+                onResumeTimer={onResumeTimer}
+                onResetTimer={onResetTimer}
+                onClearTimer={onClearTimer}
+                onStartVote={onStartVote}
+                onEndVote={onEndVote}
+                onRevealVote={onRevealVote}
+                onClearVote={onClearVote}
+              />
             </MenuAccordionSection>
           </>
         ) : view === 'copyTo' ? (
@@ -1232,17 +1242,6 @@ function SessionTabIcon() {
     >
       <circle cx="8" cy="8.5" r="5.5" />
       <path d="M8 5.5V8.5L10 10M8 2.5V1" />
-    </svg>
-  );
-}
-
-// Three dots — the voting rows.
-function VoteTabIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <circle cx="4.5" cy="8" r="1.6" />
-      <circle cx="8" cy="8" r="1.6" />
-      <circle cx="11.5" cy="8" r="1.6" />
     </svg>
   );
 }
