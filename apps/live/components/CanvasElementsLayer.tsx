@@ -70,7 +70,6 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
     onBeginDrag,
     onBeginEdit,
     onBeginEndpointDrag,
-    onBeginRotate,
     onCancelEdit,
     onCommitLabel,
     onSetTextAlign,
@@ -191,14 +190,12 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             isPaintMode={isPaintMode || isGroupMode}
             showHandles={showHandles(element.id)}
             showAnchors={showAnchorsFor(element.id)}
-            suppressRotate={quickRingOpen !== null}
             zoom={viewportZoom}
             badgeColor={badgeColor}
             tabLocked={tabLocked}
             tabSummaries={tabSummaries}
             readOnly={readOnly}
             onBeginDrag={onBeginDrag}
-            onBeginRotate={onBeginRotate}
             onShiftSelect={onShiftSelect}
             vote={tabVote}
             selfId={selfParticipant.id}

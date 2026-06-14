@@ -29,7 +29,7 @@ import {
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
 import { renderLabel } from './element-labels';
-import { LockBadge, ResizeHandles, RotateHandle, resizeCursor } from './element-parts';
+import { LockBadge, ResizeHandles, resizeCursor } from './element-parts';
 import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { BoxBorderOverlay } from './BoxBorderOverlay';
@@ -67,17 +67,8 @@ type BoxedElementViewProps = {
   isPaintMode: boolean;
   showHandles: boolean;
   showAnchors: boolean;
-  // Hide the rotate handle (e.g. while a quick-connect ring is open, whose
-  // top option would otherwise clash with the handle above the element).
-  suppressRotate?: boolean;
   zoom: number;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
-  onBeginRotate: (
-    id: string,
-    centerClientX: number,
-    centerClientY: number,
-    e: ReactPointerEvent,
-  ) => void;
   // Shift-click on an element fires this with the element id so the
   // page can toggle membership in the marquee multi-selection.
   onShiftSelect?: (id: string) => void;
@@ -196,10 +187,8 @@ function BoxedElementViewImpl({
   isPaintMode,
   showHandles,
   showAnchors,
-  suppressRotate = false,
   zoom,
   onBeginDrag,
-  onBeginRotate,
   onShiftSelect,
   onBeginEdit,
   onCommitLabel,
@@ -344,9 +333,12 @@ function BoxedElementViewImpl({
   // SelectionPopover (handled by the normal selection flow), so the
   // context menu is an additional surface, not a replacement.
   const handleContextMenu = (e: React.MouseEvent) => {
+    // While editing the label, let the browser's native text context menu
+    // (cut / copy / paste / select all) surface instead of the element
+    // context menu, so right-click acts on the text being edited.
+    if (isEditing) return;
     e.preventDefault();
     e.stopPropagation();
-    if (isEditing) return;
     onContextSelect(element.id, e.clientX, e.clientY);
   };
 
@@ -742,10 +734,6 @@ function BoxedElementViewImpl({
               rotation={rotation}
               onBeginDrag={onBeginDrag}
             />
-          ) : null}
-
-          {showHandles && !isAnnotation && !suppressRotate ? (
-            <RotateHandle elementId={element.id} zoom={zoom} onBeginRotate={onBeginRotate} />
           ) : null}
 
           {showAnchors ? (

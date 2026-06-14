@@ -3,11 +3,7 @@
 
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { DragMode } from '@/lib/canvas';
-import {
-  FLOATING_CONTROL_CLASS,
-  FLOATING_CONTROL_GAP,
-  FLOATING_CONTROL_HOVER_CLASS,
-} from './floating-controls';
+import { FLOATING_CONTROL_CLASS, FLOATING_CONTROL_HOVER_CLASS } from './floating-controls';
 
 // --- Lock badge ------------------------------------------------------------
 
@@ -119,80 +115,6 @@ export function ResizeHandles({ elementId, zoom, rotation = 0, onBeginDrag }: Re
         />
       ))}
     </>
-  );
-}
-
-// --- Rotate handle ---------------------------------------------------------
-
-type RotateHandleProps = {
-  elementId: string;
-  zoom: number;
-  onBeginRotate: (
-    elementId: string,
-    centerClientX: number,
-    centerClientY: number,
-    e: ReactPointerEvent,
-  ) => void;
-};
-
-// Custom cursor for the rotate handle. CSS has no "rotate" cursor, so
-// we inline a small circular-arrow SVG (drawn twice: a fat white halo
-// under a dark glyph so it reads on any canvas colour) with the hotspot
-// centred at 12,12 and `grab` as the fallback.
-const ROTATE_CURSOR =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M19.5 4v4h-4' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3' stroke='%231e293b' stroke-width='2'/%3E%3Cpath d='M19.5 4v4h-4' stroke='%231e293b' stroke-width='2'/%3E%3C/svg%3E\") 12 12, grab";
-
-// A circular handle (same size + style as the plus buttons) whose
-// centre lines up with the bottom + right plus buttons: anchored at the
-// element's SE corner (left/top 100%) and nudged out by the same
-// FLOATING_CONTROL_GAP the plus buttons use, so the four edge plusses
-// and this corner handle form one tidy ring well clear of the resize
-// handles. Dragging it spins the element about its centre, which is
-// read from the wrapper's bounding rect at grab time (rotation is about
-// the centre, so that rect's centre is the pivot at any angle).
-export function RotateHandle({ elementId, zoom, onBeginRotate }: RotateHandleProps) {
-  return (
-    <div
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        const wrapper = (e.currentTarget as HTMLElement).closest('[data-element-id]');
-        const rect = wrapper?.getBoundingClientRect();
-        if (!rect) return;
-        onBeginRotate(elementId, rect.left + rect.width / 2, rect.top + rect.height / 2, e);
-      }}
-      style={{
-        left: '100%',
-        top: '100%',
-        transform: `translate(${FLOATING_CONTROL_GAP / zoom}px, ${FLOATING_CONTROL_GAP / zoom}px) scale(${1 / zoom})`,
-        transformOrigin: 'top left',
-        cursor: ROTATE_CURSOR,
-      }}
-      className={`pointer-events-auto absolute flex h-6 w-6 items-center justify-center opacity-70 hover:opacity-100 ${FLOATING_CONTROL_CLASS} ${FLOATING_CONTROL_HOVER_CLASS} ${HIT_PAD_CLASSES}`}
-      aria-hidden
-    >
-      <RotateIcon />
-    </div>
-  );
-}
-
-function RotateIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-      {/* Three-quarter circular arrow — the conventional "rotate" glyph. */}
-      <path
-        d="M12.5 5.5A5 5 0 1 0 13 8"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12.8 2.5v3.2h-3.2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 

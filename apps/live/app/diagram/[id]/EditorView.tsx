@@ -117,7 +117,6 @@ export function EditorView() {
     beginFormatPainter,
     beginFreehand,
     beginGroup,
-    beginRotate,
     bringSelectedToFront,
     broadcastCursor,
     broadcastLaser,
@@ -751,7 +750,6 @@ export function EditorView() {
           isReadOnly ? undefined : (sx, sy) => setContextMenu({ mode: 'canvas', x: sx, y: sy })
         }
         onBeginDrag={beginDrag}
-        onBeginRotate={beginRotate}
         onBeginEdit={beginEdit}
         onCommitLabel={commitLabel}
         onCommitTable={commitTable}

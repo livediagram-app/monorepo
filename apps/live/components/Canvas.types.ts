@@ -232,12 +232,6 @@ export type CanvasProps = {
   // (the page sets a 'multi' context-menu mode).
   onMultiContextMenu?: (screenX: number, screenY: number) => void;
   onBeginDrag: (id: string, mode: DragMode, e: ReactPointerEvent) => void;
-  onBeginRotate: (
-    id: string,
-    centerClientX: number,
-    centerClientY: number,
-    e: ReactPointerEvent,
-  ) => void;
   onBeginEdit: (id: string) => void;
   onCommitLabel: (id: string, label: string, runs?: TextRun[]) => void;
   // Inline label-editor (rich-text) controls, threaded through
