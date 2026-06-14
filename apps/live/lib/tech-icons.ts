@@ -399,6 +399,83 @@ export const TECH_ICON_CATALOG: TechIconDef[] = [
     glyph:
       '<path d="M12 5.5 17.6 8.7v6.6L12 18.5 6.4 15.3V8.7Z"/><g fill="#fff" stroke="none"><circle cx="12" cy="5.5" r="1.3"/><circle cx="17.6" cy="8.7" r="1.3"/><circle cx="17.6" cy="15.3" r="1.3"/><circle cx="12" cy="18.5" r="1.3"/><circle cx="6.4" cy="15.3" r="1.3"/><circle cx="6.4" cy="8.7" r="1.3"/></g>',
   },
+  {
+    id: 'github',
+    label: 'GitHub',
+    provider: 'generic',
+    keywords: 'git repository version control source code',
+    color: '#181717',
+    glyph:
+      '<circle cx="7" cy="6" r="2"/><circle cx="7" cy="18" r="2"/><circle cx="16" cy="8" r="2"/><path d="M7 8v8M16 10v1.5a3 3 0 0 1-3 3H7"/>',
+  },
+  {
+    id: 'gitlab',
+    label: 'GitLab',
+    provider: 'generic',
+    keywords: 'git repository version control devops ci',
+    color: '#FC6D26',
+    glyph: '<path d="M12 20 4.5 10.5 6 5l2.4 5.5h7.2L18 5l1.5 5.5Z" fill="#fff" stroke="none"/>',
+  },
+  {
+    id: 'nodejs',
+    label: 'Node.js',
+    provider: 'generic',
+    keywords: 'javascript runtime server backend npm',
+    color: '#5FA04E',
+    glyph: '<path d="M12 3.5 19 7.5v9L12 20.5 5 16.5v-9Z"/><path d="M9.5 15.5v-6l5 4.5v-6"/>',
+  },
+  {
+    id: 'react',
+    label: 'React',
+    provider: 'generic',
+    keywords: 'javascript ui frontend component library',
+    color: '#087EA4',
+    glyph:
+      '<circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><ellipse cx="12" cy="12" rx="9" ry="3.5"/><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(120 12 12)"/>',
+  },
+  {
+    id: 'vercel',
+    label: 'Vercel',
+    provider: 'generic',
+    keywords: 'hosting deploy edge frontend serverless',
+    color: '#000000',
+    glyph: '<path d="M12 4 21 20H3Z" fill="#fff" stroke="none"/>',
+  },
+  {
+    id: 'supabase',
+    label: 'Supabase',
+    provider: 'generic',
+    keywords: 'database postgres backend auth realtime',
+    color: '#3FCF8E',
+    glyph: '<path d="M13 3 5.5 13.2H11l-.8 7.8 8.3-11H13Z" fill="#fff" stroke="none"/>',
+  },
+  {
+    id: 'terraform',
+    label: 'Terraform',
+    provider: 'generic',
+    keywords: 'infrastructure as code iac hashicorp provisioning',
+    color: '#7B42BC',
+    glyph:
+      '<path d="M10 5.5 14 7.8v4.5L10 10Z"/><path d="M14.7 8.2 18.7 10.5v4.5l-4-2.3Z"/><path d="M10 10.8 14 13.1v4.5L10 15.3Z"/>',
+  },
+  {
+    id: 'cassandra',
+    label: 'Cassandra',
+    provider: 'generic',
+    keywords: 'database distributed nosql wide column apache',
+    color: '#1287B1',
+    glyph:
+      '<ellipse cx="12" cy="12" rx="8.5" ry="5"/><circle cx="12" cy="12" r="2" fill="#fff" stroke="none"/>',
+  },
+  {
+    id: 'prometheus',
+    label: 'Prometheus',
+    provider: 'generic',
+    keywords: 'monitoring metrics observability alerting time series',
+    color: '#E6522C',
+    glyph:
+      '<path d="M12 3.5c2.2 2.6 1 4.4 0 5.4 1.6.2 2.8 1.6 2.8 3.2a3.6 3.6 0 0 1-7.2 0c0-1 .4-1.9 1-2.6"/><path d="M7.5 16.5h9M8.5 19h7"/>',
+  },
   // ---- Cloudflare ---------------------------------------------------------
   {
     id: 'cf-workers',
