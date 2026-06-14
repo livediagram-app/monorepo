@@ -99,7 +99,9 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
   // transparent (rendered fill-less in shape-svg-overlay) so content shows
   // through.
   if (kind === 'frame') {
-    return { ...base, textAlignY: 'top', textAlignX: 'left' };
+    // Frames start with a "Frame" section title (top-left) so they read as a
+    // labelled container the moment they're dropped.
+    return { ...base, label: 'Frame', textAlignY: 'top', textAlignX: 'left' };
   }
   return base;
 }

@@ -236,6 +236,22 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             and only runs while there's at least one active trail. */}
       <LaserOverlay trails={laserTrails} zoom={viewportZoom} />
 
+      {/* Dotted border around the whole multi-selection / group, so it reads
+          as one unit. Outset a touch from the union bounds; sits in the world
+          transform so it pans + zooms with the elements. */}
+      {showUnionResize && unionResizeBounds ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute rounded-md border border-dashed border-brand-400/80 dark:border-brand-300/70"
+          style={{
+            left: unionResizeBounds.x - 6,
+            top: unionResizeBounds.y - 6,
+            width: unionResizeBounds.width + 12,
+            height: unionResizeBounds.height + 12,
+          }}
+        />
+      ) : null}
+
       {showUnionResize && unionResizeBounds && unionResizePrimaryId ? (
         <UnionResizeHandles
           bounds={unionResizeBounds}
