@@ -65,9 +65,11 @@ const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: number }> =
   tablet: { width: 140, height: 180 },
   // Smartwatch: a square-ish face with bands above + below, so portrait.
   smartwatch: { width: 110, height: 150 },
-  // Curated glyph. Square + aspect-locked on create (set in
-  // createShape) so the line art never distorts; the label sits below.
-  icon: { width: 88, height: 88 },
+  // Curated glyph. Square + aspect-locked on create (set in createShape) so
+  // the line art never distorts; the label sits below. Sized generously so a
+  // two-line caption (e.g. "Durable Objects") clears the glyph rather than
+  // crowding it.
+  icon: { width: 120, height: 120 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
