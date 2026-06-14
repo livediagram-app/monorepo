@@ -549,7 +549,7 @@ Animations only fire on mount, so they naturally trigger once per element. Switc
 
 - **Click a shape** to select it. Selection is visible as a thicker brand-tinted outline plus four corner handles.
 - **Click the empty canvas background** (anywhere not on a shape, palette, or popover) to deselect.
-- Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group accordion). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over. Its buttons are Duplicate, Group, Lock / Unlock, **Export**, and Delete. **Export** opens the same Export dialog as the tab-level export, but scoped to just the selected elements (a derived tab whose `elements` are the multi-selection); the heading reads "Export selection" and every format (Markdown / PDF / PNG / SVG / File) renders only those elements. Pinned arrow endpoints that reference an element outside the selection keep their reference but render from the origin in the visual exports.
+- Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group action in the selection toolbar / context menu). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over. Its buttons are Duplicate, Group, Lock / Unlock, **Export**, and Delete. **Export** opens the same Export dialog as the tab-level export, but scoped to just the selected elements (a derived tab whose `elements` are the multi-selection); the heading reads "Export selection" and every format (Markdown / PDF / PNG / SVG / File) renders only those elements. Pinned arrow endpoints that reference an element outside the selection keep their reference but render from the origin in the visual exports.
 - Clicking the command palette never affects selection.
 
 ### Selection popover
@@ -612,7 +612,7 @@ On a touch device, the canvas surface declares `touch-action: none` and `user-se
 A multi-selection is mutually exclusive with the single-element selection:
 
 - 0 hits → both cleared.
-- 1 hit → single-select that element (popover + accordion still apply).
+- 1 hit → single-select that element (the selection popover + right-click context menu still apply).
 - 2 + hits → enter **multi-select** mode. The single-element popover is suppressed (a per-element toolbar doesn't make sense for many at once). Each multi-selected element still shows its selection ring via `BoxedElementView`'s `isSelected` prop.
 
 While multi-selected:
@@ -653,7 +653,7 @@ Boxed elements paint in **array order** — earlier in the tab's `elements` arra
 
 New elements always land at the **front** of the z-order:
 
-- **Palette adds** (shape / text / sticky / image / arrow / freehand, including the draw-to-size + pencil paths) **append** to `elements`, so the new element lands on **top** of existing content. Surfacing a freshly added element where the user can see and immediately work with it is the expected default; the Layer accordion's **Send to back** covers the rarer case where it should sit behind. (An earlier iteration prepended palette adds to drop them at the back, but landing new content on top matches how every other editor behaves and is what users reach for.)
+- **Palette adds** (shape / text / sticky / image / arrow / freehand, including the draw-to-size + pencil paths) **append** to `elements`, so the new element lands on **top** of existing content. Surfacing a freshly added element where the user can see and immediately work with it is the expected default; the context menu's Layer category **Send to Back** covers the rarer case where it should sit behind. (An earlier iteration prepended palette adds to drop them at the back, but landing new content on top matches how every other editor behaves and is what users reach for.)
 - **Paste and duplicate** likewise **append**, so the freshly minted copies land at the **front**: the user just copied them, surfacing them on top of the source is the expected behaviour.
 
 The selection popover exposes:
