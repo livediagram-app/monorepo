@@ -14,7 +14,7 @@ import {
   type Tab,
 } from '@livediagram/diagram';
 import { getTheme } from '@/lib/themes';
-import { isTechIconId } from '@/lib/tech-icons';
+import { getTechIcon, isTechIconId } from '@/lib/tech-icons';
 import { track, titleCaseType } from '@/lib/telemetry';
 import type { PendingDraw } from '@/lib/draw-mode';
 
@@ -110,7 +110,10 @@ export function useElementCreation(opts: {
   // from line-art icons while reusing the closed Element/Added pair.
   const addTechIcon = (iconId: string) => {
     if (editsBlocked) return;
-    addBoxed((x, y) => ({ ...createShape('icon', x, y), iconId }));
+    // Seed the label with the catalogue name (e.g. "S3", "EKS") so the icon
+    // lands self-describing; the user can clear / rename it like any label.
+    const label = getTechIcon(iconId)?.label ?? '';
+    addBoxed((x, y) => ({ ...createShape('icon', x, y), iconId, label }));
     track('Element', 'Added', 'TechIcon');
   };
 
