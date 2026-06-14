@@ -77,6 +77,14 @@ type TabBarProps = {
   // all live in one place).
   onImportTab: () => void;
   onExportTab: () => void;
+  // Session tools (spec/39) for the active tab, surfaced in its ellipsis
+  // menu's Session category.
+  timerActive: boolean;
+  voteActive: boolean;
+  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  onClearTimer: () => void;
+  onStartVote: (votesPerPerson: number) => void;
+  onEndVote: () => void;
   // The user's other diagrams (excluding the current one). Drives the
   // "Add to Diagram" submenu in the tab ellipsis.
   otherDiagrams: { id: string; name: string }[];
@@ -124,6 +132,12 @@ export function TabBar({
   onClearContent,
   onImportTab,
   onExportTab,
+  timerActive,
+  voteActive,
+  onStartTimer,
+  onClearTimer,
+  onStartVote,
+  onEndVote,
   otherDiagrams,
   onCopyTabTo,
   onToggleLockTab,
@@ -284,6 +298,12 @@ export function TabBar({
               onDelete(tab.id);
               setMenuFor(null);
             }}
+            timerActive={timerActive}
+            voteActive={voteActive}
+            onStartTimer={onStartTimer}
+            onClearTimer={onClearTimer}
+            onStartVote={onStartVote}
+            onEndVote={onEndVote}
           />
         ) : null}
       </div>
@@ -584,6 +604,12 @@ function EllipsisMenuButton({
   onCopyTo,
   onToggleLock,
   onDelete,
+  timerActive,
+  voteActive,
+  onStartTimer,
+  onClearTimer,
+  onStartVote,
+  onEndVote,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -604,6 +630,13 @@ function EllipsisMenuButton({
   onCopyTo: (targetDiagramId: string) => void;
   onToggleLock: () => void;
   onDelete: () => void;
+  // Session tools (spec/39) for this (active) tab's Session category.
+  timerActive: boolean;
+  voteActive: boolean;
+  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  onClearTimer: () => void;
+  onStartVote: (votesPerPerson: number) => void;
+  onEndVote: () => void;
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   return (
@@ -642,6 +675,12 @@ function EllipsisMenuButton({
           onDelete={onDelete}
           canDelete={canDelete}
           canClearContent={canClearContent}
+          timerActive={timerActive}
+          voteActive={voteActive}
+          onStartTimer={onStartTimer}
+          onClearTimer={onClearTimer}
+          onStartVote={onStartVote}
+          onEndVote={onEndVote}
         />
       ) : null}
     </div>
@@ -667,6 +706,12 @@ function PortalMenu({
   onDelete,
   canClearContent,
   canDelete,
+  timerActive,
+  voteActive,
+  onStartTimer,
+  onClearTimer,
+  onStartVote,
+  onEndVote,
 }: {
   anchor: HTMLButtonElement | null;
   onClose: () => void;
@@ -686,6 +731,12 @@ function PortalMenu({
   onDelete: () => void;
   canDelete: boolean;
   canClearContent: boolean;
+  timerActive: boolean;
+  voteActive: boolean;
+  onStartTimer: (mode: 'countdown' | 'stopwatch', durationMs?: number) => void;
+  onClearTimer: () => void;
+  onStartVote: (votesPerPerson: number) => void;
+  onEndVote: () => void;
 }) {
   // The menu has three views — "actions" lists the verbs (Rename,
   // Duplicate, Clear…), "copyTo" lists the user's other diagrams so the
@@ -855,6 +906,60 @@ function PortalMenu({
                 onClick={onClearContent}
                 disabled={!canClearContent}
               />
+            </MenuAccordionSection>
+            <MenuAccordionSection
+              title="Session"
+              icon={<SessionTabIcon />}
+              {...sectionProps('session')}
+            >
+              {timerActive ? (
+                <MenuItem
+                  icon={<SessionTabIcon />}
+                  label="Stop timer"
+                  onClick={() => {
+                    onClearTimer();
+                    onClose();
+                  }}
+                />
+              ) : (
+                <>
+                  <MenuItem
+                    icon={<SessionTabIcon />}
+                    label="Start countdown (5 min)"
+                    onClick={() => {
+                      onStartTimer('countdown', 5 * 60_000);
+                      onClose();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<SessionTabIcon />}
+                    label="Start stopwatch"
+                    onClick={() => {
+                      onStartTimer('stopwatch');
+                      onClose();
+                    }}
+                  />
+                </>
+              )}
+              {voteActive ? (
+                <MenuItem
+                  icon={<VoteTabIcon />}
+                  label="End voting"
+                  onClick={() => {
+                    onEndVote();
+                    onClose();
+                  }}
+                />
+              ) : (
+                <MenuItem
+                  icon={<VoteTabIcon />}
+                  label="Start voting"
+                  onClick={() => {
+                    onStartVote(3);
+                    onClose();
+                  }}
+                />
+              )}
             </MenuAccordionSection>
           </>
         ) : view === 'copyTo' ? (
@@ -1112,6 +1217,37 @@ function TabsLabelIcon() {
     >
       <path d="M1.5 4.5h3l1 1.25h5v4.25h-9z" />
       <path d="M3 4.5V3h3.25" />
+    </svg>
+  );
+}
+
+// Clock face — the Session timer rows.
+function SessionTabIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="8" cy="8.5" r="5.5" />
+      <path d="M8 5.5V8.5L10 10M8 2.5V1" />
+    </svg>
+  );
+}
+
+// Three dots — the voting rows.
+function VoteTabIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <circle cx="4.5" cy="8" r="1.6" />
+      <circle cx="8" cy="8" r="1.6" />
+      <circle cx="11.5" cy="8" r="1.6" />
     </svg>
   );
 }

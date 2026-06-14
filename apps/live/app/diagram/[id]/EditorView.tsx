@@ -919,6 +919,12 @@ export function EditorView() {
             setExportScope('tab');
             setExportOpen(true);
           }}
+          timerActive={!!activeTab.timer}
+          voteActive={!!activeTab.vote}
+          onStartTimer={startTimer}
+          onClearTimer={clearTimer}
+          onStartVote={startVote}
+          onEndVote={endVote}
           otherDiagrams={diagramList.filter((d) => d.id !== diagramId)}
           onCopyTabTo={linkActiveTabTo}
           onToggleLockTab={toggleActiveTabLock}
