@@ -240,7 +240,7 @@ function ArrowViewImpl({
         d={pathD}
         fill="none"
         stroke="transparent"
-        strokeWidth={14}
+        strokeWidth={24}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();

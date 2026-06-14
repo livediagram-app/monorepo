@@ -316,7 +316,7 @@ export function CommandPalette({
   const techResults = searchTechIcons(techQuery, techProvider);
   return (
     <MovablePanel
-      title="Add Elements"
+      title="Palette"
       position={position}
       defaultCorner="top-right"
       width="w-auto sm:w-64"
