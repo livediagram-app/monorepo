@@ -734,52 +734,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             />
           </MenuAccordionSection>
         ) : null}
-        {/* Layer — a collapsible section grouping front/back + opacity +
-            (for boxed elements) the aspect-ratio lock. */}
-        <MenuAccordionSection title="Layer" icon={<LayersGlyph />} {...sectionProps('layer')}>
-          {/* Layer order tweaks keep the menu open so you can nudge
-              front/back a few times in a row. */}
-          <MenuTileGrid cols={2}>
-            <MenuTile
-              icon={<LayerUpIcon />}
-              label="Bring to Front"
-              onClick={props.onBringToFront}
-            />
-            <MenuTile icon={<LayerDownIcon />} label="Send to Back" onClick={props.onSendToBack} />
-          </MenuTileGrid>
-          <ContextMenuDivider />
-          {/* Opacity slider — a non-closing row (dragging stays inside the
-              menu, so the outside-click guard leaves it open). */}
-          <OpacityRow
-            value={(target as { opacity?: number }).opacity ?? 1}
-            onChange={props.onSetOpacity}
-          />
-          {boxed ? (
-            <>
-              <ContextMenuDivider />
-              {/* Lock aspect ratio — the whole row toggles (the switch is a
-                  presentational <span> so we don't nest a button in a button). */}
-              <button
-                type="button"
-                onClick={props.onToggleAspectLock}
-                aria-pressed={!!(target as { aspectLocked?: boolean }).aspectLocked}
-                className="flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-slate-400 dark:text-slate-500">
-                    <AspectLockMenuIcon />
-                  </span>
-                  Lock aspect ratio
-                </span>
-                <ToggleSwitch
-                  presentational
-                  checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
-                  label="Lock aspect ratio"
-                />
-              </button>
-            </>
-          ) : null}
-        </MenuAccordionSection>
         {/* Colours — text / background / border swatches. Boxed elements that
             support colours (excludes images). Icons included: Text tints a
             line-art glyph, Background / Border paint the icon's box. */}
@@ -883,6 +837,52 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
+        {/* Layer — a collapsible section grouping front/back + opacity +
+            (for boxed elements) the aspect-ratio lock. */}
+        <MenuAccordionSection title="Layer" icon={<LayersGlyph />} {...sectionProps('layer')}>
+          {/* Layer order tweaks keep the menu open so you can nudge
+              front/back a few times in a row. */}
+          <MenuTileGrid cols={2}>
+            <MenuTile
+              icon={<LayerUpIcon />}
+              label="Bring to Front"
+              onClick={props.onBringToFront}
+            />
+            <MenuTile icon={<LayerDownIcon />} label="Send to Back" onClick={props.onSendToBack} />
+          </MenuTileGrid>
+          <ContextMenuDivider />
+          {/* Opacity slider — a non-closing row (dragging stays inside the
+              menu, so the outside-click guard leaves it open). */}
+          <OpacityRow
+            value={(target as { opacity?: number }).opacity ?? 1}
+            onChange={props.onSetOpacity}
+          />
+          {boxed ? (
+            <>
+              <ContextMenuDivider />
+              {/* Lock aspect ratio — the whole row toggles (the switch is a
+                  presentational <span> so we don't nest a button in a button). */}
+              <button
+                type="button"
+                onClick={props.onToggleAspectLock}
+                aria-pressed={!!(target as { aspectLocked?: boolean }).aspectLocked}
+                className="flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-slate-400 dark:text-slate-500">
+                    <AspectLockMenuIcon />
+                  </span>
+                  Lock aspect ratio
+                </span>
+                <ToggleSwitch
+                  presentational
+                  checked={!!(target as { aspectLocked?: boolean }).aspectLocked}
+                  label="Lock aspect ratio"
+                />
+              </button>
+            </>
+          ) : null}
+        </MenuAccordionSection>
         {/* Table — header row / column + zebra. */}
         {target.type === 'table' ? (
           <MenuAccordionSection title="Table" icon={<TableGlyph />} {...sectionProps('table')}>

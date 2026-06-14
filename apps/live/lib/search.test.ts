@@ -325,7 +325,10 @@ describe('buildSearchResults — team library (spec/35)', () => {
     ];
     const out = buildSearchResults({ query: 'storage', diagrams: [], folders: [], paletteItems });
     const palette = out.find((g) => g.key === 'palette')!;
-    expect(palette.items.map((i) => i.id)).toEqual(['shape:cylinder', 'tech:aws-s3']);
+    expect(palette.items.map((i) => (i.kind === 'palette' ? i.id : null))).toEqual([
+      'shape:cylinder',
+      'tech:aws-s3',
+    ]);
   });
 
   it('does not surface palette items on an empty query (no catalogue dump)', () => {
