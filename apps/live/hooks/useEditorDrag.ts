@@ -345,9 +345,21 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     const ids = mode === 'move' ? withFrameContents(d.activeTab.elements, baseIds) : baseIds;
 
     const startBounds = new Map<string, ShapeBounds>();
+    // Free endpoints of any arrows the frame-section expansion pulled in, so
+    // their free ends translate with the section (only relevant for a move).
+    const startArrowEnds = new Map<
+      string,
+      { from?: { x: number; y: number }; to?: { x: number; y: number } }
+    >();
     for (const el of d.activeTab.elements) {
-      if (ids.has(el.id) && isBoxed(el)) {
+      if (!ids.has(el.id)) continue;
+      if (isBoxed(el)) {
         startBounds.set(el.id, { x: el.x, y: el.y, width: el.width, height: el.height });
+      } else if (el.type === 'arrow') {
+        startArrowEnds.set(el.id, {
+          from: el.from.kind === 'free' ? { x: el.from.x, y: el.from.y } : undefined,
+          to: el.to.kind === 'free' ? { x: el.to.x, y: el.to.y } : undefined,
+        });
       }
     }
 
@@ -360,6 +372,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       startClientX: e.clientX,
       startClientY: e.clientY,
       startBounds,
+      startArrowEnds,
       aspectLocked: element.aspectLocked === true,
     });
   };
@@ -782,12 +795,36 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
             scheduleGuides([]);
           }
           tick((els) => {
-            // First pass: translate every dragged boxed element.
+            // First pass: translate every dragged boxed element, and the
+            // FREE endpoints of any arrows pulled into a frame-section move
+            // (pinned ends are left for the rebind pass below).
             const moved = els.map((el) => {
-              if (!isBoxed(el)) return el;
-              const start = drag.startBounds.get(el.id);
-              if (!start) return el;
-              return { ...el, x: start.x + dx + snapDx, y: start.y + dy + snapDy };
+              if (isBoxed(el)) {
+                const start = drag.startBounds.get(el.id);
+                if (!start) return el;
+                return { ...el, x: start.x + dx + snapDx, y: start.y + dy + snapDy };
+              }
+              if (el.type === 'arrow') {
+                const ends = drag.startArrowEnds.get(el.id);
+                if (!ends) return el;
+                const next = { ...el };
+                if (ends.from && el.from.kind === 'free') {
+                  next.from = {
+                    kind: 'free',
+                    x: ends.from.x + dx + snapDx,
+                    y: ends.from.y + dy + snapDy,
+                  };
+                }
+                if (ends.to && el.to.kind === 'free') {
+                  next.to = {
+                    kind: 'free',
+                    x: ends.to.x + dx + snapDx,
+                    y: ends.to.y + dy + snapDy,
+                  };
+                }
+                return next;
+              }
+              return el;
             });
             // Second pass: re-pin connected arrow anchors against
             // the moved positions so an arrow stays visually

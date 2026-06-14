@@ -1,5 +1,6 @@
 import {
   createAnnotation,
+  createArrow,
   createShape,
   type ArrowElement,
   type Element,
@@ -142,6 +143,16 @@ describe('withFrameContents', () => {
     expect(out.has(frame.id)).toBe(true);
     expect(out.has(inside.id)).toBe(true);
     expect(out.has(outside.id)).toBe(false);
+  });
+
+  it('pulls in a free arrow whose endpoints are inside, not one that spans out', () => {
+    // Both free ends inside the 100..300 frame box.
+    const arrowIn = createArrow(120, 120, 200, 200);
+    // One free end (480,480) outside.
+    const arrowOut = createArrow(150, 150, 480, 480);
+    const out = withFrameContents([frame, arrowIn, arrowOut], new Set([frame.id]));
+    expect(out.has(arrowIn.id)).toBe(true);
+    expect(out.has(arrowOut.id)).toBe(false);
   });
 
   it('returns the same set untouched when no id is a frame (cheap no-op)', () => {

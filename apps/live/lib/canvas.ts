@@ -33,26 +33,36 @@ export function inheritedSizeFor(
 }
 
 // Frame "section" membership (spec/09): the ids in `ids` plus every boxed
-// element whose CENTRE lies inside any frame in `ids`. Used to expand a
-// frame's move set so dragging the frame carries everything sitting inside
-// it (pinned arrows between members follow via the post-move rebind). A
-// no-op (returns `ids` unchanged) when none of the ids are frames, so a
-// normal drag pays nothing. Centre-point containment (not full-bounds) so a
-// shape straddling the frame edge still counts as "in" when most of it is.
+// element whose CENTRE lies inside any frame in `ids`, plus arrows that sit
+// inside it. Used to expand a frame's move set so dragging the frame carries
+// everything sitting inside it. Pinned arrows between two members follow via
+// the post-move rebind regardless; this also catches a FREE-floating arrow
+// (or the free end of a half-pinned one) drawn inside the frame, so it
+// translates with the section instead of being left behind. A no-op (returns
+// `ids` unchanged) when none of the ids are frames, so a normal drag pays
+// nothing. Centre-point containment (not full-bounds) so a shape straddling
+// the frame edge still counts as "in" when most of it is.
 export function withFrameContents(elements: Element[], ids: Set<string>): Set<string> {
   const frames = elements.filter(
     (el): el is ShapeElement => ids.has(el.id) && el.type === 'shape' && el.shape === 'frame',
   );
   if (frames.length === 0) return ids;
   const expanded = new Set(ids);
-  for (const f of frames) {
-    for (const el of elements) {
-      if (expanded.has(el.id) || !isBoxed(el)) continue;
-      const cx = el.x + el.width / 2;
-      const cy = el.y + el.height / 2;
-      if (cx >= f.x && cx <= f.x + f.width && cy >= f.y && cy <= f.y + f.height) {
-        expanded.add(el.id);
-      }
+  const inAnyFrame = (x: number, y: number) =>
+    frames.some((f) => x >= f.x && x <= f.x + f.width && y >= f.y && y <= f.y + f.height);
+  for (const el of elements) {
+    if (expanded.has(el.id)) continue;
+    if (isBoxed(el)) {
+      if (inAnyFrame(el.x + el.width / 2, el.y + el.height / 2)) expanded.add(el.id);
+    } else if (el.type === 'arrow') {
+      // Only the arrow's FREE endpoints have fixed coordinates; pinned ends
+      // follow their element. Move the arrow with the frame when it has a
+      // free end and every free end lies inside the frame (a free end
+      // OUTSIDE means the arrow spans out, so leave it put).
+      const freePts: Array<{ x: number; y: number }> = [];
+      if (el.from.kind === 'free') freePts.push({ x: el.from.x, y: el.from.y });
+      if (el.to.kind === 'free') freePts.push({ x: el.to.x, y: el.to.y });
+      if (freePts.length > 0 && freePts.every((p) => inAnyFrame(p.x, p.y))) expanded.add(el.id);
     }
   }
   return expanded;
@@ -149,6 +159,13 @@ export type DragState =
       // multi-select move/resize can update each one without losing
       // its original position.
       startBounds: Map<string, ShapeBounds>;
+      // Free arrow endpoints (keyed by arrow id) captured at grab time, for
+      // arrows pulled into a frame-section move: their free ends translate
+      // with the section (pinned ends rebind). Empty for a normal drag.
+      startArrowEnds: Map<
+        string,
+        { from?: { x: number; y: number }; to?: { x: number; y: number } }
+      >;
       aspectLocked: boolean;
     }
   | {
