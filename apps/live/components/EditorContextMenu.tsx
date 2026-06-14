@@ -26,10 +26,21 @@ import {
   type BoxedElement,
   type Element,
   type ShapeKind,
+  type TextSize,
 } from '@livediagram/diagram';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
 import { SizeButton, ToggleSwitch } from '@/components/palette-controls';
-import { BorderRadiusIcon, BorderStrokeIcon, BorderStyleIcon } from '@/components/palette-icons';
+import {
+  BoldIcon,
+  BorderRadiusIcon,
+  BorderStrokeIcon,
+  BorderStyleIcon,
+  DotsIcon,
+  ItalicIcon,
+  ScaleIcon,
+  StrikethroughIcon,
+  UnderlineIcon,
+} from '@/components/palette-icons';
 import {
   AnnotationMenuIcon,
   AutoAlignIcon,
@@ -78,6 +89,13 @@ type EditorContextMenuProps = {
   onSetBorderStyle: (value: BorderStyle) => void;
   onSetBorderRadius: (value: BorderRadius) => void;
   onResetColors: () => void;
+  // Whole-element text formatting — surfaced for arrows that carry a label
+  // (boxed elements format via the inline rich-text toolbar instead).
+  onToggleTextBold: () => void;
+  onToggleTextItalic: () => void;
+  onToggleTextUnderline: () => void;
+  onToggleTextStrikethrough: () => void;
+  onSetTextSize: (size: TextSize) => void;
   // Re-place a shape's inline icon (reuses the drop handler: same iconId,
   // new side).
   onSetIconPosition: (
@@ -160,6 +178,66 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 props.onRemoveIcon(target.id);
                 onClose();
               }}
+            />
+          </MenuAccordionSection>
+        ) : null}
+        {/* Text — whole-element label formatting for a labelled arrow (boxed
+            elements format via the inline rich-text toolbar instead). */}
+        {target.type === 'arrow' && target.label ? (
+          <MenuAccordionSection title="Text" icon={<TextGlyph />} {...sectionProps('text')}>
+            <div className="flex gap-1 px-2 py-1.5">
+              <TextToggle active={!!target.textBold} label="Bold" onClick={props.onToggleTextBold}>
+                <BoldIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textItalic}
+                label="Italic"
+                onClick={props.onToggleTextItalic}
+              >
+                <ItalicIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textUnderline}
+                label="Underline"
+                onClick={props.onToggleTextUnderline}
+              >
+                <UnderlineIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textStrikethrough}
+                label="Strikethrough"
+                onClick={props.onToggleTextStrikethrough}
+              >
+                <StrikethroughIcon />
+              </TextToggle>
+            </div>
+            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Size
+            </p>
+            <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
+              {(
+                [
+                  ['scale', <ScaleIcon key="s" />],
+                  ['sm', <DotsIcon key="1" count={1} />],
+                  ['md', <DotsIcon key="2" count={2} />],
+                  ['lg', <DotsIcon key="3" count={3} />],
+                ] as const
+              ).map(([size, glyph]) => (
+                <SizeButton
+                  key={size}
+                  active={(target.textSize ?? 'sm') === size}
+                  onClick={() => props.onSetTextSize(size)}
+                >
+                  {glyph}
+                </SizeButton>
+              ))}
+            </div>
+            <ContextMenuDivider />
+            <ColourRow
+              label="Colour"
+              value={target.textColor ?? '#0f172a'}
+              onChange={props.onSetTextColor}
+              {...colorProps('text')}
             />
           </MenuAccordionSection>
         ) : null}
@@ -708,6 +786,53 @@ function AspectLockMenuIcon() {
       <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" />
       <path d="M5 8.5v2.5h2.5M11 7.5V5H8.5" />
     </svg>
+  );
+}
+
+// A serif "A" — the "Text" category glyph.
+function TextGlyph() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <text
+        x="8"
+        y="12"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="600"
+        fontFamily="Georgia, serif"
+      >
+        A
+      </text>
+    </svg>
+  );
+}
+
+// A square toggle for the arrow Text category (B / I / U / S).
+function TextToggle({
+  active,
+  label,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      onClick={onClick}
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+        active
+          ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-100'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

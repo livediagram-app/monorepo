@@ -1154,6 +1154,11 @@ export function EditorView() {
           onSetBorderStyle={setBorderStyleSelected}
           onSetBorderRadius={setBorderRadiusSelected}
           onResetColors={resetColorsSelected}
+          onToggleTextBold={() => toggleTextStyleSelected('textBold')}
+          onToggleTextItalic={() => toggleTextStyleSelected('textItalic')}
+          onToggleTextUnderline={() => toggleTextStyleSelected('textUnderline')}
+          onToggleTextStrikethrough={() => toggleTextStyleSelected('textStrikethrough')}
+          onSetTextSize={setTextSizeSelected}
           onOpenNote={openNote}
           onOpenComments={openComments}
           onChangeTheme={() => {
