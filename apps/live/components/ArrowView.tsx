@@ -53,6 +53,8 @@ type ArrowViewProps = {
   // every parent render would invalidate the memo via fresh
   // function identities.
   onSelect: (id: string, e: ReactPointerEvent) => void;
+  // Right-click: select the arrow + open its context menu at the cursor.
+  onContextSelect: (id: string, screenX: number, screenY: number) => void;
   onBeginEndpointDrag: (id: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   // Double-click on the arrow body fires this so the page can flip
   // the arrow into label-edit mode (mirrors boxed-element edit).
@@ -99,6 +101,7 @@ function ArrowViewImpl({
   tabLocked,
   readOnly = false,
   onSelect,
+  onContextSelect,
   onBeginEndpointDrag,
   onBeginEdit,
   onCommitLabel,
@@ -228,6 +231,11 @@ function ArrowViewImpl({
         fill="none"
         stroke="transparent"
         strokeWidth={14}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onContextSelect(arrow.id, e.clientX, e.clientY);
+        }}
         onPointerDown={(e) => {
           e.stopPropagation();
           onSelect(arrow.id, e);

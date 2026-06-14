@@ -163,6 +163,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
                 tabLocked={tabLocked}
                 readOnly={readOnly}
                 onSelect={handleArrowSelect}
+                onContextSelect={handleElementContextSelect}
                 onBeginEndpointDrag={onBeginEndpointDrag}
                 onBeginEdit={onBeginEdit}
                 onCommitLabel={onCommitLabel}

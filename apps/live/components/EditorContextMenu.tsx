@@ -160,22 +160,10 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             (for boxed elements) the aspect-ratio lock. */}
         <MenuAccordionSection title="Layer" icon={<LayersGlyph />} {...sectionProps('layer')}>
           <div className="flex gap-1 px-2 py-0.5">
-            <MenuRowButton
-              icon={<LayerUpIcon />}
-              label="Front"
-              onClick={() => {
-                props.onBringToFront();
-                onClose();
-              }}
-            />
-            <MenuRowButton
-              icon={<LayerDownIcon />}
-              label="Back"
-              onClick={() => {
-                props.onSendToBack();
-                onClose();
-              }}
-            />
+            {/* Layer order tweaks keep the menu open so you can nudge
+                front/back a few times in a row. */}
+            <MenuRowButton icon={<LayerUpIcon />} label="Front" onClick={props.onBringToFront} />
+            <MenuRowButton icon={<LayerDownIcon />} label="Back" onClick={props.onSendToBack} />
           </div>
           <ContextMenuDivider />
           {/* Opacity slider — a non-closing row (dragging stays inside the
