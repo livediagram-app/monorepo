@@ -147,24 +147,27 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           </>
         ) : null}
         <ContextMenuDivider />
-        {boxed ? (
+        {/* Collaborate — notes + comments grouped under one collapsible header. */}
+        <MenuAccordionSection title="Collaborate">
+          {boxed ? (
+            <MenuItem
+              icon={<NoteMenuIcon />}
+              label={target.note ? 'Edit note' : 'Add note'}
+              onClick={() => {
+                props.onOpenNote(target.id);
+                onClose();
+              }}
+            />
+          ) : null}
           <MenuItem
-            icon={<NoteMenuIcon />}
-            label={target.note ? 'Edit note' : 'Add note'}
+            icon={<CommentMenuIcon />}
+            label="View comments"
             onClick={() => {
-              props.onOpenNote(target.id);
+              props.onOpenComments(target.id);
               onClose();
             }}
           />
-        ) : null}
-        <MenuItem
-          icon={<CommentMenuIcon />}
-          label="Comment"
-          onClick={() => {
-            props.onOpenComments(target.id);
-            onClose();
-          }}
-        />
+        </MenuAccordionSection>
       </ContextMenu>
     );
   }
@@ -237,9 +240,10 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
 // A collapsible section inside the context menu: an uppercase header (with
 // a chevron) that toggles its content. Toggling doesn't close the menu (the
 // header isn't a MenuItem; the click stays inside the menu, so the
-// outside-click guard leaves it open). Open by default.
+// outside-click guard leaves it open). Collapsed by default to keep the menu
+// compact.
 function MenuAccordionSection({ title, children }: { title: string; children: ReactNode }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div>
       <button
