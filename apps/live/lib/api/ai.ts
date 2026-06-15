@@ -71,11 +71,29 @@ function isValidElement(el: unknown): el is Element {
   return false;
 }
 
+// Normalise an AI-returned element so it renders consistently. The big one:
+// a shape with no `textSize` (or "scale") falls through to the canvas default
+// of 'scale' (auto-fit, BoxedElementView), which balloons the label to fill
+// the box — so a generated diagram ends up with some nodes huge and others
+// tiny. Manually-created shapes never hit this because createShape sets
+// textSize:'md'; AI shapes routinely omit it (the prompt even told them to),
+// so pin any missing / non-fixed size to 'md'. The model's explicit sm/md/lg
+// hierarchy choices are preserved.
+function normalizeAiElement(el: Element): Element {
+  if (el.type === 'shape') {
+    const ts = (el as { textSize?: unknown }).textSize;
+    if (ts !== 'sm' && ts !== 'md' && ts !== 'lg') {
+      return { ...el, textSize: 'md' };
+    }
+  }
+  return el;
+}
+
 // Parse all complete element objects out of an accumulated JSON buffer.
 // Finds the "elements":[ array, then extracts each top-level {...} object
 // as soon as brace depth returns to zero. Called after each SSE chunk so
 // new elements are surfaced incrementally while the stream is live.
-function extractElementsFromBuffer(buffer: string): Element[] {
+export function extractElementsFromBuffer(buffer: string): Element[] {
   const match = buffer.match(/"elements"\s*:\s*\[/);
   if (!match || match.index === undefined) return [];
   const elements: Element[] = [];
@@ -91,7 +109,7 @@ function extractElementsFromBuffer(buffer: string): Element[] {
       if (depth === 0 && start >= 0) {
         try {
           const el = JSON.parse(buffer.slice(start, i + 1));
-          if (isValidElement(el)) elements.push(el);
+          if (isValidElement(el)) elements.push(normalizeAiElement(el));
         } catch {
           /* skip malformed */
         }

@@ -78,12 +78,20 @@ DESIGN RULES:
 • Do NOT generate "image" or "freehand" types — use shapes instead.
 • IDs: "ai-" + 8 random hex chars (e.g. "ai-3f8a2b1c"). Must be unique across the whole diagram.
 
-TYPOGRAPHY HIERARCHY — strictly enforced:
+TYPOGRAPHY HIERARCHY — strictly enforced. ALWAYS set textSize explicitly on
+every shape (never omit it, never use "scale"):
 • Level 1 (top-level title, primary hub): textSize:"lg", textBold:true, width:180+
 • Level 2 (main steps, section heads, VPs, primary services): textSize:"md", textBold:true
-• Level 3 (standard nodes, reports, sub-steps): omit textSize (defaults to "md")
+• Level 3 (standard nodes, reports, sub-steps): textSize:"md"
 • Level 4 (minor annotations, small leaves): textSize:"sm"
-Never assign textSize randomly — every choice must reflect the node's place in the hierarchy.
+Most nodes in a single diagram should share ONE size ("md") — reserve "lg" for the
+single title/hub and "sm" for genuinely minor leaves. Do not scatter sizes; siblings
+at the same level MUST use the same textSize. Never assign textSize randomly — every
+choice must reflect the node's place in the hierarchy.
+
+SIZE CONSISTENCY — siblings at the same level MUST share the same width AND height.
+Pick one size per tier and reuse it for every node in that tier (e.g. all main steps
+140×60). A row or column of peers with mismatched box sizes looks broken.
 
 COMPREHENSIVENESS:
 • Full process/flow requests (flowchart, user journey, approval, etc.): 10–15+ elements minimum.

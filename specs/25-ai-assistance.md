@@ -102,6 +102,8 @@ Response for **every mode**: `Content-Type: text/event-stream`, OpenAI SSE forma
 - `clean`: elements to **replace by ID** (same IDs as input; new IDs = append).
 - `review` / `ask`: SSE text deltas rendered straight into the panel as they arrive.
 
+**Client-side normalisation.** As elements are parsed out of the stream (`extractElementsFromBuffer`, `apps/live/lib/api/ai.ts`), each shape is normalised so the result renders consistently: a shape with no `textSize` (or `"scale"`) is pinned to `"md"`. Without this the canvas default for an unset size is `'scale'` (auto-fit), so a generated node with no explicit size balloons its label to fill the box while sized siblings stay small — the classic "inconsistent font sizes" output. The model's explicit `sm`/`md`/`lg` hierarchy is preserved; only missing / `scale` sizes are rewritten. The system prompt is also strict that every shape must carry an explicit `textSize` (never omit, never `scale`) and that siblings at the same tier share one size, but the normalisation is the safety net regardless of what the model returns.
+
 Error responses follow the standard worker envelope:
 `{ "error": "ai_not_configured" | "ai_error" | "ai_parse_error" | "off_topic" | ... }`
 
