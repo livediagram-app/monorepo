@@ -64,9 +64,9 @@ const TIPS: Tip[] = [
   },
   {
     art: <ConnectArt />,
-    title: 'Quick-connect arrows',
-    body: 'Select a shape and drag from the connect handles (or the + ring) to spawn a connected shape or arrow in one motion.',
-    how: 'Hover a selected shape',
+    title: 'Build out from a shape',
+    body: 'Select a shape and a + button appears on each side. Click one to fan out quick actions: duplicate the shape, draw an arrow, sketch, or add a caption, each attached to that side.',
+    how: 'Select a shape → click a + button',
   },
 ];
 
