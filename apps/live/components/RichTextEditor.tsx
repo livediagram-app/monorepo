@@ -449,7 +449,11 @@ export function RichTextEditor({
   return (
     <div
       className={`pointer-events-none flex overflow-visible ${
-        inline ? 'relative min-w-0 flex-1 self-stretch' : 'absolute inset-0'
+        // Inline: a content-sized flex child (NOT flex-1), so the icon + editor
+        // centre together as a group per the element's alignment, mirroring the
+        // static display layout. flex-1 would fill the space after the icon and
+        // pin the icon to the far edge. min-w-0 lets long text wrap.
+        inline ? 'relative min-w-0' : 'absolute inset-0'
       }`}
       style={{ alignItems: ALIGN_ITEMS[alignY], padding: inline ? 0 : padding }}
     >
