@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 // Touch long-press detector. Touch devices never fire `contextmenu`, so a
@@ -16,31 +16,42 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 // element's own onPointerDown and both run.
 const LONG_PRESS_MS = 500;
 const MOVE_SLOP_PX = 10;
+// Hold this long before the "hold" indicator appears, so a quick tap never
+// flashes it — only a deliberate press shows the ring, which then completes as
+// the long-press fires at LONG_PRESS_MS.
+const REVEAL_DELAY_MS = 180;
 
 export function useLongPress(onLongPress: (clientX: number, clientY: number) => void): {
   onPointerDown: (e: ReactPointerEvent) => void;
+  // Screen coords of an in-progress press once it has been held past the
+  // reveal delay, for the caller to render a "hold" affordance. null when no
+  // press is being held (or it is still within the quick-tap window).
+  pressPoint: { x: number; y: number } | null;
 } {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timers = useRef<{
+    fire: ReturnType<typeof setTimeout> | null;
+    reveal: ReturnType<typeof setTimeout> | null;
+  }>({ fire: null, reveal: null });
+  const [pressPoint, setPressPoint] = useState<{ x: number; y: number } | null>(null);
   // Read the latest callback without re-arming listeners each render.
   const cbRef = useRef(onLongPress);
   cbRef.current = onLongPress;
 
+  const clearTimers = () => {
+    if (timers.current.fire !== null) clearTimeout(timers.current.fire);
+    if (timers.current.reveal !== null) clearTimeout(timers.current.reveal);
+    timers.current = { fire: null, reveal: null };
+  };
+
   // Clear any pending timer on unmount so a press that outlives the element
   // (deleted mid-hold) never fires into a stale callback.
-  useEffect(() => () => clearTimer(), []);
-
-  function clearTimer() {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }
+  useEffect(() => () => clearTimers(), []);
 
   const onPointerDown = (e: ReactPointerEvent) => {
     if (e.pointerType !== 'touch') return;
     const startX = e.clientX;
     const startY = e.clientY;
-    clearTimer();
+    clearTimers();
     const cancelOnMove = (ev: PointerEvent) => {
       if (
         Math.abs(ev.clientX - startX) > MOVE_SLOP_PX ||
@@ -49,7 +60,8 @@ export function useLongPress(onLongPress: (clientX: number, clientY: number) => 
         cleanup();
     };
     const cleanup = () => {
-      clearTimer();
+      clearTimers();
+      setPressPoint(null);
       window.removeEventListener('pointermove', cancelOnMove);
       window.removeEventListener('pointerup', cleanup);
       window.removeEventListener('pointercancel', cleanup);
@@ -57,11 +69,15 @@ export function useLongPress(onLongPress: (clientX: number, clientY: number) => 
     window.addEventListener('pointermove', cancelOnMove);
     window.addEventListener('pointerup', cleanup);
     window.addEventListener('pointercancel', cleanup);
-    timerRef.current = setTimeout(() => {
+    timers.current.reveal = setTimeout(
+      () => setPressPoint({ x: startX, y: startY }),
+      REVEAL_DELAY_MS,
+    );
+    timers.current.fire = setTimeout(() => {
       cleanup();
       cbRef.current(startX, startY);
     }, LONG_PRESS_MS);
   };
 
-  return { onPointerDown };
+  return { onPointerDown, pressPoint };
 }

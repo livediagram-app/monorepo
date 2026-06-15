@@ -47,6 +47,7 @@ const EMPTY_ID_SET: Set<string> = new Set();
 
 import { CanvasChrome } from './CanvasChrome';
 import { CanvasElementsLayer } from './CanvasElementsLayer';
+import { Portal } from './Portal';
 import { TabLoadOverlay } from './TabLoadOverlay';
 import type { CanvasProps } from './Canvas.types';
 
@@ -1046,6 +1047,19 @@ export function Canvas(props: CanvasProps) {
           otherwise overwrite an unfetched tab's real content. */}
       {tabLoadState && tabLoadState !== 'ready' ? (
         <TabLoadOverlay state={tabLoadState} onRetry={() => onRetryTabLoad?.()} />
+      ) : null}
+      {/* Touch long-press "hold" ring at the finger (spec/43-style touch
+          affordance). Portaled to escape the canvas's pan/zoom transform so its
+          fixed position is viewport-relative. Reveals only after a deliberate
+          hold and completes as the context menu opens. */}
+      {canvasLongPress.pressPoint ? (
+        <Portal>
+          <div
+            aria-hidden
+            className="animate-longpress-hold pointer-events-none fixed z-[60] h-9 w-9 rounded-full border-2 border-brand-500/70"
+            style={{ left: canvasLongPress.pressPoint.x, top: canvasLongPress.pressPoint.y }}
+          />
+        </Portal>
       ) : null}
     </main>
   );

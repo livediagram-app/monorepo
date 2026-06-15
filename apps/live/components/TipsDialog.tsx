@@ -178,8 +178,9 @@ export function TipsDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Dots: jump to any tip. */}
-        <div className="flex items-center justify-center gap-1.5 py-3">
+        {/* Dots: jump to any tip. Each button is a 24px-tall transparent hit
+            area (comfortable on touch) wrapping the small visible pip. */}
+        <div className="flex items-center justify-center gap-0.5 py-1.5">
           {TIPS.map((t, i) => (
             <button
               key={t.title}
@@ -187,12 +188,16 @@ export function TipsDialog({ onClose }: { onClose: () => void }) {
               aria-label={`Go to tip ${i + 1}: ${t.title}`}
               aria-current={i === index}
               onClick={() => goTo(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === index
-                  ? 'w-5 bg-brand-500 dark:bg-brand-400'
-                  : 'w-1.5 bg-slate-300 hover:bg-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600'
-              }`}
-            />
+              className="flex h-6 items-center px-1"
+            >
+              <span
+                className={`block h-1.5 rounded-full transition-all ${
+                  i === index
+                    ? 'w-5 bg-brand-500 dark:bg-brand-400'
+                    : 'w-1.5 bg-slate-300 hover:bg-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600'
+                }`}
+              />
+            </button>
           ))}
         </div>
 
