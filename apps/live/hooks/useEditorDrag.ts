@@ -746,11 +746,21 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     if (arrow.locked === true || d.isReadOnly || !arrow.curvePoints?.[index]) return;
     const remaining = arrow.curvePoints.filter((_, i) => i !== index);
     d.commit((all) =>
-      all.map((el) =>
-        el.id === arrowId && el.type === 'arrow'
-          ? { ...el, curvePoints: remaining.length > 0 ? remaining : undefined }
-          : el,
-      ),
+      all.map((el) => {
+        if (el.id !== arrowId || el.type !== 'arrow') return el;
+        if (remaining.length > 0) return { ...el, curvePoints: remaining };
+        // Deleting the last bend point leaves nothing to curve through, so the
+        // arrow becomes a plain straight line: drop the points AND the curve /
+        // elbow bow + the curved/angled style, rather than snapping back to a
+        // single-handle bow the user didn't ask for.
+        return {
+          ...el,
+          curvePoints: undefined,
+          curveOffset: undefined,
+          elbowOffset: undefined,
+          arrowStyle: 'straight' as const,
+        };
+      }),
     );
     d.setSelectedId(arrowId);
   };

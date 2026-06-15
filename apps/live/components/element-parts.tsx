@@ -210,7 +210,7 @@ export function EdgeResizeHandle({
         // Rotation-aware cursor so it points the right way once turned.
         cursor: resizeCursor(anchor, rotation),
       }}
-      className={`pointer-events-auto absolute rounded-full border border-brand-400 bg-white opacity-80 shadow-sm transition hover:opacity-100 dark:border-brand-300 dark:bg-slate-900 ${
+      className={`pointer-events-auto absolute rounded-full border border-brand-400 bg-white opacity-80 shadow-sm transition hover:opacity-100 dark:border-brand-300 dark:bg-slate-900 ${HIT_PAD_CLASSES} ${
         vertical ? 'h-1.5 w-4' : 'h-4 w-1.5'
       }`}
     />

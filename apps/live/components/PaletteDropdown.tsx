@@ -230,9 +230,10 @@ export function PaletteDropdown({
                   }}
                   className={`flex w-full items-center gap-2 text-left text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${
                     // Match the trigger's sizing so the options read as the
-                    // same control (flush pickers are roomier than the
-                    // compact filter pills).
-                    connected ? 'px-3.5 py-2 text-xs' : 'px-2.5 py-1.5 text-[11px]'
+                    // same control AND are the same height as the selected
+                    // item (`py-3`), which is an easier tap target on touch.
+                    // Flush pickers are roomier than the compact filter pills.
+                    connected ? 'px-3.5 py-3 text-xs' : 'px-2.5 py-1.5 text-[11px]'
                   }`}
                 >
                   {opt.icon ? <span className={ICON_WRAP}>{opt.icon}</span> : null}

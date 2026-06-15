@@ -20,6 +20,7 @@ import {
   defaultStrokeColor,
   defaultTextAlign,
   defaultTextColor,
+  hasRichFormatting,
   PADDING_PX,
   type BoxedElement,
   type FreehandElement,
@@ -29,6 +30,7 @@ import {
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
 import { renderLabel } from './element-labels';
+import { effectiveRunStyle, FIXED_FONT_PX, labelTextStyleCss } from './label-style';
 import { EdgeResizeHandle, LockBadge, ResizeHandles } from './element-parts';
 import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
@@ -953,26 +955,36 @@ function ShapeInlineIconLayout({
   // it and the whole group stays centred — `flex-1` previously stretched
   // the label and shoved the icon to the element edge. min-w-0 lets a
   // long label wrap / shrink instead of overflowing.
+  // The wrapper carries the inline base font + colour; the inner content
+  // carries the text styling. Per-range rich text (spec/09) renders one span
+  // per run so an inline icon doesn't drop the formatting — the plain
+  // whole-element path below ignored `richText`, which is why bold/italic
+  // "didn't apply" once a shape also had an icon. `effectiveRunStyle` only
+  // emits a run's overrides, so unstyled runs inherit this wrapper's size +
+  // colour.
   const text = label.trim() ? (
     <span
-      className="min-w-0 whitespace-pre-wrap break-words text-center leading-tight"
-      style={{
-        color: textColor,
-        fontSize,
-        fontFamily,
-        fontWeight: element.textBold ? 700 : 500,
-        fontStyle: element.textItalic ? 'italic' : undefined,
-        textDecoration:
-          element.textUnderline && element.textStrikethrough
-            ? 'underline line-through'
-            : element.textUnderline
-              ? 'underline'
-              : element.textStrikethrough
-                ? 'line-through'
-                : undefined,
-      }}
+      className="min-w-0 whitespace-pre-wrap break-words text-center font-medium leading-tight"
+      style={{ color: textColor, fontSize, fontFamily }}
     >
-      {label}
+      {hasRichFormatting(element.richText) ? (
+        element.richText!.map((run, i) => (
+          <span key={i} style={effectiveRunStyle(run, element, FIXED_FONT_PX)}>
+            {run.text}
+          </span>
+        ))
+      ) : (
+        <span
+          style={labelTextStyleCss({
+            bold: element.textBold,
+            italic: element.textItalic,
+            underline: element.textUnderline,
+            strikethrough: element.textStrikethrough,
+          })}
+        >
+          {label}
+        </span>
+      )}
     </span>
   ) : null;
   return (
