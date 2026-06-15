@@ -99,6 +99,48 @@ const USE_CASES: UseCase[] = [
       'Run a fishbone from the problem back to its causes, grouping contributing factors along each branch.',
     sketch: 'fishbone',
   },
+  {
+    key: 'swot',
+    title: 'SWOT analysis',
+    blurb:
+      'Weigh strengths, weaknesses, opportunities, and threats across four quadrants, then theme the board to match your deck.',
+    sketch: 'swot',
+  },
+  {
+    key: 'matrix',
+    title: 'Prioritization matrices',
+    blurb:
+      'Plot items across two axes, impact against effort, and let the quadrants make the call obvious.',
+    sketch: 'matrix',
+  },
+  {
+    key: 'gantt',
+    title: 'Gantt charts & schedules',
+    blurb:
+      'Lay tasks along a track as bars, stagger them by phase, and see the plan from kickoff to ship at a glance.',
+    sketch: 'gantt',
+  },
+  {
+    key: 'venn',
+    title: 'Venn diagrams',
+    blurb:
+      'Show what overlaps between two or three sets, with translucent circles that blend where they meet.',
+    sketch: 'venn',
+  },
+  {
+    key: 'erd',
+    title: 'Database & ER diagrams',
+    blurb:
+      'Model tables and the relationships between them, with connectors that stay attached as you rearrange the schema.',
+    sketch: 'erd',
+  },
+  {
+    key: 'sequence',
+    title: 'Sequence diagrams',
+    blurb:
+      'Trace a request across services with lifelines and messages, ordered top to bottom the way the call actually runs.',
+    sketch: 'sequence',
+  },
 ];
 
 const FALLBACK = USE_CASES[0] as UseCase;
@@ -249,7 +291,13 @@ type SketchKind =
   | 'journey'
   | 'timeline'
   | 'fishbone'
-  | 'moodboard';
+  | 'moodboard'
+  | 'swot'
+  | 'matrix'
+  | 'gantt'
+  | 'venn'
+  | 'erd'
+  | 'sequence';
 
 const FILL = '#1e3a5f';
 const STROKE = '#38bdf8';
@@ -402,6 +450,78 @@ const SKETCHES: Record<SketchKind, ReactNode> = {
         <circle cx="94" cy="24" r="5" />
         <circle cx="94" cy="96" r="5" />
       </g>
+    </>
+  ),
+  swot: (
+    <>
+      <rect x="14" y="12" width="80" height="44" rx="4" />
+      <rect x="106" y="12" width="80" height="44" rx="4" />
+      <rect x="14" y="64" width="80" height="44" rx="4" />
+      <rect x="106" y="64" width="80" height="44" rx="4" />
+      <g fill={SOFT} stroke="none">
+        <rect x="22" y="20" width="34" height="8" rx="2" />
+        <rect x="114" y="20" width="34" height="8" rx="2" />
+        <rect x="22" y="72" width="34" height="8" rx="2" />
+        <rect x="114" y="72" width="34" height="8" rx="2" />
+      </g>
+    </>
+  ),
+  matrix: (
+    <>
+      <rect x="20" y="10" width="160" height="100" rx="4" />
+      <line x1="100" y1="10" x2="100" y2="110" stroke={SOFT} />
+      <line x1="20" y1="60" x2="180" y2="60" stroke={SOFT} />
+      <g fill={STROKE} stroke="none">
+        <circle cx="58" cy="36" r="6" />
+        <circle cx="140" cy="30" r="6" />
+        <circle cx="150" cy="52" r="6" />
+        <circle cx="52" cy="86" r="6" />
+        <circle cx="130" cy="84" r="6" />
+      </g>
+    </>
+  ),
+  gantt: (
+    <>
+      <line x1="12" y1="8" x2="12" y2="112" stroke={STROKE} strokeWidth="1.5" />
+      <g fill={SOFT} stroke="none">
+        <rect x="20" y="18" width="58" height="14" rx="3" />
+        <rect x="50" y="40" width="70" height="14" rx="3" />
+        <rect x="92" y="62" width="58" height="14" rx="3" />
+        <rect x="120" y="84" width="60" height="14" rx="3" />
+      </g>
+    </>
+  ),
+  venn: (
+    <>
+      <circle cx="80" cy="46" r="34" fill={SOFT} opacity="0.3" />
+      <circle cx="120" cy="46" r="34" fill={SOFT} opacity="0.3" />
+      <circle cx="100" cy="80" r="34" fill={SOFT} opacity="0.3" />
+    </>
+  ),
+  erd: (
+    <>
+      <rect x="14" y="20" width="52" height="52" rx="3" />
+      <line x1="14" y1="34" x2="66" y2="34" stroke={STROKE} />
+      <rect x="120" y="46" width="52" height="52" rx="3" />
+      <line x1="120" y1="60" x2="172" y2="60" stroke={STROKE} />
+      <path d="M66 52 L120 66" fill="none" stroke={SOFT} />
+      <g fill={SOFT} stroke="none">
+        <rect x="20" y="44" width="40" height="6" rx="2" />
+        <rect x="20" y="56" width="40" height="6" rx="2" />
+        <rect x="126" y="70" width="40" height="6" rx="2" />
+        <rect x="126" y="82" width="40" height="6" rx="2" />
+      </g>
+    </>
+  ),
+  sequence: (
+    <>
+      <rect x="24" y="8" width="36" height="18" rx="3" />
+      <rect x="140" y="8" width="36" height="18" rx="3" />
+      <line x1="42" y1="26" x2="42" y2="112" stroke={SOFT} strokeDasharray="4 3" />
+      <line x1="158" y1="26" x2="158" y2="112" stroke={SOFT} strokeDasharray="4 3" />
+      <path d="M42 46 L158 46 M150 40 L158 46 L150 52" fill="none" stroke={STROKE} />
+      <path d="M158 74 L42 74 M50 68 L42 74 L50 80" fill="none" stroke={STROKE} />
+      <path d="M42 98 L158 98 M150 92 L158 98 L150 104" fill="none" stroke={STROKE} />
     </>
   ),
   moodboard: <MoodBoardSketch />,

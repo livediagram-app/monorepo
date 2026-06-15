@@ -460,7 +460,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
         art: <RotateArt />,
         title: 'Rotate to any angle',
         description:
-          'Grab the rotate handle above a selected shape and turn it. It snaps to neat 15° steps, or hold Shift for free rotation, and pinned arrows keep tracking the shape as it turns.',
+          'Grab the rotate handle above a selected shape and turn it to any angle. As you near square it eases onto the nearest 15°, or hold Shift to switch the snap off, and pinned arrows keep tracking the shape as it turns.',
       },
       {
         art: <AlignmentGuidesArt />,
