@@ -350,7 +350,10 @@ export function ColorSwatch({
   );
 }
 
-function hexish(color: string): string {
+// Coerce a colour to a 6-digit hex, or fall back to white, for the native
+// colour <input> (it can't take 'transparent' or named colours). Shared with
+// EditorContextMenu's colour rows.
+export function hexish(color: string): string {
   if (/^#[0-9a-fA-F]{6}$/.test(color)) return color;
   return '#ffffff';
 }

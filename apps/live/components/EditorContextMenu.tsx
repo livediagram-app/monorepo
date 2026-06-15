@@ -41,7 +41,7 @@ import {
 } from '@livediagram/diagram';
 import { ArrowLineControls, ArrowPointerControls } from '@/components/arrow-controls';
 import { ContextMenu, ContextMenuDivider } from '@/components/ContextMenu';
-import { SizeButton, ToggleSwitch } from '@/components/palette-controls';
+import { hexish, SizeButton, ToggleSwitch } from '@/components/palette-controls';
 import {
   BoldIcon,
   BorderRadiusIcon,
@@ -936,12 +936,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   // only renders the element + multi menus. `menu.mode === 'canvas'` never
   // reaches here (the page routes it to the TabBar), so fall through to null.
   return null;
-}
-
-// 6-hex or fall back to white for the native colour input (it can't take
-// 'transparent' or named colours).
-function hexish(color: string): string {
-  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#ffffff';
 }
 
 // A small preset palette for the inline colour picker. The "+" custom chip
