@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
 import { useEscape } from '@/hooks/useEscape';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { track } from '@/lib/telemetry';
 import type { UserPreferences } from '@/lib/user-preferences';
 
@@ -16,6 +17,8 @@ type SettingsDialogProps = {
 
 export function SettingsDialog({ settings, onChange, onClose, aiCapable }: SettingsDialogProps) {
   useEscape(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
 
   const autoRebind = settings.autoRebindArrows !== false;
   const telemetryOn = settings.telemetryEnabled !== false;
@@ -49,10 +52,12 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
         className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
       >
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label="Settings"
-          className="flex max-h-[calc(100%-2rem)] w-[480px] max-w-[calc(100%-2rem)] flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          tabIndex={-1}
+          className="flex max-h-[calc(100%-2rem)] w-[480px] max-w-[calc(100%-2rem)] flex-col rounded-xl border border-slate-200 bg-white shadow-xl outline-none dark:border-slate-700 dark:bg-slate-900"
         >
           <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
             <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Settings</h2>

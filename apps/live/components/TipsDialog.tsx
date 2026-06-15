@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useEscape } from '@/hooks/useEscape';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { CloseIcon } from './CloseIcon';
 
 // Tips carousel (spec/43). A user-invoked modal that highlights powerful but
@@ -77,6 +78,8 @@ export function TipsDialog({ onClose }: { onClose: () => void }) {
 
   const go = (next: number) => setIndex((i) => Math.max(0, Math.min(last, next ?? i)));
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   useEscape(onClose);
 
   // Left / Right arrow keys step between cards.
@@ -111,10 +114,12 @@ export function TipsDialog({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm dark:bg-slate-950/60"
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Tips"
-        className="pointer-events-auto flex w-[26rem] max-w-[92%] animate-fly-up-in flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        tabIndex={-1}
+        className="pointer-events-auto flex w-[26rem] max-w-[92%] animate-fly-up-in flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
       >
         <div className="flex items-center justify-between gap-3 px-5 pt-4">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-500 dark:text-brand-300">

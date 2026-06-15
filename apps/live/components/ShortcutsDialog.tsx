@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useEscape } from '@/hooks/useEscape';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { CloseIcon } from './CloseIcon';
 
 // Keyboard shortcut catalogue + per-device disable toggle. The
@@ -95,6 +96,9 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
   // on the first section so the dialog lands with one group showing.
   const [openHeading, setOpenHeading] = useState<string | null>(SECTIONS[0]?.heading ?? null);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
+
   return (
     <div
       onClick={(e) => {
@@ -106,10 +110,12 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="pointer-events-auto flex w-[30rem] max-w-[92%] max-h-[90vh] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        tabIndex={-1}
+        className="pointer-events-auto flex w-[30rem] max-w-[92%] max-h-[90vh] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 pt-5 pb-3 dark:border-slate-800">
           <div>
