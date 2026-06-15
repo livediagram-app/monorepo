@@ -1,29 +1,28 @@
 'use client';
 
 // The right-click "Change Canvas" / "Change Theme" dialog (spec/42). One
-// modal, three tabs: Canvas (pattern + colours + opacity), Theme (the
-// category-browse picker) and Font (the tab's default font + new-element
-// size). Opens on whichever tab the menu item picked; the user can switch
-// freely. Every control applies live to the active tab via its callback —
-// there's no Apply/Cancel, closing just dismisses.
+// modal, two tabs: Canvas (pattern + colours + opacity) and Theme (the
+// category-browse picker). Opens on whichever tab the menu item picked; the
+// user can switch freely. Every control applies live to the active tab via
+// its callback — there's no Apply/Cancel, closing just dismisses. (The tab
+// font + default-size controls used to live here as a third Font tab; they
+// now sit in the tab / canvas context menu's Font category, see spec/28.)
 //
 // The tabs render shared components (CanvasStyleControls,
-// ThemeCategoryBrowser, FontSelect) so they're identical to the palette
-// accordion and the New-diagram picker respectively. Follows the standard
-// modal contract (Portal + backdrop + Escape) used by SettingsDialog.
+// ThemeCategoryBrowser) so they're identical to the palette accordion and the
+// New-diagram picker respectively. Follows the standard modal contract
+// (Portal + backdrop + Escape) used by SettingsDialog.
 
-import type { BackgroundPattern, TextSize } from '@livediagram/diagram';
+import type { BackgroundPattern } from '@livediagram/diagram';
 import type { ThemeId } from '@/lib/themes';
 import { useEscape } from '@/hooks/useEscape';
 import { CanvasStyleControls } from './CanvasStyleControls';
 import { CloseIcon } from './CloseIcon';
-import { FontSelect } from './FontSelect';
-import { SizeButton } from './palette-controls';
-import { DotsIcon, ResetIcon, ScaleIcon } from './palette-icons';
+import { ResetIcon } from './palette-icons';
 import { Portal } from './Portal';
 import { ThemeCategoryBrowser } from './ThemeCategoryBrowser';
 
-export type CanvasThemeTab = 'canvas' | 'theme' | 'font';
+export type CanvasThemeTab = 'canvas' | 'theme';
 
 type CanvasThemeDialogProps = {
   tab: CanvasThemeTab;
@@ -41,12 +40,6 @@ type CanvasThemeDialogProps = {
   themeId: ThemeId;
   onSetTheme: (id: ThemeId) => void;
   onResetElementsToTheme: () => void;
-  // Font (spec/28): the tab's default font + the size seeded onto new
-  // palette elements. `null` font = the editor default.
-  font: string | null;
-  onSetTabFont: (font: string | null) => void;
-  defaultTextSize: TextSize | undefined;
-  onSetTabDefaultTextSize: (size: TextSize) => void;
   onClose: () => void;
 };
 
@@ -64,10 +57,6 @@ export function CanvasThemeDialog({
   themeId,
   onSetTheme,
   onResetElementsToTheme,
-  font,
-  onSetTabFont,
-  defaultTextSize,
-  onSetTabDefaultTextSize,
   onClose,
 }: CanvasThemeDialogProps) {
   useEscape(onClose);
@@ -122,18 +111,11 @@ export function CanvasThemeDialog({
               >
                 Theme
               </TabButton>
-              <TabButton
-                active={tab === 'font'}
-                onClick={() => onTabChange('font')}
-                icon={<FontTabIcon />}
-              >
-                Font
-              </TabButton>
             </div>
           </div>
 
-          {/* Fixed min-height so switching to the short Font tab doesn't
-              collapse the modal and make it jump around. */}
+          {/* Fixed min-height so switching between tabs doesn't collapse the
+              modal and make it jump around. */}
           <div className="min-h-[20rem] overflow-y-auto px-5 py-4">
             {tab === 'canvas' ? (
               <CanvasStyleControls
@@ -148,7 +130,7 @@ export function CanvasThemeDialog({
                 patternColumns={7}
                 showAllPatterns
               />
-            ) : tab === 'theme' ? (
+            ) : (
               <>
                 <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
                   Sets the canvas backdrop and recolours every element on this tab to match the
@@ -174,47 +156,6 @@ export function CanvasThemeDialog({
                   </button>
                 </div>
               </>
-            ) : (
-              // Font: the tab's default font + the size seeded onto new
-              // palette elements (spec/28). Centred in a comfortable column so
-              // it fills the modal intentionally rather than hugging the left.
-              <div className="mx-auto flex max-w-md flex-col gap-5">
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Font</p>
-                  <FontSelect value={font} ariaLabel="Tab font" onChange={onSetTabFont} />
-                  <p className="text-[11px] leading-snug text-slate-400 dark:text-slate-400">
-                    The default for every element on this tab; individual elements can override it.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                    Default size for new elements
-                  </p>
-                  {/* Same Scale / S / M / L control as the element editor, with
-                      visible labels since there's room here. */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {(
-                      [
-                        ['scale', 'Scale', <ScaleIcon key="s" />],
-                        ['sm', 'Small', <DotsIcon key="1" count={1} />],
-                        ['md', 'Medium', <DotsIcon key="2" count={2} />],
-                        ['lg', 'Large', <DotsIcon key="3" count={3} />],
-                      ] as const
-                    ).map(([size, label, glyph]) => (
-                      <SizeButton
-                        key={size}
-                        active={(defaultTextSize ?? 'md') === size}
-                        onClick={() => onSetTabDefaultTextSize(size)}
-                      >
-                        <span className="flex flex-col items-center gap-1 py-0.5">
-                          {glyph}
-                          <span className="text-[10px] font-medium">{label}</span>
-                        </span>
-                      </SizeButton>
-                    ))}
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </div>
@@ -286,22 +227,6 @@ function ThemeTabIcon() {
       <path d="M8 2.5a5.5 5.5 0 1 0 0 11c.9 0 1.3-.7 1.3-1.3 0-.7-.6-1-.6-1.6 0-.5.4-.9 1-.9h1.1A2.7 2.7 0 0 0 13.5 7 5.5 5.5 0 0 0 8 2.5z" />
       <circle cx="5.5" cy="7" r="0.7" fill="currentColor" stroke="none" />
       <circle cx="8" cy="5.2" r="0.7" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-function FontTabIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <text
-        x="8"
-        y="12"
-        textAnchor="middle"
-        fontSize="12"
-        fontWeight="600"
-        fontFamily="Georgia, serif"
-      >
-        A
-      </text>
     </svg>
   );
 }

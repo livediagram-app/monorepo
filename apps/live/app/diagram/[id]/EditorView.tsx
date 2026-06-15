@@ -969,6 +969,10 @@ export function EditorView() {
               track('UI', 'Opened', 'CanvasStyle');
             },
             onAutoAlign: autoAlignTab,
+            font: activeTab.font ?? null,
+            onSetFont: setTabFont,
+            defaultTextSize: activeTab.defaultTextSize,
+            onSetDefaultTextSize: setTabDefaultTextSize,
           }}
         />
       )}
@@ -1066,10 +1070,6 @@ export function EditorView() {
           themeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
           onSetTheme={setTheme}
           onResetElementsToTheme={resetElementsToTheme}
-          font={activeTab.font ?? null}
-          onSetTabFont={setTabFont}
-          defaultTextSize={activeTab.defaultTextSize}
-          onSetTabDefaultTextSize={setTabDefaultTextSize}
           onClose={() => setCanvasThemeTab(null)}
         />
       ) : null}

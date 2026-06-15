@@ -30,8 +30,8 @@ self-host that opts out). The editor never depends on the fonts loading.
 - **Per element** — a Font option in the inline edit-text toolbar's `⋯`
   menu (and, for arrows, the right-click context menu's Text category).
   Sets `Element.font`. "Tab default" clears the override.
-- **Per tab** — the **Font** tab of the Tab Appearance modal (spec/42),
-  holding:
+- **Per tab** — the **Font** category of the tab / canvas context menu
+  ([spec/09](09-canvas-and-command-palette.md)), holding:
   - **Font** — sets `Tab.font`: the default for **every** text element on
     the tab that hasn't set its own. "Default" clears it.
   - **Default size for new elements** — sets `Tab.defaultTextSize`, which

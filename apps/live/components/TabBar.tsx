@@ -10,6 +10,7 @@ import {
   type Tab,
   type TabTimer,
   type TabVote,
+  type TextSize,
   type TimerMode,
 } from '@livediagram/diagram';
 import { clampToViewport } from '@/lib/clamp-to-viewport';
@@ -41,7 +42,10 @@ import {
   MenuToolbar,
   MenuToolButton,
 } from './PortalMenu';
-import { AutoAlignIcon, CanvasMenuIcon, PaletteMenuIcon } from './context-menu-icons';
+import { AutoAlignIcon, CanvasMenuIcon, FontMenuIcon, PaletteMenuIcon } from './context-menu-icons';
+import { FontSelect } from './FontSelect';
+import { SizeButton } from './palette-controls';
+import { DotsIcon, ScaleIcon } from './palette-icons';
 import { SessionToolsSection } from './SessionToolsSection';
 import { TabFolderChip } from './TabFolderChip';
 import { TabPresenceStack } from './TabPresenceStack';
@@ -65,6 +69,13 @@ export type CanvasMenuActions = {
   onChangeTheme: () => void;
   onChangeCanvas: () => void;
   onAutoAlign: () => void;
+  // Tab font + default new-element size (spec/28), surfaced as the menu's Font
+  // category (moved out of the Tab Appearance modal). `font` null = the editor
+  // default; `defaultTextSize` undefined defaults to medium.
+  font: string | null;
+  onSetFont: (font: string | null) => void;
+  defaultTextSize: TextSize | undefined;
+  onSetDefaultTextSize: (size: TextSize) => void;
 };
 
 // Where the canvas right-click / footer-button menu should open. `openUp`
@@ -948,38 +959,78 @@ function PortalMenu({
                 points (canvas right-click AND the active tab's ellipsis menu)
                 so the two are one unified menu. */}
             {canvas ? (
-              <MenuAccordionSection
-                title="Canvas"
-                icon={<CanvasMenuIcon />}
-                {...sectionProps('canvas')}
-              >
-                <MenuTileGrid cols={3}>
-                  <MenuTile
-                    icon={<PaletteMenuIcon />}
-                    label="Change Theme"
-                    onClick={() => {
-                      canvas.onChangeTheme();
-                      onClose();
-                    }}
-                  />
-                  <MenuTile
-                    icon={<CanvasMenuIcon />}
-                    label="Change Canvas"
-                    onClick={() => {
-                      canvas.onChangeCanvas();
-                      onClose();
-                    }}
-                  />
-                  <MenuTile
-                    icon={<AutoAlignIcon />}
-                    label="Auto-align"
-                    onClick={() => {
-                      canvas.onAutoAlign();
-                      onClose();
-                    }}
-                  />
-                </MenuTileGrid>
-              </MenuAccordionSection>
+              <>
+                <MenuAccordionSection
+                  title="Canvas"
+                  icon={<CanvasMenuIcon />}
+                  {...sectionProps('canvas')}
+                >
+                  <MenuTileGrid cols={3}>
+                    <MenuTile
+                      icon={<PaletteMenuIcon />}
+                      label="Change Theme"
+                      onClick={() => {
+                        canvas.onChangeTheme();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<CanvasMenuIcon />}
+                      label="Change Canvas"
+                      onClick={() => {
+                        canvas.onChangeCanvas();
+                        onClose();
+                      }}
+                    />
+                    <MenuTile
+                      icon={<AutoAlignIcon />}
+                      label="Auto-align"
+                      onClick={() => {
+                        canvas.onAutoAlign();
+                        onClose();
+                      }}
+                    />
+                  </MenuTileGrid>
+                </MenuAccordionSection>
+                {/* Font (spec/28): the tab's default font + the size seeded onto
+                    new elements. Moved out of the Tab Appearance modal so it
+                    sits with the other tab-appearance controls. Menu stays open
+                    while adjusting so several tweaks land in one visit. */}
+                <MenuAccordionSection
+                  title="Font"
+                  icon={<FontMenuIcon />}
+                  {...sectionProps('font')}
+                >
+                  <div className="flex flex-col gap-2 px-3 py-1.5">
+                    <FontSelect
+                      value={canvas.font}
+                      ariaLabel="Tab font"
+                      onChange={canvas.onSetFont}
+                    />
+                    <div className="grid grid-cols-4 gap-1">
+                      {(
+                        [
+                          ['scale', 'Scale', <ScaleIcon key="s" />],
+                          ['sm', 'Small', <DotsIcon key="1" count={1} />],
+                          ['md', 'Medium', <DotsIcon key="2" count={2} />],
+                          ['lg', 'Large', <DotsIcon key="3" count={3} />],
+                        ] as const
+                      ).map(([size, label, glyph]) => (
+                        <SizeButton
+                          key={size}
+                          active={(canvas.defaultTextSize ?? 'md') === size}
+                          onClick={() => canvas.onSetDefaultTextSize(size)}
+                        >
+                          <span className="flex flex-col items-center gap-1 py-0.5">
+                            {glyph}
+                            <span className="text-[10px] font-medium">{label}</span>
+                          </span>
+                        </SizeButton>
+                      ))}
+                    </div>
+                  </div>
+                </MenuAccordionSection>
+              </>
             ) : null}
             <MenuAccordionSection
               title="Session"

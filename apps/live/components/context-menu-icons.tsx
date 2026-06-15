@@ -235,6 +235,26 @@ export function AutoAlignIcon() {
   );
 }
 
+// Serif "A" - the Font section glyph.
+export function FontMenuIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-hidden
+      fontSize="12"
+      fontWeight="600"
+      fontFamily="Georgia, serif"
+    >
+      <text x="8" y="12.5" textAnchor="middle">
+        A
+      </text>
+    </svg>
+  );
+}
+
 // A small arrow pointing in `dir` (one up-arrow path, rotated). Used by the
 // inline-icon placement picker's cross of direction cells.
 export function DirArrow({ dir }: { dir: 'up' | 'down' | 'left' | 'right' }) {
