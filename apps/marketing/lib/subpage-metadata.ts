@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_NAME } from './site';
 
 // Shared metadata factory for marketing subpages (FAQ, Terms,
 // Privacy). All three pages had grown identical 17-line Metadata
@@ -13,7 +14,6 @@ import type { Metadata } from 'next';
 // JSON-LD wrappers, root canonical), so this factory deliberately
 // covers subpages only.
 
-const SITE_NAME = 'livediagram';
 const SUBPAGE_LOCALE = 'en_GB';
 
 export type SubpageMetadataInput = {
