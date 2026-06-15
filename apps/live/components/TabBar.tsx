@@ -21,12 +21,16 @@ import { PencilIcon, TrashIcon } from './explorer-icons';
 import { FileExportIcon, FileImportIcon } from './palette-icons';
 import {
   BackIcon,
+  CanvasGlyph,
   ClearIcon,
   CopyIcon,
   DiagramIcon,
   FolderMenuIcon,
   FolderRemoveIcon,
+  GearIcon,
+  KeyboardIcon,
   MoveIcon,
+  SearchGlyph,
   SessionTabIcon,
   TabLockIcon,
   TabsLabelIcon,
@@ -523,96 +527,6 @@ export function TabBar({
         />
       ) : null}
     </>
-  );
-}
-
-function SearchGlyph() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <circle cx="7" cy="7" r="4" />
-      <path d="M10 10l3.5 3.5" />
-    </svg>
-  );
-}
-
-// Dotted-canvas glyph for the canvas-menu trigger.
-function CanvasGlyph() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden
-    >
-      <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
-      <circle cx="6" cy="6" r="0.6" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="6" r="0.6" fill="currentColor" stroke="none" />
-      <circle cx="6" cy="10" r="0.6" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="10" r="0.6" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function KeyboardIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2" y="5.5" width="16" height="10" rx="1.5" />
-      <path d="M5 9h.01M8 9h.01M11 9h.01M14 9h.01M5 12.5h10" />
-    </svg>
-  );
-}
-
-// A panel layout glyph: a frame with a sidebar, hinting "panels".
-function GearIcon() {
-  // Sliders silhouette (two horizontal sliders with a knob on each)
-  // instead of the cog that previously sat here. The cog's 8 spokes
-  // around a central circle read as a sun on most rendering sizes,
-  // especially in dark mode where the stroke is light, which made
-  // the Settings button look like an alternate dark-mode toggle.
-  // The sliders glyph is the standard "settings" affordance in
-  // modern UI kits (Heroicons, Lucide, Material) and reads as
-  // "settings" without ambiguity.
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <line x1="3" y1="6" x2="11" y2="6" />
-      <line x1="16" y1="6" x2="17.5" y2="6" />
-      <circle cx="13.5" cy="6" r="2" />
-      <line x1="3" y1="14" x2="6" y2="14" />
-      <line x1="11" y1="14" x2="17.5" y2="14" />
-      <circle cx="8.5" cy="14" r="2" />
-    </svg>
   );
 }
 
