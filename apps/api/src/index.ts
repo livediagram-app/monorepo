@@ -5,6 +5,7 @@ import { CORS_HEADERS, json, notFound, rateLimited } from './responses';
 import { handleAccount } from './routes/account';
 import { handleAi } from './routes/ai';
 import { handleCapabilities } from './routes/capabilities';
+import { handleCustomThemes } from './routes/custom-themes';
 import { handleUnfurl } from './routes/unfurl';
 import type { RouteContext } from './routes/context';
 import { handleDiagrams } from './routes/diagrams';
@@ -129,6 +130,8 @@ export default {
           return await handleDiagrams(ctx);
         case 'folders':
           return await handleFolders(ctx);
+        case 'custom-themes':
+          return await handleCustomThemes(ctx);
         case 'teams':
           return await handleTeams(ctx);
         case 'account':

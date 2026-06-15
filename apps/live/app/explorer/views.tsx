@@ -50,6 +50,7 @@ export type SelectedNode =
   | { kind: 'unsorted' }
   | { kind: 'shared' }
   | { kind: 'gallery' }
+  | { kind: 'themes' }
   | { kind: 'folder'; id: string }
   | { kind: 'team'; id: string }
   | { kind: 'invites' };

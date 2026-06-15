@@ -30,6 +30,8 @@ export function explorerPathFor(node: SelectedNode): string {
       return '/explorer/shared';
     case 'gallery':
       return '/explorer/images';
+    case 'themes':
+      return '/explorer/themes';
     case 'invites':
       return '/explorer/invites';
     case 'folder':
@@ -55,6 +57,8 @@ export function selectedFromRoute(pathname: string, search: URLSearchParams): Se
       return { kind: 'shared' };
     case '/explorer/images':
       return { kind: 'gallery' };
+    case '/explorer/themes':
+      return { kind: 'themes' };
     case '/explorer/invites':
       return { kind: 'invites' };
     case '/explorer/folder': {

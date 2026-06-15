@@ -1072,7 +1072,7 @@ export function EditorView() {
           onSetBackgroundColor={setBackgroundColor}
           onSetPatternColor={setPatternColor}
           onSetBackgroundOpacity={setBackgroundOpacity}
-          themeId={(activeTab.theme as ThemeId | undefined) ?? 'brand'}
+          themeId={activeTab.theme ?? 'brand'}
           onSetTheme={setTheme}
           onResetElementsToTheme={resetElementsToTheme}
           onClose={() => setCanvasThemeTab(null)}

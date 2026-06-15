@@ -11,6 +11,7 @@ import {
   type ShapeKind,
 } from '@livediagram/diagram';
 import { assignBranches, branchOfArrow, ROOT_BRANCH } from './hierarchy';
+import { lookupCustomTheme } from './custom-theme-registry';
 
 // A preset theme bundles a canvas backdrop (background colour + pattern +
 // pattern colour) with the default colours used for newly added boxed
@@ -581,6 +582,15 @@ export function themeCategory(id: ThemeId): ThemeCategory {
 }
 
 export function getTheme(id: string | undefined): ThemeDefinition {
+  // Custom themes (spec/44) win: the editor registers the owner's saved
+  // themes into the module registry, so a `custom:<uuid>` id resolves
+  // here synchronously like any built-in. Falls through to the catalogue
+  // (and ultimately the default) when the id isn't a registered custom
+  // theme — including a deleted one, so a diagram never breaks.
+  if (id) {
+    const custom = lookupCustomTheme(id);
+    if (custom) return custom;
+  }
   const found = THEMES.find((t) => t.id === id);
   return found ?? THEMES[0]!;
 }

@@ -152,6 +152,28 @@ export function ImageIcon() {
   );
 }
 
+// Painter's palette: the Themes section (spec/44).
+export function PaletteIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2a6 6 0 0 0 0 12c1 0 1.4-.7 1.4-1.3 0-.7-.6-1-.6-1.7 0-.5.4-.9 1-.9H11A3 3 0 0 0 14 7c0-2.8-2.7-5-6-5z" />
+      <circle cx="5.5" cy="7" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="5" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function TeamIcon() {
   return (
     <svg

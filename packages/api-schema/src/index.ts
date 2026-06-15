@@ -14,7 +14,7 @@
 // continues to use `StoredDiagram` — so this extraction is a
 // drop-in. New code should prefer the canonical names here.
 
-import type { Tab } from '@livediagram/diagram';
+import type { BackgroundPattern, ShapeKind, Tab } from '@livediagram/diagram';
 
 // ---------------------------------------------------------------------
 // Diagrams
@@ -117,6 +117,43 @@ export type Folder = {
   parentId: string | null;
   teamId: string | null;
   name: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+// ---------------------------------------------------------------------
+// Custom themes (spec/44)
+// ---------------------------------------------------------------------
+
+// The themable payload of a custom theme — the same fields a built-in
+// `ThemeDefinition` carries MINUS its `id` / `label` (which live on the
+// row) and the `extra` "show more" flag (custom themes are never
+// gated). Stored as a JSON string in the `custom_themes.definition`
+// column; this is the parsed shape the api emits and the live editor
+// materialises into a full ThemeDefinition. Kept structurally in step
+// with `apps/live/lib/themes.ts` ThemeDefinition by the editor's
+// `materialiseCustomTheme` helper.
+export type CustomThemeDefinition = {
+  backgroundColor: string;
+  backgroundPattern: BackgroundPattern;
+  patternColor: string;
+  elementFill: string | null;
+  elementStroke: string | null;
+  elementText: string | null;
+  palette?: { fill: string; stroke: string; text: string }[];
+  rootColor?: { fill: string; stroke: string; text: string };
+  shapeColors?: Partial<Record<ShapeKind, { fill?: string; stroke?: string; text?: string }>>;
+};
+
+// A saved custom theme. `id` is `custom:<uuid>` so it can never collide
+// with a built-in ThemeId and is a cheap "is this custom?" check. It is
+// stored on `Tab.theme` like any other theme id. Owner-scoped (spec/04
+// hybrid identity), guests included.
+export type CustomTheme = {
+  id: string;
+  ownerId: string;
+  name: string;
+  definition: CustomThemeDefinition;
   createdAt: number;
   updatedAt: number;
 };

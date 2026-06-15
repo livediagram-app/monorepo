@@ -9,6 +9,7 @@ import { MoveToFolderDialog } from '@/components/MoveToFolderDialog';
 import { SignInBanner, SIGNIN_BANNER_DISMISS_KEY } from '@/components/SignInBanner';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useDismissibleBanner } from '@/hooks/useDismissibleBanner';
+import { CustomThemeProvider } from '@/components/CustomThemeProvider';
 import { ExplorerProvider, useExplorer } from './ExplorerContext';
 import { ExplorerSidebar } from './ExplorerSidebar';
 import { useExplorerState } from './useExplorerState';
@@ -39,7 +40,12 @@ export function ExplorerShell({ children }: { children: ReactNode }) {
   if (!state.authLoaded) return null;
   return (
     <ExplorerProvider value={state}>
-      <ShellChrome>{children}</ShellChrome>
+      {/* Owner-scoped custom themes (spec/44) so the Themes section + its
+          builder share one source of truth, keyed by the same owner id
+          the rest of the Explorer uses. */}
+      <CustomThemeProvider ownerId={state.ownerId}>
+        <ShellChrome>{children}</ShellChrome>
+      </CustomThemeProvider>
     </ExplorerProvider>
   );
 }

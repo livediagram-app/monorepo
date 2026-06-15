@@ -11,6 +11,7 @@ import {
   FolderIcon,
   ImageIcon,
   InviteIcon,
+  PaletteIcon,
   PlusIcon,
   ShareIcon,
   TeamIcon,
@@ -258,6 +259,13 @@ export function ExplorerSidebar() {
         label="Image gallery"
         selected={selected.kind === 'gallery'}
         onClick={() => go({ kind: 'gallery' })}
+        depth={0}
+      />
+      <SidebarRow
+        icon={<PaletteIcon />}
+        label="Themes"
+        selected={selected.kind === 'themes'}
+        onClick={() => go({ kind: 'themes' })}
         depth={0}
       />
     </>

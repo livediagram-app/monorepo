@@ -8,6 +8,7 @@ import { EmptyPane, ListView, PaneHeader, SharedList, SkeletonRows } from './vie
 // Lazy-load the heavier panes — each is only mounted on its own
 // route, so none of them sit in the shared explorer chunk.
 const GalleryPane = dynamic(() => import('@/components/GalleryPane').then((m) => m.GalleryPane));
+const ThemesPane = dynamic(() => import('@/components/ThemesPane').then((m) => m.ThemesPane));
 const TeamPane = dynamic(() => import('@/components/TeamPane').then((m) => m.TeamPane));
 const TeamInvitesPane = dynamic(() =>
   import('@/components/TeamInvitesPane').then((m) => m.TeamInvitesPane),
@@ -71,6 +72,7 @@ export function ExplorerPane() {
         onCreateDiagram={
           selected.kind === 'shared' ||
           selected.kind === 'gallery' ||
+          selected.kind === 'themes' ||
           selected.kind === 'team' ||
           selected.kind === 'invites'
             ? undefined
@@ -82,6 +84,7 @@ export function ExplorerPane() {
         onCreateFolder={
           selected.kind === 'shared' ||
           selected.kind === 'gallery' ||
+          selected.kind === 'themes' ||
           selected.kind === 'team' ||
           selected.kind === 'invites' ||
           selected.kind === 'recent'
@@ -119,6 +122,8 @@ export function ExplorerPane() {
         ownerId ? (
           <GalleryPane ownerId={ownerId} />
         ) : null
+      ) : selected.kind === 'themes' ? (
+        <ThemesPane />
       ) : selected.kind === 'shared' ? (
         <SharedList shared={shared} onDismiss={dismissShared} />
       ) : paneContent.folders.length === 0 &&

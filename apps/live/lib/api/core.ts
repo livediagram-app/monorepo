@@ -5,6 +5,7 @@
 // import from here; callers go through the lib/api-client.ts barrel.
 import type {
   ChangeLogEntry,
+  CustomTheme,
   Diagram,
   DiagramSummary,
   Folder,
@@ -60,6 +61,8 @@ export type TabResponse = { tab: TabRecord };
 export type ListResponse = { diagrams: DiagramSummary[] };
 export type FolderResponse = { folder: Folder };
 export type FoldersResponse = { folders: Folder[] };
+export type CustomThemeResponse = { theme: CustomTheme };
+export type CustomThemesResponse = { themes: CustomTheme[] };
 export type ShareLinkResponse = { link: ShareLink };
 // The share-links list doubles as the owner's read of the diagram's
 // share password (spec/24): owner-only endpoint, so it's safe in the

@@ -19,8 +19,8 @@ import {
   switchThemeBackdrop,
   switchThemeElements,
   THEMES,
-  type ThemeId,
 } from '@/lib/themes';
+import { isCustomThemeId } from '@/lib/custom-theme-registry';
 import {
   type BackgroundPattern,
   type Element,
@@ -160,14 +160,17 @@ export function useTabCanvas(deps: TabCanvasDeps) {
   // theme-controlled and gets the new theme's value; anything else is
   // the user's choice and survives. Sticky notes are skipped entirely
   // — the amber palette is iconic.
-  const setTheme = (id: ThemeId) => {
+  // Accepts a built-in ThemeId or a custom `custom:<uuid>` id (spec/44):
+  // getTheme resolves both, so the preserve-customs switch works the same
+  // for either. Widened to string for the custom case.
+  const setTheme = (id: string) => {
     if (editsBlocked) return;
     const theme = getTheme(id);
-    const themeLabel =
-      THEMES.find((t) => t.id === id)?.label ?? id.charAt(0).toUpperCase() + id.slice(1);
-    emitTabMeta(activeId, `Changed theme to ${themeLabel}`);
-    // Telemetry (spec/22): `type` is the theme label, a preset.
-    track('Theme', 'Changed', themeLabel);
+    // theme.label is the built-in label or the custom theme's name.
+    emitTabMeta(activeId, `Changed theme to ${theme.label}`);
+    // Telemetry (spec/22): `type` must stay a preset, never user content,
+    // so a custom theme reports the fixed 'Custom' rather than its name.
+    track('Theme', 'Changed', isCustomThemeId(id) ? 'Custom' : theme.label);
     commitTabs((ts) =>
       ts.map((t) => {
         if (t.id !== activeId) return t;

@@ -6,6 +6,7 @@ import { setSessionSharePassword } from '@/lib/api-client';
 import { EditorHeader } from '@/components/EditorHeader';
 import { Explorer } from '@/components/Explorer';
 import { DiagramLoading } from '@/components/DiagramLoading';
+import { CustomThemeProvider } from '@/components/CustomThemeProvider';
 import { EditorContext } from './EditorContext';
 import { EditorView } from './EditorView';
 import { useEditorState } from './useEditorState';
@@ -143,7 +144,13 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
 
   return (
     <EditorContext.Provider value={state}>
-      <EditorView />
+      {/* Owner-scoped custom themes (spec/44): keyed by the current
+          user's id (Clerk or guest self id) so the theme picker /
+          builder share one source of truth and getTheme resolves saved
+          themes referenced by this diagram's tabs. */}
+      <CustomThemeProvider ownerId={state.selfParticipant?.id ?? null}>
+        <EditorView />
+      </CustomThemeProvider>
     </EditorContext.Provider>
   );
 }

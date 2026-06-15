@@ -54,6 +54,8 @@ export async function deleteAccount(
   // Wipe along with everything else so a delete-account run leaves
   // no row carrying their flags.
   await env.DB.prepare('DELETE FROM user_preferences WHERE owner_id = ?').bind(ownerId).run();
+  // custom_themes (spec/44): this owner's saved themes go too.
+  await env.DB.prepare('DELETE FROM custom_themes WHERE owner_id = ?').bind(ownerId).run();
   return {
     diagrams: diagramsRes.meta.changes ?? 0,
     folders: foldersRes.meta.changes ?? 0,
@@ -140,6 +142,13 @@ export async function migrateOwnerId(
   const imagesRes = await env.DB.prepare(
     'UPDATE OR IGNORE images SET owner_id = ? WHERE owner_id = ?',
   )
+    .bind(toOwnerId, fromOwnerId)
+    .run();
+  // custom_themes (spec/44): move the guest's saved themes onto the
+  // authed identity so the diagrams that reference them keep their look
+  // after sign-up. Plain UPDATE — the id is the PK (no per-owner unique
+  // constraint to collide on), so no OR IGNORE needed.
+  await env.DB.prepare('UPDATE custom_themes SET owner_id = ? WHERE owner_id = ?')
     .bind(toOwnerId, fromOwnerId)
     .run();
   return {
