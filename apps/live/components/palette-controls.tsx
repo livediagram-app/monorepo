@@ -32,7 +32,17 @@ import { createContext, useContext } from 'react';
 // shape interior used by the filled tiles (shapes / devices / annotation),
 // applied via the `palette-tile-filled` rule in globals.css. Both are
 // undefined for the Basic theme, where the palette keeps its default look.
-export type PaletteTint = { stroke?: string; fill?: string };
+//
+// `shapeColors` carries a per-shape-kind override (spec/42 Formal / UML +
+// spec/44 custom themes): a tile whose `dragKind` has an entry previews
+// THAT kind's colour instead of the base — so a UML diamond tile shows
+// amber, a cylinder purple, etc., matching what the shape becomes when
+// added. Kinds without an entry fall back to stroke/fill.
+export type PaletteTint = {
+  stroke?: string;
+  fill?: string;
+  shapeColors?: Partial<Record<ShapeKind, { fill?: string; stroke?: string }>>;
+};
 
 const PaletteTintContext = createContext<PaletteTint | undefined>(undefined);
 
@@ -447,8 +457,14 @@ export function IconButton({
   // (the style only lands on the glyph wrapper), so labels keep their
   // contrast.
   const themeTint = useContext(PaletteTintContext);
-  const tintStroke = !active && !disabled && !noTint ? themeTint?.stroke : undefined;
-  const tintFill = tintStroke && filled ? themeTint?.fill : undefined;
+  // Per-shape themes (UML / custom) colour a tile by its own kind; fall
+  // back to the theme's single element stroke / fill for kinds without an
+  // override (and for non-shape tiles, which carry no dragKind).
+  const shapeOverride = dragKind ? themeTint?.shapeColors?.[dragKind] : undefined;
+  const baseStroke = shapeOverride?.stroke ?? themeTint?.stroke;
+  const baseFill = shapeOverride?.fill ?? themeTint?.fill;
+  const tintStroke = !active && !disabled && !noTint ? baseStroke : undefined;
+  const tintFill = tintStroke && filled ? baseFill : undefined;
   const glyphStyle: React.CSSProperties | undefined = tintStroke
     ? ({
         color: tintStroke,

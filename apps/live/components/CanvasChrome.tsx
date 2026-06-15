@@ -277,9 +277,17 @@ export function CanvasChrome(props: CanvasChromeProps) {
   // theme leaves elementStroke null, so we pass nothing and the palette
   // keeps its default slate look. See spec/09.
   const paletteTheme = getTheme(tabThemeId);
-  const paletteTint = paletteTheme.elementStroke
-    ? { stroke: paletteTheme.elementStroke, fill: paletteTheme.elementFill ?? undefined }
-    : undefined;
+  // A per-shape theme (UML / custom, spec/42 + spec/44) tints each shape
+  // tile by its own kind even when the base element stroke is unset, so
+  // surface the tint whenever there's a base stroke OR per-shape colours.
+  const paletteTint =
+    paletteTheme.elementStroke || paletteTheme.shapeColors
+      ? {
+          stroke: paletteTheme.elementStroke ?? undefined,
+          fill: paletteTheme.elementFill ?? undefined,
+          shapeColors: paletteTheme.shapeColors,
+        }
+      : undefined;
   // Alignment guides for the in-progress draw-to-size box, so the user
   // sees which neighbour edges / centres it latched onto — the same faint
   // lines a move / resize shows. Box intents only (arrows are a line,
