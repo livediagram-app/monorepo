@@ -212,7 +212,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // Canvas tool (Pan / Select / Laser). See useCanvasTool: the raw
   // setter serves internal auto-switches, the tracked selectCanvasTool
   // serves the user-facing pickers.
-  const { canvasTool, setCanvasTool, selectCanvasTool } = useCanvasTool();
+  const { canvasTool, setCanvasTool, selectCanvasTool } = useCanvasTool({ defaultPan: embedMode });
   // Picker mode lives here (rather than nearer `chooseTemplate`) so the
   // derived `identityOnlyScreenOpen` below — used to gate page-level
   // chrome for the visitor join flow — can read it. See
