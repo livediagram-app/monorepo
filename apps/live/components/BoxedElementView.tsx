@@ -30,7 +30,13 @@ import {
 } from '@livediagram/diagram';
 import type { DragMode } from '@/lib/canvas';
 import { renderLabel } from './element-labels';
-import { effectiveRunStyle, FIXED_FONT_PX, labelTextStyleCss } from './label-style';
+import {
+  ALIGN_ITEMS,
+  effectiveRunStyle,
+  FIXED_FONT_PX,
+  labelTextStyleCss,
+  TEXT_ALIGN,
+} from './label-style';
 import { EdgeResizeHandle, LockBadge, ResizeHandles } from './element-parts';
 import { ImageElementView } from './ImageElementView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
@@ -636,6 +642,9 @@ function BoxedElementViewImpl({
           label={label}
           textColor={textColor}
           textSize={textSize}
+          alignX={alignX}
+          alignY={alignY}
+          padding={PADDING_PX[element.padding ?? defaultPadding(element)]}
           fontFamily={fontFamily}
           draggableIcon={canRepositionIcon}
           onIconPointerDown={startIconReposition}
@@ -898,6 +907,9 @@ function ShapeInlineIconLayout({
   label,
   textColor,
   textSize,
+  alignX,
+  alignY,
+  padding,
   fontFamily,
   draggableIcon,
   onIconPointerDown,
@@ -913,6 +925,12 @@ function ShapeInlineIconLayout({
   label: string;
   textColor: string;
   textSize: TextSize;
+  // The element's resolved text alignment + padding, so the icon + label
+  // group honours them the same way a label-only shape does (it used to be
+  // hardcoded centre + a fixed 8px inset, ignoring both).
+  alignX: import('@livediagram/diagram').TextAlignX;
+  alignY: import('@livediagram/diagram').TextAlignY;
+  padding: number;
   fontFamily?: string;
   // When true the glyph itself is grabbable (parent shape selected): a
   // pointer-drag repositions it to a different side via onIconPointerDown.
@@ -964,8 +982,8 @@ function ShapeInlineIconLayout({
   // colour.
   const text = label.trim() ? (
     <span
-      className="min-w-0 whitespace-pre-wrap break-words text-center font-medium leading-tight"
-      style={{ color: textColor, fontSize, fontFamily }}
+      className="min-w-0 whitespace-pre-wrap break-words font-medium leading-tight"
+      style={{ color: textColor, fontSize, fontFamily, textAlign: TEXT_ALIGN[alignX] }}
     >
       {hasRichFormatting(element.richText) ? (
         element.richText!.map((run, i) => (
@@ -987,13 +1005,21 @@ function ShapeInlineIconLayout({
       )}
     </span>
   ) : null;
+  // Position the icon + label group per the element's alignment. The flex
+  // main axis runs along the icon/label arrangement (horizontal for a side
+  // icon, vertical for a stacked one), so the X alignment drives justify on a
+  // row and align on a column, and vice-versa for Y. `padding` replaces the
+  // old fixed 8px inset so the Text category's padding preset applies here too.
+  const xFlex = X_ALIGN_FLEX[alignX];
+  const yFlex = ALIGN_ITEMS[alignY];
   return (
-    // justify-center + content-sized children keeps icon + text grouped
-    // and centred together, padded off the element edges.
     <div
-      className="pointer-events-none absolute inset-0 flex items-center justify-center p-2"
+      className="pointer-events-none absolute inset-0 flex"
       style={{
         flexDirection: isRow ? 'row' : 'column',
+        justifyContent: isRow ? xFlex : yFlex,
+        alignItems: isRow ? yFlex : xFlex,
+        padding,
         // Side-by-side icon + text wants more breathing room than the
         // stacked layout, so the glyph doesn't crowd the first letter.
         gap: isRow ? Math.max(8, Math.round(iconSize * 0.32)) : Math.round(iconSize * 0.2),
@@ -1004,3 +1030,14 @@ function ShapeInlineIconLayout({
     </div>
   );
 }
+
+// Cross-axis flex mapping for the horizontal text alignment (the label-style
+// ALIGN_ITEMS table covers the vertical one).
+const X_ALIGN_FLEX: Record<
+  import('@livediagram/diagram').TextAlignX,
+  'flex-start' | 'center' | 'flex-end'
+> = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+};
