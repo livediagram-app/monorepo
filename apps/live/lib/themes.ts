@@ -575,11 +575,11 @@ export function themeDescription(id: string): string | undefined {
 }
 
 export const THEME_CATEGORIES: { id: ThemeCategory; label: string; description: string }[] = [
+  { id: 'formal', label: 'Formal', description: 'Standard notations like UML.' },
   { id: 'cool', label: 'Cool', description: 'Blues, greens and purples.' },
   { id: 'warm', label: 'Warm', description: 'Reds, oranges and earthy tones.' },
   { id: 'dark', label: 'Dark', description: 'Dark-backdrop themes.' },
   { id: 'multicolour', label: 'Multi-colour', description: 'A different hue per branch.' },
-  { id: 'formal', label: 'Formal', description: 'Standard notations like UML.' },
 ];
 
 const THEME_CATEGORY: Record<ThemeId, ThemeCategory> = {

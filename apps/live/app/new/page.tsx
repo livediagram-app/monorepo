@@ -203,13 +203,13 @@ export default function NewDiagramPage() {
         <AnimatedLinesBackdrop />
         {/* No identity spinner: the wizard's first step is static template
             data, so it renders immediately. Identity resolves in the
-            background; keying the picker on self.id remounts it once when
-            the real id lands so the participant name isn't the placeholder.
-            Mounting CustomThemeProvider with a null owner until then just
-            defers the Custom theme list (spec/44). */}
+            background; the picker follows the resolved participant name on
+            its own (it no longer remounts on id change, which used to flash
+            the card once the real id landed). Mounting CustomThemeProvider
+            with a null owner until then just defers the Custom theme list
+            (spec/44). */}
         <CustomThemeProvider ownerId={self.id === 'pending' ? null : self.id}>
           <TemplatePicker
-            key={self.id}
             mode="welcome"
             participant={self}
             currentThemeId="brand"

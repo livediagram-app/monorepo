@@ -241,10 +241,23 @@ export function ThemeCategoryCard({
           : 'flex flex-col items-start gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10'
       }
     >
+      {/* Always a full 2×2 sampler so categories with fewer than four
+          themes (Formal has one, Custom can have none) keep the same
+          footprint + visual weight as Cool / Warm / etc. — empty slots
+          render as muted placeholders rather than collapsing the grid. */}
       <div className="grid w-full grid-cols-2 gap-1">
-        {themes.slice(0, 4).map((t) => (
-          <ThemeSwatch key={t.id} theme={t} size="sm" />
-        ))}
+        {Array.from({ length: 4 }, (_, i) => {
+          const theme = themes[i];
+          return theme ? (
+            <ThemeSwatch key={theme.id} theme={theme} size="sm" />
+          ) : (
+            <span
+              key={`placeholder-${i}`}
+              aria-hidden
+              className="h-9 w-full rounded-md border border-dashed border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          );
+        })}
       </div>
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-1">

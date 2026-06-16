@@ -175,22 +175,38 @@ export function ThemeCategoryBrowser({
 }
 
 function BackButton({ onClick }: { onClick: () => void }) {
+  return <BackBar label="All themes" onClick={onClick} />;
+}
+
+// A full-width "go back to the overview" bar. Far more obvious than a
+// small pill in the corner — the whole row is the target. Shared shape
+// with the template picker's back bar so the two browses match.
+export function BackBar({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
+      className="group mb-3 flex w-full items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 shadow-sm transition hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-slate-800/80 dark:hover:text-brand-200"
     >
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-        <path
-          d="M7.5 2.5 4 6l3.5 3.5"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      All themes
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition group-hover:bg-brand-100 group-hover:text-brand-700 dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-brand-500/25 dark:group-hover:text-brand-200">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 12 12"
+          fill="none"
+          aria-hidden
+          className="transition-transform duration-150 group-hover:-translate-x-0.5"
+        >
+          <path
+            d="M7.5 2.5 4 6l3.5 3.5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      {label}
     </button>
   );
 }

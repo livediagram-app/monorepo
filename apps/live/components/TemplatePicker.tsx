@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { useEscape } from '@/hooks/useEscape';
 import type { Participant } from '@/lib/identity';
@@ -7,6 +7,7 @@ import { shufflePinned } from '@/lib/shuffle';
 import type { TemplateCategory, TemplateKind } from '@/lib/templates';
 import { TEMPLATE_CATEGORIES, TEMPLATES, templateCategory } from '@/lib/templates';
 import { AnimatedHeightBox } from './AnimatedHeightBox';
+import { BackBar } from './ThemeCategoryBrowser';
 import { CustomThemePicker } from './CustomThemePicker';
 import { CategoryCard, TemplateCard } from './template-picker-cards';
 import { Tooltip } from './Tooltip';
@@ -91,6 +92,18 @@ export function TemplatePicker({
   // pre-existing participant record was created under a guest alias.
   const [name, setName] = useState(lockedName ?? participant.name);
   const nameLocked = !!lockedName;
+  // On /new the participant id (and name) resolves asynchronously — a
+  // 'pending'/'Guest' placeholder first, then the real identity. We used
+  // to remount the whole picker (key={self.id}) to pick that up, which
+  // read as a visible flash once the page settled. Instead, follow the
+  // participant name here until the user actually edits it, so the card
+  // mounts once and never blinks. `nameEdited` gates it so a user-typed
+  // name isn't clobbered when the prop changes.
+  const nameEdited = useRef(false);
+  useEffect(() => {
+    if (nameLocked || nameEdited.current) return;
+    setName(participant.name);
+  }, [participant.name, nameLocked]);
   const [templateKind, setTemplateKind] = useState<TemplateKind>('blank');
   // Free-text filter for the template grid (title / description / kind /
   // category label). Empty = show the whole catalogue. The input updates
@@ -238,7 +251,10 @@ export function TemplatePicker({
                 <input
                   id="welcome-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    nameEdited.current = true;
+                    setName(e.target.value);
+                  }}
                   placeholder={participant.name}
                   readOnly={nameLocked}
                   aria-readonly={nameLocked}
@@ -257,7 +273,10 @@ export function TemplatePicker({
                 <Tooltip title="Shuffle name" description="Pick a different random name.">
                   <button
                     type="button"
-                    onClick={() => setName(randomName())}
+                    onClick={() => {
+                      nameEdited.current = true;
+                      setName(randomName());
+                    }}
                     aria-label="Generate a different name"
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
@@ -319,22 +338,7 @@ export function TemplatePicker({
                   )
                 ) : openCategory ? (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => setOpenCategory(null)}
-                      className="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                        <path
-                          d="M7.5 2.5 4 6l3.5 3.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      All templates
-                    </button>
+                    <BackBar label="All templates" onClick={() => setOpenCategory(null)} />
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {categoryTemplates(openCategory).map((t) => (
                         <TemplateCard
@@ -459,8 +463,10 @@ export function TemplatePicker({
                 Back
               </button>
             ) : null}
-            {isWelcome ? (
-              /* Skip the wizard: Blank template, Basic theme (spec/14). */
+            {isWelcome && step === 'template' ? (
+              /* Skip the wizard: Blank template, Basic theme (spec/14).
+                 Only on the first (template) step — once the user has
+                 reached the theme step, Back / Create are the actions. */
               <button
                 type="button"
                 onClick={skipToDefaults}
