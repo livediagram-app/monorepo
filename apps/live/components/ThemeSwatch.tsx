@@ -1,12 +1,15 @@
+'use client';
+
+import { useId } from 'react';
 import type { ThemeDefinition } from '@/lib/themes';
 
 // The preview inside a theme card. Rather than a flat colour dot, it
-// renders a miniature diagram scene — two connected nodes with a text
-// line + a faint pattern hint — drawn in the theme's actual colours, so
-// the card previews what a diagram in this theme looks like, not just
-// its palette. Shared by the palette accordion, the welcome / template
-// picker, and the Tab Appearance + Explorer theme surfaces so they can't
-// drift.
+// renders a miniature diagram scene — a titled node flowing into two
+// others, with soft shadows, arrowheads and a faint grid — drawn in the
+// theme's actual colours, so the card previews what a diagram in this
+// theme looks like, not just its palette. Shared by the palette
+// accordion, the welcome / template picker, and the Tab Appearance +
+// Explorer theme surfaces so they can't drift.
 //
 // The scene adapts to the theme kind: a single-colour theme draws one
 // cohesive look; a multi-colour theme (spec/29) gives each node a branch
@@ -52,16 +55,24 @@ function nodeColours(theme: ThemeDefinition): [Tri, Tri, Tri] {
 export function ThemeSwatch({
   theme,
   size = 'sm',
+  heightClass,
 }: {
   theme: ThemeDefinition;
-  // 'sm' compact palette grid, 'md' welcome picker, 'lg' the Basic
-  // quick-pick card's hero swatch (fills a category-card-sized preview).
+  // 'sm' compact palette grid, 'md' welcome picker, 'lg' the Explorer
+  // hero cards. `heightClass` overrides the height outright (used to make
+  // the Basic quick-pick match the category sampler exactly).
   size?: 'sm' | 'md' | 'lg';
+  heightClass?: string;
 }) {
-  const boxH = size === 'lg' ? 'h-28' : size === 'md' ? 'h-20' : 'h-9';
+  const boxH = heightClass ?? (size === 'lg' ? 'h-28' : size === 'md' ? 'h-20' : 'h-9');
   const [c0, c1, c2] = nodeColours(theme);
   const connector = theme.rootColor?.stroke ?? baseTri(theme).stroke;
   const showPattern = theme.backgroundPattern !== 'blank';
+  // Unique per instance so multiple inline SVGs don't share (and clobber)
+  // the same filter / marker ids.
+  const uid = useId().replace(/:/g, '');
+  const shadow = `shadow-${uid}`;
+  const arrow = `arrow-${uid}`;
 
   return (
     <span
@@ -69,68 +80,101 @@ export function ThemeSwatch({
       className={`block ${boxH} w-full overflow-hidden rounded-md border border-slate-200 dark:border-slate-700`}
     >
       <svg
-        viewBox="0 0 100 60"
-        // `meet`, not `slice`: show the WHOLE scene (the backdrop fills any
-        // letterbox) so nothing is clipped on a wide card.
+        viewBox="0 0 100 64"
         preserveAspectRatio="xMidYMid meet"
         className="h-full w-full"
         style={{ backgroundColor: theme.backgroundColor }}
         role="img"
       >
-        <rect x="0" y="0" width="100" height="60" fill={theme.backgroundColor} />
+        <defs>
+          <filter id={shadow} x="-20%" y="-20%" width="140%" height="160%">
+            <feDropShadow
+              dx="0"
+              dy="0.8"
+              stdDeviation="0.9"
+              floodColor="#0f172a"
+              floodOpacity="0.18"
+            />
+          </filter>
+          <marker
+            id={arrow}
+            viewBox="0 0 10 10"
+            refX="7.5"
+            refY="5"
+            markerWidth="4"
+            markerHeight="4"
+            orient="auto-start-reverse"
+          >
+            <path d="M1 1 L8.5 5 L1 9 Z" fill={connector} />
+          </marker>
+        </defs>
 
-        {/* Faint pattern hint (skipped for blank backdrops). */}
+        {/* Faint dot grid (skipped for blank backdrops). */}
         {showPattern ? (
-          <g fill={theme.patternColor} opacity="0.55">
-            {[12, 32, 52, 72, 92].map((x) =>
-              [10, 26, 42, 58].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="0.9" />),
+          <g fill={theme.patternColor} opacity="0.45">
+            {[10, 22, 34, 46, 58, 70, 82, 94].map((x) =>
+              [10, 22, 34, 46, 58].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="0.7" />),
             )}
           </g>
         ) : null}
 
-        {/* Connectors first, so the nodes sit on top of the line ends. */}
-        <g stroke={connector} strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.9">
-          <path d="M48 30 H60" />
-          <path d="M44 38 V44 H64" />
+        {/* Connectors: gentle curves from node 1 into nodes 2 + 3, with
+            arrowheads. Drawn before the nodes so the line ends tuck under. */}
+        <g
+          stroke={connector}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          fill="none"
+          markerEnd={`url(#${arrow})`}
+        >
+          <path d="M46 27 C 55 27, 55 20, 62 20" />
+          <path d="M46 37 C 55 37, 55 45, 62 45" />
         </g>
 
-        {/* Node 1: a labelled box (rounded rect + two text bars). */}
-        <rect
-          x="8"
-          y="16"
-          width="40"
-          height="28"
-          rx="4"
-          fill={c0.fill}
-          stroke={c0.stroke}
-          strokeWidth="2.2"
-        />
-        <rect x="13" y="24" width="27" height="3.4" rx="1.7" fill={c0.text} />
-        <rect x="13" y="32" width="18" height="3.4" rx="1.7" fill={c0.text} opacity="0.65" />
+        {/* Node 1: a titled card (header line + two body lines). */}
+        <g filter={`url(#${shadow})`}>
+          <rect
+            x="9"
+            y="16"
+            width="37"
+            height="32"
+            rx="3.5"
+            fill={c0.fill}
+            stroke={c0.stroke}
+            strokeWidth="1.6"
+          />
+          <rect x="13" y="21" width="23" height="4" rx="2" fill={c0.stroke} />
+          <rect x="13" y="30" width="28" height="3" rx="1.5" fill={c0.text} opacity="0.5" />
+          <rect x="13" y="37" width="19" height="3" rx="1.5" fill={c0.text} opacity="0.5" />
+        </g>
 
         {/* Node 2: a pill / stadium (top right). */}
-        <rect
-          x="62"
-          y="10"
-          width="30"
-          height="16"
-          rx="8"
-          fill={c1.fill}
-          stroke={c1.stroke}
-          strokeWidth="2.2"
-        />
+        <g filter={`url(#${shadow})`}>
+          <rect
+            x="63"
+            y="12"
+            width="29"
+            height="16"
+            rx="8"
+            fill={c1.fill}
+            stroke={c1.stroke}
+            strokeWidth="1.6"
+          />
+        </g>
 
-        {/* Node 3: a second box (bottom right). */}
-        <rect
-          x="62"
-          y="36"
-          width="30"
-          height="16"
-          rx="3"
-          fill={c2.fill}
-          stroke={c2.stroke}
-          strokeWidth="2.2"
-        />
+        {/* Node 3: a rounded box (bottom right). */}
+        <g filter={`url(#${shadow})`}>
+          <rect
+            x="63"
+            y="37"
+            width="29"
+            height="16"
+            rx="3"
+            fill={c2.fill}
+            stroke={c2.stroke}
+            strokeWidth="1.6"
+          />
+        </g>
       </svg>
     </span>
   );

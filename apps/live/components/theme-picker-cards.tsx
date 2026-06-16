@@ -85,7 +85,9 @@ export function ThemeQuickPickCard({
       }
     >
       <div className="w-full">
-        <ThemeSwatch theme={theme} size="lg" />
+        {/* Match the category cards' 2×2 sampler height (two h-9 rows +
+            gap) so Basic doesn't tower over the other tiles on the row. */}
+        <ThemeSwatch theme={theme} heightClass="h-[4.75rem]" />
       </div>
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">{label}</p>
