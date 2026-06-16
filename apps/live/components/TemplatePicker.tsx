@@ -130,6 +130,15 @@ export function TemplatePicker({
   // wizard hides its own Back / Create footer while the builder owns the
   // surface (the builder has its own Save / Cancel).
   const [step, setStep] = useState<'template' | 'theme'>('template');
+  // Direction of the last step change, so the incoming phase slides in
+  // from the side it's travelling toward (forward = from the right, back
+  // = from the left). Drives the tip-next / tip-prev slide animation on
+  // the keyed step container below.
+  const [stepDir, setStepDir] = useState<'forward' | 'backward'>('forward');
+  const goToStep = (next: 'template' | 'theme') => {
+    setStepDir(next === 'theme' ? 'forward' : 'backward');
+    setStep(next);
+  };
   const [themeBuilding, setThemeBuilding] = useState(false);
   // Rotate which templates greet the user on each open so people keep
   // discovering options beyond the usual first rows, but always pin Blank
@@ -178,7 +187,7 @@ export function TemplatePicker({
   // needs to pick a theme) rather than committing the whole wizard.
   const onTemplateCommit = (kind: TemplateKind) => {
     setTemplateKind(kind);
-    if (isWizard) setStep('theme');
+    if (isWizard) goToStep('theme');
     else onPick(kind, effectiveName, themeId);
   };
 
@@ -226,7 +235,7 @@ export function TemplatePicker({
           </div>
           {/* Step indicator: a modern two-segment progress rail so the
               wizard reads as 1 of 2 at a glance. Both wizard modes. */}
-          {isWizard ? <WizardSteps step={step} onStep={setStep} /> : null}
+          {isWizard ? <WizardSteps step={step} onStep={goToStep} /> : null}
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pt-5 pb-8">
@@ -287,26 +296,40 @@ export function TemplatePicker({
             </div>
           ) : null}
 
-          {/* Template grid. 4 columns at wide widths so the picker uses the
+          {/* Wizard phases slide in / out directionally (forward from the
+              right, back from the left); keying on `step` replays the
+              animation each switch. Non-wizard surfaces stack both
+              sections under a stable key, so nothing animates. */}
+          <div
+            key={isWizard ? step : 'steps'}
+            className={
+              isWizard
+                ? stepDir === 'forward'
+                  ? 'animate-tip-next'
+                  : 'animate-tip-prev'
+                : undefined
+            }
+          >
+            {/* Template grid. 4 columns at wide widths so the picker uses the
               modal width instead of stretching cards vertically. */}
-          {showTemplateSection ? (
-            <>
-              <div
-                className={`flex items-center justify-between gap-3 ${showIdentity ? 'mt-5' : ''}`}
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Pick a template
-                </p>
-                <input
-                  type="text"
-                  value={templateQuery}
-                  onChange={(e) => setTemplateQuery(e.target.value)}
-                  placeholder="Search templates"
-                  aria-label="Search templates"
-                  className="w-44 max-w-[55%] rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
-                />
-              </div>
-              {/* Two-level browse inside a height-capped scroll area:
+            {showTemplateSection ? (
+              <>
+                <div
+                  className={`flex items-center justify-between gap-3 ${showIdentity ? 'mt-5' : ''}`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Pick a template
+                  </p>
+                  <input
+                    type="text"
+                    value={templateQuery}
+                    onChange={(e) => setTemplateQuery(e.target.value)}
+                    placeholder="Search templates"
+                    aria-label="Search templates"
+                    className="w-44 max-w-[55%] rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                  />
+                </div>
+                {/* Two-level browse inside a height-capped scroll area:
                   the overview shows a Blank quick-pick + a card per
                   category; clicking a category drills into its templates
                   (with a Back affordance). A non-empty search query
@@ -314,91 +337,92 @@ export function TemplatePicker({
                   catalogue. Blank is special-cased out of the category
                   grouping — it's a "start from scratch", not a category
                   template — and lives only on the overview row. */}
-              <AnimatedHeightBox
-                viewKey={templateFilter ? 'search' : (openCategory ?? 'overview')}
-                className="mt-2"
-              >
-                {templateFilter ? (
-                  filteredTemplates.length === 0 ? (
-                    <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-400">
-                      No templates match “{templateQuery.trim()}”.
-                    </p>
+                <AnimatedHeightBox
+                  viewKey={templateFilter ? 'search' : (openCategory ?? 'overview')}
+                  className="mt-2"
+                >
+                  {templateFilter ? (
+                    filteredTemplates.length === 0 ? (
+                      <p className="px-1 py-6 text-center text-xs text-slate-400 dark:text-slate-400">
+                        No templates match “{templateQuery.trim()}”.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {filteredTemplates.map((t) => (
+                          <TemplateCard
+                            key={t.kind}
+                            template={t}
+                            active={templateKind === t.kind}
+                            onSelect={() => setTemplateKind(t.kind)}
+                            onCommit={() => onTemplateCommit(t.kind)}
+                          />
+                        ))}
+                      </div>
+                    )
+                  ) : openCategory ? (
+                    <>
+                      <BackBar label="All templates" onClick={() => setOpenCategory(null)} />
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {categoryTemplates(openCategory).map((t) => (
+                          <TemplateCard
+                            key={t.kind}
+                            template={t}
+                            active={templateKind === t.kind}
+                            onSelect={() => setTemplateKind(t.kind)}
+                            onCommit={() => onTemplateCommit(t.kind)}
+                          />
+                        ))}
+                      </div>
+                    </>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {filteredTemplates.map((t) => (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {blankTemplate ? (
                         <TemplateCard
-                          key={t.kind}
-                          template={t}
-                          active={templateKind === t.kind}
-                          onSelect={() => setTemplateKind(t.kind)}
-                          onCommit={() => onTemplateCommit(t.kind)}
+                          template={blankTemplate}
+                          active={templateKind === 'blank'}
+                          onSelect={() => setTemplateKind('blank')}
+                          onCommit={() => onTemplateCommit('blank')}
                         />
-                      ))}
+                      ) : null}
+                      {TEMPLATE_CATEGORIES.map((cat) => {
+                        const items = categoryTemplates(cat.id);
+                        if (items.length === 0) return null;
+                        return (
+                          <CategoryCard
+                            key={cat.id}
+                            label={cat.label}
+                            description={cat.description}
+                            count={items.length}
+                            previews={items.map((t) => t.kind)}
+                            selected={
+                              templateKind !== 'blank' && templateCategory(templateKind) === cat.id
+                            }
+                            onOpen={() => setOpenCategory(cat.id)}
+                          />
+                        );
+                      })}
                     </div>
-                  )
-                ) : openCategory ? (
-                  <>
-                    <BackBar label="All templates" onClick={() => setOpenCategory(null)} />
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {categoryTemplates(openCategory).map((t) => (
-                        <TemplateCard
-                          key={t.kind}
-                          template={t}
-                          active={templateKind === t.kind}
-                          onSelect={() => setTemplateKind(t.kind)}
-                          onCommit={() => onTemplateCommit(t.kind)}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {blankTemplate ? (
-                      <TemplateCard
-                        template={blankTemplate}
-                        active={templateKind === 'blank'}
-                        onSelect={() => setTemplateKind('blank')}
-                        onCommit={() => onTemplateCommit('blank')}
-                      />
-                    ) : null}
-                    {TEMPLATE_CATEGORIES.map((cat) => {
-                      const items = categoryTemplates(cat.id);
-                      if (items.length === 0) return null;
-                      return (
-                        <CategoryCard
-                          key={cat.id}
-                          label={cat.label}
-                          description={cat.description}
-                          count={items.length}
-                          previews={items.map((t) => t.kind)}
-                          selected={
-                            templateKind !== 'blank' && templateCategory(templateKind) === cat.id
-                          }
-                          onOpen={() => setOpenCategory(cat.id)}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </AnimatedHeightBox>
-            </>
-          ) : null}
+                  )}
+                </AnimatedHeightBox>
+              </>
+            ) : null}
 
-          {/* Theme picker: a two-level browse (Basic quick-pick, a card per
+            {/* Theme picker: a two-level browse (Basic quick-pick, a card per
               colour-temperament category, plus a Custom category for the
               owner's saved themes). Reuses the exact picker the right-click
               Tab Appearance dialog renders (spec/42, /44) so the two can't
               drift. Shown as step 2 of the welcome wizard, or stacked under
               the template grid in templates mode. */}
-          {showThemeSection ? (
-            <CustomThemePicker
-              themeId={themeId}
-              onSelect={setThemeId}
-              onCommit={(id) => onPick(templateKind, effectiveName, id)}
-              onBuildingChange={setThemeBuilding}
-              browserClassName="mt-1"
-            />
-          ) : null}
+            {showThemeSection ? (
+              <CustomThemePicker
+                themeId={themeId}
+                onSelect={setThemeId}
+                onCommit={(id) => onPick(templateKind, effectiveName, id)}
+                onBuildingChange={setThemeBuilding}
+                browserClassName="mt-1"
+              />
+            ) : null}
+          </div>
         </div>
 
         {/* Footer. Identity mode keeps a flat Cancel + Join row. Both wizard
@@ -456,7 +480,7 @@ export function TemplatePicker({
             {step === 'theme' ? (
               <button
                 type="button"
-                onClick={() => setStep('template')}
+                onClick={() => goToStep('template')}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 <ArrowLeftIcon />
@@ -479,7 +503,7 @@ export function TemplatePicker({
             {step === 'template' ? (
               <button
                 type="button"
-                onClick={() => setStep('theme')}
+                onClick={() => goToStep('theme')}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-600"
               >
                 Next
