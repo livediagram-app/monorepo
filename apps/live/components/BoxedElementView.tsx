@@ -53,6 +53,7 @@ import { isTechIconId } from '@/lib/tech-icons';
 import { useLongPress } from '@/hooks/useLongPress';
 import { describeLink } from '@/lib/link-label';
 import { TableView } from './TableView';
+import { Tooltip } from './Tooltip';
 
 type BoxedElementViewProps = {
   element: BoxedElement;
@@ -705,23 +706,27 @@ function BoxedElementViewImpl({
           className="absolute -bottom-1 -right-1 origin-bottom-right"
           style={{ transform: `scale(${1 / zoom})` }}
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (myVotes > 0) onRetractVote?.(element.id);
-            }}
-            title={myVotes > 0 ? 'Click to remove one of your dots' : `${voteTotal} votes`}
-            aria-label={`${voteTotal} votes`}
-            className={
-              'pointer-events-auto flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold shadow-sm ' +
-              (myVotes > 0
-                ? 'bg-brand-500 text-white'
-                : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100')
-            }
+          <Tooltip
+            title={`${voteTotal} ${voteTotal === 1 ? 'vote' : 'votes'}`}
+            description={myVotes > 0 ? 'Click to remove one of your dots.' : undefined}
           >
-            {voteTotal}
-          </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (myVotes > 0) onRetractVote?.(element.id);
+              }}
+              aria-label={`${voteTotal} votes`}
+              className={
+                'pointer-events-auto flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold shadow-sm ' +
+                (myVotes > 0
+                  ? 'bg-brand-500 text-white'
+                  : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100')
+              }
+            >
+              {voteTotal}
+            </button>
+          </Tooltip>
         </div>
       ) : null}
 
@@ -959,15 +964,23 @@ function ShapeInlineIconLayout({
     ? Math.max(16, Math.min(fontSize * 1.6, elementIconSize))
     : elementIconSize;
 
-  const iconBox = (
+  const iconGlyph = (
     <div
       className={`relative shrink-0 ${draggableIcon ? 'pointer-events-auto cursor-grab' : ''}`}
       style={{ width: iconSize, height: iconSize }}
       onPointerDown={draggableIcon ? onIconPointerDown : undefined}
-      title={draggableIcon ? 'Drag to move the icon to another side' : undefined}
     >
       <IconGlyph iconId={element.iconId} stroke={iconStroke} strokeWidth={2} hasLabel={false} />
     </div>
+  );
+  // Only the draggable icon earns a tooltip (the affordance hint); a static
+  // icon needs none, so it skips the wrapper entirely.
+  const iconBox = draggableIcon ? (
+    <Tooltip title="Drag to move" description="Move the icon to another side of the label.">
+      {iconGlyph}
+    </Tooltip>
+  ) : (
+    iconGlyph
   );
   // The text flows (NOT absolute / flex-1) so the icon sits right beside
   // it and the whole group stays centred — `flex-1` previously stretched

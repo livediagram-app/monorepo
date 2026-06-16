@@ -447,12 +447,17 @@ function DailySparkline({ days, totals }: { days: number[]; totals: number[] }) 
       </div>
       <div className="mt-4 flex h-24 items-end gap-1">
         {totals.map((v, i) => (
-          <div
+          <Tooltip
             key={days[i] ?? i}
-            title={`${fmt(days[i] ?? 0)} · ${v.toLocaleString()}`}
-            className="flex-1 rounded-sm bg-brand-200 transition hover:bg-brand-500 dark:bg-brand-500/40 dark:hover:bg-brand-400"
-            style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
-          />
+            title={fmt(days[i] ?? 0)}
+            description={`${v.toLocaleString()} events`}
+            className="flex-1 items-end self-stretch"
+          >
+            <div
+              className="w-full rounded-sm bg-brand-200 transition hover:bg-brand-500 dark:bg-brand-500/40 dark:hover:bg-brand-400"
+              style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
+            />
+          </Tooltip>
         ))}
       </div>
       <div className="mt-2 flex justify-between text-[10px] text-slate-400">
@@ -475,14 +480,15 @@ function CategoryShareBar({ groups, total }: { groups: Group[]; total: number })
       </p>
       <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         {groups.map((g) => (
-          <div
+          <Tooltip
             key={g.category}
-            title={`${g.category} · ${((g.subtotal / total) * 100).toFixed(1)}%`}
-            style={{
-              width: `${(g.subtotal / total) * 100}%`,
-              backgroundColor: categoryColor(g.category),
-            }}
-          />
+            title={g.category}
+            description={`${((g.subtotal / total) * 100).toFixed(1)}% of events`}
+            className="h-full"
+            style={{ width: `${(g.subtotal / total) * 100}%` }}
+          >
+            <div className="h-full w-full" style={{ backgroundColor: categoryColor(g.category) }} />
+          </Tooltip>
         ))}
       </div>
       <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
@@ -563,12 +569,17 @@ function CategorySparkline({ days, series }: { days: number[]; series: number[] 
   return (
     <div className="mt-3 flex h-10 items-end gap-[2px]">
       {series.map((v, i) => (
-        <div
+        <Tooltip
           key={days[i] ?? i}
-          title={`${fmt(days[i] ?? 0)} · ${v.toLocaleString()}`}
-          className="flex-1 rounded-[1px] bg-slate-200 dark:bg-slate-700"
-          style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
-        />
+          title={fmt(days[i] ?? 0)}
+          description={`${v.toLocaleString()} events`}
+          className="flex-1 items-end self-stretch"
+        >
+          <div
+            className="w-full rounded-[1px] bg-slate-200 dark:bg-slate-700"
+            style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
+          />
+        </Tooltip>
       ))}
     </div>
   );

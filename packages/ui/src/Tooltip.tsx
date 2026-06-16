@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 type TooltipProps = {
@@ -14,6 +14,12 @@ type TooltipProps = {
   // parent. Default (false) keeps the historical `inline-flex` behaviour
   // so existing toolbar usages don't reflow.
   block?: boolean;
+  // Extra classes / inline style merged onto the wrapping span. Use when the
+  // trigger must participate in its parent's layout (a flex/grid child, a
+  // chart bar sized by a percentage) rather than sit inline. Appended after
+  // the block/inline-flex base so callers can override the display.
+  className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 };
 
@@ -32,7 +38,14 @@ const VIEWPORT_MARGIN = 8;
 // arrow pointer tracks the anchor element so the connection between
 // tooltip and trigger stays unambiguous even when the tooltip slides
 // sideways to stay on-screen.
-export function Tooltip({ title, description, block = false, children }: TooltipProps) {
+export function Tooltip({
+  title,
+  description,
+  block = false,
+  className,
+  style,
+  children,
+}: TooltipProps) {
   const wrapRef = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -120,7 +133,8 @@ export function Tooltip({ title, description, block = false, children }: Tooltip
       onMouseLeave={hide}
       onFocus={show}
       onBlur={hide}
-      className={block ? 'flex w-full' : 'inline-flex'}
+      className={`${block ? 'flex w-full' : 'inline-flex'}${className ? ` ${className}` : ''}`}
+      style={style}
     >
       {children}
       {visible && typeof document !== 'undefined'
