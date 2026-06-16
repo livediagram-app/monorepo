@@ -487,7 +487,7 @@ export function TemplatePicker({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {busy ? <Spinner /> : <SparkleIcon />}
-                {busy ? 'Creating…' : isWelcome ? 'Create Diagram' : 'Apply'}
+                {busy ? 'Creating…' : isWelcome ? 'Create' : 'Apply'}
               </button>
             )}
           </div>
