@@ -5,7 +5,10 @@ import { createPortal } from 'react-dom';
 
 type TooltipProps = {
   title: ReactNode;
-  description: string;
+  // Optional one-line elaboration under the title. Omit it for simple
+  // icon/label tooltips that just name the control (the card then shows
+  // only the bold title).
+  description?: string;
   // When true, the wrapping span renders as a full-width flex container so
   // the tooltip-wrapped child can stretch to fill a grid cell or flex
   // parent. Default (false) keeps the historical `inline-flex` behaviour
@@ -133,9 +136,11 @@ export function Tooltip({ title, description, block = false, children }: Tooltip
               }
             >
               <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{title}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                {description}
-              </p>
+              {description ? (
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  {description}
+                </p>
+              ) : null}
               {layout ? <Arrow placement={layout.placement} offset={layout.arrowOffset} /> : null}
             </div>,
             document.body,

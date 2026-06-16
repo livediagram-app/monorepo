@@ -62,7 +62,6 @@ export function ThemeCard({
           type="button"
           onClick={onCopy}
           aria-label={`Copy ${theme.label} to a new theme`}
-          title="Copy to a new theme"
           className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-slate-600 opacity-0 shadow-sm transition hover:text-brand-600 focus:opacity-100 group-hover:opacity-100 dark:bg-slate-900/85 dark:text-slate-200"
         >
           <CopyGlyph />

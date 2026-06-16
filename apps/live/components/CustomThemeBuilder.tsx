@@ -28,6 +28,7 @@ import { hexish, PATTERNS, PatternButton } from './palette-controls';
 import { ShapeIcon } from './shape-icon';
 import { BackBar } from './ThemeCategoryBrowser';
 import { ThemeSwatch } from './ThemeSwatch';
+import { Tooltip } from './Tooltip';
 
 // The shape kinds offered in the per-shape editor: the flowchart /
 // diagram vocabulary where a per-kind colour is meaningful. Device
@@ -305,71 +306,74 @@ export function CustomThemeBuilder({
         <p className="mb-2 text-[11px] leading-snug text-slate-500 dark:text-slate-300">
           Give a shape kind its own colours (like UML). Leave a kind unset to use the base colours.
         </p>
-        {/* A grid of cards (not one long list) so the row uses the full
-            width; each card shows a large shape preview + its three
-            colour dots. */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Compact two-column rows: a shape preview + name, then its
+            three colour dots (fill / outline / text, tooltip'd). Dense
+            and scannable rather than a wall of big swatch blocks. */}
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {PER_SHAPE_KINDS.map((kind) => {
             const o = def.shapeColors?.[kind];
             const r = resolved(def, kind);
             return (
               <div
                 key={kind}
-                className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800"
+                className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-800"
               >
-                <div className="flex items-center gap-2">
-                  {/* Preview the shape sitting on the THEME background: the
-                      chip backdrop is the theme's background, and only the
-                      shape's interior takes the fill (stroke = currentColor).
-                      The CSS var overrides the icon paths' fill="none". */}
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 [&_svg]:h-6 [&_svg]:w-6 [&_svg_*]:[fill:var(--shape-fill)]"
-                    style={
-                      {
-                        backgroundColor: def.backgroundColor,
-                        color: r.stroke,
-                        '--shape-fill': r.fill,
-                      } as CSSProperties
-                    }
-                  >
-                    <ShapeIcon kind={kind} />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 dark:text-slate-200">
-                    {elementKindLabel({ type: 'shape', shape: kind } as Parameters<
-                      typeof elementKindLabel
-                    >[0])}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => clearShape(kind)}
-                    disabled={!o}
-                    className="text-[10px] font-medium text-slate-400 underline-offset-2 transition hover:text-slate-600 hover:underline disabled:invisible dark:text-slate-500 dark:hover:text-slate-300"
-                  >
-                    reset
-                  </button>
-                </div>
-                <div className="flex items-center justify-around">
-                  <DotField
-                    caption="Fill"
-                    label={`${kind} fill`}
-                    value={r.fill}
-                    onChange={(v) => setShapeColour(kind, 'fill', v)}
-                    painter={painter}
-                  />
-                  <DotField
-                    caption="Line"
-                    label={`${kind} stroke`}
-                    value={r.stroke}
-                    onChange={(v) => setShapeColour(kind, 'stroke', v)}
-                    painter={painter}
-                  />
-                  <DotField
-                    caption="Text"
-                    label={`${kind} text`}
-                    value={r.text}
-                    onChange={(v) => setShapeColour(kind, 'text', v)}
-                    painter={painter}
-                  />
+                {/* Preview the shape on the THEME background; only the
+                    shape's interior takes the fill (stroke = currentColor).
+                    The CSS var overrides the icon paths' fill="none". */}
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 [&_svg]:h-5 [&_svg]:w-5 [&_svg_*]:[fill:var(--shape-fill)]"
+                  style={
+                    {
+                      backgroundColor: def.backgroundColor,
+                      color: r.stroke,
+                      '--shape-fill': r.fill,
+                    } as CSSProperties
+                  }
+                >
+                  <ShapeIcon kind={kind} />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 dark:text-slate-200">
+                  {elementKindLabel({ type: 'shape', shape: kind } as Parameters<
+                    typeof elementKindLabel
+                  >[0])}
+                </span>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Tooltip title="Fill" description="The shape's interior colour.">
+                    <ColorDot
+                      label={`${kind} fill`}
+                      value={r.fill}
+                      onChange={(v) => setShapeColour(kind, 'fill', v)}
+                      painter={painter}
+                    />
+                  </Tooltip>
+                  <Tooltip title="Outline" description="The shape's border colour.">
+                    <ColorDot
+                      label={`${kind} outline`}
+                      value={r.stroke}
+                      onChange={(v) => setShapeColour(kind, 'stroke', v)}
+                      painter={painter}
+                    />
+                  </Tooltip>
+                  <Tooltip title="Text" description="The shape's label colour.">
+                    <ColorDot
+                      label={`${kind} text`}
+                      value={r.text}
+                      onChange={(v) => setShapeColour(kind, 'text', v)}
+                      painter={painter}
+                    />
+                  </Tooltip>
+                  <Tooltip title="Reset" description="Use the base colours for this shape.">
+                    <button
+                      type="button"
+                      onClick={() => clearShape(kind)}
+                      disabled={!o}
+                      aria-label={`Reset ${kind} colours`}
+                      className="flex h-5 w-5 items-center justify-center rounded text-slate-400 opacity-0 transition hover:text-slate-600 group-hover:opacity-100 disabled:!opacity-0 dark:text-slate-500 dark:hover:text-slate-300"
+                    >
+                      <ResetGlyph />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             );
@@ -528,28 +532,22 @@ function ColorDot({
   );
 }
 
-// A per-shape colour dot with a caption beneath (Fill / Line / Text), so
-// the three swatches in a shape card are labelled.
-function DotField({
-  caption,
-  label,
-  value,
-  onChange,
-  painter,
-}: {
-  caption: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  painter: Painter;
-}) {
+function ResetGlyph() {
   return (
-    <span className="flex flex-col items-center gap-1">
-      <ColorDot label={label} value={value} onChange={onChange} painter={painter} />
-      <span className="text-[9px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-        {caption}
-      </span>
-    </span>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 8a5 5 0 1 1 1.5 3.5" />
+      <path d="M3 5.5V8h2.5" />
+    </svg>
   );
 }
 
