@@ -212,7 +212,7 @@ type Pt = { x: number; y: number };
 // quadratic Bezier sampled into short chords (fine enough to place +
 // project a label against). Both the label anchor and the label-drag
 // projection read this so they agree on the same line.
-export function arrowCenterline(
+function arrowCenterline(
   style: ArrowStyle,
   from: Pt,
   to: Pt,

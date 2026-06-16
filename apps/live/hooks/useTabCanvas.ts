@@ -17,6 +17,7 @@ import {
   getTheme,
   resetArrowsToTheme,
   resetThemeElementsToTheme,
+  resolveTheme,
   switchThemeBackdrop,
   switchThemeElements,
   THEMES,
@@ -55,6 +56,10 @@ const patternLabel = (pattern: BackgroundPattern): string =>
 // change the canvas appearance" as a discrete signal. Matches the
 // activity-log debounce in spirit (`scheduleTabMetaLog`).
 const CANVAS_TELEMETRY_DEBOUNCE_MS = 800;
+
+// The default theme a tab reverts to when its custom theme is deleted —
+// the first catalogue entry (brand), matching getTheme's own fallback.
+const DEFAULT_THEME_ID = 'brand';
 
 type TabCanvasDeps = {
   // True when edits are disallowed (read-only role / locked tab). Every
@@ -175,7 +180,25 @@ export function useTabCanvas(deps: TabCanvasDeps) {
     commitTabs((ts) =>
       ts.map((t) => {
         if (t.id !== activeId) return t;
-        const prevTheme = getTheme(t.theme);
+        // When the tab's PREVIOUS theme can't be resolved (a custom theme
+        // that was deleted, spec/44), there's no baseline to diff against:
+        // the elements carry the dead theme's colours, which match neither
+        // the default nor the new theme, so the preserve-customs walk would
+        // treat them all as user overrides and recolour nothing — the tab
+        // reads as "stuck on the deleted theme". Hard-reset to the new
+        // theme instead so picking a theme always visibly applies.
+        const prevTheme = resolveTheme(t.theme);
+        if (!prevTheme) {
+          return {
+            ...t,
+            elements: resetThemeElementsToTheme(t.elements, theme),
+            theme: id,
+            backgroundColor: theme.backgroundColor,
+            backgroundPattern: theme.backgroundPattern,
+            patternColor: theme.patternColor,
+            backgroundOpacity: theme.backgroundOpacity,
+          };
+        }
         // Per-field, preserve-customs walk. See `switchThemeElement`
         // in lib/themes.ts for the rule (a field is replaced when
         // it's unset or still matches the previous theme's value,
@@ -201,6 +224,31 @@ export function useTabCanvas(deps: TabCanvasDeps) {
           ...backdrop,
         };
       }),
+    );
+  };
+
+  // Called when a custom theme (spec/44) is deleted: every tab in THIS
+  // diagram still pointing at the now-dead `custom:<uuid>` id falls back
+  // to the default theme — backdrop AND element colours — so the deletion
+  // is visible immediately instead of stranding the old colours on a dead
+  // id. A hard reset (not preserve-customs): the deleted theme is gone, so
+  // there's no baseline left to tell user overrides from theme colours.
+  const resetTabsUsingTheme = (deletedId: string) => {
+    const fallback = getTheme(DEFAULT_THEME_ID);
+    commitTabs((ts) =>
+      ts.map((t) =>
+        t.theme === deletedId
+          ? {
+              ...t,
+              theme: DEFAULT_THEME_ID,
+              elements: resetThemeElementsToTheme(t.elements, fallback),
+              backgroundColor: fallback.backgroundColor,
+              backgroundPattern: fallback.backgroundPattern,
+              patternColor: fallback.patternColor,
+              backgroundOpacity: fallback.backgroundOpacity,
+            }
+          : t,
+      ),
     );
   };
 
@@ -261,6 +309,7 @@ export function useTabCanvas(deps: TabCanvasDeps) {
     setTabDefaultTextSize,
     setBackgroundPattern,
     setTheme,
+    resetTabsUsingTheme,
     resetElementsToTheme,
     setBackgroundColor,
     setBackgroundOpacity,

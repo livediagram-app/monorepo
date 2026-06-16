@@ -625,18 +625,30 @@ export function themeCategory(id: ThemeId): ThemeCategory {
   return THEME_CATEGORY[id];
 }
 
+// Resolve an id to its real ThemeDefinition, or `undefined` when the id
+// names nothing we know — a deleted custom theme (spec/44), or a custom
+// id whose owner fetch hasn't landed yet. Callers that need to render
+// something always (getTheme) fall back to the default; callers that
+// must DISTINGUISH "unknown" from "the default theme" (setTheme's
+// preserve-customs diff) use this and branch on undefined. Without that
+// distinction, switching away from a deleted theme would diff every
+// element against the default's colours, mistake the dead theme's
+// colours for user overrides, and silently change nothing.
+export function resolveTheme(id: string | undefined): ThemeDefinition | undefined {
+  if (id) {
+    const custom = lookupCustomTheme(id);
+    if (custom) return custom;
+  }
+  return THEMES.find((t) => t.id === id);
+}
+
 export function getTheme(id: string | undefined): ThemeDefinition {
   // Custom themes (spec/44) win: the editor registers the owner's saved
   // themes into the module registry, so a `custom:<uuid>` id resolves
   // here synchronously like any built-in. Falls through to the catalogue
   // (and ultimately the default) when the id isn't a registered custom
   // theme — including a deleted one, so a diagram never breaks.
-  if (id) {
-    const custom = lookupCustomTheme(id);
-    if (custom) return custom;
-  }
-  const found = THEMES.find((t) => t.id === id);
-  return found ?? THEMES[0]!;
+  return resolveTheme(id) ?? THEMES[0]!;
 }
 
 // Which element-colour fields each element type writes from a theme.
