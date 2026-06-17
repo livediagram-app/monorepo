@@ -212,14 +212,27 @@ export const TEMPLATES: TemplateDescriptor[] = [
 // mapping lives beside the catalogue (mirroring TEMPLATE_PATTERNS) so a
 // new template slots into a section with a one-line edit; the picker
 // renders sections in TEMPLATE_CATEGORIES order and skips empties.
-export type TemplateCategory = 'general' | 'planning' | 'strategy' | 'design' | 'technical';
+export type TemplateCategory =
+  | 'general'
+  | 'planning'
+  | 'project-management'
+  | 'strategy'
+  | 'design'
+  | 'technical';
 
 export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; description: string }[] = [
   { id: 'general', label: 'Diagrams', description: 'Flowcharts, mind maps, org charts and more.' },
   {
+    // id stays 'planning' (saved nothing references it; label is the
+    // user-facing name) — Agile artefacts: boards, retros, prioritisation.
     id: 'planning',
-    label: 'Planning',
-    description: 'Boards, schedules and roadmaps for delivery.',
+    label: 'Agile',
+    description: 'Boards, retros and prioritisation.',
+  },
+  {
+    id: 'project-management',
+    label: 'Project Management',
+    description: 'Schedules and roadmaps over time.',
   },
   {
     id: 'strategy',
@@ -244,12 +257,13 @@ const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
   venn: 'general',
   fishbone: 'general',
   pyramid: 'general',
-  // Planning: agile boards, project schedules + roadmaps, prioritisation.
+  // Planning: agile boards, retrospectives, prioritisation.
   kanban: 'planning',
-  gantt: 'planning',
-  timeline: 'planning',
   retrospective: 'planning',
   'prioritization-matrix': 'planning',
+  // Project Management: time-ordered schedules + roadmaps.
+  gantt: 'project-management',
+  timeline: 'project-management',
   // Strategy: business / product analysis + decision frameworks.
   swot: 'strategy',
   flywheel: 'strategy',
