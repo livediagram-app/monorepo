@@ -294,6 +294,219 @@ export function TemplatePreview({ kind }: { kind: TemplateKind }) {
           ))}
         </svg>
       );
+    case 'swimlane':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          {[3, 19, 35].map((y) => (
+            <rect
+              key={y}
+              x="2"
+              y={y}
+              width="76"
+              height="13"
+              rx="1"
+              fill="none"
+              stroke="rgb(148 163 184)"
+              strokeWidth="0.8"
+            />
+          ))}
+          <rect
+            x="8"
+            y="5.5"
+            width="15"
+            height="8"
+            rx="1.5"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="33"
+            y="21.5"
+            width="15"
+            height="8"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="58"
+            y="37.5"
+            width="15"
+            height="8"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <line
+            x1="15.5"
+            y1="13.5"
+            x2="40.5"
+            y2="21.5"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.8"
+          />
+          <line x1="48" y1="25.5" x2="65.5" y2="37.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+        </svg>
+      );
+    case 'decision-tree':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          <polygon
+            points="40,3 48,11 40,19 32,11"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          <rect
+            x="8"
+            y="22"
+            width="18"
+            height="9"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          <polygon
+            points="58,21 66,28 58,35 50,28"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          <rect
+            x="44"
+            y="40"
+            width="16"
+            height="8"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="64"
+            y="40"
+            width="14"
+            height="8"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <line x1="34" y1="14" x2="17" y2="22" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="46" y1="14" x2="56" y2="21" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="54" y1="33" x2="52" y2="40" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="62" y1="33" x2="69" y2="40" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+        </svg>
+      );
+    case 'approval-workflow':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          <rect
+            x="3"
+            y="14"
+            width="16"
+            height="9"
+            rx="4.5"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="25"
+            y="14"
+            width="16"
+            height="9"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <polygon
+            points="55,13 63,18.5 55,24 47,18.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="66"
+            y="14"
+            width="12"
+            height="9"
+            rx="4.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <line x1="19" y1="18.5" x2="25" y2="18.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="41" y1="18.5" x2="47" y2="18.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="63" y1="18.5" x2="66" y2="18.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <path
+            d="M55 24 C55 38 11 38 11 23"
+            fill="none"
+            stroke="rgb(100 116 139)"
+            strokeWidth="0.8"
+            strokeDasharray="2 1.5"
+          />
+        </svg>
+      );
+    case 'data-flow':
+      return (
+        <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>
+          <rect
+            x="3"
+            y="14"
+            width="16"
+            height="11"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <circle
+            cx="38"
+            cy="19.5"
+            r="8"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1"
+          />
+          <rect
+            x="60"
+            y="13"
+            width="16"
+            height="13"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <ellipse
+            cx="68"
+            cy="13"
+            rx="8"
+            ry="2.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <rect
+            x="30"
+            y="38"
+            width="16"
+            height="9"
+            rx="1.5"
+            fill="none"
+            stroke="rgb(14 165 233)"
+            strokeWidth="0.9"
+          />
+          <line x1="19" y1="19.5" x2="30" y2="19.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="46" y1="19.5" x2="60" y2="19.5" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+          <line x1="38" y1="27.5" x2="38" y2="38" stroke="rgb(100 116 139)" strokeWidth="0.8" />
+        </svg>
+      );
     case 'kanban':
       return (
         <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>

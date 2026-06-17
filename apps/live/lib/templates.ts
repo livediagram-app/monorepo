@@ -10,6 +10,12 @@ export type TemplateKind =
   | 'orgchart'
   | 'retrospective'
   | 'flowchart'
+  // Flowchart variants (spec/09): cross-functional lanes, branching decision
+  // tree, an approval loop, and a data-flow diagram. Grouped under Flowcharts.
+  | 'swimlane'
+  | 'decision-tree'
+  | 'approval-workflow'
+  | 'data-flow'
   | 'kanban'
   | 'swot'
   | 'timeline'
@@ -99,6 +105,30 @@ export const TEMPLATES: TemplateDescriptor[] = [
     kind: 'flowchart',
     title: 'Flowchart',
     description: 'Start → step → decision → end, with a branching path.',
+  },
+  {
+    kind: 'swimlane',
+    title: 'Swimlane flowchart',
+    description: 'A cross-functional process split across role lanes.',
+    extra: true,
+  },
+  {
+    kind: 'decision-tree',
+    title: 'Decision tree',
+    description: 'A question branching yes / no into cascading outcomes.',
+    extra: true,
+  },
+  {
+    kind: 'approval-workflow',
+    title: 'Approval workflow',
+    description: 'Submit → review → approve, with a reject loop back.',
+    extra: true,
+  },
+  {
+    kind: 'data-flow',
+    title: 'Data flow diagram',
+    description: 'Entities, processes and data stores wired by data flows.',
+    extra: true,
   },
   {
     kind: 'kanban',
@@ -292,6 +322,10 @@ const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
   // a separate quick-pick in the picker, never inside a category grid).
   blank: 'flowcharts',
   flowchart: 'flowcharts',
+  swimlane: 'flowcharts',
+  'decision-tree': 'flowcharts',
+  'approval-workflow': 'flowcharts',
+  'data-flow': 'flowcharts',
   // Hierarchies: top-down structure + cause-effect.
   orgchart: 'hierarchies',
   pyramid: 'hierarchies',
@@ -343,6 +377,10 @@ export function templateCategory(kind: TemplateKind): TemplateCategory {
 // Templates not listed here fall through to the theme's pattern.
 const TEMPLATE_PATTERNS: Partial<Record<TemplateKind, BackgroundPattern>> = {
   flowchart: 'graph',
+  swimlane: 'graph',
+  'decision-tree': 'graph',
+  'approval-workflow': 'graph',
+  'data-flow': 'graph',
   orgchart: 'graph',
   swot: 'graph',
   gantt: 'graph',

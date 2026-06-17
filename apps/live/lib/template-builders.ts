@@ -19,6 +19,7 @@ import {
   createText,
   type Anchor,
   type Element,
+  type ShapeKind,
   type Tab,
 } from '@livediagram/diagram';
 import { getTheme, recolourElementsForTheme } from './themes';
@@ -90,6 +91,14 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildRetrospective(cx, cy);
     case 'flowchart':
       return buildFlowchart(cx, cy);
+    case 'swimlane':
+      return buildSwimlane(cx, cy);
+    case 'decision-tree':
+      return buildDecisionTree(cx, cy);
+    case 'approval-workflow':
+      return buildApprovalWorkflow(cx, cy);
+    case 'data-flow':
+      return buildDataFlow(cx, cy);
     case 'kanban':
       return buildKanban(cx, cy);
     case 'swot':
@@ -233,6 +242,179 @@ function buildBubbleMap(cx: number, cy: number): Element[] {
     };
   });
   return [...arrows, center, ...bubbles];
+}
+
+// Swimlane flowchart (spec/09): the same process flowing across role lanes.
+// Lanes are frame containers (they paint behind their contents via framesFirst)
+// with a left-aligned role label; steps sit in their lane and the arrows cross
+// between lanes to show hand-offs.
+function buildSwimlane(cx: number, cy: number): Element[] {
+  const roles = ['Customer', 'Sales', 'Warehouse'];
+  const laneW = 820;
+  const laneH = 150;
+  const left = cx - laneW / 2;
+  const top0 = cy - (roles.length * laneH) / 2;
+  const lanes = roles.map((role, i) => ({
+    ...createShape('frame', left, top0 + i * laneH),
+    width: laneW,
+    height: laneH,
+    label: role,
+    textAlignX: 'left' as const,
+    textAlignY: 'middle' as const,
+    padding: 'md' as const,
+  }));
+  const stepW = 130;
+  const stepH = 56;
+  const colX = (col: number) => left + 120 + col * 200;
+  const laneCY = (i: number) => top0 + i * laneH + laneH / 2;
+  const box = (label: string, col: number, lane: number, kind: ShapeKind = 'square') => ({
+    ...createShape(kind, colX(col) - stepW / 2, laneCY(lane) - stepH / 2),
+    width: stepW,
+    height: stepH,
+    label,
+  });
+  const order = box('Place order', 0, 0);
+  const review = box('Review', 1, 1);
+  const approve = {
+    ...createShape('diamond', colX(2) - 60, laneCY(1) - 42),
+    width: 120,
+    height: 84,
+    label: 'Approve?',
+  };
+  const ship = box('Ship', 3, 2);
+  const arrows = [
+    { ...createPinnedArrow(order.id, 's', review.id, 'n') },
+    { ...createPinnedArrow(review.id, 'e', approve.id, 'w') },
+    { ...createPinnedArrow(approve.id, 's', ship.id, 'n'), label: 'Yes' },
+  ];
+  return [...lanes, ...arrows, order, review, approve, ship];
+}
+
+// Decision tree (spec/09): a root question that branches yes / no, with one
+// branch posing a further question — outcomes cascade downward.
+function buildDecisionTree(cx: number, cy: number): Element[] {
+  const dW = 130;
+  const dH = 84;
+  const bW = 130;
+  const bH = 56;
+  const top = cy - 190;
+  const root = {
+    ...createShape('diamond', cx - dW / 2, top),
+    width: dW,
+    height: dH,
+    label: 'Start?',
+  };
+  const a = {
+    ...createShape('square', cx - 240 - bW / 2, top + 150),
+    width: bW,
+    height: bH,
+    label: 'Option A',
+  };
+  const elseD = {
+    ...createShape('diamond', cx + 110 - dW / 2, top + 150 - (dH - bH) / 2),
+    width: dW,
+    height: dH,
+    label: 'Else?',
+  };
+  const b = {
+    ...createShape('square', cx + 30 - bW / 2, top + 320),
+    width: bW,
+    height: bH,
+    label: 'Option B',
+  };
+  const c = {
+    ...createShape('square', cx + 240 - bW / 2, top + 320),
+    width: bW,
+    height: bH,
+    label: 'Option C',
+  };
+  const arrows = [
+    { ...createPinnedArrow(root.id, 'sw', a.id, 'n'), label: 'Yes' },
+    { ...createPinnedArrow(root.id, 'se', elseD.id, 'n'), label: 'No' },
+    { ...createPinnedArrow(elseD.id, 'sw', b.id, 'n'), label: 'Yes' },
+    { ...createPinnedArrow(elseD.id, 'se', c.id, 'n'), label: 'No' },
+  ];
+  return [...arrows, root, a, elseD, b, c];
+}
+
+// Approval workflow (spec/09): Submit → Review → Approve?, branching to Done on
+// yes and looping back to Submit on reject (a curved feedback edge below).
+function buildApprovalWorkflow(cx: number, cy: number): Element[] {
+  const w = 130;
+  const h = 56;
+  const gap = 190;
+  const x0 = cx - 1.5 * gap;
+  const submit = {
+    ...createShape('stadium', x0 - w / 2, cy - h / 2),
+    width: w,
+    height: h,
+    label: 'Submit',
+  };
+  const review = {
+    ...createShape('square', x0 + gap - w / 2, cy - h / 2),
+    width: w,
+    height: h,
+    label: 'Review',
+  };
+  const approve = {
+    ...createShape('diamond', x0 + 2 * gap - 65, cy - 42),
+    width: 130,
+    height: 84,
+    label: 'Approved?',
+  };
+  const done = {
+    ...createShape('stadium', x0 + 3 * gap - w / 2, cy - h / 2),
+    width: w,
+    height: h,
+    label: 'Done',
+  };
+  const arrows = [
+    { ...createPinnedArrow(submit.id, 'e', review.id, 'w') },
+    { ...createPinnedArrow(review.id, 'e', approve.id, 'w') },
+    { ...createPinnedArrow(approve.id, 'e', done.id, 'w'), label: 'Yes' },
+    {
+      ...createPinnedArrow(approve.id, 's', submit.id, 's'),
+      label: 'Reject',
+      arrowStyle: 'curved' as const,
+      curveOffset: { dx: 0, dy: 90 },
+    },
+  ];
+  return [...arrows, submit, review, approve, done];
+}
+
+// Data flow diagram (spec/09): an external entity, a process (circle), a data
+// store (cylinder) and an output, wired by labelled data flows.
+function buildDataFlow(cx: number, cy: number): Element[] {
+  const entity = {
+    ...createShape('square', cx - 330, cy - 35),
+    width: 120,
+    height: 70,
+    label: 'Customer',
+  };
+  const process = {
+    ...createShape('circle', cx - 60, cy - 60),
+    width: 120,
+    height: 120,
+    label: 'Process order',
+  };
+  const store = {
+    ...createShape('cylinder', cx + 180, cy - 70),
+    width: 120,
+    height: 130,
+    label: 'Orders',
+  };
+  const output = {
+    ...createShape('square', cx - 120, cy + 160),
+    width: 120,
+    height: 70,
+    label: 'Invoice',
+  };
+  const arrows = [
+    { ...createPinnedArrow(entity.id, 'e', process.id, 'w'), label: 'Order' },
+    { ...createPinnedArrow(process.id, 'e', store.id, 'w'), label: 'Save' },
+    { ...createPinnedArrow(process.id, 's', output.id, 'n'), label: 'Invoice' },
+  ];
+  return [...arrows, entity, process, store, output];
 }
 
 function buildMindMap(cx: number, cy: number): Element[] {

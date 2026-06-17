@@ -35,6 +35,10 @@ describe('TEMPLATES catalogue', () => {
     'orgchart',
     'retrospective',
     'flowchart',
+    'swimlane',
+    'decision-tree',
+    'approval-workflow',
+    'data-flow',
     'kanban',
     'swot',
     'timeline',
@@ -56,15 +60,15 @@ describe('TEMPLATES catalogue', () => {
     'prioritization-matrix',
   ];
 
-  it('lists exactly 26 templates (10 default + 16 extra, matches spec/16 and spec/09)', () => {
-    expect(TEMPLATES).toHaveLength(26);
+  it('lists exactly 30 templates (10 default + 20 extra, matches spec/16 and spec/09)', () => {
+    expect(TEMPLATES).toHaveLength(30);
   });
 
-  it('splits cleanly into 10 default + 16 extra (the picker uses `extra` to gate behind "Show more")', () => {
+  it('splits cleanly into 10 default + 20 extra (the picker uses `extra` to gate behind "Show more")', () => {
     const defaults = TEMPLATES.filter((t) => !t.extra);
     const extras = TEMPLATES.filter((t) => t.extra);
     expect(defaults).toHaveLength(10);
-    expect(extras).toHaveLength(16);
+    expect(extras).toHaveLength(20);
   });
 
   it('has no duplicate kinds (guards against accidental copy-paste in the catalogue)', () => {
