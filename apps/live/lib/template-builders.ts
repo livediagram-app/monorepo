@@ -814,10 +814,13 @@ function buildVenn(cx: number, cy: number): Element[] {
   // pairwise overlap is meaningful but the three-way intersection
   // stays a recognisable lens.
   const offset = radius * 0.6;
+  // The classic design-thinking lenses: an idea worth building sits where
+  // Desirable (people want it), Feasible (we can build it), and Viable (it
+  // sustains a business) overlap. Concrete, recognisable, and easy to retheme.
   const centers = [
-    { x: cx, y: cy - offset, label: 'Set A', tx: 0, ty: -radius - 60 },
-    { x: cx - offset * 0.95, y: cy + offset * 0.55, label: 'Set B', tx: -radius - 120, ty: 0 },
-    { x: cx + offset * 0.95, y: cy + offset * 0.55, label: 'Set C', tx: radius + 120, ty: 0 },
+    { x: cx, y: cy - offset, label: 'Desirable', tx: 0, ty: -radius - 60 },
+    { x: cx - offset * 0.95, y: cy + offset * 0.55, label: 'Feasible', tx: -radius - 120, ty: 0 },
+    { x: cx + offset * 0.95, y: cy + offset * 0.55, label: 'Viable', tx: radius + 120, ty: 0 },
   ];
   const labelW = 320;
   const labelH = 80;
@@ -847,7 +850,7 @@ function buildVenn(cx: number, cy: number): Element[] {
     ...createText(centroidX - 160, centroidY - 40),
     width: 320,
     height: 80,
-    label: 'All',
+    label: 'Sweet spot',
     textSize: 'lg',
     textAlignX: 'center',
   });
@@ -923,12 +926,14 @@ function buildFishbone(cx: number, cy: number): Element[] {
   const spineRight = cx + spineLength / 2;
   const elements: Element[] = [];
 
-  // Effect card at the head of the spine.
+  // Effect card at the head of the spine. A concrete problem statement
+  // (rather than the literal word "Effect") shows what the four cause
+  // categories are meant to explain; users swap it for their own.
   elements.push({
     ...createShape('square', spineRight, cy - effectH / 2),
     width: effectW,
     height: effectH,
-    label: 'Effect',
+    label: 'Late delivery',
     textSize: 'md',
   });
 
