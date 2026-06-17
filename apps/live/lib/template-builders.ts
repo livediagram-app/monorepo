@@ -11,6 +11,7 @@
 // template is self-describing. See spec/09 for the picker UX.
 
 import {
+  bestAnchorTowards,
   createArrow,
   createPinnedArrow,
   createShape,
@@ -79,6 +80,10 @@ export function buildTemplate(kind: TemplateKind, cx: number, cy: number): Eleme
       return buildBlank(cx, cy);
     case 'mindmap':
       return buildMindMap(cx, cy);
+    case 'mindmap-tree':
+      return buildMindMapTree(cx, cy);
+    case 'mindmap-bubble':
+      return buildBubbleMap(cx, cy);
     case 'orgchart':
       return buildOrgChart(cx, cy);
     case 'retrospective':
@@ -140,6 +145,94 @@ function buildBlank(cx: number, cy: number): Element[] {
       textSize: 'md' as const,
     },
   ];
+}
+
+// Tree mind map (spec/09): a left-to-right hierarchy — root, a vertical stack
+// of branches, and one leaf per branch — connected by plain lines. Distinct
+// from the radial 'mindmap' for users who think in outlines.
+function buildMindMapTree(cx: number, cy: number): Element[] {
+  const rootW = 170;
+  const rootH = 72;
+  const branchW = 160;
+  const branchH = 56;
+  const leafW = 140;
+  const leafH = 46;
+  const rootX = cx - 360;
+  const branchX = cx - 110;
+  const leafX = cx + 150;
+  const root = {
+    ...createShape('square', rootX, cy - rootH / 2),
+    width: rootW,
+    height: rootH,
+    label: 'Main idea',
+    textSize: 'lg' as const,
+    borderRadius: 'lg' as const,
+  };
+  const branchLabels = ['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4'];
+  const leafLabels = ['Detail 1', 'Detail 2', 'Detail 3', 'Detail 4'];
+  const branchYs = branchLabels.map((_, i) => cy + (i - (branchLabels.length - 1) / 2) * 110);
+  const branches = branchLabels.map((label, i) => ({
+    ...createShape('square', branchX, branchYs[i]! - branchH / 2),
+    width: branchW,
+    height: branchH,
+    label,
+    borderRadius: 'md' as const,
+  }));
+  const leaves = leafLabels.map((label, i) => ({
+    ...createShape('square', leafX, branchYs[i]! - leafH / 2),
+    width: leafW,
+    height: leafH,
+    label,
+    borderRadius: 'md' as const,
+  }));
+  const arrows: Element[] = [];
+  branches.forEach((b, i) => {
+    arrows.push({ ...createPinnedArrow(root.id, 'e', b.id, 'w'), arrowEnds: 'none' as const });
+    arrows.push({
+      ...createPinnedArrow(b.id, 'e', leaves[i]!.id, 'w'),
+      arrowEnds: 'none' as const,
+    });
+  });
+  return [...arrows, root, ...branches, ...leaves];
+}
+
+// Bubble map (spec/09): a central topic ringed by descriptive bubbles, joined
+// by plain lines. A flatter alternative to the radial mind map (no
+// sub-branches). Anchors face inward via bestAnchorTowards so the spokes are
+// tidy at every angle.
+function buildBubbleMap(cx: number, cy: number): Element[] {
+  const centerSize = 150;
+  const bubbleSize = 100;
+  const radius = 250;
+  const center = {
+    ...createShape('circle', cx - centerSize / 2, cy - centerSize / 2),
+    width: centerSize,
+    height: centerSize,
+    label: 'Topic',
+    textSize: 'lg' as const,
+  };
+  const labels = ['Idea', 'Detail', 'Aspect', 'Trait', 'Feature', 'Note'];
+  const n = labels.length;
+  const bubbles = labels.map((label, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const bx = cx + Math.cos(angle) * radius - bubbleSize / 2;
+    const by = cy + Math.sin(angle) * radius - bubbleSize / 2;
+    return { ...createShape('circle', bx, by), width: bubbleSize, height: bubbleSize, label };
+  });
+  const centrePoint = { x: cx, y: cy };
+  const arrows = bubbles.map((b) => {
+    const bubbleCentre = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    return {
+      ...createPinnedArrow(
+        center.id,
+        bestAnchorTowards(center, bubbleCentre),
+        b.id,
+        bestAnchorTowards(b, centrePoint),
+      ),
+      arrowEnds: 'none' as const,
+    };
+  });
+  return [...arrows, center, ...bubbles];
 }
 
 function buildMindMap(cx: number, cy: number): Element[] {

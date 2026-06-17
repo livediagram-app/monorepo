@@ -3,6 +3,10 @@ import type { BackgroundPattern, Tab } from '@livediagram/diagram';
 export type TemplateKind =
   | 'blank'
   | 'mindmap'
+  // Mind-map variants (spec/09): the radial 'mindmap' plus a left-to-right
+  // tree and a central bubble map, grouped under the Mind maps category.
+  | 'mindmap-tree'
+  | 'mindmap-bubble'
   | 'orgchart'
   | 'retrospective'
   | 'flowchart'
@@ -69,7 +73,17 @@ export const TEMPLATES: TemplateDescriptor[] = [
   {
     kind: 'mindmap',
     title: 'Mind map',
-    description: 'A central idea with branching topics around it.',
+    description: 'A central idea with branching topics radiating around it.',
+  },
+  {
+    kind: 'mindmap-tree',
+    title: 'Tree mind map',
+    description: 'A left-to-right hierarchy: root, branches and their sub-topics.',
+  },
+  {
+    kind: 'mindmap-bubble',
+    title: 'Bubble map',
+    description: 'A central topic ringed by descriptive bubbles.',
   },
   {
     kind: 'orgchart',
@@ -186,9 +200,9 @@ export const TEMPLATES: TemplateDescriptor[] = [
   },
   {
     kind: 'er-diagram',
-    title: 'ER diagram',
+    title: 'Database schema',
     description:
-      'Four entity tables (Users / Orders / Products / OrderItems) wired by relationships.',
+      'Entity-relationship (ER) diagram: four tables (Users / Orders / Products / OrderItems) wired by relationships.',
     extra: true,
   },
   {
@@ -213,50 +227,75 @@ export const TEMPLATES: TemplateDescriptor[] = [
 // new template slots into a section with a one-line edit; the picker
 // renders sections in TEMPLATE_CATEGORIES order and skips empties.
 export type TemplateCategory =
-  | 'general'
+  | 'mindmaps'
+  | 'flowcharts'
+  | 'hierarchies'
   | 'planning'
   | 'project-management'
   | 'strategy'
   | 'design'
   | 'technical';
 
+// Category descriptions are kept to a similar length (~40-46 chars) so the
+// overview cards read as a tidy, even set rather than ragged.
 export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; description: string }[] = [
-  { id: 'general', label: 'Diagrams', description: 'Flowcharts, mind maps, org charts and more.' },
   {
-    // id stays 'planning' (saved nothing references it; label is the
+    id: 'mindmaps',
+    label: 'Mind maps',
+    description: 'Radial, tree and bubble brainstorming maps.',
+  },
+  {
+    id: 'flowcharts',
+    label: 'Flowcharts',
+    description: 'Step-by-step process and decision flows.',
+  },
+  {
+    id: 'hierarchies',
+    label: 'Hierarchies',
+    description: 'Org charts, pyramids and cause-effect maps.',
+  },
+  {
+    // id stays 'planning' (nothing saved references it; label is the
     // user-facing name) — Agile artefacts: boards, retros, prioritisation.
     id: 'planning',
     label: 'Agile',
-    description: 'Boards, retros and prioritisation.',
+    description: 'Boards, retrospectives and prioritisation.',
   },
   {
     id: 'project-management',
     label: 'Project Management',
-    description: 'Schedules and roadmaps over time.',
+    description: 'Timelines, Gantt charts and roadmaps.',
   },
   {
     id: 'strategy',
     label: 'Strategy',
-    description: 'Frameworks for analysis and decisions.',
+    description: 'Analysis frameworks, decisions and Venn sets.',
   },
-  { id: 'design', label: 'Design', description: 'Wireframes, slides and visual mock-ups.' },
+  {
+    id: 'design',
+    label: 'Design',
+    description: 'Wireframes, slide decks and visual mock-ups.',
+  },
   {
     id: 'technical',
     label: 'Technical',
-    description: 'Architecture, ER and sequence diagrams.',
+    description: 'Architecture, schema and sequence diagrams.',
   },
 ];
 
 const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
-  // General-purpose diagrams: the everyday shapes-and-arrows starters
-  // (structure + relationships, no specific domain).
-  blank: 'general',
-  mindmap: 'general',
-  orgchart: 'general',
-  flowchart: 'general',
-  venn: 'general',
-  fishbone: 'general',
-  pyramid: 'general',
+  // Mind maps: radial / tree / bubble brainstorming layouts.
+  mindmap: 'mindmaps',
+  'mindmap-tree': 'mindmaps',
+  'mindmap-bubble': 'mindmaps',
+  // Flowcharts: process + decision flows. Blank lives here too (it's shown as
+  // a separate quick-pick in the picker, never inside a category grid).
+  blank: 'flowcharts',
+  flowchart: 'flowcharts',
+  // Hierarchies: top-down structure + cause-effect.
+  orgchart: 'hierarchies',
+  pyramid: 'hierarchies',
+  fishbone: 'hierarchies',
   // Planning: agile boards, retrospectives, prioritisation.
   kanban: 'planning',
   retrospective: 'planning',
@@ -264,11 +303,13 @@ const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
   // Project Management: time-ordered schedules + roadmaps.
   gantt: 'project-management',
   timeline: 'project-management',
-  // Strategy: business / product analysis + decision frameworks.
+  // Strategy: business / product analysis, decision frameworks + set
+  // relationships (Venn).
   swot: 'strategy',
   flywheel: 'strategy',
   journey: 'strategy',
   'comparison-table': 'strategy',
+  venn: 'strategy',
   // Design: wireframes, slides + visual mock-ups.
   'mobile-wireframe': 'design',
   'laptop-wireframe': 'design',
@@ -319,6 +360,10 @@ const TEMPLATE_PATTERNS: Partial<Record<TemplateKind, BackgroundPattern>> = {
   fishbone: 'grid',
   'live-card': 'grid',
   mindmap: 'grid',
+  // Tree map rides the dot grid like the radial map; the bubble map is a
+  // clean radial layout, so it gets a blank canvas like Venn / pyramid.
+  'mindmap-tree': 'grid',
+  'mindmap-bubble': 'blank',
   // Technical diagrams are alignment-heavy (boxes + tables snap to a
   // grid), so they ride graph paper like the flow / org / SWOT scaffolds.
   'system-architecture': 'graph',
@@ -336,7 +381,12 @@ export function templateCanvasOverrides(kind: TemplateKind): Partial<Tab> {
   const overrides: Partial<Tab> = {};
   const pattern = TEMPLATE_PATTERNS[kind];
   if (pattern) overrides.backgroundPattern = pattern;
-  if (kind === 'mindmap' || kind === 'journey' || kind === 'prioritization-matrix')
+  if (
+    kind === 'mindmap' ||
+    kind === 'mindmap-tree' ||
+    kind === 'journey' ||
+    kind === 'prioritization-matrix'
+  )
     overrides.backgroundOpacity = 0.8;
   return overrides;
 }

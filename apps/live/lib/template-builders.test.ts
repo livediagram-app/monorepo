@@ -28,6 +28,8 @@ import { isTechIconId } from './tech-icons';
 const ALL_KINDS = [
   'blank',
   'mindmap',
+  'mindmap-tree',
+  'mindmap-bubble',
   'orgchart',
   'retrospective',
   'flowchart',

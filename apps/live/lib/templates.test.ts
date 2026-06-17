@@ -30,6 +30,8 @@ describe('TEMPLATES catalogue', () => {
   const ALL_KINDS: TemplateKind[] = [
     'blank',
     'mindmap',
+    'mindmap-tree',
+    'mindmap-bubble',
     'orgchart',
     'retrospective',
     'flowchart',
@@ -54,14 +56,14 @@ describe('TEMPLATES catalogue', () => {
     'prioritization-matrix',
   ];
 
-  it('lists exactly 24 templates (8 default + 16 extra, matches spec/16 and spec/09)', () => {
-    expect(TEMPLATES).toHaveLength(24);
+  it('lists exactly 26 templates (10 default + 16 extra, matches spec/16 and spec/09)', () => {
+    expect(TEMPLATES).toHaveLength(26);
   });
 
-  it('splits cleanly into 8 default + 16 extra (the picker uses `extra` to gate behind "Show more")', () => {
+  it('splits cleanly into 10 default + 16 extra (the picker uses `extra` to gate behind "Show more")', () => {
     const defaults = TEMPLATES.filter((t) => !t.extra);
     const extras = TEMPLATES.filter((t) => t.extra);
-    expect(defaults).toHaveLength(8);
+    expect(defaults).toHaveLength(10);
     expect(extras).toHaveLength(16);
   });
 

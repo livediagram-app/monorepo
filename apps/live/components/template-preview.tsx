@@ -45,6 +45,71 @@ export function TemplatePreview({ kind }: { kind: TemplateKind }) {
           <line x1="40" y1="34" x2="40" y2="39" stroke="rgb(100 116 139)" strokeWidth="1" />
         </svg>
       );
+    case 'mindmap-tree':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* Root on the left, three branches stacked on the right. */}
+          <rect
+            x="6"
+            y="19"
+            width="16"
+            height="12"
+            rx="2"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1.25"
+          />
+          {[8, 25, 42].map((y) => (
+            <g key={y}>
+              <line x1="22" y1="25" x2="40" y2={y + 4} stroke="rgb(100 116 139)" strokeWidth="1" />
+              <rect
+                x="40"
+                y={y}
+                width="18"
+                height="9"
+                rx="2"
+                fill="none"
+                stroke="rgb(14 165 233)"
+                strokeWidth="1.25"
+              />
+            </g>
+          ))}
+        </svg>
+      );
+    case 'mindmap-bubble':
+      return (
+        <svg width="70" height="44" viewBox="0 0 80 50" aria-hidden>
+          {/* Central topic ringed by bubbles. */}
+          {[
+            [40, 6],
+            [64, 16],
+            [64, 34],
+            [40, 44],
+            [16, 34],
+            [16, 16],
+          ].map(([bx, by]) => (
+            <g key={`${bx}-${by}`}>
+              <line x1="40" y1="25" x2={bx} y2={by} stroke="rgb(100 116 139)" strokeWidth="0.9" />
+              <circle
+                cx={bx}
+                cy={by}
+                r="4.5"
+                fill="none"
+                stroke="rgb(14 165 233)"
+                strokeWidth="1.25"
+              />
+            </g>
+          ))}
+          <circle
+            cx="40"
+            cy="25"
+            r="9"
+            fill="rgb(186 230 253)"
+            stroke="rgb(14 165 233)"
+            strokeWidth="1.25"
+          />
+        </svg>
+      );
     case 'orgchart':
       return (
         <svg width="80" height="50" viewBox="0 0 80 50" aria-hidden>

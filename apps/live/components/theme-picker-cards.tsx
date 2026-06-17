@@ -304,12 +304,14 @@ export function ThemeCategoryCard({
           );
         })}
       </div>
-      <div className="min-w-0">
+      <div className="w-full min-w-0">
         <div className="flex items-center justify-between gap-1">
           <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
             {label}
           </p>
-          <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-300">
+          {/* Count badge, pinned far right (w-full row + justify-between) so it
+              sits in the same spot on every card regardless of label length. */}
+          <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-slate-500 dark:bg-slate-700 dark:text-slate-300">
             {count}
           </span>
         </div>

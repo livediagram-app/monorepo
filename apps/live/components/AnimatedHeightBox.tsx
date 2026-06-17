@@ -53,8 +53,11 @@ export function AnimatedHeightBox({
     >
       {/* Stable (non-keyed) wrapper so the ResizeObserver keeps measuring
           across view swaps; its keyed child remounts + soft-fades while
-          the outer height eases to the new size. */}
-      <div ref={ref}>
+          the outer height eases to the new size. The `pb-1` keeps the
+          bottom row's 2px card border off the clip edge: the box height is
+          the integer-rounded scrollHeight, and without the pad sub-pixel
+          rounding shaved the last row's border (both pickers hit this). */}
+      <div ref={ref} className="pb-1">
         <div key={viewKey} className="animate-fade-in">
           {children}
         </div>
