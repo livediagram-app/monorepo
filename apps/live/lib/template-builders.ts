@@ -679,21 +679,21 @@ function buildFlowchart(cx: number, cy: number): Element[] {
     ...createShape('square', cx - procW / 2, step1Y),
     width: procW,
     height: procH,
-    label: 'Step 1',
+    label: 'Enter details',
     textSize: 'md' as const,
   };
   const decision = {
     ...createShape('diamond', cx - decW / 2, decisionY),
     width: decW,
     height: decH,
-    label: 'Decision?',
+    label: 'Email valid?',
     textSize: 'md' as const,
   };
   const step2 = {
     ...createShape('square', cx - procW / 2, step2Y),
     width: procW,
     height: procH,
-    label: 'Step 2',
+    label: 'Create account',
     textSize: 'md' as const,
   };
   const end = {
@@ -703,23 +703,25 @@ function buildFlowchart(cx: number, cy: number): Element[] {
     label: 'End',
     textSize: 'md' as const,
   };
-  // Side branch (No path): a square to the right of the decision that
-  // rejoins End's east side.
+  // No branch: a step to the right of the decision that loops back up to
+  // "Enter details" so the user can correct their input (a real reject loop).
   const sideStep = {
     ...createShape('square', cx + decW / 2 + 80, decisionY + decH / 2 - procH / 2),
     width: procW,
     height: procH,
-    label: 'Alt path',
+    label: 'Show error',
     textSize: 'md' as const,
   };
 
   const arrows = [
     createPinnedArrow(start.id, 's', step1.id, 'n'),
     createPinnedArrow(step1.id, 's', decision.id, 'n'),
-    createPinnedArrow(decision.id, 's', step2.id, 'n'),
+    { ...createPinnedArrow(decision.id, 's', step2.id, 'n'), label: 'Yes' },
     createPinnedArrow(step2.id, 's', end.id, 'n'),
-    createPinnedArrow(decision.id, 'e', sideStep.id, 'w'),
-    createPinnedArrow(sideStep.id, 's', end.id, 'e'),
+    { ...createPinnedArrow(decision.id, 'e', sideStep.id, 'w'), label: 'No' },
+    // Angled loop-back so the correction edge reads as an L rather than a
+    // diagonal cutting across the decision.
+    { ...createPinnedArrow(sideStep.id, 'n', step1.id, 'e'), arrowStyle: 'angled' as const },
   ];
 
   return [start, step1, decision, step2, sideStep, end, ...arrows];

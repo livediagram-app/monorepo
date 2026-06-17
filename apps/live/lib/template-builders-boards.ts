@@ -1,6 +1,6 @@
 // Board templates lifted out of template-builders.ts: retrospective
-// (Mad / Sad / Glad columns), kanban (five Backlog-to-Done lanes),
-// and SWOT (2x2 quadrants). All three share the same shape: a tinted
+// (Mad / Sad / Glad columns), kanban (four Todo-to-Done lanes), and
+// SWOT (2x2 quadrants). All three share the same shape: a tinted
 // container holds a header label + a stack of sticky-note rows. The
 // grouping mirrors the picker's own "Boards / 2x2 layouts" rhythm.
 //
@@ -32,12 +32,12 @@ export function buildRetrospective(cx: number, cy: number): Element[] {
   const containerSpacing = 500;
   const colW = 400;
   const headerH = 80;
-  const stickyH = 170;
+  const stickyH = 150;
   const stickyGap = 28;
   const topPadding = 24;
   const headerGap = 24;
   const bottomPadding = 24;
-  const stickiesPerColumn = 5;
+  const stickiesPerColumn = 3;
   const containerH =
     topPadding +
     headerH +
@@ -46,10 +46,39 @@ export function buildRetrospective(cx: number, cy: number): Element[] {
     (stickiesPerColumn - 1) * stickyGap +
     bottomPadding;
 
-  const columns: { label: string; fill: string; stroke: string }[] = [
-    { label: 'Mad', fill: '#fee2e2', stroke: '#fca5a5' },
-    { label: 'Sad', fill: '#dbeafe', stroke: '#93c5fd' },
-    { label: 'Glad', fill: '#dcfce7', stroke: '#86efac' },
+  // Each column seeds three believable starter cards so the board reads as a
+  // real retro rather than three empty colour blocks. Authors overwrite them.
+  const columns: { label: string; fill: string; stroke: string; notes: string[] }[] = [
+    {
+      label: 'Mad',
+      fill: '#fee2e2',
+      stroke: '#fca5a5',
+      notes: [
+        'Deploys still need a manual approval step',
+        'Flaky tests blocked two PRs this sprint',
+        'On-call paged three times for the same alert',
+      ],
+    },
+    {
+      label: 'Sad',
+      fill: '#dbeafe',
+      stroke: '#93c5fd',
+      notes: [
+        'Docs for the new API are out of date',
+        'Standup ran long most mornings',
+        'Design handoff slipped a few days',
+      ],
+    },
+    {
+      label: 'Glad',
+      fill: '#dcfce7',
+      stroke: '#86efac',
+      notes: [
+        'Onboarding flow shipped on time',
+        'Pairing sessions cleared the review backlog',
+        'New dashboard got great user feedback',
+      ],
+    },
   ];
 
   const firstColCenterX = cx - containerSpacing;
@@ -86,6 +115,7 @@ export function buildRetrospective(cx: number, cy: number): Element[] {
         ...createSticky(innerX, stickyY),
         width: colW,
         height: stickyH,
+        label: col.notes[j] ?? '',
         textSize: 'sm',
       });
     }
