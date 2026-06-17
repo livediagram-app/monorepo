@@ -104,6 +104,7 @@ function patternStyleFor(
     case 'drift':
     case 'aurora':
     case 'ripple':
+    case 'ribbons':
       return base;
     case 'lines':
       // A single tiled linear-gradient (one crisp 1px line per 24px

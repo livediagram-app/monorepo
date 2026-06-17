@@ -21,6 +21,7 @@ import {
   BackgroundHexagonalIcon,
   BackgroundIsometricIcon,
   BackgroundLinesIcon,
+  BackgroundRibbonsIcon,
   BackgroundRippleIcon,
   BackgroundStripesIcon,
   BackgroundWavesIcon,
@@ -308,6 +309,14 @@ export const PATTERNS: PatternEntry[] = [
     description: 'Animated: gentle expanding rings.',
     extra: true,
     icon: BackgroundRippleIcon,
+  },
+  {
+    id: 'ribbons',
+    label: 'Ribbons',
+    shortLabel: 'Ribbons',
+    description: 'Animated: thick curved lines that flow (theme-coloured).',
+    extra: true,
+    icon: BackgroundRibbonsIcon,
   },
 ];
 

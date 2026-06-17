@@ -1,19 +1,50 @@
 'use client';
 
-// The per-tab canvas-style controls: the pattern grid (with the "Show
-// more patterns" toggle), the Canvas + Pattern colour swatches, and the
-// pattern-opacity slider. Lifted out of TabSection so the same block
-// renders in both the palette's Canvas accordion AND the Canvas tab of
-// the right-click CanvasThemeDialog (spec/42) — the two can't drift.
+// The per-tab canvas-style controls: the static pattern grid (with the
+// "Show more patterns" toggle), a separate Animated pattern grid, the
+// Canvas + Pattern colour swatches, and the opacity + size sliders. Lifted
+// out of TabSection so the same block renders in both the palette's Canvas
+// accordion AND the Canvas tab of the right-click CanvasThemeDialog
+// (spec/42) — the two can't drift.
 //
 // Purely presentational: every change is a callback prop applied live to
 // the active tab. The "Show more" expansion is local UI state owned here.
 
-import type { BackgroundPattern } from '@livediagram/diagram';
+import { isAnimatedPattern, type BackgroundPattern } from '@livediagram/diagram';
 import { useShowMoreList } from '@/hooks/useShowMoreList';
-import { ColorSwatch, PATTERNS, PatternButton } from './palette-controls';
+import { ColorSwatch, PATTERNS, PatternButton, type PatternEntry } from './palette-controls';
 import { ShowMoreButton } from './ShowMoreButton';
 import { Tooltip } from './Tooltip';
+
+// Static vs animated split (spec/09): the two render as separate, labelled
+// sections so the catalogue reads clearly. Computed once from the single
+// PATTERNS source so adding a pattern still needs no edits here.
+const STATIC_PATTERNS = PATTERNS.filter((p) => !isAnimatedPattern(p.id));
+const ANIMATED_PATTERNS = PATTERNS.filter((p) => isAnimatedPattern(p.id));
+
+function PatternGrid({
+  patterns,
+  gridClass,
+  active,
+  onPick,
+}: {
+  patterns: PatternEntry[];
+  gridClass: string;
+  active: BackgroundPattern;
+  onPick: (pattern: BackgroundPattern) => void;
+}) {
+  return (
+    <div className={gridClass}>
+      {patterns.map((p) => (
+        <Tooltip key={p.id} title={p.label} description={p.description}>
+          <PatternButton active={active === p.id} onClick={() => onPick(p.id)} label={p.shortLabel}>
+            <p.icon />
+          </PatternButton>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
 
 export function CanvasStyleControls({
   backgroundPattern,
@@ -48,11 +79,13 @@ export function CanvasStyleControls({
   // dialog has the room to show them all.
   showAllPatterns?: boolean;
 }) {
-  // Auto-expands when the active pattern sits behind the toggle so the
-  // current selection is always visible. Still called unconditionally
+  // The "Show more" toggle applies to the STATIC patterns only; the
+  // animated set is small and shown in full so it stays discoverable.
+  // Auto-expands when the active static pattern sits behind the toggle so
+  // the current selection is always visible. Still called unconditionally
   // (hooks rule) even when showAllPatterns bypasses its visible list.
-  const patternsList = useShowMoreList(PATTERNS, (p) => p.id === backgroundPattern);
-  const visiblePatterns = showAllPatterns ? PATTERNS : patternsList.visible;
+  const staticList = useShowMoreList(STATIC_PATTERNS, (p) => p.id === backgroundPattern);
+  const visibleStatic = showAllPatterns ? STATIC_PATTERNS : staticList.visible;
   const patternGridClass =
     patternColumns === 7
       ? 'mt-1 grid grid-cols-4 gap-1 sm:grid-cols-7'
@@ -61,22 +94,24 @@ export function CanvasStyleControls({
   return (
     <>
       <p className="text-[10px] font-medium text-slate-500 dark:text-slate-300">Pattern</p>
-      <div className={patternGridClass}>
-        {visiblePatterns.map((p) => (
-          <Tooltip key={p.id} title={p.label} description={p.description}>
-            <PatternButton
-              active={backgroundPattern === p.id}
-              onClick={() => onSetBackgroundPattern(p.id)}
-              label={p.shortLabel}
-            >
-              <p.icon />
-            </PatternButton>
-          </Tooltip>
-        ))}
-      </div>
-      {!showAllPatterns && patternsList.hasMore && !patternsList.showAll ? (
-        <ShowMoreButton label="Show more patterns" onClick={patternsList.reveal} />
+      <PatternGrid
+        patterns={visibleStatic}
+        gridClass={patternGridClass}
+        active={backgroundPattern}
+        onPick={onSetBackgroundPattern}
+      />
+      {!showAllPatterns && staticList.hasMore && !staticList.showAll ? (
+        <ShowMoreButton label="Show more patterns" onClick={staticList.reveal} />
       ) : null}
+      <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        Animated
+      </p>
+      <PatternGrid
+        patterns={ANIMATED_PATTERNS}
+        gridClass={patternGridClass}
+        active={backgroundPattern}
+        onPick={onSetBackgroundPattern}
+      />
       <p className="mt-3 border-t border-slate-100 pt-3 text-[10px] font-medium text-slate-500 dark:border-slate-800 dark:text-slate-400">
         Colours
       </p>

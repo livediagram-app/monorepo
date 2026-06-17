@@ -386,3 +386,27 @@ export function BackgroundRippleIcon() {
     </svg>
   );
 }
+
+// Ribbons: thick curved flowing lines (the new-diagram page backdrop).
+export function BackgroundRibbonsIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[
+        { d: 'M0 6 C 6 2, 10 9, 16 6 S 24 3, 28 7', o: 0.8 },
+        { d: 'M0 12 C 7 9, 11 15, 17 12 S 24 9, 28 13', o: 0.55 },
+        { d: 'M0 17 C 6 14, 12 19, 18 16 S 25 14, 28 17', o: 0.35 },
+      ].map((l, i) => (
+        <path
+          key={i}
+          d={l.d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          opacity={l.o}
+        />
+      ))}
+    </svg>
+  );
+}

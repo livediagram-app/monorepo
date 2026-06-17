@@ -1,8 +1,8 @@
 'use client';
 
-// The animated canvas backdrops (spec/09). Four softly-moving patterns
-// (Flow / Drift / Aurora / Ripple) that bring an otherwise-static canvas
-// to life. They render as a single full-bleed, pointer-transparent overlay
+// The animated canvas backdrops (spec/09). Five softly-moving patterns
+// (Flow / Drift / Aurora / Ripple / Ribbons) that bring an otherwise-static
+// canvas to life. They render as a single full-bleed, pointer-transparent overlay
 // layered behind the diagram content rather than as a CSS `background-image`
 // (the static patterns' route), because none of these can be expressed as a
 // tiling image: they need independent per-element motion.
@@ -21,7 +21,7 @@
 //   - Deterministic: all positions / delays come from fixed tables (no
 //     Math.random) so server and client markup match.
 
-import type { AnimatedBackgroundPattern } from '@livediagram/diagram';
+import { shade, tint, type AnimatedBackgroundPattern } from '@livediagram/diagram';
 import type { CSSProperties } from 'react';
 
 type Props = {
@@ -51,6 +51,7 @@ export function AnimatedCanvasBackground({ variant, color, scale, opacity }: Pro
       {variant === 'drift' ? <Drift scale={scale} /> : null}
       {variant === 'aurora' ? <Aurora scale={scale} /> : null}
       {variant === 'ripple' ? <Ripple scale={scale} /> : null}
+      {variant === 'ribbons' ? <Ribbons scale={scale} color={color} /> : null}
     </div>
   );
 }
@@ -215,6 +216,52 @@ function Ripple({ scale }: { scale: number }) {
   );
 }
 
+// ── Ribbons ──────────────────────────────────────────────────────────────
+// Thick curved lines that slowly draw + flow along their paths: the canvas
+// port of the new-diagram page's AnimatedLinesBackdrop, but coloured from
+// the theme. The new-page version uses a fixed rainbow palette; here every
+// ribbon is a tint / shade of the tab's pattern colour, so the effect stays
+// "theme related" while keeping the layered, multi-tone depth. Resting
+// frame: the dashed curves, drawn in place.
+const RIBBONS: { d: string; width: number; dur: number; delay: number }[] = [
+  { d: 'M-50 160 C 250 60, 520 300, 820 170 S 1320 60, 1500 220', width: 10, dur: 58, delay: 0 },
+  {
+    d: 'M-50 360 C 200 480, 540 240, 800 400 S 1280 520, 1500 360',
+    width: 12,
+    dur: 70,
+    delay: -14,
+  },
+  { d: 'M-50 560 C 260 460, 520 700, 840 560 S 1300 460, 1500 600', width: 9, dur: 64, delay: -28 },
+  { d: 'M-50 700 C 240 620, 560 820, 860 700 S 1280 640, 1500 760', width: 11, dur: 80, delay: -8 },
+  { d: 'M-50 40 C 300 140, 560 -40, 880 80 S 1320 200, 1500 60', width: 8, dur: 74, delay: -40 },
+];
+function Ribbons({ scale, color }: { scale: number; color: string }) {
+  // Five tones of the one pattern colour give the layered look without
+  // leaving the theme: the base, two lighter tints, two darker shades.
+  const tones = [color, tint(color, 0.4), shade(color, 0.3), tint(color, 0.7), shade(color, 0.5)];
+  return (
+    <svg
+      className="h-full w-full"
+      viewBox="0 0 1450 800"
+      preserveAspectRatio="xMidYMid slice"
+      fill="none"
+    >
+      {RIBBONS.map((r, i) => (
+        <path
+          key={i}
+          className="lvd-ribbon"
+          d={r.d}
+          stroke={tones[i % tones.length]}
+          strokeWidth={r.width * scale}
+          strokeLinecap="round"
+          pathLength={100}
+          style={{ ['--dur']: `${r.dur}s`, ['--delay']: `${r.delay}s` } as Vars}
+        />
+      ))}
+    </svg>
+  );
+}
+
 // All keyframes + the reduced-motion freeze in one block. Element opacities
 // are kept modest so the patterns stay a backdrop, never competing with the
 // diagram content on top.
@@ -237,12 +284,12 @@ const KEYFRAMES = `
   }
 
   .lvd-aurora-glow {
-    opacity: 0.5;
+    opacity: 0.72;
     animation: lvd-aurora var(--dur) ease-in-out infinite;
   }
   @keyframes lvd-aurora {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(var(--dx), var(--dy)) scale(1.25); }
+    50% { transform: translate(var(--dx), var(--dy)) scale(1.3); }
   }
 
   .lvd-ripple-ring {
@@ -254,10 +301,18 @@ const KEYFRAMES = `
     100% { transform: scale(1.7); opacity: 0; }
   }
 
+  .lvd-ribbon {
+    opacity: 0.45;
+    stroke-dasharray: 45 55;
+    animation: lvd-ribbon-flow var(--dur) linear var(--delay) infinite;
+  }
+  @keyframes lvd-ribbon-flow { to { stroke-dashoffset: -200; } }
+
   @media (prefers-reduced-motion: reduce) {
     .lvd-flow-line,
     .lvd-drift-mote,
     .lvd-aurora-glow,
-    .lvd-ripple-ring { animation: none; }
+    .lvd-ripple-ring,
+    .lvd-ribbon { animation: none; }
   }
 `;

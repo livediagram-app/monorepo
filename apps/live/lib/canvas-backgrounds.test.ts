@@ -134,7 +134,7 @@ describe('tabBackgroundStyle', () => {
     // Flow / Drift / Aurora / Ripple paint no static image: their motion
     // is the AnimatedCanvasBackground overlay's job. Here they must behave
     // like Blank (colour only) so the overlay isn't fighting a CSS image.
-    for (const pattern of ['flow', 'drift', 'aurora', 'ripple'] as const) {
+    for (const pattern of ['flow', 'drift', 'aurora', 'ripple', 'ribbons'] as const) {
       const style = tabBackgroundStyle(pattern, { x: 5, y: 9 }, '#abcdef', '#123456', 0.5);
       expect(style.backgroundColor).toBe('rgba(171, 205, 239, 0.5)');
       expect(style.backgroundImage).toBeUndefined();

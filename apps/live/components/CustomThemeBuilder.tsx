@@ -16,6 +16,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   deriveTextColorForBg,
   elementKindLabel,
+  isAnimatedPattern,
   isLightColor,
   shade,
   tint,
@@ -263,7 +264,20 @@ export function CustomThemeBuilder({
         </p>
         <FieldLabel className="mb-1">Style</FieldLabel>
         <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
-          {PATTERNS.map((p) => (
+          {PATTERNS.filter((p) => !isAnimatedPattern(p.id)).map((p) => (
+            <PatternButton
+              key={p.id}
+              active={def.backgroundPattern === p.id}
+              onClick={() => patch({ backgroundPattern: p.id as BackgroundPattern })}
+              label={p.shortLabel}
+            >
+              <p.icon />
+            </PatternButton>
+          ))}
+        </div>
+        <FieldLabel className="mb-1 mt-3">Animated</FieldLabel>
+        <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
+          {PATTERNS.filter((p) => isAnimatedPattern(p.id)).map((p) => (
             <PatternButton
               key={p.id}
               active={def.backgroundPattern === p.id}

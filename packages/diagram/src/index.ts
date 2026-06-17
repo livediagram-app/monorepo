@@ -82,13 +82,20 @@ export type BackgroundPattern =
   | 'flow'
   | 'drift'
   | 'aurora'
-  | 'ripple';
+  | 'ripple'
+  | 'ribbons';
 
 // The animated members of BackgroundPattern. These render via the
 // AnimatedCanvasBackground overlay (CSS / SVG motion) instead of a static
 // `background-image`, so callers that paint or export a still frame can
 // branch on this. Order mirrors the picker.
-export const ANIMATED_BACKGROUND_PATTERNS = ['flow', 'drift', 'aurora', 'ripple'] as const;
+export const ANIMATED_BACKGROUND_PATTERNS = [
+  'flow',
+  'drift',
+  'aurora',
+  'ripple',
+  'ribbons',
+] as const;
 
 export type AnimatedBackgroundPattern = (typeof ANIMATED_BACKGROUND_PATTERNS)[number];
 
