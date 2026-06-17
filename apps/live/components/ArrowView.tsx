@@ -162,6 +162,17 @@ function ArrowViewImpl({
     arrow.elbowOffset,
     arrow.curvePoints,
   );
+  // Flowing arrows (spec/09) sync to a shared clock so several arrows — e.g.
+  // all leaving one element — march / travel IN PHASE regardless of when each
+  // was added: a negative animation-delay aligns every loop to the same epoch
+  // (the performance.now() time origin), so same-speed arrows share a period
+  // and a phase. Arrows only render client-side (diagram content loads after
+  // mount), so reading performance.now() in render is hydration-safe.
+  const flowFactor = ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'];
+  const flowDelay = (baseMs: number): string => {
+    if (typeof performance === 'undefined') return '0ms';
+    return `-${(performance.now() % (baseMs * flowFactor)).toFixed(0)}ms`;
+  };
   const midpoint = arrowPathMidpoint(
     style,
     from,
@@ -275,9 +286,13 @@ function ArrowViewImpl({
         style={
           {
             pointerEvents: 'none',
-            // Flow speed scales the marching-dash duration (see lvd-arrow-flow).
+            // Flow speed scales the marching-dash duration (see lvd-arrow-flow);
+            // the negative delay phase-aligns it with sibling arrows (700ms base).
             ...(arrow.flow === 'dashes'
-              ? { '--lvd-flow-speed': ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'] }
+              ? {
+                  '--lvd-flow-speed': flowFactor,
+                  animationDelay: flowDelay(700),
+                }
               : {}),
           } as React.CSSProperties
         }
@@ -334,7 +349,9 @@ function ArrowViewImpl({
               offsetPath: `path('${pathD}')`,
               offsetRotate: '0deg',
               pointerEvents: 'none',
-              '--lvd-flow-speed': ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'],
+              '--lvd-flow-speed': flowFactor,
+              // Phase-align the travelling dot with sibling arrows (2000ms base).
+              animationDelay: flowDelay(2000),
             } as React.CSSProperties
           }
           aria-hidden
