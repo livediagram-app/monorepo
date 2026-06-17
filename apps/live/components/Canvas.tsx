@@ -49,6 +49,8 @@ const EMPTY_ID_SET: Set<string> = new Set();
 
 import { CanvasChrome } from './CanvasChrome';
 import { CanvasElementsLayer } from './CanvasElementsLayer';
+import { SpotlightOverlay } from './SpotlightOverlay';
+import { useSpotlight } from '@/hooks/useSpotlight';
 import { Portal } from './Portal';
 import { TabLoadOverlay } from './TabLoadOverlay';
 import type { CanvasProps } from './Canvas.types';
@@ -242,6 +244,12 @@ export function Canvas(props: CanvasProps) {
   // O(N) for the sole purpose of computing a boolean.
   const hasArrows = elements.some((el) => el.type === 'arrow');
 
+  // Spotlight presenter tool (spec/09): screen-space light position +
+  // radius. Local to Canvas so the click handlers, the pointer tracker, and
+  // the overlay share one source of truth; survives Pan/Select detours
+  // because Canvas stays mounted.
+  const spotlight = useSpotlight();
+
   const cursorClass = canvasCursorClass({
     pendingDraw: !!pendingDraw,
     pan: !!pan,
@@ -261,6 +269,15 @@ export function Canvas(props: CanvasProps) {
   // Broadcast the local pointer position to peers (canvas-coords).
   // Throttling lives in page.tsx so the Canvas stays prop-driven.
   const handlePointerMoveCanvas = (e: React.PointerEvent) => {
+    // Spotlight tracks the cursor in SCREEN space (px relative to <main>),
+    // not canvas-coords: its light must stay put on screen as the diagram
+    // pans / zooms under it. <main> is `position: relative` with no border,
+    // so its content origin is its bounding-rect top-left.
+    if (canvasTool === 'spotlight') {
+      const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+      const mr = node?.getBoundingClientRect();
+      if (mr) spotlight.setPos({ x: e.clientX - mr.left, y: e.clientY - mr.top });
+    }
     const rect = wrapperRef.current?.getBoundingClientRect();
     if (!rect) return;
     const sx = (e.clientX - rect.left) / viewportZoom;
@@ -654,6 +671,24 @@ export function Canvas(props: CanvasProps) {
         // start a gesture at the click point and drop the pending shape
         // behind the panel. Bail before any canvas gesture starts.
         if ((e.target as Element | null)?.closest?.('[data-floating-panel]')) return;
+        // Spotlight tool (spec/09): a non-editing presenter mode. Left-click
+        // grows the light; right-click shrinks it (the shrink itself runs in
+        // onContextMenuCapture below). Handled in the capture phase so it
+        // wins over an element's own select/drag — and we MUST swallow the
+        // secondary button too, not just the primary: arrow hit-bands set
+        // `pointer-events: stroke`, which re-enables them despite the layer's
+        // `pointer-events: none`, and their pointerdown selects on ANY button,
+        // so a right-click would otherwise select the arrow under the cursor.
+        // Middle-mouse (button 1) is the exception — it falls through to pan.
+        // Space-held also falls through so it can pan.
+        if (canvasTool === 'spotlight' && !spaceHeldRef.current && e.button !== 1) {
+          const node = mainRef && 'current' in mainRef ? mainRef.current : null;
+          node?.focus({ preventScroll: true });
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.button === 0) spotlight.grow();
+          return;
+        }
         // Eraser tool (spec/09): a primary-button press deletes whatever
         // it lands on and starts a drag-to-erase gesture. Handled in the
         // capture phase so it wins over an element's own select/drag and
@@ -698,12 +733,26 @@ export function Canvas(props: CanvasProps) {
           if (beginPendingDrawGesture(e)) e.stopPropagation();
         }
       }}
+      onContextMenuCapture={(e) => {
+        // Spotlight tool (spec/09): right-click shrinks the light instead of
+        // opening any menu. Capture phase + stopPropagation so it intercepts
+        // right-clicks ANYWHERE — including over an element, whose own
+        // onContextMenu would otherwise open the element menu. The bubble
+        // handler below also bails in spotlight as a belt-and-braces guard.
+        if (canvasTool !== 'spotlight') return;
+        e.preventDefault();
+        e.stopPropagation();
+        spotlight.shrink();
+      }}
       onContextMenu={(e) => {
         // BoxedElementView's onContextMenu calls e.stopPropagation()
         // for right-clicks on elements, so we only reach here for
         // canvas background clicks. Suppress the browser context
         // menu and open a tab-level context menu instead.
         e.preventDefault();
+        // Spotlight suppresses all context menus (right-click is its
+        // shrink gesture, handled in onContextMenuCapture).
+        if (canvasTool === 'spotlight') return;
         onCanvasContextMenu?.(e.clientX, e.clientY);
       }}
       onPointerDown={(e) => {
@@ -889,7 +938,16 @@ export function Canvas(props: CanvasProps) {
           const sy = (e.clientY - rect.top) / viewportZoom;
           onCanvasDoubleClick(sx, sy);
         }}
-        className={`absolute inset-0 origin-center touch-none ${pendingDraw ? '' : cursorClass}`}
+        // Spotlight (spec/09) is a non-editing presenter mode: make the whole
+        // diagram layer ignore pointer events so NO element kind can be
+        // selected, dragged, or edited (a per-element capture guard can't
+        // catch every select path — boxed elements, arrow hit-bands, labels,
+        // click vs pointerdown). Clicks then fall through to <main>, where the
+        // capture handler turns them into grow / shrink, and middle-mouse or
+        // held-Space still pans.
+        className={`absolute inset-0 origin-center touch-none ${
+          canvasTool === 'spotlight' ? 'pointer-events-none' : ''
+        } ${pendingDraw ? '' : cursorClass}`}
         style={{
           // Translate is in canvas-coords (applied first); scale is centred
           // on the wrapper so zooming keeps the viewport centre stable.
@@ -924,6 +982,15 @@ export function Canvas(props: CanvasProps) {
         />
       </div>
 
+      {/* Spotlight presenter shroud (spec/09). Screen-space sibling of the
+          transformed wrapper so the light stays fixed on screen while the
+          diagram pans / zooms underneath. Rendered before CanvasChrome so the
+          palette + chrome paint ON TOP and stay reachable to switch tools
+          back; pointer-events-none lets clicks fall through to <main>. */}
+      {canvasTool === 'spotlight' ? (
+        <SpotlightOverlay pos={spotlight.pos} radius={spotlight.radius} />
+      ) : null}
+
       {/* SelectionPopover rides on a sibling wrapper that mirrors
           the canvas transform but lives AFTER the floating panels in
           DOM order. z-40 on every viewport: lifts the toolbar
@@ -941,7 +1008,7 @@ export function Canvas(props: CanvasProps) {
           options own the space around the element, and a toolbar on top just
           competes for clicks. Kept mounted and faded out (not unmounted) so
           it animates away as the ring opens and back in when it closes. */}
-      {showPopover && selectionBounds ? (
+      {showPopover && selectionBounds && canvasTool !== 'spotlight' ? (
         <div
           className="pointer-events-none absolute inset-0 z-40 origin-center"
           style={{
@@ -1006,7 +1073,11 @@ export function Canvas(props: CanvasProps) {
           the same canvas-transform sibling wrapper so it counter-scales with
           zoom. Gated on a true marquee multi-selection (2+), never in
           view-only. */}
-      {!readOnly && multiSelectedIds.size >= 2 && showUnionResize && unionResizeBounds ? (
+      {!readOnly &&
+      multiSelectedIds.size >= 2 &&
+      showUnionResize &&
+      unionResizeBounds &&
+      canvasTool !== 'spotlight' ? (
         <div
           className="pointer-events-none absolute inset-0 z-40 origin-center"
           style={{

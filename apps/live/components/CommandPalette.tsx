@@ -4,7 +4,7 @@ import type { ShapeKind } from '@livediagram/diagram';
 import { MovablePanel } from './MovablePanel';
 import { PaletteTabBar } from './PaletteTabBar';
 import { PaletteDropdown } from './PaletteDropdown';
-import { EraserIcon, LaserIcon, PanIcon, SelectIcon } from './palette-icons';
+import { EraserIcon, LaserIcon, PanIcon, SelectIcon, SpotlightIcon } from './palette-icons';
 import { Tooltip } from './Tooltip';
 import { ICON_CATALOG, ICON_CATEGORIES, ICON_DND_MIME, iconsInCategory } from '@/lib/icons';
 import {
@@ -16,7 +16,7 @@ import {
 import { IconPrims } from './icon-glyph';
 import { TechIconArt } from './tech-icon-glyph';
 
-export type CanvasTool = 'pan' | 'select' | 'laser' | 'eraser';
+export type CanvasTool = 'pan' | 'select' | 'laser' | 'spotlight' | 'eraser';
 
 type CommandPaletteProps = {
   position: { x: number; y: number } | null;
@@ -284,6 +284,7 @@ export function CommandPalette({
                 { id: 'select', label: 'Select', shortcut: 'S', icon: <SelectIcon /> },
                 { id: 'pan', label: 'Hand', shortcut: 'P', icon: <PanIcon /> },
                 { id: 'laser', label: 'Laser', shortcut: 'L', icon: <LaserIcon /> },
+                { id: 'spotlight', label: 'Spotlight', icon: <SpotlightIcon /> },
                 { id: 'eraser', label: 'Eraser', shortcut: 'E', icon: <EraserIcon /> },
               ]}
             />

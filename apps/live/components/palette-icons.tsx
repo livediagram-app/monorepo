@@ -437,6 +437,32 @@ export function EraserIcon() {
   );
 }
 
+// Spotlight tool (spec/09): a focus glyph — a bright centre dot ringed
+// by a circle with short rays beaming outward, reading as "the cursor
+// emits light" without copying the laser-pointer beam.
+export function SpotlightIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="3.2" />
+      <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+      <path d="M8 1.5v2" />
+      <path d="M8 12.5v2" />
+      <path d="M1.5 8h2" />
+      <path d="M12.5 8h2" />
+    </svg>
+  );
+}
+
 // Zen / focus mode (spec/26): an "expand to fullscreen" glyph (four
 // corner arrows pushing outward) for the palette enter button.
 export function ZenIcon() {

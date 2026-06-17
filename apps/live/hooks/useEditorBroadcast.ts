@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoomOutgoing } from '@livediagram/api-schema';
+import type { CanvasTool } from '@/components/CommandPalette';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 
 const BROADCAST_THROTTLE_MS = 33;
@@ -43,7 +44,7 @@ type EditorBroadcastDeps = {
   // Current canvas tool. The laser-trail buffer clears when the tool
   // switches away from 'laser' so a fresh laser session doesn't
   // start from a previous run's tail.
-  canvasTool: 'pan' | 'select' | 'laser' | 'eraser';
+  canvasTool: CanvasTool;
 };
 
 type EditorBroadcastApi = {

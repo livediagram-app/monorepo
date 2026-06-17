@@ -41,6 +41,10 @@ export function canvasCursorClass(input: {
   if (pan) return 'cursor-grabbing';
   if (marquee) return 'cursor-crosshair';
   if (canvasTool === 'laser' && !spaceHeld) return 'cursor-crosshair';
+  // Spotlight (spec/09): a crosshair marks the exact centre of the light
+  // (the OS arrow would read as an editing cursor it isn't). Space still
+  // pans, so defer to the grab cursor while it's held.
+  if (canvasTool === 'spotlight' && !spaceHeld) return 'cursor-crosshair';
   // Eraser shows a custom eraser glyph (see .cursor-eraser in globals.css),
   // unless Space is held for a temporary pan.
   if (canvasTool === 'eraser' && !spaceHeld) return 'cursor-eraser';

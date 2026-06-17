@@ -38,6 +38,7 @@ import { deriveNewBoxedColours, getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
 import { isTechIconId } from '@/lib/tech-icons';
 import type { PendingDraw } from '@/lib/draw-mode';
+import type { CanvasTool } from '@/components/CommandPalette';
 
 // Stroke for a new arrow when the active theme has no explicit
 // `elementStroke` (the Brand theme). brand-500 — matches the shape
@@ -51,8 +52,8 @@ type ShapeDrawingDeps = {
   // The currently-selected element id, read at arm-time so a tap-to-drop
   // inherits its size (see beginDraw / commitDraw).
   selectedId: string | null;
-  canvasTool: 'pan' | 'select' | 'laser' | 'eraser';
-  setCanvasTool: (tool: 'pan' | 'select' | 'laser' | 'eraser') => void;
+  canvasTool: CanvasTool;
+  setCanvasTool: (tool: CanvasTool) => void;
   activeTab: Tab;
   activeId: string;
   commit: (mapElements: (els: Element[]) => Element[]) => void;
