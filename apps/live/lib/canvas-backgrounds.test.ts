@@ -129,4 +129,16 @@ describe('tabBackgroundStyle', () => {
     const same = tabBackgroundStyle('engineering', NO_OFFSET, '#fff', '#000', 1, 1);
     expect(same.backgroundSize).toBe(base.backgroundSize);
   });
+
+  it('animated patterns contribute only the backdrop colour (the overlay draws motion)', () => {
+    // Flow / Drift / Aurora / Ripple paint no static image: their motion
+    // is the AnimatedCanvasBackground overlay's job. Here they must behave
+    // like Blank (colour only) so the overlay isn't fighting a CSS image.
+    for (const pattern of ['flow', 'drift', 'aurora', 'ripple'] as const) {
+      const style = tabBackgroundStyle(pattern, { x: 5, y: 9 }, '#abcdef', '#123456', 0.5);
+      expect(style.backgroundColor).toBe('rgba(171, 205, 239, 0.5)');
+      expect(style.backgroundImage).toBeUndefined();
+      expect(style.backgroundSize).toBeUndefined();
+    }
+  });
 });

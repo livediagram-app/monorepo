@@ -307,3 +307,82 @@ export function BackgroundEngineeringIcon() {
     </svg>
   );
 }
+
+// ── Animated pattern previews (spec/09) ──────────────────────────────────
+// Still glyphs that depict each animated backdrop's resting frame; the
+// "animated" nature is conveyed by the picker tooltip, not the icon.
+
+// Flow: streaming diagonal dashes.
+export function BackgroundFlowIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[-2, 6, 14, 22].map((x) => (
+        <line
+          key={x}
+          x1={x}
+          y1="20"
+          x2={x + 12}
+          y2="0"
+          stroke="currentColor"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+          strokeDasharray="4 3"
+        />
+      ))}
+    </svg>
+  );
+}
+
+// Drift: rising motes of varied size.
+export function BackgroundDriftIcon() {
+  const motes = [
+    { cx: 5, cy: 6, r: 1.6 },
+    { cx: 11, cy: 13, r: 1 },
+    { cx: 15, cy: 5, r: 2.1 },
+    { cx: 20, cy: 11, r: 1.3 },
+    { cx: 24, cy: 7, r: 1.7 },
+    { cx: 9, cy: 16, r: 1.1 },
+  ];
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {motes.map((m, i) => (
+        <circle key={i} cx={m.cx} cy={m.cy} r={m.r} fill="currentColor" opacity="0.7" />
+      ))}
+    </svg>
+  );
+}
+
+// Aurora: soft drifting glows.
+export function BackgroundAuroraIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      <circle cx="8" cy="8" r="6" fill="currentColor" opacity="0.28" />
+      <circle cx="19" cy="13" r="7" fill="currentColor" opacity="0.22" />
+      <circle cx="21" cy="6" r="4" fill="currentColor" opacity="0.3" />
+    </svg>
+  );
+}
+
+// Ripple: concentric rings.
+export function BackgroundRippleIcon() {
+  return (
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden>
+      <rect width="28" height="20" rx="2" fill="white" stroke="currentColor" strokeWidth="0.5" />
+      {[2, 5, 8].map((r) => (
+        <circle
+          key={r}
+          cx="14"
+          cy="10"
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="0.8"
+          opacity={1 - r * 0.08}
+        />
+      ))}
+    </svg>
+  );
+}

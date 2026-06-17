@@ -95,7 +95,15 @@ function patternStyleFor(
   const px = offset.x;
   const py = offset.y;
   switch (pattern) {
+    // Blank + the animated patterns paint no static background image: the
+    // animated ones draw their motion via the AnimatedCanvasBackground
+    // overlay (spec/09), so here they contribute only the (alpha-applied)
+    // backdrop colour, exactly like Blank.
     case 'blank':
+    case 'flow':
+    case 'drift':
+    case 'aurora':
+    case 'ripple':
       return base;
     case 'lines':
       // A single tiled linear-gradient (one crisp 1px line per 24px

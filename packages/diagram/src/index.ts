@@ -74,7 +74,29 @@ export type BackgroundPattern =
   | 'isometric'
   | 'hexagonal'
   | 'engineering'
-  | 'checkerboard';
+  | 'checkerboard'
+  // Animated patterns (spec/09): soft ambient motion rendered as an
+  // overlay layer rather than a CSS background image. They theme off the
+  // pattern colour like the static ones. Kept last so the static catalogue
+  // ordering is undisturbed.
+  | 'flow'
+  | 'drift'
+  | 'aurora'
+  | 'ripple';
+
+// The animated members of BackgroundPattern. These render via the
+// AnimatedCanvasBackground overlay (CSS / SVG motion) instead of a static
+// `background-image`, so callers that paint or export a still frame can
+// branch on this. Order mirrors the picker.
+export const ANIMATED_BACKGROUND_PATTERNS = ['flow', 'drift', 'aurora', 'ripple'] as const;
+
+export type AnimatedBackgroundPattern = (typeof ANIMATED_BACKGROUND_PATTERNS)[number];
+
+export function isAnimatedPattern(
+  pattern: BackgroundPattern,
+): pattern is AnimatedBackgroundPattern {
+  return (ANIMATED_BACKGROUND_PATTERNS as readonly string[]).includes(pattern);
+}
 
 export const DEFAULT_BACKGROUND_COLOR = '#ffffff';
 export const DEFAULT_PATTERN_COLOR = '#cbd5e1'; // slate-300

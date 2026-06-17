@@ -6,18 +6,22 @@ import {
 } from '@livediagram/diagram';
 import { PALETTE_DND_MIME } from '@/lib/icons';
 import {
+  BackgroundAuroraIcon,
   BackgroundBlankIcon,
   BackgroundBricksIcon,
   BackgroundConfettiIcon,
   BackgroundCheckerboardIcon,
   BackgroundCrosshatchIcon,
   BackgroundDiagonalIcon,
+  BackgroundDriftIcon,
   BackgroundEngineeringIcon,
+  BackgroundFlowIcon,
   BackgroundGraphIcon,
   BackgroundGridIcon,
   BackgroundHexagonalIcon,
   BackgroundIsometricIcon,
   BackgroundLinesIcon,
+  BackgroundRippleIcon,
   BackgroundStripesIcon,
   BackgroundWavesIcon,
 } from './background-pattern-icons';
@@ -272,6 +276,38 @@ export const PATTERNS: PatternEntry[] = [
     description: 'Graph paper with bold major gridlines every 5 cells.',
     extra: true,
     icon: BackgroundEngineeringIcon,
+  },
+  {
+    id: 'flow',
+    label: 'Flow',
+    shortLabel: 'Flow',
+    description: 'Animated: streaming diagonal lines.',
+    extra: true,
+    icon: BackgroundFlowIcon,
+  },
+  {
+    id: 'drift',
+    label: 'Drift',
+    shortLabel: 'Drift',
+    description: 'Animated: softly rising motes.',
+    extra: true,
+    icon: BackgroundDriftIcon,
+  },
+  {
+    id: 'aurora',
+    label: 'Aurora',
+    shortLabel: 'Aurora',
+    description: 'Animated: slowly drifting colour glows.',
+    extra: true,
+    icon: BackgroundAuroraIcon,
+  },
+  {
+    id: 'ripple',
+    label: 'Ripple',
+    shortLabel: 'Ripple',
+    description: 'Animated: gentle expanding rings.',
+    extra: true,
+    icon: BackgroundRippleIcon,
   },
 ];
 

@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
   elementKindLabel,
+  isAnimatedPattern,
   isBoxed,
   snapResizeBounds,
   snapToAlignment,
@@ -16,6 +17,7 @@ import {
 import { ICON_DND_MIME, PALETTE_DND_MIME } from '@/lib/icons';
 import { TECH_ICON_DND_MIME } from '@/lib/tech-icons';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
+import { AnimatedCanvasBackground } from './AnimatedCanvasBackground';
 import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 import { deriveCanvasSelection } from '@/lib/canvas-selection';
 import { canvasCursorClass } from '@/lib/canvas-chrome';
@@ -802,6 +804,18 @@ export function Canvas(props: CanvasProps) {
         ...(pendingDraw ? { cursor: drawIntentCursor(pendingDraw) } : null),
       }}
     >
+      {/* Animated backdrops (spec/09) paint as an ambient overlay behind the
+          diagram content; the static patterns ride the <main> background
+          above. tabBackgroundStyle returns just the backdrop colour for
+          these, so this layer is the only thing that draws their motion. */}
+      {isAnimatedPattern(tabBackgroundPattern) ? (
+        <AnimatedCanvasBackground
+          variant={tabBackgroundPattern}
+          color={tabPatternColor}
+          scale={tabBackgroundPatternScale}
+          opacity={tabBackgroundOpacity}
+        />
+      ) : null}
       <div
         ref={wrapperRef}
         onPointerDown={(e) => {
