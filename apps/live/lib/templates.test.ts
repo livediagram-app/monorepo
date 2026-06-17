@@ -18,7 +18,7 @@ import { getTheme } from './themes';
 
 // The catalogue's shape (count + default/extra split + no kind
 // drift) is load-bearing across both the picker and the marketing
-// site. spec/16 pins "20 templates (8 default + 12 extra)" and
+// site. spec/16 pins "30 templates (10 default + 20 extra)" and
 // spec/09 catalogues the picker UX. These tests pin the array so
 // either the spec or the catalogue can't silently drift away from
 // the other.
