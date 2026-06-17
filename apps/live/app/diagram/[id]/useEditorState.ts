@@ -1080,7 +1080,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   const {
     addBoxed,
     addBoxedAt,
-    addBoxedGroup,
     memberIdsOf,
     currentSelectionIds,
     selectionPrimary,
@@ -1368,6 +1367,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addBanner,
     addHero,
     addHeader,
+    addCallout,
+    addStatRow,
+    addProcess,
     addAvatar,
     dropPaletteItem,
     addText,
@@ -1387,7 +1389,6 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setEditingId,
     addBoxed,
     addBoxedAt,
-    addBoxedGroup,
     beginDraw,
   });
 
@@ -1787,6 +1788,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addBanner,
     addHero,
     addHeader,
+    addCallout,
+    addStatRow,
+    addProcess,
     addAvatar,
     dropPaletteItem,
     addTab,

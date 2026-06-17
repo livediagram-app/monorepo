@@ -6,9 +6,15 @@ import {
   createArrow,
   createAvatar,
   createBanner,
+  createCallout,
   createComment,
+  createComponent,
   createHeader,
   createHero,
+  createProcessSteps,
+  createStatRow,
+  scaleElements,
+  COMPONENT_SIZE,
   createImage,
   createPinnedArrow,
   createShape,
@@ -177,6 +183,67 @@ describe('boxed-element factories', () => {
     expect(links.length).toBeGreaterThanOrEqual(3);
     const gid = bar.groupId;
     expect(els.every((e) => e.groupId === gid)).toBe(true);
+  });
+
+  it('createCallout is a group: surface box + accent badge + title + body (spec/09)', () => {
+    const els = createCallout(0, 0, { accent: '#be123c', surface: '#ffe4e6', ink: '#881337' });
+    expect(els).toHaveLength(4);
+    const box = els[0]!;
+    const badge = els[1]!;
+    expect(box).toMatchObject({ type: 'shape', fillColor: '#ffe4e6', strokeColor: '#be123c' });
+    expect(badge).toMatchObject({ type: 'shape', shape: 'circle', fillColor: '#be123c', label: 'i' });
+    const gid = box.groupId;
+    expect(gid).toBeDefined();
+    expect(els.every((e) => e.groupId === gid)).toBe(true);
+  });
+
+  it('createStatRow is three KPI cards (9 grouped elements) (spec/09)', () => {
+    const els = createStatRow(0, 0, { accent: '#15803d', surface: '#dcfce7', ink: '#14532d' });
+    expect(els).toHaveLength(9); // 3 cards x (card + number + caption)
+    const gid = els[0]!.groupId;
+    expect(els.every((e) => e.groupId === gid)).toBe(true);
+    // The big numbers pop in the accent.
+    const numbers = els.filter((e) => e.type === 'text' && e.textColor === '#15803d');
+    expect(numbers.length).toBe(3);
+  });
+
+  it('createProcessSteps is circles + pinned arrows + captions (spec/09)', () => {
+    const els = createProcessSteps(0, 0, { accent: '#2563eb', surface: '#dbeafe', ink: '#1e3a8a' });
+    const circles = els.filter((e) => e.type === 'shape' && e.shape === 'circle');
+    const arrows = els.filter((e) => e.type === 'arrow');
+    const captions = els.filter((e) => e.type === 'text');
+    expect(circles.length).toBe(3);
+    expect(arrows.length).toBe(2); // connectors between consecutive steps
+    expect(captions.length).toBe(3);
+    // Arrows are pinned to the circles so they track the group.
+    const a0 = arrows[0]!;
+    expect(a0.type).toBe('arrow');
+    if (a0.type === 'arrow') {
+      expect(a0.from.kind).toBe('pinned');
+      expect(a0.to.kind).toBe('pinned');
+    }
+  });
+
+  it('createComponent dispatches by kind and COMPONENT_SIZE covers every kind', () => {
+    const colors = { accent: '#000', surface: '#fff', ink: '#111' };
+    (['banner', 'hero', 'header', 'callout', 'stat', 'process', 'avatar'] as const).forEach((k) => {
+      const els = createComponent(k, 0, 0, colors);
+      expect(els.length).toBeGreaterThan(0);
+      expect(COMPONENT_SIZE[k].width).toBeGreaterThan(0);
+      expect(COMPONENT_SIZE[k].height).toBeGreaterThan(0);
+    });
+    expect(createComponent('avatar', 0, 0, colors)).toHaveLength(1);
+  });
+
+  it('scaleElements scales boxed position + size about the origin, 2x', () => {
+    const [shape] = createComponent('banner', 0, 0, { accent: '#000', surface: '#fff', ink: '#111' });
+    const before = shape!;
+    if (before.type === 'arrow') throw new Error('expected boxed');
+    const scaled = scaleElements([before], 0, 0, 2)[0]!;
+    if (scaled.type === 'arrow') throw new Error('expected boxed');
+    expect(scaled.width).toBe(before.width * 2);
+    expect(scaled.height).toBe(before.height * 2);
+    expect(scaled.x).toBe(before.x * 2);
   });
 
   it('factories mint distinct ids on each call', () => {

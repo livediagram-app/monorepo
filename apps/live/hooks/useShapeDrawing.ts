@@ -22,14 +22,19 @@
 import { useRef, useState } from 'react';
 import { inheritedSizeFor } from '@/lib/canvas';
 import {
+  COMPONENT_SIZE,
+  createComponent,
   createFreehand,
   createImage,
   createShape,
   createSticky,
   createText,
+  isBoxed,
   recogniseShape,
+  scaleElements,
   simplifyPolyline,
   type ArrowElement,
+  type ComponentKind,
   type Element,
   type ShapeElement,
   type Tab,
@@ -46,6 +51,17 @@ import type { CanvasTool } from '@/components/CommandPalette';
 // accent like every other new element, instead of ArrowView's slate-700
 // fallback (which looked like an un-themed black line + arrowhead).
 const NEW_ARROW_THEME_STROKE_FALLBACK = '#0ea5e9';
+
+// Telemetry `type` per component kind (closed vocabulary, no user content).
+const COMPONENT_TELEMETRY: Record<ComponentKind, string> = {
+  banner: 'Banner',
+  hero: 'Hero',
+  header: 'Header',
+  callout: 'Callout',
+  stat: 'StatRow',
+  process: 'ProcessSteps',
+  avatar: 'Avatar',
+};
 
 type ShapeDrawingDeps = {
   editsBlocked: boolean;
@@ -188,6 +204,39 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
     // where the user expected a sketch.
     if (intent.type === 'freehand') {
       setPendingDraw(null);
+      return;
+    }
+    // Component (spec/09): build the composite at the theme's colours, then a
+    // tap drops it at its natural size centred on the tap, while a drag scales
+    // the whole group uniformly to fill the dragged box (keeps proportions;
+    // pinned connectors follow). Selects the group's primary member.
+    if (intent.type === 'component') {
+      const theme = getTheme(activeTab.theme);
+      const colors = {
+        accent: theme.elementStroke ?? '#0284c7',
+        surface: theme.elementFill ?? '#ffffff',
+        ink: theme.elementText ?? '#0f172a',
+      };
+      const def = COMPONENT_SIZE[intent.kind];
+      const isTap = Math.abs(endX - startX) < 16 && Math.abs(endY - startY) < 16;
+      const centreX = isTap ? startX : (startX + endX) / 2;
+      const centreY = isTap ? startY : (startY + endY) / 2;
+      const made = createComponent(intent.kind, centreX, centreY, colors);
+      let placed = made;
+      if (!isTap) {
+        const dragW = Math.max(16, Math.abs(endX - startX));
+        const dragH = Math.max(16, Math.abs(endY - startY));
+        const s = Math.min(8, Math.max(0.25, Math.max(dragW / def.width, dragH / def.height)));
+        placed = scaleElements(made, centreX, centreY, s);
+      }
+      const before = activeTab.elements;
+      const after = [...before, ...placed];
+      commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
+      emitChange(activeId, before, after);
+      const primary = placed.find((el) => isBoxed(el) && el.groupId) ?? placed[0];
+      if (primary) setSelectedId(primary.id);
+      setPendingDraw(null);
+      track('Element', 'Added', COMPONENT_TELEMETRY[intent.kind]);
       return;
     }
     // Tap vs drag (the combined add mode): a press with under 16px of

@@ -70,31 +70,6 @@ export function useElementHelpers(opts: {
     placeBoxed(make, { x: canvasX, y: canvasY }, /* inheritSize */ false);
   };
 
-  // Insert a pre-built composite (several elements sharing a groupId) at the
-  // viewport centre as ONE action. Unlike addBoxed it neither derives colours
-  // nor inherits the selection's size — the builder owns the full styling and
-  // layout (the banner, spec/09, is the first caller). Mirrors placeBoxed's
-  // commit + activity-log + select path. The builder receives the centre
-  // point and lays its elements out around it. Selects the first element,
-  // which (sharing the groupId) expands to the whole banner.
-  // Returns the inserted elements so callers can act on a member afterwards
-  // (the hero / header / avatar open the image picker for their image
-  // element); undefined when blocked or the builder produced nothing.
-  const addBoxedGroup = (
-    build: (cx: number, cy: number) => BoxedElement[],
-  ): BoxedElement[] | undefined => {
-    if (editsBlocked) return undefined;
-    const centre = getViewportCenter();
-    const made = build(centre.x, centre.y);
-    if (made.length === 0) return undefined;
-    const before = activeTab.elements;
-    const after = [...before, ...made];
-    commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
-    emitChange(activeId, before, after);
-    setSelectedId(made[0]!.id);
-    return made;
-  };
-
   const placeBoxed = <T extends BoxedElement>(
     make: (x: number, y: number) => T,
     centre: { x: number; y: number },
@@ -225,7 +200,6 @@ export function useElementHelpers(opts: {
   return {
     addBoxed,
     addBoxedAt,
-    addBoxedGroup,
     memberIdsOf,
     currentSelectionIds,
     selectionPrimary,

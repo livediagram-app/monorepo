@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { IconButton, PaletteTintProvider, type PaletteTint } from './palette-controls';
 import type { ShapeKind } from '@livediagram/diagram';
+import type { PendingDraw } from '@/lib/draw-mode';
 import { MovablePanel } from './MovablePanel';
 import { PaletteTabBar } from './PaletteTabBar';
 import { PaletteDropdown } from './PaletteDropdown';
@@ -48,12 +49,16 @@ type CommandPaletteProps = {
   onAddAnnotation: () => void;
   // Drop a link-card / bookmark at the viewport centre. See spec/40.
   onAddLinkCard: () => void;
-  // Composite "Components" (spec/09): banner (no image), and the image-backed
-  // hero / header / avatar (gated on image upload being available, i.e.
-  // onAddImage present).
+  // Composite "Components" (spec/09): each arms the tap-or-drag draw gesture.
+  // Banner / Callout / Stat row / Process need no image and always show; Hero
+  // / Header (and the Tools-tab Avatar) carry an image, so they're gated on
+  // image upload being available (onAddImage present).
   onAddBanner: () => void;
   onAddHero: () => void;
   onAddHeader: () => void;
+  onAddCallout: () => void;
+  onAddStatRow: () => void;
+  onAddProcess: () => void;
   onAddAvatar: () => void;
   // Spawn an image placeholder + open the picker. Optional so
   // deployments without R2 (or view-role visitors) can omit it; the
@@ -74,10 +79,7 @@ type CommandPaletteProps = {
   // renders pressed so the user can see what's queued for the next
   // canvas drag. Only populated when user-preferences.drawToAdd is
   // on; otherwise null and no button shows the pressed treatment.
-  pendingDraw?:
-    | { type: 'shape'; kind: ShapeKind }
-    | { type: 'text' | 'sticky' | 'image' | 'arrow' | 'freehand' }
-    | null;
+  pendingDraw?: PendingDraw | null;
   // Optional callback fired with the palette's current bounding box
   // whenever it changes (via MovablePanel's ResizeObserver). Canvas
   // wires this up so the Comments + AI panels can stack below the
@@ -122,6 +124,9 @@ export function CommandPalette({
   onAddBanner,
   onAddHero,
   onAddHeader,
+  onAddCallout,
+  onAddStatRow,
+  onAddProcess,
   onAddAvatar,
   onAddImage,
   onAddArrow,
@@ -197,20 +202,42 @@ export function CommandPalette({
     onAddLinkCard();
     onMobileClose?.();
   };
+  // Components arm the draw gesture (tap-or-drag), so they signal onDrawArmed
+  // like shapes do (so the mobile palette reopens once the draw lands) and
+  // close the mobile dock so the canvas is clear to draw on.
   const addBanner = () => {
     onAddBanner();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addHero = () => {
     onAddHero();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addHeader = () => {
     onAddHeader();
+    onDrawArmed?.();
+    onMobileClose?.();
+  };
+  const addCallout = () => {
+    onAddCallout();
+    onDrawArmed?.();
+    onMobileClose?.();
+  };
+  const addStatRow = () => {
+    onAddStatRow();
+    onDrawArmed?.();
+    onMobileClose?.();
+  };
+  const addProcess = () => {
+    onAddProcess();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addAvatar = () => {
     onAddAvatar();
+    onDrawArmed?.();
     onMobileClose?.();
   };
   const addArrow = () => {
@@ -815,8 +842,9 @@ export function CommandPalette({
                   {onAddImage ? (
                     <IconButton
                       label="Add avatar"
-                      description="Avatar. A circular image — double-click it to pick / upload a photo."
+                      description="Avatar. A circular image. Tap to drop or drag to size; double-click it to pick / upload a photo."
                       onClick={addAvatar}
+                      active={pendingDraw?.type === 'component' && pendingDraw.kind === 'avatar'}
                       noTint
                     >
                       <svg
@@ -955,8 +983,9 @@ export function CommandPalette({
                 <div className="grid grid-cols-3 gap-1 px-2 pb-1.5">
                   <IconButton
                     label="Add banner"
-                    description="Banner. A themed title block (accent bar with a title and subtitle) to head your diagram — drops as a group you can recolour, retitle, or ungroup."
+                    description="Banner. A themed title block (accent bar with a title and subtitle) to head your diagram. Tap to drop or drag to size; drops as a group you can recolour, retitle, or ungroup."
                     onClick={addBanner}
+                    active={pendingDraw?.type === 'component' && pendingDraw.kind === 'banner'}
                     noTint
                   >
                     <svg
@@ -975,11 +1004,83 @@ export function CommandPalette({
                       <path d="M9 14.25h6" />
                     </svg>
                   </IconButton>
+                  <IconButton
+                    label="Add callout"
+                    description="Callout. A soft note box with an icon, title, and body for annotating a diagram. Tap to drop or drag to size."
+                    onClick={addCallout}
+                    active={pendingDraw?.type === 'component' && pendingDraw.kind === 'callout'}
+                    noTint
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <rect x="2.5" y="4.5" width="19" height="15" rx="2" />
+                      <circle cx="7" cy="9" r="2" fill="currentColor" stroke="none" />
+                      <path d="M11 8.5h8M6 13h13M6 16h9" />
+                    </svg>
+                  </IconButton>
+                  <IconButton
+                    label="Add stat row"
+                    description="Stat row. Three KPI cards (big number + caption) for dashboards / summaries. Tap to drop or drag to size."
+                    onClick={addStatRow}
+                    active={pendingDraw?.type === 'component' && pendingDraw.kind === 'stat'}
+                    noTint
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <rect x="2" y="6" width="6" height="12" rx="1" />
+                      <rect x="9" y="6" width="6" height="12" rx="1" />
+                      <rect x="16" y="6" width="6" height="12" rx="1" />
+                      <path d="M3.5 10.5h3M10.5 10.5h3M17.5 10.5h3" />
+                    </svg>
+                  </IconButton>
+                  <IconButton
+                    label="Add process steps"
+                    description="Process steps. Numbered circles joined by arrows with captions, for flows. Tap to drop or drag to size."
+                    onClick={addProcess}
+                    active={pendingDraw?.type === 'component' && pendingDraw.kind === 'process'}
+                    noTint
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <circle cx="5" cy="12" r="3" />
+                      <circle cx="12" cy="12" r="3" />
+                      <circle cx="19" cy="12" r="3" />
+                      <path d="M8 12h1M15 12h1" />
+                    </svg>
+                  </IconButton>
                   {onAddImage ? (
                     <IconButton
                       label="Add hero"
-                      description="Hero. A large image with a title and supporting line over a themed overlay — opens the image picker on drop."
+                      description="Hero. A large image with a title and supporting line on a themed caption card. Tap to drop or drag to size; double-click the image to set it."
                       onClick={addHero}
+                      active={pendingDraw?.type === 'component' && pendingDraw.kind === 'hero'}
                       noTint
                     >
                       <svg
@@ -1002,8 +1103,9 @@ export function CommandPalette({
                   {onAddImage ? (
                     <IconButton
                       label="Add header"
-                      description="Header. A website-style bar with a circular avatar, brand title, and nav links — opens the image picker on drop."
+                      description="Header. A website-style bar with a circular avatar, brand title, and nav links. Tap to drop or drag to size; double-click the avatar to set it."
                       onClick={addHeader}
+                      active={pendingDraw?.type === 'component' && pendingDraw.kind === 'header'}
                       noTint
                     >
                       <svg

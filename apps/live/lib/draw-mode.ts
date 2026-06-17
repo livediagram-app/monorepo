@@ -1,4 +1,4 @@
-import type { ShapeKind } from '@livediagram/diagram';
+import type { ComponentKind, ShapeKind } from '@livediagram/diagram';
 
 // Draw-to-size intent. When user-preferences.drawToAdd is on, picking
 // any element from the palette stashes the intent here; the canvas
@@ -17,6 +17,10 @@ export type PendingDraw =
   | { type: 'sticky' }
   | { type: 'image' }
   | { type: 'arrow' }
+  // A composite Component (spec/09): banner / hero / header / callout / stat /
+  // process / avatar. Draws to size exactly like a shape — a tap drops it at
+  // its natural size, a drag scales the whole group to the dragged box.
+  | { type: 'component'; kind: ComponentKind }
   // Pencil intent: the user picked the freehand tool. Unlike the
   // box intents, this one ignores the drawToAdd preference (the
   // pencil is gestural by definition) and the gesture collects a
@@ -39,6 +43,17 @@ function prettyShapeLabel(kind: ShapeKind): string {
   return kind.charAt(0).toUpperCase() + kind.slice(1);
 }
 
+// User-facing component names for the draw-mode banner.
+const COMPONENT_LABELS: Record<ComponentKind, string> = {
+  banner: 'Banner',
+  hero: 'Hero',
+  header: 'Header',
+  callout: 'Callout',
+  stat: 'Stat row',
+  process: 'Process steps',
+  avatar: 'Avatar',
+};
+
 // Banner copy per draw intent. Shape intents include the kind name
 // so the user can see which palette button they queued ("Drag to
 // draw Rectangle"); tools read in plain English ("Drag to draw an
@@ -60,6 +75,8 @@ export function drawBannerMessage(intent: PendingDraw, isMobile: boolean): strin
       return 'Tap to drop or drag to draw image bounds';
     case 'arrow':
       return 'Tap to drop or drag to draw an arrow';
+    case 'component':
+      return `Tap to drop or drag to draw ${COMPONENT_LABELS[intent.kind]}`;
     case 'freehand':
       // Freehand is gestural only (no tap-to-drop): it collects the
       // pointer stream, so it keeps the bare "Drag to draw".
@@ -128,6 +145,13 @@ export function drawIntentCursor(intent: PendingDraw): string {
     // instrument", same as the palette button below.
     return drawCursorFromGlyph(
       `<path d="M14 22 L20 16 L23 19 L17 25 Z M20 16 L22 14 M14 22 L13 25" stroke="black" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none" />`,
+    );
+  }
+  if (intent.type === 'component') {
+    // Stacked blocks (a header bar over a content block) — the same glyph the
+    // Components palette category uses, so the queued cursor matches the tile.
+    return drawCursorFromGlyph(
+      `<rect x="13" y="13" width="11" height="3.5" rx="1" fill="none" stroke="black" stroke-width="1.3" /><rect x="13" y="18" width="11" height="6" rx="1" fill="none" stroke="black" stroke-width="1.3" />`,
     );
   }
   // Arrow: a tiny line with a head at the right end.

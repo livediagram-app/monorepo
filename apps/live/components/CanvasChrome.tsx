@@ -147,6 +147,9 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onAddBanner,
     onAddHero,
     onAddHeader,
+    onAddCallout,
+    onAddStatRow,
+    onAddProcess,
     onAddAvatar,
     onAddSticky,
     onAddText,
@@ -821,6 +824,9 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onAddBanner={onAddBanner}
           onAddHero={onAddHero}
           onAddHeader={onAddHeader}
+          onAddCallout={onAddCallout}
+          onAddStatRow={onAddStatRow}
+          onAddProcess={onAddProcess}
           onAddAvatar={onAddAvatar}
           onAddText={onAddText}
           onAddSticky={onAddSticky}

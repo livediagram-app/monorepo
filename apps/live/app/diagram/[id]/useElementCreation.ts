@@ -3,10 +3,6 @@ import {
   acceptsInlineIcon,
   bestAnchorTowards,
   createAnnotation,
-  createAvatar,
-  createBanner,
-  createHeader,
-  createHero,
   createLinkCard,
   createShape,
   createTable,
@@ -46,7 +42,6 @@ export function useElementCreation(opts: {
     canvasY: number,
     make: (x: number, y: number) => T,
   ) => void;
-  addBoxedGroup: (build: (cx: number, cy: number) => BoxedElement[]) => BoxedElement[] | undefined;
   beginDraw: (intent: PendingDraw) => void;
 }) {
   const {
@@ -59,7 +54,6 @@ export function useElementCreation(opts: {
     setEditingId,
     addBoxed,
     addBoxedAt,
-    addBoxedGroup,
     beginDraw,
   } = opts;
 
@@ -152,52 +146,40 @@ export function useElementCreation(opts: {
     track('Element', 'Added', 'LinkCard');
   };
 
-  // A banner (spec/09): a decorative title block dropped at the viewport
-  // centre as a composite GROUP (accent bar + title + subtitle sharing a
-  // groupId). The accent comes from the active tab's theme (falling back to
-  // brand sky when the theme has no accent, e.g. the Brand theme), mapped here
-  // so the diagram package stays theme-agnostic. createBanner returns the
-  // group in paint order; addBoxedGroup commits + selects it.
+  // Components (spec/09) arm the combined tap-or-drag draw gesture, exactly
+  // like shapes: a tap drops the composite at its natural size on the tap
+  // point, a drag scales the whole group to the dragged box. The build (theme
+  // colours, group assembly, scaling) + telemetry happen on commit in
+  // useShapeDrawing.commitDraw, so these are thin "arm the intent" wrappers.
+  // Avatar rides the same gesture though it lives in the Tools tab (it's a
+  // single circular image, not a composite — see addAvatar / the palette).
   const addBanner = () => {
     if (editsBlocked) return;
-    const accent = getTheme(activeTab.theme).elementStroke ?? '#0284c7';
-    addBoxedGroup((cx, cy) => createBanner(cx, cy, accent));
-    track('Element', 'Added', 'Banner');
+    beginDraw({ type: 'component', kind: 'banner' });
   };
-
-  // The active tab's accent colour for theme-following composites. The theme's
-  // elementStroke is the accent (arrows / new outlines use it); the Basic
-  // theme has none, so fall back to brand sky. Mapped here so the diagram
-  // package's create* factories stay theme-agnostic (they take a colour).
-  const themeAccent = () => getTheme(activeTab.theme).elementStroke ?? '#0284c7';
-
-  // A hero (spec/09): a large image with a title + supporting line on a themed
-  // caption card, dropped as a composite group. The image is an empty
-  // placeholder the user fills later (double-click the image area above the
-  // card) — we deliberately do NOT auto-open the picker.
   const addHero = () => {
     if (editsBlocked) return;
-    addBoxedGroup((cx, cy) => createHero(cx, cy, themeAccent()));
-    track('Element', 'Added', 'Hero');
+    beginDraw({ type: 'component', kind: 'hero' });
   };
-
-  // A header (spec/09): a website-style bar with a circular avatar, brand
-  // title, and nav links, dropped as a composite group. The avatar is an empty
-  // placeholder filled later (double-click it).
   const addHeader = () => {
     if (editsBlocked) return;
-    addBoxedGroup((cx, cy) => createHeader(cx, cy, themeAccent()));
-    track('Element', 'Added', 'Header');
+    beginDraw({ type: 'component', kind: 'header' });
   };
-
-  // An avatar (spec/09): a single circular image element (not a composite — it
-  // lives in the Tools tab beside Image, not Components). Reuses addBoxedGroup
-  // (no colour / size derivation — an avatar is just an image); the user fills
-  // it by double-clicking, like any image placeholder.
+  const addCallout = () => {
+    if (editsBlocked) return;
+    beginDraw({ type: 'component', kind: 'callout' });
+  };
+  const addStatRow = () => {
+    if (editsBlocked) return;
+    beginDraw({ type: 'component', kind: 'stat' });
+  };
+  const addProcess = () => {
+    if (editsBlocked) return;
+    beginDraw({ type: 'component', kind: 'process' });
+  };
   const addAvatar = () => {
     if (editsBlocked) return;
-    addBoxedGroup((cx, cy) => [createAvatar(cx, cy)]);
-    track('Element', 'Added', 'Avatar');
+    beginDraw({ type: 'component', kind: 'avatar' });
   };
 
   const addText = () => {
@@ -320,6 +302,9 @@ export function useElementCreation(opts: {
     addBanner,
     addHero,
     addHeader,
+    addCallout,
+    addStatRow,
+    addProcess,
     addAvatar,
     dropPaletteItem,
     addText,

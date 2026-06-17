@@ -401,6 +401,264 @@ export function createHeader(cx: number, cy: number, accent: string): BoxedEleme
   return [bar, avatar, title, ...links];
 }
 
+// Theme colours a component is built from. `accent` is the theme accent
+// (elementStroke); `surface` is the light element fill; `ink` is the element
+// text colour. The fill/text pair is what every theme guarantees legible
+// together, so components built on a `surface` card with `ink` text stay
+// readable on light AND dark themes (the caller maps theme -> these, keeping
+// this package theme-agnostic).
+export type ComponentColors = { accent: string; surface: string; ink: string };
+
+// Callout / note box (spec/09): a soft surface card with an accent badge, a
+// bold title, and a body line — for annotating a diagram. Composite group.
+export const CALLOUT_WIDTH = 380;
+export const CALLOUT_HEIGHT = 116;
+export function createCallout(cx: number, cy: number, c: ComponentColors): BoxedElement[] {
+  const groupId: ElementId = crypto.randomUUID();
+  const left = cx - CALLOUT_WIDTH / 2;
+  const top = cy - CALLOUT_HEIGHT / 2;
+  const pad = 18;
+  const badge = 30;
+  const box: ShapeElement = {
+    ...createShape('square', left, top),
+    width: CALLOUT_WIDTH,
+    height: CALLOUT_HEIGHT,
+    fillColor: c.surface,
+    strokeColor: c.accent,
+    strokeWidth: 'thin',
+    borderRadius: 'md',
+    groupId,
+  };
+  // Accent badge with an "i" — an info marker built from a circle + its label.
+  const badgeEl: ShapeElement = {
+    ...createShape('circle', left + pad, top + pad),
+    width: badge,
+    height: badge,
+    fillColor: c.accent,
+    strokeColor: c.accent,
+    strokeWidth: 'none',
+    label: 'i',
+    textColor: '#ffffff',
+    textBold: true,
+    textSize: 'sm',
+    aspectLocked: true,
+    groupId,
+  };
+  const textLeft = left + pad + badge + 14;
+  const textWidth = CALLOUT_WIDTH - pad - (pad + badge + 14);
+  const title: TextElement = {
+    ...createText(textLeft, top + pad - 2),
+    width: textWidth,
+    height: 24,
+    label: 'Heads up',
+    textSize: 'md',
+    textBold: true,
+    textAlignX: 'left',
+    textAlignY: 'middle',
+    textColor: c.ink,
+    groupId,
+  };
+  const body: TextElement = {
+    ...createText(textLeft, top + pad + 24),
+    width: textWidth,
+    height: CALLOUT_HEIGHT - pad * 2 - 24,
+    label: 'A short note with some supporting detail.',
+    textSize: 'sm',
+    textAlignX: 'left',
+    textAlignY: 'top',
+    textColor: c.ink,
+    opacity: 0.8,
+    groupId,
+  };
+  return [box, badgeEl, title, body];
+}
+
+// Stat row (spec/09): three KPI cards (big number + caption) side by side, as
+// one composite group. The number pops in the accent; the card is the theme
+// surface with a thin accent border, the caption muted ink.
+export const STAT_CARD_WIDTH = 150;
+export const STAT_CARD_HEIGHT = 96;
+const STAT_GAP = 16;
+const STAT_PRESETS = [
+  { value: '1.2k', caption: 'Users' },
+  { value: '98%', caption: 'Uptime' },
+  { value: '4.7', caption: 'Rating' },
+] as const;
+export const STAT_ROW_WIDTH = STAT_PRESETS.length * STAT_CARD_WIDTH + (STAT_PRESETS.length - 1) * STAT_GAP;
+export function createStatRow(cx: number, cy: number, c: ComponentColors): BoxedElement[] {
+  const groupId: ElementId = crypto.randomUUID();
+  const left = cx - STAT_ROW_WIDTH / 2;
+  const top = cy - STAT_CARD_HEIGHT / 2;
+  const out: BoxedElement[] = [];
+  STAT_PRESETS.forEach((s, i) => {
+    const x = left + i * (STAT_CARD_WIDTH + STAT_GAP);
+    out.push({
+      ...createShape('square', x, top),
+      width: STAT_CARD_WIDTH,
+      height: STAT_CARD_HEIGHT,
+      fillColor: c.surface,
+      strokeColor: c.accent,
+      strokeWidth: 'thin',
+      borderRadius: 'md',
+      groupId,
+    });
+    out.push({
+      ...createText(x + 10, top + 16),
+      width: STAT_CARD_WIDTH - 20,
+      height: 36,
+      label: s.value,
+      textSize: 'lg',
+      textBold: true,
+      textAlignX: 'center',
+      textAlignY: 'middle',
+      textColor: c.accent,
+      groupId,
+    });
+    out.push({
+      ...createText(x + 10, top + 16 + 34),
+      width: STAT_CARD_WIDTH - 20,
+      height: 22,
+      label: s.caption,
+      textSize: 'sm',
+      textAlignX: 'center',
+      textAlignY: 'middle',
+      textColor: c.ink,
+      opacity: 0.7,
+      groupId,
+    });
+  });
+  return out;
+}
+
+// Process steps (spec/09): numbered accent circles joined by arrows, with a
+// caption under each. The circles + captions share a group; the connectors are
+// arrows pinned to the circles, so they follow when the group moves / scales.
+export const PROCESS_STEP_SIZE = 60;
+const PROCESS_STRIDE = PROCESS_STEP_SIZE + 96; // centre-to-centre spacing
+const PROCESS_PRESETS = [
+  { n: '1', caption: 'Plan' },
+  { n: '2', caption: 'Build' },
+  { n: '3', caption: 'Ship' },
+] as const;
+export const PROCESS_WIDTH = (PROCESS_PRESETS.length - 1) * PROCESS_STRIDE + PROCESS_STEP_SIZE;
+export const PROCESS_HEIGHT = PROCESS_STEP_SIZE + 8 + 24;
+export function createProcessSteps(cx: number, cy: number, c: ComponentColors): Element[] {
+  const groupId: ElementId = crypto.randomUUID();
+  const left = cx - PROCESS_WIDTH / 2;
+  const top = cy - PROCESS_HEIGHT / 2;
+  const captionW = 140;
+  const circles: ShapeElement[] = PROCESS_PRESETS.map((s, i) => ({
+    ...createShape('circle', left + i * PROCESS_STRIDE, top),
+    width: PROCESS_STEP_SIZE,
+    height: PROCESS_STEP_SIZE,
+    fillColor: c.accent,
+    strokeColor: c.accent,
+    strokeWidth: 'none',
+    label: s.n,
+    textColor: '#ffffff',
+    textBold: true,
+    textSize: 'lg',
+    aspectLocked: true,
+    groupId,
+  }));
+  const captions: TextElement[] = PROCESS_PRESETS.map((s, i) => ({
+    ...createText(left + i * PROCESS_STRIDE + PROCESS_STEP_SIZE / 2 - captionW / 2, top + PROCESS_STEP_SIZE + 8),
+    width: captionW,
+    height: 24,
+    label: s.caption,
+    textSize: 'sm',
+    textAlignX: 'center',
+    textAlignY: 'middle',
+    textColor: c.ink,
+    groupId,
+  }));
+  const arrows: ArrowElement[] = [];
+  for (let i = 0; i < circles.length - 1; i++) {
+    arrows.push({
+      ...createPinnedArrow(circles[i]!.id, 'e', circles[i + 1]!.id, 'w'),
+      arrowEnds: 'to',
+      strokeColor: c.accent,
+    });
+  }
+  // Arrows first (behind the circles), then circles, then captions.
+  return [...arrows, ...circles, ...captions];
+}
+
+// The component catalogue: kinds, their natural bounds (for the tap-to-drop
+// default size + the drag-to-draw scale denominator), and a single builder so
+// the draw-to-size path (spec/09) treats every component uniformly. Banner /
+// Hero / Header take just the accent; the rest take the full colour triple;
+// Avatar is a lone circular image (its colours are irrelevant).
+export type ComponentKind =
+  | 'banner'
+  | 'hero'
+  | 'header'
+  | 'callout'
+  | 'stat'
+  | 'process'
+  | 'avatar';
+
+export const COMPONENT_SIZE: Record<ComponentKind, { width: number; height: number }> = {
+  banner: { width: BANNER_WIDTH, height: BANNER_HEIGHT },
+  hero: { width: HERO_WIDTH, height: HERO_HEIGHT },
+  header: { width: HEADER_WIDTH, height: HEADER_HEIGHT },
+  callout: { width: CALLOUT_WIDTH, height: CALLOUT_HEIGHT },
+  stat: { width: STAT_ROW_WIDTH, height: STAT_CARD_HEIGHT },
+  process: { width: PROCESS_WIDTH, height: PROCESS_HEIGHT },
+  avatar: { width: AVATAR_SIZE, height: AVATAR_SIZE },
+};
+
+export function createComponent(
+  kind: ComponentKind,
+  cx: number,
+  cy: number,
+  colors: ComponentColors,
+): Element[] {
+  switch (kind) {
+    case 'banner':
+      return createBanner(cx, cy, colors.accent);
+    case 'hero':
+      return createHero(cx, cy, colors.accent);
+    case 'header':
+      return createHeader(cx, cy, colors.accent);
+    case 'callout':
+      return createCallout(cx, cy, colors);
+    case 'stat':
+      return createStatRow(cx, cy, colors);
+    case 'process':
+      return createProcessSteps(cx, cy, colors);
+    case 'avatar':
+      return [createAvatar(cx, cy)];
+  }
+}
+
+// Scale a set of elements uniformly about (ox, oy) — used to drag-to-draw a
+// component to size (spec/09). Boxed elements scale position + size; arrows
+// scale only their FREE endpoints (pinned ones track their elements). Font
+// sizes are unchanged (matches group resize).
+export function scaleElements(elements: Element[], ox: number, oy: number, s: number): Element[] {
+  return elements.map((el) => {
+    if (isBoxed(el)) {
+      return {
+        ...el,
+        x: ox + (el.x - ox) * s,
+        y: oy + (el.y - oy) * s,
+        width: el.width * s,
+        height: el.height * s,
+      };
+    }
+    const from =
+      el.from.kind === 'free'
+        ? { ...el.from, x: ox + (el.from.x - ox) * s, y: oy + (el.from.y - oy) * s }
+        : el.from;
+    const to =
+      el.to.kind === 'free'
+        ? { ...el.to, x: ox + (el.to.x - ox) * s, y: oy + (el.to.y - oy) * s }
+        : el.to;
+    return { ...el, from, to };
+  });
+}
+
 // Spawns an image element in the empty-state (placeholder) shape. The
 // imageId stays null until the user picks an image from the picker;
 // the renderer shows the upload affordance in the meantime.

@@ -90,6 +90,9 @@ export function EditorView() {
     addBanner,
     addHero,
     addHeader,
+    addCallout,
+    addStatRow,
+    addProcess,
     addAvatar,
     dropPaletteItem,
     addTab,
@@ -628,6 +631,9 @@ export function EditorView() {
         onAddBanner={addBanner}
         onAddHero={addHero}
         onAddHeader={addHeader}
+        onAddCallout={addCallout}
+        onAddStatRow={addStatRow}
+        onAddProcess={addProcess}
         onAddAvatar={addAvatar}
         onAddText={addText}
         onAddSticky={addSticky}
