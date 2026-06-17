@@ -162,17 +162,33 @@ function ArrowViewImpl({
     arrow.elbowOffset,
     arrow.curvePoints,
   );
-  // Flowing arrows (spec/09) sync to a shared clock so several arrows — e.g.
-  // all leaving one element — march / travel IN PHASE regardless of when each
-  // was added: a negative animation-delay aligns every loop to the same epoch
-  // (the performance.now() time origin), so same-speed arrows share a period
-  // and a phase. Arrows only render client-side (diagram content loads after
-  // mount), so reading performance.now() in render is hydration-safe.
   const flowFactor = ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'];
-  const flowDelay = (baseMs: number): string => {
-    if (typeof performance === 'undefined') return '0ms';
-    return `-${(performance.now() % (baseMs * flowFactor)).toFixed(0)}ms`;
-  };
+  // Phase-sync flowing arrows (spec/09). CSS animations start counting from
+  // when each element's animation is applied, so arrows whose flow was turned
+  // on at different times drift apart. Pin every flow animation's startTime to
+  // the shared document-timeline origin (0) via the Web Animations API, so all
+  // flowing arrows are measured against ONE clock and same-speed siblings stay
+  // in phase no matter when they were added or last changed. Re-runs on
+  // flow / speed change (a speed change restarts the CSS animation).
+  const flowPathRef = useRef<SVGPathElement>(null);
+  const flowDotRef = useRef<SVGCircleElement>(null);
+  useEffect(() => {
+    if (!arrow.flow || typeof window === 'undefined') return;
+    const raf = window.requestAnimationFrame(() => {
+      const pin = (node: Element | null) =>
+        node?.getAnimations().forEach((a) => {
+          try {
+            a.startTime = 0;
+          } catch {
+            // Some engines disallow setting startTime on a CSS animation; the
+            // arrow still flows, just not phase-locked. Best-effort.
+          }
+        });
+      pin(flowPathRef.current);
+      pin(flowDotRef.current);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [arrow.flow, arrow.flowSpeed]);
   const midpoint = arrowPathMidpoint(
     style,
     from,
@@ -259,6 +275,7 @@ function ArrowViewImpl({
         />
       ) : null}
       <path
+        ref={flowPathRef}
         d={pathD}
         fill="none"
         stroke={baseStroke}
@@ -287,13 +304,9 @@ function ArrowViewImpl({
           {
             pointerEvents: 'none',
             // Flow speed scales the marching-dash duration (see lvd-arrow-flow);
-            // the negative delay phase-aligns it with sibling arrows (700ms base).
-            ...(arrow.flow === 'dashes'
-              ? {
-                  '--lvd-flow-speed': flowFactor,
-                  animationDelay: flowDelay(700),
-                }
-              : {}),
+            // phase-sync across arrows is pinned via the Web Animations API in
+            // the effect below, not animation-delay.
+            ...(arrow.flow === 'dashes' ? { '--lvd-flow-speed': flowFactor } : {}),
           } as React.CSSProperties
         }
       />
@@ -341,6 +354,7 @@ function ArrowViewImpl({
           it rides on top of the line. */}
       {arrow.flow === 'dots' ? (
         <circle
+          ref={flowDotRef}
           r={Math.max(3, strokeWidth * 1.6)}
           fill={baseStroke}
           className="lvd-arrow-dot"
@@ -350,8 +364,6 @@ function ArrowViewImpl({
               offsetRotate: '0deg',
               pointerEvents: 'none',
               '--lvd-flow-speed': flowFactor,
-              // Phase-align the travelling dot with sibling arrows (2000ms base).
-              animationDelay: flowDelay(2000),
             } as React.CSSProperties
           }
           aria-hidden
