@@ -71,8 +71,8 @@ describe('canvasCursorClass', () => {
       'cursor-grab',
     );
   });
-  it('the spotlight tool shows crosshair unless Space is held', () => {
-    expect(canvasCursorClass({ ...rest, canvasTool: 'spotlight' })).toBe('cursor-crosshair');
+  it('the spotlight tool shows the glowing-dot cursor unless Space is held', () => {
+    expect(canvasCursorClass({ ...rest, canvasTool: 'spotlight' })).toBe('cursor-spotlight');
     // Space held suppresses the spotlight cursor, falling through to the rest
     // (pan tool here -> grab) for a temporary pan.
     expect(canvasCursorClass({ ...rest, canvasTool: 'spotlight', spaceHeld: true })).toBe(

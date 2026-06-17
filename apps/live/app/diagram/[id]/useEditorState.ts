@@ -70,6 +70,7 @@ import type { SaveStatus } from '@/components/EditorHeader';
 // AiPanel content is rendered inside Canvas via MovablePanel (spec/25).
 import { useCanvasEraser } from '@/hooks/useCanvasEraser';
 import { useCanvasTool } from '@/hooks/useCanvasTool';
+import type { CanvasTool } from '@/components/CommandPalette';
 import { useCellLinkPicker } from '@/hooks/useCellLinkPicker';
 import { useClerkApiBootstrap } from '@/hooks/useClerkApiBootstrap';
 import { useClipboard } from '@/hooks/useClipboard';
@@ -265,6 +266,19 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
   // selection / its popover / its accordion controls are suppressed. Both
   // are cleared together by `onDeselect` and by clicking any single element.
   const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
+  // User-facing tool picker. Spotlight (spec/09) is a non-editing presenter
+  // mode, so entering it clears any selection: an element selected beforehand
+  // would otherwise keep its handles (dimmed under the shroud) and pop back
+  // on exit. Wraps the tracked selectCanvasTool so every entry point (palette
+  // dropdown, keyboard) routes through it; internal auto-switches keep using
+  // the raw setCanvasTool and are unaffected.
+  const pickCanvasTool = (tool: CanvasTool) => {
+    if (tool === 'spotlight') {
+      setSelectedId(null);
+      setMultiSelectedIds(new Set());
+    }
+    selectCanvasTool(tool);
+  };
   // Local-session participant. Initialised to a stable placeholder so the
   // SSG output and the first client paint agree (Math.random() in a lazy
   // initialiser ran on both server and client and produced different
@@ -1701,7 +1715,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     undo,
     redo,
     copySelection,
-    setCanvasTool: selectCanvasTool,
+    setCanvasTool: pickCanvasTool,
     addShape,
     addText,
     addSticky,
@@ -1952,7 +1966,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setBorderRadiusSelected,
     setBorderStrokeSelected,
     setBorderStyleSelected,
-    setCanvasTool: selectCanvasTool,
+    setCanvasTool: pickCanvasTool,
     setContextMenu,
     setDiagramName,
     setDiagramSharePassword,
