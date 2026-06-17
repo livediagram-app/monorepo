@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { IconButton, PaletteTintProvider, type PaletteTint } from './palette-controls';
 import type { ShapeKind } from '@livediagram/diagram';
 import { MovablePanel } from './MovablePanel';
@@ -125,6 +126,27 @@ export function CommandPalette({
   themeTint,
 }: CommandPaletteProps) {
   const pendingShapeKind = pendingDraw && pendingDraw.type === 'shape' ? pendingDraw.kind : null;
+  // Spotlight (spec/09) is desktop-only: it relies on hover-tracking the
+  // cursor and on left/right-click to resize the light, none of which map to
+  // touch — so drop it from the tool picker on mobile viewports. Reactive
+  // (mirrors MovablePanel) so the option appears / disappears as the viewport
+  // crosses the breakpoint, with a sync initial read to avoid a flicker.
+  const [isMobile, setIsMobile] = useState(isMobileViewportSync);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia?.(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`);
+    if (!mq) return;
+    const onChange = () => setIsMobile(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  // If the viewport shrinks into mobile while Spotlight is active (desktop ->
+  // resize / rotate), revert to Select: the option has just left the picker,
+  // so leaving the tool on spotlight would strand it (the trigger would
+  // mislabel as Select while the canvas stayed shrouded).
+  useEffect(() => {
+    if (isMobile && canvasTool === 'spotlight') onSetCanvasTool('select');
+  }, [isMobile, canvasTool, onSetCanvasTool]);
   // On mobile (dock popover mode) close the palette after adding a
   // shape/tool so the user can draw immediately without dismissing manually.
   // Draw-to-place tools also signal onDrawArmed so the parent can reopen the
@@ -284,7 +306,11 @@ export function CommandPalette({
                 { id: 'select', label: 'Select', shortcut: 'S', icon: <SelectIcon /> },
                 { id: 'pan', label: 'Hand', shortcut: 'P', icon: <PanIcon /> },
                 { id: 'laser', label: 'Laser', shortcut: 'L', icon: <LaserIcon /> },
-                { id: 'spotlight', label: 'Spotlight', icon: <SpotlightIcon /> },
+                // Spotlight is desktop-only (hover + click-to-resize don't map
+                // to touch); omitted on mobile viewports.
+                ...(isMobile
+                  ? []
+                  : [{ id: 'spotlight', label: 'Spotlight', icon: <SpotlightIcon /> }]),
                 { id: 'eraser', label: 'Eraser', shortcut: 'E', icon: <EraserIcon /> },
               ]}
             />
