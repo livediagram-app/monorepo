@@ -57,8 +57,20 @@ export function ContextMenu({
   }, [position.x, position.y]);
 
   useEffect(() => {
+    // Grace window after the menu opens during which outside mouse /
+    // contextmenu events are ignored. A mobile long-press opens this menu
+    // while the finger is still down, and the same gesture then emits a
+    // native `contextmenu` (Android) plus trailing synthetic mouse events
+    // on lift — all within a few hundred ms. Without this guard those land
+    // on the just-mounted dismiss listeners and close the menu the instant
+    // it appears. Desktop right-click is unaffected: its mousedown fires
+    // before the contextmenu that opens the menu, so nothing arrives during
+    // the window. Escape (below) is never graced.
+    const openedAt = performance.now();
+    const GRACE_MS = 400;
     const onMouse = (e: MouseEvent) => {
       if (!ref.current) return;
+      if (performance.now() - openedAt < GRACE_MS) return;
       if (!(e.target instanceof Node) || ref.current.contains(e.target)) return;
       // A mousedown on the button that OPENED this menu must not trip the
       // outside-close, or the button's own click would just reopen it. The
