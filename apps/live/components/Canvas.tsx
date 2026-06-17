@@ -58,6 +58,7 @@ export function Canvas(props: CanvasProps) {
     tabBackgroundPattern,
     tabBackgroundColor,
     tabBackgroundOpacity,
+    tabBackgroundPatternScale,
     tabPatternColor,
     mainRef,
     isPinchingRef,
@@ -790,6 +791,7 @@ export function Canvas(props: CanvasProps) {
           tabBackgroundColor,
           tabPatternColor,
           tabBackgroundOpacity,
+          tabBackgroundPatternScale,
         ),
         // Mirror the inner-wrapper cursor on <main>. The inner div is
         // `absolute inset-0` but its CSS transform scales it (zoom),

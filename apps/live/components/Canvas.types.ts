@@ -37,6 +37,8 @@ export type CanvasProps = {
   tabBackgroundPattern: BackgroundPattern;
   tabBackgroundColor: string;
   tabBackgroundOpacity: number;
+  // Pattern tile scale (the canvas pattern-size slider); defaults to 1.
+  tabBackgroundPatternScale: number;
   tabPatternColor: string;
   // The active tab's default font id (spec/28). Elements without their
   // own `font` render in this; undefined = the editor default. Used by

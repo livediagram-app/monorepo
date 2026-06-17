@@ -20,10 +20,12 @@ export function CanvasStyleControls({
   backgroundColor,
   patternColor,
   backgroundOpacity,
+  backgroundPatternScale,
   onSetBackgroundPattern,
   onSetBackgroundColor,
   onSetPatternColor,
   onSetBackgroundOpacity,
+  onSetBackgroundPatternScale,
   patternColumns = 4,
   showAllPatterns = false,
 }: {
@@ -31,10 +33,12 @@ export function CanvasStyleControls({
   backgroundColor: string;
   patternColor: string;
   backgroundOpacity: number;
+  backgroundPatternScale: number;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
   onSetPatternColor: (color: string) => void;
   onSetBackgroundOpacity: (opacity: number) => void;
+  onSetBackgroundPatternScale: (scale: number) => void;
   // Pattern-grid density. The narrow palette accordion uses 4; the wide
   // dialog passes 7 so the tiles aren't marooned with empty gutters.
   // Discrete values keep the class names static for Tailwind.
@@ -98,6 +102,23 @@ export function CanvasStyleControls({
           step={0.05}
           value={backgroundOpacity}
           onChange={(e) => onSetBackgroundOpacity(parseFloat(e.target.value))}
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
+        />
+      </div>
+      <div className="mt-3 flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Size</p>
+          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
+            {Math.round(backgroundPatternScale * 100)}%
+          </span>
+        </div>
+        <input
+          type="range"
+          min={0.5}
+          max={2}
+          step={0.1}
+          value={backgroundPatternScale}
+          onChange={(e) => onSetBackgroundPatternScale(parseFloat(e.target.value))}
           className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
         />
       </div>

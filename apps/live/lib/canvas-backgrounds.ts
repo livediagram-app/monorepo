@@ -48,12 +48,36 @@ function applyAlpha(color: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// Scale every `<n>px` length in a CSS background-size spec by `k` (the
+// user's pattern-size slider). Only background-size is scaled, never
+// background-position, so the tiles grow / shrink while the pattern still
+// tracks the pan offset at its original phase. Multi-layer specs (comma
+// separated, e.g. graph / engineering) scale every layer.
+function scaleBackgroundSize(spec: string, k: number): string {
+  return spec.replace(/(\d+(?:\.\d+)?)px/g, (_, n: string) => `${Number(n) * k}px`);
+}
+
 export function tabBackgroundStyle(
   pattern: BackgroundPattern,
   offset: { x: number; y: number },
   backgroundColor: string,
   patternColor: string,
   backgroundOpacity = 1,
+  patternScale = 1,
+): React.CSSProperties {
+  const style = patternStyleFor(pattern, offset, backgroundColor, patternColor, backgroundOpacity);
+  if (patternScale !== 1 && typeof style.backgroundSize === 'string') {
+    style.backgroundSize = scaleBackgroundSize(style.backgroundSize, patternScale);
+  }
+  return style;
+}
+
+function patternStyleFor(
+  pattern: BackgroundPattern,
+  offset: { x: number; y: number },
+  backgroundColor: string,
+  patternColor: string,
+  backgroundOpacity: number,
 ): React.CSSProperties {
   const base: React.CSSProperties = {
     backgroundColor: applyAlpha(backgroundColor, backgroundOpacity),

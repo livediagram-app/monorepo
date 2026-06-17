@@ -107,4 +107,26 @@ describe('tabBackgroundStyle', () => {
     expect(style.backgroundColor).toBe('white');
     expect(style.backgroundImage).toContain('black');
   });
+
+  it('pattern scale multiplies the tile size (background-size) but not the pan phase', () => {
+    // The size slider scales every background-size length by the factor.
+    // A single-layer 24px grid at 1.5x becomes 36px; background-position
+    // (the pan phase) must stay untouched so the pattern still tracks pan.
+    const base = tabBackgroundStyle('grid', NO_OFFSET, '#fff', '#000');
+    const scaled = tabBackgroundStyle('grid', NO_OFFSET, '#fff', '#000', 1, 1.5);
+    expect(base.backgroundSize).toBe('24px 24px');
+    expect(scaled.backgroundSize).toBe('36px 36px');
+    expect(scaled.backgroundPosition).toBe(base.backgroundPosition);
+  });
+
+  it('pattern scale applies to every layer of a multi-layer spec (graph)', () => {
+    const scaled = tabBackgroundStyle('graph', NO_OFFSET, '#fff', '#000', 1, 2);
+    expect(scaled.backgroundSize).toBe('48px 48px, 48px 48px');
+  });
+
+  it('pattern scale of 1 leaves the size string identical', () => {
+    const base = tabBackgroundStyle('engineering', NO_OFFSET, '#fff', '#000');
+    const same = tabBackgroundStyle('engineering', NO_OFFSET, '#fff', '#000', 1, 1);
+    expect(same.backgroundSize).toBe(base.backgroundSize);
+  });
 });

@@ -1253,6 +1253,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setBackgroundColor,
     setBackgroundOpacity,
     setPatternColor,
+    setBackgroundPatternScale,
   } = useTabCanvas({
     editsBlocked,
     activeId,
@@ -1944,6 +1945,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     setTableHeaderTextColorSelected,
     setBackgroundColor,
     setBackgroundOpacity,
+    setBackgroundPatternScale,
     setBackgroundPattern,
     setTabFont,
     setTabDefaultTextSize,

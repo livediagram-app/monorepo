@@ -272,6 +272,7 @@ export function EditorView() {
     setRotationSelected,
     setBackgroundColor,
     setBackgroundOpacity,
+    setBackgroundPatternScale,
     setBackgroundPattern,
     setBorderRadiusSelected,
     setBorderStrokeSelected,
@@ -561,6 +562,7 @@ export function EditorView() {
         tabBackgroundPattern={activeTab.backgroundPattern ?? 'grid'}
         tabBackgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
         tabBackgroundOpacity={activeTab.backgroundOpacity ?? 1}
+        tabBackgroundPatternScale={activeTab.backgroundPatternScale ?? 1}
         tabPatternColor={activeTab.patternColor ?? DEFAULT_PATTERN_COLOR}
         tabFont={activeTab.font}
         mainRef={canvasMainRef}
@@ -1080,10 +1082,12 @@ export function EditorView() {
           backgroundColor={activeTab.backgroundColor ?? DEFAULT_BACKGROUND_COLOR}
           patternColor={activeTab.patternColor ?? DEFAULT_PATTERN_COLOR}
           backgroundOpacity={activeTab.backgroundOpacity ?? 1}
+          backgroundPatternScale={activeTab.backgroundPatternScale ?? 1}
           onSetBackgroundPattern={setBackgroundPattern}
           onSetBackgroundColor={setBackgroundColor}
           onSetPatternColor={setPatternColor}
           onSetBackgroundOpacity={setBackgroundOpacity}
+          onSetBackgroundPatternScale={setBackgroundPatternScale}
           themeId={activeTab.theme ?? 'brand'}
           onSetTheme={setTheme}
           onResetElementsToTheme={resetElementsToTheme}

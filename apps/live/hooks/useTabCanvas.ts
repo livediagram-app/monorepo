@@ -303,6 +303,18 @@ export function useTabCanvas(deps: TabCanvasDeps) {
     scheduleCanvasTelemetry('patternColor', 'PatternColor');
   };
 
+  const setBackgroundPatternScale = (scale: number) => {
+    if (editsBlocked) return;
+    commitTabs((ts) =>
+      ts.map((t) => (t.id === activeId ? { ...t, backgroundPatternScale: scale } : t)),
+    );
+    scheduleTabMetaLog(
+      'backgroundPatternScale',
+      `Changed pattern size to ${Math.round(scale * 100)}%`,
+    );
+    scheduleCanvasTelemetry('backgroundPatternScale', 'BackgroundPatternScale');
+  };
+
   return {
     autoAlignTab,
     setTabFont,
@@ -314,5 +326,6 @@ export function useTabCanvas(deps: TabCanvasDeps) {
     setBackgroundColor,
     setBackgroundOpacity,
     setPatternColor,
+    setBackgroundPatternScale,
   };
 }

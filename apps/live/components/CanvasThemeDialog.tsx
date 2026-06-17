@@ -31,10 +31,12 @@ type CanvasThemeDialogProps = {
   backgroundColor: string;
   patternColor: string;
   backgroundOpacity: number;
+  backgroundPatternScale: number;
   onSetBackgroundPattern: (pattern: BackgroundPattern) => void;
   onSetBackgroundColor: (color: string) => void;
   onSetPatternColor: (color: string) => void;
   onSetBackgroundOpacity: (opacity: number) => void;
+  onSetBackgroundPatternScale: (scale: number) => void;
   // Theme. `themeId` is a built-in ThemeId or a custom `custom:<uuid>`
   // id (spec/44), so it's widened to string; onSetTheme applies either.
   themeId: string;
@@ -50,10 +52,12 @@ export function CanvasThemeDialog({
   backgroundColor,
   patternColor,
   backgroundOpacity,
+  backgroundPatternScale,
   onSetBackgroundPattern,
   onSetBackgroundColor,
   onSetPatternColor,
   onSetBackgroundOpacity,
+  onSetBackgroundPatternScale,
   themeId,
   onSetTheme,
   onResetElementsToTheme,
@@ -123,10 +127,12 @@ export function CanvasThemeDialog({
                 backgroundColor={backgroundColor}
                 patternColor={patternColor}
                 backgroundOpacity={backgroundOpacity}
+                backgroundPatternScale={backgroundPatternScale}
                 onSetBackgroundPattern={onSetBackgroundPattern}
                 onSetBackgroundColor={onSetBackgroundColor}
                 onSetPatternColor={onSetPatternColor}
                 onSetBackgroundOpacity={onSetBackgroundOpacity}
+                onSetBackgroundPatternScale={onSetBackgroundPatternScale}
                 patternColumns={7}
                 showAllPatterns
               />
