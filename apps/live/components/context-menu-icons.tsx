@@ -10,6 +10,8 @@
 // each icon picks up the surrounding row's tone (default / danger
 // / disabled) without needing per-icon variants.
 
+import type { ArrowFlow, ElementAnimation } from '@livediagram/diagram';
+
 export function LayerUpIcon() {
   return (
     <svg
@@ -359,4 +361,124 @@ export function LayersGlyph() {
       <path d="m3.5 8 4.5 2.6L12.5 8M3.5 11l4.5 2.6L12.5 11" />
     </svg>
   );
+}
+
+// Animation section glyph (spec/09): a dot with a couple of "motion" arcs,
+// reading as "this element animates".
+export function AnimationMenuGlyph() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="2" />
+      <path d="M11.5 4.5a5 5 0 0 1 0 7" />
+      <path d="M4.5 11.5a5 5 0 0 1 0-7" />
+    </svg>
+  );
+}
+
+// Illustrations for the Animation + Flow context-menu tiles (spec/09), so
+// each option reads at a glance. 16-unit viewBox, currentColor; filled dots
+// set their own fill since the wrapping <svg> is stroke-only.
+function AnimSvg({ children }: { children: React.ReactNode }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {children}
+    </svg>
+  );
+}
+
+// "No animation" — a hollow dot struck through.
+function AnimNoneGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="3.6" />
+      <path d="M4.5 11.5 11.5 4.5" />
+    </AnimSvg>
+  );
+}
+
+// Pulse — a bright core ringed by expanding circles.
+function AnimPulseGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="8" r="4" />
+      <circle cx="8" cy="8" r="6.4" opacity="0.45" />
+    </AnimSvg>
+  );
+}
+
+// Blink — a dot with a twinkle of short ticks.
+function AnimBlinkGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="2.1" fill="currentColor" stroke="none" />
+      <path d="M8 1.4v1.8M8 12.8v1.8M1.4 8h1.8M12.8 8h1.8" />
+    </AnimSvg>
+  );
+}
+
+// Glow — a core with a soft halo.
+function AnimGlowGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="6" fill="currentColor" stroke="none" opacity="0.22" />
+      <circle cx="8" cy="8" r="2.4" fill="currentColor" stroke="none" />
+    </AnimSvg>
+  );
+}
+
+// Flow: marching dashes toward an arrowhead.
+function FlowDashesGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 8 H10.5" strokeDasharray="2.4 2" />
+      <path d="M10 5 13 8 10 11" />
+    </AnimSvg>
+  );
+}
+
+// Flow: a dot travelling a line toward an arrowhead.
+function FlowDotsGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 8 H13.5" />
+      <path d="M10.5 5.5 13.5 8 10.5 10.5" />
+      <circle cx="5.5" cy="8" r="1.7" fill="currentColor" stroke="none" />
+    </AnimSvg>
+  );
+}
+
+// Dispatchers used by the context menu's Animation / Flow tiles. `null` is the
+// "None" option.
+export function AnimationKindGlyph({ kind }: { kind: ElementAnimation | null }) {
+  if (kind === 'pulse') return <AnimPulseGlyph />;
+  if (kind === 'blink') return <AnimBlinkGlyph />;
+  if (kind === 'glow') return <AnimGlowGlyph />;
+  return <AnimNoneGlyph />;
+}
+
+export function FlowKindGlyph({ kind }: { kind: ArrowFlow | null }) {
+  if (kind === 'dashes') return <FlowDashesGlyph />;
+  if (kind === 'dots') return <FlowDotsGlyph />;
+  return <AnimNoneGlyph />;
 }

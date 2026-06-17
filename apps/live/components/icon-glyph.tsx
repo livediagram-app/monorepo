@@ -2,7 +2,7 @@
 // element (BoxedElementView, for shape==='icon') and the palette icon
 // picker so the on-canvas glyph and the picker thumbnail can't drift.
 
-import { getIcon, type IconPrim } from '@/lib/icons';
+import { getIcon, iconAnimationClass, type IconPrim } from '@/lib/icons';
 
 // non-scaling-stroke keeps the line weight constant on screen at any
 // element size / zoom (matching the device-frame shapes), so a big icon
@@ -33,13 +33,12 @@ function Prim({ p }: { p: IconPrim }) {
 // caller owns the <svg> + stroke colour so the same prims render at
 // catalogue thumbnail size and at element size.
 export function IconPrims({ iconId }: { iconId: string | undefined }) {
-  return (
-    <>
-      {getIcon(iconId).prims.map((p, i) => (
-        <Prim key={i} p={p} />
-      ))}
-    </>
-  );
+  const prims = getIcon(iconId).prims.map((p, i) => <Prim key={i} p={p} />);
+  // Animated icons (spec/09) wrap the glyph in a <g> that carries the looping
+  // CSS class (spin / beat / pulse); transform-box: fill-box in globals.css
+  // keeps the spin/scale centred on the glyph.
+  const animClass = iconAnimationClass(iconId);
+  return animClass ? <g className={animClass}>{prims}</g> : <>{prims}</>;
 }
 
 // Full-box icon overlay for a shape==='icon' element. When the icon

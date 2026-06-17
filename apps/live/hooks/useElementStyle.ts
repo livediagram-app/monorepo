@@ -27,9 +27,12 @@ import {
   type ArrowEnds,
   type ArrowheadShape,
   type ArrowheadSize,
+  type AnimationSpeed,
+  type ArrowFlow,
   type ArrowStyle,
   type ArrowThickness,
   type BorderRadius,
+  type ElementAnimation,
   type BorderStroke,
   type BorderStyle,
   type Element,
@@ -458,6 +461,46 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'BorderRadius');
   };
 
+  // Animated elements (spec/09). A looping animation on the selected boxed
+  // element(s); `null` clears it. Arrows take a separate `flow` (marching
+  // dashes / travelling dot).
+  const setAnimationSelected = (value: ElementAnimation | null) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && isBoxed(el) ? { ...el, animation: value ?? undefined } : el,
+      ),
+    );
+    track('Element', 'Changed', 'Animation');
+  };
+  const setArrowFlowSelected = (value: ArrowFlow | null) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'arrow' ? { ...el, flow: value ?? undefined } : el,
+      ),
+    );
+    track('Element', 'Changed', 'ArrowFlow');
+  };
+  const setAnimationSpeedSelected = (value: AnimationSpeed) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && isBoxed(el) ? { ...el, animationSpeed: value } : el)),
+    );
+    track('Element', 'Changed', 'AnimationSpeed');
+  };
+  const setFlowSpeedSelected = (value: AnimationSpeed) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, flowSpeed: value } : el)),
+    );
+    track('Element', 'Changed', 'FlowSpeed');
+  };
+
   // Clear per-element colour overrides so the element falls back to
   // whatever the current tab theme dictates. Each colour field is set
   // to undefined; the history hook snapshots the present so this is
@@ -564,6 +607,10 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setBorderStrokeSelected,
     setBorderStyleSelected,
     setBorderRadiusSelected,
+    setAnimationSelected,
+    setArrowFlowSelected,
+    setAnimationSpeedSelected,
+    setFlowSpeedSelected,
     resetColorsSelected,
   };
 }

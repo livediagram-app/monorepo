@@ -1240,7 +1240,70 @@ export const ICON_CATALOG: IconDef[] = [
       { t: 'line', x1: 5, y1: 15, x2: 19, y2: 15 },
     ],
   },
+  // Animated icons (spec/09 "Animated elements"). Ordinary `icon` glyphs whose
+  // SVG animates via a CSS class (see ANIMATED_ICONS + iconAnimationClass).
+  // The prims are the resting frame, so they read fine frozen (reduced-motion
+  // / export).
+  {
+    id: 'spinner',
+    label: 'Spinner',
+    keywords: 'loading spinner progress wait busy animated spin',
+    // A 3/4 arc — the gap makes the rotation read.
+    prims: [{ t: 'path', d: 'M12 3 a9 9 0 1 0 9 9' }],
+  },
+  {
+    id: 'gear',
+    label: 'Gear',
+    keywords: 'gear cog settings spin processing animated',
+    // Hub + eight radial teeth; spins about its centre.
+    prims: [
+      { t: 'circle', cx: 12, cy: 12, r: 3.5 },
+      { t: 'line', x1: 12, y1: 1.5, x2: 12, y2: 5 },
+      { t: 'line', x1: 12, y1: 19, x2: 12, y2: 22.5 },
+      { t: 'line', x1: 1.5, y1: 12, x2: 5, y2: 12 },
+      { t: 'line', x1: 19, y1: 12, x2: 22.5, y2: 12 },
+      { t: 'line', x1: 4.6, y1: 4.6, x2: 7.1, y2: 7.1 },
+      { t: 'line', x1: 16.9, y1: 16.9, x2: 19.4, y2: 19.4 },
+      { t: 'line', x1: 4.6, y1: 19.4, x2: 7.1, y2: 16.9 },
+      { t: 'line', x1: 16.9, y1: 7.1, x2: 19.4, y2: 4.6 },
+    ],
+  },
+  {
+    id: 'heartbeat',
+    label: 'Heartbeat',
+    keywords: 'heart like love favourite favorite beat pulse animated',
+    prims: [
+      {
+        t: 'path',
+        d: 'M12 20.5 C12 20.5 4 14 4 8.8 A4 4 0 0 1 12 6.2 A4 4 0 0 1 20 8.8 C20 14 12 20.5 12 20.5 Z',
+      },
+    ],
+  },
+  {
+    id: 'signal',
+    label: 'Signal',
+    keywords: 'signal wifi wireless network broadcast live pulse animated',
+    prims: [
+      { t: 'path', d: 'M5 12.5 a9 9 0 0 1 14 0' },
+      { t: 'path', d: 'M8 15.5 a5 5 0 0 1 8 0' },
+      { t: 'circle', cx: 12, cy: 18.5, r: 1 },
+    ],
+  },
 ];
+
+// Animated icons (spec/09): icon id -> the looping CSS animation its glyph
+// gets (spin / beat / pulse). `iconAnimationClass` maps an id to the
+// globals.css class (or undefined for a static icon); IconPrims applies it.
+export const ANIMATED_ICONS: Record<string, 'spin' | 'beat' | 'pulse'> = {
+  spinner: 'spin',
+  gear: 'spin',
+  heartbeat: 'beat',
+  signal: 'pulse',
+};
+export function iconAnimationClass(iconId: string | undefined): string | undefined {
+  const anim = iconId ? ANIMATED_ICONS[iconId] : undefined;
+  return anim ? `lvd-icon-${anim}` : undefined;
+}
 
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved
 // against a newer build): a simple framed question mark so the element
@@ -1282,6 +1345,11 @@ export function searchIcons(query: string): IconDef[] {
 export type IconCategory = { id: string; label: string; iconIds: string[] };
 
 export const ICON_CATEGORIES: IconCategory[] = [
+  {
+    id: 'animated',
+    label: 'Animated',
+    iconIds: ['spinner', 'gear', 'heartbeat', 'signal'],
+  },
   {
     id: 'tech',
     label: 'Tech',

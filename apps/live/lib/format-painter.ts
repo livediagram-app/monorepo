@@ -110,6 +110,9 @@ export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement
     strokeWidth: ext.strokeWidth,
     strokeStyle: ext.strokeStyle,
     borderRadius: ext.borderRadius,
+    // Looping animation (spec/09) is a cosmetic field, so paint it like the rest.
+    animation: source.animation,
+    animationSpeed: source.animationSpeed,
   });
 }
 
@@ -129,6 +132,9 @@ export function paintableArrowFields(source: ArrowElement): Partial<ArrowElement
     arrowheadSize: source.arrowheadSize,
     arrowheadShape: source.arrowheadShape,
     arrowStyle: source.arrowStyle,
+    // Flow animation (spec/09): marching dashes / travelling dot.
+    flow: source.flow,
+    flowSpeed: source.flowSpeed,
     // Label text styling (spec/09). Arrows don't carry alignment /
     // padding (the label rides the line), but do carry the same text
     // switches + size + colour + font as boxed labels.

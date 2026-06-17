@@ -17,16 +17,21 @@ import { useState, type ReactNode } from 'react';
 import {
   arrowheadShapeOf,
   arrowheadSizeOf,
+  ANIMATION_SPEEDS,
+  ARROW_FLOWS,
   arrowStyleOf,
   arrowThicknessOf,
   defaultFillColor,
   defaultStrokeColor,
   defaultTextColor,
+  ELEMENT_ANIMATIONS,
   isBoxed,
   supportsBorderControls,
   supportsBorderRadius,
   supportsColours,
+  type AnimationSpeed,
   type ArrowEnds,
+  type ArrowFlow,
   type ArrowheadShape,
   type ArrowheadSize,
   type ArrowStyle,
@@ -36,6 +41,7 @@ import {
   type BorderStyle,
   type BoxedElement,
   type Element,
+  type ElementAnimation,
   type ShapeKind,
   type TextSize,
 } from '@livediagram/diagram';
@@ -63,6 +69,9 @@ import {
   LayerUpIcon,
   LineGlyph,
   LinkMenuIcon,
+  AnimationKindGlyph,
+  AnimationMenuGlyph,
+  FlowKindGlyph,
   NoteMenuIcon,
   PaletteMenuIcon,
   PointerGlyph,
@@ -133,6 +142,12 @@ type EditorContextMenuProps = {
   onSetBorderStroke: (value: BorderStroke) => void;
   onSetBorderStyle: (value: BorderStyle) => void;
   onSetBorderRadius: (value: BorderRadius) => void;
+  // Animated elements (spec/09): a looping animation on boxed elements, and a
+  // flow animation on arrows. `null` clears it.
+  onSetAnimation: (value: ElementAnimation | null) => void;
+  onSetArrowFlow: (value: ArrowFlow | null) => void;
+  onSetAnimationSpeed: (value: AnimationSpeed) => void;
+  onSetFlowSpeed: (value: AnimationSpeed) => void;
   onResetColors: () => void;
   // Whole-element text formatting — surfaced for arrows that carry a label
   // (boxed elements format via the inline rich-text toolbar instead).
@@ -378,6 +393,36 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   </MenuAccordionSection>
                 </>
               ) : null}
+              {/* Animation (spec/09) — applies to every boxed member of the
+                  selection. */}
+              {boxedSel.length ? (
+                <MenuAccordionSection
+                  title="Animation"
+                  icon={<AnimationMenuGlyph />}
+                  {...sectionProps('m-animation')}
+                >
+                  <AnimationTiles
+                    animation={boxedSel[0]!.animation ?? null}
+                    speed={boxedSel[0]!.animationSpeed ?? 'normal'}
+                    onSet={props.onSetAnimation}
+                    onSetSpeed={props.onSetAnimationSpeed}
+                  />
+                </MenuAccordionSection>
+              ) : null}
+              {arrowSrc ? (
+                <MenuAccordionSection
+                  title="Flow"
+                  icon={<AnimationMenuGlyph />}
+                  {...sectionProps('m-flow')}
+                >
+                  <FlowTiles
+                    flow={arrowSrc.flow ?? null}
+                    speed={arrowSrc.flowSpeed ?? 'normal'}
+                    onSet={props.onSetArrowFlow}
+                    onSetSpeed={props.onSetFlowSpeed}
+                  />
+                </MenuAccordionSection>
+              ) : null}
             </>
           );
         })()}
@@ -466,6 +511,38 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 </SizeButton>
               ))}
             </div>
+          </MenuAccordionSection>
+        ) : null}
+        {/* Animation (spec/09) — a looping attention/status effect on the
+            element. None clears it. */}
+        {boxed ? (
+          <MenuAccordionSection
+            title="Animation"
+            icon={<AnimationMenuGlyph />}
+            {...sectionProps('animation')}
+          >
+            <AnimationTiles
+              animation={(target as { animation?: ElementAnimation }).animation ?? null}
+              speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
+              onSet={props.onSetAnimation}
+              onSetSpeed={props.onSetAnimationSpeed}
+            />
+          </MenuAccordionSection>
+        ) : null}
+        {/* Flow (spec/09) — animate an arrow to show direction: marching dashes
+            or a travelling dot. None clears it. */}
+        {target.type === 'arrow' ? (
+          <MenuAccordionSection
+            title="Flow"
+            icon={<AnimationMenuGlyph />}
+            {...sectionProps('flow')}
+          >
+            <FlowTiles
+              flow={(target as { flow?: ArrowFlow }).flow ?? null}
+              speed={(target as { flowSpeed?: AnimationSpeed }).flowSpeed ?? 'normal'}
+              onSet={props.onSetArrowFlow}
+              onSetSpeed={props.onSetFlowSpeed}
+            />
           </MenuAccordionSection>
         ) : null}
         {/* Link — set / change / remove a link-card's destination (spec/40). */}
@@ -1055,6 +1132,86 @@ function BorderButton({
     <SizeButton active={active} onClick={onClick}>
       {children}
     </SizeButton>
+  );
+}
+
+// Speed presets row (spec/09) — shown under an Animation / Flow control once
+// an animation is picked. Slow / Normal / Fast scale the loop's duration.
+function SpeedTiles({
+  value,
+  onSet,
+}: {
+  value: AnimationSpeed;
+  onSet: (v: AnimationSpeed) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1 px-2 pb-1.5">
+      {ANIMATION_SPEEDS.map((s) => (
+        <SizeButton key={s} active={value === s} onClick={() => onSet(s)}>
+          <span className="text-[10px] capitalize leading-none">{s}</span>
+        </SizeButton>
+      ))}
+    </div>
+  );
+}
+
+// Boxed-element Animation control: an illustrated tile per kind (None / Pulse
+// / Blink / Glow) plus the Speed row once one is active. Shared by the single
+// and multi-select menus.
+function AnimationTiles({
+  animation,
+  speed,
+  onSet,
+  onSetSpeed,
+}: {
+  animation: ElementAnimation | null;
+  speed: AnimationSpeed;
+  onSet: (v: ElementAnimation | null) => void;
+  onSetSpeed: (v: AnimationSpeed) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
+        {([null, ...ELEMENT_ANIMATIONS] as (ElementAnimation | null)[]).map((v) => (
+          <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
+            <span className="flex flex-col items-center gap-0.5">
+              <AnimationKindGlyph kind={v} />
+              <span className="text-[9px] capitalize leading-none">{v ?? 'None'}</span>
+            </span>
+          </SizeButton>
+        ))}
+      </div>
+      {animation ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
+    </>
+  );
+}
+
+// Arrow Flow control: None / Dashes / Dots illustrated, plus the Speed row.
+function FlowTiles({
+  flow,
+  speed,
+  onSet,
+  onSetSpeed,
+}: {
+  flow: ArrowFlow | null;
+  speed: AnimationSpeed;
+  onSet: (v: ArrowFlow | null) => void;
+  onSetSpeed: (v: AnimationSpeed) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-1 px-2 py-1.5">
+        {([null, ...ARROW_FLOWS] as (ArrowFlow | null)[]).map((v) => (
+          <SizeButton key={v ?? 'none'} active={flow === v} onClick={() => onSet(v)}>
+            <span className="flex flex-col items-center gap-0.5">
+              <FlowKindGlyph kind={v} />
+              <span className="text-[9px] capitalize leading-none">{v ?? 'None'}</span>
+            </span>
+          </SizeButton>
+        ))}
+      </div>
+      {flow ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
+    </>
   );
 }
 

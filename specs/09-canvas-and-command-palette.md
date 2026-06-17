@@ -271,6 +271,17 @@ If a boxed element is currently selected, the new element **inherits its width a
 
 Consecutive **icon / table** adds land at the same viewport centre and stack on top of each other; the user sees the auto-selection move to the latest, so they can drag it off or undo without trial-and-error. An earlier draft promised a "staggered default position" to spread adds out, but that was never wired up and the simpler centre-then-let-the-user-move-it path shipped instead.
 
+## Animated elements
+
+Elements can carry a **looping animation** to convey flow, signal status, or draw the room's eye during a presentation. Following the animated-background-pattern model, every animation is **pure CSS** (keyframes in `globals.css`, classes `lvd-anim-*` / `lvd-arrow-*` / `lvd-icon-*`): **deterministic** (nothing broadcast — collaborators see the same loop), **reduced-motion-safe** (a single `@media (prefers-reduced-motion: reduce)` block disables them all, freezing the resting frame), and they **freeze to a static frame on PNG / SVG export**. Animation fields are cosmetic, so the **format painter copies them**.
+
+The **Animation** (boxed) and **Flow** (arrow) context-menu categories show an **illustrated tile per option** (a struck-through dot for None, expanding rings for Pulse, a twinkle for Blink, a haloed core for Glow; dashes-to-arrowhead and dot-on-a-line for the flow modes — `AnimationKindGlyph` / `FlowKindGlyph` in `context-menu-icons.tsx`). Both appear in the **single-element AND the multi-select** menus (a selection-wide setter applies to every matching member). Once an animation is picked, a **Speed** row appears (Slow / Normal / Fast).
+
+- **Boxed-element animation** (`animation?: ElementAnimation` on every boxed type — `'pulse' | 'blink' | 'glow'`). **Pulse** is an attention ping (an expanding ring in the element's accent — its `strokeColor`, exposed to the keyframes as the `--lvd-anim-color` CSS variable), **Blink** a status breathe (opacity), **Glow** a soft halo. Applied as a class on the element wrapper (replacing the one-shot pop-in entry class, since both drive the CSS `animation` property). A small circle with **Blink** + a colour is the "status LED" pattern.
+- **Flowing arrows** (`flow?: ArrowFlow` — `'dashes' | 'dots'`). **Dashes** marches a fixed dash pattern along the path (animated `stroke-dashoffset`, overriding the static stroke style); **Dots** sends a dot travelling the path (CSS `offset-path` following the arrow's `d`). Both show flow direction in data / process diagrams.
+- **Speed** (`animationSpeed?` / `flowSpeed?: AnimationSpeed` — `'slow' | 'normal' | 'fast'`, default normal). A **duration multiplier** (`ANIMATION_SPEED_FACTOR`: slow 2×, normal 1×, fast 0.5×) fed to CSS via `--lvd-anim-speed` / `--lvd-flow-speed`, which each keyframe class multiplies into its own tuned base duration with `calc()` — so every animation keeps its character and speed just scales it.
+- **Animated icons** — ordinary `icon` glyphs whose SVG animates by id (no model field): **Spinner** + **Gear** spin, **Heartbeat** beats, **Signal** pulses. They live in the **Animated** chip of the Icons picker; `ANIMATED_ICONS` / `iconAnimationClass` (`apps/live/lib/icons.ts`) map the id to the glyph's animation class, which `IconPrims` wraps the glyph in. Their prims double as the still frame, so they read fine frozen. (Icon speed is fixed; the Speed control governs the element `animation` / arrow `flow`.)
+
 ## Arrows
 
 Arrows are a second element kind. They link two points on the canvas.

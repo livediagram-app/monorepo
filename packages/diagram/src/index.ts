@@ -60,6 +60,34 @@ export const PADDING_PX: Record<Padding, number> = {
 export type TextAlignX = 'left' | 'center' | 'right';
 export type TextAlignY = 'top' | 'middle' | 'bottom';
 
+// Looping element animation (spec/09 "Animated elements"). Applied to a boxed
+// element as a CSS class; deterministic (no broadcast), reduced-motion-safe
+// (the keyframes are disabled under prefers-reduced-motion), and freezes to a
+// static frame on PNG / SVG export. 'pulse' is an attention ping (an
+// expanding ring), 'blink' a status breathe (opacity), 'glow' a soft halo.
+export type ElementAnimation = 'pulse' | 'blink' | 'glow';
+export const ELEMENT_ANIMATIONS: readonly ElementAnimation[] = ['pulse', 'blink', 'glow'];
+
+// Animation / flow speed (spec/09). A multiplier on each animation's tuned
+// base duration (so every animation keeps its own feel; speed just scales it):
+// 'slow' doubles the duration, 'fast' halves it. Shared by boxed-element
+// animations (`animationSpeed`) and arrow flow (`flowSpeed`); 'normal' = 1 and
+// is the default when unset. The renderer feeds the factor to CSS via a
+// custom property the keyframe classes multiply into their duration.
+export type AnimationSpeed = 'slow' | 'normal' | 'fast';
+export const ANIMATION_SPEEDS: readonly AnimationSpeed[] = ['slow', 'normal', 'fast'];
+export const ANIMATION_SPEED_FACTOR: Record<AnimationSpeed, number> = {
+  slow: 2,
+  normal: 1,
+  fast: 0.5,
+};
+
+// Flowing-arrow animation (spec/09): 'dashes' marches the dash pattern along
+// the connector (CSS stroke-dashoffset), 'dots' sends a dot travelling the
+// path (CSS offset-path). Shows direction of data / process flow.
+export type ArrowFlow = 'dashes' | 'dots';
+export const ARROW_FLOWS: readonly ArrowFlow[] = ['dashes', 'dots'];
+
 export type BackgroundPattern =
   | 'grid'
   | 'blank'
@@ -209,6 +237,10 @@ export type ShapeElement = {
   // Clockwise rotation in degrees about the element's centre. Absent
   // or 0 means unrotated. See specs/09 "Rotation".
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -263,6 +295,10 @@ export type TextElement = {
   // Clockwise rotation in degrees about the element's centre. Absent
   // or 0 means unrotated. See specs/09 "Rotation".
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -367,6 +403,10 @@ export type TableElement = {
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   note?: string;
@@ -410,6 +450,10 @@ export type StickyElement = {
   // Clockwise rotation in degrees about the element's centre. Absent
   // or 0 means unrotated. See specs/09 "Rotation".
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   // Optional plain-text note. Distinct from `commentThread`: one
@@ -496,6 +540,10 @@ export type ImageElement = {
   // Clockwise rotation in degrees about the element's centre. Absent
   // or 0 means unrotated. See specs/09 "Rotation".
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   note?: string;
@@ -560,6 +608,10 @@ export type FreehandElement = {
   // Clockwise rotation in degrees about the element's centre. Absent
   // or 0 means unrotated. See specs/09 "Rotation".
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   link?: ElementLink;
   commentThread?: CommentThread;
   note?: string;
@@ -605,6 +657,10 @@ export type AnnotationElement = {
   // so they stay undefined in practice; declared for parity the same way
   // ImageElement / TableElement declare their always-undefined text fields.
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   aspectLocked?: boolean;
   padding?: Padding;
   textSize?: TextSize;
@@ -659,6 +715,10 @@ export type LinkCardElement = {
   groupId?: ElementId;
   opacity?: number;
   rotation?: number;
+  // Looping CSS animation (spec/09 "Animated elements"). Undefined = static.
+  animation?: ElementAnimation;
+  // Speed of `animation` (multiplier on its base duration). Default 'normal'.
+  animationSpeed?: AnimationSpeed;
   aspectLocked?: boolean;
   commentThread?: CommentThread;
   note?: string;
@@ -750,6 +810,11 @@ export type ArrowElement = {
   // 'angled' renders the connector as an axis-aligned L-shape with
   // a single right-angle bend. See `arrowStyleOf`.
   arrowStyle?: ArrowStyle;
+  // Flowing-arrow animation (spec/09): marching dashes or a travelling dot
+  // along the path to show flow direction. Undefined = static.
+  flow?: ArrowFlow;
+  // Speed of `flow` (multiplier on its base duration). Default 'normal'.
+  flowSpeed?: AnimationSpeed;
   // Optional override for the curve control point. Stored as a
   // delta from the chord midpoint (canvas coords) so the curve
   // translates with the arrow when an endpoint moves: the chord

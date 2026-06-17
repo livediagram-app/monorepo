@@ -284,6 +284,10 @@ export function EditorView() {
     setBorderRadiusSelected,
     setBorderStrokeSelected,
     setBorderStyleSelected,
+    setAnimationSelected,
+    setArrowFlowSelected,
+    setAnimationSpeedSelected,
+    setFlowSpeedSelected,
     setCanvasTool,
     setCommentsPanelPosition,
     setContextMenu,
@@ -1217,6 +1221,10 @@ export function EditorView() {
           onSetBorderStroke={setBorderStrokeSelected}
           onSetBorderStyle={setBorderStyleSelected}
           onSetBorderRadius={setBorderRadiusSelected}
+          onSetAnimation={setAnimationSelected}
+          onSetArrowFlow={setArrowFlowSelected}
+          onSetAnimationSpeed={setAnimationSpeedSelected}
+          onSetFlowSpeed={setFlowSpeedSelected}
           onResetColors={resetColorsSelected}
           onToggleTextBold={() => toggleTextStyleSelected('textBold')}
           onToggleTextItalic={() => toggleTextStyleSelected('textItalic')}

@@ -356,3 +356,138 @@
 .cursor-spotlight [data-element-id] * {
   cursor: none !important;
 }
+
+/*
+ * Animated elements (spec/09 "Animated elements"). Looping, decorative
+ * animations applied as a class on a boxed element's wrapper, an arrow's
+ * path, or an animated icon glyph. Deterministic (CSS only, nothing
+ * broadcast), and every rule below is disabled under prefers-reduced-motion
+ * (see the media query at the end). The `--lvd-anim-color` custom property is
+ * set inline from the element's stroke / text colour so the ring + glow take
+ * the element's accent; it falls back to brand sky.
+ */
+
+/* Boxed-element animations. */
+@keyframes lvd-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 0%, transparent);
+  }
+}
+.lvd-anim-pulse {
+  /* --lvd-anim-speed (set inline from animationSpeed) scales the base
+   * duration: slow = 2, normal = 1, fast = 0.5. Defaults to normal. */
+  animation: lvd-pulse calc(1.8s * var(--lvd-anim-speed, 1)) ease-out infinite;
+}
+
+@keyframes lvd-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.lvd-anim-blink {
+  animation: lvd-blink calc(1.4s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+@keyframes lvd-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 4px 0 color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 65%, transparent);
+  }
+}
+.lvd-anim-glow {
+  animation: lvd-glow calc(2s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+/* Flowing arrows: marching dashes (stroke-dashoffset) + a travelling dot
+ * (offset-path). The dash pattern is set inline on the path so the march
+ * loops seamlessly regardless of the arrow's own stroke style. */
+@keyframes lvd-arrow-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+.lvd-arrow-flow {
+  /* --lvd-flow-speed (set inline from flowSpeed) scales the base duration. */
+  animation: lvd-arrow-flow calc(0.7s * var(--lvd-flow-speed, 1)) linear infinite;
+}
+@keyframes lvd-arrow-dot {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+.lvd-arrow-dot {
+  animation: lvd-arrow-dot calc(2s * var(--lvd-flow-speed, 1)) linear infinite;
+}
+
+/* Animated icon glyphs (spinner / gear spin, heart beat, signal pulse). The
+ * whole SVG glyph animates; transform-origin centre so spins stay put. */
+@keyframes lvd-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lvd-icon-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.18);
+  }
+  45% {
+    transform: scale(0.95);
+  }
+}
+@keyframes lvd-icon-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.lvd-icon-spin,
+.lvd-icon-beat,
+.lvd-icon-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.lvd-icon-spin {
+  animation: lvd-icon-spin 1.1s linear infinite;
+}
+.lvd-icon-beat {
+  animation: lvd-icon-beat 1.1s ease-in-out infinite;
+}
+.lvd-icon-pulse {
+  animation: lvd-icon-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lvd-anim-pulse,
+  .lvd-anim-blink,
+  .lvd-anim-glow,
+  .lvd-arrow-flow,
+  .lvd-arrow-dot,
+  .lvd-icon-spin,
+  .lvd-icon-beat,
+  .lvd-icon-pulse {
+    animation: none;
+  }
+}

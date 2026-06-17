@@ -9,6 +9,7 @@ import {
   acceptsInlineIcon,
   isVotable,
   activeCommentCount,
+  ANIMATION_SPEED_FACTOR,
   BORDER_DASH_ARRAY,
   BORDER_RADIUS_PX,
   BORDER_STROKE_PX,
@@ -504,7 +505,11 @@ function BoxedElementViewImpl({
       onDragOver={acceptsIconDrop ? handleIconDragOver : undefined}
       onDragLeave={acceptsIconDrop ? handleIconDragLeave : undefined}
       onDrop={acceptsIconDrop ? handleIconDrop : undefined}
-      className={`absolute origin-center animate-pop-in touch-none select-none ${variant.className} ${cursor}`}
+      className={`absolute origin-center touch-none select-none ${
+        // A looping animation (spec/09) replaces the one-shot pop-in entry
+        // class (both drive the `animation` property, so they can't co-exist).
+        element.animation ? `lvd-anim-${element.animation}` : 'animate-pop-in'
+      } ${variant.className} ${cursor}`}
       style={{
         left: element.x,
         top: element.y,
@@ -513,6 +518,15 @@ function BoxedElementViewImpl({
         color: textColor,
         opacity: element.opacity ?? 1,
         ...variant.style,
+        // Pulse / glow rings take the element's accent (its stroke, else its
+        // text colour); the speed factor scales the keyframe duration. See
+        // .lvd-anim-* in globals.css.
+        ...(element.animation
+          ? ({
+              '--lvd-anim-color': element.strokeColor ?? textColor,
+              '--lvd-anim-speed': ANIMATION_SPEED_FACTOR[element.animationSpeed ?? 'normal'],
+            } as React.CSSProperties)
+          : {}),
         // Spin about the centre (the wrapper already has origin-center).
         // Handles + anchors are children, so they rotate with the box.
         ...(isRotated ? { transform: `rotate(${rotation}deg)` } : {}),

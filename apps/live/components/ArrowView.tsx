@@ -13,6 +13,7 @@ import {
   arrowheadSizeOf,
   arrowLabelAnchor,
   arrowPathD,
+  ANIMATION_SPEED_FACTOR,
   arrowPathMidpoint,
   arrowStyleOf,
   BORDER_DASH_ARRAY,
@@ -253,12 +254,16 @@ function ArrowViewImpl({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        // Shared dasharray lookup with the shape Border accordion's
-        // pattern row, so "dashed" / "dotted" arrows visually match
-        // their box counterparts. Selection halo above stays solid
-        // for visibility. `null` from the lookup (solid) becomes
-        // undefined so the attribute is omitted.
-        strokeDasharray={BORDER_DASH_ARRAY[arrow.strokeStyle ?? DEFAULT_BORDER_STYLE] ?? undefined}
+        // Flowing arrow (spec/09): 'dashes' marches a fixed dash pattern along
+        // the path (the lvd-arrow-flow class animates stroke-dashoffset),
+        // overriding the static strokeStyle dasharray. Otherwise the shared
+        // dasharray lookup mirrors the shape Border accordion's pattern row.
+        className={arrow.flow === 'dashes' ? 'lvd-arrow-flow' : undefined}
+        strokeDasharray={
+          arrow.flow === 'dashes'
+            ? '8 6'
+            : (BORDER_DASH_ARRAY[arrow.strokeStyle ?? DEFAULT_BORDER_STYLE] ?? undefined)
+        }
         markerStart={
           arrow.arrowEnds === 'from' || arrow.arrowEnds === 'both' ? markerUrl : undefined
         }
@@ -267,7 +272,15 @@ function ArrowViewImpl({
             ? markerUrl
             : undefined
         }
-        style={{ pointerEvents: 'none' }}
+        style={
+          {
+            pointerEvents: 'none',
+            // Flow speed scales the marching-dash duration (see lvd-arrow-flow).
+            ...(arrow.flow === 'dashes'
+              ? { '--lvd-flow-speed': ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'] }
+              : {}),
+          } as React.CSSProperties
+        }
       />
 
       <path
@@ -307,6 +320,26 @@ function ArrowViewImpl({
               : hitCursor,
         }}
       />
+
+      {/* Flowing arrow (spec/09), 'dots': a dot travels the path via CSS
+          offset-path (reduced-motion-safe; freezes on export). Painted last so
+          it rides on top of the line. */}
+      {arrow.flow === 'dots' ? (
+        <circle
+          r={Math.max(3, strokeWidth * 1.6)}
+          fill={baseStroke}
+          className="lvd-arrow-dot"
+          style={
+            {
+              offsetPath: `path('${pathD}')`,
+              offsetRotate: '0deg',
+              pointerEvents: 'none',
+              '--lvd-flow-speed': ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'],
+            } as React.CSSProperties
+          }
+          aria-hidden
+        />
+      ) : null}
 
       {showLabel ? (
         <ArrowLabel
