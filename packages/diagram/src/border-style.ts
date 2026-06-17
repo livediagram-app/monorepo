@@ -10,7 +10,7 @@
 // Arrowhead size / etc).
 export type BorderStroke = 'none' | 'thin' | 'medium' | 'thick' | 'extra-thick';
 export type BorderStyle = 'solid' | 'dashed' | 'dotted' | 'dash-dot' | 'long-dash' | 'dash-dot-dot';
-export type BorderRadius = 'none' | 'sm' | 'md' | 'lg';
+export type BorderRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
 export const BORDER_STROKE_PX: Record<BorderStroke, number> = {
   none: 0,
@@ -52,4 +52,8 @@ export const BORDER_RADIUS_PX: Record<BorderRadius, number> = {
   sm: 4,
   md: 12,
   lg: 24,
+  // Pill / circle: a radius far larger than any element half-size. CSS clamps
+  // border-radius to 50% of the box, so this renders a square as a circle and
+  // a rectangle as a stadium — what a circular avatar (spec/09) needs.
+  full: 9999,
 };

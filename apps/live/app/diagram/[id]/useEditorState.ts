@@ -1366,6 +1366,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addAnnotation,
     addLinkCard,
     addBanner,
+    addHero,
+    addHeader,
+    addAvatar,
     dropPaletteItem,
     addText,
     addSticky,
@@ -1385,6 +1388,7 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addBoxed,
     addBoxedAt,
     addBoxedGroup,
+    openImagePickerFor,
     beginDraw,
   });
 
@@ -1782,6 +1786,9 @@ export function useEditorState(opts: { embed?: boolean } = {}) {
     addAnnotation,
     addLinkCard,
     addBanner,
+    addHero,
+    addHeader,
+    addAvatar,
     dropPaletteItem,
     addTab,
     addText,

@@ -77,16 +77,22 @@ export function useElementHelpers(opts: {
   // commit + activity-log + select path. The builder receives the centre
   // point and lays its elements out around it. Selects the first element,
   // which (sharing the groupId) expands to the whole banner.
-  const addBoxedGroup = (build: (cx: number, cy: number) => BoxedElement[]) => {
-    if (editsBlocked) return;
+  // Returns the inserted elements so callers can act on a member afterwards
+  // (the hero / header / avatar open the image picker for their image
+  // element); undefined when blocked or the builder produced nothing.
+  const addBoxedGroup = (
+    build: (cx: number, cy: number) => BoxedElement[],
+  ): BoxedElement[] | undefined => {
+    if (editsBlocked) return undefined;
     const centre = getViewportCenter();
     const made = build(centre.x, centre.y);
-    if (made.length === 0) return;
+    if (made.length === 0) return undefined;
     const before = activeTab.elements;
     const after = [...before, ...made];
     commitTabs((ts) => patchTab(ts, activeId, { elements: after, templateChosen: true }));
     emitChange(activeId, before, after);
     setSelectedId(made[0]!.id);
+    return made;
   };
 
   const placeBoxed = <T extends BoxedElement>(

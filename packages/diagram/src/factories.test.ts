@@ -4,8 +4,11 @@ import {
   activeCommentCount,
   createAnnotation,
   createArrow,
+  createAvatar,
   createBanner,
   createComment,
+  createHeader,
+  createHero,
   createImage,
   createPinnedArrow,
   createShape,
@@ -122,6 +125,58 @@ describe('boxed-element factories', () => {
     const a = createBanner(0, 0, '#000')[0] as ShapeElement;
     const b = createBanner(0, 0, '#000')[0] as ShapeElement;
     expect(a.groupId).not.toBe(b.groupId);
+  });
+
+  it('createAvatar is a square, circular, cover-fit image (spec/09)', () => {
+    const a = createAvatar(50, 60);
+    expect(a.type).toBe('image');
+    expect(a.width).toBe(a.height); // square so 'full' radius is a perfect circle
+    expect(a).toMatchObject({
+      borderRadius: 'full',
+      objectFit: 'cover',
+      aspectLocked: true,
+      imageId: null,
+    });
+    // Centred on the drop point.
+    expect(a.x + a.width / 2).toBe(50);
+    expect(a.y + a.height / 2).toBe(60);
+  });
+
+  it('createHero is a group: image (cover) + accent overlay + title + body (spec/09)', () => {
+    const els = createHero(100, 50, '#db2777');
+    expect(els).toHaveLength(4);
+    const image = els[0]!;
+    const overlay = els[1]!;
+    const title = els[2]!;
+    const body = els[3]!;
+    // Image paints first (lowest z), fills with cover.
+    expect(image.type).toBe('image');
+    expect(image).toMatchObject({ objectFit: 'cover', borderRadius: 'lg' });
+    // Overlay is the accent at reduced opacity (theme-following + legible text).
+    expect(overlay.type).toBe('shape');
+    expect(overlay).toMatchObject({ fillColor: '#db2777', strokeWidth: 'none' });
+    expect(overlay.opacity).toBeLessThan(1);
+    // White title + body, all sharing one group.
+    expect(title).toMatchObject({ type: 'text', textColor: '#ffffff', textBold: true });
+    expect(body.type).toBe('text');
+    const gid = image.groupId;
+    expect(gid).toBeDefined();
+    expect(els.every((e) => e.groupId === gid)).toBe(true);
+  });
+
+  it('createHeader is a group: accent bar + circular avatar + title + nav links (spec/09)', () => {
+    const els = createHeader(0, 0, '#15803d');
+    // bar + avatar + title + 3 links.
+    expect(els.length).toBe(6);
+    const bar = els[0]!;
+    const avatar = els[1]!;
+    expect(bar).toMatchObject({ type: 'shape', fillColor: '#15803d', strokeWidth: 'none' });
+    expect(avatar).toMatchObject({ type: 'image', borderRadius: 'full', objectFit: 'cover' });
+    // Three nav-link text elements with white text.
+    const links = els.filter((e) => e.type === 'text' && e.textColor === '#ffffff');
+    expect(links.length).toBeGreaterThanOrEqual(3);
+    const gid = bar.groupId;
+    expect(els.every((e) => e.groupId === gid)).toBe(true);
   });
 
   it('factories mint distinct ids on each call', () => {

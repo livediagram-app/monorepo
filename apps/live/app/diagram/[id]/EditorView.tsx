@@ -88,6 +88,9 @@ export function EditorView() {
     addAnnotation,
     addLinkCard,
     addBanner,
+    addHero,
+    addHeader,
+    addAvatar,
     dropPaletteItem,
     addTab,
     addText,
@@ -623,6 +626,9 @@ export function EditorView() {
         onAddAnnotation={addAnnotation}
         onAddLinkCard={addLinkCard}
         onAddBanner={addBanner}
+        onAddHero={addHero}
+        onAddHeader={addHeader}
+        onAddAvatar={addAvatar}
         onAddText={addText}
         onAddSticky={addSticky}
         onAddImage={addImage}

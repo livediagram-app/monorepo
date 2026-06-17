@@ -757,7 +757,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   ))}
                 </BorderGrid>
                 {supportsBorderRadius(target) ? (
-                  <BorderGrid label="Radius" cols={4}>
+                  <BorderGrid label="Radius" cols={5}>
                     {BORDER_RADII.map((v) => (
                       <BorderButton
                         key={v}
@@ -976,7 +976,7 @@ const BORDER_STYLES: readonly BorderStyle[] = [
   'long-dash',
   'dash-dot-dot',
 ];
-const BORDER_RADII: readonly BorderRadius[] = ['none', 'sm', 'md', 'lg'];
+const BORDER_RADII: readonly BorderRadius[] = ['none', 'sm', 'md', 'lg', 'full'];
 
 type IconPos = 'left' | 'right' | 'above' | 'below';
 

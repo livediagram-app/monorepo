@@ -448,6 +448,11 @@ export type ImageElement = {
   // menu action; the element's own width/height drive layout.
   naturalWidth?: number;
   naturalHeight?: number;
+  // How the bitmap fills its box. Defaults to 'contain' (the whole image
+  // shows, letterboxed) which suits screenshots / diagrams. 'cover' fills the
+  // box (cropping) — used by the hero + avatar composites (spec/09) so a
+  // photo fills the area / circle rather than letterboxing.
+  objectFit?: 'cover' | 'contain';
   // Optional alt text (accessibility + future export-to-markdown).
   // Aliases as the element's `label` so the surrounding "boxed
   // element has a label" code paths (change log, Markdown export,

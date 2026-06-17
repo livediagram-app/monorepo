@@ -48,8 +48,13 @@ type CommandPaletteProps = {
   onAddAnnotation: () => void;
   // Drop a link-card / bookmark at the viewport centre. See spec/40.
   onAddLinkCard: () => void;
-  // Drop a decorative banner (composite title block) at the viewport centre.
+  // Composite "Components" (spec/09): banner (no image), and the image-backed
+  // hero / header / avatar (gated on image upload being available, i.e.
+  // onAddImage present).
   onAddBanner: () => void;
+  onAddHero: () => void;
+  onAddHeader: () => void;
+  onAddAvatar: () => void;
   // Spawn an image placeholder + open the picker. Optional so
   // deployments without R2 (or view-role visitors) can omit it; the
   // Image palette entry hides when the handler is missing. See
@@ -115,6 +120,9 @@ export function CommandPalette({
   onAddAnnotation,
   onAddLinkCard,
   onAddBanner,
+  onAddHero,
+  onAddHeader,
+  onAddAvatar,
   onAddImage,
   onAddArrow,
   onBeginFreehand,
@@ -191,6 +199,18 @@ export function CommandPalette({
   };
   const addBanner = () => {
     onAddBanner();
+    onMobileClose?.();
+  };
+  const addHero = () => {
+    onAddHero();
+    onMobileClose?.();
+  };
+  const addHeader = () => {
+    onAddHeader();
+    onMobileClose?.();
+  };
+  const addAvatar = () => {
+    onAddAvatar();
     onMobileClose?.();
   };
   const addArrow = () => {
@@ -881,9 +901,37 @@ export function CommandPalette({
                       <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
                     </svg>
                   </IconButton>
+                </div>
+              ),
+            },
+            {
+              id: 'components',
+              label: 'Components',
+              description:
+                'Ready-made composites that follow the tab theme: Banner, Hero, Header, and a circular Avatar. Each drops as a group you can recolour, retitle, or ungroup.',
+              icon: (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  {/* Stacked blocks — a header bar over a content block — reading
+                      as "pre-assembled section". */}
+                  <rect x="2.5" y="2.5" width="13" height="4" rx="1" />
+                  <rect x="2.5" y="8" width="13" height="7.5" rx="1" />
+                </svg>
+              ),
+              content: (
+                <div className="grid grid-cols-3 gap-1 px-2 pb-1.5">
                   <IconButton
                     label="Add banner"
-                    description="Banner. A decorative title block (accent bar with a title and subtitle) to head your diagram — drops as a group you can recolour, retitle, or ungroup."
+                    description="Banner. A themed title block (accent bar with a title and subtitle) to head your diagram — drops as a group you can recolour, retitle, or ungroup."
                     onClick={addBanner}
                     noTint
                   >
@@ -903,6 +951,78 @@ export function CommandPalette({
                       <path d="M9 14.25h6" />
                     </svg>
                   </IconButton>
+                  {onAddImage ? (
+                    <IconButton
+                      label="Add hero"
+                      description="Hero. A large image with a title and supporting line over a themed overlay — opens the image picker on drop."
+                      onClick={addHero}
+                      noTint
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <rect x="2.5" y="3.5" width="19" height="17" rx="2" />
+                        <path d="M2.5 14l5-4 4 3 3-2.5 7 5.5" />
+                        <path d="M7 17.5h10" strokeWidth="2.2" />
+                      </svg>
+                    </IconButton>
+                  ) : null}
+                  {onAddImage ? (
+                    <IconButton
+                      label="Add header"
+                      description="Header. A website-style bar with a circular avatar, brand title, and nav links — opens the image picker on drop."
+                      onClick={addHeader}
+                      noTint
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <rect x="2.5" y="6.5" width="19" height="11" rx="2" />
+                        <circle cx="7" cy="12" r="2.2" />
+                        <path d="M14 10.5h5M14 13.5h5" />
+                      </svg>
+                    </IconButton>
+                  ) : null}
+                  {onAddImage ? (
+                    <IconButton
+                      label="Add avatar"
+                      description="Avatar. A circular image — opens the image picker on drop."
+                      onClick={addAvatar}
+                      noTint
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <circle cx="12" cy="9.5" r="3" />
+                        <path d="M6.5 19a6 6 0 0 1 11 0" />
+                      </svg>
+                    </IconButton>
+                  ) : null}
                 </div>
               ),
             },

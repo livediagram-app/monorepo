@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import type { ImageElement } from '@livediagram/diagram';
+import { BORDER_RADIUS_PX, type ImageElement } from '@livediagram/diagram';
 import { useImageBlobUrl } from '@/hooks/useImageBlobUrl';
 
 // Renders the bitmap (or upload placeholder) for an ImageElement.
@@ -51,6 +51,16 @@ function ImageElementViewImpl({
   const { imageId } = element;
   const state = useImageBlobUrl(ownerId, imageId, { diagramId, shareCode });
 
+  // Corner radius follows the element's borderRadius so a circular avatar
+  // ('full' → clamped to 50%) and a rounded hero ('lg') clip correctly;
+  // defaults to the old 4px `rounded` look. Applied inline (overriding the
+  // base `rounded` class) on every state so the placeholder + skeleton match
+  // the final shape. `objectFit` defaults to 'contain' (whole image shows);
+  // the hero + avatar set 'cover' so a photo fills the box / circle.
+  const radius = element.borderRadius !== undefined ? BORDER_RADIUS_PX[element.borderRadius] : 4;
+  const radiusStyle = { borderRadius: radius };
+  const fit = element.objectFit ?? 'contain';
+
   if (!imageId) {
     // Empty placeholder. Double-click opens the picker for editors
     // so a single click (and the drag that follows it) can still
@@ -60,7 +70,7 @@ function ImageElementViewImpl({
       'flex h-full w-full flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-white';
     if (!canOpenPicker) {
       return (
-        <div className={placeholderBase}>
+        <div className={placeholderBase} style={radiusStyle}>
           <ImageIcon />
           <span className="text-[10px] font-medium">No image</span>
         </div>
@@ -69,6 +79,7 @@ function ImageElementViewImpl({
     return (
       <div
         className={`${placeholderBase} cursor-pointer transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10 dark:hover:text-brand-200`}
+        style={radiusStyle}
       >
         <ImageIcon />
         <span className="text-[10px] font-medium">Double-click to upload</span>
@@ -78,7 +89,10 @@ function ImageElementViewImpl({
 
   if (state.status === 'broken') {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-1 rounded border border-rose-200 bg-rose-50/60 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
+      <div
+        className="flex h-full w-full flex-col items-center justify-center gap-1 rounded border border-rose-200 bg-rose-50/60 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300"
+        style={radiusStyle}
+      >
         <BrokenIcon />
         <span className="text-[10px] font-medium">Image unavailable</span>
       </div>
@@ -88,7 +102,12 @@ function ImageElementViewImpl({
   if (state.status !== 'ready') {
     // Loading skeleton: keep the empty box from flashing as "no
     // image" while the bytes are in flight.
-    return <div className="h-full w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />;
+    return (
+      <div
+        className="h-full w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800"
+        style={radiusStyle}
+      />
+    );
   }
 
   return (
@@ -103,13 +122,13 @@ function ImageElementViewImpl({
     // any transparent areas and inverts the apparent contrast of
     // anti-aliased edges. Image element content is independent of
     // editor theme by convention (matches GitHub / Notion).
-    <div className="h-full w-full overflow-hidden rounded bg-white">
+    <div className="h-full w-full overflow-hidden rounded bg-white" style={radiusStyle}>
       <img
         src={state.src}
         alt={element.alt ?? ''}
         draggable={false}
         className="block h-full w-full select-none"
-        style={{ objectFit: 'contain' }}
+        style={{ objectFit: fit }}
       />
     </div>
   );

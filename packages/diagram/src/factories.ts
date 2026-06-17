@@ -251,6 +251,148 @@ export function createBanner(cx: number, cy: number, accent: string): BoxedEleme
   return [bar, title, subtitle];
 }
 
+// Avatar (spec/09): a circular image. Just an ImageElement that's square +
+// aspect-locked with a 'full' corner radius (CSS clamps that to a circle).
+// Built to back the Header component but also useful standalone. Centred on
+// (cx, cy); imageId is null until the picker fills it.
+export const AVATAR_SIZE = 96;
+export function createAvatar(cx: number, cy: number): ImageElement {
+  return {
+    ...createImage(cx - AVATAR_SIZE / 2, cy - AVATAR_SIZE / 2),
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: 'full',
+    objectFit: 'cover',
+    aspectLocked: true,
+  };
+}
+
+// Hero (spec/09): a large image with a title + supporting line over a tinted
+// overlay, as a composite GROUP (image + overlay + title + body sharing one
+// groupId). The overlay is the theme accent at half opacity so the hero
+// follows the tab theme while keeping the white text legible; `accent` is
+// supplied by the caller (theme -> colour mapping stays in the app). Returned
+// in paint order: image, then overlay, then text on top.
+export const HERO_WIDTH = 520;
+export const HERO_HEIGHT = 300;
+export function createHero(cx: number, cy: number, accent: string): BoxedElement[] {
+  const groupId: ElementId = crypto.randomUUID();
+  const left = cx - HERO_WIDTH / 2;
+  const top = cy - HERO_HEIGHT / 2;
+  const inset = 36;
+  const image: ImageElement = {
+    ...createImage(left, top),
+    width: HERO_WIDTH,
+    height: HERO_HEIGHT,
+    borderRadius: 'lg',
+    objectFit: 'cover',
+    groupId,
+  };
+  const overlay: ShapeElement = {
+    ...createShape('square', left, top),
+    width: HERO_WIDTH,
+    height: HERO_HEIGHT,
+    fillColor: accent,
+    strokeColor: accent,
+    strokeWidth: 'none',
+    borderRadius: 'lg',
+    opacity: 0.5,
+    groupId,
+  };
+  const title: TextElement = {
+    ...createText(left + inset, top + HERO_HEIGHT / 2 - 46),
+    width: HERO_WIDTH - inset * 2,
+    height: 46,
+    label: 'Hero title',
+    textSize: 'lg',
+    textBold: true,
+    textAlignX: 'center',
+    textAlignY: 'middle',
+    textColor: '#ffffff',
+    groupId,
+  };
+  const body: TextElement = {
+    ...createText(left + inset, top + HERO_HEIGHT / 2 + 6),
+    width: HERO_WIDTH - inset * 2,
+    height: 56,
+    label: 'A short supporting line of text over the image.',
+    textSize: 'sm',
+    textAlignX: 'center',
+    textAlignY: 'middle',
+    textColor: '#ffffff',
+    opacity: 0.92,
+    groupId,
+  };
+  return [image, overlay, title, body];
+}
+
+// Header (spec/09): a website-style header bar as a composite GROUP — an
+// accent bar with a circular avatar on the left, a brand/logo title beside
+// it, and a row of nav links on the right, all sharing one groupId. Follows
+// the tab theme via the accent bar + white text. Returned in paint order
+// (bar first). Centred on (cx, cy).
+export const HEADER_WIDTH = 640;
+export const HEADER_HEIGHT = 84;
+const HEADER_LINKS = ['Home', 'About', 'Contact'] as const;
+export function createHeader(cx: number, cy: number, accent: string): BoxedElement[] {
+  const groupId: ElementId = crypto.randomUUID();
+  const left = cx - HEADER_WIDTH / 2;
+  const top = cy - HEADER_HEIGHT / 2;
+  const pad = 22;
+  const avatarSize = 48;
+  const bar: ShapeElement = {
+    ...createShape('square', left, top),
+    width: HEADER_WIDTH,
+    height: HEADER_HEIGHT,
+    fillColor: accent,
+    strokeColor: accent,
+    strokeWidth: 'none',
+    borderRadius: 'md',
+    groupId,
+  };
+  const avatar: ImageElement = {
+    ...createImage(left + pad, top + (HEADER_HEIGHT - avatarSize) / 2),
+    width: avatarSize,
+    height: avatarSize,
+    borderRadius: 'full',
+    objectFit: 'cover',
+    aspectLocked: true,
+    groupId,
+  };
+  const titleHeight = 30;
+  const title: TextElement = {
+    ...createText(left + pad + avatarSize + 14, top + (HEADER_HEIGHT - titleHeight) / 2),
+    width: 200,
+    height: titleHeight,
+    label: 'Brand',
+    textSize: 'md',
+    textBold: true,
+    textAlignX: 'left',
+    textAlignY: 'middle',
+    textColor: '#ffffff',
+    groupId,
+  };
+  const linkW = 92;
+  const linkH = 28;
+  const gap = 4;
+  const linkY = top + (HEADER_HEIGHT - linkH) / 2;
+  const rowWidth = HEADER_LINKS.length * linkW + (HEADER_LINKS.length - 1) * gap;
+  const rowStart = left + HEADER_WIDTH - pad - rowWidth;
+  const links: TextElement[] = HEADER_LINKS.map((label, i) => ({
+    ...createText(rowStart + i * (linkW + gap), linkY),
+    width: linkW,
+    height: linkH,
+    label,
+    textSize: 'sm',
+    textAlignX: 'center',
+    textAlignY: 'middle',
+    textColor: '#ffffff',
+    opacity: 0.9,
+    groupId,
+  }));
+  return [bar, avatar, title, ...links];
+}
+
 // Spawns an image element in the empty-state (placeholder) shape. The
 // imageId stays null until the user picks an image from the picker;
 // the renderer shows the upload affordance in the meantime.
