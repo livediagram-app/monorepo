@@ -484,7 +484,8 @@ const STAT_PRESETS = [
   { value: '98%', caption: 'Uptime' },
   { value: '4.7', caption: 'Rating' },
 ] as const;
-export const STAT_ROW_WIDTH = STAT_PRESETS.length * STAT_CARD_WIDTH + (STAT_PRESETS.length - 1) * STAT_GAP;
+export const STAT_ROW_WIDTH =
+  STAT_PRESETS.length * STAT_CARD_WIDTH + (STAT_PRESETS.length - 1) * STAT_GAP;
 export function createStatRow(cx: number, cy: number, c: ComponentColors): BoxedElement[] {
   const groupId: ElementId = crypto.randomUUID();
   const left = cx - STAT_ROW_WIDTH / 2;
@@ -562,7 +563,10 @@ export function createProcessSteps(cx: number, cy: number, c: ComponentColors): 
     groupId,
   }));
   const captions: TextElement[] = PROCESS_PRESETS.map((s, i) => ({
-    ...createText(left + i * PROCESS_STRIDE + PROCESS_STEP_SIZE / 2 - captionW / 2, top + PROCESS_STEP_SIZE + 8),
+    ...createText(
+      left + i * PROCESS_STRIDE + PROCESS_STEP_SIZE / 2 - captionW / 2,
+      top + PROCESS_STEP_SIZE + 8,
+    ),
     width: captionW,
     height: 24,
     label: s.caption,

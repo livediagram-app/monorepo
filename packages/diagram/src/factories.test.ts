@@ -117,7 +117,12 @@ describe('boxed-element factories', () => {
     expect(bar).toMatchObject({ fillColor: '#db2777', strokeWidth: 'none', borderRadius: 'lg' });
 
     // Title + subtitle are white, centred text; subtitle is smaller + muted.
-    expect(title).toMatchObject({ type: 'text', textColor: '#ffffff', textBold: true, textSize: 'lg' });
+    expect(title).toMatchObject({
+      type: 'text',
+      textColor: '#ffffff',
+      textBold: true,
+      textSize: 'lg',
+    });
     expect(title.textAlignX).toBe('center');
     expect(subtitle).toMatchObject({ type: 'text', textColor: '#ffffff', textSize: 'sm' });
     expect(subtitle.opacity).toBeLessThan(1);
@@ -191,7 +196,12 @@ describe('boxed-element factories', () => {
     const box = els[0]!;
     const badge = els[1]!;
     expect(box).toMatchObject({ type: 'shape', fillColor: '#ffe4e6', strokeColor: '#be123c' });
-    expect(badge).toMatchObject({ type: 'shape', shape: 'circle', fillColor: '#be123c', label: 'i' });
+    expect(badge).toMatchObject({
+      type: 'shape',
+      shape: 'circle',
+      fillColor: '#be123c',
+      label: 'i',
+    });
     const gid = box.groupId;
     expect(gid).toBeDefined();
     expect(els.every((e) => e.groupId === gid)).toBe(true);
@@ -236,7 +246,11 @@ describe('boxed-element factories', () => {
   });
 
   it('scaleElements scales boxed position + size about the origin, 2x', () => {
-    const [shape] = createComponent('banner', 0, 0, { accent: '#000', surface: '#fff', ink: '#111' });
+    const [shape] = createComponent('banner', 0, 0, {
+      accent: '#000',
+      surface: '#fff',
+      ink: '#111',
+    });
     const before = shape!;
     if (before.type === 'arrow') throw new Error('expected boxed');
     const scaled = scaleElements([before], 0, 0, 2)[0]!;
