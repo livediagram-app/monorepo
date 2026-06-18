@@ -151,7 +151,9 @@ export function MenuAccordionSection({
         className="flex w-full cursor-pointer items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
       >
         <span className="flex items-center gap-2">
-          {icon}
+          {/* Fixed-width, centred icon slot so every category title starts at
+              the same x regardless of the glyph's own width. */}
+          <span className="flex w-4 shrink-0 items-center justify-center">{icon}</span>
           {title}
         </span>
         <svg

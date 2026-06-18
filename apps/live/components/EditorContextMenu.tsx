@@ -268,8 +268,45 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             | undefined;
           const arrowSrc = arrowSel[0];
           if (!colourable && !borderableSel && !arrowSel.length) return null;
+          // Same grouping as the single-element menu: appearance (Animation /
+          // Colours / Border) · content (Line / Pointer / Text). Layer / Shape /
+          // Rotation / Icon / Image / Table / Link / Collaborate don't apply to a
+          // multi-selection, so those groups stay excluded.
+          const showMultiAppearance =
+            boxedSel.length > 0 || !!arrowSrc || colourable || borderableSel;
+          const showMultiContent = !!arrowSrc || !!textSrc;
           return (
             <>
+              {/* Animation (spec/09) — applies to every boxed member of the
+                  selection. */}
+              {boxedSel.length ? (
+                <MenuAccordionSection
+                  title="Animation"
+                  icon={<AnimationMenuGlyph />}
+                  {...sectionProps('m-animation')}
+                >
+                  <AnimationTiles
+                    animation={boxedSel[0]!.animation ?? null}
+                    speed={boxedSel[0]!.animationSpeed ?? 'normal'}
+                    onSet={props.onSetAnimation}
+                    onSetSpeed={props.onSetAnimationSpeed}
+                  />
+                </MenuAccordionSection>
+              ) : null}
+              {arrowSrc ? (
+                <MenuAccordionSection
+                  title="Animation"
+                  icon={<AnimationMenuGlyph />}
+                  {...sectionProps('m-flow')}
+                >
+                  <FlowTiles
+                    flow={arrowSrc.flow ?? null}
+                    speed={arrowSrc.flowSpeed ?? 'normal'}
+                    onSet={props.onSetArrowFlow}
+                    onSetSpeed={props.onSetFlowSpeed}
+                  />
+                </MenuAccordionSection>
+              ) : null}
               {colourable ? (
                 <MenuAccordionSection
                   title="Colours"
@@ -308,35 +345,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   ) : null}
                 </MenuAccordionSection>
               ) : null}
-              {textSrc ? (
-                <MenuAccordionSection
-                  title="Text"
-                  icon={<TextGlyph />}
-                  {...sectionProps('m-text-size')}
-                >
-                  <p className="px-3 pb-1 pt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                    Size
-                  </p>
-                  <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
-                    {(
-                      [
-                        ['scale', <ScaleIcon key="s" />],
-                        ['sm', <DotsIcon key="1" count={1} />],
-                        ['md', <DotsIcon key="2" count={2} />],
-                        ['lg', <DotsIcon key="3" count={3} />],
-                      ] as const
-                    ).map(([size, glyph]) => (
-                      <SizeButton
-                        key={size}
-                        active={(textSrc as { textSize?: TextSize }).textSize === size}
-                        onClick={() => props.onSetTextSize(size)}
-                      >
-                        {glyph}
-                      </SizeButton>
-                    ))}
-                  </div>
-                </MenuAccordionSection>
-              ) : null}
               {borderableSel ? (
                 <MenuAccordionSection
                   title="Border"
@@ -369,6 +377,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   </div>
                 </MenuAccordionSection>
               ) : null}
+              {/* ── Content group: Line / Pointer / Text ── */}
+              {showMultiContent && showMultiAppearance ? <ContextMenuDivider /> : null}
               {arrowSrc ? (
                 <>
                   <MenuAccordionSection
@@ -405,34 +415,33 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   </MenuAccordionSection>
                 </>
               ) : null}
-              {/* Animation (spec/09) — applies to every boxed member of the
-                  selection. */}
-              {boxedSel.length ? (
+              {textSrc ? (
                 <MenuAccordionSection
-                  title="Animation"
-                  icon={<AnimationMenuGlyph />}
-                  {...sectionProps('m-animation')}
+                  title="Text"
+                  icon={<TextGlyph />}
+                  {...sectionProps('m-text-size')}
                 >
-                  <AnimationTiles
-                    animation={boxedSel[0]!.animation ?? null}
-                    speed={boxedSel[0]!.animationSpeed ?? 'normal'}
-                    onSet={props.onSetAnimation}
-                    onSetSpeed={props.onSetAnimationSpeed}
-                  />
-                </MenuAccordionSection>
-              ) : null}
-              {arrowSrc ? (
-                <MenuAccordionSection
-                  title="Animation"
-                  icon={<AnimationMenuGlyph />}
-                  {...sectionProps('m-flow')}
-                >
-                  <FlowTiles
-                    flow={arrowSrc.flow ?? null}
-                    speed={arrowSrc.flowSpeed ?? 'normal'}
-                    onSet={props.onSetArrowFlow}
-                    onSetSpeed={props.onSetFlowSpeed}
-                  />
+                  <p className="px-3 pb-1 pt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                    Size
+                  </p>
+                  <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
+                    {(
+                      [
+                        ['scale', <ScaleIcon key="s" />],
+                        ['sm', <DotsIcon key="1" count={1} />],
+                        ['md', <DotsIcon key="2" count={2} />],
+                        ['lg', <DotsIcon key="3" count={3} />],
+                      ] as const
+                    ).map(([size, glyph]) => (
+                      <SizeButton
+                        key={size}
+                        active={(textSrc as { textSize?: TextSize }).textSize === size}
+                        onClick={() => props.onSetTextSize(size)}
+                      >
+                        {glyph}
+                      </SizeButton>
+                    ))}
+                  </div>
                 </MenuAccordionSection>
               ) : null}
             </>
@@ -472,6 +481,21 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     // another common kind in place.
     const isProgress = target.type === 'shape' && isProgressShape(target.shape);
     const morphable = target.type === 'shape' && !isIcon && target.shape !== 'frame' && !isProgress;
+    // Consistent category grouping (spec/09): placement (Layer / Shape /
+    // Rotation) · appearance (Progress / Animation / Colours / Border) ·
+    // content (Line / Pointer / Text / Icon / Image / Table / Link) ·
+    // collaboration. A group divider renders above a group only when that
+    // group has a visible section, so an absent group never leaves a dangling
+    // rule. Placement always shows (Layer is unconditional), so each later
+    // group's divider just gates on the group's own visibility.
+    const showAppearanceGroup = boxed || target.type === 'arrow';
+    const showContentGroup =
+      target.type === 'arrow' ||
+      target.type === 'table' ||
+      target.type === 'image' ||
+      target.type === 'link-card' ||
+      hasInlineIcon;
+    const showCollaborateGroup = boxed;
     return (
       <ContextMenu position={position} onClose={onClose} flush anchorBottom={anchorBottom}>
         {/* Layer — pinned FIRST in the menu (before the type-specific
@@ -550,24 +574,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </div>
           </MenuAccordionSection>
         ) : null}
-        {/* Progress (spec/46) — the percentage + how the fill animates. Only
-            for progress bars / rings. */}
-        {isProgress ? (
-          <MenuAccordionSection
-            title="Progress"
-            icon={<ProgressMenuGlyph />}
-            {...sectionProps('progress')}
-          >
-            <ProgressRow
-              value={(target as ShapeElement).progress ?? 50}
-              onChange={props.onSetProgress}
-            />
-            <ProgressAnimTiles
-              anim={(target as ShapeElement).progressAnim ?? null}
-              onSet={props.onSetProgressAnim}
-            />
-          </MenuAccordionSection>
-        ) : null}
         {/* Rotation — fixed snap angles. Each tile previews the orientation
             (an upright marker rotated by the angle) so the effect is legible
             before clicking; 0° resets to upright. */}
@@ -591,6 +597,26 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 </SizeButton>
               ))}
             </div>
+          </MenuAccordionSection>
+        ) : null}
+        {/* ── Appearance group: Progress / Animation / Colours / Border ── */}
+        {showAppearanceGroup ? <ContextMenuDivider /> : null}
+        {/* Progress (spec/46) — the percentage + how the fill animates. Only
+            for progress bars / rings. */}
+        {isProgress ? (
+          <MenuAccordionSection
+            title="Progress"
+            icon={<ProgressMenuGlyph />}
+            {...sectionProps('progress')}
+          >
+            <ProgressRow
+              value={(target as ShapeElement).progress ?? 50}
+              onChange={props.onSetProgress}
+            />
+            <ProgressAnimTiles
+              anim={(target as ShapeElement).progressAnim ?? null}
+              onSet={props.onSetProgressAnim}
+            />
           </MenuAccordionSection>
         ) : null}
         {/* Animation (spec/09) — a looping attention/status effect on the
@@ -633,208 +659,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               speed={(target as { flowSpeed?: AnimationSpeed }).flowSpeed ?? 'normal'}
               onSet={props.onSetArrowFlow}
               onSetSpeed={props.onSetFlowSpeed}
-            />
-          </MenuAccordionSection>
-        ) : null}
-        {/* Link — set / change / remove a link-card's destination (spec/40). */}
-        {target.type === 'link-card' ? (
-          <MenuAccordionSection title="Link" icon={<LinkMenuIcon />} {...sectionProps('link')}>
-            {hasLink ? (
-              <MenuTileGrid cols={2}>
-                <MenuTile
-                  icon={<LinkMenuIcon />}
-                  label="Change Link"
-                  onClick={() => {
-                    props.onLinkElement(target.id);
-                    onClose();
-                  }}
-                />
-                <MenuTile
-                  icon={<RemoveIconGlyph />}
-                  label="Remove Link"
-                  onClick={() => {
-                    props.onRemoveLink();
-                    onClose();
-                  }}
-                />
-              </MenuTileGrid>
-            ) : (
-              <div className="px-2 py-1.5">
-                <MenuTile
-                  icon={<LinkMenuIcon />}
-                  label="Set Link"
-                  onClick={() => {
-                    props.onLinkElement(target.id);
-                    onClose();
-                  }}
-                />
-              </div>
-            )}
-          </MenuAccordionSection>
-        ) : null}
-        {/* Image — pick / change / clear the bitmap (spec/19). */}
-        {target.type === 'image' ? (
-          <MenuAccordionSection title="Image" icon={<ImageGlyph />} {...sectionProps('image')}>
-            {hasImage ? (
-              <MenuTileGrid cols={2}>
-                <MenuTile
-                  icon={<ImageGlyph />}
-                  label="Change Image"
-                  onClick={() => {
-                    props.onOpenImagePicker(target.id);
-                    onClose();
-                  }}
-                />
-                <MenuTile
-                  icon={<RemoveIconGlyph />}
-                  label="Remove Image"
-                  onClick={() => {
-                    props.onRemoveImage(target.id);
-                    onClose();
-                  }}
-                />
-              </MenuTileGrid>
-            ) : (
-              <div className="px-2 py-1.5">
-                <MenuTile
-                  icon={<ImageGlyph />}
-                  label="Select Image"
-                  onClick={() => {
-                    props.onOpenImagePicker(target.id);
-                    onClose();
-                  }}
-                />
-              </div>
-            )}
-          </MenuAccordionSection>
-        ) : null}
-        {/* Icon — re-place or remove a shape's inline icon. */}
-        {hasInlineIcon ? (
-          <MenuAccordionSection title="Icon" icon={<IconCategoryGlyph />} {...sectionProps('icon')}>
-            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Icon position
-            </p>
-            <IconPositionGrid
-              current={(target as { iconPosition?: string }).iconPosition ?? 'left'}
-              onPick={(pos) =>
-                props.onSetIconPosition(
-                  target.id,
-                  (target as { iconId?: string }).iconId ?? '',
-                  pos,
-                )
-              }
-            />
-            <ContextMenuDivider />
-            <div className="px-2 py-1.5">
-              <MenuTile
-                icon={<RemoveIconGlyph />}
-                label="Remove icon"
-                onClick={() => {
-                  props.onRemoveIcon(target.id);
-                  onClose();
-                }}
-              />
-            </div>
-          </MenuAccordionSection>
-        ) : null}
-        {/* Line + Pointer — arrow stroke + arrowhead controls (shared
-            ArrowLine/PointerControls). */}
-        {target.type === 'arrow' ? (
-          <>
-            <MenuAccordionSection title="Line" icon={<LineGlyph />} {...sectionProps('line')}>
-              <div className="px-3 py-1.5">
-                <ArrowLineControls
-                  thickness={arrowThicknessOf(target)}
-                  style={arrowStyleOf(target)}
-                  strokeStyle={target.strokeStyle ?? 'solid'}
-                  onSetThickness={props.onSetArrowThickness}
-                  onSetStyle={props.onSetArrowStyle}
-                  onSetStrokeStyle={props.onSetArrowStrokeStyle}
-                />
-              </div>
-            </MenuAccordionSection>
-            <MenuAccordionSection
-              title="Pointer"
-              icon={<PointerGlyph />}
-              {...sectionProps('pointer')}
-            >
-              <div className="px-3 py-1.5">
-                <ArrowPointerControls
-                  ends={target.arrowEnds ?? 'to'}
-                  headSize={arrowheadSizeOf(target)}
-                  headShape={arrowheadShapeOf(target)}
-                  onSetEnds={props.onSetArrowEnds}
-                  onSetHeadSize={props.onSetArrowheadSize}
-                  onSetHeadShape={props.onSetArrowheadShape}
-                />
-              </div>
-            </MenuAccordionSection>
-          </>
-        ) : null}
-        {/* Text — whole-element label formatting for a labelled arrow, or
-            every cell of a table (other boxed elements format via the inline
-            rich-text toolbar instead). */}
-        {(target.type === 'arrow' && target.label) || target.type === 'table' ? (
-          <MenuAccordionSection title="Text" icon={<TextGlyph />} {...sectionProps('text')}>
-            {target.type === 'table' ? (
-              <p className="px-3 pt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Applies to every cell.
-              </p>
-            ) : null}
-            <div className="flex gap-1 px-2 py-1.5">
-              <TextToggle active={!!target.textBold} label="Bold" onClick={props.onToggleTextBold}>
-                <BoldIcon />
-              </TextToggle>
-              <TextToggle
-                active={!!target.textItalic}
-                label="Italic"
-                onClick={props.onToggleTextItalic}
-              >
-                <ItalicIcon />
-              </TextToggle>
-              <TextToggle
-                active={!!target.textUnderline}
-                label="Underline"
-                onClick={props.onToggleTextUnderline}
-              >
-                <UnderlineIcon />
-              </TextToggle>
-              <TextToggle
-                active={!!target.textStrikethrough}
-                label="Strikethrough"
-                onClick={props.onToggleTextStrikethrough}
-              >
-                <StrikethroughIcon />
-              </TextToggle>
-            </div>
-            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Size
-            </p>
-            <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
-              {(
-                [
-                  ['scale', <ScaleIcon key="s" />],
-                  ['sm', <DotsIcon key="1" count={1} />],
-                  ['md', <DotsIcon key="2" count={2} />],
-                  ['lg', <DotsIcon key="3" count={3} />],
-                ] as const
-              ).map(([size, glyph]) => (
-                <SizeButton
-                  key={size}
-                  active={(target.textSize ?? 'sm') === size}
-                  onClick={() => props.onSetTextSize(size)}
-                >
-                  {glyph}
-                </SizeButton>
-              ))}
-            </div>
-            <ContextMenuDivider />
-            <ColourRow
-              label="Colour"
-              value={target.textColor ?? '#0f172a'}
-              onChange={props.onSetTextColor}
-              {...colorProps('text')}
-              presets={props.presetColors}
             />
           </MenuAccordionSection>
         ) : null}
@@ -941,6 +765,174 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
+        {/* ── Content group: Line / Pointer / Text / Icon / Image / Table / Link ── */}
+        {showContentGroup ? <ContextMenuDivider /> : null}
+        {/* Line + Pointer — arrow stroke + arrowhead controls (shared
+            ArrowLine/PointerControls). */}
+        {target.type === 'arrow' ? (
+          <>
+            <MenuAccordionSection title="Line" icon={<LineGlyph />} {...sectionProps('line')}>
+              <div className="px-3 py-1.5">
+                <ArrowLineControls
+                  thickness={arrowThicknessOf(target)}
+                  style={arrowStyleOf(target)}
+                  strokeStyle={target.strokeStyle ?? 'solid'}
+                  onSetThickness={props.onSetArrowThickness}
+                  onSetStyle={props.onSetArrowStyle}
+                  onSetStrokeStyle={props.onSetArrowStrokeStyle}
+                />
+              </div>
+            </MenuAccordionSection>
+            <MenuAccordionSection
+              title="Pointer"
+              icon={<PointerGlyph />}
+              {...sectionProps('pointer')}
+            >
+              <div className="px-3 py-1.5">
+                <ArrowPointerControls
+                  ends={target.arrowEnds ?? 'to'}
+                  headSize={arrowheadSizeOf(target)}
+                  headShape={arrowheadShapeOf(target)}
+                  onSetEnds={props.onSetArrowEnds}
+                  onSetHeadSize={props.onSetArrowheadSize}
+                  onSetHeadShape={props.onSetArrowheadShape}
+                />
+              </div>
+            </MenuAccordionSection>
+          </>
+        ) : null}
+        {/* Text — whole-element label formatting for a labelled arrow, or
+            every cell of a table (other boxed elements format via the inline
+            rich-text toolbar instead). */}
+        {(target.type === 'arrow' && target.label) || target.type === 'table' ? (
+          <MenuAccordionSection title="Text" icon={<TextGlyph />} {...sectionProps('text')}>
+            {target.type === 'table' ? (
+              <p className="px-3 pt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Applies to every cell.
+              </p>
+            ) : null}
+            <div className="flex gap-1 px-2 py-1.5">
+              <TextToggle active={!!target.textBold} label="Bold" onClick={props.onToggleTextBold}>
+                <BoldIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textItalic}
+                label="Italic"
+                onClick={props.onToggleTextItalic}
+              >
+                <ItalicIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textUnderline}
+                label="Underline"
+                onClick={props.onToggleTextUnderline}
+              >
+                <UnderlineIcon />
+              </TextToggle>
+              <TextToggle
+                active={!!target.textStrikethrough}
+                label="Strikethrough"
+                onClick={props.onToggleTextStrikethrough}
+              >
+                <StrikethroughIcon />
+              </TextToggle>
+            </div>
+            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Size
+            </p>
+            <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
+              {(
+                [
+                  ['scale', <ScaleIcon key="s" />],
+                  ['sm', <DotsIcon key="1" count={1} />],
+                  ['md', <DotsIcon key="2" count={2} />],
+                  ['lg', <DotsIcon key="3" count={3} />],
+                ] as const
+              ).map(([size, glyph]) => (
+                <SizeButton
+                  key={size}
+                  active={(target.textSize ?? 'sm') === size}
+                  onClick={() => props.onSetTextSize(size)}
+                >
+                  {glyph}
+                </SizeButton>
+              ))}
+            </div>
+            <ContextMenuDivider />
+            <ColourRow
+              label="Colour"
+              value={target.textColor ?? '#0f172a'}
+              onChange={props.onSetTextColor}
+              {...colorProps('text')}
+              presets={props.presetColors}
+            />
+          </MenuAccordionSection>
+        ) : null}
+        {/* Icon — re-place or remove a shape's inline icon. */}
+        {hasInlineIcon ? (
+          <MenuAccordionSection title="Icon" icon={<IconCategoryGlyph />} {...sectionProps('icon')}>
+            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Icon position
+            </p>
+            <IconPositionGrid
+              current={(target as { iconPosition?: string }).iconPosition ?? 'left'}
+              onPick={(pos) =>
+                props.onSetIconPosition(
+                  target.id,
+                  (target as { iconId?: string }).iconId ?? '',
+                  pos,
+                )
+              }
+            />
+            <ContextMenuDivider />
+            <div className="px-2 py-1.5">
+              <MenuTile
+                icon={<RemoveIconGlyph />}
+                label="Remove icon"
+                onClick={() => {
+                  props.onRemoveIcon(target.id);
+                  onClose();
+                }}
+              />
+            </div>
+          </MenuAccordionSection>
+        ) : null}
+        {/* Image — pick / change / clear the bitmap (spec/19). */}
+        {target.type === 'image' ? (
+          <MenuAccordionSection title="Image" icon={<ImageGlyph />} {...sectionProps('image')}>
+            {hasImage ? (
+              <MenuTileGrid cols={2}>
+                <MenuTile
+                  icon={<ImageGlyph />}
+                  label="Change Image"
+                  onClick={() => {
+                    props.onOpenImagePicker(target.id);
+                    onClose();
+                  }}
+                />
+                <MenuTile
+                  icon={<RemoveIconGlyph />}
+                  label="Remove Image"
+                  onClick={() => {
+                    props.onRemoveImage(target.id);
+                    onClose();
+                  }}
+                />
+              </MenuTileGrid>
+            ) : (
+              <div className="px-2 py-1.5">
+                <MenuTile
+                  icon={<ImageGlyph />}
+                  label="Select Image"
+                  onClick={() => {
+                    props.onOpenImagePicker(target.id);
+                    onClose();
+                  }}
+                />
+              </div>
+            )}
+          </MenuAccordionSection>
+        ) : null}
         {/* Table — header row / column + zebra. */}
         {target.type === 'table' ? (
           <MenuAccordionSection title="Table" icon={<TableGlyph />} {...sectionProps('table')}>
@@ -966,6 +958,44 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             />
           </MenuAccordionSection>
         ) : null}
+        {/* Link — set / change / remove a link-card's destination (spec/40). */}
+        {target.type === 'link-card' ? (
+          <MenuAccordionSection title="Link" icon={<LinkMenuIcon />} {...sectionProps('link')}>
+            {hasLink ? (
+              <MenuTileGrid cols={2}>
+                <MenuTile
+                  icon={<LinkMenuIcon />}
+                  label="Change Link"
+                  onClick={() => {
+                    props.onLinkElement(target.id);
+                    onClose();
+                  }}
+                />
+                <MenuTile
+                  icon={<RemoveIconGlyph />}
+                  label="Remove Link"
+                  onClick={() => {
+                    props.onRemoveLink();
+                    onClose();
+                  }}
+                />
+              </MenuTileGrid>
+            ) : (
+              <div className="px-2 py-1.5">
+                <MenuTile
+                  icon={<LinkMenuIcon />}
+                  label="Set Link"
+                  onClick={() => {
+                    props.onLinkElement(target.id);
+                    onClose();
+                  }}
+                />
+              </div>
+            )}
+          </MenuAccordionSection>
+        ) : null}
+        {/* ── Collaboration group ── */}
+        {showCollaborateGroup ? <ContextMenuDivider /> : null}
         {/* Collaborate — link / note / comments. Boxed-only: arrows can't be
             linked, noted, or commented on. */}
         {boxed ? (

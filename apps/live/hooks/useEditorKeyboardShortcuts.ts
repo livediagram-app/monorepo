@@ -152,12 +152,11 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
   useEffect(() => {
     const { formatSourceId, groupSourceId, pendingDraw, canvasTool, enabled } = liveRef.current;
     if (!enabled) return;
-    const formatToolActive = canvasTool === 'format';
     if (
       formatSourceId === null &&
       groupSourceId === null &&
       pendingDraw === null &&
-      !formatToolActive
+      canvasTool !== 'format'
     )
       return;
     const onKey = (e: KeyboardEvent) => {

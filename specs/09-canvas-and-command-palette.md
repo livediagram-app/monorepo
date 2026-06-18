@@ -136,9 +136,18 @@ Tab-level appearance + tools (no longer a panel section): **Theme**, **Canvas** 
 
 ### Selected Element section
 
-> **Status (superseded):** removed along with the editor side panel — these per-element controls now live in the **right-click element context menu** (Layer / Colours / Border / Text / Icon / Image / Link / Table / arrow Line + Pointer / Collaborate categories) and the floating selection toolbar. The control descriptions stay accurate; their panel home does not.
+> **Status (superseded):** removed along with the editor side panel — these per-element controls now live in the **right-click element context menu** (Layer / Shape / Rotation / Progress / Animation / Colours / Border / arrow Line + Pointer / Text / Icon / Image / Table / Link / Collaborate categories) and the floating selection toolbar. The control descriptions stay accurate; their panel home does not.
 
 When an element is selected, these per-element controls are available from its **right-click context menu** (and the floating selection toolbar), grouped into **collapsible categories**. Each category is **closed by default**; clicking its header toggles it open.
+
+**Category order is fixed and consistent** across the single-element and multi-selection menus, sorted into four visually-separated bands (a divider rules between bands, drawn only when the following band has a visible category so an absent band leaves no dangling rule):
+
+1. **Placement** — Layer, Shape, Rotation.
+2. **Appearance** — Progress, Animation, Colours, Border.
+3. **Content** — Line, Pointer, Text, Icon, Image, Table, Link.
+4. **Collaboration** — Collaborate (link / note / comments).
+
+Every category renders conditionally (hidden when its gate doesn't apply), but a shown category always lands in this order, so the menu never reshuffles between element kinds. The multi-selection menu surfaces only the Appearance + Content categories that apply to the selection (Placement / Collaboration don't apply to a multi-selection), in the same relative order.
 
 Control groups (rendered as context-menu categories, hidden when their gate doesn't apply):
 
@@ -172,7 +181,7 @@ Control groups (rendered as context-menu categories, hidden when their gate does
 
 Double-clicking the body of a selected arrow opens an inline `<foreignObject>` editor for the arrow's `label?: string`. Enter / blur commits, Escape cancels. The label renders as an SVG `<text>` anchored at the path's midpoint (chord midpoint for straight, t=0.5 of the quadratic bezier for curved, the elbow vertex for angled). By default placement first offsets the label **perpendicular to the arrow's direction** (trying each side) by enough to clear the line — so a label never sits on top of a horizontal / diagonal / vertical arrow — then falls back to the four cardinal slots around the midpoint (right → below → left → above), picking the first whose AABB doesn't collide with a neighbouring boxed element; falls back to the first perpendicular slot if everything collides. The user can **override placement by dragging the label**: when the arrow is selected a dashed box + move-cursor appear on the label, and dragging it slides the label **along the line** and to **either side** of it, staying connected (stored as `labelOffset: { t, offset }`). Empty label string strips the field on commit so persisted JSON stays clean. **Label formatting:** an arrow carries the same label-text fields as boxed elements (`textSize`, `textBold`, `textItalic`, `textUnderline`, `textStrikethrough`, `textColor`, `font`), so once it has a label the arrow's right-click context menu surfaces a **Text** category (size + bold/italic/underline/strikethrough + font) and the **text** colour swatch — alignment + padding are omitted since the label sits at the midpoint. `textColor` falls back to the arrow's stroke colour when unset, so the label matches the line by default; `textSize` defaults to small (12px) to match arrows authored before the fields existed. The fields ride the same `useElementStyle` setters as boxed labels (extended to accept `el.type === 'arrow'`).
 
-Each context-menu category header shows a chevron that rotates 180° when open; the body slides open/closed via a `grid-template-rows` 0fr↔1fr transition (~200 ms) so motion is smooth and free of layout jumps.
+Each context-menu category header shows a chevron that rotates 180° when open; the body slides open/closed via a `grid-template-rows` 0fr↔1fr transition (~200 ms) so motion is smooth and free of layout jumps. The header's leading icon sits in a **fixed-width centred slot** so every category title starts at the same x regardless of the glyph's own width — the labels line up in a clean column down the menu.
 
 ### Undo / Redo
 

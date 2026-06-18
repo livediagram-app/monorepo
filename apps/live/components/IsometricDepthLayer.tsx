@@ -47,6 +47,10 @@ export function IsometricDepthLayer({ elements }: { elements: Element[] }) {
         // default rounded rectangle.
         const silhouette = el.type === 'shape' ? isoShapeSilhouette(el.shape) : {};
         const layerRadius = silhouette.borderRadius;
+        // Computed once per element: a clip-path or explicit border-radius
+        // drives the silhouette, otherwise the default rounded rectangle.
+        const layerClass =
+          layerRadius === undefined ? 'absolute inset-0 rounded-md' : 'absolute inset-0';
         return (
           <div
             key={el.id}
@@ -62,9 +66,7 @@ export function IsometricDepthLayer({ elements }: { elements: Element[] }) {
             {DEPTH_LAYERS.map((z, i) => (
               <div
                 key={i}
-                className={
-                  layerRadius === undefined ? 'absolute inset-0 rounded-md' : 'absolute inset-0'
-                }
+                className={layerClass}
                 style={{
                   transform: `translateZ(${z}px)`,
                   background: color,
