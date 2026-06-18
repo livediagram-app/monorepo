@@ -494,7 +494,10 @@ export function TabBar({
         {/* Open-source repo link (the codebase is public + MIT, spec/03).
             Sits just left of Settings; an external <a>, not a callback, so it
             needs no wiring from the editor page. */}
-        <Tooltip title="Source on GitHub" description="View livediagram's open-source code on GitHub.">
+        <Tooltip
+          title="Source on GitHub"
+          description="View livediagram's open-source code on GitHub."
+        >
           <a
             href="https://github.com/livediagram-app/monorepo"
             target="_blank"

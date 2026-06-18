@@ -188,6 +188,28 @@
   }
 }
 
+@keyframes tip-next {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tip-prev {
+  from {
+    transform: translateX(-28px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @keyframes fly-up-in {
   from {
     transform: translateY(16px) scale(0.96);
