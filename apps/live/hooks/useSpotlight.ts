@@ -15,17 +15,15 @@ import { useState } from 'react';
 // Light radius bounds + the default it opens at, in screen px. The min keeps
 // the beam from collapsing into a useless pinhole; the max stops it from
 // lighting the whole canvas (at which point the tool does nothing).
-export const SPOTLIGHT_MIN_RADIUS = 70;
-export const SPOTLIGHT_MAX_RADIUS = 600;
-export const SPOTLIGHT_DEFAULT_RADIUS = 170;
+const SPOTLIGHT_MIN_RADIUS = 70;
+const SPOTLIGHT_MAX_RADIUS = 600;
+const SPOTLIGHT_DEFAULT_RADIUS = 170;
 // Multiplicative step per click — a geometric ramp so each click feels like
 // the same proportional change whether the light is small or large.
 const SPOTLIGHT_STEP = 1.25;
 
 const clampRadius = (r: number) =>
   Math.round(Math.max(SPOTLIGHT_MIN_RADIUS, Math.min(SPOTLIGHT_MAX_RADIUS, r)));
-
-export type SpotlightState = ReturnType<typeof useSpotlight>;
 
 export function useSpotlight() {
   // Light centre in <main>-relative px. Null until the pointer first moves

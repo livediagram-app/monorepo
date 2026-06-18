@@ -34,7 +34,7 @@ export type RouteContext = {
 
 // Visitor share code carried on edit/view-link requests so a non-owner
 // can authorise against a diagram they don't own.
-export function shareCodeOf(request: Request): string | null {
+function shareCodeOf(request: Request): string | null {
   return request.headers.get('X-Share-Code');
 }
 

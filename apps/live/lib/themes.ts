@@ -73,7 +73,7 @@ type ThemePaletteEntry = {
 // Each field is optional: an unset one falls through to the theme's
 // element-level colour, so a theme can recolour just the fill of one
 // kind without restating its stroke / text.
-export type ShapeColourOverride = { fill?: string; stroke?: string; text?: string };
+type ShapeColourOverride = { fill?: string; stroke?: string; text?: string };
 
 export type ThemeDefinition = {
   id: ThemeId;

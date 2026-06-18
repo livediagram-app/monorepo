@@ -84,7 +84,7 @@ function legibleTabAccent(tab: Tab, isDark: boolean): string {
 // Canvas-scoped actions folded into the unified tab / canvas menu: change
 // theme / background, and tidy the layout. (Add-element actions used to live
 // here too but were removed — the palette + quick-connect cover adding.)
-export type CanvasMenuActions = {
+type CanvasMenuActions = {
   onChangeTheme: () => void;
   onChangeCanvas: () => void;
   onAutoAlign: () => void;
@@ -99,7 +99,7 @@ export type CanvasMenuActions = {
 
 // Where the canvas right-click / footer-button menu should open. `openUp`
 // grows it upward from y (footer button) rather than down from the cursor.
-export type CanvasMenuTarget = { x: number; y: number; openUp?: boolean };
+type CanvasMenuTarget = { x: number; y: number; openUp?: boolean };
 
 type TabBarProps = {
   // Optional callback that pops the keyboard-shortcuts modal. Lives

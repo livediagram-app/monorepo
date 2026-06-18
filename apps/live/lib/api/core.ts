@@ -214,7 +214,7 @@ export async function expectOkVoid(res: Response, action: string): Promise<void>
 // DELETE that tolerates 404 — used everywhere "remove this if it
 // exists" is the semantic. A racing concurrent delete shouldn't
 // throw.
-export async function expectOkOr404Void(res: Response, action: string): Promise<void> {
+async function expectOkOr404Void(res: Response, action: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`${action} failed: ${res.status}`);
 }
 

@@ -89,22 +89,6 @@ export async function getDiagram(env: Env, id: string): Promise<DiagramDTO | nul
   return row ? rowToDiagram(env, row) : null;
 }
 
-export async function getDiagramByShareCode(env: Env, code: string): Promise<DiagramDTO | null> {
-  // Resolve through share_links exclusively now that the legacy
-  // diagrams.share_code column is gone (migration 0008). Only
-  // diagrams that are still shareable surface — revoking the last
-  // link flips that flag off.
-  const row = await env.DB.prepare(
-    `SELECT ${DIAGRAM_COLS}
-       FROM diagrams
-       WHERE shareable = 1
-         AND id = (SELECT diagram_id FROM share_links WHERE code = ?)`,
-  )
-    .bind(code)
-    .first<DiagramRow>();
-  return row ? rowToDiagram(env, row) : null;
-}
-
 function rowToSummary(row: SummaryRow): DiagramSummary {
   return {
     id: row.id,

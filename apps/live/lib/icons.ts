@@ -1294,7 +1294,7 @@ export const ICON_CATALOG: IconDef[] = [
 // Animated icons (spec/09): icon id -> the looping CSS animation its glyph
 // gets (spin / beat / pulse). `iconAnimationClass` maps an id to the
 // globals.css class (or undefined for a static icon); IconPrims applies it.
-export const ANIMATED_ICONS: Record<string, 'spin' | 'beat' | 'pulse'> = {
+const ANIMATED_ICONS: Record<string, 'spin' | 'beat' | 'pulse'> = {
   spinner: 'spin',
   gear: 'spin',
   heartbeat: 'beat',
