@@ -191,6 +191,20 @@ export function MenuAccordionSection({
   );
 }
 
+// Band separator between groups of accordion categories (e.g. the editor
+// context menu's placement / appearance / content / collaboration bands, or
+// the tab menu's organise / look-and-feel / session bands). Stronger than a
+// per-row hairline and slightly inset, so when rows render `flush` the
+// grouping reads at a glance. Pair with `flush` sections + parent-supplied
+// gating so an absent band leaves no dangling rule.
+export function MenuGroupSeparator() {
+  return (
+    <div className="my-1.5 px-2" role="separator" aria-hidden>
+      <div className="h-px bg-slate-200/90 dark:bg-slate-700/80" />
+    </div>
+  );
+}
+
 // A compact icon-button row pinned to the top of a menu for the most
 // common quick actions (lock / rename / duplicate), keeping them one
 // glance away while the verbose actions move into labelled sections below.

@@ -40,6 +40,7 @@ import {
 } from './tab-bar-icons';
 import {
   MenuAccordionSection,
+  MenuGroupSeparator,
   MenuItem,
   MenuTile,
   MenuTileGrid,
@@ -810,6 +811,9 @@ function PortalMenu({
   const sectionProps = (id: string) => ({
     open: openSection === id,
     onToggle: () => setOpenSection((s) => (s === id ? null : id)),
+    // Rows sit flush (no per-row hairline); the only rules are the
+    // MenuGroupSeparator bands, matching the element context menu.
+    flush: true,
   });
   // Delete confirmation: an inline popover anchored to the Delete row
   // (rather than the jarring full-screen modal). Rendered inside this
@@ -1003,10 +1007,12 @@ function PortalMenu({
                 whenever canvas actions are available, which is now both entry
                 points (canvas right-click AND the active tab's ellipsis menu)
                 so the two are one unified menu. */}
+            {/* ── Look & Feel band: theme / background / auto-align + Font ── */}
             {canvas ? (
               <>
+                <MenuGroupSeparator />
                 <MenuAccordionSection
-                  title="Canvas"
+                  title="Look & Feel"
                   icon={<CanvasMenuIcon />}
                   {...sectionProps('canvas')}
                 >
@@ -1077,8 +1083,10 @@ function PortalMenu({
                 </MenuAccordionSection>
               </>
             ) : null}
+            {/* ── Session band ── */}
+            <MenuGroupSeparator />
             <MenuAccordionSection
-              title="Session"
+              title="Session Tools"
               icon={<SessionTabIcon />}
               {...sectionProps('session')}
             >

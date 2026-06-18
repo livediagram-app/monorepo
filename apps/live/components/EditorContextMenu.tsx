@@ -88,7 +88,12 @@ import {
   SquareMenuIcon,
   TableGlyph,
 } from '@/components/context-menu-icons';
-import { MenuAccordionSection, MenuTile, MenuTileGrid } from '@/components/PortalMenu';
+import {
+  MenuAccordionSection,
+  MenuGroupSeparator,
+  MenuTile,
+  MenuTileGrid,
+} from '@/components/PortalMenu';
 import { ShapeIcon } from '@/components/shape-icon';
 
 // A curated subset of the most common shapes offered for in-place morphing
@@ -1048,19 +1053,6 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
   // only renders the element + multi menus. `menu.mode === 'canvas'` never
   // reaches here (the page routes it to the TabBar), so fall through to null.
   return null;
-}
-
-// Band separator between context-menu category groups (placement / appearance
-// / content / collaboration). Stronger than the old per-row hairline and the
-// only rule in the menu now that rows render flush, so the grouping reads
-// clearly. Inset slightly from the edges so it looks deliberate, not like a
-// row border.
-function MenuGroupSeparator() {
-  return (
-    <div className="my-1.5 px-2" role="separator" aria-hidden>
-      <div className="h-px bg-slate-200/90 dark:bg-slate-700/80" />
-    </div>
-  );
 }
 
 // A small preset palette for the inline colour picker. The "+" custom chip

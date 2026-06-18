@@ -18,7 +18,7 @@ import {
   UnderlineIcon,
 } from './palette-icons';
 import { Tooltip } from './Tooltip';
-import { MenuAccordionSection, MenuTile, MenuTileGrid } from './PortalMenu';
+import { MenuAccordionSection, MenuGroupSeparator, MenuTile, MenuTileGrid } from './PortalMenu';
 import { FONTS, resolveFontStack } from '@/lib/fonts';
 import type {
   ListStyle,
@@ -181,9 +181,10 @@ const CHEVRON = (
   </svg>
 );
 
-// The ⋯ overflow menu: the less-common text options (Strikethrough, Font,
-// Padding) grouped into collapsible category sections, matching the element /
-// canvas context menus rather than a flat list. Kept INLINE (not portalled)
+// The ⋯ overflow menu: the less-common text options grouped into collapsible
+// category sections, matching the element / canvas context menus rather than a
+// flat list — a Format band (strikethrough + lists), then a separator, then a
+// typography band (Font / Size / Padding). Kept INLINE (not portalled)
 // so the editor's focus + canvas-propagation guards apply; every control
 // preventDefaults mousedown so the live text selection survives a click, and
 // the category headers do too (via MenuAccordionSection's preserveFocus).
@@ -222,6 +223,9 @@ function OverflowMenu({
     open: openCat === id,
     onToggle: () => setOpenCat((c) => (c === id ? null : id)),
     preserveFocus: true,
+    // Rows sit flush; the only rule is the MenuGroupSeparator band, matching
+    // the element + tab context menus.
+    flush: true,
   });
   return (
     <div className="relative" ref={rootRef}>
@@ -244,23 +248,6 @@ function OverflowMenu({
       </Tooltip>
       {open ? (
         <div className="lvd-menu-stagger animate-fade-in absolute left-0 top-full z-10 mt-1 w-44 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          <MenuAccordionSection title="Size" icon={<DotsIcon count={2} />} {...catProps('size')}>
-            <MenuTileGrid cols={2}>
-              {SIZES.map((s) => (
-                <MenuTile
-                  key={s.key}
-                  preserveFocus
-                  active={active.size === s.key}
-                  label={s.label}
-                  icon={s.icon}
-                  onClick={() => {
-                    onSize(s.key);
-                    close();
-                  }}
-                />
-              ))}
-            </MenuTileGrid>
-          </MenuAccordionSection>
           <MenuAccordionSection title="Format" icon={<StrikethroughIcon />} {...catProps('format')}>
             <MenuTileGrid cols={2}>
               <MenuTile
@@ -302,6 +289,8 @@ function OverflowMenu({
               />
             </MenuTileGrid>
           </MenuAccordionSection>
+          {/* ── Typography band: Font / Size / Padding ── */}
+          <MenuGroupSeparator />
           <MenuAccordionSection title="Font" icon={<FontGlyph />} {...catProps('font')}>
             <MenuTileGrid cols={2}>
               {FONTS.map((f) => (
@@ -317,6 +306,23 @@ function OverflowMenu({
                   }
                   onClick={() => {
                     onSetFont(f.id);
+                    close();
+                  }}
+                />
+              ))}
+            </MenuTileGrid>
+          </MenuAccordionSection>
+          <MenuAccordionSection title="Size" icon={<DotsIcon count={2} />} {...catProps('size')}>
+            <MenuTileGrid cols={2}>
+              {SIZES.map((s) => (
+                <MenuTile
+                  key={s.key}
+                  preserveFocus
+                  active={active.size === s.key}
+                  label={s.label}
+                  icon={s.icon}
+                  onClick={() => {
+                    onSize(s.key);
                     close();
                   }}
                 />
