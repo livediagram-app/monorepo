@@ -51,6 +51,7 @@ export function PaletteDropdown({
   triggerLeading,
   menuClassName = 'w-max min-w-[7rem] max-w-[12rem]',
   variant = 'bordered',
+  autoHeight = false,
 }: {
   value: string;
   options: PaletteDropdownOption[];
@@ -77,6 +78,11 @@ export function PaletteDropdown({
   // 'flush' drops the border + rounding so the control sits flush against
   // the top and sides of a header band (the canvas-tool / category row).
   variant?: 'bordered' | 'flush';
+  // Drop the menu's max-height + scroll, so it grows to fit its options
+  // instead of capping at ~56 and showing a scrollbar. For short, fixed
+  // lists (the canvas-tool picker) where every option should always be
+  // visible; leave off for long lists (icon categories) that need to scroll.
+  autoHeight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -198,7 +204,9 @@ export function PaletteDropdown({
             ref={menuRef}
             role="listbox"
             data-palette-dropdown-menu
-            className={`fixed z-50 max-h-56 w-max overflow-y-auto border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+            className={`fixed z-50 w-max border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+              autoHeight ? '' : 'max-h-56 overflow-y-auto'
+            } ${
               // Connected pickers drop the corner that meets the trigger so the
               // menu reads as one piece with it; bordered pills stay fully
               // rounded + hug their content via menuClassName.

@@ -363,6 +363,7 @@ export function CommandPalette({
               ariaLabel="Canvas tool"
               value={canvasTool}
               variant="flush"
+              autoHeight
               onChange={(id) => onSetCanvasTool(id as CanvasTool)}
               // Grouped (group index drives the menu dividers): editing tools
               // (Select / Hand / Eraser), then presenter tools (Laser /
