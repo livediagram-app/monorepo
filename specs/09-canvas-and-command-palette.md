@@ -679,6 +679,8 @@ While multi-selected:
 
 Marquee hits include both boxed elements (shape, text, sticky) and arrows whose segment AABB is fully enclosed by the rectangle. Duplicating a marquee that contains both carries the connectors across with their endpoints remapped to the duplicated targets.
 
+The floating `MultiSelectionToolbar` appears for **any** 2 + selection, **including an arrow-only one**: it floats over the union bounds of every selected element (arrows contribute their endpoint AABB, via `unionElementBounds`), anchored independently of the union **resize** box. The resize box and its handles stay **boxed-only** (there's no box to drag-resize an arrow by), so an arrow-only selection shows the toolbar but no resize handles. This is what makes "select five arrows → toolbar → **More** → **Flow** → animate them all in one action" reachable; the selection-wide setters (`setArrowFlowSelected` et al.) then apply to every matching member.
+
 ## Quick add + connect
 
 When a **boxed element** (shape, text, sticky note) is selected and not in edit/paint mode, **four plus buttons** float around its bounding box — one centred on each edge (right, bottom, left, top).

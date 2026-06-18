@@ -485,6 +485,33 @@ export function elementBounds(
   };
 }
 
+// Union bounding box of any selection, INCLUDING arrows (their endpoint
+// AABB). Unlike `unionBoxedBounds`, which only spans boxed elements, this
+// covers arrow-only / mixed selections — used to anchor the floating
+// selection toolbar over a marquee that grabbed arrows. Returns null when
+// no listed id matches.
+export function unionElementBounds(
+  elements: Element[],
+  ids: Set<ElementId>,
+): { x: number; y: number; width: number; height: number } | null {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  let found = false;
+  for (const el of elements) {
+    if (!ids.has(el.id)) continue;
+    found = true;
+    const b = elementBounds(el, elements);
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.width > maxX) maxX = b.x + b.width;
+    if (b.y + b.height > maxY) maxY = b.y + b.height;
+  }
+  if (!found) return null;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
 // Alignment snapping: when dragging an element, snap its edges/centre to
 // match nearby OTHER elements' edges/centres on the same axis. Returns the
 // delta (dx, dy) to apply to the candidate position.

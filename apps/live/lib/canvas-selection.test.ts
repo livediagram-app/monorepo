@@ -13,6 +13,13 @@ const box = (id: string, overrides: Partial<ShapeElement> = {}): ShapeElement =>
   ...overrides,
 });
 
+const arrow = (id: string, from = { x: 0, y: 0 }, to = { x: 50, y: 50 }): Element => ({
+  id,
+  type: 'arrow',
+  from: { kind: 'free', ...from },
+  to: { kind: 'free', ...to },
+});
+
 // Default "clean editor" flags: nothing being edited, no modes, unlocked,
 // editable. Individual tests override what they exercise.
 const base = {
@@ -110,10 +117,46 @@ describe('deriveCanvasSelection', () => {
     expect(s.showPopover).toBe(false); // per-element popover is meaningless for many
     expect(s.showUnionResize).toBe(true);
     expect(s.unionResizePrimaryId).toBe('a');
+    // The floating toolbar shows for the boxed multi too, anchored on the
+    // same union bounds.
+    expect(s.showMultiToolbar).toBe(true);
+    expect(s.multiToolbarBounds).toEqual({ x: 0, y: 0, width: 300, height: 60 });
     // Per-element single-handles stay off when the selection is a group/multi.
     expect(s.showHandlesFor('a')).toBe(false);
     // Quick-connect plus buttons are single-element only.
     expect(s.showPlus).toBe(false);
+  });
+
+  it('an arrow-only marquee shows the floating toolbar (spanning the arrows) but no resize box', () => {
+    const els: Element[] = [
+      arrow('a', { x: 0, y: 0 }, { x: 40, y: 20 }),
+      arrow('b', { x: 60, y: 30 }, { x: 100, y: 80 }),
+    ];
+    const s = derive({
+      elements: els,
+      selectedId: null,
+      multiSelectedIds: new Set(['a', 'b']),
+    });
+    expect(s.selectionScope).toBe('multi');
+    // No boxed members, so the resize box (and its handles) stays hidden...
+    expect(s.showUnionResize).toBe(false);
+    expect(s.unionResizeBounds).toBeNull();
+    // ...but the toolbar still appears, anchored on the arrows' union AABB,
+    // so the user can reach the Flow / animate menu via its "More" button.
+    expect(s.showMultiToolbar).toBe(true);
+    expect(s.multiToolbarBounds).toEqual({ x: 0, y: 0, width: 100, height: 80 });
+  });
+
+  it('suppresses the floating toolbar in read-only / locked-tab modes', () => {
+    const els: Element[] = [arrow('a'), arrow('b')];
+    const ro = derive({ elements: els, multiSelectedIds: new Set(['a', 'b']), readOnly: true });
+    expect(ro.showMultiToolbar).toBe(false);
+    const locked = derive({
+      elements: els,
+      multiSelectedIds: new Set(['a', 'b']),
+      tabLocked: true,
+    });
+    expect(locked.showMultiToolbar).toBe(false);
   });
 
   it('a group selection (>1 member) shows union resize, not per-element handles', () => {

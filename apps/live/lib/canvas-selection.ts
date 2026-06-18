@@ -20,6 +20,7 @@ import {
   supportsBorderControls,
   supportsBorderRadius,
   unionBoxedBounds,
+  unionElementBounds,
   type ArrowEnds,
   type ArrowheadShape,
   type ArrowheadSize,
@@ -67,6 +68,10 @@ type CanvasSelection = {
   unionResizeBounds: Bounds | null;
   unionResizePrimaryId: string | null;
   showUnionResize: boolean;
+  // Floating multi-selection toolbar anchor + visibility. Spans arrows too,
+  // so it shows for arrow-only / mixed marquees (the resize box above does not).
+  multiToolbarBounds: Bounds | null;
+  showMultiToolbar: boolean;
 };
 
 export function deriveCanvasSelection(input: {
@@ -189,6 +194,22 @@ export function deriveCanvasSelection(input: {
     !tabLocked &&
     !readOnly;
 
+  // The floating multi-selection toolbar (Duplicate / Group / Lock / Export /
+  // Delete + the "More" entry into the type-aware formatting menu) is anchored
+  // separately from the resize box: it floats over the union of EVERY selected
+  // element including arrows, so an arrow-only or mixed marquee still gets the
+  // toolbar (and thus the Flow / animate controls). The resize handles above
+  // stay boxed-only because there's no box to drag-resize an arrow by.
+  const multiToolbarBounds =
+    multiSelectedIds.size > 1 ? unionElementBounds(elements, multiSelectedIds) : null;
+  const showMultiToolbar =
+    !!multiToolbarBounds &&
+    multiSelectedIds.size > 1 &&
+    !isPaintMode &&
+    !isGroupMode &&
+    !tabLocked &&
+    !readOnly;
+
   return {
     memberIds,
     multiPrimaryId,
@@ -206,6 +227,8 @@ export function deriveCanvasSelection(input: {
     unionResizeBounds,
     unionResizePrimaryId,
     showUnionResize,
+    multiToolbarBounds,
+    showMultiToolbar,
   };
 }
 

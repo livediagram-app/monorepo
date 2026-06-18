@@ -232,6 +232,8 @@ export function Canvas(props: CanvasProps) {
     unionResizeBounds,
     unionResizePrimaryId,
     showUnionResize,
+    multiToolbarBounds,
+    showMultiToolbar,
   } = canvasSelection;
 
   // Cached check only. Render loops iterate `elements` directly so
@@ -1071,13 +1073,11 @@ export function Canvas(props: CanvasProps) {
           bounds (above, or below when there's no room) instead of pinning to
           the top of the screen, mirroring the single-selection popover. Rides
           the same canvas-transform sibling wrapper so it counter-scales with
-          zoom. Gated on a true marquee multi-selection (2+), never in
-          view-only. */}
-      {!readOnly &&
-      multiSelectedIds.size >= 2 &&
-      showUnionResize &&
-      unionResizeBounds &&
-      canvasTool !== 'spotlight' ? (
+          zoom. Anchored on `multiToolbarBounds` (which spans arrows too) rather
+          than the boxed-only resize box, so an arrow-only / mixed marquee still
+          gets the toolbar — and its "More" entry into the Flow / animate menu.
+          Gated on a true marquee multi-selection (2+), never in view-only. */}
+      {showMultiToolbar && multiToolbarBounds && canvasTool !== 'spotlight' ? (
         <div
           className="pointer-events-none absolute inset-0 z-40 origin-center"
           style={{
@@ -1085,7 +1085,7 @@ export function Canvas(props: CanvasProps) {
           }}
         >
           <FloatingToolbar
-            bounds={unionResizeBounds}
+            bounds={multiToolbarBounds}
             canvasOffset={viewportOffset}
             zoom={viewportZoom}
             title={`Selected Elements (${multiSelectedIds.size})`}
