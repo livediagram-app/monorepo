@@ -1072,6 +1072,7 @@ export * from './auto-layout';
 export * from './element-kind-label';
 
 export * from './geometry';
+export * from './geometry-snapping';
 
 export * from './groups';
 
