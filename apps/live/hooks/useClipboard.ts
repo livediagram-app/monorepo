@@ -26,6 +26,13 @@ import { uploadImageFile } from '@/lib/upload-image';
 import { track } from '@/lib/telemetry';
 import type { useToast } from '@/hooks/useToast';
 
+// Written to the OS clipboard on an in-app element copy purely to displace
+// any lingering image (see copySelection). The paste handler only inspects
+// clipboard files/items, never text, so this string is never read back — it
+// just guarantees the OS clipboard no longer carries an image that would
+// shadow the in-app element clipboard.
+const OS_CLIPBOARD_SENTINEL = 'livediagram:elements-copied';
+
 type ImageDescriptor = {
   id: string;
   width: number;
@@ -87,6 +94,16 @@ export function useClipboard(deps: ClipboardDeps) {
       .map((el) => JSON.parse(JSON.stringify(el)) as Element);
     if (snapshot.length === 0) return;
     setClipboard(snapshot);
+    // Clear the OS clipboard so a previously-copied image stops shadowing
+    // this copy. The paste handler prefers an image on the OS clipboard over
+    // the in-app element clipboard, but the in-app Cmd+C never touched the OS
+    // clipboard — so once a user had pasted an image, that image lingered and
+    // every later element paste re-dropped the stale image instead of the new
+    // copy. Overwriting with a sentinel (Cmd+C is a user gesture, so writeText
+    // is permitted) makes the next paste see no image and fall through to the
+    // in-app clipboard. Best-effort: writeText can reject if the document
+    // isn't focused or permission is denied; the in-app copy still works.
+    void navigator.clipboard?.writeText?.(OS_CLIPBOARD_SENTINEL).catch(() => {});
     track('Element', 'Copied');
   };
 
