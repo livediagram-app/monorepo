@@ -51,11 +51,14 @@ export function ShapeSvgOverlay({
   // Looping animation (spec/09) that has to render against the true SVG
   // geometry rather than the wrapper: 'trace' marches the shape's own outline
   // (a light running the perimeter), 'gradient' fills it with a moving gradient
-  // between the element's fill + accent. Speed / accent / fill come from the
-  // wrapper's inherited --lvd-anim-* custom properties. Other animations
-  // (pulse / blink / glow / bounce / wobble) stay on the wrapper and don't
-  // reach here. Undefined for the draw-preview and unanimated elements.
-  animation?: 'trace' | 'gradient';
+  // between the element's fill + accent, and 'pulse' / 'glow' radiate a
+  // drop-shadow off the shape's real silhouette (the wrapper's box-shadow
+  // version would draw a rectangle around a diamond / hexagon / etc.). Speed /
+  // accent / fill come from the wrapper's inherited --lvd-anim-* custom
+  // properties. Other animations (blink / bounce / wobble) are shape-agnostic
+  // and stay on the wrapper. Undefined for the draw-preview and unanimated
+  // elements.
+  animation?: 'trace' | 'gradient' | 'pulse' | 'glow';
 }) {
   // useId is not selector-safe (it emits ':' chars); strip them so the id is a
   // valid url(#…) fragment. One gradient def per overlay instance.
@@ -69,6 +72,18 @@ export function ShapeSvgOverlay({
     animation === 'trace'
       ? { strokeDasharray: '10 8', strokeLinecap: 'round' as const, className: 'lvd-trace-run' }
       : null;
+  // pulse / glow ride a CSS drop-shadow on the <svg> root. drop-shadow follows
+  // the rendered alpha (the shape's silhouette / stroke), so the ring hugs the
+  // true outline instead of the bounding box. Colour + speed come from the
+  // inherited --lvd-anim-* props. The svg already sets overflow-visible so the
+  // shadow isn't clipped to the box.
+  const svgRoot = 'pointer-events-none absolute inset-0 h-full w-full overflow-visible';
+  const svgClassName =
+    animation === 'glow'
+      ? `${svgRoot} lvd-svg-glow`
+      : animation === 'pulse'
+        ? `${svgRoot} lvd-svg-pulse`
+        : svgRoot;
   // Three cycling stops blend fill ↔ accent into a flowing band; the inline
   // stop-color is the frozen (reduced-motion / export) resting frame.
   const gradientDefs =
@@ -90,7 +105,7 @@ export function ShapeSvgOverlay({
     // the figure proportional and centred at any size.
     return (
       <svg
-        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+        className={svgClassName}
         viewBox="0 0 90 130"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden
@@ -144,12 +159,7 @@ export function ShapeSvgOverlay({
       : {}),
   };
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden
-    >
+    <svg className={svgClassName} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
       {gradientDefs}
       {shape === 'diamond' ? <polygon points="50,0 100,50 50,100 0,50" {...common} /> : null}
       {shape === 'parallelogram' ? <polygon points="20,0 100,0 80,100 0,100" {...common} /> : null}

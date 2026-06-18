@@ -491,15 +491,23 @@ function BoxedElementViewImpl({
     below: 'left-0 right-0 bottom-0 h-1/3',
   };
 
-  // trace / gradient on an SVG-rendered shape (diamond, triangle, hexagon, …)
-  // render against the true outline / fill inside ShapeSvgOverlay, so the
-  // wrapper must NOT also paint its bounding-box version (a doubled effect).
-  // Every other animation — and trace / gradient on CSS-rendered shapes and
-  // non-shape boxed elements — stays a wrapper class.
+  // trace / gradient / pulse / glow on an SVG-rendered shape (diamond,
+  // triangle, hexagon, …) render against the true outline / fill / silhouette
+  // inside ShapeSvgOverlay, so the wrapper must NOT also paint its
+  // bounding-box version (pulse / glow as a box-shadow would ring the
+  // rectangle, not the shape; trace / gradient would double up). Every other
+  // animation — and these four on CSS-rendered shapes (circle / stadium /
+  // square / browser, where the wrapper's border-radius already matches the
+  // outline) and non-shape boxed elements — stays a wrapper class.
+  const svgAnim =
+    element.animation === 'trace' ||
+    element.animation === 'gradient' ||
+    element.animation === 'pulse' ||
+    element.animation === 'glow'
+      ? element.animation
+      : undefined;
   const svgHandlesAnim =
-    element.type === 'shape' &&
-    isSvgRenderedShape(element.shape) &&
-    (element.animation === 'trace' || element.animation === 'gradient');
+    element.type === 'shape' && isSvgRenderedShape(element.shape) && svgAnim !== undefined;
   const wrapperAnimClass = element.animation
     ? svgHandlesAnim
       ? ''
@@ -590,13 +598,11 @@ function BoxedElementViewImpl({
             BORDER_DASH_ARRAY[element.strokeStyle ?? DEFAULT_BORDER_STYLE] ?? undefined
           }
           aspect={element.height > 0 ? element.width / element.height : 1}
-          // trace / gradient render against the true SVG geometry here; every
-          // other animation (and the CSS-shape path) stays on the wrapper.
-          animation={
-            element.animation === 'trace' || element.animation === 'gradient'
-              ? element.animation
-              : undefined
-          }
+          // trace / gradient / pulse / glow render against the true SVG
+          // geometry here; blink / bounce / wobble (shape-agnostic) stay on the
+          // wrapper. svgHandlesAnim above suppresses the wrapper class so these
+          // don't double up.
+          animation={svgAnim}
         />
       ) : null}
       {/* CSS-rendered shapes (square / circle / stadium / browser) paint

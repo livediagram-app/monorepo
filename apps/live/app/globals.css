@@ -484,6 +484,51 @@
   animation: lvd-gradient-shift calc(3s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
 }
 
+/* SVG-shape pulse / glow. The wrapper versions (.lvd-anim-pulse / -glow) use
+ * box-shadow, which rings the bounding rectangle — fine for CSS-rendered shapes
+ * (circle / stadium / square / browser) whose border-radius matches the
+ * outline, but wrong for SVG-rendered shapes (diamond / hexagon / triangle / …)
+ * where it draws a rectangle around the shape. These ride a `filter:
+ * drop-shadow()` on the <svg> root instead (applied by ShapeSvgOverlay), and
+ * drop-shadow follows the rendered alpha so the ring/halo hugs the true
+ * silhouette / stroke. Colour + speed inherit the wrapper's --lvd-anim-*. No
+ * static filter at rest, so reduced-motion / export freeze to a clean shape. */
+@keyframes lvd-svg-glow {
+  0%,
+  100% {
+    filter: drop-shadow(
+      0 0 3px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 35%, transparent)
+    );
+  }
+  50% {
+    filter: drop-shadow(
+      0 0 9px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 65%, transparent)
+    );
+  }
+}
+.lvd-svg-glow {
+  animation: lvd-svg-glow calc(2s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+@keyframes lvd-svg-pulse {
+  0% {
+    filter: drop-shadow(
+      0 0 1px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 60%, transparent)
+    );
+  }
+  70% {
+    filter: drop-shadow(
+      0 0 13px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 0%, transparent)
+    );
+  }
+  100% {
+    filter: drop-shadow(0 0 1px color-mix(in srgb, var(--lvd-anim-color, #0ea5e9) 0%, transparent));
+  }
+}
+.lvd-svg-pulse {
+  animation: lvd-svg-pulse calc(1.8s * var(--lvd-anim-speed, 1)) ease-out infinite;
+}
+
 /* Bounce / wobble use the INDEPENDENT transform properties (translate / rotate)
  * rather than `transform`, so they compose with an element's own
  * `transform: rotate()` (set inline when the element is rotated) instead of
@@ -679,6 +724,8 @@
   .lvd-anim-gradient,
   .lvd-anim-bounce,
   .lvd-anim-wobble,
+  .lvd-svg-glow,
+  .lvd-svg-pulse,
   .lvd-trace-run,
   .lvd-grad-s0,
   .lvd-grad-s1,
