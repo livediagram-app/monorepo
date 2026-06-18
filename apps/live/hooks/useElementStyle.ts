@@ -33,6 +33,7 @@ import {
   type ArrowThickness,
   type BorderRadius,
   type ElementAnimation,
+  type IconAnimation,
   type BorderStroke,
   type BorderStyle,
   type Element,
@@ -484,6 +485,20 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'ArrowFlow');
   };
+  // Per-icon glyph animation (spec/09). Applies only to icon shapes; `null`
+  // clears it. Icons use this set instead of the boxed-element animation set.
+  const setIconAnimationSelected = (value: IconAnimation | null) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'shape' && el.shape === 'icon'
+          ? { ...el, iconAnimation: value ?? undefined }
+          : el,
+      ),
+    );
+    track('Element', 'Changed', 'IconAnimation');
+  };
   const setAnimationSpeedSelected = (value: AnimationSpeed) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
@@ -609,6 +624,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setBorderRadiusSelected,
     setAnimationSelected,
     setArrowFlowSelected,
+    setIconAnimationSelected,
     setAnimationSpeedSelected,
     setFlowSpeedSelected,
     resetColorsSelected,

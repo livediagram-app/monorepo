@@ -672,8 +672,10 @@
   animation: lvd-arrow-glow calc(1.6s * var(--lvd-flow-speed, 1)) ease-in-out infinite;
 }
 
-/* Animated icon glyphs (spinner / gear spin, heart beat, signal pulse). The
- * whole SVG glyph animates; transform-origin centre so spins stay put. */
+/* Animated icon glyphs (spec/09): any icon can opt into one of these via the
+ * icon context menu (the element's `iconAnimation`). The whole SVG glyph
+ * animates; transform-box: fill-box + transform-origin centre keep spins /
+ * scales pinned on the glyph. Speed is fixed (no per-icon speed control). */
 @keyframes lvd-icon-spin {
   to {
     transform: rotate(360deg);
@@ -700,9 +702,66 @@
     opacity: 1;
   }
 }
+@keyframes lvd-icon-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+@keyframes lvd-icon-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(12deg);
+  }
+}
+@keyframes lvd-icon-flash {
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.2;
+  }
+}
+@keyframes lvd-icon-tada {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  10%,
+  20% {
+    transform: scale(0.9) rotate(-4deg);
+  }
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: scale(1.12) rotate(4deg);
+  }
+  40%,
+  60%,
+  80% {
+    transform: scale(1.12) rotate(-4deg);
+  }
+}
 .lvd-icon-spin,
 .lvd-icon-beat,
-.lvd-icon-pulse {
+.lvd-icon-pulse,
+.lvd-icon-bounce,
+.lvd-icon-wiggle,
+.lvd-icon-flash,
+.lvd-icon-tada {
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -714,6 +773,18 @@
 }
 .lvd-icon-pulse {
   animation: lvd-icon-pulse 1.6s ease-in-out infinite;
+}
+.lvd-icon-bounce {
+  animation: lvd-icon-bounce 0.9s ease-in-out infinite;
+}
+.lvd-icon-wiggle {
+  animation: lvd-icon-wiggle 0.8s ease-in-out infinite;
+}
+.lvd-icon-flash {
+  animation: lvd-icon-flash 1.4s ease-in-out infinite;
+}
+.lvd-icon-tada {
+  animation: lvd-icon-tada 1.4s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -739,7 +810,11 @@
   .lvd-arrow-glow,
   .lvd-icon-spin,
   .lvd-icon-beat,
-  .lvd-icon-pulse {
+  .lvd-icon-pulse,
+  .lvd-icon-bounce,
+  .lvd-icon-wiggle,
+  .lvd-icon-flash,
+  .lvd-icon-tada {
     animation: none;
   }
 }

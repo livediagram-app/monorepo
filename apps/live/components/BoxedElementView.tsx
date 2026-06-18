@@ -574,7 +574,11 @@ function BoxedElementViewImpl({
         // (spec/41). Same shape kind as a curated icon, but the id
         // resolves in the tech catalogue, so it renders coloured rather
         // than stroke-tinted.
-        <TechIconGlyph iconId={element.iconId} hasLabel={(element.label ?? '').trim().length > 0} />
+        <TechIconGlyph
+          iconId={element.iconId}
+          hasLabel={(element.label ?? '').trim().length > 0}
+          animation={element.iconAnimation}
+        />
       ) : element.type === 'shape' && element.shape === 'icon' ? (
         // Curated glyph: line art tinted by the element's stroke
         // colour. Rendered separately from ShapeSvgOverlay because it
@@ -585,6 +589,9 @@ function BoxedElementViewImpl({
           stroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
           strokeWidth={remoteBorderColor ? 3 : 2}
           hasLabel={(element.label ?? '').trim().length > 0}
+          // Per-icon looping animation (spec/09). Picked from the icon context
+          // menu; undefined = static.
+          animation={element.iconAnimation}
         />
       ) : element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
         <ShapeSvgOverlay

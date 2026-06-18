@@ -2,6 +2,8 @@
 // element (BoxedElementView, for shape==='icon') and the palette icon
 // picker so the on-canvas glyph and the picker thumbnail can't drift.
 
+import type { IconAnimation } from '@livediagram/diagram';
+
 import { getIcon, iconAnimationClass, type IconPrim } from '@/lib/icons';
 
 // non-scaling-stroke keeps the line weight constant on screen at any
@@ -32,12 +34,20 @@ function Prim({ p }: { p: IconPrim }) {
 // Bare <g> of an icon's primitives in a 0..24 coordinate space. The
 // caller owns the <svg> + stroke colour so the same prims render at
 // catalogue thumbnail size and at element size.
-export function IconPrims({ iconId }: { iconId: string | undefined }) {
+export function IconPrims({
+  iconId,
+  animation,
+}: {
+  iconId: string | undefined;
+  // The chosen looping animation (spec/09), or undefined for a static glyph.
+  // The palette picker passes nothing, so thumbnails stay still.
+  animation?: IconAnimation;
+}) {
   const prims = getIcon(iconId).prims.map((p, i) => <Prim key={i} p={p} />);
-  // Animated icons (spec/09) wrap the glyph in a <g> that carries the looping
-  // CSS class (spin / beat / pulse); transform-box: fill-box in globals.css
-  // keeps the spin/scale centred on the glyph.
-  const animClass = iconAnimationClass(iconId);
+  // An animated icon wraps the glyph in a <g> that carries the looping CSS
+  // class; transform-box: fill-box in globals.css keeps the spin / scale
+  // centred on the glyph.
+  const animClass = iconAnimationClass(animation);
   return animClass ? <g className={animClass}>{prims}</g> : <>{prims}</>;
 }
 
@@ -54,11 +64,13 @@ export function IconGlyph({
   stroke,
   strokeWidth = 2,
   hasLabel = false,
+  animation,
 }: {
   iconId: string | undefined;
   stroke: string;
   strokeWidth?: number;
   hasLabel?: boolean;
+  animation?: IconAnimation;
 }) {
   return (
     <svg
@@ -72,7 +84,7 @@ export function IconGlyph({
       strokeLinejoin="round"
       aria-hidden
     >
-      <IconPrims iconId={iconId} />
+      <IconPrims iconId={iconId} animation={animation} />
     </svg>
   );
 }

@@ -9,6 +9,9 @@
 // this paints the tile fill from the catalogue and the glyph in white,
 // ignoring the element's stroke colour entirely.
 
+import type { IconAnimation } from '@livediagram/diagram';
+
+import { iconAnimationClass } from '@/lib/icons';
 import { getTechIcon } from '@/lib/tech-icons';
 
 // The white line-art group the glyph markup sits in. A bare path/circle in
@@ -49,10 +52,15 @@ export function TechIconArt({ iconId }: { iconId: string | undefined }) {
 export function TechIconGlyph({
   iconId,
   hasLabel = false,
+  animation,
 }: {
   iconId: string | undefined;
   hasLabel?: boolean;
+  // Per-icon looping animation (spec/09); undefined = static. Wraps the whole
+  // tile + glyph so a brand mark spins / beats as one.
+  animation?: IconAnimation;
 }) {
+  const animClass = iconAnimationClass(animation);
   // With a label, pin the art to the TOP ~62% band (leaving the bottom for the
   // bottom-aligned label) rather than letterboxing a tall viewBox across the
   // whole box — the latter scaled the icon only by height, so widening the
@@ -67,7 +75,13 @@ export function TechIconGlyph({
       preserveAspectRatio="xMidYMid meet"
       aria-hidden
     >
-      <TechIconArt iconId={iconId} />
+      {animClass ? (
+        <g className={animClass}>
+          <TechIconArt iconId={iconId} />
+        </g>
+      ) : (
+        <TechIconArt iconId={iconId} />
+      )}
     </svg>
   );
 }

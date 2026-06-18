@@ -285,6 +285,7 @@ export function EditorView() {
     setBorderStyleSelected,
     setAnimationSelected,
     setArrowFlowSelected,
+    setIconAnimationSelected,
     setAnimationSpeedSelected,
     setFlowSpeedSelected,
     setCanvasTool,
@@ -1228,6 +1229,7 @@ export function EditorView() {
           onSetBorderRadius={setBorderRadiusSelected}
           onSetAnimation={setAnimationSelected}
           onSetArrowFlow={setArrowFlowSelected}
+          onSetIconAnimation={setIconAnimationSelected}
           onSetAnimationSpeed={setAnimationSpeedSelected}
           onSetFlowSpeed={setFlowSpeedSelected}
           onResetColors={resetColorsSelected}

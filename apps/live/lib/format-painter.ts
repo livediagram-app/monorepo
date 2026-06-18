@@ -20,6 +20,7 @@ import type {
   BorderStroke,
   BorderStyle,
   BoxedElement,
+  IconAnimation,
   TextRun,
 } from '@livediagram/diagram';
 
@@ -113,6 +114,9 @@ export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement
     // Looping animation (spec/09) is a cosmetic field, so paint it like the rest.
     animation: source.animation,
     animationSpeed: source.animationSpeed,
+    // Per-icon glyph animation (spec/09); cosmetic, painted alongside. Only
+    // ShapeElement carries it, so read it off a structural view of the union.
+    iconAnimation: (source as { iconAnimation?: IconAnimation }).iconAnimation,
   });
 }
 

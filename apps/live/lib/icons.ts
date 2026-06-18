@@ -10,6 +10,8 @@
 // one-file change with no schema migration; an unknown id renders the
 // PLACEHOLDER glyph rather than vanishing.
 
+import type { IconAnimation } from '@livediagram/diagram';
+
 import type { IconDef, IconPrim } from './icon-types';
 import { ICON_CATALOG_1 } from './icon-catalog-1';
 import { ICON_CATALOG_2 } from './icon-catalog-2';
@@ -30,17 +32,12 @@ export const PALETTE_DND_MIME = 'application/x-livediagram-palette';
 // part 1 then part 2, so ICON_CATALOG[0] is still the default icon.
 export const ICON_CATALOG: IconDef[] = [...ICON_CATALOG_1, ...ICON_CATALOG_2];
 
-// Animated icons (spec/09): icon id -> the looping CSS animation its glyph
-// gets (spin / beat / pulse). `iconAnimationClass` maps an id to the
-// globals.css class (or undefined for a static icon); IconPrims applies it.
-const ANIMATED_ICONS: Record<string, 'spin' | 'beat' | 'pulse'> = {
-  spinner: 'spin',
-  gear: 'spin',
-  heartbeat: 'beat',
-  signal: 'pulse',
-};
-export function iconAnimationClass(iconId: string | undefined): string | undefined {
-  const anim = iconId ? ANIMATED_ICONS[iconId] : undefined;
+// Animated icons (spec/09): any icon can opt into a looping animation via the
+// icon context menu (the `iconAnimation` field on the element). This maps the
+// chosen IconAnimation to its globals.css class; undefined = a static glyph.
+// (Previously a few icon ids were hard-wired to always animate; that's gone —
+// the catalogue glyphs are static unless the element asks for motion.)
+export function iconAnimationClass(anim: IconAnimation | undefined): string | undefined {
   return anim ? `lvd-icon-${anim}` : undefined;
 }
 

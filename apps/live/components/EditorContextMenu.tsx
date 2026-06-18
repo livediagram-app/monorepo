@@ -25,6 +25,7 @@ import {
   defaultStrokeColor,
   defaultTextColor,
   ELEMENT_ANIMATIONS,
+  ICON_ANIMATIONS,
   isBoxed,
   supportsBorderControls,
   supportsBorderRadius,
@@ -42,6 +43,7 @@ import {
   type BoxedElement,
   type Element,
   type ElementAnimation,
+  type IconAnimation,
   type ShapeKind,
   type TextSize,
 } from '@livediagram/diagram';
@@ -72,6 +74,7 @@ import {
   AnimationKindGlyph,
   AnimationMenuGlyph,
   FlowKindGlyph,
+  IconAnimKindGlyph,
   NoteMenuIcon,
   PaletteMenuIcon,
   PointerGlyph,
@@ -146,6 +149,7 @@ type EditorContextMenuProps = {
   // flow animation on arrows. `null` clears it.
   onSetAnimation: (value: ElementAnimation | null) => void;
   onSetArrowFlow: (value: ArrowFlow | null) => void;
+  onSetIconAnimation: (value: IconAnimation | null) => void;
   onSetAnimationSpeed: (value: AnimationSpeed) => void;
   onSetFlowSpeed: (value: AnimationSpeed) => void;
   onResetColors: () => void;
@@ -521,12 +525,21 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             icon={<AnimationMenuGlyph />}
             {...sectionProps('animation')}
           >
-            <AnimationTiles
-              animation={(target as { animation?: ElementAnimation }).animation ?? null}
-              speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
-              onSet={props.onSetAnimation}
-              onSetSpeed={props.onSetAnimationSpeed}
-            />
+            {isIcon ? (
+              // Icons get their own glyph-motion set (spin / beat / pulse / …)
+              // instead of the boxed-element animation set.
+              <IconAnimationTiles
+                animation={(target as { iconAnimation?: IconAnimation }).iconAnimation ?? null}
+                onSet={props.onSetIconAnimation}
+              />
+            ) : (
+              <AnimationTiles
+                animation={(target as { animation?: ElementAnimation }).animation ?? null}
+                speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
+                onSet={props.onSetAnimation}
+                onSetSpeed={props.onSetAnimationSpeed}
+              />
+            )}
           </MenuAccordionSection>
         ) : null}
         {/* Animation (spec/09) — animate an arrow to show direction: marching
@@ -1215,6 +1228,30 @@ function FlowTiles({
       </div>
       {flow ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
     </>
+  );
+}
+
+// Icon Animation control (spec/09): icons get their own glyph-motion set
+// (Spin / Beat / Pulse / Bounce / Wiggle / Flash / Tada) instead of the
+// boxed-element animation set. Icon speed is fixed, so there's no Speed row.
+function IconAnimationTiles({
+  animation,
+  onSet,
+}: {
+  animation: IconAnimation | null;
+  onSet: (v: IconAnimation | null) => void;
+}) {
+  return (
+    <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
+      {([null, ...ICON_ANIMATIONS] as (IconAnimation | null)[]).map((v) => (
+        <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
+          <span className="flex flex-col items-center gap-0.5">
+            <IconAnimKindGlyph kind={v} />
+            <span className="text-[9px] capitalize leading-none">{v ?? 'None'}</span>
+          </span>
+        </SizeButton>
+      ))}
+    </div>
   );
 }
 

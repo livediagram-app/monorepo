@@ -104,6 +104,24 @@ export const ANIMATION_SPEED_FACTOR: Record<AnimationSpeed, number> = {
   fast: 0.5,
 };
 
+// Looping animation for an `icon` shape's glyph (spec/09 "Animated icons").
+// A separate, glyph-oriented set from the boxed-element ElementAnimation: any
+// icon can opt into one of these via the icon context menu (they used to be
+// hard-wired to a few icon ids and always-on). 'spin' rotates, 'beat' is the
+// heart double-pump (scale), 'pulse' breathes opacity, 'bounce' bobs, 'wiggle'
+// tilts, 'flash' blinks, 'tada' is a celebratory scale + rotate. Undefined =
+// static. Mapped to a `lvd-icon-*` class; icon speed is fixed (no speed row).
+export type IconAnimation = 'spin' | 'beat' | 'pulse' | 'bounce' | 'wiggle' | 'flash' | 'tada';
+export const ICON_ANIMATIONS: readonly IconAnimation[] = [
+  'spin',
+  'beat',
+  'pulse',
+  'bounce',
+  'wiggle',
+  'flash',
+  'tada',
+];
+
 // Flowing-arrow animation (spec/09): 'dashes' marches the dash pattern along
 // the connector (CSS stroke-dashoffset), 'dots' sends a dot travelling the
 // path (CSS offset-path), 'beads' marches a row of round dots, 'pulse' breathes
@@ -215,6 +233,13 @@ export type ShapeElement = {
   // live app's icon catalogue; an unknown key falls back to a placeholder
   // glyph so a diagram authored against a newer catalogue still renders.
   iconId?: string;
+  // Looping animation for an `icon` shape's glyph (spec/09 "Animated icons").
+  // Independent of the boxed-element `animation` field above: icons get their
+  // own motion set (the icon context menu swaps in IconAnimationTiles), since
+  // a spinning gear / beating heart wants glyph-level motion, not the
+  // wrapper ring / glow a shape uses. Undefined = static. Applied as a
+  // `lvd-icon-*` CSS class on the glyph by IconGlyph / IconPrims.
+  iconAnimation?: IconAnimation;
   // Where the inline icon sits relative to the shape's text label (only
   // meaningful on a non-'icon' shape carrying an `iconId`). Defaults to
   // 'left' when unset. Chosen by which side of the shape the icon was

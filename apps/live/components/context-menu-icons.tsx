@@ -10,7 +10,7 @@
 // each icon picks up the surrounding row's tone (default / danger
 // / disabled) without needing per-icon variants.
 
-import type { ArrowFlow, ElementAnimation } from '@livediagram/diagram';
+import type { ArrowFlow, ElementAnimation, IconAnimation } from '@livediagram/diagram';
 
 export function LayerUpIcon() {
   return (
@@ -575,5 +575,80 @@ export function FlowKindGlyph({ kind }: { kind: ArrowFlow | null }) {
   if (kind === 'pulse') return <FlowPulseGlyph />;
   if (kind === 'grow') return <FlowGrowGlyph />;
   if (kind === 'glow') return <FlowGlowGlyph />;
+  return <AnimNoneGlyph />;
+}
+
+// Icon-animation tile glyphs (spec/09). Small pictograms hinting at each
+// motion: a circular arrow for Spin, a heart for Beat, signal arcs for Pulse,
+// an up-chevron-over-baseline for Bounce, a tilde for Wiggle, a spark for
+// Flash, a burst for Tada.
+function IconAnimSpinGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M13 8a5 5 0 1 1-1.6-3.7" />
+      <path d="M13 3.2 13 5.4 10.8 5.4" />
+    </AnimSvg>
+  );
+}
+function IconAnimBeatGlyph() {
+  return (
+    <AnimSvg>
+      <path
+        d="M8 13.2 3.4 8.6a2.6 2.6 0 0 1 3.7-3.7l.9.9.9-.9a2.6 2.6 0 0 1 3.7 3.7z"
+        fill="currentColor"
+        stroke="none"
+      />
+    </AnimSvg>
+  );
+}
+function IconAnimPulseGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M4.6 11.4a4.8 4.8 0 0 1 0-6.8" />
+      <path d="M11.4 4.6a4.8 4.8 0 0 1 0 6.8" />
+    </AnimSvg>
+  );
+}
+function IconAnimBounceGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none" />
+      <path d="M5.5 8.5 8 6 10.5 8.5" opacity="0.6" />
+      <path d="M3.5 13 H12.5" />
+    </AnimSvg>
+  );
+}
+function IconAnimWiggleGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2.5 9.5C4 6 5.5 6 7 8s2.5 2 4 -1.5 2.5 -1.5 2.5 -1.5" />
+    </AnimSvg>
+  );
+}
+function IconAnimFlashGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M9 2 4 9h3l-1 5 5-7H8z" fill="currentColor" stroke="none" />
+    </AnimSvg>
+  );
+}
+function IconAnimTadaGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="1.8" fill="currentColor" stroke="none" />
+      <path d="M8 2.2v1.8M8 12v1.8M2.2 8h1.8M12 8h1.8M4 4l1.3 1.3M11 11l1.3 1.3M12 4l-1.3 1.3M4 12l1.3-1.3" />
+    </AnimSvg>
+  );
+}
+
+export function IconAnimKindGlyph({ kind }: { kind: IconAnimation | null }) {
+  if (kind === 'spin') return <IconAnimSpinGlyph />;
+  if (kind === 'beat') return <IconAnimBeatGlyph />;
+  if (kind === 'pulse') return <IconAnimPulseGlyph />;
+  if (kind === 'bounce') return <IconAnimBounceGlyph />;
+  if (kind === 'wiggle') return <IconAnimWiggleGlyph />;
+  if (kind === 'flash') return <IconAnimFlashGlyph />;
+  if (kind === 'tada') return <IconAnimTadaGlyph />;
   return <AnimNoneGlyph />;
 }
