@@ -11,6 +11,7 @@
 // new palette glyph belongs here unless it's shared across panels
 // (in which case it goes into a sibling icon module).
 
+import { BORDER_STROKE_PX } from '@livediagram/diagram';
 import type {
   ArrowEnds,
   ArrowheadShape,
@@ -44,7 +45,10 @@ export function BorderStrokeIcon({ value }: { value: BorderStroke }) {
       </svg>
     );
   }
-  const sw = { thin: 1, medium: 2, thick: 4, 'extra-thick': 7 }[value];
+  // Reuse the renderer's canonical stroke-weight scale so the preview line
+  // can't drift from the real border widths. `value` is never 'none' here
+  // (handled above), so the px is always defined.
+  const sw = BORDER_STROKE_PX[value];
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
       <line
