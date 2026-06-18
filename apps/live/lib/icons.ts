@@ -10,7 +10,12 @@
 // one-file change with no schema migration; an unknown id renders the
 // PLACEHOLDER glyph rather than vanishing.
 
-import type { IconAnimation } from '@livediagram/diagram';
+import type { CSSProperties } from 'react';
+import {
+  ANIMATION_SPEED_FACTOR,
+  type AnimationSpeed,
+  type IconAnimation,
+} from '@livediagram/diagram';
 
 import type { IconDef, IconPrim } from './icon-types';
 import { ICON_CATALOG_1 } from './icon-catalog-1';
@@ -39,6 +44,17 @@ export const ICON_CATALOG: IconDef[] = [...ICON_CATALOG_1, ...ICON_CATALOG_2];
 // the catalogue glyphs are static unless the element asks for motion.)
 export function iconAnimationClass(anim: IconAnimation | undefined): string | undefined {
   return anim ? `lvd-icon-${anim}` : undefined;
+}
+
+// The duration multiplier for an icon animation, exposed to the `lvd-icon-*`
+// keyframes as the `--lvd-icon-anim-speed` custom property. undefined speed =
+// normal (factor 1, no inline style needed). Shared by IconGlyph / IconPrims
+// (line-art) and TechIconGlyph (brand marks) so the two can't drift.
+export function iconAnimationSpeedStyle(
+  speed: AnimationSpeed | undefined,
+): CSSProperties | undefined {
+  if (!speed || speed === 'normal') return undefined;
+  return { '--lvd-icon-anim-speed': ANIMATION_SPEED_FACTOR[speed] } as CSSProperties;
 }
 
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved

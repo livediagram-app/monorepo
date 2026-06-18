@@ -2,20 +2,9 @@
 // element (BoxedElementView, for shape==='icon') and the palette icon
 // picker so the on-canvas glyph and the picker thumbnail can't drift.
 
-import {
-  ANIMATION_SPEED_FACTOR,
-  type AnimationSpeed,
-  type IconAnimation,
-} from '@livediagram/diagram';
+import type { AnimationSpeed, IconAnimation } from '@livediagram/diagram';
 
-import { getIcon, iconAnimationClass, type IconPrim } from '@/lib/icons';
-
-// The duration multiplier for an icon animation, exposed to the `lvd-icon-*`
-// keyframes as `--lvd-icon-anim-speed`. undefined speed = normal (factor 1).
-function iconSpeedStyle(speed: AnimationSpeed | undefined): React.CSSProperties | undefined {
-  if (!speed || speed === 'normal') return undefined;
-  return { '--lvd-icon-anim-speed': ANIMATION_SPEED_FACTOR[speed] } as React.CSSProperties;
-}
+import { getIcon, iconAnimationClass, iconAnimationSpeedStyle, type IconPrim } from '@/lib/icons';
 
 // non-scaling-stroke keeps the line weight constant on screen at any
 // element size / zoom (matching the device-frame shapes), so a big icon
@@ -63,7 +52,7 @@ export function IconPrims({
   // centred on the glyph. The speed factor rides a CSS var the class reads.
   const animClass = iconAnimationClass(animation);
   return animClass ? (
-    <g className={animClass} style={iconSpeedStyle(animationSpeed)}>
+    <g className={animClass} style={iconAnimationSpeedStyle(animationSpeed)}>
       {prims}
     </g>
   ) : (
