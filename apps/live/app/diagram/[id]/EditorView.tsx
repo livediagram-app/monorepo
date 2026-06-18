@@ -286,6 +286,8 @@ export function EditorView() {
     setAnimationSelected,
     setArrowFlowSelected,
     setIconAnimationSelected,
+    setProgressSelected,
+    setProgressAnimSelected,
     setAnimationSpeedSelected,
     setFlowSpeedSelected,
     setCanvasTool,
@@ -1230,6 +1232,8 @@ export function EditorView() {
           onSetAnimation={setAnimationSelected}
           onSetArrowFlow={setArrowFlowSelected}
           onSetIconAnimation={setIconAnimationSelected}
+          onSetProgress={setProgressSelected}
+          onSetProgressAnim={setProgressAnimSelected}
           onSetAnimationSpeed={setAnimationSpeedSelected}
           onSetFlowSpeed={setFlowSpeedSelected}
           onResetColors={resetColorsSelected}

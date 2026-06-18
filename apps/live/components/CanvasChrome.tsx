@@ -1,4 +1,4 @@
-import { alignmentGuides, deriveTextColorForBg } from '@livediagram/diagram';
+import { alignmentGuides, deriveTextColorForBg, isProgressShape } from '@livediagram/diagram';
 import { getTheme } from '@/lib/themes';
 import { CommandPalette } from './CommandPalette';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
@@ -649,7 +649,12 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const canvasH = Math.abs(drawDrag.currentY - drawDrag.startY);
             const widthPx = Math.max(canvasW * viewportZoom, 1);
             const heightPx = Math.max(canvasH * viewportZoom, 1);
-            const usesSvg = pendingDraw.type === 'shape' && isSvgRenderedShape(pendingDraw.kind);
+            // Progress shapes render via ProgressView, not ShapeSvgOverlay, so
+            // they fall back to the dashed-rect preview (pill / circle corners).
+            const usesSvg =
+              pendingDraw.type === 'shape' &&
+              isSvgRenderedShape(pendingDraw.kind) &&
+              !isProgressShape(pendingDraw.kind);
             // Box intents: square / circle / stadium use border-
             // radius on the wrapping div (matching the BoxedElementView
             // at-rest treatment), every SVG-rendered shape kind
@@ -659,9 +664,11 @@ export function CanvasChrome(props: CanvasChromeProps) {
             // their corner-fold preview here because the preview is
             // very small and a peeled corner just reads as noise.
             const radius =
-              pendingDraw.type === 'shape' && pendingDraw.kind === 'circle'
+              pendingDraw.type === 'shape' &&
+              (pendingDraw.kind === 'circle' || pendingDraw.kind === 'progress-ring')
                 ? '50%'
-                : pendingDraw.type === 'shape' && pendingDraw.kind === 'stadium'
+                : pendingDraw.type === 'shape' &&
+                    (pendingDraw.kind === 'stadium' || pendingDraw.kind === 'progress-bar')
                   ? '9999px'
                   : '4px';
             return (

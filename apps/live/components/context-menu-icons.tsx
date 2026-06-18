@@ -10,7 +10,12 @@
 // each icon picks up the surrounding row's tone (default / danger
 // / disabled) without needing per-icon variants.
 
-import type { ArrowFlow, ElementAnimation, IconAnimation } from '@livediagram/diagram';
+import type {
+  ArrowFlow,
+  ElementAnimation,
+  IconAnimation,
+  ProgressAnim,
+} from '@livediagram/diagram';
 
 export function LayerUpIcon() {
   return (
@@ -650,5 +655,68 @@ export function IconAnimKindGlyph({ kind }: { kind: IconAnimation | null }) {
   if (kind === 'wiggle') return <IconAnimWiggleGlyph />;
   if (kind === 'flash') return <IconAnimFlashGlyph />;
   if (kind === 'tada') return <IconAnimTadaGlyph />;
+  return <AnimNoneGlyph />;
+}
+
+// Progress section icon (spec/46): a half-filled pill.
+export function ProgressMenuGlyph() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="6" width="12" height="4" rx="2" />
+      <rect x="2" y="6" width="6" height="4" rx="2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// Progress fill-animation tile glyphs (spec/46): a partly-filled bar for Fill,
+// a faded fill for Pulse, diagonal hatching for Stripes.
+function ProgAnimFillGlyph() {
+  return (
+    <AnimSvg>
+      <rect x="2" y="6" width="12" height="4" rx="2" />
+      <rect x="2" y="6" width="6" height="4" rx="2" fill="currentColor" stroke="none" />
+      <path d="M8.5 8 H11" opacity="0.5" />
+    </AnimSvg>
+  );
+}
+function ProgAnimPulseGlyph() {
+  return (
+    <AnimSvg>
+      <rect x="2" y="6" width="12" height="4" rx="2" />
+      <rect
+        x="2"
+        y="6"
+        width="7"
+        height="4"
+        rx="2"
+        fill="currentColor"
+        stroke="none"
+        opacity="0.5"
+      />
+    </AnimSvg>
+  );
+}
+function ProgAnimStripesGlyph() {
+  return (
+    <AnimSvg>
+      <rect x="2" y="6" width="12" height="4" rx="2" />
+      <path d="M4 10 6 6M6.5 10 8.5 6M9 10 11 6" strokeWidth="1" opacity="0.7" />
+    </AnimSvg>
+  );
+}
+export function ProgressAnimKindGlyph({ kind }: { kind: ProgressAnim | null }) {
+  if (kind === 'fill') return <ProgAnimFillGlyph />;
+  if (kind === 'pulse') return <ProgAnimPulseGlyph />;
+  if (kind === 'stripes') return <ProgAnimStripesGlyph />;
   return <AnimNoneGlyph />;
 }

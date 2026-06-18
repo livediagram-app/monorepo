@@ -72,6 +72,10 @@ export const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: numb
   // two-line caption (e.g. "Durable Objects") clears the glyph rather than
   // crowding it.
   icon: { width: 120, height: 120 },
+  // Progress bar: a wide, short pill. Progress ring: a square donut
+  // (aspect-locked on create so it stays circular).
+  'progress-bar': { width: 220, height: 44 },
+  'progress-ring': { width: 130, height: 130 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
@@ -107,6 +111,15 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
     // off the border so it doesn't touch the outline, so they read as a
     // labelled container the moment they're dropped.
     return { ...base, label: 'Frame', textAlignY: 'top', textAlignX: 'right', padding: 'lg' };
+  }
+  // Progress ring is drawn as a donut, so lock the aspect ratio to keep it
+  // circular. Both progress kinds start half-filled so the fill is visible the
+  // moment they're dropped.
+  if (kind === 'progress-ring') {
+    return { ...base, aspectLocked: true, progress: 50 };
+  }
+  if (kind === 'progress-bar') {
+    return { ...base, progress: 50 };
   }
   return base;
 }

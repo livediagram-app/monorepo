@@ -6,6 +6,8 @@ import type { Element, ShapeKind } from './index';
 const SHAPE_LABELS: Partial<Record<ShapeKind, string>> = {
   'speech-bubble': 'Speech Bubble',
   icon: 'Icon',
+  'progress-bar': 'Progress Bar',
+  'progress-ring': 'Progress Ring',
 };
 
 function titleCase(s: string): string {

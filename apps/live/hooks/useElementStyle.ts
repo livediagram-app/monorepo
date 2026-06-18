@@ -21,6 +21,7 @@ import {
   ARROW_THICKNESS_PX,
   bringManyToFront,
   isBoxed,
+  isProgressShape,
   sendManyToBack,
   SHAPE_DEFAULT_SIZE,
   supportsBorder,
@@ -34,6 +35,7 @@ import {
   type BorderRadius,
   type ElementAnimation,
   type IconAnimation,
+  type ProgressAnim,
   type BorderStroke,
   type BorderStyle,
   type Element,
@@ -499,6 +501,33 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'IconAnimation');
   };
+  // Progress elements (spec/46). The percentage + how its fill animates;
+  // both apply only to progress shapes. `null` clears the animation.
+  const setProgressSelected = (value: number) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    const clamped = Math.max(0, Math.min(100, Math.round(value)));
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'shape' && isProgressShape(el.shape)
+          ? { ...el, progress: clamped }
+          : el,
+      ),
+    );
+    track('Element', 'Changed', 'Progress');
+  };
+  const setProgressAnimSelected = (value: ProgressAnim | null) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'shape' && isProgressShape(el.shape)
+          ? { ...el, progressAnim: value ?? undefined }
+          : el,
+      ),
+    );
+    track('Element', 'Changed', 'ProgressAnim');
+  };
   const setAnimationSpeedSelected = (value: AnimationSpeed) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
@@ -625,6 +654,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setAnimationSelected,
     setArrowFlowSelected,
     setIconAnimationSelected,
+    setProgressSelected,
+    setProgressAnimSelected,
     setAnimationSpeedSelected,
     setFlowSpeedSelected,
     resetColorsSelected,

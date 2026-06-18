@@ -122,6 +122,20 @@ export const ICON_ANIMATIONS: readonly IconAnimation[] = [
   'tada',
 ];
 
+// Progress elements (spec/46): a horizontal bar + a donut ring that display a
+// 0–100 `progress` value. `progressAnim` animates HOW the filled portion
+// behaves: 'fill' repeatedly grows it from 0 to the value, 'pulse' breathes its
+// opacity, 'stripes' runs a barber-pole / marching pattern over the fill.
+// Undefined = a static fill. Mapped to `lvd-prog-*` classes by ProgressView.
+export type ProgressAnim = 'fill' | 'pulse' | 'stripes';
+export const PROGRESS_ANIMS: readonly ProgressAnim[] = ['fill', 'pulse', 'stripes'];
+
+// The two progress ShapeKinds, grouped so renderers + context-menu gates can
+// branch on "is this a progress element" without repeating the literal pair.
+export function isProgressShape(kind: ShapeKind): boolean {
+  return kind === 'progress-bar' || kind === 'progress-ring';
+}
+
 // Flowing-arrow animation (spec/09): 'dashes' marches the dash pattern along
 // the connector (CSS stroke-dashoffset), 'dots' sends a dot travelling the
 // path (CSS offset-path), 'beads' marches a row of round dots, 'pulse' breathes
@@ -213,6 +227,10 @@ export type ShapeKind =
   | 'phone'
   | 'tablet'
   | 'smartwatch'
+  // Progress elements (spec/46): a horizontal bar + a donut ring that show a
+  // 0–100 percentage. They carry `progress` / `progressAnim` (below).
+  | 'progress-bar'
+  | 'progress-ring'
   // Curated single-colour glyph from the icon catalogue. Which glyph
   // is carried by `iconId` (a registry key resolved in the live app's
   // icon catalogue, NOT a closed enum here, so adding icons is a
@@ -245,6 +263,12 @@ export type ShapeElement = {
   // 'left' when unset. Chosen by which side of the shape the icon was
   // dropped on.
   iconPosition?: 'left' | 'right' | 'above' | 'below';
+  // Progress elements (spec/46), only meaningful when `shape` is
+  // 'progress-bar' / 'progress-ring'. `progress` is the filled percentage
+  // (0–100, defaults to 50); `progressAnim` animates how the fill behaves.
+  // Edited from the element's context menu.
+  progress?: number;
+  progressAnim?: ProgressAnim;
   x: number;
   y: number;
   width: number;

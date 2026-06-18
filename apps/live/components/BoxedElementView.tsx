@@ -22,6 +22,7 @@ import {
   defaultTextAlign,
   defaultTextColor,
   hasRichFormatting,
+  isProgressShape,
   PADDING_PX,
   type BoxedElement,
   type FreehandElement,
@@ -40,6 +41,7 @@ import {
 } from './label-style';
 import { EdgeResizeHandle, LockBadge, ResizeHandles } from './element-parts';
 import { ImageElementView } from './ImageElementView';
+import { ProgressView } from './ProgressView';
 import { isSvgRenderedShape, ShapeSvgOverlay } from './shape-svg-overlay';
 import { BoxBorderOverlay } from './BoxBorderOverlay';
 import { isCssNativeBorderStyle } from './border-css';
@@ -593,6 +595,15 @@ function BoxedElementViewImpl({
           // menu; undefined = static.
           animation={element.iconAnimation}
         />
+      ) : element.type === 'shape' && isProgressShape(element.shape) ? (
+        // Progress elements (spec/46): a bar / donut showing element.progress.
+        // The fill takes the stroke accent; the track takes the fill colour.
+        <ProgressView
+          element={element}
+          accent={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
+          track={element.fillColor ?? '#e2e8f0'}
+          textColor={textColor}
+        />
       ) : element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
         <ShapeSvgOverlay
           shape={element.shape}
@@ -707,6 +718,10 @@ function BoxedElementViewImpl({
           draggableIcon={canRepositionIcon}
           onIconPointerDown={startIconReposition}
         />
+      ) : element.type === 'shape' && isProgressShape(element.shape) ? (
+        // Progress elements draw their own centred percentage, so they render no
+        // standard editable label.
+        <></>
       ) : (
         labelNode
       )}

@@ -27,6 +27,8 @@ import {
   ELEMENT_ANIMATIONS,
   ICON_ANIMATIONS,
   isBoxed,
+  isProgressShape,
+  PROGRESS_ANIMS,
   supportsBorderControls,
   supportsBorderRadius,
   supportsColours,
@@ -44,6 +46,8 @@ import {
   type Element,
   type ElementAnimation,
   type IconAnimation,
+  type ProgressAnim,
+  type ShapeElement,
   type ShapeKind,
   type TextSize,
 } from '@livediagram/diagram';
@@ -75,6 +79,8 @@ import {
   AnimationMenuGlyph,
   FlowKindGlyph,
   IconAnimKindGlyph,
+  ProgressAnimKindGlyph,
+  ProgressMenuGlyph,
   NoteMenuIcon,
   PaletteMenuIcon,
   PointerGlyph,
@@ -150,6 +156,8 @@ type EditorContextMenuProps = {
   onSetAnimation: (value: ElementAnimation | null) => void;
   onSetArrowFlow: (value: ArrowFlow | null) => void;
   onSetIconAnimation: (value: IconAnimation | null) => void;
+  onSetProgress: (value: number) => void;
+  onSetProgressAnim: (value: ProgressAnim | null) => void;
   onSetAnimationSpeed: (value: AnimationSpeed) => void;
   onSetFlowSpeed: (value: AnimationSpeed) => void;
   onResetColors: () => void;
@@ -459,9 +467,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
       target.type === 'shape' && target.shape !== 'icon' && target.iconId !== undefined;
     const hasImage = target.type === 'image' && target.imageId != null;
     const hasLink = target.link != null;
-    // Regular shapes (not the dedicated icon glyph, not a frame container)
-    // can morph to another common kind in place.
-    const morphable = target.type === 'shape' && !isIcon && target.shape !== 'frame';
+    // Regular shapes (not the dedicated icon glyph, not a frame container, not
+    // a progress element which carries its own `progress` data) can morph to
+    // another common kind in place.
+    const isProgress = target.type === 'shape' && isProgressShape(target.shape);
+    const morphable = target.type === 'shape' && !isIcon && target.shape !== 'frame' && !isProgress;
     return (
       <ContextMenu position={position} onClose={onClose} flush anchorBottom={anchorBottom}>
         {/* Shape — morph to another common kind, preserving size + colour. */}
@@ -490,6 +500,24 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 Reset aspect ratio
               </button>
             </div>
+          </MenuAccordionSection>
+        ) : null}
+        {/* Progress (spec/46) — the percentage + how the fill animates. Only
+            for progress bars / rings. */}
+        {isProgress ? (
+          <MenuAccordionSection
+            title="Progress"
+            icon={<ProgressMenuGlyph />}
+            {...sectionProps('progress')}
+          >
+            <ProgressRow
+              value={(target as ShapeElement).progress ?? 50}
+              onChange={props.onSetProgress}
+            />
+            <ProgressAnimTiles
+              anim={(target as ShapeElement).progressAnim ?? null}
+              onSet={props.onSetProgressAnim}
+            />
           </MenuAccordionSection>
         ) : null}
         {/* Rotation — fixed snap angles. Each tile previews the orientation
@@ -1292,6 +1320,53 @@ function MenuToggleRow({
 // Opacity slider row inside the context menu. Doesn't close the menu on
 // interaction (it isn't a MenuItem): dragging fires pointer events inside
 // the menu, so the ContextMenu's outside-click guard keeps it open.
+// Progress percentage slider (spec/46). Mirrors OpacityRow but on a 0–100
+// integer scale.
+function ProgressRow({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value)));
+  return (
+    <div className="px-3 py-1.5">
+      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Percentage</p>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={pct}
+          onChange={(e) => onChange(Number(e.target.value))}
+          aria-label="Percentage"
+          className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
+        />
+        <span className="w-10 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
+          {pct}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Progress fill-animation tiles (spec/46): None / Fill / Pulse / Stripes.
+function ProgressAnimTiles({
+  anim,
+  onSet,
+}: {
+  anim: ProgressAnim | null;
+  onSet: (v: ProgressAnim | null) => void;
+}) {
+  return (
+    <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
+      {([null, ...PROGRESS_ANIMS] as (ProgressAnim | null)[]).map((v) => (
+        <SizeButton key={v ?? 'none'} active={anim === v} onClick={() => onSet(v)}>
+          <span className="flex flex-col items-center gap-0.5">
+            <ProgressAnimKindGlyph kind={v} />
+            <span className="text-[9px] capitalize leading-none">{v ?? 'None'}</span>
+          </span>
+        </SizeButton>
+      ))}
+    </div>
+  );
+}
+
 function OpacityRow({ value, onChange }: { value: number; onChange: (opacity: number) => void }) {
   const pct = Math.round(value * 100);
   return (

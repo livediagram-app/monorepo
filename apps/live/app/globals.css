@@ -787,6 +787,73 @@
   animation: lvd-icon-tada 1.4s ease-in-out infinite;
 }
 
+/* Progress elements (spec/46): animate HOW the fill behaves. 'fill' grows it
+ * from 0 to the set value on a loop (bar: scaleX; ring: a stroke-dashoffset
+ * draw keyed off --lvd-progress), 'pulse' breathes opacity, 'stripes' runs a
+ * barber-pole / marching pattern over the fill. */
+@keyframes lvd-prog-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.lvd-prog-grow {
+  transform-origin: left center;
+  animation: lvd-prog-grow 1.8s ease-out infinite;
+}
+@keyframes lvd-prog-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.lvd-prog-pulse {
+  animation: lvd-prog-pulse 1.4s ease-in-out infinite;
+}
+@keyframes lvd-prog-stripes {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 22px 0;
+  }
+}
+.lvd-prog-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3) 0,
+    rgba(255, 255, 255, 0.3) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  background-size: 22px 22px;
+  animation: lvd-prog-stripes 0.6s linear infinite;
+}
+@keyframes lvd-prog-ring-grow {
+  from {
+    stroke-dashoffset: var(--lvd-progress, 100);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.lvd-prog-ring-grow {
+  animation: lvd-prog-ring-grow 1.8s ease-out infinite;
+}
+@keyframes lvd-prog-ring-stripes {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+.lvd-prog-ring-stripes {
+  animation: lvd-prog-ring-stripes 0.6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lvd-anim-pulse,
   .lvd-anim-blink,
@@ -814,7 +881,12 @@
   .lvd-icon-bounce,
   .lvd-icon-wiggle,
   .lvd-icon-flash,
-  .lvd-icon-tada {
+  .lvd-icon-tada,
+  .lvd-prog-grow,
+  .lvd-prog-pulse,
+  .lvd-prog-stripes,
+  .lvd-prog-ring-grow,
+  .lvd-prog-ring-stripes {
     animation: none;
   }
 }
