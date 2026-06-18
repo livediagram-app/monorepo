@@ -1245,6 +1245,12 @@
   .fa-on,
   .fa-fade,
   .fa-ripple,
+  .fa-flow,
+  .fa-glow,
+  .fa-spin-cont,
+  .fa-beat,
+  .fa-drift,
+  .fa-spot,
   .uc-pop {
     animation: none !important;
     opacity: 1 !important;

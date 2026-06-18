@@ -895,8 +895,26 @@ export function CustomThemesArt() {
         {/* preview canvas adopting the saved palette */}
         <div className="relative mt-0.5 flex-1 rounded border border-slate-200 bg-white">
           <svg viewBox="0 0 196 38" className="absolute inset-0 h-full w-full">
-            <rect x="14" y="9" width="44" height="20" rx="5" fill="#ede9fe" stroke="#7c3aed" strokeWidth="2" />
-            <rect x="138" y="9" width="44" height="20" rx="5" fill="#ede9fe" stroke="#7c3aed" strokeWidth="2" />
+            <rect
+              x="14"
+              y="9"
+              width="44"
+              height="20"
+              rx="5"
+              fill="#ede9fe"
+              stroke="#7c3aed"
+              strokeWidth="2"
+            />
+            <rect
+              x="138"
+              y="9"
+              width="44"
+              height="20"
+              rx="5"
+              fill="#ede9fe"
+              stroke="#7c3aed"
+              strokeWidth="2"
+            />
             <line x1="58" y1="19" x2="138" y2="19" stroke="#7c3aed" strokeWidth="2" />
           </svg>
           <span className="fa-fade absolute -top-1.5 right-2 rounded bg-violet-600 px-1.5 py-0.5 text-[7px] font-semibold text-white shadow-sm">
@@ -910,7 +928,14 @@ export function CustomThemesArt() {
 
 function SlidersIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke={BLUE_STROKE} strokeWidth="1.5">
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke={BLUE_STROKE}
+      strokeWidth="1.5"
+    >
       <path d="M2 4 H14 M2 8 H14 M2 12 H14" strokeLinecap="round" />
       <circle cx="5" cy="4" r="1.6" fill="white" />
       <circle cx="11" cy="8" r="1.6" fill="white" />

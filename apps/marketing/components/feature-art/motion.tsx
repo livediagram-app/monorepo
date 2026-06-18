@@ -184,7 +184,14 @@ export function AnimatedIconsArt() {
         <IconTile label="Gear">
           <g className="fa-spin-cont" stroke={BLUE_STROKE} strokeWidth="1.8" fill="none">
             {Array.from({ length: 8 }).map((_, i) => (
-              <line key={i} x1="12" y1="2.5" x2="12" y2="5.5" transform={`rotate(${i * 45} 12 12)`} />
+              <line
+                key={i}
+                x1="12"
+                y1="2.5"
+                x2="12"
+                y2="5.5"
+                transform={`rotate(${i * 45} 12 12)`}
+              />
             ))}
             <circle cx="12" cy="12" r="6" />
             <circle cx="12" cy="12" r="2.4" />
@@ -200,7 +207,11 @@ export function AnimatedIconsArt() {
         <IconTile label="Signal">
           <g fill="none" stroke={SKY} strokeWidth="2" strokeLinecap="round">
             <circle cx="12" cy="18" r="1.6" fill={SKY} stroke="none" />
-            <path className="fa-pulse" d="M7.5 14 a6 6 0 0 1 9 0" style={{ animationDelay: '0s' }} />
+            <path
+              className="fa-pulse"
+              d="M7.5 14 a6 6 0 0 1 9 0"
+              style={{ animationDelay: '0s' }}
+            />
             <path
               className="fa-pulse"
               d="M4.5 10.5 a10.5 10.5 0 0 1 15 0"

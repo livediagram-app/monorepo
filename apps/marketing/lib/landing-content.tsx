@@ -3,16 +3,21 @@ import {
   ActivityArt,
   AiAssistArt,
   AlignmentGuidesArt,
+  AnimatedIconsArt,
+  AnimatedShapesArt,
   AnyDeviceArt,
   ArrowsArt,
   AutosaveArt,
   BorderStyleArt,
   CanvasBackdropArt,
   CommentsArt,
+  ComponentsArt,
+  CustomThemesArt,
   DarkModeArt,
   DepthArt,
   EasyStartArt,
   ExpiryArt,
+  FlowingArrowsArt,
   FoldersArt,
   FontsArt,
   FormatPainterArt,
@@ -21,6 +26,7 @@ import {
   ImagesArt,
   LaserArt,
   LinkCardArt,
+  LivingBackgroundArt,
   NotesArt,
   LockArt,
   MarkdownImportArt,
@@ -43,6 +49,7 @@ import {
   ShapesArt,
   ShareLinksArt,
   ShortcutsArt,
+  SpotlightArt,
   TabCopyArt,
   TabFoldersArt,
   TabLockArt,
@@ -132,9 +139,15 @@ export const LANDING_SECTIONS: LandingSection[] = [
       },
       {
         art: <ThemesArt />,
-        title: 'Twenty-six preset themes',
+        title: 'Twenty-seven preset themes',
         description:
           'Basic, Forest, Ocean, Sunset, Rose, Midnight, Mono and a dozen more — plus multi-colour Rainbow, Pastel, Tropical, Autumn, and Jewel themes that tint each branch a different hue. One click recolours the canvas, every shape, and every arrow.',
+      },
+      {
+        art: <CustomThemesArt />,
+        title: 'Build your own theme',
+        description:
+          'Need your brand palette, a house style, or a notation that is not in the list? Build a custom theme, save it to your account, and reuse it across diagrams just like a built-in one. Edit it any time, and guests get them too.',
       },
       {
         art: <CanvasBackdropArt />,
@@ -171,6 +184,38 @@ export const LANDING_SECTIONS: LandingSection[] = [
         title: 'Organise in folders',
         description:
           'File diagrams into nested folders in the explorer. Recent diagrams stay one click away; everything else lives where you put it.',
+      },
+    ],
+  },
+  {
+    id: 'motion',
+    title: 'Bring the canvas to life',
+    description:
+      'A diagram does not have to sit still. Animate a shape to signal status, send the flow marching along an arrow, let the backdrop drift, and reach for a spotlight when you present. Every animation is purely decorative motion: it freezes to a clean still frame when exported and respects reduced-motion.',
+    items: [
+      {
+        art: <AnimatedShapesArt />,
+        title: 'Animate any shape',
+        description:
+          'Give a shape a looping animation to draw the eye or signal status: pulse an attention ring, glow a soft halo, blink a status light, trace the outline, or bob and wobble. Pick a speed, and the format painter copies the motion to the next shape.',
+      },
+      {
+        art: <FlowingArrowsArt />,
+        title: 'Arrows that show the flow',
+        description:
+          'Set an arrow flowing and its line comes alive: marching dashes, travelling dots, a row of beads, a breathing pulse, or a soft glow, all running toward the target so a data or process diagram reads its own direction.',
+      },
+      {
+        art: <LivingBackgroundArt />,
+        title: 'A backdrop with motion',
+        description:
+          'Swap the static grid for a living pattern: Flow streams diagonal lines, Drift floats rising motes, Aurora drifts colour glows, Ripple expands gentle rings, and Ribbons sweeps curved lines. Each matches the theme, scales with the size slider, and settles when reduced-motion is on.',
+      },
+      {
+        art: <AnimatedIconsArt />,
+        title: 'Animated icons',
+        description:
+          'Some icons move on their own: a spinner and gear turn, a heartbeat beats, a signal pulses. Pick one from the Animated set of the icon palette and drop it like any other glyph; it doubles as its own still frame.',
       },
     ],
   },
@@ -221,6 +266,12 @@ export const LANDING_SECTIONS: LandingSection[] = [
         title: 'Laser pointer for presenting',
         description:
           'Switch to the laser tool and your cursor leaves a glowing trail everyone can see. Point at the thing you mean while you talk it through. Trails fade on their own.',
+      },
+      {
+        art: <SpotlightArt />,
+        title: 'Spotlight the room on one thing',
+        description:
+          'Switch on Spotlight and the canvas dims under a soft shroud, with only a circle of light around your cursor. Walk the room through a busy diagram one piece at a time. Left-click grows the light, right-click shrinks it, and it is a local view aid, so it never gets in a viewer’s way.',
       },
       {
         art: <SessionToolsArt />,
@@ -415,6 +466,12 @@ export const LANDING_SECTIONS: LandingSection[] = [
         title: 'Full-colour technology icons',
         description:
           'Build cloud architecture diagrams with brand-accurate icons for AWS, Azure, Cloudflare, and Firebase, plus a vendor-neutral set (Kubernetes, Docker, PostgreSQL, Redis and more), spanning compute, storage, databases, and networking. Search the Technology picker, drop one in, and it lands labelled with its product name.',
+      },
+      {
+        art: <ComponentsArt />,
+        title: 'Ready-made components',
+        description:
+          'Drop in a polished composite and skip the busywork: a banner, a hero, a website-style header, an annotated callout, a row of KPI stats, or numbered process steps. Tap to place it or drag to size it; each one follows the tab theme, then ungroups into plain shapes you can edit like anything else.',
       },
     ],
   },
