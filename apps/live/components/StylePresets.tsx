@@ -1,14 +1,24 @@
 'use client';
 
 // One-click style presets for the selected-element context menu (spec/48).
-// ShapePresets renders eight theme-derived colour looks + up to eight border
-// looks (weight × pattern × radius) + a reset, combined freely. Purely
-// presentational: every apply is a callback prop. Colour presets are
-// theme-derived (passed in); border presets are the static table below. Lives
-// in its own file so EditorContextMenu doesn't accrete a third large category
-// inline (see the no-god-files principle).
+// Two surfaces:
+//   - ShapePresets — eight theme-derived colour looks + up to eight border
+//     looks (weight × pattern × radius) + a reset, combined freely.
+//   - ArrowPresets — eight line looks (pattern × thickness × optional flow
+//     animation, e.g. a dashed animated arrow) + a reset.
+// Purely presentational: every apply is a callback prop. Colour presets are
+// theme-derived (passed in); border + arrow presets are the static tables
+// below. Lives in its own file so EditorContextMenu doesn't accrete more large
+// categories inline (see the no-god-files principle).
 
-import type { BorderRadius, BorderStyle, BorderStroke } from '@livediagram/diagram';
+import {
+  ARROW_THICKNESS_PX,
+  type ArrowFlow,
+  type ArrowThickness,
+  type BorderRadius,
+  type BorderStyle,
+  type BorderStroke,
+} from '@livediagram/diagram';
 import type { ShapeColorPreset } from '@/lib/themes';
 import { SizeButton } from '@/components/palette-controls';
 
@@ -33,6 +43,26 @@ const SHAPE_BORDER_PRESETS: readonly ShapeBorderPreset[] = [
   { name: 'Dashed', stroke: 'medium', style: 'dashed', radius: 'md' },
   { name: 'Heavy', stroke: 'thick', style: 'solid', radius: 'none' },
   { name: 'Fine', stroke: 'thin', style: 'solid', radius: 'lg' },
+];
+
+// Arrow presets: line pattern × thickness × optional flow animation, so the
+// user can grab a dashed animated arrow, a travelling-dot arrow, etc. in one
+// click.
+export type ArrowPreset = {
+  name: string;
+  style: BorderStyle;
+  thickness: ArrowThickness;
+  flow?: ArrowFlow;
+};
+const ARROW_PRESETS: readonly ArrowPreset[] = [
+  { name: 'Plain', style: 'solid', thickness: 'medium' },
+  { name: 'Bold', style: 'solid', thickness: 'thick' },
+  { name: 'Fine', style: 'solid', thickness: 'thin' },
+  { name: 'Dashed', style: 'dashed', thickness: 'medium' },
+  { name: 'Dotted', style: 'dotted', thickness: 'medium' },
+  { name: 'Flow', style: 'solid', thickness: 'medium', flow: 'dashes' },
+  { name: 'Dash Flow', style: 'dashed', thickness: 'medium', flow: 'dashes' },
+  { name: 'Dot Flow', style: 'solid', thickness: 'medium', flow: 'dots' },
 ];
 
 // ── Preview-style mappings ──────────────────────────────────────────────
@@ -60,6 +90,12 @@ function cssBorderStyle(style: BorderStyle): string {
   if (style === 'dotted') return 'dotted';
   if (style === 'solid') return 'solid';
   return 'dashed';
+}
+// SVG stroke-dasharray for an arrow-line preview, scaled to the stroke width.
+function svgDash(style: BorderStyle, w: number): string | undefined {
+  if (style === 'dotted') return `0.1 ${w * 2.5}`;
+  if (style === 'solid') return undefined;
+  return `${w * 3} ${w * 2.5}`;
 }
 
 // ── Tiles ───────────────────────────────────────────────────────────────
@@ -167,15 +203,79 @@ export function ShapePresets({
           </SizeButton>
         ))}
       </div>
-      <div className="px-0 pb-1 pt-1.5">
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
-        >
-          Reset to default
-        </button>
+      <ResetButton onReset={onReset} />
+    </div>
+  );
+}
+
+// ── Arrow presets ───────────────────────────────────────────────────────
+
+function ArrowPresetSwatch({ preset }: { preset: ArrowPreset }) {
+  const w = ARROW_THICKNESS_PX[preset.thickness];
+  const dash = svgDash(preset.style, w);
+  return (
+    <svg width="34" height="14" viewBox="0 0 34 14" fill="none" aria-hidden>
+      <path
+        d="M2 7 H26"
+        stroke="currentColor"
+        strokeWidth={w}
+        strokeLinecap={preset.style === 'dotted' ? 'round' : 'butt'}
+        strokeDasharray={dash}
+        // Reuse the canvas arrow-flow march so animated presets preview live.
+        className={preset.flow ? 'lvd-arrow-flow' : undefined}
+      />
+      <path
+        d="M24 3 L30 7 L24 11"
+        stroke="currentColor"
+        strokeWidth={w}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ArrowPresets({
+  current,
+  onApply,
+  onReset,
+}: {
+  // The arrow's current style, to highlight a matching preset.
+  current: { strokeStyle?: BorderStyle; flow?: ArrowFlow };
+  onApply: (preset: ArrowPreset) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="px-2 py-1.5">
+      <div className="grid grid-cols-4 gap-1">
+        {ARROW_PRESETS.map((p) => (
+          <SizeButton
+            key={p.name}
+            active={(current.strokeStyle ?? 'solid') === p.style && current.flow === p.flow}
+            onClick={() => onApply(p)}
+          >
+            <PresetLabel name={p.name}>
+              <ArrowPresetSwatch preset={p} />
+            </PresetLabel>
+          </SizeButton>
+        ))}
       </div>
+      <ResetButton onReset={onReset} />
+    </div>
+  );
+}
+
+// Shared "Reset to default" button beneath the preset grids.
+function ResetButton({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="px-0 pb-1 pt-1.5">
+      <button
+        type="button"
+        onClick={onReset}
+        className="inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
+      >
+        Reset to default
+      </button>
     </div>
   );
 }

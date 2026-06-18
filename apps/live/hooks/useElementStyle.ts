@@ -537,6 +537,48 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'StyleReset');
   };
 
+  // Arrow style presets (spec/48). A one-click line look — pattern + thickness
+  // + optional flow animation — applied in a single step. A preset without a
+  // `flow` clears any existing animation; one with a flow defaults its speed to
+  // normal when the arrow had none. Arrows only.
+  const applyArrowPresetSelected = (preset: {
+    style: BorderStyle;
+    thickness: ArrowThickness;
+    flow?: ArrowFlow;
+  }) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    const px = ARROW_THICKNESS_PX[preset.thickness];
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'arrow'
+          ? {
+              ...el,
+              strokeStyle: preset.style,
+              strokeWidth: px,
+              flow: preset.flow,
+              flowSpeed: preset.flow ? (el.flowSpeed ?? 'normal') : el.flowSpeed,
+            }
+          : el,
+      ),
+    );
+    track('Element', 'Changed', 'ArrowPreset');
+  };
+  // Reset a preset-styled arrow: drop its line pattern / thickness / flow
+  // overrides so it falls back to the defaults. One step.
+  const resetArrowStyleSelected = () => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => {
+        if (!ids.has(el.id) || el.type !== 'arrow') return el;
+        const { strokeWidth: _w, strokeStyle: _s, flow: _f, flowSpeed: _fs, ...rest } = el;
+        return rest as typeof el;
+      }),
+    );
+    track('Element', 'Changed', 'StyleReset');
+  };
+
   // Animated elements (spec/09). A looping animation on the selected boxed
   // element(s); `null` clears it. Arrows take a separate `flow` (marching
   // dashes / travelling dot).
@@ -765,6 +807,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
+    applyArrowPresetSelected,
+    resetArrowStyleSelected,
     setAnimationSelected,
     setArrowFlowSelected,
     setIconAnimationSelected,

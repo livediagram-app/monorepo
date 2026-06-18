@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createShape, type Element, type Tab } from '@livediagram/diagram';
+import { createArrow, createShape, type Element, type Tab } from '@livediagram/diagram';
 import { useElementStyle } from './useElementStyle';
 
 // useElementStyle builds plain handler closures from its deps (no internal
@@ -115,5 +115,56 @@ describe('useElementStyle shape style presets (spec/48)', () => {
     expect(el.strokeWidth).toBeUndefined();
     expect(el.strokeStyle).toBeUndefined();
     expect(el.borderRadius).toBeUndefined();
+  });
+});
+
+describe('useElementStyle arrow style presets (spec/48)', () => {
+  it('applies an animated line preset (pattern + thickness + flow) in one step', () => {
+    const a = createArrow(0, 0, 100, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.applyArrowPresetSelected({ style: 'dashed', thickness: 'thick', flow: 'dashes' });
+
+    const el = result()[0] as {
+      strokeStyle?: string;
+      strokeWidth?: number;
+      flow?: string;
+      flowSpeed?: string;
+    };
+    expect(el.strokeStyle).toBe('dashed');
+    expect(el.strokeWidth).toBe(4); // thick → 4px
+    expect(el.flow).toBe('dashes');
+    expect(el.flowSpeed).toBe('normal');
+  });
+
+  it('a preset without a flow clears any existing animation', () => {
+    const a = createArrow(0, 0, 100, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.applyArrowPresetSelected({ style: 'solid', thickness: 'medium', flow: 'dashes' });
+    style.applyArrowPresetSelected({ style: 'dotted', thickness: 'medium' });
+
+    const el = result()[0] as { flow?: string; strokeStyle?: string };
+    expect(el.flow).toBeUndefined();
+    expect(el.strokeStyle).toBe('dotted');
+  });
+
+  it('resets a preset-styled arrow back to its defaults', () => {
+    const a = createArrow(0, 0, 100, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.applyArrowPresetSelected({ style: 'dashed', thickness: 'thick', flow: 'dashes' });
+    style.resetArrowStyleSelected();
+
+    const el = result()[0] as {
+      strokeStyle?: string;
+      strokeWidth?: number;
+      flow?: string;
+      flowSpeed?: string;
+    };
+    expect(el.strokeStyle).toBeUndefined();
+    expect(el.strokeWidth).toBeUndefined();
+    expect(el.flow).toBeUndefined();
+    expect(el.flowSpeed).toBeUndefined();
   });
 });

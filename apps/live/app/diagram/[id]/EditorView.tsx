@@ -289,6 +289,8 @@ export function EditorView() {
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
+    applyArrowPresetSelected,
+    resetArrowStyleSelected,
     setAnimationSelected,
     setArrowFlowSelected,
     setIconAnimationSelected,
@@ -1245,6 +1247,8 @@ export function EditorView() {
           onApplyShapeColorPreset={applyShapeColorPresetSelected}
           onApplyShapeBorderPreset={applyShapeBorderPresetSelected}
           onResetShapeStyle={resetShapeStyleSelected}
+          onApplyArrowPreset={applyArrowPresetSelected}
+          onResetArrowStyle={resetArrowStyleSelected}
           onSetAnimation={setAnimationSelected}
           onSetArrowFlow={setArrowFlowSelected}
           onSetIconAnimation={setIconAnimationSelected}

@@ -101,7 +101,12 @@ import {
   MenuTileGrid,
 } from '@/components/PortalMenu';
 import { ShapeIcon } from '@/components/shape-icon';
-import { ShapePresets, type ShapeBorderPreset } from '@/components/StylePresets';
+import {
+  ArrowPresets,
+  ShapePresets,
+  type ArrowPreset,
+  type ShapeBorderPreset,
+} from '@/components/StylePresets';
 import type { ShapeColorPreset } from '@/lib/themes';
 
 // A curated subset of the most common shapes offered for in-place morphing
@@ -171,6 +176,10 @@ type EditorContextMenuProps = {
   onApplyShapeColorPreset: (preset: ShapeColorPreset) => void;
   onApplyShapeBorderPreset: (preset: ShapeBorderPreset) => void;
   onResetShapeStyle: () => void;
+  // Arrow style presets (spec/48): one-click line looks (pattern / thickness /
+  // optional flow animation) for the selected arrow, plus a reset.
+  onApplyArrowPreset: (preset: ArrowPreset) => void;
+  onResetArrowStyle: () => void;
   // Animated elements (spec/09): a looping animation on boxed elements, and a
   // flow animation on arrows. `null` clears it.
   onSetAnimation: (value: ElementAnimation | null) => void;
@@ -655,6 +664,25 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               onApplyBorder={(p) => props.onApplyShapeBorderPreset(p)}
               onReset={() => {
                 props.onResetShapeStyle();
+                onClose();
+              }}
+            />
+          </MenuAccordionSection>
+        ) : null}
+        {/* Presets (spec/48) — one-click line looks for an arrow (pattern /
+            thickness / optional flow animation, e.g. a dashed animated arrow),
+            pinned above the arrow Animation. Arrows only. */}
+        {target.type === 'arrow' ? (
+          <MenuAccordionSection
+            title="Presets"
+            icon={<PresetsMenuGlyph />}
+            {...sectionProps('presets')}
+          >
+            <ArrowPresets
+              current={{ strokeStyle: target.strokeStyle, flow: target.flow }}
+              onApply={(p) => props.onApplyArrowPreset(p)}
+              onReset={() => {
+                props.onResetArrowStyle();
                 onClose();
               }}
             />
