@@ -411,7 +411,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               ) : null}
               {arrowSrc ? (
                 <MenuAccordionSection
-                  title="Flow"
+                  title="Animation"
                   icon={<AnimationMenuGlyph />}
                   {...sectionProps('m-flow')}
                 >
@@ -529,11 +529,13 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             />
           </MenuAccordionSection>
         ) : null}
-        {/* Flow (spec/09) — animate an arrow to show direction: marching dashes
-            or a travelling dot. None clears it. */}
+        {/* Animation (spec/09) — animate an arrow to show direction: marching
+            dashes, a travelling dot, beads, or an in-place pulse / grow / glow.
+            None clears it. (Labelled "Animation" to match the boxed-element
+            control; the field is still `flow`.) */}
         {target.type === 'arrow' ? (
           <MenuAccordionSection
-            title="Flow"
+            title="Animation"
             icon={<AnimationMenuGlyph />}
             {...sectionProps('flow')}
           >

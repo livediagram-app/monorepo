@@ -8,8 +8,6 @@ import { useState } from 'react';
 export function useEditorDialogs() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  // Tips carousel (spec/43), opened from the footer lightbulb.
-  const [tipsOpen, setTipsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   // The right-click Canvas/Theme dialog (spec/42). null = closed; the
@@ -29,8 +27,6 @@ export function useEditorDialogs() {
     setSearchOpen,
     shortcutsOpen,
     setShortcutsOpen,
-    tipsOpen,
-    setTipsOpen,
     settingsOpen,
     setSettingsOpen,
     shareDialogOpen,
