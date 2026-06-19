@@ -8,9 +8,11 @@
 // deterministic + reduced-motion-safe like the other element animations. The
 // first of the chart family, so the anim set is its own.
 
+import { useState } from 'react';
 import { type ShapeElement } from '@livediagram/diagram';
 import { chartAnim, chartFrame } from '@/lib/chart';
 import { ChartLegend } from './ChartLegend';
+import { ChartTooltip } from './ChartTooltip';
 
 export function PieChartView({
   element,
@@ -26,6 +28,7 @@ export function PieChartView({
   palette?: readonly string[];
 }) {
   const { w, h, data: slices, showLegend, colorAt } = chartFrame(element, palette);
+  const [hover, setHover] = useState<number | null>(null);
   const total = slices.reduce((sum, s) => sum + Math.max(0, s.value), 0) || 1;
   // Legend takes a right-hand column (toggleable, on by default); the pie fills
   // the remaining left area, or the whole box when the legend is off.
@@ -44,7 +47,12 @@ export function PieChartView({
     const a1 = angle + frac * Math.PI * 2;
     angle = a1;
     const color = colorAt(i, s);
-    if (frac >= 0.999) return { full: true, color, d: '' };
+    // Tooltip anchor: the slice's mid-angle at ~half radius (full circle
+    // anchors at the top), as a viewBox point converted to a % of the box.
+    const mid = frac >= 0.999 ? -Math.PI / 2 : (a0 + a1) / 2;
+    const leftPct = ((cx + rad * 0.55 * Math.cos(mid)) / w) * 100;
+    const topPct = ((cy + rad * 0.55 * Math.sin(mid)) / h) * 100;
+    if (frac >= 0.999) return { full: true, color, d: '', leftPct, topPct };
     const large = frac > 0.5 ? 1 : 0;
     const x0 = cx + rad * Math.cos(a0);
     const y0 = cy + rad * Math.sin(a0);
@@ -54,6 +62,8 @@ export function PieChartView({
       full: false,
       color,
       d: `M ${cx} ${cy} L ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1} Z`,
+      leftPct,
+      topPct,
     };
   });
 
@@ -69,15 +79,38 @@ export function PieChartView({
         aria-hidden
       >
         <g className={group.className} style={group.style}>
-          {wedges.map((wedge, i) =>
-            wedge.full ? (
-              <circle key={i} cx={cx} cy={cy} r={rad} fill={wedge.color} />
+          {wedges.map((wedge, i) => {
+            // pointer-events:auto re-enables hover on the mark (the svg is
+            // pointer-events-none); pointerdown still bubbles to the element
+            // wrapper, so selecting / dragging the chart is unaffected.
+            const hoverProps = {
+              style: { pointerEvents: 'auto' as const },
+              onPointerEnter: () => setHover(i),
+              onPointerLeave: () => setHover((h) => (h === i ? null : h)),
+            };
+            return wedge.full ? (
+              <circle key={i} cx={cx} cy={cy} r={rad} fill={wedge.color} {...hoverProps} />
             ) : (
-              <path key={i} d={wedge.d} fill={wedge.color} stroke="#ffffff" strokeWidth={1} />
-            ),
-          )}
+              <path
+                key={i}
+                d={wedge.d}
+                fill={wedge.color}
+                stroke="#ffffff"
+                strokeWidth={1}
+                {...hoverProps}
+              />
+            );
+          })}
         </g>
       </svg>
+      {hover !== null && wedges[hover] ? (
+        <ChartTooltip
+          leftPct={wedges[hover]!.leftPct}
+          topPct={wedges[hover]!.topPct}
+          label={slices[hover]!.label}
+          value={slices[hover]!.value}
+        />
+      ) : null}
       <ChartLegend
         items={slices}
         colorAt={colorAt}
