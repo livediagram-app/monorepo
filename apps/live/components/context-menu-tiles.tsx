@@ -25,6 +25,11 @@ import {
   IconAnimKindGlyph,
 } from '@/components/context-menu-icons';
 
+// Prepend the "None" option to a kinds list for the picker tile grids. The
+// generic return type ((T | null)[]) lets each `.map` infer its element type,
+// replacing the `[null, ...X] as (T | null)[]` cast that recurred per grid.
+export const withNone = <T,>(kinds: readonly T[]): (T | null)[] => [null, ...kinds];
+
 // Speed presets row (spec/09) — shown under an Animation / Flow control once
 // an animation is picked. Slow / Normal / Fast scale the loop's duration.
 export function SpeedTiles({
@@ -74,7 +79,7 @@ export function AnimationTiles({
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
-        {([null, ...ELEMENT_ANIMATIONS] as (ElementAnimation | null)[]).map((v) => (
+        {withNone(ELEMENT_ANIMATIONS).map((v) => (
           <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
             <TileLabel glyph={<AnimationKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
@@ -101,7 +106,7 @@ export function FlowTiles({
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
-        {([null, ...ARROW_FLOWS] as (ArrowFlow | null)[]).map((v) => (
+        {withNone(ARROW_FLOWS).map((v) => (
           <SizeButton key={v ?? 'none'} active={flow === v} onClick={() => onSet(v)}>
             <TileLabel glyph={<FlowKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
@@ -130,7 +135,7 @@ export function IconAnimationTiles({
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
-        {([null, ...ICON_ANIMATIONS] as (IconAnimation | null)[]).map((v) => (
+        {withNone(ICON_ANIMATIONS).map((v) => (
           <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
             <TileLabel glyph={<IconAnimKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>

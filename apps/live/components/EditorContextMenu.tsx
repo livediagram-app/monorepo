@@ -102,6 +102,7 @@ import {
   IconAnimationTiles,
   SpeedTiles,
   TileLabel,
+  withNone,
 } from '@/components/context-menu-tiles';
 import {
   ArrowPresets,
@@ -1333,7 +1334,7 @@ function ProgressAnimTiles({
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
-        {([null, ...PROGRESS_ANIMS] as (ProgressAnim | null)[]).map((v) => (
+        {withNone(PROGRESS_ANIMS).map((v) => (
           <SizeButton key={v ?? 'none'} active={anim === v} onClick={() => onSet(v)}>
             <TileLabel glyph={<ProgressAnimKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
