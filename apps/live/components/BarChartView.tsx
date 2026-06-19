@@ -7,14 +7,9 @@
 // edited from the context menu's Data category. The slice group carries the
 // `lvd-pie-*` animation (grow / pop / spin / pulse), reduced-motion-safe.
 
-import {
-  animLoops,
-  PIE_DEFAULT_SLICES,
-  PIE_LOOPING_ANIMS,
-  PIE_PALETTE,
-  type ShapeElement,
-} from '@livediagram/diagram';
+import { animLoops, PIE_LOOPING_ANIMS, type ShapeElement } from '@livediagram/diagram';
 import { animClass, animSpeedVars } from '@/lib/icons';
+import { chartFrame } from '@/lib/chart';
 import { ChartLegend } from './ChartLegend';
 
 export function BarChartView({
@@ -28,16 +23,10 @@ export function BarChartView({
   textColor: string;
   palette?: readonly string[];
 }) {
-  const colors = palette && palette.length > 0 ? palette : PIE_PALETTE;
-  const w = Math.max(1, element.width);
-  const h = Math.max(1, element.height);
-  const data =
-    element.pieSlices && element.pieSlices.length > 0 ? element.pieSlices : PIE_DEFAULT_SLICES;
+  const { w, h, data, showLegend, colorAt } = chartFrame(element, palette);
   const maxVal = data.reduce((m, d) => Math.max(m, Math.max(0, d.value)), 0) || 1;
-  const showLegend = element.chartLegend !== false;
   const legendW = showLegend ? Math.max(0, Math.min(w * 0.4, 120)) : 0;
   const barAreaW = w - legendW;
-  const colorAt = (i: number, d: { color?: string }) => d.color ?? colors[i % colors.length]!;
 
   // Bars across the bar area, baseline near the bottom (room for a value /
   // label gutter). Evenly spaced with a gap, capped bar width so a 2-bar chart

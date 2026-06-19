@@ -8,14 +8,9 @@
 // deterministic + reduced-motion-safe like the other element animations. The
 // first of the chart family, so the anim set is its own.
 
-import {
-  animLoops,
-  PIE_DEFAULT_SLICES,
-  PIE_LOOPING_ANIMS,
-  PIE_PALETTE,
-  type ShapeElement,
-} from '@livediagram/diagram';
+import { animLoops, PIE_LOOPING_ANIMS, type ShapeElement } from '@livediagram/diagram';
 import { animClass, animSpeedVars } from '@/lib/icons';
+import { chartFrame } from '@/lib/chart';
 import { ChartLegend } from './ChartLegend';
 
 export function PieChartView({
@@ -31,21 +26,15 @@ export function PieChartView({
   // categorical palette when absent (e.g. an export with no theme context).
   palette?: readonly string[];
 }) {
-  const colors = palette && palette.length > 0 ? palette : PIE_PALETTE;
-  const w = Math.max(1, element.width);
-  const h = Math.max(1, element.height);
-  const slices =
-    element.pieSlices && element.pieSlices.length > 0 ? element.pieSlices : PIE_DEFAULT_SLICES;
+  const { w, h, data: slices, showLegend, colorAt } = chartFrame(element, palette);
   const total = slices.reduce((sum, s) => sum + Math.max(0, s.value), 0) || 1;
   // Legend takes a right-hand column (toggleable, on by default); the pie fills
   // the remaining left area, or the whole box when the legend is off.
-  const showLegend = element.chartLegend !== false;
   const legendW = showLegend ? Math.max(0, Math.min(w * 0.44, 130)) : 0;
   const pieAreaW = w - legendW;
   const rad = Math.max(10, (Math.min(pieAreaW, h) * 0.86) / 2);
   const cx = pieAreaW / 2;
   const cy = h / 2;
-  const colorAt = (i: number, s: { color?: string }) => s.color ?? colors[i % colors.length]!;
 
   // Build slice paths (clockwise from 12 o'clock). A single 100% slice draws
   // as a full circle (an arc from a point back to itself is degenerate).
