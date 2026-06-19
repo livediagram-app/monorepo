@@ -20,7 +20,7 @@
 // hook. Verbatim relocation — no behaviour change.
 
 import { useRef, useState } from 'react';
-import { inheritedSizeFor } from '@/lib/canvas';
+import { ARROW_SNAP_THRESHOLD_PX, inheritedSizeFor } from '@/lib/canvas';
 import {
   COMPONENT_SIZE,
   createComponent,
@@ -33,9 +33,11 @@ import {
   recogniseShape,
   scaleElements,
   simplifyPolyline,
+  snapToArrowPoint,
   type ArrowElement,
   type ComponentKind,
   type Element,
+  type Endpoint,
   type ShapeElement,
   type Tab,
 } from '@livediagram/diagram';
@@ -178,11 +180,21 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
       const arrowEndX = isClick ? startX + 80 : endX;
       const arrowEndY = isClick ? startY : endY;
       const theme = getTheme(activeTab.theme);
+      // Snap each endpoint onto a nearby arrow's line at draw time (spec/50), so
+      // drawing a message onto another arrow connects immediately rather than
+      // landing free and needing a follow-up nudge. A stray click lays the
+      // placeholder arrow free (no snapping). Element-anchor snapping on draw
+      // stays as-is (free); this only adds the arrow-line connection.
+      const snapDrawn = (x: number, y: number): Endpoint => {
+        if (isClick) return { kind: 'free', x, y };
+        const hit = snapToArrowPoint({ x, y }, activeTab.elements, ARROW_SNAP_THRESHOLD_PX, '');
+        return hit ? { kind: 'on-arrow', arrowId: hit.arrowId, t: hit.t } : { kind: 'free', x, y };
+      };
       const arrow: ArrowElement = {
         id: crypto.randomUUID(),
         type: 'arrow',
-        from: { kind: 'free', x: arrowStartX, y: startY },
-        to: { kind: 'free', x: arrowEndX, y: arrowEndY },
+        from: snapDrawn(arrowStartX, startY),
+        to: snapDrawn(arrowEndX, arrowEndY),
         arrowEnds: 'none',
         strokeColor: theme.elementStroke ?? NEW_ARROW_THEME_STROKE_FALLBACK,
       };
@@ -382,6 +394,14 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
         if (detected.kind === 'line') {
           const fromPt = detected.from ?? simplified[0]!;
           const toPt = detected.to ?? simplified[simplified.length - 1]!;
+          // Snap each end onto a nearby arrow's line (spec/50), as the arrow
+          // tool does, so a sketched line connects to an existing one.
+          const snapLineEnd = (p: { x: number; y: number }): Endpoint => {
+            const hit = snapToArrowPoint(p, activeTab.elements, ARROW_SNAP_THRESHOLD_PX, '');
+            return hit
+              ? { kind: 'on-arrow', arrowId: hit.arrowId, t: hit.t }
+              : { kind: 'free', ...p };
+          };
           // Map "line" to an ArrowElement with arrowEnds 'none'
           // (the existing addArrow drop). The arrowEnds toggle in
           // the Pointer accordion is there if the user wants to
@@ -389,8 +409,8 @@ export function useShapeDrawing(deps: ShapeDrawingDeps) {
           const arrow: ArrowElement = {
             id: crypto.randomUUID(),
             type: 'arrow',
-            from: { kind: 'free', x: fromPt.x, y: fromPt.y },
-            to: { kind: 'free', x: toPt.x, y: toPt.y },
+            from: snapLineEnd(fromPt),
+            to: snapLineEnd(toPt),
             arrowEnds: 'none',
             strokeColor: theme.elementStroke ?? NEW_ARROW_THEME_STROKE_FALLBACK,
           };

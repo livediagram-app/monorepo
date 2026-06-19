@@ -163,6 +163,13 @@ export const SNAP_THRESHOLD = 24;
 // align with another element's edges/centres. Tight enough that nudging
 // off the line takes deliberate motion.
 export const ALIGN_SNAP_THRESHOLD = 6;
+// Arrow-to-arrow snapping (spec/50). REVEAL is the perpendicular distance at
+// which a nearby arrow's snap dots appear while dragging an endpoint; THRESHOLD
+// (tighter) is where the endpoint actually connects — also used when committing
+// a freshly-drawn arrow so it can land on a line without a follow-up nudge. Both
+// a touch more generous than the element-anchor snap so a thin line is catchable.
+export const ARROW_SNAP_REVEAL_PX = 36;
+export const ARROW_SNAP_THRESHOLD_PX = 12;
 
 // Floor for any single side of a boxed element during a resize. Below
 // this the shape becomes a pinprick that's near-impossible to grab

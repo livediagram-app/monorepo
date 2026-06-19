@@ -58,6 +58,8 @@ import { isTechIconId } from '@/lib/tech-icons';
 import { getTheme } from '@/lib/themes';
 import {
   ALIGN_SNAP_THRESHOLD,
+  ARROW_SNAP_REVEAL_PX,
+  ARROW_SNAP_THRESHOLD_PX,
   cornerOf,
   iconDropSide,
   snapModeOf,
@@ -134,13 +136,6 @@ function sameTargets(a: SnapTarget[], b: SnapTarget[]): boolean {
 // that shape's connection points while dragging an arrow endpoint. A little
 // generous so the anchors appear as you approach rather than only on contact.
 const SNAP_TARGET_REVEAL_MARGIN = 44;
-
-// Arrow-to-arrow snapping (spec/50). REVEAL is the perpendicular distance at
-// which a nearby arrow's snap dots appear; THRESHOLD (tighter) is where the
-// endpoint actually connects. Both a touch more generous than the element
-// anchor SNAP_THRESHOLD so an arrow line — a thin target — is easy to catch.
-const ARROW_SNAP_REVEAL_PX = 36;
-const ARROW_SNAP_THRESHOLD_PX = 12;
 
 // The connection-point markers to show for the current arrow-endpoint drag:
 // every anchor of each shape whose (margin-expanded) box the cursor is over,
