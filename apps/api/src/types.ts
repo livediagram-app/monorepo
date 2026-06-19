@@ -38,6 +38,10 @@ export type Env = {
   // claim (spec/04) so a token from another instance sharing the JWKS
   // host can't be replayed. Unset → issuer not asserted (back-compat).
   CLERK_ISSUER?: string;
+  // Optional: when set, the Clerk JWT verifier also asserts the `aud`
+  // claim (spec/04) so a token minted for a different audience/app can't
+  // be replayed here. Unset → audience not asserted (back-compat).
+  CLERK_AUDIENCE?: string;
   // HMAC secret for signing guest owner-ids (spec/04 + auth/
   // owner-signature.ts). When set, POST /api/guest-id mints a signed id
   // and /api/migrate requires a valid signature before reassigning a

@@ -63,16 +63,17 @@ export async function getClerkIdentity(env: Env, request: Request): Promise<Cler
 
   try {
     // jose enforces the JWKS signature (rejecting alg:none / unsigned)
-    // and exp/nbf by default. When CLERK_ISSUER is configured we also
-    // assert the `iss` claim, so a validly-signed token from a different
-    // Clerk instance/tenant sharing the JWKS host can't be replayed.
-    // Left optional (unset → current behaviour) so self-host without it
-    // keeps working.
-    const { payload } = await jwtVerify(
-      token,
-      getJWKS(jwksUrl),
-      env.CLERK_ISSUER ? { issuer: env.CLERK_ISSUER } : undefined,
-    );
+    // and exp/nbf by default. When CLERK_ISSUER / CLERK_AUDIENCE are
+    // configured we also assert the `iss` / `aud` claims, so a validly-signed
+    // token from a different Clerk instance/tenant sharing the JWKS host — or
+    // one minted for a different audience/app — can't be replayed here. Both
+    // are left optional (unset → current behaviour) so self-host keeps working;
+    // production should set CLERK_ISSUER (and CLERK_AUDIENCE if configured in
+    // Clerk).
+    const verifyOptions: { issuer?: string; audience?: string } = {};
+    if (env.CLERK_ISSUER) verifyOptions.issuer = env.CLERK_ISSUER;
+    if (env.CLERK_AUDIENCE) verifyOptions.audience = env.CLERK_AUDIENCE;
+    const { payload } = await jwtVerify(token, getJWKS(jwksUrl), verifyOptions);
     if (typeof payload.sub !== 'string') return null;
     const email =
       typeof payload.email === 'string' && payload.email.length > 0
