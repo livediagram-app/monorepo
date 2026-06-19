@@ -18,11 +18,12 @@ import {
   type BorderRadius,
   type BorderStyle,
   type BorderStroke,
+  type ShapeKind,
 } from '@livediagram/diagram';
 import type { ShapeColorPreset } from '@/lib/themes';
 import { SizeButton } from '@/components/palette-controls';
 import { MenuActionButton } from '@/components/PortalMenu';
-import { nearestCssBorderStyle } from '@/components/border-css';
+import { ShapeGlyph } from '@/components/shape-icon';
 
 // ── Static preset table ─────────────────────────────────────────────────
 
@@ -69,22 +70,20 @@ const ARROW_PRESETS: readonly ArrowPreset[] = [
 
 // ── Preview-style mappings ──────────────────────────────────────────────
 
-const BORDER_WIDTH_PX: Record<BorderStroke, number> = {
+// Border weight in 16-unit viewBox units, for the shape-matched swatch outline.
+const BORDER_WIDTH_SVG: Record<BorderStroke, number> = {
   none: 0,
   thin: 1,
-  medium: 2,
-  thick: 3,
-  'extra-thick': 4,
+  medium: 1.6,
+  thick: 2.4,
+  'extra-thick': 3.2,
 };
-// Preview corner radius (px on the small tile box). `full` clamps to a large
-// value so the box reads as a pill.
-const BORDER_RADIUS_PX: Record<BorderRadius, number> = {
-  none: 0,
-  sm: 2,
-  md: 4,
-  lg: 7,
-  full: 999,
-};
+// stroke-dasharray (16-unit units) for the dotted / dashed swatch outline.
+function svgBorderDash(style: BorderStyle): string | undefined {
+  if (style === 'dotted') return '0.6 2';
+  if (style === 'solid') return undefined;
+  return '3 2';
+}
 // SVG stroke-dasharray for an arrow-line preview, scaled to the stroke width.
 function svgDash(style: BorderStyle, w: number): string | undefined {
   if (style === 'dotted') return `0.1 ${w * 2.5}`;
@@ -103,47 +102,51 @@ function PresetLabel({ children, name }: { children: React.ReactNode; name: stri
   );
 }
 
-function ColorPresetSwatch({ preset }: { preset: ShapeColorPreset }) {
+// The colour swatch previews on the user's actual shape (a circle as a circle,
+// not a square): the silhouette filled with the preset fill + stroked with its
+// border colour, an "A" in the text colour overlaid for the label.
+function ColorPresetSwatch({ preset, shape }: { preset: ShapeColorPreset; shape: ShapeKind }) {
   return (
-    <span
-      className="flex h-5 w-7 items-center justify-center rounded text-[10px] font-bold"
-      style={{
-        backgroundColor: preset.fill,
-        borderColor: preset.stroke,
-        borderWidth: 1.5,
-        borderStyle: 'solid',
-        color: preset.text,
-      }}
-      aria-hidden
-    >
-      A
+    <span className="relative flex h-5 w-7 items-center justify-center" aria-hidden>
+      <ShapeGlyph
+        kind={shape}
+        fill={preset.fill}
+        stroke={preset.stroke}
+        strokeWidth={1.4}
+        size={20}
+      />
+      <span className="absolute text-[9px] font-bold leading-none" style={{ color: preset.text }}>
+        A
+      </span>
     </span>
   );
 }
 
-function BorderPresetSwatch({ preset }: { preset: ShapeBorderPreset }) {
-  // borderColor is left to currentColor so the preview adopts the button's
-  // text tone (slate, brand when active).
+// The border swatch previews on the actual shape too: the silhouette outline at
+// the preset's weight + pattern (currentColor so it adopts the button tone).
+function BorderPresetSwatch({ preset, shape }: { preset: ShapeBorderPreset; shape: ShapeKind }) {
   return (
-    <span
-      className="h-5 w-7"
-      style={{
-        borderWidth: BORDER_WIDTH_PX[preset.stroke],
-        borderStyle: nearestCssBorderStyle(preset.style),
-        borderRadius: BORDER_RADIUS_PX[preset.radius],
-      }}
-      aria-hidden
-    />
+    <span className="flex h-5 w-7 items-center justify-center" aria-hidden>
+      <ShapeGlyph
+        kind={shape}
+        strokeWidth={BORDER_WIDTH_SVG[preset.stroke]}
+        dash={svgBorderDash(preset.style)}
+        size={20}
+      />
+    </span>
   );
 }
 
 export function ShapePresets({
+  shape,
   colorPresets,
   current,
   onApplyColor,
   onApplyBorder,
   onReset,
 }: {
+  // The selected shape's kind, so the preview tiles match it.
+  shape: ShapeKind;
   colorPresets: ShapeColorPreset[];
   // The shape's current style, to highlight a preset that matches it.
   current: {
@@ -174,7 +177,7 @@ export function ShapePresets({
             onClick={() => onApplyColor(p)}
           >
             <PresetLabel name={p.name}>
-              <ColorPresetSwatch preset={p} />
+              <ColorPresetSwatch preset={p} shape={shape} />
             </PresetLabel>
           </SizeButton>
         ))}
@@ -192,7 +195,7 @@ export function ShapePresets({
             onClick={() => onApplyBorder(p)}
           >
             <PresetLabel name={p.name}>
-              <BorderPresetSwatch preset={p} />
+              <BorderPresetSwatch preset={p} shape={shape} />
             </PresetLabel>
           </SizeButton>
         ))}

@@ -639,6 +639,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             {...sectionProps('presets')}
           >
             <ShapePresets
+              shape={target.shape}
               colorPresets={props.shapeColorPresets}
               current={{
                 fillColor: (target as { fillColor?: string }).fillColor,
