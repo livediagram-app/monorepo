@@ -146,11 +146,11 @@ export default {
           return await handleParticipants(ctx);
       }
     } catch (err) {
+      // Log the real error server-side, but don't echo its message to the
+      // client — internal error text can leak implementation details (table
+      // names, stack hints). Return a generic body instead.
       console.error('api error', err);
-      return json(
-        { error: 'internal_error', message: String((err as Error).message ?? err) },
-        { status: 500 },
-      );
+      return json({ error: 'internal_error' }, { status: 500 });
     }
 
     return notFound();
