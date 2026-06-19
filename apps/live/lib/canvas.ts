@@ -6,6 +6,21 @@ import {
   type ShapeElement,
 } from '@livediagram/diagram';
 
+// Convert a pointer's screen coords into canvas coords: shift by the canvas
+// element's top-left, then divide by zoom (the canvas transform is
+// `scale(zoom) translate(offset)`, so this inverts the scale). The result is
+// pre-pan; callers that need fully world-space coords subtract the pan offset
+// themselves. Centralises the transform that was inlined at every pointer
+// handler in Canvas.tsx.
+export function pointerToCanvas(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+  zoom: number,
+): { x: number; y: number } {
+  return { x: (clientX - rect.left) / zoom, y: (clientY - rect.top) / zoom };
+}
+
 // Size a newly-added boxed element. It inherits the currently-selected
 // boxed element's width / height (so adding elements one after another
 // keeps a consistent size), falling back to the factory default when

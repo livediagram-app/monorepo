@@ -21,7 +21,7 @@ import { ICON_DND_MIME, PALETTE_DND_MIME } from '@/lib/icons';
 import { TECH_ICON_DND_MIME } from '@/lib/tech-icons';
 import { tabBackgroundStyle } from '@/lib/canvas-backgrounds';
 import { AnimatedCanvasBackground } from './AnimatedCanvasBackground';
-import { ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
+import { pointerToCanvas, ZOOM_MIN, ZOOM_MAX } from '@/lib/canvas';
 import { deriveCanvasSelection } from '@/lib/canvas-selection';
 import { canvasCursorClass } from '@/lib/canvas-chrome';
 import { useCanvasMobileDock } from '@/hooks/useCanvasMobileDock';
@@ -305,8 +305,7 @@ export function Canvas(props: CanvasProps) {
     }
     const rect = wrapperRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const sx = (e.clientX - rect.left) / viewportZoom;
-    const sy = (e.clientY - rect.top) / viewportZoom;
+    const { x: sx, y: sy } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
     onCanvasPointerMove(sx, sy);
   };
   const handlePointerLeaveCanvas = () => {
@@ -406,8 +405,7 @@ export function Canvas(props: CanvasProps) {
     if (!pendingDraw) return false;
     const rect = wrapperRef.current?.getBoundingClientRect();
     if (!rect) return false;
-    const sx = (e.clientX - rect.left) / viewportZoom;
-    const sy = (e.clientY - rect.top) / viewportZoom;
+    const { x: sx, y: sy } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
     if (pendingDraw.type === 'freehand') {
       // Snap the first stroke point to nearby alignments (same as a shape's
       // first corner) so the sketch can begin from an aligned start.
@@ -436,8 +434,7 @@ export function Canvas(props: CanvasProps) {
     const onMove = (e: PointerEvent) => {
       const rect = wrapperEl?.getBoundingClientRect();
       if (!rect) return;
-      const px = (e.clientX - rect.left) / viewportZoom;
-      const py = (e.clientY - rect.top) / viewportZoom;
+      const { x: px, y: py } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
       const snap = snapToAlignment(
         { x: px, y: py, width: 0, height: 0 },
         elements,
@@ -485,8 +482,7 @@ export function Canvas(props: CanvasProps) {
       // position so finger-1's moves don't size the element to the
       // pinch-warped pointer (pan + editor-drag bail the same way).
       if (isPinchingRef?.current) return;
-      const rawX = (e.clientX - rect.left) / viewportZoom;
-      const rawY = (e.clientY - rect.top) / viewportZoom;
+      const { x: rawX, y: rawY } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
       let endX = rawX;
       let endY = rawY;
       // 1:1 aspect lock on shift. Mirrors Figma / Photoshop: hold
@@ -587,8 +583,7 @@ export function Canvas(props: CanvasProps) {
       // Stop sampling once a 2-finger pinch takes over, so the committed
       // polyline doesn't pick up the pinch-warped finger-1 path.
       if (isPinchingRef?.current) return;
-      const x = (e.clientX - rect.left) / viewportZoom;
-      const y = (e.clientY - rect.top) / viewportZoom;
+      const { x, y } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
       buffer = [...buffer, { x, y }];
       if (rafId !== null) return;
       rafId = window.requestAnimationFrame(() => {
@@ -697,9 +692,11 @@ export function Canvas(props: CanvasProps) {
         if (!shapeKind && !iconId) return;
         e.preventDefault();
         const rect = e.currentTarget.getBoundingClientRect();
-        // Canvas transform is scale(z) translate(o): invert to canvas coords.
-        const cx = (e.clientX - rect.left) / viewportZoom - viewportOffset.x;
-        const cy = (e.clientY - rect.top) / viewportZoom - viewportOffset.y;
+        // Canvas transform is scale(z) translate(o): invert to canvas coords,
+        // then subtract the pan offset for fully world-space coords.
+        const { x: px, y: py } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
+        const cx = px - viewportOffset.x;
+        const cy = py - viewportOffset.y;
         if (iconId) props.onDropPalette?.('icon', cx, cy, iconId);
         else props.onDropPalette?.(shapeKind as ShapeKind, cx, cy);
       }}
@@ -1003,8 +1000,7 @@ export function Canvas(props: CanvasProps) {
           if (!rect) return;
           // rect is post-transform; click position relative to wrapper top-left
           // is in scaled pixels — divide by zoom to recover canvas-coords.
-          const sx = (e.clientX - rect.left) / viewportZoom;
-          const sy = (e.clientY - rect.top) / viewportZoom;
+          const { x: sx, y: sy } = pointerToCanvas(e.clientX, e.clientY, rect, viewportZoom);
           onCanvasDoubleClick(sx, sy);
         }}
         // Spotlight (spec/09) is a non-editing presenter mode: make the whole
