@@ -431,12 +431,44 @@ function WindowStrip({ today, last7, last30 }: { today: number; last7: number; l
 // Daily-volume sparkline: 30 vertical bars, oldest -> newest, height
 // proportional to that day's total. Hover surfaces a native title
 // tooltip with the date + count for each bar.
+// "Month day" axis label shared by the sparklines.
+function fmtDay(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// A row of value-proportional bars (one per day) with a per-bar hover tooltip,
+// shared by the daily-volume + per-category sparklines. Each caller passes its
+// own container + bar styling; bars never fully vanish (2% floor).
+function SparklineBars({
+  days,
+  values,
+  containerClassName,
+  barClassName,
+}: {
+  days: number[];
+  values: number[];
+  containerClassName: string;
+  barClassName: string;
+}) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className={containerClassName}>
+      {values.map((v, i) => (
+        <Tooltip
+          key={days[i] ?? i}
+          title={fmtDay(days[i] ?? 0)}
+          description={`${v.toLocaleString()} events`}
+          className="flex-1 items-end self-stretch"
+        >
+          <div className={barClassName} style={{ height: `${Math.max(2, (v / max) * 100)}%` }} />
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
 function DailySparkline({ days, totals }: { days: number[]; totals: number[] }) {
   const max = Math.max(...totals, 1);
-  const fmt = (ms: number) => {
-    const d = new Date(ms);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
       <div className="flex items-baseline justify-between">
@@ -445,24 +477,15 @@ function DailySparkline({ days, totals }: { days: number[]; totals: number[] }) 
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">Peak {max.toLocaleString()}</p>
       </div>
-      <div className="mt-4 flex h-24 items-end gap-1">
-        {totals.map((v, i) => (
-          <Tooltip
-            key={days[i] ?? i}
-            title={fmt(days[i] ?? 0)}
-            description={`${v.toLocaleString()} events`}
-            className="flex-1 items-end self-stretch"
-          >
-            <div
-              className="w-full rounded-sm bg-brand-200 transition hover:bg-brand-500 dark:bg-brand-500/40 dark:hover:bg-brand-400"
-              style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
-            />
-          </Tooltip>
-        ))}
-      </div>
+      <SparklineBars
+        days={days}
+        values={totals}
+        containerClassName="mt-4 flex h-24 items-end gap-1"
+        barClassName="w-full rounded-sm bg-brand-200 transition hover:bg-brand-500 dark:bg-brand-500/40 dark:hover:bg-brand-400"
+      />
       <div className="mt-2 flex justify-between text-[10px] text-slate-400">
-        <span>{fmt(days[0] ?? 0)}</span>
-        <span>{fmt(days[days.length - 1] ?? 0)}</span>
+        <span>{fmtDay(days[0] ?? 0)}</span>
+        <span>{fmtDay(days[days.length - 1] ?? 0)}</span>
       </div>
     </div>
   );
@@ -561,27 +584,13 @@ function TopNLeaderboard({ rows, n = 10 }: { rows: TelemetryCount[]; n?: number 
 // isn't a flat line beneath a dominant one.
 function CategorySparkline({ days, series }: { days: number[]; series: number[] }) {
   if (series.length === 0) return null;
-  const max = Math.max(...series, 1);
-  const fmt = (ms: number) => {
-    const d = new Date(ms);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
   return (
-    <div className="mt-3 flex h-10 items-end gap-[2px]">
-      {series.map((v, i) => (
-        <Tooltip
-          key={days[i] ?? i}
-          title={fmt(days[i] ?? 0)}
-          description={`${v.toLocaleString()} events`}
-          className="flex-1 items-end self-stretch"
-        >
-          <div
-            className="w-full rounded-[1px] bg-slate-200 dark:bg-slate-700"
-            style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
-          />
-        </Tooltip>
-      ))}
-    </div>
+    <SparklineBars
+      days={days}
+      values={series}
+      containerClassName="mt-3 flex h-10 items-end gap-[2px]"
+      barClassName="w-full rounded-[1px] bg-slate-200 dark:bg-slate-700"
+    />
   );
 }
 
