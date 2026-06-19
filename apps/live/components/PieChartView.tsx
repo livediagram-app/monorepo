@@ -8,9 +8,8 @@
 // deterministic + reduced-motion-safe like the other element animations. The
 // first of the chart family, so the anim set is its own.
 
-import { animLoops, PIE_LOOPING_ANIMS, type ShapeElement } from '@livediagram/diagram';
-import { animClass, animSpeedVars } from '@/lib/icons';
-import { chartFrame } from '@/lib/chart';
+import { type ShapeElement } from '@livediagram/diagram';
+import { chartAnim, chartFrame } from '@/lib/chart';
 import { ChartLegend } from './ChartLegend';
 
 export function PieChartView({
@@ -58,14 +57,7 @@ export function PieChartView({
     };
   });
 
-  const anim = element.pieAnim;
-  const loops = animLoops(anim, element.pieAnimRepeat, PIE_LOOPING_ANIMS);
-  const groupStyle = anim
-    ? {
-        transformOrigin: `${cx}px ${cy}px`,
-        ...animSpeedVars('pie', element.pieAnimSpeed, loops),
-      }
-    : undefined;
+  const group = chartAnim(element, `${cx}px ${cy}px`);
 
   return (
     <div className="absolute inset-0">
@@ -76,7 +68,7 @@ export function PieChartView({
         className="pointer-events-none absolute inset-0"
         aria-hidden
       >
-        <g className={animClass('pie', anim)} style={groupStyle}>
+        <g className={group.className} style={group.style}>
           {wedges.map((wedge, i) =>
             wedge.full ? (
               <circle key={i} cx={cx} cy={cy} r={rad} fill={wedge.color} />

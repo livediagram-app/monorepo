@@ -7,9 +7,8 @@
 // edited from the context menu's Data category. The slice group carries the
 // `lvd-pie-*` animation (grow / pop / spin / pulse), reduced-motion-safe.
 
-import { animLoops, PIE_LOOPING_ANIMS, type ShapeElement } from '@livediagram/diagram';
-import { animClass, animSpeedVars } from '@/lib/icons';
-import { chartFrame } from '@/lib/chart';
+import { type ShapeElement } from '@livediagram/diagram';
+import { chartAnim, chartFrame } from '@/lib/chart';
 import { ChartLegend } from './ChartLegend';
 
 export function BarChartView({
@@ -39,14 +38,7 @@ export function BarChartView({
   const barW = Math.min(slot * 0.7, 48);
   const fullH = Math.max(1, baseY - topPad);
 
-  const anim = element.pieAnim;
-  const loops = animLoops(anim, element.pieAnimRepeat, PIE_LOOPING_ANIMS);
-  const groupStyle = anim
-    ? {
-        transformOrigin: `${barAreaW / 2}px ${baseY}px`,
-        ...animSpeedVars('pie', element.pieAnimSpeed, loops),
-      }
-    : undefined;
+  const group = chartAnim(element, `${barAreaW / 2}px ${baseY}px`);
 
   return (
     <div className="absolute inset-0">
@@ -66,7 +58,7 @@ export function BarChartView({
           stroke="#cbd5e1"
           strokeWidth={1}
         />
-        <g className={animClass('pie', anim)} style={groupStyle}>
+        <g className={group.className} style={group.style}>
           {data.map((d, i) => {
             const barH = (Math.max(0, d.value) / maxVal) * fullH;
             const cx = padX + slot * (i + 0.5);
