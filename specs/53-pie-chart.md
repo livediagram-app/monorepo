@@ -12,9 +12,10 @@ in beside it.
 - A **Data** context-menu category edits the chart: one row per slice — a
   recolourable swatch, a **label**, and a **value** — plus add / remove. The
   pie + legend redraw live from the data.
-- A chart-specific **Animation** row sits in the same category: None / Grow /
-  Pop / Spin / Pulse, with a **Speed** row + **Repeat** toggle once one is
-  picked. Grow / Pop play once (an entrance); Spin / Pulse loop.
+- The **Animation** category carries the chart-specific slice animations
+  (None / Grow / Pop / Spin / Pulse, with a **Speed** row + **Repeat** toggle)
+  in place of the boxed-element animation set — a pie animates its slices, not
+  the whole box. Grow / Pop play once (an entrance); Spin / Pulse loop.
 - Slice colours default to **variants of the active theme** (`themeChartPalette`
   — each branch hue on multi-colour themes, accent tints/shades on single-accent
   themes), overridable per slice. So a pie reads as part of the theme out of the

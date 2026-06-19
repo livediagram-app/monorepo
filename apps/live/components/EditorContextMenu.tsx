@@ -794,29 +794,31 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               slices={shapeTarget?.pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))}
               onChange={props.onSetPieData}
             />
-            <PieAnimTiles
-              anim={shapeTarget?.pieAnim ?? null}
-              speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
-              repeat={animLoops(
-                shapeTarget?.pieAnim,
-                shapeTarget?.pieAnimRepeat,
-                PIE_LOOPING_ANIMS,
-              )}
-              onSet={props.onSetPieAnim}
-              onSetSpeed={props.onSetPieAnimSpeed}
-              onSetRepeat={props.onSetPieAnimRepeat}
-            />
           </MenuAccordionSection>
         ) : null}
         {/* Animation (spec/09) — a looping attention/status effect on the
-            element. None clears it. */}
+            element. None clears it. Pie charts swap the boxed-element set for
+            their own slice animations (the chart family's set). */}
         {boxed ? (
           <MenuAccordionSection
             title="Animation"
             icon={<AnimationMenuGlyph />}
             {...sectionProps('animation')}
           >
-            {isIcon ? (
+            {isPie ? (
+              <PieAnimTiles
+                anim={shapeTarget?.pieAnim ?? null}
+                speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
+                repeat={animLoops(
+                  shapeTarget?.pieAnim,
+                  shapeTarget?.pieAnimRepeat,
+                  PIE_LOOPING_ANIMS,
+                )}
+                onSet={props.onSetPieAnim}
+                onSetSpeed={props.onSetPieAnimSpeed}
+                onSetRepeat={props.onSetPieAnimRepeat}
+              />
+            ) : isIcon ? (
               // Icons get their own glyph-motion set (spin / beat / pulse / …)
               // instead of the boxed-element animation set.
               <IconAnimationTiles
@@ -1653,8 +1655,25 @@ function PieGlyph({ size = 16 }: { size?: number }) {
     </svg>
   );
 }
+// Monochrome pie outline — the "Data" category glyph. The other category
+// glyphs are all single-colour (currentColor), so the colourful PieGlyph (used
+// for the animation tiles) would stand out; this matches them.
 function DataMenuGlyph() {
-  return <PieGlyph size={12} />;
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 12 L12 3 M12 12 L20.5 15" />
+    </svg>
+  );
 }
 
 // Pie-chart data editor (spec/53): one row per slice — a colour swatch
