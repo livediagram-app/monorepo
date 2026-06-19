@@ -138,9 +138,11 @@ view; JSON / Markdown ignore it. The export applies the projection's 2D affine
 (`isoCanvasMatrix` in `lib/isometric.ts` — an in-plane rotation by the azimuth
 then a `cos(elevation)` vertical squash, the parallel-projection equivalent of
 the on-screen `rotateX·rotateZ`) and sizes the canvas / SVG viewBox to the
-projected footprint (`isoProjectBounds`) so nothing clips. It is the **flat
-projected** look (matching the export renderer's faithful-overview remit); the
-on-screen voxel **extrusion** is not reproduced in the export.
+projected footprint (`isoProjectBounds`) so nothing clips. Each element also
+gets the same **voxel extrusion** the on-screen view paints: a stack of its
+silhouette stepped along the projected depth axis (`isoDepthLayers` /
+`isoLayerBrightness`), dimmed toward the floor, behind the element body — so the
+export reads with depth, not as a flat tilted plane.
 
 ## Scope (first cut) and what's deliberately out
 

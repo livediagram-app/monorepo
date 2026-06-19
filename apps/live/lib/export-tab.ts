@@ -13,6 +13,7 @@ import {
   endpointPosition,
   hasRichFormatting,
   isBoxed,
+  shade,
   type ArrowElement,
   type BoxedElement,
   type Element,
@@ -20,7 +21,13 @@ import {
   type TextRun,
 } from '@livediagram/diagram';
 import { framesFirst } from './canvas';
-import { isoCanvasMatrix, isoProjectBounds } from './isometric';
+import {
+  isoCanvasMatrix,
+  isoDepthLayers,
+  isoLayerBrightness,
+  isoProjectBounds,
+  ISO_TILT_DEG,
+} from './isometric';
 
 // Shared options for the image exports (PNG / SVG / PDF). `isometric` tilts
 // the rendered scene into the editor's isometric projection (spec/45 / 48),
@@ -199,6 +206,14 @@ function renderTabToCanvas(
   ctx.translate(EXPORT_PADDING - draw.x, EXPORT_PADDING - draw.y);
   if (iso) ctx.transform(iso.a, iso.b, iso.c, iso.d, 0, 0);
 
+  // Isometric: paint every element's extrusion column first, so all the
+  // depth sits behind all the element bodies (matching the editor's single
+  // depth plane behind the element layer).
+  if (iso) {
+    for (const el of framesFirst(tab.elements)) {
+      if (el.type !== 'arrow') drawBoxedExtrusion(ctx, el);
+    }
+  }
   // Boxed elements first so arrows draw over them with the right
   // z-order on either end; framesFirst keeps frame sections behind
   // their contents (spec/09).
@@ -327,10 +342,66 @@ function describeBoxedExport(el: BoxedElement): BoxedExport {
   return { opacity, shape, label };
 }
 
+// Build the silhouette path for a boxed export shape at an optional offset
+// (canvas px). Shared by the element body and its isometric extrusion copies
+// so the two never diverge. `image` shares the rect's rounded outline.
+function boxedSilhouettePath(
+  ctx: CanvasRenderingContext2D,
+  el: BoxedElement,
+  kind: ExportShape['kind'],
+  dx = 0,
+  dy = 0,
+): void {
+  const x = el.x + dx;
+  const y = el.y + dy;
+  const cx = x + el.width / 2;
+  const cy = y + el.height / 2;
+  if (kind === 'ellipse') {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, el.width / 2, el.height / 2, 0, 0, Math.PI * 2);
+  } else if (kind === 'diamond') {
+    ctx.beginPath();
+    ctx.moveTo(cx, y);
+    ctx.lineTo(x + el.width, cy);
+    ctx.lineTo(cx, y + el.height);
+    ctx.lineTo(x, cy);
+    ctx.closePath();
+  } else {
+    // rect + image both use the rounded outline.
+    roundedRect(ctx, x, y, el.width, el.height, 6);
+  }
+}
+
+// Isometric extrusion (spec/45): behind the element body, paint a stack of its
+// silhouette stepped along the projected depth axis — the same voxel column
+// the on-screen isometric view renders (IsometricDepthLayer). Each copy is the
+// element's accent dimmed toward the floor. The step is computed in element
+// space so that, once the iso matrix is applied to the context, every copy
+// lands at the right SCREEN depth offset (0, z·sin(elevation)); inverting that
+// projection gives the element-space offset z·tan(elevation)·(sinAz, cosAz).
+function drawBoxedExtrusion(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
+  const { shape, opacity } = describeBoxedExport(el);
+  if (shape.kind === 'none') return; // text: no body to extrude
+  const accent = shape.kind === 'image' ? EXPORT_IMAGE_STROKE : shape.stroke;
+  const az = (ISO_TILT_DEG.z * Math.PI) / 180;
+  const k = Math.tan((ISO_TILT_DEG.x * Math.PI) / 180);
+  const ox = Math.sin(az);
+  const oy = Math.cos(az);
+  const layers = isoDepthLayers();
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  // Deepest (floor) first so nearer, brighter copies paint over it.
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const z = -layers[i]!; // positive depth (floor → just under the element)
+    ctx.fillStyle = shade(accent, 1 - isoLayerBrightness(i, layers.length));
+    boxedSilhouettePath(ctx, el, shape.kind, z * k * ox, z * k * oy);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
   const { opacity, shape, label } = describeBoxedExport(el);
-  const cx = el.x + el.width / 2;
-  const cy = el.y + el.height / 2;
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.lineWidth = 1.5;
@@ -338,32 +409,14 @@ function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
     ctx.strokeStyle = EXPORT_IMAGE_STROKE;
     ctx.fillStyle = EXPORT_IMAGE_FILL;
     ctx.setLineDash([4, 4]);
-    roundedRect(ctx, el.x, el.y, el.width, el.height, 6);
+    boxedSilhouettePath(ctx, el, 'image');
     ctx.fill();
     ctx.stroke();
     ctx.setLineDash([]);
-  } else if (shape.kind === 'ellipse') {
+  } else if (shape.kind !== 'none') {
     ctx.fillStyle = shape.fill;
     ctx.strokeStyle = shape.stroke;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, el.width / 2, el.height / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  } else if (shape.kind === 'diamond') {
-    ctx.fillStyle = shape.fill;
-    ctx.strokeStyle = shape.stroke;
-    ctx.beginPath();
-    ctx.moveTo(cx, el.y);
-    ctx.lineTo(el.x + el.width, cy);
-    ctx.lineTo(cx, el.y + el.height);
-    ctx.lineTo(el.x, cy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  } else if (shape.kind === 'rect') {
-    ctx.fillStyle = shape.fill;
-    ctx.strokeStyle = shape.stroke;
-    roundedRect(ctx, el.x, el.y, el.width, el.height, 6);
+    boxedSilhouettePath(ctx, el, shape.kind);
     ctx.fill();
     ctx.stroke();
   }
@@ -579,6 +632,51 @@ function svgBoxed(el: BoxedElement): string {
   return `<g${opAttr}>${shapeStr}${labelStr}</g>`;
 }
 
+// A single filled silhouette (no stroke / label) at an offset — the SVG
+// counterpart of boxedSilhouettePath, used for the isometric extrusion copies.
+function svgSilhouette(
+  el: BoxedElement,
+  kind: ExportShape['kind'],
+  dx: number,
+  dy: number,
+  fill: string,
+): string {
+  const x = el.x + dx;
+  const y = el.y + dy;
+  const cx = x + el.width / 2;
+  const cy = y + el.height / 2;
+  if (kind === 'ellipse') {
+    return `<ellipse cx="${r2(cx)}" cy="${r2(cy)}" rx="${r2(el.width / 2)}" ry="${r2(el.height / 2)}" fill="${xmlEscape(fill)}"/>`;
+  }
+  if (kind === 'diamond') {
+    return `<polygon points="${r2(cx)},${r2(y)} ${r2(x + el.width)},${r2(cy)} ${r2(cx)},${r2(y + el.height)} ${r2(x)},${r2(cy)}" fill="${xmlEscape(fill)}"/>`;
+  }
+  return `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6" fill="${xmlEscape(fill)}"/>`;
+}
+
+// Isometric extrusion column for one boxed element (spec/45) — the SVG
+// counterpart of drawBoxedExtrusion. Stepped silhouette copies, dimmed toward
+// the floor, behind the element body.
+function svgBoxedExtrusion(el: BoxedElement): string {
+  const { shape, opacity } = describeBoxedExport(el);
+  if (shape.kind === 'none') return '';
+  const accent = shape.kind === 'image' ? EXPORT_IMAGE_STROKE : shape.stroke;
+  const az = (ISO_TILT_DEG.z * Math.PI) / 180;
+  const k = Math.tan((ISO_TILT_DEG.x * Math.PI) / 180);
+  const ox = Math.sin(az);
+  const oy = Math.cos(az);
+  const layers = isoDepthLayers();
+  const opAttr = opacity !== 1 ? ` opacity="${r2(opacity)}"` : '';
+  const parts = [`<g${opAttr}>`];
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const z = -layers[i]!;
+    const fill = shade(accent, 1 - isoLayerBrightness(i, layers.length));
+    parts.push(svgSilhouette(el, shape.kind, z * k * ox, z * k * oy, fill));
+  }
+  parts.push('</g>');
+  return parts.join('');
+}
+
 function svgArrowhead(
   from: { x: number; y: number },
   to: { x: number; y: number },
@@ -644,6 +742,10 @@ function renderTabToSvg(tab: Tab, opts: ImageExportOpts = {}): string {
   );
   if (iso) {
     parts.push(`<g transform="matrix(${r2(iso.a)} ${r2(iso.b)} ${r2(iso.c)} ${r2(iso.d)} 0 0)">`);
+    // All extrusion columns behind all element bodies (matching the canvas).
+    for (const el of framesFirst(tab.elements)) {
+      if (el.type !== 'arrow') parts.push(svgBoxedExtrusion(el));
+    }
   }
   // Boxed elements first, then arrows on top (same z-order as the canvas).
   // framesFirst keeps frame sections behind their contents (spec/09).
