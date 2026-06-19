@@ -8,8 +8,12 @@ components, so it's built to a reusable pattern rather than as a one-off.
 
 - Drag it in from the palette (Tools tab, next to the progress elements). It
   drops as a line with **3 points** above it.
-- When selected, a **"+" affordance at the right end** of the rail adds another
-  point. Points are evenly spaced and the rail **widens by one step** per point
+- Each point has an **editable label above it** (`railLabels`, index-aligned).
+  Select the rail, then click a label to type; it commits on blur / Enter as one
+  undo step.
+- Adding a point is offered from the element's **standard quick-connect "+"**
+  (an "Add point" action), so the rail draws no competing on-canvas button.
+  Points are evenly spaced and the rail **widens by one step** per point
   (constant spacing × point count), so it stays neat as it grows; capped at 12.
 - A **Timeline** context-menu category (modelled on Progress) carries a
   **Points** stepper to set the count precisely — and to remove points (min 2).

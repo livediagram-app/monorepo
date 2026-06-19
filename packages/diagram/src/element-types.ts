@@ -112,6 +112,9 @@ export type ShapeElement = {
   // line. Only meaningful on the 'timeline-rail' kind; clamped to
   // RAIL_MIN_POINTS..RAIL_MAX_POINTS.
   railCount?: number;
+  // Per-point labels, index-aligned to the points (a short / missing entry is
+  // an empty label). Edited inline above each point. Only on 'timeline-rail'.
+  railLabels?: string[];
   // Rating (spec/52): the score in filled stars (0..RATING_MAX) + its optional
   // animation. Only meaningful on the 'rating' kind.
   rating?: number;

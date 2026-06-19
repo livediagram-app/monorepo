@@ -672,6 +672,21 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'TimelineRail');
   };
+  // Edit one rail point's label (spec/51). Keyed by element id (the inline
+  // editor lives on the element itself), committed on blur so it's one undo
+  // step. Grows the labels array as needed; trailing empties are harmless.
+  const setRailLabelSelected = (elementId: string, index: number, text: string) => {
+    commit((els) =>
+      els.map((el) => {
+        if (el.id !== elementId || el.type !== 'shape' || el.shape !== 'timeline-rail') return el;
+        const labels = [...(el.railLabels ?? [])];
+        while (labels.length <= index) labels.push('');
+        labels[index] = text;
+        return { ...el, railLabels: labels };
+      }),
+    );
+    track('Element', 'Changed', 'TimelineRail');
+  };
 
   // Rating (spec/52): the star score + its optional animation, gated to rating
   // shapes. The setters share one body (differing only in the patched field +
@@ -805,6 +820,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setMarkerSizeSelected,
     setRailCountSelected,
     addRailPointSelected,
+    setRailLabelSelected,
     setRatingSelected,
     setRatingAnimSelected,
     setRatingAnimSpeedSelected,

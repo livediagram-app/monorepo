@@ -119,6 +119,8 @@ type BoxedElementViewProps = {
       >
     >,
   ) => void;
+  // Edit a timeline-rail point's label (spec/51). Omitted in read-only mode.
+  onSetRailLabel?: (elementId: string, index: number, text: string) => void;
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (id: string) => void;
@@ -216,6 +218,7 @@ function BoxedElementViewImpl({
   onSetFont,
   onSetTextSize,
   onCommitTable,
+  onSetRailLabel,
   onCancelEdit,
   onFollowLink,
   onOpenComments,
@@ -624,6 +627,10 @@ function BoxedElementViewImpl({
         <RailView
           element={element}
           accent={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
+          textColor={textColor}
+          fontFamily={fontFamily}
+          editable={isSelected && !readOnly && !isLocked}
+          onSetLabel={onSetRailLabel}
         />
       ) : element.type === 'shape' && isRatingShape(element.shape) ? (
         // Rating (spec/52): a row of stars showing element.rating.

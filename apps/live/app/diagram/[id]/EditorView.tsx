@@ -290,6 +290,7 @@ export function EditorView() {
     setMarkerSizeSelected,
     setRailCountSelected,
     addRailPointSelected,
+    setRailLabelSelected,
     setRatingSelected,
     setRatingAnimSelected,
     setRatingAnimSpeedSelected,
@@ -828,6 +829,7 @@ export function EditorView() {
         onCommitLabel={commitLabel}
         onCommitTable={commitTable}
         onAddRailPoint={addRailPointSelected}
+        onSetRailLabel={isReadOnly ? undefined : setRailLabelSelected}
         onCancelEdit={cancelEdit}
         onBeginEndpointDrag={beginEndpointDrag}
         onBeginArrowTranslate={beginArrowTranslate}
