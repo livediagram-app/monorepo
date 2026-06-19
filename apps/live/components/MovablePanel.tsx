@@ -125,6 +125,11 @@ type MovablePanelProps = {
   // Used by the palette, whose first child is a full-width tab band meant
   // to be flush; applies in BOTH render paths so the layouts match.
   flushTop?: boolean;
+  // When true the body grows to its content instead of capping to the
+  // available height + scrolling. Used by the palette so the shapes / tools /
+  // … tab panels grow rather than showing a scrollbar (their content is
+  // bounded; searchable tabs scroll their own inner grid).
+  growBody?: boolean;
   children: ReactNode;
 };
 
@@ -157,6 +162,7 @@ export function MovablePanel({
   onMobileClose,
   mobileDockAnchor,
   flushTop = false,
+  growBody = false,
   children,
 }: MovablePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -624,8 +630,12 @@ export function MovablePanel({
         aria-hidden={collapsible && effectiveCollapsed ? true : undefined}
       >
         <div
-          style={bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
-          className="overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700"
+          style={!growBody && bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
+          className={
+            growBody
+              ? ''
+              : 'overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700'
+          }
         >
           <div className={`flex flex-col ${flushTop ? '' : 'pt-1'}`}>{children}</div>
         </div>

@@ -35,6 +35,66 @@ export function PaletteDataTab({
           <path d="M12 12 L12 3 A9 9 0 0 1 20.5 15 Z" fill="currentColor" />
         </svg>
       </IconButton>
+      <IconButton
+        label="Add progress bar"
+        caption="Progress"
+        description="Horizontal progress bar. Set the percentage from its menu."
+        onClick={() => addShape('progress-bar')}
+        dragKind="progress-bar"
+        filled
+        active={pendingShapeKind === 'progress-bar'}
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+          <rect
+            x="2"
+            y="6.5"
+            width="14"
+            height="5"
+            rx="2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <rect x="2" y="6.5" width="8" height="5" rx="2.5" fill="currentColor" />
+        </svg>
+      </IconButton>
+      <IconButton
+        label="Add progress ring"
+        caption="Donut"
+        description="Donut progress ring. Set the percentage from its menu."
+        onClick={() => addShape('progress-ring')}
+        dragKind="progress-ring"
+        filled
+        active={pendingShapeKind === 'progress-ring'}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden
+        >
+          <circle cx="9" cy="9" r="6" strokeWidth="2.4" opacity="0.3" />
+          <path d="M9 3 a6 6 0 0 1 5.2 9" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </IconButton>
+      <IconButton
+        label="Add rating"
+        caption="Rating"
+        description="A 1–5 star rating. Set the score + an animation from its menu."
+        onClick={() => addShape('rating')}
+        dragKind="rating"
+        filled
+        active={pendingShapeKind === 'rating'}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+          <path
+            d="M12 2.6l2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.85 6.6 19.23l1.03-6.02L3.26 8.95l6.04-.88z"
+            fill="currentColor"
+          />
+        </svg>
+      </IconButton>
     </div>
   );
 }
@@ -608,50 +668,6 @@ export function PaletteToolsTab({
         </svg>
       </IconButton>
       <IconButton
-        label="Add progress bar"
-        caption="Progress"
-        description="Horizontal progress bar. Set the percentage from its menu."
-        onClick={() => addShape('progress-bar')}
-        dragKind="progress-bar"
-        filled
-        active={pendingShapeKind === 'progress-bar'}
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-          <rect
-            x="2"
-            y="6.5"
-            width="14"
-            height="5"
-            rx="2.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-          />
-          <rect x="2" y="6.5" width="8" height="5" rx="2.5" fill="currentColor" />
-        </svg>
-      </IconButton>
-      <IconButton
-        label="Add progress ring"
-        caption="Donut"
-        description="Donut progress ring. Set the percentage from its menu."
-        onClick={() => addShape('progress-ring')}
-        dragKind="progress-ring"
-        filled
-        active={pendingShapeKind === 'progress-ring'}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 18 18"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden
-        >
-          <circle cx="9" cy="9" r="6" strokeWidth="2.4" opacity="0.3" />
-          <path d="M9 3 a6 6 0 0 1 5.2 9" strokeWidth="2.4" strokeLinecap="round" />
-        </svg>
-      </IconButton>
-      <IconButton
         label="Add timeline rail"
         caption="Timeline"
         description="A line with points above it. Add more points from its right-end button."
@@ -673,22 +689,6 @@ export function PaletteToolsTab({
           <circle cx="4.5" cy="6" r="1.8" fill="currentColor" />
           <circle cx="9" cy="6" r="1.8" fill="currentColor" />
           <circle cx="13.5" cy="6" r="1.8" fill="currentColor" />
-        </svg>
-      </IconButton>
-      <IconButton
-        label="Add rating"
-        caption="Rating"
-        description="A 1–5 star rating. Set the score + an animation from its menu."
-        onClick={() => addShape('rating')}
-        dragKind="rating"
-        filled
-        active={pendingShapeKind === 'rating'}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
-          <path
-            d="M12 2.6l2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.85 6.6 19.23l1.03-6.02L3.26 8.95l6.04-.88z"
-            fill="currentColor"
-          />
         </svg>
       </IconButton>
     </div>

@@ -320,6 +320,7 @@ export function CommandPalette({
       mobileDockAnchor={mobileDockAnchor}
       forceDockMode={forceDockMode}
       flushTop
+      growBody
       onReset={onReset}
       onMoveTo={onMoveTo}
       headerExtra={
