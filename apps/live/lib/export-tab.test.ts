@@ -35,12 +35,19 @@ const freehand = (id: string, overrides: Partial<FreehandElement> = {}): Freehan
   ...overrides,
 });
 
-const pinnedArrow = (id: string, fromId: string, toId: string, label?: string): ArrowElement => ({
+const pinnedArrow = (
+  id: string,
+  fromId: string,
+  toId: string,
+  label?: string,
+  overrides: Partial<ArrowElement> = {},
+): ArrowElement => ({
   id,
   type: 'arrow',
   from: { kind: 'pinned', elementId: fromId, anchor: 'e' },
   to: { kind: 'pinned', elementId: toId, anchor: 'w' },
   ...(label ? { label } : {}),
+  ...overrides,
 });
 
 const tab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -223,7 +230,7 @@ describe('exportTabAsSvg', () => {
     expect(svg).toContain('<rect'); // the square (plus the bg rect)
   });
 
-  it('draws an arrow as a line with an arrowhead and escapes the label', async () => {
+  it('draws an arrow as a path with an arrowhead and escapes the label', async () => {
     const svg = await text(
       exportTabAsSvg(
         tab({
@@ -235,10 +242,28 @@ describe('exportTabAsSvg', () => {
         }),
       ),
     );
-    expect(svg).toContain('<line');
+    // Arrows render via the shared arrow path (straight = M…L…), so curved /
+    // angled arrows export with their real shape rather than a flat line.
+    expect(svg).toContain('<path d="M ');
     expect(svg).toContain('<polygon'); // arrowhead
     // Label is XML-escaped, never raw.
     expect(svg).toContain('A &amp; B &lt;ok&gt;');
     expect(svg).not.toContain('A & B <ok>');
+  });
+
+  it('exports a curved arrow as a Bézier path (not a straight chord)', async () => {
+    const svg = await text(
+      exportTabAsSvg(
+        tab({
+          elements: [
+            shape('a'),
+            shape('b', { x: 300 }),
+            pinnedArrow('arr', 'a', 'b', '', { arrowStyle: 'curved' }),
+          ],
+        }),
+      ),
+    );
+    expect(svg).toContain('<path d="M '); // a path...
+    expect(svg).toContain(' Q '); // ...with a quadratic curve segment
   });
 });

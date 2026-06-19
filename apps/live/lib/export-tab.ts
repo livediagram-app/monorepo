@@ -10,6 +10,13 @@
 // rendering.
 
 import {
+  angledElbow,
+  arrowLabelAnchor,
+  arrowPathD,
+  arrowStyleOf,
+  BORDER_DASH_ARRAY,
+  curveAnchorPoints,
+  curveControlPoint,
   endpointPosition,
   hasRichFormatting,
   isBoxed,
@@ -479,32 +486,84 @@ function roundedRect(
   ctx.closePath();
 }
 
+// The point that precedes each endpoint along the rendered path, so the
+// arrowhead can point along a curved / angled line instead of the straight
+// from→to chord (the reported "curves export straight" bug). Mirrors the
+// tangent the editor's <ArrowView> draws its heads along.
+function arrowHeadRefs(
+  arrow: ArrowElement,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): { toRef: { x: number; y: number }; fromRef: { x: number; y: number } } {
+  const style = arrowStyleOf(arrow);
+  const pts = arrow.curvePoints;
+  if (pts && pts.length > 0 && (style === 'curved' || style === 'angled')) {
+    const anchors = curveAnchorPoints(from, to, pts);
+    return { toRef: anchors[anchors.length - 1]!, fromRef: anchors[0]! };
+  }
+  if (style === 'curved') {
+    const c = curveControlPoint(from, to, arrow.curveOffset);
+    return { toRef: c, fromRef: c };
+  }
+  if (style === 'angled') {
+    const elbow = angledElbow(from, to, arrow.from, arrow.to, arrow.elbowOffset);
+    return { toRef: elbow, fromRef: elbow };
+  }
+  return { toRef: from, fromRef: to };
+}
+
 function drawArrow(ctx: CanvasRenderingContext2D, arrow: ArrowElement, elements: Element[]): void {
   const from = endpointPosition(arrow.from, elements);
   const to = endpointPosition(arrow.to, elements);
   const stroke = arrow.strokeColor ?? '#64748b';
   const lineWidth = arrow.strokeWidth ?? 2;
+  const style = arrowStyleOf(arrow);
   ctx.save();
   ctx.globalAlpha = arrow.opacity ?? 1;
   ctx.strokeStyle = stroke;
   ctx.fillStyle = stroke;
   ctx.lineWidth = lineWidth;
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
-  ctx.stroke();
-  // Arrowheads — small triangles at the requested endpoints.
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  // Honour the line pattern (dashed / dotted / …) like the editor does.
+  const dash = BORDER_DASH_ARRAY[arrow.strokeStyle ?? 'solid'];
+  if (dash) ctx.setLineDash(dash.split(' ').map(Number));
+  // Stroke the SAME path the editor renders (straight / curved / angled,
+  // honouring drag handles) via its shared SVG path data.
+  const d = arrowPathD(
+    style,
+    from,
+    to,
+    arrow.from,
+    arrow.to,
+    arrow.curveOffset,
+    arrow.elbowOffset,
+    arrow.curvePoints,
+  );
+  ctx.stroke(new Path2D(d));
+  ctx.setLineDash([]);
+  // Arrowheads — small triangles pointing along the path's end tangents.
+  const { toRef, fromRef } = arrowHeadRefs(arrow, from, to);
   const ends = arrow.arrowEnds ?? 'to';
-  if (ends === 'to' || ends === 'both') drawArrowhead(ctx, from, to);
-  if (ends === 'from' || ends === 'both') drawArrowhead(ctx, to, from);
+  if (ends === 'to' || ends === 'both') drawArrowhead(ctx, toRef, to);
+  if (ends === 'from' || ends === 'both') drawArrowhead(ctx, fromRef, from);
   if (arrow.label) {
-    const mx = (from.x + to.x) / 2;
-    const my = (from.y + to.y) / 2;
+    const anchor = arrowLabelAnchor(
+      style,
+      from,
+      to,
+      arrow.from,
+      arrow.to,
+      arrow.curveOffset,
+      arrow.elbowOffset,
+      arrow.labelOffset,
+      arrow.curvePoints,
+    );
     ctx.fillStyle = '#0f172a';
     ctx.font = '500 12px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(arrow.label, mx, my - 4);
+    ctx.fillText(arrow.label, anchor.x, anchor.y - 4);
   }
   ctx.restore();
 }
@@ -697,25 +756,44 @@ function svgArrow(arrow: ArrowElement, elements: Element[]): string {
   const lw = arrow.strokeWidth ?? 2;
   const op = arrow.opacity ?? 1;
   const opAttr = op !== 1 ? ` opacity="${r2(op)}"` : '';
+  const style = arrowStyleOf(arrow);
   const parts = [`<g${opAttr}>`];
-  parts.push(
-    `<line x1="${r2(from.x)}" y1="${r2(from.y)}" x2="${r2(to.x)}" y2="${r2(to.y)}" stroke="${xmlEscape(stroke)}" stroke-width="${lw}"/>`,
+  // The same path the editor renders (straight / curved / angled, honouring
+  // the curve / elbow drag handles) — not a flat from→to line (the reported
+  // "curves export straight" bug).
+  const d = arrowPathD(
+    style,
+    from,
+    to,
+    arrow.from,
+    arrow.to,
+    arrow.curveOffset,
+    arrow.elbowOffset,
+    arrow.curvePoints,
   );
+  const dash = BORDER_DASH_ARRAY[arrow.strokeStyle ?? 'solid'];
+  const dashAttr = dash ? ` stroke-dasharray="${dash}"` : '';
+  parts.push(
+    `<path d="${d}" fill="none" stroke="${xmlEscape(stroke)}" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round"${dashAttr}/>`,
+  );
+  const { toRef, fromRef } = arrowHeadRefs(arrow, from, to);
   const ends = arrow.arrowEnds ?? 'to';
-  if (ends === 'to' || ends === 'both') parts.push(svgArrowhead(from, to, stroke));
-  if (ends === 'from' || ends === 'both') parts.push(svgArrowhead(to, from, stroke));
+  if (ends === 'to' || ends === 'both') parts.push(svgArrowhead(toRef, to, stroke));
+  if (ends === 'from' || ends === 'both') parts.push(svgArrowhead(fromRef, from, stroke));
   if (arrow.label) {
+    const anchor = arrowLabelAnchor(
+      style,
+      from,
+      to,
+      arrow.from,
+      arrow.to,
+      arrow.curveOffset,
+      arrow.elbowOffset,
+      arrow.labelOffset,
+      arrow.curvePoints,
+    );
     parts.push(
-      svgLabel(
-        arrow.label,
-        (from.x + to.x) / 2,
-        (from.y + to.y) / 2 - 6,
-        'middle',
-        '#0f172a',
-        12,
-        false,
-        false,
-      ),
+      svgLabel(arrow.label, anchor.x, anchor.y - 6, 'middle', '#0f172a', 12, false, false),
     );
   }
   parts.push('</g>');
