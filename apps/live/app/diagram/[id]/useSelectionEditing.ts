@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import {
   hasRichFormatting,
   isBoxed,
+  isSelfDrawingShape,
   normalizeRuns,
   type Element,
   type TableElement,
@@ -92,6 +93,11 @@ export function useSelectionEditing(opts: {
     // Another participant has it selected — don't let two people edit it.
     if (lockedByOther(elementId)) return;
     if (formatSourceId !== null) return;
+    // The self-drawing data components (progress / rail / rating / charts)
+    // have no editable text label, so no entry point (double-click, Space,
+    // type-to-edit) opens the inline editor for them.
+    const el = activeTab.elements.find((e) => e.id === elementId);
+    if (el && el.type === 'shape' && isSelfDrawingShape(el.shape)) return;
     setGroupSourceId(null);
     setSelectedId(elementId);
     // Double-click / Space edit: select-all so a retype replaces the label.
@@ -180,6 +186,8 @@ export function useSelectionEditing(opts: {
     if (!el) return false;
     const labelable = isBoxed(el) || el.type === 'arrow';
     if (!labelable) return false;
+    // Self-drawing data components have no editable label (see beginEdit).
+    if (el.type === 'shape' && isSelfDrawingShape(el.shape)) return false;
     commit((els) => els.map((e) => (e.id === elementId ? { ...e, label: char } : e)));
     setSelectedId(elementId);
     // Seeded with the first char → caret at end, NOT select-all, so the

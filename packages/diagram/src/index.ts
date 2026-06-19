@@ -252,6 +252,14 @@ export function isChartShape(kind: ShapeKind): boolean {
   return isPieShape(kind) || isBarShape(kind);
 }
 
+// The "self-drawing" shape kinds: progress (bar / ring), timeline rail, rating,
+// and the data charts. They render their own bespoke content (no fill/border
+// box) and carry no editable text label, so the editor suppresses markers, the
+// inline label editor, and double-click / type-to-edit for them.
+export function isSelfDrawingShape(kind: ShapeKind): boolean {
+  return isProgressShape(kind) || isRailShape(kind) || isRatingShape(kind) || isChartShape(kind);
+}
+
 // Clamp to a whole 0..RATING_MAX star count.
 export function clampRating(value: number): number {
   return Math.max(0, Math.min(RATING_MAX, Math.round(value)));

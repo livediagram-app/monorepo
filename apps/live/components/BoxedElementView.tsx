@@ -23,11 +23,11 @@ import {
   defaultTextColor,
   hasRichFormatting,
   isBarShape,
-  isChartShape,
   isPieShape,
   isProgressShape,
   isRailShape,
   isRatingShape,
+  isSelfDrawingShape,
   PADDING_PX,
   type BoxedElement,
   type FreehandElement,
@@ -353,6 +353,14 @@ function BoxedElementViewImpl({
       onOpenNote?.(element.id);
       return;
     }
+    // The self-drawing data components (progress / rail / rating / charts) draw
+    // their own content and have no editable text label, so double-click never
+    // enters text-edit mode for them — it would pop an empty, confusing editor.
+    // (beginEdit also guards this; belt-and-braces so no entry point slips
+    // through.)
+    if (element.type === 'shape' && isSelfDrawingShape(element.shape)) {
+      return;
+    }
     // Don't gate on isPaintMode here (the page-level beginEdit decides whether
     // edit can start; it rejects during format painter, and exits group mode).
     onBeginEdit(element.id);
@@ -429,13 +437,7 @@ function BoxedElementViewImpl({
   // shape has no label). Progress shapes render their own centred percentage,
   // so they skip it. Shares the icon+label flex layout below.
   const marker: ShapeMarker | undefined =
-    element.type === 'shape' &&
-    !isProgressShape(element.shape) &&
-    !isRailShape(element.shape) &&
-    !isRatingShape(element.shape) &&
-    !isChartShape(element.shape)
-      ? element.marker
-      : undefined;
+    element.type === 'shape' && !isSelfDrawingShape(element.shape) ? element.marker : undefined;
   // The text label, computed once so the freehand branch, the plain
   // shape branch, and the inline-icon layout below all share it.
   const labelNode = renderLabel(
@@ -782,11 +784,7 @@ function BoxedElementViewImpl({
           draggableIcon={canRepositionIcon}
           onIconPointerDown={startIconReposition}
         />
-      ) : element.type === 'shape' &&
-        (isProgressShape(element.shape) ||
-          isRailShape(element.shape) ||
-          isRatingShape(element.shape) ||
-          isChartShape(element.shape)) ? (
+      ) : element.type === 'shape' && isSelfDrawingShape(element.shape) ? (
         // Progress / rail / rating / chart elements draw their own content, so
         // they render no standard editable label.
         <></>
