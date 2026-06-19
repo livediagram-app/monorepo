@@ -8,6 +8,7 @@ import type {
   BackgroundPattern,
   DistributionGuide,
   Element,
+  IconPosition,
   ShapeKind,
   TextAlignX,
   TextAlignY,
@@ -302,11 +303,7 @@ export type CanvasProps = {
   // Drop a palette icon onto a shape: set its inline iconId and the
   // position (which side of the text) derived from where it was dropped.
   // Optional so read-only / pre-identity Canvas mounts can omit it.
-  onDropIcon?: (
-    elementId: string,
-    iconId: string,
-    position: 'left' | 'right' | 'above' | 'below',
-  ) => void;
+  onDropIcon?: (elementId: string, iconId: string, position: IconPosition) => void;
   // Open the link picker for a specific table cell. Optional so read-
   // only / pre-identity Canvas mounts can omit it.
   onLinkCell?: (tableId: string, r: number, c: number) => void;

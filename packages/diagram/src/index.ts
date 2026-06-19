@@ -145,6 +145,11 @@ export const ICON_ANIMATIONS: readonly IconAnimation[] = [
   'tada',
 ];
 
+// Where an inline icon sits relative to its shape's text label (the
+// drag-an-icon-onto-a-shape feature, spec/09). The drop-side detection, the
+// context-menu placement picker, and the data-model field all speak this.
+export type IconPosition = 'left' | 'right' | 'above' | 'below';
+
 // Progress elements (spec/46): a horizontal bar + a donut ring that display a
 // 0–100 `progress` value. `progressAnim` animates HOW the filled portion
 // behaves: 'fill' repeatedly grows it from 0 to the value, 'pulse' breathes its

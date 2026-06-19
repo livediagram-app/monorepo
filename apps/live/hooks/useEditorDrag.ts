@@ -48,6 +48,7 @@ import {
   type ArrowElement,
   type Element,
   type Endpoint,
+  type IconPosition,
   type Tab,
 } from '@livediagram/diagram';
 import { titleCaseType, track } from '@/lib/telemetry';
@@ -266,7 +267,7 @@ type EditorDragDeps = {
   onIconElementDroppedOnShape?: (
     sourceIconId: string,
     targetShapeId: string,
-    position: 'left' | 'right' | 'above' | 'below',
+    position: IconPosition,
   ) => void;
   // An annotation marker was pressed + released without moving (a click,
   // not a drag): open its note editor (spec/38). Distinguished from a drag

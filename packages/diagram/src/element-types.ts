@@ -12,6 +12,7 @@ import type {
   ElementId,
   ElementLink,
   IconAnimation,
+  IconPosition,
   Padding,
   ProgressAnim,
   ShapeKind,
@@ -47,7 +48,7 @@ export type ShapeElement = {
   // meaningful on a non-'icon' shape carrying an `iconId`). Defaults to
   // 'left' when unset. Chosen by which side of the shape the icon was
   // dropped on.
-  iconPosition?: 'left' | 'right' | 'above' | 'below';
+  iconPosition?: IconPosition;
   // Progress elements (spec/46), only meaningful when `shape` is
   // 'progress-bar' / 'progress-ring'. `progress` is the filled percentage
   // (0–100, defaults to 50); `progressAnim` animates how the fill behaves.

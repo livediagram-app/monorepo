@@ -47,6 +47,7 @@ import {
   type Element,
   type ElementAnimation,
   type IconAnimation,
+  type IconPosition,
   type ProgressAnim,
   type ShapeElement,
   type ShapeKind,
@@ -226,11 +227,7 @@ type EditorContextMenuProps = {
   onToggleTableZebra: () => void;
   // Re-place a shape's inline icon (reuses the drop handler: same iconId,
   // new side).
-  onSetIconPosition: (
-    elementId: string,
-    iconId: string,
-    position: 'left' | 'right' | 'above' | 'below',
-  ) => void;
+  onSetIconPosition: (elementId: string, iconId: string, position: IconPosition) => void;
   onOpenNote: (elementId: string) => void;
   onOpenComments: (elementId: string) => void;
   // The selected elements (multi-selection / group members), so the 'multi'
@@ -1223,8 +1220,6 @@ const BORDER_STYLES: readonly BorderStyle[] = [
 ];
 const BORDER_RADII: readonly BorderRadius[] = ['none', 'sm', 'md', 'lg', 'full'];
 
-type IconPos = 'left' | 'right' | 'above' | 'below';
-
 // The inline-icon placement picker laid out as a cross (Top / Left / Right /
 // Bottom around an empty centre), each cell an arrow + label.
 function IconPositionGrid({
@@ -1232,9 +1227,9 @@ function IconPositionGrid({
   onPick,
 }: {
   current: string;
-  onPick: (pos: IconPos) => void;
+  onPick: (pos: IconPosition) => void;
 }) {
-  const cell = (key: IconPos, label: string, dir: 'up' | 'down' | 'left' | 'right') => (
+  const cell = (key: IconPosition, label: string, dir: 'up' | 'down' | 'left' | 'right') => (
     <button
       type="button"
       aria-pressed={current === key}

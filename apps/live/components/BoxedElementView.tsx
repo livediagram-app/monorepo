@@ -26,6 +26,7 @@ import {
   PADDING_PX,
   type BoxedElement,
   type FreehandElement,
+  type IconPosition,
   type ShapeElement,
   type TextRun,
   type TextSize,
@@ -146,7 +147,7 @@ type BoxedElementViewProps = {
   // Drop a dragged palette icon onto this shape. The view computes which
   // side of the text the icon landed on and reports it. Omitted in
   // read-only mode so visitors can't drop icons.
-  onDropIcon?: (id: string, iconId: string, position: 'left' | 'right' | 'above' | 'below') => void;
+  onDropIcon?: (id: string, iconId: string, position: IconPosition) => void;
   // Open the link picker for one of this table's cells. Only used by
   // table elements; omitted for read-only viewers.
   onLinkCell?: (tableId: string, r: number, c: number) => void;
@@ -429,14 +430,10 @@ function BoxedElementViewImpl({
   // preview band so the user sees WHERE the icon will land before
   // releasing (null = not currently a drag target).
   const acceptsIconDrop = !!onDropIcon && acceptsInlineIcon(element);
-  const [dropSide, setDropSide] = useState<'left' | 'right' | 'above' | 'below' | null>(null);
+  const [dropSide, setDropSide] = useState<IconPosition | null>(null);
   // Which side a point sits nearest, normalised by half-extent so a
   // wide-but-short box still reads top / bottom correctly.
-  const sideFromPoint = (
-    clientX: number,
-    clientY: number,
-    rect: DOMRect,
-  ): 'left' | 'right' | 'above' | 'below' => {
+  const sideFromPoint = (clientX: number, clientY: number, rect: DOMRect): IconPosition => {
     const dx = (clientX - (rect.left + rect.width / 2)) / (rect.width / 2 || 1);
     const dy = (clientY - (rect.top + rect.height / 2)) / (rect.height / 2 || 1);
     return Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'above' : 'below';
@@ -492,7 +489,7 @@ function BoxedElementViewImpl({
   };
   // Translucent band on the target side + a ring, shown while dragging an
   // icon over this shape so the drop position is obvious.
-  const DROP_BAND: Record<'left' | 'right' | 'above' | 'below', string> = {
+  const DROP_BAND: Record<IconPosition, string> = {
     left: 'left-0 top-0 bottom-0 w-1/3',
     right: 'right-0 top-0 bottom-0 w-1/3',
     above: 'left-0 right-0 top-0 h-1/3',
@@ -1000,7 +997,7 @@ function ShapeInlineIconLayout({
   onIconPointerDown,
 }: {
   element: ShapeElement;
-  position: 'left' | 'right' | 'above' | 'below';
+  position: IconPosition;
   iconStroke: string;
   isEditing: boolean;
   // The full label renderer (incl. the inline editor). Shown full-box
