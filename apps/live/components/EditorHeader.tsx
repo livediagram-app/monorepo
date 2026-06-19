@@ -155,6 +155,36 @@ export function EditorHeader({
   );
 }
 
+// Per-state pill styling for SharedBadge below, keyed by the resolved share
+// state so the label / hover copy / badge + dot colours stay in one table
+// rather than five parallel `state === ...` ternaries.
+const SHARE_STATE_META: Record<
+  'shared' | 'team' | 'private',
+  { label: string; description: string; badge: string; dot: string }
+> = {
+  shared: {
+    label: 'Shared',
+    description: 'Anyone with a link can view.',
+    badge:
+      'inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30',
+    dot: 'text-emerald-500',
+  },
+  team: {
+    label: 'Team',
+    description: 'In a team library: every member of the team can open it.',
+    badge:
+      'inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-700 ring-1 ring-brand-200 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-500/30',
+    dot: 'text-brand-500',
+  },
+  private: {
+    label: 'Private',
+    description: 'Only visible to you.',
+    badge:
+      'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700',
+    dot: 'text-slate-400',
+  },
+};
+
 // Small pill rendered to the right of the diagram name so the owner
 // can see at a glance whether the diagram is private, shared, or in a
 // team library (spec/35). Share links win: a shared team diagram
@@ -164,39 +194,14 @@ export function EditorHeader({
 // button. Hidden on visitor views where the share UI doesn't apply.
 function SharedBadge({ shareable, team }: { shareable: boolean; team?: boolean }) {
   const state: 'shared' | 'team' | 'private' = shareable ? 'shared' : team ? 'team' : 'private';
+  const meta = SHARE_STATE_META[state];
   return (
-    <Tooltip
-      title={state === 'shared' ? 'Shared' : state === 'team' ? 'Team' : 'Private'}
-      description={
-        state === 'shared'
-          ? 'Anyone with a link can view.'
-          : state === 'team'
-            ? 'In a team library: every member of the team can open it.'
-            : 'Only visible to you.'
-      }
-    >
-      <span
-        className={
-          state === 'shared'
-            ? 'inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30'
-            : state === 'team'
-              ? 'inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-700 ring-1 ring-brand-200 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-500/30'
-              : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700'
-        }
-      >
-        <span
-          aria-hidden
-          className={
-            state === 'shared'
-              ? 'text-emerald-500'
-              : state === 'team'
-                ? 'text-brand-500'
-                : 'text-slate-400'
-          }
-        >
+    <Tooltip title={meta.label} description={meta.description}>
+      <span className={meta.badge}>
+        <span aria-hidden className={meta.dot}>
           {state === 'private' ? <PrivateDotIcon /> : <SharedDotIcon />}
         </span>
-        {state === 'shared' ? 'Shared' : state === 'team' ? 'Team' : 'Private'}
+        {meta.label}
       </span>
     </Tooltip>
   );
