@@ -631,8 +631,9 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         {showAppearanceGroup ? <MenuGroupSeparator /> : null}
         {/* Presets (spec/48) — pinned at the top of the appearance group (above
             Animation): one-click theme-colour + border looks for a shape, plus
-            a reset to the theme default. Shapes only. */}
-        {target.type === 'shape' ? (
+            a reset to the theme default. Regular shapes only — the dedicated
+            icon glyph has no fill/border to preset, so it's excluded. */}
+        {target.type === 'shape' && !isIcon ? (
           <MenuAccordionSection
             title="Presets"
             icon={<PresetsMenuGlyph />}

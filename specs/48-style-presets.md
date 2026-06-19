@@ -8,7 +8,8 @@ hand. A **Presets** category sits at the top of the appearance group (above
 ## Shapes
 
 When a single **shape** element is right-clicked, the menu shows a **Presets**
-category with two preset rows the user combines freely, plus a reset:
+category with two preset rows the user combines freely, plus a reset. The
+dedicated **icon** glyph is excluded — it has no fill / border to preset:
 
 - **Colour** — eight one-click colour variations derived from the active
   theme. Each preset sets the shape's fill, border (stroke) and text colour
