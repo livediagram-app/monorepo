@@ -437,7 +437,7 @@ function ArrowViewImpl({
           <EndpointHandle
             cx={from.x}
             cy={from.y}
-            pinned={arrow.from.kind === 'pinned'}
+            pinned={arrow.from.kind !== 'free'}
             disabled={isLocked}
             onPointerDown={(e) => {
               if (isLocked) return;
@@ -448,7 +448,7 @@ function ArrowViewImpl({
           <EndpointHandle
             cx={to.x}
             cy={to.y}
-            pinned={arrow.to.kind === 'pinned'}
+            pinned={arrow.to.kind !== 'free'}
             disabled={isLocked}
             onPointerDown={(e) => {
               if (isLocked) return;

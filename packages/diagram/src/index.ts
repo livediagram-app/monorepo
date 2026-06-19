@@ -286,7 +286,13 @@ export type Endpoint =
   // onto that face). The auto-rebind that re-chooses faces as boxes move
   // (`rebindArrowAnchorsAfterMove`) leaves a manual endpoint fixed, so a
   // deliberate correction sticks. Absent === auto-managed (the default).
-  | { kind: 'pinned'; elementId: ElementId; anchor: Anchor; manual?: boolean };
+  | { kind: 'pinned'; elementId: ElementId; anchor: Anchor; manual?: boolean }
+  // Connected to a point ALONG another arrow's line (spec/50) — `t` is the
+  // parametric position (0 = the target arrow's `from`, 1 = its `to`). The
+  // position resolves dynamically from the target arrow's centreline, so it
+  // tracks the target as it moves / reshapes (e.g. sequence-diagram messages
+  // attached to a lifeline arrow). Resolved by `endpointPosition`.
+  | { kind: 'on-arrow'; arrowId: ElementId; t: number };
 
 // Cross-tab link on any element. `tab` jumps to another tab on the same
 // diagram; `diagram` navigates to a different diagram entirely (with

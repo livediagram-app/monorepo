@@ -37,11 +37,13 @@ import {
   projectToArrow,
   isBoxed,
   rebindArrowAnchorsAfterMove,
+  arrowSnapPoints,
   selectionMembers,
   snapArrowPoint,
   snapResizeBounds,
   snapToAlignment,
   snapToAnchor,
+  snapToArrowPoint,
   type AlignmentGuide,
   type DistributionGuide,
   type Anchor,
@@ -132,6 +134,13 @@ function sameTargets(a: SnapTarget[], b: SnapTarget[]): boolean {
 // that shape's connection points while dragging an arrow endpoint. A little
 // generous so the anchors appear as you approach rather than only on contact.
 const SNAP_TARGET_REVEAL_MARGIN = 44;
+
+// Arrow-to-arrow snapping (spec/50). REVEAL is the perpendicular distance at
+// which a nearby arrow's snap dots appear; THRESHOLD (tighter) is where the
+// endpoint actually connects. Both a touch more generous than the element
+// anchor SNAP_THRESHOLD so an arrow line — a thin target — is easy to catch.
+const ARROW_SNAP_REVEAL_PX = 36;
+const ARROW_SNAP_THRESHOLD_PX = 12;
 
 // The connection-point markers to show for the current arrow-endpoint drag:
 // every anchor of each shape whose (margin-expanded) box the cursor is over,
@@ -366,6 +375,9 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // pointer-down pushed a no-op snapshot (and cleared the redo stack) on
   // every click, evicting real states under the 3-deep HISTORY_LIMIT.
   const checkpointPendingRef = useRef(false);
+  // One-shot guard so an arrow-to-arrow connection (spec/50) is tracked once
+  // per endpoint drag, not on every pointer-move tick. Reset on drag start.
+  const arrowConnectTrackedRef = useRef(false);
   // True for the duration of a gesture that edits EXISTING elements
   // (move / resize / rotate / arrow-handle), gating the activity-log
   // emit. Set when the armed checkpoint is flushed on the first real
@@ -659,6 +671,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
     const start = endpointPosition(end === 'from' ? arrow.from : arrow.to, d.activeTab.elements);
     // Arm a checkpoint; it is taken on the first real mutation (tick).
     checkpointPendingRef.current = true;
+    arrowConnectTrackedRef.current = false;
     setDrag({
       kind: 'arrow-endpoint',
       arrowId,
@@ -1354,11 +1367,36 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       // another shape is the strongest constraint and the most desirable
       // outcome when both are plausible.
       const anchorSnap = snapToAnchor(cursor, els0, SNAP_THRESHOLD);
-      // Reveal the connection points of nearby shapes so the user can see
-      // where the endpoint will snap, highlighting the active one.
-      scheduleSnapTargets(
-        computeSnapTargets(cursor, els0, anchorSnap?.elementId ?? null, anchorSnap?.anchor ?? null),
+      // No element anchor nearby → look for a nearby arrow line to connect to
+      // (spec/50). REVEAL distance shows the line's snap dots as you approach;
+      // the tighter SNAP distance actually connects. Element anchors win.
+      const arrowHit = anchorSnap
+        ? null
+        : snapToArrowPoint(cursor, els0, ARROW_SNAP_REVEAL_PX, drag.arrowId);
+      const arrowSnap = arrowHit && arrowHit.dist <= ARROW_SNAP_THRESHOLD_PX ? arrowHit : null;
+      // Reveal the connection points of nearby shapes + arrows so the user can
+      // see where the endpoint will snap, highlighting the active one.
+      const targets = computeSnapTargets(
+        cursor,
+        els0,
+        anchorSnap?.elementId ?? null,
+        anchorSnap?.anchor ?? null,
       );
+      if (arrowHit) {
+        const targetArrow = els0.find((e) => e.id === arrowHit.arrowId && e.type === 'arrow') as
+          | ArrowElement
+          | undefined;
+        if (targetArrow) {
+          for (const sp of arrowSnapPoints(targetArrow, els0)) {
+            targets.push({
+              x: sp.x,
+              y: sp.y,
+              active: !!arrowSnap && Math.abs(sp.t - arrowHit.t) < 1e-6,
+            });
+          }
+        }
+      }
+      scheduleSnapTargets(targets);
       let endpoint: Endpoint;
       if (anchorSnap) {
         endpoint = {
@@ -1369,6 +1407,15 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
           // override; auto-rebind then leaves this end's face alone.
           ...(drag.reposition ? { manual: true } : {}),
         };
+        scheduleGuides([]);
+      } else if (arrowSnap) {
+        // Connect to a point along the target arrow's line; it resolves
+        // dynamically so it tracks the target as it moves (spec/50).
+        endpoint = { kind: 'on-arrow', arrowId: arrowSnap.arrowId, t: arrowSnap.t };
+        if (!arrowConnectTrackedRef.current) {
+          arrowConnectTrackedRef.current = true;
+          track('Element', 'Linked', 'ArrowPoint');
+        }
         scheduleGuides([]);
       } else {
         // Angle snap: lock the arrow to 45-degree increments from its

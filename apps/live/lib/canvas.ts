@@ -498,12 +498,15 @@ export function snapModeOf(mode: DragMode): ResizeSnapMode | null {
   return mode === 'move' ? null : (mode.slice('resize-'.length) as ResizeSnapMode);
 }
 
-// True when either of the arrow's endpoints is pinned to one of the
-// given element ids. Used by the deletion / cascading-update paths so
-// arrows attached to a removed box can be cleaned up alongside it.
+// True when either of the arrow's endpoints is attached to one of the given
+// element ids — pinned to a box, or connected to another arrow's line
+// (spec/50). Used by the deletion / cascading-update paths so arrows attached
+// to a removed box (or a removed arrow) are cleaned up alongside it.
 export function arrowReferencesAny(arrow: ArrowElement, ids: Set<string>): boolean {
   return (
     (arrow.from.kind === 'pinned' && ids.has(arrow.from.elementId)) ||
-    (arrow.to.kind === 'pinned' && ids.has(arrow.to.elementId))
+    (arrow.to.kind === 'pinned' && ids.has(arrow.to.elementId)) ||
+    (arrow.from.kind === 'on-arrow' && ids.has(arrow.from.arrowId)) ||
+    (arrow.to.kind === 'on-arrow' && ids.has(arrow.to.arrowId))
   );
 }

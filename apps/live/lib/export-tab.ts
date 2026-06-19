@@ -178,6 +178,7 @@ function endpointLabel(endpoint: ArrowElement['from'], boxed: BoxedElement[]): s
     if (target && target.label) return target.label;
     return '?';
   }
+  if (endpoint.kind === 'on-arrow') return '(arrow)';
   return `(${Math.round(endpoint.x)}, ${Math.round(endpoint.y)})`;
 }
 

@@ -1,12 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import {
   alignmentGuides,
+  arrowSnapPoints,
   distributionSnap,
   snapArrowPoint,
   snapResizeBounds,
   snapToAlignment,
+  snapToArrowPoint,
+  type ArrowElement,
   type ShapeElement,
 } from './index';
+
+const hLine = (id: string, x1: number, x2: number, y: number): ArrowElement => ({
+  id,
+  type: 'arrow',
+  from: { kind: 'free', x: x1, y },
+  to: { kind: 'free', x: x2, y },
+});
+
+describe('arrow-to-arrow snapping (spec/50)', () => {
+  it('offers evenly-spaced snap points scaled to the arrow length', () => {
+    const pts = arrowSnapPoints(hLine('a', 0, 240, 0), []);
+    // ~one point every 24px → 10 divisions → 11 points, endpoints included.
+    expect(pts.length).toBe(11);
+    expect(pts[0]).toMatchObject({ x: 0, y: 0, t: 0 });
+    expect(pts[pts.length - 1]).toMatchObject({ x: 240, y: 0, t: 1 });
+  });
+
+  it('snaps a nearby cursor to the closest division on the line', () => {
+    const line = hLine('a', 0, 240, 0);
+    // Cursor near t≈0.5 (x=120) but 6px off the line → snaps onto x=120,y=0.
+    const hit = snapToArrowPoint({ x: 122, y: 6 }, [line], 12, 'dragged');
+    expect(hit).not.toBeNull();
+    expect(hit!.arrowId).toBe('a');
+    expect(hit!.x).toBeCloseTo(120, 5);
+    expect(hit!.y).toBeCloseTo(0, 5);
+  });
+
+  it('returns null when no arrow line is within the threshold', () => {
+    expect(snapToArrowPoint({ x: 120, y: 80 }, [hLine('a', 0, 240, 0)], 12, 'dragged')).toBeNull();
+  });
+
+  it('never snaps to the dragged arrow itself', () => {
+    expect(snapToArrowPoint({ x: 120, y: 0 }, [hLine('a', 0, 240, 0)], 12, 'a')).toBeNull();
+  });
+});
 
 const shape = (id: string, overrides: Partial<ShapeElement> = {}): ShapeElement => ({
   id,

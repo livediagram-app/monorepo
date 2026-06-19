@@ -109,6 +109,31 @@ describe('endpointPosition', () => {
       y: 0,
     });
   });
+
+  it('resolves an on-arrow endpoint to a point along the target arrow (spec/50)', () => {
+    // A straight arrow from (0,0) to (100,0); t=0.5 is its midpoint.
+    const line: ArrowElement = {
+      id: 'line',
+      type: 'arrow',
+      from: { kind: 'free', x: 0, y: 0 },
+      to: { kind: 'free', x: 100, y: 0 },
+    };
+    const p = endpointPosition({ kind: 'on-arrow', arrowId: 'line', t: 0.5 }, [line]);
+    expect(p.x).toBeCloseTo(50, 5);
+    expect(p.y).toBeCloseTo(0, 5);
+    // t=0 / t=1 land on the target's own endpoints.
+    expect(endpointPosition({ kind: 'on-arrow', arrowId: 'line', t: 0 }, [line])).toEqual({
+      x: 0,
+      y: 0,
+    });
+  });
+
+  it('falls back to the origin when the on-arrow target is missing', () => {
+    expect(endpointPosition({ kind: 'on-arrow', arrowId: 'gone', t: 0.5 }, [target])).toEqual({
+      x: 0,
+      y: 0,
+    });
+  });
 });
 
 describe('elementBounds', () => {

@@ -1,4 +1,6 @@
 import {
+  arrowLabelAnchor,
+  arrowStyleOf,
   isBoxed,
   type Anchor,
   type BoxedElement,
@@ -457,12 +459,36 @@ export function buildElementIndex(elements: Element[]): Map<ElementId, Element> 
 // overload stays for one-off resolutions (a single drag handle);
 // per-element loops should pass an index so the whole pass is O(n)
 // rather than O(n^2).
-export function endpointPosition(endpoint: Endpoint, elements: Element[] | ElementIndex): Point {
+export function endpointPosition(
+  endpoint: Endpoint,
+  elements: Element[] | ElementIndex,
+  // Internal recursion guard: an `on-arrow` endpoint resolves through the
+  // target arrow's own endpoints, which could themselves be `on-arrow`. Bail
+  // after a few hops so a pathological cycle can't recurse forever.
+  depth = 0,
+): Point {
   if (endpoint.kind === 'free') return { x: endpoint.x, y: endpoint.y };
-  const target =
-    elements instanceof Map
-      ? elements.get(endpoint.elementId)
-      : (elements as Element[]).find((el) => el.id === endpoint.elementId);
+  const lookup = (id: ElementId): Element | undefined =>
+    elements instanceof Map ? elements.get(id) : (elements as Element[]).find((el) => el.id === id);
+  if (endpoint.kind === 'on-arrow') {
+    if (depth > 4) return { x: 0, y: 0 };
+    const target = lookup(endpoint.arrowId);
+    if (!target || target.type !== 'arrow') return { x: 0, y: 0 };
+    const from = endpointPosition(target.from, elements, depth + 1);
+    const to = endpointPosition(target.to, elements, depth + 1);
+    return arrowLabelAnchor(
+      arrowStyleOf(target),
+      from,
+      to,
+      target.from,
+      target.to,
+      target.curveOffset,
+      target.elbowOffset,
+      { t: endpoint.t, offset: 0 },
+      target.curvePoints,
+    );
+  }
+  const target = lookup(endpoint.elementId);
   if (!target || !isBoxed(target)) return { x: 0, y: 0 };
   return anchorPosition(target, endpoint.anchor);
 }

@@ -203,6 +203,9 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
         if (next) return { ...e, elementId: next };
         return e;
       }
+      // Connected to another arrow's line (spec/50): keep the copy attached to
+      // the same line (arrow ids aren't remapped in this boxed-only copy path).
+      if (e.kind === 'on-arrow') return e;
       return { kind: 'free', x: e.x + offset, y: e.y + offset };
     };
     const arrowCopies: ArrowElement[] = arrowSources.map((s) => ({

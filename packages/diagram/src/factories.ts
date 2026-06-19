@@ -964,6 +964,13 @@ export function duplicateGroupedElements(
   // whole arrow is skipped rather than left dangling.
   const remapEndpoint = (end: ArrowElement['from']): ArrowElement['from'] | null => {
     if (end.kind === 'free') return { kind: 'free', x: end.x + dx, y: end.y + dy };
+    // Connected to another arrow's line (spec/50): follow the duplicate when
+    // the target arrow was copied too, else keep the original, else drop.
+    if (end.kind === 'on-arrow') {
+      const dupArrow = idMap.get(end.arrowId);
+      if (dupArrow) return { kind: 'on-arrow', arrowId: dupArrow, t: end.t };
+      return existingIds.has(end.arrowId) ? end : null;
+    }
     const dup = idMap.get(end.elementId);
     if (dup) return { kind: 'pinned', elementId: dup, anchor: end.anchor };
     return existingIds.has(end.elementId) ? end : null;
