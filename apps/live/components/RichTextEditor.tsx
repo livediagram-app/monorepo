@@ -278,7 +278,19 @@ export function RichTextEditor({
     paintRuns();
     el.focus();
     const len = runsPlainText(runsRef.current).length;
-    selectRange(offsetsToDomRange(el, cursorAtEnd ? len : 0, len));
+    if (cursorAtEnd) {
+      // Type-to-edit: collapse to the true END of the painted content so the
+      // seed char stays first and further typing appends. Done against the live
+      // DOM (not the computed offset) so a stray empty / desynced run can't drop
+      // the caret back to the start — the "Hello" -> "elloH" bug.
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(false);
+      selectRange(r);
+    } else {
+      // Double-click / Space edit: select all, so the next keystroke replaces.
+      selectRange(offsetsToDomRange(el, 0, len));
+    }
     selectionRef.current = { start: cursorAtEnd ? len : 0, end: len };
     refreshActive();
     // Mount-only: cursorAtEnd is fixed for an edit session (editor remounts

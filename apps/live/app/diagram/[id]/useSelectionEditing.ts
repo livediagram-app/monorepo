@@ -188,7 +188,16 @@ export function useSelectionEditing(opts: {
     if (!labelable) return false;
     // Self-drawing data components have no editable label (see beginEdit).
     if (el.type === 'shape' && isSelfDrawingShape(el.shape)) return false;
-    commit((els) => els.map((e) => (e.id === elementId ? { ...e, label: char } : e)));
+    // Type-to-edit REPLACES the whole label with the typed char, so any
+    // per-range `richText` from a prior edit must be dropped — otherwise the
+    // editor would re-open against the stale runs instead of the seed char.
+    commit((els) =>
+      els.map((e) => {
+        if (e.id !== elementId) return e;
+        const { richText: _drop, ...base } = e as typeof e & { richText?: unknown };
+        return { ...base, label: char };
+      }),
+    );
     setSelectedId(elementId);
     // Seeded with the first char → caret at end, NOT select-all, so the
     // next keystroke appends instead of replacing it.
