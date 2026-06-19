@@ -26,6 +26,7 @@ import {
   sendManyToBack,
   SHAPE_DEFAULT_SIZE,
   supportsBorder,
+  type ArrowElement,
   type ArrowEnds,
   type ArrowheadShape,
   type ArrowheadSize,
@@ -255,35 +256,26 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'Padding');
   };
 
-  const setArrowEndsSelected = (arrowEnds: ArrowEnds) => {
+  // Set arrow-only field(s) on every selected arrow. The straightforward
+  // per-field arrow setters share this; setArrowStyleSelected stays separate
+  // because it also has to drop curvePoints.
+  const setArrowFieldSelected = (patch: Partial<ArrowElement>, telemetryType: string) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowEnds } : el)),
+      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, ...patch } : el)),
     );
-    track('Element', 'Changed', 'ArrowEnds');
+    track('Element', 'Changed', telemetryType);
   };
 
-  const setArrowThicknessSelected = (thickness: ArrowThickness) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    const px = ARROW_THICKNESS_PX[thickness];
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeWidth: px } : el)),
-    );
-    track('Element', 'Changed', 'ArrowThickness');
-  };
+  const setArrowEndsSelected = (arrowEnds: ArrowEnds) =>
+    setArrowFieldSelected({ arrowEnds }, 'ArrowEnds');
 
-  const setArrowheadSizeSelected = (size: ArrowheadSize) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowheadSize: size } : el,
-      ),
-    );
-    track('Element', 'Changed', 'ArrowheadSize');
-  };
+  const setArrowThicknessSelected = (thickness: ArrowThickness) =>
+    setArrowFieldSelected({ strokeWidth: ARROW_THICKNESS_PX[thickness] }, 'ArrowThickness');
+
+  const setArrowheadSizeSelected = (size: ArrowheadSize) =>
+    setArrowFieldSelected({ arrowheadSize: size }, 'ArrowheadSize');
 
   // Toggle the header row / column band on the selected table(s).
   // Toggle a boolean structure flag on every selected table. The three table
@@ -326,29 +318,15 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     track('Element', 'Changed', 'ArrowStyle');
   };
 
-  const setArrowheadShapeSelected = (shape: ArrowheadShape) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'arrow' ? { ...el, arrowheadShape: shape } : el,
-      ),
-    );
-    track('Element', 'Changed', 'ArrowheadShape');
-  };
+  const setArrowheadShapeSelected = (shape: ArrowheadShape) =>
+    setArrowFieldSelected({ arrowheadShape: shape }, 'ArrowheadShape');
 
   // Line pattern (solid / dashed / dotted) on the selected arrow.
   // Reuses the BorderStyle union shapes already carry so future
   // pattern additions (e.g. 'long-dash') just need a single
   // BORDER_DASH_ARRAY entry to light up both surfaces.
-  const setArrowStrokeStyleSelected = (style: BorderStyle) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, strokeStyle: style } : el)),
-    );
-    track('Element', 'Changed', 'ArrowLineStyle');
-  };
+  const setArrowStrokeStyleSelected = (style: BorderStyle) =>
+    setArrowFieldSelected({ strokeStyle: style }, 'ArrowLineStyle');
 
   // Morph the selected shape into a different kind, preserving width /
   // height / label / colour overrides. Circle and diamond are 1:1
