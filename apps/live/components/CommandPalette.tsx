@@ -408,7 +408,7 @@ export function CommandPalette({
                 {
                   id: 'laser',
                   label: 'Laser',
-                  shortcut: 'L',
+                  shortcut: 'K',
                   icon: <LaserIcon />,
                   group: 1,
                   disabled: canvasEmpty,
