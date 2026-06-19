@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { track } from '@/lib/telemetry';
+import { CloseIcon } from './CloseIcon';
 
 // Lazy-load the reasons modal: the banner shows on every guest
 // Explorer load, but the modal only matters once Learn more is
@@ -92,7 +93,7 @@ export function SignInBanner({
               aria-label="Dismiss"
               className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white"
             >
-              <CloseIcon />
+              <CloseIcon size={16} />
             </button>
           </div>
         </div>
@@ -136,23 +137,6 @@ function SignInIcon() {
       <path d="M9 3h3.5A1.5 1.5 0 0 1 14 4.5v7A1.5 1.5 0 0 1 12.5 13H9" />
       <path d="M2 8h7" />
       <path d="M6 5l3 3-3 3" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M4 4l8 8M12 4l-8 8" />
     </svg>
   );
 }

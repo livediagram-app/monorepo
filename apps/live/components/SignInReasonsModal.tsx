@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Portal } from './Portal';
+import { CloseIcon } from './CloseIcon';
 
 type Reason = {
   icon: ReactNode;
@@ -97,7 +98,7 @@ export function SignInReasonsModal({
               aria-label="Close"
               className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white"
             >
-              <CloseIcon />
+              <CloseIcon size={16} />
             </button>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80">
               <SparkleIcon />
@@ -258,23 +259,6 @@ function SignInIcon() {
       <path d="M9 3h3.5A1.5 1.5 0 0 1 14 4.5v7A1.5 1.5 0 0 1 12.5 13H9" />
       <path d="M2 8h7" />
       <path d="M6 5l3 3-3 3" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M4 4l8 8M12 4l-8 8" />
     </svg>
   );
 }
