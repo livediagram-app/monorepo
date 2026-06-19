@@ -6,6 +6,8 @@ import {
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
   isBoxed,
+  LINE_DEFAULT_CATEGORIES,
+  LINE_DEFAULT_SERIES,
   selectionMembers,
   type Anchor,
 } from '@livediagram/diagram';
@@ -43,6 +45,9 @@ const EditorContextMenu = dynamic(() =>
 );
 const LinkPickerDialog = dynamic(() =>
   import('@/components/LinkPickerDialog').then((m) => m.LinkPickerDialog),
+);
+const LineDataDialog = dynamic(() =>
+  import('@/components/LineDataDialog').then((m) => m.LineDataDialog),
 );
 const CommentThreadPopover = dynamic(() =>
   import('@/components/CommentThreadPopover').then((m) => m.CommentThreadPopover),
@@ -308,6 +313,8 @@ export function EditorView() {
     setPieAnimRepeatSelected,
     setChartLegendSelected,
     setLineDataSelected,
+    lineDataOpenForId,
+    setLineDataOpenForId,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
@@ -1286,7 +1293,7 @@ export function EditorView() {
           onSetPieAnimSpeed={setPieAnimSpeedSelected}
           onSetPieAnimRepeat={setPieAnimRepeatSelected}
           onSetChartLegend={setChartLegendSelected}
-          onSetLineData={setLineDataSelected}
+          onEditLineData={setLineDataOpenForId}
           shapeColorPresets={shapeColorPresets(getTheme(activeTab.theme))}
           onApplyShapeColorPreset={applyShapeColorPresetSelected}
           onApplyShapeBorderPreset={applyShapeBorderPresetSelected}
@@ -1383,6 +1390,23 @@ export function EditorView() {
           onClose={() => setCellLinkPickerOpenFor(null)}
         />
       ) : null}
+      {/* Line-chart data modal (spec/53): edits the chart whose id is open. */}
+      {lineDataOpenForId !== null && !isReadOnly
+        ? (() => {
+            const el = activeTab.elements.find((e) => e.id === lineDataOpenForId);
+            if (!el || el.type !== 'shape') return null;
+            return (
+              <LineDataDialog
+                categories={el.lineCategories ?? [...LINE_DEFAULT_CATEGORIES]}
+                series={
+                  el.lineSeries ?? LINE_DEFAULT_SERIES.map((s) => ({ ...s, values: [...s.values] }))
+                }
+                onCommit={setLineDataSelected}
+                onClose={() => setLineDataOpenForId(null)}
+              />
+            );
+          })()
+        : null}
       {imagePickerOpenFor && diagramId && !isReadOnly ? (
         <ImagePicker
           ownerId={selfParticipant.id}

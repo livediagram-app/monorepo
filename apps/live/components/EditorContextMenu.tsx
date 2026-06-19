@@ -30,7 +30,6 @@ import {
   isProgressShape,
   isRailShape,
   isRatingShape,
-  LINE_DEFAULT_CATEGORIES,
   LINE_DEFAULT_SERIES,
   PIE_ANIMS,
   PIE_DEFAULT_SLICES,
@@ -136,7 +135,6 @@ import {
   type ShapeBorderPreset,
 } from '@/components/StylePresets';
 import type { ShapeColorPreset } from '@/lib/themes';
-import { parseCsvLineData } from '@/lib/csv';
 
 // A curated subset of the most common shapes offered for in-place morphing
 // in the context menu's Shape category (the full set lived in the old panel).
@@ -214,8 +212,9 @@ type EditorContextMenuProps = {
   onSetPieAnimSpeed: (value: AnimationSpeed) => void;
   onSetPieAnimRepeat: (value: boolean) => void;
   onSetChartLegend: (value: boolean) => void;
-  // Line chart (spec/53): replace the whole 2-D dataset (categories + series).
-  onSetLineData: (categories: string[], series: LineSeries[]) => void;
+  // Line chart (spec/53): open the data modal for the given element (the 2-D
+  // grid is too wide for the menu, which just summarises the series).
+  onEditLineData: (elementId: string) => void;
   // Style presets (spec/48): one-click colour + border looks for the selected
   // shape, plus a reset back to the theme default. `shapeColorPresets` are
   // theme-derived (see shapeColorPresets in lib/themes).
@@ -796,18 +795,17 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           </MenuAccordionSection>
         ) : null}
         {/* Data (spec/53) — the chart's data. Pie / bar edit a single row of
-            label+value; the line chart edits a 2-D grid (categories x series)
-            and can import a CSV. */}
+            label+value inline; the line chart's 2-D grid is too wide for the
+            menu, so it summarises the series + opens a modal to edit. */}
         {isChart ? (
           <MenuAccordionSection title="Data" icon={<DataMenuGlyph />} {...sectionProps('pie-data')}>
             {isLine ? (
-              <LineDataEditor
-                categories={shapeTarget?.lineCategories ?? [...LINE_DEFAULT_CATEGORIES]}
+              <LineDataSummary
                 series={
                   shapeTarget?.lineSeries ??
                   LINE_DEFAULT_SERIES.map((s) => ({ ...s, values: [...s.values] }))
                 }
-                onChange={props.onSetLineData}
+                onEdit={() => target.type === 'shape' && props.onEditLineData(target.id)}
               />
             ) : (
               <PieDataEditor
@@ -1806,167 +1804,32 @@ function PieDataEditor({
   );
 }
 
-// Line-chart data editor (spec/53): a 2-D grid — a row per category (its label
-// + a value per series) with the series names along the top — plus add / remove
-// row + series and a CSV import. Horizontally scrollable since the menu is
-// narrow; CSV is the path for real datasets, the grid for small tweaks. Local
-// draft while typing, committing the whole dataset on blur / structural change.
-function LineDataEditor({
-  categories,
-  series,
-  onChange,
-}: {
-  categories: string[];
-  series: LineSeries[];
-  onChange: (categories: string[], series: LineSeries[]) => void;
-}) {
-  const [cats, setCats] = useState<string[]>(categories);
-  const [rows, setRows] = useState<LineSeries[]>(series);
-  useEffect(() => {
-    setCats(categories);
-    setRows(series);
-  }, [categories, series]);
-  const commit = (c: string[], s: LineSeries[]) => {
-    setCats(c);
-    setRows(s);
-    onChange(c, s);
-  };
-  const xBtn =
-    'flex h-4 w-4 shrink-0 items-center justify-center rounded text-slate-400 transition enabled:cursor-pointer enabled:hover:bg-rose-50 enabled:hover:text-rose-600 disabled:opacity-30 dark:enabled:hover:bg-rose-500/15';
-  const importCsv = (file: File) => {
-    void file.text().then((text) => {
-      const parsed = parseCsvLineData(text);
-      if (parsed) commit(parsed.categories, parsed.series);
-    });
-  };
+// Line-chart data summary (spec/53): the 2-D grid is too wide for the narrow
+// menu, so the Data category just lists the series (a colour dot + name) and an
+// "Edit data" button that opens the full grid + CSV import in a modal.
+function LineDataSummary({ series, onEdit }: { series: LineSeries[]; onEdit: () => void }) {
   return (
-    <div className="space-y-1.5 px-2 py-1.5">
-      <label className="inline-flex w-full cursor-pointer items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15">
-        Import CSV
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) importCsv(f);
-            e.target.value = '';
-          }}
-        />
-      </label>
-      <div className="overflow-x-auto">
-        <div className="inline-block min-w-full">
-          {/* Header: series names + remove, then add-series. */}
-          <div className="flex gap-1">
-            <span className="w-14 shrink-0" />
-            {rows.map((s, si) => (
-              <div key={si} className="flex w-16 shrink-0 items-center gap-0.5">
-                <input
-                  className={`${CHART_CELL_INPUT} w-full`}
-                  value={s.name}
-                  aria-label="Series name"
-                  onChange={(e) =>
-                    setRows((r) => r.map((x, j) => (j === si ? { ...x, name: e.target.value } : x)))
-                  }
-                  onBlur={() => onChange(cats, rows)}
-                />
-                <button
-                  type="button"
-                  aria-label="Remove series"
-                  disabled={rows.length <= 1}
-                  onClick={() =>
-                    commit(
-                      cats,
-                      rows.filter((_, j) => j !== si),
-                    )
-                  }
-                  className={xBtn}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              aria-label="Add series"
-              onClick={() =>
-                commit(cats, [
-                  ...rows,
-                  { name: `Series ${rows.length + 1}`, values: cats.map(() => 0) },
-                ])
-              }
-              className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/15"
-            >
-              +
-            </button>
+    <div className="px-2 py-1.5">
+      <div className="flex flex-col gap-1">
+        {series.map((s, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-200"
+          >
+            <span
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
+              style={{ backgroundColor: s.color ?? PIE_PALETTE[i % PIE_PALETTE.length]! }}
+            />
+            <span className="truncate">{s.name || `Series ${i + 1}`}</span>
           </div>
-          {/* One row per category: label + a value per series + remove. */}
-          {cats.map((c, i) => (
-            <div key={i} className="mt-1 flex items-center gap-1">
-              <input
-                className={`${CHART_CELL_INPUT} w-14 shrink-0`}
-                value={c}
-                aria-label="Category"
-                onChange={(e) => setCats((cc) => cc.map((v, j) => (j === i ? e.target.value : v)))}
-                onBlur={() => onChange(cats, rows)}
-              />
-              {rows.map((s, si) => (
-                <input
-                  key={si}
-                  className={`${CHART_CELL_INPUT} w-16 shrink-0 text-right tabular-nums`}
-                  type="number"
-                  value={s.values[i] ?? 0}
-                  aria-label={`${s.name} ${c}`}
-                  onChange={(e) =>
-                    setRows((r) =>
-                      r.map((x, j) =>
-                        j === si
-                          ? {
-                              ...x,
-                              values: x.values.map((v, k) =>
-                                k === i
-                                  ? Number.isFinite(Number(e.target.value))
-                                    ? Number(e.target.value)
-                                    : 0
-                                  : v,
-                              ),
-                            }
-                          : x,
-                      ),
-                    )
-                  }
-                  onBlur={() => onChange(cats, rows)}
-                />
-              ))}
-              <button
-                type="button"
-                aria-label="Remove row"
-                disabled={cats.length <= 1}
-                onClick={() =>
-                  commit(
-                    cats.filter((_, j) => j !== i),
-                    rows.map((s) => ({ ...s, values: s.values.filter((_, k) => k !== i) })),
-                  )
-                }
-                className={xBtn}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
       <button
         type="button"
-        onClick={() =>
-          commit(
-            [...cats, `#${cats.length + 1}`],
-            rows.map((s) => ({ ...s, values: [...s.values, 0] })),
-          )
-        }
-        className="inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
+        onClick={onEdit}
+        className="mt-1.5 inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
       >
-        + Add row
+        Edit data
       </button>
     </div>
   );

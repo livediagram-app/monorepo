@@ -11,12 +11,14 @@ pie + bar also share the same 1-D data model, while the line chart carries a
 
 - Drag a **Pie**, **Bar**, or **Line** chart in from the palette's **Data**
   category. It drops with sample data.
-- A **Data** context-menu category edits the chart. Pie / bar: one row per
-  datum — a recolourable swatch, a **label**, and a **value** — plus add /
-  remove. Line: a 2-D **grid** (a row per category, a column per series, with
-  the series names along the top) plus add / remove row + series, and an
-  **Import CSV** button (header row = series names, first column = category
-  labels). The chart + legend redraw live from the data.
+- A **Data** context-menu category edits the chart. Pie / bar edit inline: one
+  row per datum — a recolourable swatch, a **label**, and a **value** — plus
+  add / remove. The line chart's 2-D grid is too wide for the narrow menu, so
+  the category instead **summarises the series** (a colour dot + name) and an
+  **Edit data** button opens a **modal** (`LineDataDialog`): a row per category,
+  a column per series, add / remove either axis, and an **Import CSV** button
+  (header row = series names, first column = category labels). The chart +
+  legend redraw live from the data.
 - Hovering a mark (slice / bar / line point) shows a tooltip with its label +
   value, regardless of the legend toggle.
 - A **Chart** context-menu category holds display options: a **Legend** toggle
