@@ -571,34 +571,25 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'ArrowFlow');
   };
-  // Per-icon glyph animation (spec/09). Applies only to icon shapes; `null`
-  // clears it. Icons use this set instead of the boxed-element animation set.
-  const setIconAnimationSelected = (value: IconAnimation | null) => {
+  // Per-icon glyph animation (spec/09), gated to icon shapes — its own set
+  // instead of the boxed-element animation. The animation + its loop speed
+  // differ only in the patched field, so they share one body.
+  const setIconFieldSelected = (patch: Partial<ShapeElement>) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) =>
       els.map((el) =>
-        ids.has(el.id) && el.type === 'shape' && el.shape === 'icon'
-          ? { ...el, iconAnimation: value ?? undefined }
-          : el,
+        ids.has(el.id) && el.type === 'shape' && el.shape === 'icon' ? { ...el, ...patch } : el,
       ),
     );
     track('Element', 'Changed', 'IconAnimation');
   };
-  // Loop speed for an icon's animation (slow / normal / fast), mirroring
-  // setAnimationSpeedSelected for boxed elements.
-  const setIconAnimationSpeedSelected = (value: AnimationSpeed) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'shape' && el.shape === 'icon'
-          ? { ...el, iconAnimationSpeed: value }
-          : el,
-      ),
-    );
-    track('Element', 'Changed', 'IconAnimation');
-  };
+  // `null` clears the animation.
+  const setIconAnimationSelected = (value: IconAnimation | null) =>
+    setIconFieldSelected({ iconAnimation: value ?? undefined });
+  // Loop speed (slow / normal / fast), mirroring setAnimationSpeedSelected.
+  const setIconAnimationSpeedSelected = (value: AnimationSpeed) =>
+    setIconFieldSelected({ iconAnimationSpeed: value });
   // Progress elements (spec/46): the percentage + how its fill animates, all
   // gated to progress shapes. The four setters differ only in the patched
   // field + telemetry type, so they share one body.
