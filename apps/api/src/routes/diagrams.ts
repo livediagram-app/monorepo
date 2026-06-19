@@ -6,6 +6,7 @@
 import type { Tab } from '@livediagram/diagram';
 import { parseChangeLogEntryBody } from '../change-log-body';
 import { timingSafeEqual } from '../auth/timing-safe';
+import { verifyOwnerId } from '../auth/owner-signature';
 import {
   findComment,
   redactCommentAuthorIds,
@@ -712,8 +713,27 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       if (required && !(await timingSafeEqual(url.searchParams.get('p') ?? '', required)))
         return forbidden();
     }
+    // Bind the broadcast participant identity to something we've actually
+    // verified, so a joiner can't spoof another participant's presence by
+    // lying in its `hello` frame (the DO otherwise trusts the client id).
+    // `o` is proven when it matches the diagram owner (knowing the unguessable
+    // owner id is the proof), or when the guest-id HMAC signature `g` checks
+    // out (proves possession of that guest id). Forward only a verified id; the
+    // DO overrides hello.id from it when present, else keeps the client value
+    // (Clerk non-owner members can't prove their sub over a WS, so they fall
+    // back — a narrow residual that grants no write/data access).
+    let verifiedOwner: string | null = null;
+    if (isOwnerUpgrade) {
+      verifiedOwner = claimedOwnerId;
+    } else if (
+      claimedOwnerId &&
+      (await verifyOwnerId(env.GUEST_ID_HMAC_SECRET, claimedOwnerId, url.searchParams.get('g')))
+    ) {
+      verifiedOwner = claimedOwnerId;
+    }
     const forwarded = new Request(request);
     forwarded.headers.set('X-Verified-Role', role);
+    if (verifiedOwner) forwarded.headers.set('X-Verified-Owner', verifiedOwner);
     return stub.fetch(forwarded);
   }
 

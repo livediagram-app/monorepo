@@ -164,6 +164,25 @@ describe('DiagramRoom hello frame role forcing', () => {
     expect(stored?.id).toBe('lying-peer');
   });
 
+  it('overrides the client participant id with the server-verified owner id', () => {
+    const room = newRoom();
+    const ws = makeSocket();
+    // The api worker verified the connector owns 'real-owner' (owner-id match
+    // or guest HMAC) and forwarded it as X-Verified-Owner.
+    room.handleSession(ws as unknown as WebSocket, 'edit', 'real-owner');
+
+    // Client tries to impersonate another participant by claiming their id.
+    ws.listeners['message']?.[0]?.({
+      data: JSON.stringify({
+        kind: 'hello',
+        participant: { id: 'victim-peer-id', name: 'L', color: '#000' },
+      }),
+    });
+
+    const stored = room.sessions.get(ws as unknown as WebSocket);
+    expect(stored?.id).toBe('real-owner'); // not the spoofed 'victim-peer-id'
+  });
+
   it('leaves role undefined when the upgrade carried no X-Verified-Role', () => {
     const room = newRoom();
     const ws = makeSocket();

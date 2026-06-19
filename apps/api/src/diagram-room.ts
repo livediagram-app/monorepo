@@ -73,7 +73,11 @@ export class DiagramRoom implements DurableObject {
     const headerRole = request.headers.get('X-Verified-Role');
     const verifiedRole: 'edit' | 'view' | undefined =
       headerRole === 'edit' || headerRole === 'view' ? headerRole : undefined;
-    this.handleSession(server, verifiedRole);
+    // The api worker sets this only when it verified the connector owns the id
+    // (owner-id match or a valid guest-id HMAC). Used to override the client's
+    // self-declared participant id so a joiner can't impersonate another peer.
+    const verifiedOwner = request.headers.get('X-Verified-Owner') ?? undefined;
+    this.handleSession(server, verifiedRole, verifiedOwner);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -93,7 +97,7 @@ export class DiagramRoom implements DurableObject {
     }
   }
 
-  handleSession(ws: WebSocket, verifiedRole?: 'edit' | 'view'): void {
+  handleSession(ws: WebSocket, verifiedRole?: 'edit' | 'view', verifiedOwner?: string): void {
     ws.accept();
     this.sessions.set(ws, null);
 
@@ -105,11 +109,16 @@ export class DiagramRoom implements DurableObject {
         return;
       }
       if (msg.kind === 'hello') {
-        // Force the server-resolved role onto the stored presence: the
-        // hello frame's own `role` field (if any) is ignored. This is
-        // the lie-defence that justifies surfacing a Viewer / Editor
-        // badge to peers.
-        this.sessions.set(ws, { ...msg.participant, role: verifiedRole });
+        // Force the server-resolved role AND (when verified) the server-bound
+        // participant id onto the stored presence: the hello frame's own
+        // `role` / `id` are not trusted. Overriding the id stops a joiner from
+        // impersonating another participant's cursor / presence by claiming
+        // their id; the role override is the Viewer / Editor lie-defence.
+        this.sessions.set(ws, {
+          ...msg.participant,
+          ...(verifiedOwner ? { id: verifiedOwner } : {}),
+          role: verifiedRole,
+        });
         this.broadcastPresence();
         return;
       }

@@ -23,7 +23,7 @@ export function connectRoom(
   diagramId: string,
   participant: { id: string; name: string; color: string },
   handlers: RoomHandlers,
-  options: { shareCode?: string | null; ownerId?: string | null } = {},
+  options: { shareCode?: string | null; ownerId?: string | null; signature?: string | null } = {},
 ): {
   send: (msg: RoomOutgoing) => void;
   close: () => void;
@@ -37,6 +37,11 @@ export function connectRoom(
   const params = new URLSearchParams();
   if (options.shareCode) params.set('s', options.shareCode);
   if (options.ownerId) params.set('o', options.ownerId);
+  // Guest-id HMAC signature (spec/04). Proves the connector actually possesses
+  // the owner id it claims in `o`, so the api worker can bind the broadcast
+  // participant id to a verified value (the room otherwise trusts the client's
+  // hello id, letting any joiner impersonate another participant's presence).
+  if (options.signature) params.set('g', options.signature);
   // Share password (spec/24) for a protected diagram's room. The api
   // refuses the upgrade if it's missing / wrong. Read from the same
   // session state apiHeaders uses, so the editor doesn't have to thread

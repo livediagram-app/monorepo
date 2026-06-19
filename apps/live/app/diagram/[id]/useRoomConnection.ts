@@ -2,6 +2,7 @@ import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } 
 import type { Tab } from '@livediagram/diagram';
 import { CHANGE_LOG_LIST_LIMIT } from '@livediagram/api-schema';
 import { nextFreeColor, type Participant } from '@/lib/identity';
+import { getGuestSelfSig } from '@/lib/local-identity';
 import { connectRoom, type ChangeLogEntry, type RoomHandlers } from '@/lib/api-client';
 import { trimLaserBuffer, type LaserPoint } from '@/lib/laser-buffer';
 import { pruneMapToPresent } from './editor-page-helpers';
@@ -290,6 +291,12 @@ export function useRoomConnection(opts: {
         // the room without a share link. A share-link visitor's id just
         // won't match either, and their role comes from the code.
         ownerId: selfParticipant.id,
+        // Possession proof for `o` (spec/04): lets the worker bind the
+        // broadcast participant id to a verified value so a joiner can't
+        // spoof another participant's presence. A guest's sig matches their
+        // id; a signed-in user's `o` is their Clerk id (no guest sig), so they
+        // fall back to the owner-id match for the owner path.
+        signature: getGuestSelfSig(),
       },
     );
     roomRef.current = room;
