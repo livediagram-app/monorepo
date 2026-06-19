@@ -24,6 +24,7 @@ import {
   endpointPosition,
   isBoxed,
   type ArrowElement,
+  type ArrowFlow,
   type ArrowheadShape,
   type ArrowheadSize,
   type ElementIndex,
@@ -101,6 +102,20 @@ type ArrowViewProps = {
 
 const BRAND_600 = 'rgb(2 132 199)';
 
+// Per-flow path styling. Every flow except 'dots' (a travelling <circle>)
+// animates the line itself via a class; dashes / beads also swap in their own
+// dash pattern, while pulse / grow / glow keep the user's static stroke and
+// just breathe opacity / thickness / a halo. A missing entry (no flow, or
+// 'dots') leaves the path on its static style.
+const FLOW_PATH_CLASS: Partial<Record<ArrowFlow, string>> = {
+  dashes: 'lvd-arrow-flow',
+  beads: 'lvd-arrow-beads',
+  pulse: 'lvd-arrow-pulse',
+  grow: 'lvd-arrow-grow',
+  glow: 'lvd-arrow-glow',
+};
+const FLOW_PATH_DASH: Partial<Record<ArrowFlow, string>> = { dashes: '8 6', beads: '0.1 12' };
+
 // The on-canvas arrow grips (endpoints, curve / elbow bend points) are fixed
 // SVG shapes a few px across — fine for a mouse, fiddly for a fingertip. On
 // coarse-pointer (touch) devices we lay an invisible larger hit circle over
@@ -163,24 +178,8 @@ function ArrowViewImpl({
     arrow.curvePoints,
   );
   const flowFactor = ANIMATION_SPEED_FACTOR[arrow.flowSpeed ?? 'normal'];
-  // Every flow except 'dots' (a travelling <circle>) animates the line itself
-  // via a class on the path. dashes / beads also swap in their own dash
-  // pattern; pulse / grow / glow keep the user's static stroke style and just
-  // breathe opacity / thickness / a halo.
-  const flowPathClass =
-    arrow.flow === 'dashes'
-      ? 'lvd-arrow-flow'
-      : arrow.flow === 'beads'
-        ? 'lvd-arrow-beads'
-        : arrow.flow === 'pulse'
-          ? 'lvd-arrow-pulse'
-          : arrow.flow === 'grow'
-            ? 'lvd-arrow-grow'
-            : arrow.flow === 'glow'
-              ? 'lvd-arrow-glow'
-              : undefined;
-  const flowPathDash =
-    arrow.flow === 'dashes' ? '8 6' : arrow.flow === 'beads' ? '0.1 12' : undefined;
+  const flowPathClass = arrow.flow ? FLOW_PATH_CLASS[arrow.flow] : undefined;
+  const flowPathDash = arrow.flow ? FLOW_PATH_DASH[arrow.flow] : undefined;
   // Phase-sync flowing arrows (spec/09). CSS animations start counting from
   // when each element's animation is applied, so arrows whose flow was turned
   // on at different times drift apart. Pin every flow animation's startTime to
