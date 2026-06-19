@@ -1385,7 +1385,7 @@ function MarkerTiles({
   return (
     <>
       <div className="grid grid-cols-3 gap-1 px-2 py-1.5">
-        {([null, ...SHAPE_MARKERS] as (ShapeMarker | null)[]).map((v) => (
+        {withNone(SHAPE_MARKERS).map((v) => (
           <SizeButton key={v ?? 'none'} active={marker === v} onClick={() => onSet(v)}>
             <span className="flex flex-col items-center gap-0.5">
               {v ? <ShapeMarkerGlyph marker={v} size={18} /> : <NoMarkerGlyph />}
@@ -1399,20 +1399,7 @@ function MarkerTiles({
           <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
             Size
           </p>
-          <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
-            {(
-              [
-                ['scale', <ScaleIcon key="s" />],
-                ['sm', <DotsIcon key="1" count={1} />],
-                ['md', <DotsIcon key="2" count={2} />],
-                ['lg', <DotsIcon key="3" count={3} />],
-              ] as const
-            ).map(([s, glyph]) => (
-              <SizeButton key={s} active={size === s} onClick={() => onSetSize(s)}>
-                {glyph}
-              </SizeButton>
-            ))}
-          </div>
+          <TextSizeTiles current={size} onSet={onSetSize} />
         </>
       ) : null}
     </>
@@ -1565,12 +1552,9 @@ function RatingAnimTiles({
         Animation
       </p>
       <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
-        {([null, ...RATING_ANIMS] as (RatingAnim | null)[]).map((v) => (
+        {withNone(RATING_ANIMS).map((v) => (
           <SizeButton key={v ?? 'none'} active={anim === v} onClick={() => onSet(v)}>
-            <span className="flex flex-col items-center gap-0.5">
-              <StarGlyph filled={!!v} size={16} />
-              <span className="text-[9px] capitalize leading-none">{v ?? 'None'}</span>
-            </span>
+            <TileLabel glyph={<StarGlyph filled={!!v} size={16} />} label={v ?? 'None'} />
           </SizeButton>
         ))}
       </div>
