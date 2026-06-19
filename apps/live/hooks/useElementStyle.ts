@@ -44,6 +44,7 @@ import {
   type Padding,
   type ShapeElement,
   type ShapeKind,
+  type ShapeMarker,
   type Tab,
   type TextAlignX,
   type TextAlignY,
@@ -435,6 +436,28 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   };
 
   // Style presets (spec/48). One-click looks for the selected shape(s),
+  // Status markers (spec/49). A glyph shown inside the shape, left of its
+  // label; `null` clears it. `markerSize` is a TextSize bucket ('scale' tracks
+  // the element's text). Shapes only.
+  const setMarkerSelected = (marker: ShapeMarker | null) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) =>
+        ids.has(el.id) && el.type === 'shape' ? { ...el, marker: marker ?? undefined } : el,
+      ),
+    );
+    track('Element', 'Changed', 'Marker');
+  };
+  const setMarkerSizeSelected = (size: TextSize) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'shape' ? { ...el, markerSize: size } : el)),
+    );
+    track('Element', 'Changed', 'MarkerSize');
+  };
+
   // applied in a single history step (unlike the per-field setters above, a
   // preset writes fill+stroke+text — or width+style+radius — at once).
   // Colour and border presets are independent: each touches only its own
@@ -722,6 +745,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setBorderStrokeSelected,
     setBorderStyleSelected,
     setBorderRadiusSelected,
+    setMarkerSelected,
+    setMarkerSizeSelected,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,

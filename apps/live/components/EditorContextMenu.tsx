@@ -26,6 +26,7 @@ import {
   isBoxed,
   isProgressShape,
   PROGRESS_ANIMS,
+  SHAPE_MARKERS,
   supportsBorderControls,
   supportsBorderRadius,
   supportsColours,
@@ -47,6 +48,7 @@ import {
   type ProgressAnim,
   type ShapeElement,
   type ShapeKind,
+  type ShapeMarker,
   type TextSize,
 } from '@livediagram/diagram';
 import { ArrowLineControls, ArrowPointerControls } from '@/components/arrow-controls';
@@ -96,6 +98,7 @@ import {
   MenuTileGrid,
 } from '@/components/PortalMenu';
 import { ShapeIcon } from '@/components/shape-icon';
+import { MARKER_LABELS, ShapeMarkerGlyph } from '@/components/ShapeMarker';
 import {
   AnimationTiles,
   FlowTiles,
@@ -172,6 +175,9 @@ type EditorContextMenuProps = {
   onSetBorderStroke: (value: BorderStroke) => void;
   onSetBorderStyle: (value: BorderStyle) => void;
   onSetBorderRadius: (value: BorderRadius) => void;
+  // Status markers (spec/49): set / clear the shape's marker glyph and its size.
+  onSetMarker: (value: ShapeMarker | null) => void;
+  onSetMarkerSize: (value: TextSize) => void;
   // Style presets (spec/48): one-click colour + border looks for the selected
   // shape, plus a reset back to the theme default. `shapeColorPresets` are
   // theme-derived (see shapeColorPresets in lib/themes).
@@ -842,6 +848,25 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             </MenuAccordionSection>
           </>
         ) : null}
+        {/* ── Markers group (spec/49): its own band between Border and the
+            content / collaborate groups. Shapes only. ── */}
+        {target.type === 'shape' ? (
+          <>
+            <MenuGroupSeparator />
+            <MenuAccordionSection
+              title="Markers"
+              icon={<MarkersMenuGlyph />}
+              {...sectionProps('markers')}
+            >
+              <MarkerTiles
+                marker={(target as ShapeElement).marker ?? null}
+                size={(target as ShapeElement).markerSize ?? 'scale'}
+                onSet={props.onSetMarker}
+                onSetSize={props.onSetMarkerSize}
+              />
+            </MenuAccordionSection>
+          </>
+        ) : null}
         {/* ── Content group: Line / Pointer / Text / Icon / Image / Table / Link ── */}
         {showContentGroup ? <MenuGroupSeparator /> : null}
         {/* Line + Pointer — arrow stroke + arrowhead controls (shared
@@ -1248,6 +1273,84 @@ function BorderGrid({
       </p>
       <div className={`grid gap-1 ${colClass}`}>{children}</div>
     </div>
+  );
+}
+
+// The "Markers" category glyph — a small filled status dot.
+function MarkersMenuGlyph() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <circle cx="8" cy="8" r="4.5" />
+    </svg>
+  );
+}
+
+// The "None" tile glyph — a dashed empty circle, sized to match a marker glyph.
+function NoMarkerGlyph() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeDasharray="3 3"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="8" />
+    </svg>
+  );
+}
+
+// Markers control (spec/49): a None option + one illustrated tile per marker,
+// then a Size row (Scale / S / M / L, mirroring the Text size control) once a
+// marker is chosen. 'scale' tracks the element's text size.
+function MarkerTiles({
+  marker,
+  size,
+  onSet,
+  onSetSize,
+}: {
+  marker: ShapeMarker | null;
+  size: TextSize;
+  onSet: (v: ShapeMarker | null) => void;
+  onSetSize: (v: TextSize) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-1 px-2 py-1.5">
+        {([null, ...SHAPE_MARKERS] as (ShapeMarker | null)[]).map((v) => (
+          <SizeButton key={v ?? 'none'} active={marker === v} onClick={() => onSet(v)}>
+            <span className="flex flex-col items-center gap-0.5">
+              {v ? <ShapeMarkerGlyph marker={v} size={18} /> : <NoMarkerGlyph />}
+              <span className="text-[9px] leading-none">{v ? MARKER_LABELS[v] : 'None'}</span>
+            </span>
+          </SizeButton>
+        ))}
+      </div>
+      {marker ? (
+        <>
+          <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            Size
+          </p>
+          <div className="grid grid-cols-4 gap-1 px-2 pb-1.5">
+            {(
+              [
+                ['scale', <ScaleIcon key="s" />],
+                ['sm', <DotsIcon key="1" count={1} />],
+                ['md', <DotsIcon key="2" count={2} />],
+                ['lg', <DotsIcon key="3" count={3} />],
+              ] as const
+            ).map(([s, glyph]) => (
+              <SizeButton key={s} active={size === s} onClick={() => onSetSize(s)}>
+                {glyph}
+              </SizeButton>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </>
   );
 }
 

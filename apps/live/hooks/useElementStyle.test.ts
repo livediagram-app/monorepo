@@ -61,6 +61,27 @@ describe('useElementStyle selection-wide setters on a multi-selection', () => {
   });
 });
 
+describe('useElementStyle shape markers (spec/49)', () => {
+  it('sets and clears a marker on the selected shape', () => {
+    const a = createShape('square', 0, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.setMarkerSelected('green-circle');
+    expect((result()[0] as { marker?: string }).marker).toBe('green-circle');
+
+    style.setMarkerSelected(null);
+    expect((result()[0] as { marker?: string }).marker).toBeUndefined();
+  });
+
+  it('sets the marker size bucket', () => {
+    const a = createShape('square', 0, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.setMarkerSizeSelected('lg');
+    expect((result()[0] as { markerSize?: string }).markerSize).toBe('lg');
+  });
+});
+
 describe('useElementStyle shape style presets (spec/48)', () => {
   it('applies a colour preset (fill + stroke + text) in one step, untouched border', () => {
     const a = createShape('square', 0, 0);

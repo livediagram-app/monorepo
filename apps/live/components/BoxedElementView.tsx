@@ -28,6 +28,7 @@ import {
   type FreehandElement,
   type IconPosition,
   type ShapeElement,
+  type ShapeMarker,
   type TextRun,
   type TextSize,
 } from '@livediagram/diagram';
@@ -51,6 +52,7 @@ import { BadgeStrip, RemoteSelectorsStrip } from './element-badges';
 import { AnnotationGlyph, AnnotationHoverNote } from './AnnotationMarker';
 import { LinkCardView } from './LinkCardView';
 import { IconGlyph } from './icon-glyph';
+import { ShapeMarkerGlyph } from './ShapeMarker';
 import { TechIconGlyph } from './tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
 import { isTechIconId } from '@/lib/tech-icons';
@@ -403,6 +405,11 @@ function BoxedElementViewImpl({
   // above and is excluded here). Computed before the label so the editor
   // can render as a flex child (keeping the icon visible while typing).
   const inlineIcon = element.type === 'shape' && element.shape !== 'icon' && element.iconId;
+  // A status marker (spec/49) sits just left of the label (or centred when the
+  // shape has no label). Progress shapes render their own centred percentage,
+  // so they skip it. Shares the icon+label flex layout below.
+  const marker: ShapeMarker | undefined =
+    element.type === 'shape' && !isProgressShape(element.shape) ? element.marker : undefined;
   // The text label, computed once so the freehand branch, the plain
   // shape branch, and the inline-icon layout below all share it.
   const labelNode = renderLabel(
@@ -699,9 +706,12 @@ function BoxedElementViewImpl({
           fontFamily={fontFamily}
           zoom={zoom}
         />
-      ) : inlineIcon ? (
+      ) : element.type === 'shape' && (inlineIcon || marker) ? (
         <ShapeInlineIconLayout
           element={element}
+          showIcon={!!inlineIcon}
+          marker={marker}
+          markerSize={element.markerSize ?? 'scale'}
           position={element.iconPosition ?? 'left'}
           iconStroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
           isEditing={isEditing}
@@ -972,6 +982,9 @@ function FreehandSvg({
 
 function ShapeInlineIconLayout({
   element,
+  showIcon = true,
+  marker,
+  markerSize = 'scale',
   position,
   iconStroke,
   isEditing,
@@ -987,6 +1000,12 @@ function ShapeInlineIconLayout({
   onIconPointerDown,
 }: {
   element: ShapeElement;
+  // Whether an inline icon glyph is present. False for a marker-only shape, so
+  // the layout draws just the marker + label.
+  showIcon?: boolean;
+  // Optional status marker (spec/49), drawn immediately left of the label.
+  marker?: ShapeMarker;
+  markerSize?: TextSize;
   position: IconPosition;
   iconStroke: string;
   isEditing: boolean;
@@ -1097,6 +1116,32 @@ function ShapeInlineIconLayout({
   // both honour the element's alignment. On commit it swaps back to the
   // static `text`.
   const slot = isEditing ? editor : text;
+  // The marker (spec/49) sits immediately left of the label, sized from its
+  // own bucket: 'scale' tracks the label's font size (capped to the box), the
+  // fixed buckets are small / medium / large dots.
+  const markerPx = marker
+    ? markerSize === 'scale'
+      ? Math.max(10, Math.min(fontSize * 1.1, elementIconSize))
+      : MARKER_FIXED_PX[markerSize]
+    : 0;
+  const markerGlyph = marker ? (
+    <span className="shrink-0" style={{ width: markerPx, height: markerPx, lineHeight: 0 }}>
+      <ShapeMarkerGlyph marker={marker} size={markerPx} color={textColor} />
+    </span>
+  ) : null;
+  // Marker + label form one inline group so the marker hugs the text and the
+  // pair stays centred together (or the marker centres alone when no label).
+  const content = markerGlyph ? (
+    <div
+      className="flex min-w-0 items-center"
+      style={{ gap: Math.max(4, Math.round(markerPx * 0.4)) }}
+    >
+      {markerGlyph}
+      {slot}
+    </div>
+  ) : (
+    slot
+  );
   return (
     <div
       className="pointer-events-none absolute inset-0 flex"
@@ -1110,11 +1155,19 @@ function ShapeInlineIconLayout({
         gap: isRow ? Math.max(8, Math.round(iconSize * 0.32)) : Math.round(iconSize * 0.2),
       }}
     >
-      {iconFirst ? iconBox : slot}
-      {iconFirst ? slot : iconBox}
+      {showIcon ? (iconFirst ? iconBox : content) : content}
+      {showIcon ? (iconFirst ? content : iconBox) : null}
     </div>
   );
 }
+
+// Fixed marker sizes (px) for the small / medium / large buckets; 'scale'
+// tracks the label font size instead (see above).
+const MARKER_FIXED_PX: Record<Exclude<TextSize, 'scale'>, number> = {
+  sm: 12,
+  md: 18,
+  lg: 26,
+};
 
 // Cross-axis flex mapping for the horizontal text alignment (the label-style
 // ALIGN_ITEMS table covers the vertical one).

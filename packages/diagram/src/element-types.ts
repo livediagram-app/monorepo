@@ -6,6 +6,7 @@
 import type { TextRun } from './rich-text';
 import type { CommentThread } from './comments';
 import type { BorderStroke, BorderStyle, BorderRadius } from './border-style';
+import type { ShapeMarker } from './shape-marker';
 import type {
   AnimationSpeed,
   ElementAnimation,
@@ -106,6 +107,11 @@ export type ShapeElement = {
   strokeWidth?: BorderStroke;
   strokeStyle?: BorderStyle;
   borderRadius?: BorderRadius;
+  // Status marker (spec/49): a small glyph (traffic-light dot / checkbox) shown
+  // just left of the label, or centred when the shape has no label. `markerSize`
+  // is a TextSize bucket where 'scale' tracks the element's text size.
+  marker?: ShapeMarker;
+  markerSize?: TextSize;
   aspectLocked?: boolean;
   opacity?: number; // 0..1, defaults to 1
   // Clockwise rotation in degrees about the element's centre. Absent

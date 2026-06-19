@@ -286,6 +286,8 @@ export function EditorView() {
     setBorderRadiusSelected,
     setBorderStrokeSelected,
     setBorderStyleSelected,
+    setMarkerSelected,
+    setMarkerSizeSelected,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
@@ -1243,6 +1245,8 @@ export function EditorView() {
           onSetBorderStroke={setBorderStrokeSelected}
           onSetBorderStyle={setBorderStyleSelected}
           onSetBorderRadius={setBorderRadiusSelected}
+          onSetMarker={setMarkerSelected}
+          onSetMarkerSize={setMarkerSizeSelected}
           shapeColorPresets={shapeColorPresets(getTheme(activeTab.theme))}
           onApplyShapeColorPreset={applyShapeColorPresetSelected}
           onApplyShapeBorderPreset={applyShapeBorderPresetSelected}

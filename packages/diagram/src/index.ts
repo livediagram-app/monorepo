@@ -525,6 +525,7 @@ export function elementHasText(element: Element): boolean {
 export * from './arrow-path';
 export * from './arrow-style';
 export * from './border-style';
+export * from './shape-marker';
 export * from './comments';
 export * from './colors';
 
