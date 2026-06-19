@@ -123,12 +123,14 @@ export type ShapeElement = {
   ratingAnim?: RatingAnim;
   ratingAnimSpeed?: AnimationSpeed;
   ratingAnimRepeat?: boolean;
-  // Pie chart (spec/53): the labelled data + its optional slice animation.
-  // Only meaningful on the 'pie-chart' kind.
+  // Data charts (spec/53): the labelled data + its optional animation, shared
+  // by the pie + bar chart kinds (the `pie*` names are kept for data
+  // round-trip). `chartLegend` toggles the legend (default on).
   pieSlices?: PieSlice[];
   pieAnim?: PieAnim;
   pieAnimSpeed?: AnimationSpeed;
   pieAnimRepeat?: boolean;
+  chartLegend?: boolean;
   // Status marker (spec/49): a small glyph (traffic-light dot / checkbox) shown
   // just left of the label, or centred when the shape has no label. `markerSize`
   // is a TextSize bucket where 'scale' tracks the element's text size.

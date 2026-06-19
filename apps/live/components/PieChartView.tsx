@@ -36,8 +36,10 @@ export function PieChartView({
   const slices =
     element.pieSlices && element.pieSlices.length > 0 ? element.pieSlices : PIE_DEFAULT_SLICES;
   const total = slices.reduce((sum, s) => sum + Math.max(0, s.value), 0) || 1;
-  // Legend takes a right-hand column; the pie fills the remaining left area.
-  const legendW = Math.max(0, Math.min(w * 0.44, 130));
+  // Legend takes a right-hand column (toggleable, on by default); the pie fills
+  // the remaining left area, or the whole box when the legend is off.
+  const showLegend = element.chartLegend !== false;
+  const legendW = showLegend ? Math.max(0, Math.min(w * 0.44, 130)) : 0;
   const pieAreaW = w - legendW;
   const rad = Math.max(10, (Math.min(pieAreaW, h) * 0.86) / 2);
   const cx = pieAreaW / 2;

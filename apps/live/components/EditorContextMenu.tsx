@@ -25,7 +25,7 @@ import {
   defaultStrokeColor,
   defaultTextColor,
   isBoxed,
-  isPieShape,
+  isChartShape,
   isProgressShape,
   isRailShape,
   isRatingShape,
@@ -208,6 +208,7 @@ type EditorContextMenuProps = {
   onSetPieAnim: (value: PieAnim | null) => void;
   onSetPieAnimSpeed: (value: AnimationSpeed) => void;
   onSetPieAnimRepeat: (value: boolean) => void;
+  onSetChartLegend: (value: boolean) => void;
   // Style presets (spec/48): one-click colour + border looks for the selected
   // shape, plus a reset back to the theme default. `shapeColorPresets` are
   // theme-derived (see shapeColorPresets in lib/themes).
@@ -543,7 +544,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     const isProgress = target.type === 'shape' && isProgressShape(target.shape);
     const isRail = target.type === 'shape' && isRailShape(target.shape);
     const isRating = target.type === 'shape' && isRatingShape(target.shape);
-    const isPie = target.type === 'shape' && isPieShape(target.shape);
+    const isChart = target.type === 'shape' && isChartShape(target.shape);
     // The shape-only sections below (Marker / Progress / Rail / Rating / Data)
     // all render under a `target.type === 'shape'` guard, so this is non-null
     // wherever they read it — `shapeTarget?.field ?? default` reads the shape
@@ -556,7 +557,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
       !isProgress &&
       !isRail &&
       !isRating &&
-      !isPie;
+      !isChart;
     // Consistent category grouping (spec/09): placement (Layer / Shape /
     // Rotation) · appearance (Progress / Animation / Colours / Border) ·
     // content (Line / Pointer / Text / Icon / Image / Table / Link) ·
@@ -679,7 +680,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             a reset to the theme default. Regular shapes only — the dedicated
             icon glyph has no fill/border to preset, and the pie chart styles
             per-slice via its Data category, so both are excluded. */}
-        {target.type === 'shape' && !isIcon && !isPie ? (
+        {target.type === 'shape' && !isIcon && !isChart ? (
           <MenuAccordionSection
             title="Presets"
             icon={<PresetsMenuGlyph />}
@@ -786,13 +787,23 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             />
           </MenuAccordionSection>
         ) : null}
-        {/* Data (spec/53) — the pie chart's label + value rows, plus a
-            chart-specific slice animation. */}
-        {isPie ? (
+        {/* Data (spec/53) — the chart's label + value rows. */}
+        {isChart ? (
           <MenuAccordionSection title="Data" icon={<DataMenuGlyph />} {...sectionProps('pie-data')}>
             <PieDataEditor
               slices={shapeTarget?.pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))}
               onChange={props.onSetPieData}
+            />
+          </MenuAccordionSection>
+        ) : null}
+        {/* Chart (spec/53) — display options (the legend toggle today). */}
+        {isChart ? (
+          <MenuAccordionSection title="Chart" icon={<ChartMenuGlyph />} {...sectionProps('chart')}>
+            <MenuToggleRow
+              label="Legend"
+              description="Show the label key beside the chart."
+              checked={shapeTarget?.chartLegend !== false}
+              onToggle={() => props.onSetChartLegend(shapeTarget?.chartLegend === false)}
             />
           </MenuAccordionSection>
         ) : null}
@@ -805,7 +816,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             icon={<AnimationMenuGlyph />}
             {...sectionProps('animation')}
           >
-            {isPie ? (
+            {isChart ? (
               <PieAnimTiles
                 anim={shapeTarget?.pieAnim ?? null}
                 speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
@@ -861,7 +872,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             support colours (excludes images). Icons included: Text tints a
             line-art glyph, Background / Border paint the icon's box. Pie charts
             colour per-slice via their Data category, so they're excluded. */}
-        {boxed && supportsColours(target) && !isPie ? (
+        {boxed && supportsColours(target) && !isChart ? (
           <>
             <MenuAccordionSection
               title="Colours"
@@ -916,7 +927,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         ) : null}
         {/* Border — strength / pattern / radius. Pie charts have no box border
             to style, so they're excluded. */}
-        {borderable && !isPie ? (
+        {borderable && !isChart ? (
           <>
             <MenuAccordionSection title="Border" icon={<BorderGlyph />} {...sectionProps('border')}>
               <div className="px-2 py-1">
@@ -962,7 +973,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         {/* ── Markers group (spec/49): its own band between Border and the
             content / collaborate groups. Regular shapes only — the self-drawing
             shapes (progress / rail / rating) have no label slot for a marker. ── */}
-        {target.type === 'shape' && !isProgress && !isRail && !isRating && !isPie ? (
+        {target.type === 'shape' && !isProgress && !isRail && !isRating && !isChart ? (
           <>
             <MenuGroupSeparator />
             <MenuAccordionSection
@@ -1672,6 +1683,26 @@ function DataMenuGlyph() {
     >
       <circle cx="12" cy="12" r="9" />
       <path d="M12 12 L12 3 M12 12 L20.5 15" />
+    </svg>
+  );
+}
+
+// Bars-in-a-frame — the "Chart" (display options) category glyph.
+function ChartMenuGlyph() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 4 V20 H20" />
+      <path d="M8 16 V13 M12 16 V9 M16 16 V11" />
     </svg>
   );
 }

@@ -6,7 +6,7 @@ import {
   DEFAULT_BORDER_STYLE,
   defaultFillColor,
   defaultStrokeColor,
-  isPieShape,
+  isChartShape,
   isRailShape,
   isRatingShape,
   type BoxedElement,
@@ -52,10 +52,14 @@ export function describeVariant(
           style: { borderRadius: '4px' },
         };
       }
-      // Timeline rail (spec/51) + rating (spec/52) + pie chart (spec/53) paint
+      // Timeline rail (spec/51) + rating (spec/52) + charts (spec/53) paint
       // their own content, so the wrapper carries no box border / background —
       // just the selection ring.
-      if (isRailShape(element.shape) || isRatingShape(element.shape) || isPieShape(element.shape)) {
+      if (
+        isRailShape(element.shape) ||
+        isRatingShape(element.shape) ||
+        isChartShape(element.shape)
+      ) {
         return { className: ring, style: { borderRadius: '4px' } };
       }
       // CSS-rendered shapes (square / circle / stadium and the

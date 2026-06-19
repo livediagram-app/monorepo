@@ -239,6 +239,19 @@ export function isPieShape(kind: ShapeKind): boolean {
   return kind === 'pie-chart';
 }
 
+export function isBarShape(kind: ShapeKind): boolean {
+  return kind === 'bar-chart';
+}
+
+// Pie + bar are the "Data" charts: they share the labelled data
+// (`pieSlices`), the slice animation (`pieAnim`), the legend toggle
+// (`chartLegend`), and the Data / Chart / Animation context-menu categories.
+// The `pie*` field names are kept (not renamed to `chart*`) so saved diagrams
+// round-trip without a migration.
+export function isChartShape(kind: ShapeKind): boolean {
+  return isPieShape(kind) || isBarShape(kind);
+}
+
 // Clamp to a whole 0..RATING_MAX star count.
 export function clampRating(value: number): number {
   return Math.max(0, Math.min(RATING_MAX, Math.round(value)));
@@ -353,9 +366,10 @@ export type ShapeKind =
   // Rating (spec/52): a row of five stars showing a 1–5 score. Carries
   // `rating` / `ratingAnim` (below).
   | 'rating'
-  // Pie chart (spec/53): a data chart whose slices are sized by value. Carries
-  // `pieSlices` / `pieAnim` (below). The first of the "Data" component family.
+  // Pie + bar charts (spec/53): data charts sized by value. Share `pieSlices` /
+  // `pieAnim` / `chartLegend` (below). The "Data" component family.
   | 'pie-chart'
+  | 'bar-chart'
   // Curated single-colour glyph from the icon catalogue. Which glyph
   // is carried by `iconId` (a registry key resolved in the live app's
   // icon catalogue, NOT a closed enum here, so adding icons is a

@@ -1,28 +1,31 @@
-# 53 — Pie chart
+# 53 — Data charts (pie + bar)
 
-A **Pie chart** is a data element: slices sized by value, in a categorical
-palette, with a legend beside the pie. It's the first of a **Data** family of
-chart components (a dedicated palette category), built so more chart kinds slot
-in beside it.
+Data charts are elements whose marks are sized by value, in a categorical
+palette, with an optional legend. The **Data** palette category holds them —
+**Pie** and **Bar** today, built so more chart kinds slot in beside them. Pie +
+bar share the same data model, animation set, legend toggle, and context-menu
+categories; only the rendering differs.
 
 ## Behaviour
 
-- Drag it in from the palette's new **Data** category. It drops with three
-  sample slices.
-- A **Data** context-menu category edits the chart: one row per slice — a
+- Drag a **Pie** or **Bar** chart in from the palette's **Data** category. It
+  drops with three sample data points.
+- A **Data** context-menu category edits the chart: one row per datum — a
   recolourable swatch, a **label**, and a **value** — plus add / remove. The
-  pie + legend redraw live from the data.
-- The **Animation** category carries the chart-specific slice animations
+  chart + legend redraw live from the data.
+- A **Chart** context-menu category holds display options: a **Legend** toggle
+  (on by default) that shows / hides the label key beside the chart.
+- The **Animation** category carries the chart-specific animations
   (None / Grow / Pop / Spin / Pulse, with a **Speed** row + **Repeat** toggle)
-  in place of the boxed-element animation set — a pie animates its slices, not
+  in place of the boxed-element animation set — a chart animates its marks, not
   the whole box. Grow / Pop play once (an entrance); Spin / Pulse loop.
-- Slice colours default to **variants of the active theme** (`themeChartPalette`
+- Mark colours default to **variants of the active theme** (`themeChartPalette`
   — each branch hue on multi-colour themes, accent tints/shades on single-accent
-  themes), overridable per slice. So a pie reads as part of the theme out of the
-  box.
+  themes), overridable per datum. So a chart reads as part of the theme out of
+  the box.
 - It's a normal boxed element otherwise (move / resize / select / group / lock),
   but the **Colours / Border / Presets** context-menu categories are hidden — a
-  pie styles per-slice via its Data category, not as one filled box.
+  chart styles per-datum via its Data category, not as one filled box.
 
 ## Model
 

@@ -305,6 +305,7 @@ export function EditorView() {
     setPieAnimSelected,
     setPieAnimSpeedSelected,
     setPieAnimRepeatSelected,
+    setChartLegendSelected,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
@@ -1276,6 +1277,7 @@ export function EditorView() {
           onSetPieAnim={setPieAnimSelected}
           onSetPieAnimSpeed={setPieAnimSpeedSelected}
           onSetPieAnimRepeat={setPieAnimRepeatSelected}
+          onSetChartLegend={setChartLegendSelected}
           shapeColorPresets={shapeColorPresets(getTheme(activeTab.theme))}
           onApplyShapeColorPreset={applyShapeColorPresetSelected}
           onApplyShapeBorderPreset={applyShapeBorderPresetSelected}

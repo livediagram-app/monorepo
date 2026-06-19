@@ -22,6 +22,8 @@ import {
   defaultTextAlign,
   defaultTextColor,
   hasRichFormatting,
+  isBarShape,
+  isChartShape,
   isPieShape,
   isProgressShape,
   isRailShape,
@@ -59,6 +61,7 @@ import { ShapeMarkerGlyph } from './ShapeMarker';
 import { RailView } from './RailView';
 import { RatingView } from './RatingView';
 import { PieChartView } from './PieChartView';
+import { BarChartView } from './BarChartView';
 import { TechIconGlyph } from './tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
 import { isTechIconId } from '@/lib/tech-icons';
@@ -430,7 +433,7 @@ function BoxedElementViewImpl({
     !isProgressShape(element.shape) &&
     !isRailShape(element.shape) &&
     !isRatingShape(element.shape) &&
-    !isPieShape(element.shape)
+    !isChartShape(element.shape)
       ? element.marker
       : undefined;
   // The text label, computed once so the freehand branch, the plain
@@ -654,6 +657,14 @@ function BoxedElementViewImpl({
           textColor={textColor}
           palette={chartPalette}
         />
+      ) : element.type === 'shape' && isBarShape(element.shape) ? (
+        // Bar chart (spec/53): bars sized by value + a legend.
+        <BarChartView
+          element={element}
+          fontFamily={fontFamily}
+          textColor={textColor}
+          palette={chartPalette}
+        />
       ) : element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
         <ShapeSvgOverlay
           shape={element.shape}
@@ -775,8 +786,8 @@ function BoxedElementViewImpl({
         (isProgressShape(element.shape) ||
           isRailShape(element.shape) ||
           isRatingShape(element.shape) ||
-          isPieShape(element.shape)) ? (
-        // Progress / rail / rating / pie elements draw their own content, so
+          isChartShape(element.shape)) ? (
+        // Progress / rail / rating / chart elements draw their own content, so
         // they render no standard editable label.
         <></>
       ) : (

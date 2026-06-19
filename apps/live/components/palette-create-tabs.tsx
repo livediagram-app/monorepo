@@ -36,6 +36,21 @@ export function PaletteDataTab({
         </svg>
       </IconButton>
       <IconButton
+        label="Add bar chart"
+        caption="Bar"
+        description="A bar chart. Edit its labels + values from the Data menu."
+        onClick={() => addShape('bar-chart')}
+        dragKind="bar-chart"
+        filled
+        active={pendingShapeKind === 'bar-chart'}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <rect x="4" y="12" width="4" height="8" rx="1" opacity="0.45" />
+          <rect x="10" y="7" width="4" height="13" rx="1" />
+          <rect x="16" y="10" width="4" height="10" rx="1" opacity="0.7" />
+        </svg>
+      </IconButton>
+      <IconButton
         label="Add progress bar"
         caption="Progress"
         description="Horizontal progress bar. Set the percentage from its menu."

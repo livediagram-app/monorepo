@@ -174,6 +174,16 @@ describe('useElementStyle pie chart (spec/53)', () => {
     style.setPieDataSelected([{ label: 'X', value: 1 }]);
     expect((result()[0] as { pieSlices?: unknown }).pieSlices).toBeUndefined();
   });
+
+  it('edits bar chart data + legend like a pie', () => {
+    const a = createShape('bar-chart', 0, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+    style.setPieDataSelected([{ label: 'X', value: 5 }]);
+    style.setChartLegendSelected(false);
+    const el = result()[0] as { pieSlices?: { value: number }[]; chartLegend?: boolean };
+    expect(el.pieSlices).toEqual([{ label: 'X', value: 5 }]);
+    expect(el.chartLegend).toBe(false);
+  });
 });
 
 describe('useElementStyle shape style presets (spec/48)', () => {

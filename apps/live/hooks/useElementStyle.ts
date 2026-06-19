@@ -27,6 +27,7 @@ import {
   bringManyToFront,
   clampPercent,
   isBoxed,
+  isChartShape,
   isProgressShape,
   sendManyToBack,
   SHAPE_DEFAULT_SIZE,
@@ -712,29 +713,30 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   const setRatingAnimRepeatSelected = (value: boolean) =>
     setRatingFieldSelected({ ratingAnimRepeat: value }, 'RatingAnim');
 
-  // Pie chart (spec/53): the data + its slice animation, gated to pie shapes.
+  // Data charts (spec/53): the data + slice animation + legend toggle, gated to
+  // chart shapes (pie + bar).
   const setPieFieldSelected = (patch: Partial<ShapeElement>, telemetryType: string) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) =>
       els.map((el) =>
-        ids.has(el.id) && el.type === 'shape' && el.shape === 'pie-chart'
-          ? { ...el, ...patch }
-          : el,
+        ids.has(el.id) && el.type === 'shape' && isChartShape(el.shape) ? { ...el, ...patch } : el,
       ),
     );
     track('Element', 'Changed', telemetryType);
   };
-  // Replace the whole slice array (the Data editor builds the next array from
+  // Replace the whole data array (the Data editor builds the next array from
   // the current one — add / remove / edit a row — and commits it).
   const setPieDataSelected = (slices: PieSlice[]) =>
-    setPieFieldSelected({ pieSlices: slices }, 'PieData');
+    setPieFieldSelected({ pieSlices: slices }, 'ChartData');
   const setPieAnimSelected = (value: PieAnim | null) =>
-    setPieFieldSelected({ pieAnim: value ?? undefined }, 'PieAnim');
+    setPieFieldSelected({ pieAnim: value ?? undefined }, 'ChartAnim');
   const setPieAnimSpeedSelected = (value: AnimationSpeed) =>
-    setPieFieldSelected({ pieAnimSpeed: value }, 'PieAnim');
+    setPieFieldSelected({ pieAnimSpeed: value }, 'ChartAnim');
   const setPieAnimRepeatSelected = (value: boolean) =>
-    setPieFieldSelected({ pieAnimRepeat: value }, 'PieAnim');
+    setPieFieldSelected({ pieAnimRepeat: value }, 'ChartAnim');
+  const setChartLegendSelected = (value: boolean) =>
+    setPieFieldSelected({ chartLegend: value }, 'ChartLegend');
 
   // Clear per-element colour overrides so the element falls back to
   // whatever the current tab theme dictates. Each colour field is set
@@ -855,6 +857,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setPieAnimSelected,
     setPieAnimSpeedSelected,
     setPieAnimRepeatSelected,
+    setChartLegendSelected,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,

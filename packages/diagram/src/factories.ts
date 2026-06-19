@@ -87,6 +87,8 @@ export const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: numb
   rating: { width: 200, height: 44 },
   // Pie chart: the pie + a legend beside it.
   'pie-chart': { width: 280, height: 180 },
+  // Bar chart: bars + a legend beside them.
+  'bar-chart': { width: 280, height: 180 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
@@ -143,9 +145,9 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
   if (kind === 'rating') {
     return { ...base, rating: RATING_DEFAULT, strokeColor: '#f59e0b' };
   }
-  // Pie chart: starts with three sample slices; edit the data from its menu.
+  // Pie + bar charts: start with three sample data points; edit from the menu.
   // See spec/53.
-  if (kind === 'pie-chart') {
+  if (kind === 'pie-chart' || kind === 'bar-chart') {
     return { ...base, pieSlices: PIE_DEFAULT_SLICES.map((s) => ({ ...s })) };
   }
   return base;
