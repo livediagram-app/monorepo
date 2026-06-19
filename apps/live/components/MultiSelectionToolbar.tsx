@@ -1,5 +1,11 @@
 import { Tooltip } from './Tooltip';
 
+// Shared styling for the toolbar's plain icon buttons (More / Duplicate / Group
+// / Export). Lock (active brand fill) and Delete (rose / disabled) compose
+// their own variants, so they're not on this.
+const TOOLBAR_BTN =
+  'flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+
 type MultiSelectionToolbarProps = {
   // True if at least one member of the multi-selection is locked. The
   // Lock button toggles them all to the inverse state — if anything is
@@ -45,7 +51,7 @@ export function MultiSelectionToolbar({
                 onOpenContextMenu(r.left, r.bottom);
               }}
               aria-label="More actions"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              className={TOOLBAR_BTN}
             >
               <EllipsisIcon />
             </button>
@@ -58,7 +64,7 @@ export function MultiSelectionToolbar({
           type="button"
           onClick={onDuplicate}
           aria-label="Duplicate selected elements"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          className={TOOLBAR_BTN}
         >
           <DuplicateIcon />
         </button>
@@ -68,7 +74,7 @@ export function MultiSelectionToolbar({
           type="button"
           onClick={onGroup}
           aria-label="Group selected elements"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          className={TOOLBAR_BTN}
         >
           <GroupIcon />
         </button>
@@ -96,7 +102,7 @@ export function MultiSelectionToolbar({
           type="button"
           onClick={onExport}
           aria-label="Export selected elements"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          className={TOOLBAR_BTN}
         >
           <ExportIcon />
         </button>
