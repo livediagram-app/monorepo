@@ -61,7 +61,6 @@ import {
   type PieSlice,
   type ProgressAnim,
   type RatingAnim,
-  type ShapeElement,
   type ShapeKind,
   type ShapeMarker,
   type TextSize,
@@ -541,6 +540,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
     const isRail = target.type === 'shape' && isRailShape(target.shape);
     const isRating = target.type === 'shape' && isRatingShape(target.shape);
     const isPie = target.type === 'shape' && isPieShape(target.shape);
+    // The shape-only sections below (Marker / Progress / Rail / Rating / Data)
+    // all render under a `target.type === 'shape'` guard, so this is non-null
+    // wherever they read it — `shapeTarget?.field ?? default` reads the shape
+    // fields without an `as ShapeElement` assertion at each site.
+    const shapeTarget = target.type === 'shape' ? target : null;
     const morphable =
       target.type === 'shape' &&
       !isIcon &&
@@ -724,17 +728,11 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             icon={<ProgressMenuGlyph />}
             {...sectionProps('progress')}
           >
-            <ProgressRow
-              value={(target as ShapeElement).progress ?? 50}
-              onChange={props.onSetProgress}
-            />
+            <ProgressRow value={shapeTarget?.progress ?? 50} onChange={props.onSetProgress} />
             <ProgressAnimTiles
-              anim={(target as ShapeElement).progressAnim ?? null}
-              speed={(target as ShapeElement).progressAnimSpeed ?? 'normal'}
-              repeat={
-                (target as ShapeElement).progressAnimRepeat ??
-                (target as ShapeElement).progressAnim !== 'fill'
-              }
+              anim={shapeTarget?.progressAnim ?? null}
+              speed={shapeTarget?.progressAnimSpeed ?? 'normal'}
+              repeat={shapeTarget?.progressAnimRepeat ?? shapeTarget?.progressAnim !== 'fill'}
               onSet={props.onSetProgressAnim}
               onSetSpeed={props.onSetProgressAnimSpeed}
               onSetRepeat={props.onSetProgressAnimRepeat}
@@ -750,7 +748,7 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             {...sectionProps('timeline')}
           >
             <RailPointsRow
-              value={(target as ShapeElement).railCount ?? RAIL_DEFAULT_POINTS}
+              value={shapeTarget?.railCount ?? RAIL_DEFAULT_POINTS}
               onChange={props.onSetRailCount}
             />
           </MenuAccordionSection>
@@ -763,16 +761,15 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             {...sectionProps('rating')}
           >
             <RatingPickerRow
-              value={(target as ShapeElement).rating ?? RATING_DEFAULT}
+              value={shapeTarget?.rating ?? RATING_DEFAULT}
               onChange={props.onSetRating}
             />
             <RatingAnimTiles
-              anim={(target as ShapeElement).ratingAnim ?? null}
-              speed={(target as ShapeElement).ratingAnimSpeed ?? 'normal'}
+              anim={shapeTarget?.ratingAnim ?? null}
+              speed={shapeTarget?.ratingAnimSpeed ?? 'normal'}
               repeat={
-                (target as ShapeElement).ratingAnimRepeat ??
-                ((target as ShapeElement).ratingAnim === 'pulse' ||
-                  (target as ShapeElement).ratingAnim === 'twinkle')
+                shapeTarget?.ratingAnimRepeat ??
+                (shapeTarget?.ratingAnim === 'pulse' || shapeTarget?.ratingAnim === 'twinkle')
               }
               onSet={props.onSetRatingAnim}
               onSetSpeed={props.onSetRatingAnimSpeed}
@@ -785,18 +782,15 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
         {isPie ? (
           <MenuAccordionSection title="Data" icon={<DataMenuGlyph />} {...sectionProps('pie-data')}>
             <PieDataEditor
-              slices={
-                (target as ShapeElement).pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))
-              }
+              slices={shapeTarget?.pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))}
               onChange={props.onSetPieData}
             />
             <PieAnimTiles
-              anim={(target as ShapeElement).pieAnim ?? null}
-              speed={(target as ShapeElement).pieAnimSpeed ?? 'normal'}
+              anim={shapeTarget?.pieAnim ?? null}
+              speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
               repeat={
-                (target as ShapeElement).pieAnimRepeat ??
-                ((target as ShapeElement).pieAnim === 'spin' ||
-                  (target as ShapeElement).pieAnim === 'pulse')
+                shapeTarget?.pieAnimRepeat ??
+                (shapeTarget?.pieAnim === 'spin' || shapeTarget?.pieAnim === 'pulse')
               }
               onSet={props.onSetPieAnim}
               onSetSpeed={props.onSetPieAnimSpeed}
@@ -965,8 +959,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               {...sectionProps('markers')}
             >
               <MarkerTiles
-                marker={(target as ShapeElement).marker ?? null}
-                size={(target as ShapeElement).markerSize ?? 'scale'}
+                marker={shapeTarget?.marker ?? null}
+                size={shapeTarget?.markerSize ?? 'scale'}
                 onSet={props.onSetMarker}
                 onSetSize={props.onSetMarkerSize}
               />
