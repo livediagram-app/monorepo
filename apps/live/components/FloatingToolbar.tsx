@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { VIEWPORT_EDGE_MARGIN as EDGE } from '@/lib/clamp-to-viewport';
+import { type ReactNode } from 'react';
+import { useEdgeAwarePlacement } from '@/hooks/useEdgeAwarePlacement';
 
 type Bounds = { x: number; y: number; width: number; height: number };
 
@@ -26,48 +26,11 @@ export function FloatingToolbar({
   title?: string;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const flipSigRef = useRef('');
-  const flippedRef = useRef(false);
-  const [placeAbove, setPlaceAbove] = useState(true);
+  const { ref, adjust, placeAbove } = useEdgeAwarePlacement(bounds, canvasOffset, zoom);
 
   const gap = GAP / zoom;
   const baseTop = placeAbove ? bounds.y - gap : bounds.y + bounds.height + gap;
   const baseLeft = bounds.x + bounds.width / 2;
-
-  useLayoutEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    // One flip per geometry so a toolbar that fits neither side can't
-    // ping-pong forever (the SelectionPopover guard).
-    const sig = `${bounds.x},${bounds.y},${bounds.width},${bounds.height},${canvasOffset.x},${canvasOffset.y},${zoom}`;
-    if (flipSigRef.current !== sig) {
-      flipSigRef.current = sig;
-      flippedRef.current = false;
-    }
-    const rect = node.getBoundingClientRect();
-    if (!flippedRef.current) {
-      if (placeAbove && rect.top < EDGE) {
-        flippedRef.current = true;
-        setPlaceAbove(false);
-        return;
-      }
-      if (!placeAbove && rect.bottom > window.innerHeight - EDGE) {
-        flippedRef.current = true;
-        setPlaceAbove(true);
-        return;
-      }
-    }
-    let dx = 0;
-    let dy = 0;
-    if (rect.left < EDGE) dx = EDGE - rect.left;
-    else if (rect.right > window.innerWidth - EDGE) dx = window.innerWidth - EDGE - rect.right;
-    if (rect.top < EDGE) dy = EDGE - rect.top;
-    else if (rect.bottom > window.innerHeight - EDGE) dy = window.innerHeight - EDGE - rect.bottom;
-    if (dx !== adjust.x || dy !== adjust.y) setAdjust({ x: dx, y: dy });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bounds.x, bounds.y, bounds.width, bounds.height, canvasOffset.x, canvasOffset.y, placeAbove]);
 
   return (
     <div

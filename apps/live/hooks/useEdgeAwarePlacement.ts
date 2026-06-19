@@ -1,0 +1,65 @@
+'use client';
+
+import { useLayoutEffect, useRef, useState } from 'react';
+import { VIEWPORT_EDGE_MARGIN as EDGE } from '@/lib/clamp-to-viewport';
+
+type XY = { x: number; y: number };
+type Bounds = { x: number; y: number; width: number; height: number };
+
+// Positions a floating box that hovers above (or below, when there's no room)
+// a canvas-space `bounds`, nudging it back inside the viewport when it would
+// overflow an edge. Shared by FloatingToolbar + SelectionPopover so the subtle
+// flip guard lives in one place.
+//
+// `placeAbove` flips above<->below at most ONCE per geometry (the flip guard):
+// a box that fits neither side could otherwise ping-pong above<->below forever,
+// an infinite synchronous re-render that trips React's "Maximum update depth".
+// `adjust` is the one-shot edge nudge and is deliberately NOT an effect
+// dependency, so the effect never re-enters on its own setAdjust. `zoom` is
+// folded into the geometry signature (a zoom change earns a fresh flip
+// decision) but kept out of the dep array — the effect re-runs on the
+// bounds / offset / placeAbove changes that actually move the box.
+//
+// The box ref must be attached to the floating element so its measured rect can
+// be checked against the viewport. Callers derive their own base top/left from
+// the returned `placeAbove` and add `adjust`.
+export function useEdgeAwarePlacement(bounds: Bounds, canvasOffset: XY, zoom: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [adjust, setAdjust] = useState<XY>({ x: 0, y: 0 });
+  const flipSigRef = useRef('');
+  const flippedRef = useRef(false);
+  const [placeAbove, setPlaceAbove] = useState(true);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const sig = `${bounds.x},${bounds.y},${bounds.width},${bounds.height},${canvasOffset.x},${canvasOffset.y},${zoom}`;
+    if (flipSigRef.current !== sig) {
+      flipSigRef.current = sig;
+      flippedRef.current = false;
+    }
+    const rect = node.getBoundingClientRect();
+    if (!flippedRef.current) {
+      if (placeAbove && rect.top < EDGE) {
+        flippedRef.current = true;
+        setPlaceAbove(false);
+        return;
+      }
+      if (!placeAbove && rect.bottom > window.innerHeight - EDGE) {
+        flippedRef.current = true;
+        setPlaceAbove(true);
+        return;
+      }
+    }
+    let dx = 0;
+    let dy = 0;
+    if (rect.left < EDGE) dx = EDGE - rect.left;
+    else if (rect.right > window.innerWidth - EDGE) dx = window.innerWidth - EDGE - rect.right;
+    if (rect.top < EDGE) dy = EDGE - rect.top;
+    else if (rect.bottom > window.innerHeight - EDGE) dy = window.innerHeight - EDGE - rect.bottom;
+    if (dx !== adjust.x || dy !== adjust.y) setAdjust({ x: dx, y: dy });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bounds.x, bounds.y, bounds.width, bounds.height, canvasOffset.x, canvasOffset.y, placeAbove]);
+
+  return { ref, adjust, placeAbove };
+}

@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Tooltip } from './Tooltip';
-import { VIEWPORT_EDGE_MARGIN as EDGE_MARGIN } from '@/lib/clamp-to-viewport';
+import { useEdgeAwarePlacement } from '@/hooks/useEdgeAwarePlacement';
 import {
   CommentIcon,
   DuplicateIcon,
@@ -79,65 +79,11 @@ export function SelectionPopover({
   title,
 }: SelectionPopoverProps) {
   const ellipsisRef = useRef<HTMLButtonElement>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const [adjust, setAdjust] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  // Above/below flip guard: the geometry signature it last flipped
-  // for, and whether it has already flipped for that geometry.
-  const flipSigRef = useRef('');
-  const flippedRef = useRef(false);
-  // Prefer above by default (desktop + mobile alike). The layoutEffect
-  // below still flips to "below" when there's no room above, so it stays
-  // on-screen near the top edge regardless of device.
-  const [placeAbove, setPlaceAbove] = useState(true);
+  const { ref, adjust, placeAbove } = useEdgeAwarePlacement(bounds, canvasOffset, zoom);
 
   const visualGap = (compact ? GAP_COMPACT : GAP_DEFAULT) / zoom;
   const baseTop = placeAbove ? bounds.y - visualGap : bounds.y + bounds.height + visualGap;
   const baseLeft = bounds.x + bounds.width / 2;
-
-  useLayoutEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    // The geometry that legitimately changes where the popover should
-    // sit. When it changes we earn a fresh above/below flip decision;
-    // for the SAME geometry we allow at most one flip so a popover
-    // that fits neither side can't ping-pong above<->below forever
-    // (that infinite synchronous re-render is what tripped React's
-    // "Maximum update depth exceeded" while panning a selection).
-    const sig = `${bounds.x},${bounds.y},${bounds.width},${bounds.height},${canvasOffset.x},${canvasOffset.y},${zoom}`;
-    if (flipSigRef.current !== sig) {
-      flipSigRef.current = sig;
-      flippedRef.current = false;
-    }
-    const rect = node.getBoundingClientRect();
-    // Flip above<->below at most once per geometry (the guard), so a
-    // popover that fits neither side can't ping-pong forever — that
-    // infinite synchronous re-render is what tripped "Maximum update
-    // depth". `adjust` is intentionally NOT a dependency: this runs
-    // once per geometry change and applies a one-shot nudge, so it
-    // never re-enters on its own setAdjust.
-    if (!flippedRef.current) {
-      if (placeAbove && rect.top < EDGE_MARGIN) {
-        flippedRef.current = true;
-        setPlaceAbove(false);
-        return;
-      }
-      if (!placeAbove && rect.bottom > window.innerHeight - EDGE_MARGIN) {
-        flippedRef.current = true;
-        setPlaceAbove(true);
-        return;
-      }
-    }
-    let dx = 0;
-    let dy = 0;
-    if (rect.left < EDGE_MARGIN) dx = EDGE_MARGIN - rect.left;
-    else if (rect.right > window.innerWidth - EDGE_MARGIN)
-      dx = window.innerWidth - EDGE_MARGIN - rect.right;
-    if (rect.top < EDGE_MARGIN) dy = EDGE_MARGIN - rect.top;
-    else if (rect.bottom > window.innerHeight - EDGE_MARGIN)
-      dy = window.innerHeight - EDGE_MARGIN - rect.bottom;
-    if (dx !== adjust.x || dy !== adjust.y) setAdjust({ x: dx, y: dy });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bounds.x, bounds.y, bounds.width, bounds.height, canvasOffset.x, canvasOffset.y, placeAbove]);
 
   return (
     <div
