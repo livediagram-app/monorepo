@@ -119,9 +119,6 @@ type BoxedElementViewProps = {
       >
     >,
   ) => void;
-  // Append a point to a timeline rail (spec/51), from the rail's canvas
-  // affordance. Omitted in read-only mode.
-  onAddRailPoint?: () => void;
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (id: string) => void;
@@ -219,7 +216,6 @@ function BoxedElementViewImpl({
   onSetFont,
   onSetTextSize,
   onCommitTable,
-  onAddRailPoint,
   onCancelEdit,
   onFollowLink,
   onOpenComments,
@@ -417,7 +413,12 @@ function BoxedElementViewImpl({
   // shape has no label). Progress shapes render their own centred percentage,
   // so they skip it. Shares the icon+label flex layout below.
   const marker: ShapeMarker | undefined =
-    element.type === 'shape' && !isProgressShape(element.shape) ? element.marker : undefined;
+    element.type === 'shape' &&
+    !isProgressShape(element.shape) &&
+    !isRailShape(element.shape) &&
+    !isRatingShape(element.shape)
+      ? element.marker
+      : undefined;
   // The text label, computed once so the freehand branch, the plain
   // shape branch, and the inline-icon layout below all share it.
   const labelNode = renderLabel(
@@ -623,8 +624,6 @@ function BoxedElementViewImpl({
         <RailView
           element={element}
           accent={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
-          interactive={isSelected && !readOnly && !isLocked}
-          onAddPoint={onAddRailPoint}
         />
       ) : element.type === 'shape' && isRatingShape(element.shape) ? (
         // Rating (spec/52): a row of stars showing element.rating.

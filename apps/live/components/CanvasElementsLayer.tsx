@@ -1,4 +1,4 @@
-import { buildElementIndex, isBoxed } from '@livediagram/diagram';
+import { buildElementIndex, isBoxed, isRailShape } from '@livediagram/diagram';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { framesFirst, type QuickConnectDirection } from '@/lib/canvas';
 import { resolveFontStack } from '@/lib/fonts';
@@ -130,6 +130,10 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
   // meant for the elements inside it (spec/09). Same rule the exporters
   // use, via the shared `framesFirst` helper.
   const ordered = framesFirst(elements);
+  // Whether the single selected element is a timeline rail — gates the rail's
+  // "Add point" action on the quick-connect "+" (spec/51).
+  const selectedElement = selectedId ? elements.find((e) => e.id === selectedId) : undefined;
+  const selectedIsRail = selectedElement?.type === 'shape' && isRailShape(selectedElement.shape);
   return (
     <>
       {/* Shared arrowhead defs. Multiple per-arrow <svg>s below
@@ -216,7 +220,6 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             onSetFont={readOnly ? undefined : onSetFont}
             onSetTextSize={readOnly ? undefined : onSetTextSize}
             onCommitTable={onCommitTable}
-            onAddRailPoint={onAddRailPoint}
             onCancelEdit={onCancelEdit}
             onFollowLink={onFollowLink}
             onOpenComments={onOpenComments}
@@ -303,6 +306,9 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
               onSpawn={(kind) => onSpawnConnect(placement, kind)}
               onArrowPointerDown={(e) => onStartArrow(placement, e)}
               onPencil={onStartPencil}
+              // Timeline rail (spec/51): the standard "+" gains an "Add point"
+              // action instead of the rail drawing its own competing button.
+              onAddRailPoint={selectedIsRail ? onAddRailPoint : undefined}
             />
           ))
         : null}

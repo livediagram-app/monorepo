@@ -914,8 +914,9 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
           </>
         ) : null}
         {/* ── Markers group (spec/49): its own band between Border and the
-            content / collaborate groups. Shapes only. ── */}
-        {target.type === 'shape' ? (
+            content / collaborate groups. Regular shapes only — the self-drawing
+            shapes (progress / rail / rating) have no label slot for a marker. ── */}
+        {target.type === 'shape' && !isProgress && !isRail && !isRating ? (
           <>
             <MenuGroupSeparator />
             <MenuAccordionSection

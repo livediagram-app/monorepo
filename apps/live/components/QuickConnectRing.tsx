@@ -34,6 +34,9 @@ type Props = {
   onArrowPointerDown: (e: ReactPointerEvent) => void;
   // Enter freehand (pencil) draw mode.
   onPencil: () => void;
+  // Timeline rail (spec/51): when set (the selected element is a rail), the
+  // ring gains an "Add point" action that appends a point to the rail.
+  onAddRailPoint?: () => void;
 };
 
 // The plus trigger stays in the shared floating-control family (matching
@@ -99,10 +102,18 @@ const MENU: Record<
 };
 
 type Option = {
-  kind: QuickConnectKind | 'arrow' | 'pencil';
+  kind: QuickConnectKind | 'arrow' | 'pencil' | 'add-point';
   label: string;
   description: string;
   icon: ReactNode;
+};
+
+// Rail-only action appended to the menu when onAddRailPoint is set (spec/51).
+const ADD_POINT_OPTION: Option = {
+  kind: 'add-point',
+  label: 'Add point',
+  description: 'Add another point to the timeline rail.',
+  icon: <AddPointIcon />,
 };
 
 // Listed order matches the spec; they fan across the arc in this order.
@@ -144,7 +155,11 @@ export function QuickConnectRing({
   onSpawn,
   onArrowPointerDown,
   onPencil,
+  onAddRailPoint,
 }: Props) {
+  // The rail "Add point" action only appears when the selected element is a
+  // timeline rail (onAddRailPoint set), appended after the standard actions.
+  const options = onAddRailPoint ? [...OPTIONS, ADD_POINT_OPTION] : OPTIONS;
   // `rendered` keeps the options mounted through the exit transition;
   // `active` drives the per-option fade/scale (off → on for enter, on →
   // off for exit).
@@ -226,7 +241,7 @@ export function QuickConnectRing({
             transition: 'transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 140ms ease',
           }}
         >
-          {OPTIONS.map((option, i) => {
+          {options.map((option, i) => {
             const isArrow = option.kind === 'arrow';
             return (
               <Fragment key={option.kind}>
@@ -257,6 +272,7 @@ export function QuickConnectRing({
                     onClick={() => {
                       if (isArrow) return;
                       if (option.kind === 'pencil') onPencil();
+                      else if (option.kind === 'add-point') onAddRailPoint?.();
                       else onSpawn(option.kind as QuickConnectKind);
                       onClose();
                     }}
@@ -320,6 +336,17 @@ function TextIcon() {
   return (
     <svg {...iconProps()}>
       <path d="M4 4h8M8 4v9M6.5 13h3" />
+    </svg>
+  );
+}
+
+// A rail line with a dot + a small plus — "add a point to the timeline rail".
+function AddPointIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M2 11h12" />
+      <circle cx="5.5" cy="7" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M11 4v4M9 6h4" />
     </svg>
   );
 }
