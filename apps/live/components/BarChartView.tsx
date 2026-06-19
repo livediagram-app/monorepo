@@ -15,6 +15,7 @@ import {
   type ShapeElement,
 } from '@livediagram/diagram';
 import { animClass, animSpeedVars } from '@/lib/icons';
+import { ChartLegend } from './ChartLegend';
 
 export function BarChartView({
   element,
@@ -94,23 +95,13 @@ export function BarChartView({
           })}
         </g>
       </svg>
-      {legendW >= 48 ? (
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 flex flex-col justify-center gap-0.5 overflow-hidden pr-1"
-          style={{ width: legendW, color: textColor, fontFamily }}
-          aria-hidden
-        >
-          {data.map((d, i) => (
-            <div key={i} className="flex items-center gap-1 leading-tight">
-              <span
-                className="inline-block shrink-0 rounded-[2px]"
-                style={{ width: 9, height: 9, backgroundColor: colorAt(i, d) }}
-              />
-              <span className="truncate text-[11px]">{d.label || '—'}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <ChartLegend
+        items={data}
+        colorAt={colorAt}
+        legendW={legendW}
+        textColor={textColor}
+        fontFamily={fontFamily}
+      />
     </div>
   );
 }
