@@ -561,16 +561,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'Animation');
   };
-  const setArrowFlowSelected = (value: ArrowFlow | null) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'arrow' ? { ...el, flow: value ?? undefined } : el,
-      ),
-    );
-    track('Element', 'Changed', 'ArrowFlow');
-  };
+  const setArrowFlowSelected = (value: ArrowFlow | null) =>
+    setArrowFieldSelected({ flow: value ?? undefined }, 'ArrowFlow');
   // Per-icon glyph animation (spec/09), gated to icon shapes — its own set
   // instead of the boxed-element animation. The animation + its loop speed
   // differ only in the patched field, so they share one body.
@@ -621,14 +613,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     );
     track('Element', 'Changed', 'AnimationSpeed');
   };
-  const setFlowSpeedSelected = (value: AnimationSpeed) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'arrow' ? { ...el, flowSpeed: value } : el)),
-    );
-    track('Element', 'Changed', 'FlowSpeed');
-  };
+  const setFlowSpeedSelected = (value: AnimationSpeed) =>
+    setArrowFieldSelected({ flowSpeed: value }, 'FlowSpeed');
 
   // Clear per-element colour overrides so the element falls back to
   // whatever the current tab theme dictates. Each colour field is set
