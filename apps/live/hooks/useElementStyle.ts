@@ -442,27 +442,24 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   };
 
   // Style presets (spec/48). One-click looks for the selected shape(s),
+  // Set a field on every selected shape (any shape kind), the shape-wide
+  // counterpart of setArrowFieldSelected. The icon / progress / rating helpers
+  // gate to their specific shape kinds; this is for fields any shape can carry.
+  const setShapeFieldSelected = (patch: Partial<ShapeElement>, telemetryType: string) => {
+    const ids = currentSelectionIds();
+    if (ids.size === 0) return;
+    commit((els) =>
+      els.map((el) => (ids.has(el.id) && el.type === 'shape' ? { ...el, ...patch } : el)),
+    );
+    track('Element', 'Changed', telemetryType);
+  };
   // Status markers (spec/49). A glyph shown inside the shape, left of its
   // label; `null` clears it. `markerSize` is a TextSize bucket ('scale' tracks
   // the element's text). Shapes only.
-  const setMarkerSelected = (marker: ShapeMarker | null) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'shape' ? { ...el, marker: marker ?? undefined } : el,
-      ),
-    );
-    track('Element', 'Changed', 'Marker');
-  };
-  const setMarkerSizeSelected = (size: TextSize) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'shape' ? { ...el, markerSize: size } : el)),
-    );
-    track('Element', 'Changed', 'MarkerSize');
-  };
+  const setMarkerSelected = (marker: ShapeMarker | null) =>
+    setShapeFieldSelected({ marker: marker ?? undefined }, 'Marker');
+  const setMarkerSizeSelected = (size: TextSize) =>
+    setShapeFieldSelected({ markerSize: size }, 'MarkerSize');
 
   // applied in a single history step (unlike the per-field setters above, a
   // preset writes fill+stroke+text — or width+style+radius — at once).
