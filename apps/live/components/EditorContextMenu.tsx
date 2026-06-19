@@ -1726,11 +1726,6 @@ function ChartMenuGlyph() {
   );
 }
 
-// Shared cell-input styling for the chart data editors (pie slice rows + line
-// category/series grid): a compact bordered text/number field.
-const CHART_CELL_INPUT =
-  'min-w-0 rounded border border-slate-200 bg-white px-1 py-0.5 text-[11px] text-slate-700 outline-none focus:border-brand-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
-
 // Pie-chart data editor (spec/53): one row per slice — a colour swatch
 // (recolourable), a label, and a value — plus add / remove. Local draft while
 // typing; commits the whole array on blur / structural change (one undo step).
@@ -1746,6 +1741,10 @@ function PieDataEditor({
   const colorAt = (i: number, s: PieSlice) => s.color ?? PIE_PALETTE[i % PIE_PALETTE.length]!;
   const patch = (i: number, p: Partial<PieSlice>) =>
     setRows((r) => r.map((s, j) => (j === i ? { ...s, ...p } : s)));
+  // Compact bordered field for the slice rows. The line editor lives in its own
+  // (roomier) dialog now, so this is no longer shared.
+  const cellInput =
+    'min-w-0 rounded border border-slate-200 bg-white px-1 py-0.5 text-[11px] text-slate-700 outline-none focus:border-brand-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
   return (
     <div className="px-2 py-1.5">
       <div className="flex flex-col gap-1">
@@ -1766,14 +1765,14 @@ function PieDataEditor({
               />
             </label>
             <input
-              className={`${CHART_CELL_INPUT} flex-1`}
+              className={`${cellInput} flex-1`}
               value={s.label}
               placeholder="Label"
               onChange={(e) => patch(i, { label: e.target.value })}
               onBlur={() => onChange(rows)}
             />
             <input
-              className={`${CHART_CELL_INPUT} w-12 text-right tabular-nums`}
+              className={`${cellInput} w-12 text-right tabular-nums`}
               type="number"
               min={0}
               value={s.value}
