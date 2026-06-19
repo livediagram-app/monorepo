@@ -9,14 +9,13 @@
 // first of the chart family, so the anim set is its own.
 
 import {
-  ANIMATION_SPEED_FACTOR,
   animLoops,
   PIE_DEFAULT_SLICES,
   PIE_LOOPING_ANIMS,
   PIE_PALETTE,
   type ShapeElement,
 } from '@livediagram/diagram';
-import { animClass } from '@/lib/icons';
+import { animClass, animSpeedVars } from '@/lib/icons';
 
 export function PieChartView({
   element,
@@ -70,11 +69,10 @@ export function PieChartView({
   const anim = element.pieAnim;
   const loops = animLoops(anim, element.pieAnimRepeat, PIE_LOOPING_ANIMS);
   const groupStyle = anim
-    ? ({
+    ? {
         transformOrigin: `${cx}px ${cy}px`,
-        '--lvd-pie-speed': ANIMATION_SPEED_FACTOR[element.pieAnimSpeed ?? 'normal'],
-        '--lvd-pie-iter': loops ? 'infinite' : 1,
-      } as React.CSSProperties)
+        ...animSpeedVars('pie', element.pieAnimSpeed, loops),
+      }
     : undefined;
 
   return (

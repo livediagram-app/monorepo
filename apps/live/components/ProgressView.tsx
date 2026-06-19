@@ -10,12 +10,12 @@
 import { useId } from 'react';
 
 import {
-  ANIMATION_SPEED_FACTOR,
   animLoops,
   clampPercent,
   PROGRESS_LOOPING_ANIMS,
   type ShapeElement,
 } from '@livediagram/diagram';
+import { animSpeedVars } from '@/lib/icons';
 
 // The speed + iteration custom properties the `lvd-prog-*` keyframes read.
 // `fill` defaults to playing once and holding; `pulse` / `stripes` default to
@@ -24,10 +24,7 @@ function progressAnimStyle(el: ShapeElement): React.CSSProperties | undefined {
   const anim = el.progressAnim;
   if (!anim) return undefined;
   const loops = animLoops(anim, el.progressAnimRepeat, PROGRESS_LOOPING_ANIMS);
-  return {
-    '--lvd-prog-speed': ANIMATION_SPEED_FACTOR[el.progressAnimSpeed ?? 'normal'],
-    '--lvd-prog-iter': loops ? 'infinite' : 1,
-  } as React.CSSProperties;
+  return animSpeedVars('prog', el.progressAnimSpeed, loops);
 }
 
 // Map a progress animation to its fill class. The bar fill and the ring arc

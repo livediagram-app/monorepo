@@ -65,6 +65,22 @@ export function iconAnimationSpeedStyle(
   return { '--lvd-icon-anim-speed': ANIMATION_SPEED_FACTOR[speed] } as CSSProperties;
 }
 
+// The `--lvd-{prefix}-speed` / `-iter` custom properties the per-element
+// animation keyframes read (progress / pie / rating). `speed` maps to its
+// duration multiplier (undefined = normal); `loops` selects an infinite vs
+// single iteration. Shared so the var-naming + the speed/iter mapping live in
+// one place; callers spread the result into their own style object.
+export function animSpeedVars(
+  prefix: string,
+  speed: AnimationSpeed | undefined,
+  loops: boolean,
+): CSSProperties {
+  return {
+    [`--lvd-${prefix}-speed`]: ANIMATION_SPEED_FACTOR[speed ?? 'normal'],
+    [`--lvd-${prefix}-iter`]: loops ? 'infinite' : 1,
+  } as CSSProperties;
+}
+
 // Fallback when an iconId isn't in the catalogue (e.g. a diagram saved
 // against a newer build): a simple framed question mark so the element
 // is still visibly an icon placeholder rather than empty space.

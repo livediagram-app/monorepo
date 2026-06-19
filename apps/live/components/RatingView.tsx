@@ -16,7 +16,7 @@ import {
   RATING_MAX,
   type ShapeElement,
 } from '@livediagram/diagram';
-import { animClass } from '@/lib/icons';
+import { animClass, animSpeedVars } from '@/lib/icons';
 
 const STAR_PATH =
   'M12 2.6l2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.85 6.6 19.23l1.03-6.02L3.26 8.95l6.04-.88z';
@@ -44,12 +44,11 @@ export function RatingView({ element, accent }: { element: ShapeElement; accent:
             className={filled ? cls : undefined}
             style={
               filled && cls
-                ? ({
-                    '--lvd-rating-speed': speed,
-                    '--lvd-rating-iter': loops ? 'infinite' : 1,
+                ? {
+                    ...animSpeedVars('rating', element.ratingAnimSpeed, loops),
                     animationDelay: stagger ? `${i * 0.12 * speed}s` : '0s',
                     transformOrigin: 'center',
-                  } as React.CSSProperties)
+                  }
                 : undefined
             }
             aria-hidden
