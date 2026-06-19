@@ -15,8 +15,13 @@ in beside it.
 - A chart-specific **Animation** row sits in the same category: None / Grow /
   Pop / Spin / Pulse, with a **Speed** row + **Repeat** toggle once one is
   picked. Grow / Pop play once (an entrance); Spin / Pulse loop.
-- It's a normal boxed element otherwise (move / resize / select / group / lock).
-  The wrapper draws no box border.
+- Slice colours default to **variants of the active theme** (`themeChartPalette`
+  — each branch hue on multi-colour themes, accent tints/shades on single-accent
+  themes), overridable per slice. So a pie reads as part of the theme out of the
+  box.
+- It's a normal boxed element otherwise (move / resize / select / group / lock),
+  but the **Colours / Border / Presets** context-menu categories are hidden — a
+  pie styles per-slice via its Data category, not as one filled box.
 
 ## Model
 

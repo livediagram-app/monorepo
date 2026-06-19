@@ -284,6 +284,9 @@ export type CanvasProps = {
   onAddRailPoint: () => void;
   // Edit one timeline-rail point's label (spec/51). Omitted in read-only.
   onSetRailLabel?: (elementId: string, index: number, text: string) => void;
+  // Default chart slice colours derived from the active theme (spec/53), used
+  // by pie charts for slices without an explicit colour.
+  chartPalette: readonly string[];
   onBeginEndpointDrag: (arrowId: string, end: ArrowEnd, e: ReactPointerEvent) => void;
   onBeginArrowCurveDrag: (arrowId: string, e: ReactPointerEvent) => void;
   onBeginArrowCurvePointDrag: (arrowId: string, index: number, e: ReactPointerEvent) => void;

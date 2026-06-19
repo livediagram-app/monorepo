@@ -452,6 +452,37 @@ export function shapeColorPresets(theme: ThemeDefinition): ShapeColorPreset[] {
   return out.slice(0, 8);
 }
 
+// A categorical palette derived from the active theme, for charts (spec/53):
+// multi-colour themes contribute each branch hue (genuinely distinct slices);
+// single-accent themes contribute variants of the accent (lighter / darker
+// tints) so the slices still read as "shades of the theme". Deduped
+// (case-insensitive); always non-empty.
+export function themeChartPalette(theme: ThemeDefinition): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (c: string | null | undefined) => {
+    if (!c) return;
+    const key = c.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(c);
+  };
+  if (theme.palette && theme.palette.length > 0) {
+    for (const entry of theme.palette) push(entry.stroke);
+  }
+  const accent = theme.elementStroke ?? DEFAULT_SHAPE_STROKE;
+  // Accent variants — appended so single-accent themes get a spread and
+  // palette themes pad out if they have few branches.
+  push(accent);
+  push(tint(accent, 0.4));
+  push(shade(accent, 0.3));
+  push(tint(accent, 0.7));
+  push(shade(accent, 0.55));
+  push(tint(accent, 0.2));
+  if (theme.elementText) push(theme.elementText);
+  return out;
+}
+
 // Soft theme switch: change the diagram's theme but preserve every
 // per-element colour the user has CUSTOMISED. A field counts as
 // "still on the old theme" (and is therefore safe to replace) when

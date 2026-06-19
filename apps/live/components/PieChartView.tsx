@@ -24,11 +24,16 @@ export function PieChartView({
   element,
   fontFamily,
   textColor,
+  palette,
 }: {
   element: ShapeElement;
   fontFamily?: string;
   textColor: string;
+  // Default slice colours (theme-derived, spec/53). Falls back to the built-in
+  // categorical palette when absent (e.g. an export with no theme context).
+  palette?: readonly string[];
 }) {
+  const colors = palette && palette.length > 0 ? palette : PIE_PALETTE;
   const w = Math.max(1, element.width);
   const h = Math.max(1, element.height);
   const slices =
@@ -40,8 +45,7 @@ export function PieChartView({
   const rad = Math.max(10, (Math.min(pieAreaW, h) * 0.86) / 2);
   const cx = pieAreaW / 2;
   const cy = h / 2;
-  const colorAt = (i: number, s: { color?: string }) =>
-    s.color ?? PIE_PALETTE[i % PIE_PALETTE.length]!;
+  const colorAt = (i: number, s: { color?: string }) => s.color ?? colors[i % colors.length]!;
 
   // Build slice paths (clockwise from 12 o'clock). A single 100% slice draws
   // as a full circle (an arc from a point back to itself is degenerate).

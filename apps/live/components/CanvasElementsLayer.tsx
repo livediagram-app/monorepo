@@ -82,6 +82,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
     onCommitTable,
     onAddRailPoint,
     onSetRailLabel,
+    chartPalette,
     onSpawnConnect,
     onStartArrow,
     onStartPencil,
@@ -222,6 +223,7 @@ export function CanvasElementsLayer(props: CanvasElementsLayerProps) {
             onSetTextSize={readOnly ? undefined : onSetTextSize}
             onCommitTable={onCommitTable}
             onSetRailLabel={onSetRailLabel}
+            chartPalette={chartPalette}
             onCancelEdit={onCancelEdit}
             onFollowLink={onFollowLink}
             onOpenComments={onOpenComments}

@@ -11,7 +11,13 @@ import {
 } from '@livediagram/diagram';
 import type { QuickConnectDirection } from '@/lib/canvas';
 import { track } from '@/lib/telemetry';
-import { getTheme, shapeColorPresets, themePresetColors, type ThemeId } from '@/lib/themes';
+import {
+  getTheme,
+  shapeColorPresets,
+  themeChartPalette,
+  themePresetColors,
+  type ThemeId,
+} from '@/lib/themes';
 import { PALETTE_SEARCH_ITEMS } from '@/lib/palette-search';
 import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
@@ -834,6 +840,7 @@ export function EditorView() {
         onCommitTable={commitTable}
         onAddRailPoint={addRailPointSelected}
         onSetRailLabel={isReadOnly ? undefined : setRailLabelSelected}
+        chartPalette={themeChartPalette(getTheme(activeTab.theme))}
         onCancelEdit={cancelEdit}
         onBeginEndpointDrag={beginEndpointDrag}
         onBeginArrowTranslate={beginArrowTranslate}

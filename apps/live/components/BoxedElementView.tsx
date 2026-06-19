@@ -123,6 +123,8 @@ type BoxedElementViewProps = {
   ) => void;
   // Edit a timeline-rail point's label (spec/51). Omitted in read-only mode.
   onSetRailLabel?: (elementId: string, index: number, text: string) => void;
+  // Theme-derived default slice colours for pie charts (spec/53).
+  chartPalette?: readonly string[];
   onCancelEdit: () => void;
   onFollowLink: (link: import('@livediagram/diagram').ElementLink) => void;
   onOpenComments: (id: string) => void;
@@ -221,6 +223,7 @@ function BoxedElementViewImpl({
   onSetTextSize,
   onCommitTable,
   onSetRailLabel,
+  chartPalette,
   onCancelEdit,
   onFollowLink,
   onOpenComments,
@@ -643,7 +646,12 @@ function BoxedElementViewImpl({
         />
       ) : element.type === 'shape' && isPieShape(element.shape) ? (
         // Pie chart (spec/53): slices sized by value + a legend.
-        <PieChartView element={element} fontFamily={fontFamily} textColor={textColor} />
+        <PieChartView
+          element={element}
+          fontFamily={fontFamily}
+          textColor={textColor}
+          palette={chartPalette}
+        />
       ) : element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
         <ShapeSvgOverlay
           shape={element.shape}
