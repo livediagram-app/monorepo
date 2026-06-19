@@ -251,6 +251,24 @@ describe('exportTabAsSvg', () => {
     expect(svg).not.toContain('A & B <ok>');
   });
 
+  it('wraps a long label to multiple lines instead of one overflowing line', async () => {
+    const svg = await text(
+      exportTabAsSvg(
+        tab({
+          elements: [
+            shape('s', {
+              width: 120,
+              label: 'This is a long sticky note label that should wrap across lines',
+            }),
+          ],
+        }),
+      ),
+    );
+    // Wrapped labels emit one <tspan> per line; a single line would emit none.
+    const tspans = svg.match(/<tspan/g) ?? [];
+    expect(tspans.length).toBeGreaterThan(1);
+  });
+
   it('exports a curved arrow as a Bézier path (not a straight chord)', async () => {
     const svg = await text(
       exportTabAsSvg(

@@ -458,7 +458,15 @@ function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
       ctx.font = `${label.bold ? '600' : '400'} ${label.italic ? 'italic ' : ''}${label.size}px system-ui, sans-serif`;
       ctx.textAlign =
         label.anchor === 'end' ? 'right' : label.anchor === 'start' ? 'left' : 'center';
-      ctx.fillText(label.text, label.x, label.y);
+      // Wrap to the element width so long labels stay inside the box, then
+      // stack the lines centred on the label's vertical anchor.
+      const lines = wrapLabel(label.text, labelMaxWidth(el), (s) => ctx.measureText(s).width);
+      const lineH = label.size * LABEL_LINE_HEIGHT;
+      let ly = label.y - ((lines.length - 1) * lineH) / 2;
+      for (const line of lines) {
+        ctx.fillText(line, label.x, ly);
+        ly += lineH;
+      }
     }
   }
   ctx.restore();
@@ -616,6 +624,56 @@ function fontSizeFor(textSize: BoxedElement['textSize']): number {
   return textSize === 'lg' ? 20 : textSize === 'sm' ? 12 : textSize === 'scale' ? 18 : 14;
 }
 
+// Horizontal room a label has inside its element — the box width minus the
+// same ~8px inset the label x already uses on each side. Both renderers wrap
+// to this so long labels (sticky notes especially) stay inside the element
+// instead of spilling out as one illegible line (the reported bug).
+function labelMaxWidth(el: BoxedElement): number {
+  return Math.max(8, el.width - 16);
+}
+const LABEL_LINE_HEIGHT = 1.25;
+
+// Greedy word-wrap to a max pixel width, preserving explicit newlines. A
+// single word wider than the box is left whole (no mid-word breaking) — it
+// still overflows far less than the previous unwrapped single line.
+function wrapLabel(text: string, maxWidth: number, measure: (s: string) => number): string[] {
+  const out: string[] = [];
+  for (const para of text.split('\n')) {
+    const words = para.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      out.push('');
+      continue;
+    }
+    let cur = words[0]!;
+    for (let i = 1; i < words.length; i++) {
+      const w = words[i]!;
+      if (measure(`${cur} ${w}`) <= maxWidth) cur += ` ${w}`;
+      else {
+        out.push(cur);
+        cur = w;
+      }
+    }
+    out.push(cur);
+  }
+  return out;
+}
+
+// A reusable measuring 2D context for the SVG path (the canvas renderer
+// measures on its own context). Null in non-DOM environments (jsdom tests),
+// where we fall back to a rough character-width estimate so wrapping still
+// degrades gracefully rather than throwing.
+let _labelMeasureCtx: CanvasRenderingContext2D | null | undefined;
+function labelMeasure(size: number, bold: boolean, italic: boolean): (s: string) => number {
+  if (_labelMeasureCtx === undefined) {
+    _labelMeasureCtx =
+      typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+  }
+  const ctx = _labelMeasureCtx;
+  if (!ctx) return (s) => s.length * size * 0.55;
+  ctx.font = `${bold ? '600' : '400'} ${italic ? 'italic ' : ''}${size}px system-ui, sans-serif`;
+  return (s) => ctx.measureText(s).width;
+}
+
 function svgLabel(
   text: string,
   x: number,
@@ -630,6 +688,33 @@ function svgLabel(
     `<text x="${r2(x)}" y="${r2(y)}" font-family="system-ui, sans-serif" font-size="${fontSize}"` +
     ` font-weight="${bold ? 600 : 400}"${italic ? ' font-style="italic"' : ''}` +
     ` fill="${xmlEscape(color)}" text-anchor="${anchor}" dominant-baseline="central">${xmlEscape(text)}</text>`
+  );
+}
+
+// A word-wrapped plain label as one anchored <text> with a <tspan> per line,
+// each dy a line-height below the last, centred on the vertical anchor — the
+// SVG counterpart of the canvas multi-line label.
+function svgWrappedLabel(
+  lines: string[],
+  x: number,
+  y: number,
+  anchor: 'start' | 'middle' | 'end',
+  color: string,
+  fontSize: number,
+  bold: boolean,
+  italic: boolean,
+): string {
+  const lineH = fontSize * LABEL_LINE_HEIGHT;
+  const firstY = y - ((lines.length - 1) * lineH) / 2;
+  const tspans = lines
+    .map(
+      (line, i) => `<tspan x="${r2(x)}" dy="${i === 0 ? 0 : r2(lineH)}">${xmlEscape(line)}</tspan>`,
+    )
+    .join('');
+  return (
+    `<text x="${r2(x)}" y="${r2(firstY)}" font-family="system-ui, sans-serif" font-size="${fontSize}"` +
+    ` font-weight="${bold ? 600 : 400}"${italic ? ' font-style="italic"' : ''}` +
+    ` fill="${xmlEscape(color)}" text-anchor="${anchor}" dominant-baseline="central">${tspans}</text>`
   );
 }
 
@@ -678,8 +763,12 @@ function svgBoxed(el: BoxedElement): string {
     ? ''
     : label.runs
       ? svgRichLabel(label.runs, label.x, label.y, label.anchor)
-      : svgLabel(
-          label.text,
+      : svgWrappedLabel(
+          wrapLabel(
+            label.text,
+            labelMaxWidth(el),
+            labelMeasure(label.size, label.bold, label.italic),
+          ),
           label.x,
           label.y,
           label.anchor,
