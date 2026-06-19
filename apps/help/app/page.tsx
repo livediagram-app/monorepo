@@ -92,7 +92,7 @@ export default function HelpHome() {
             return (
               <Link
                 key={article.slug}
-                href={`/help/${article.categorySlug}/${article.slug}/`}
+                href={`/${article.categorySlug}/${article.slug}/`}
                 className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
               >
                 <div className="flex items-start gap-4">

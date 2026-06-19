@@ -66,7 +66,7 @@ export function SearchInput({ large = false }: { large?: boolean }) {
           {results.map((article) => (
             <Link
               key={`${article.categorySlug}/${article.slug}`}
-              href={`/help/${article.categorySlug}/${article.slug}`}
+              href={`/${article.categorySlug}/${article.slug}`}
               onClick={() => {
                 setIsOpen(false);
                 setQuery('');

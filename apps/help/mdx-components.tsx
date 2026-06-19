@@ -70,7 +70,7 @@ function Note({ children }: { children: ReactNode }) {
 function Feature({ slug, title, children }: { slug?: string; title: string; children: ReactNode }) {
   const colour = slug ? (FEATURE_ENTITY_HEX[slug] ?? FEATURE_FALLBACK_HEX) : FEATURE_FALLBACK_HEX;
   const icon = slug ? FEATURE_ICONS[slug] : null;
-  const href = slug ? `/help/features/${slug}/` : undefined;
+  const href = slug ? `/features/${slug}/` : undefined;
 
   const card = (
     <div

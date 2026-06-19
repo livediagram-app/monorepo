@@ -22,7 +22,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2.5 md:px-8">
         <nav className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-slate-500">
           <Link
-            href="/help/"
+            href="/"
             className="flex shrink-0 items-center gap-1.5 transition-colors hover:text-slate-900"
           >
             {HomeIcon}
@@ -72,7 +72,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
                 '@type': 'ListItem',
                 position: i + 2,
                 name: item.label,
-                ...(item.href ? { item: `https://livediagram.app${item.href}` } : {}),
+                ...(item.href ? { item: `https://livediagram.app/help${item.href}` } : {}),
               })),
             ],
           }),

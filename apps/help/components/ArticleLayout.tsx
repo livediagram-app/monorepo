@@ -26,7 +26,7 @@ function SidebarCard({ subArticles }: { subArticles?: Article[] }) {
             {subArticles!.map((a, i) => (
               <li key={a.slug}>
                 <Link
-                  href={`/help/${a.categorySlug}/${a.slug}`}
+                  href={`/${a.categorySlug}/${a.slug}`}
                   className="flex items-center gap-2.5 py-1 text-sm text-slate-600 transition-colors hover:text-brand-700"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
@@ -80,16 +80,16 @@ export function ArticleLayout({
   const showCategory = categoryTitle !== title && categoryTitle !== parentArticle?.title;
   const parentHref =
     parentArticle?.slug === categorySlug
-      ? `/help/${categorySlug}`
-      : `/help/${categorySlug}/${parentArticle?.slug}`;
+      ? `/${categorySlug}`
+      : `/${categorySlug}/${parentArticle?.slug}`;
   const breadcrumbItems = parentArticle
     ? [
-        ...(showCategory ? [{ label: categoryTitle, href: `/help/${categorySlug}` }] : []),
+        ...(showCategory ? [{ label: categoryTitle, href: `/${categorySlug}` }] : []),
         { label: parentArticle.title, href: parentHref },
         { label: title },
       ]
     : showCategory
-      ? [{ label: categoryTitle, href: `/help/${categorySlug}` }, { label: title }]
+      ? [{ label: categoryTitle, href: `/${categorySlug}` }, { label: title }]
       : [{ label: title }];
 
   return (
