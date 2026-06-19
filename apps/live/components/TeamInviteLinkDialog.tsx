@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TeamInviteLink } from '@livediagram/api-schema';
 import { apiGenerateTeamInviteLink, apiRevokeTeamInviteLink } from '@/lib/api-client';
+import { useEscape } from '@/hooks/useEscape';
 import { Portal } from './Portal';
 
 // "Invite by link" (spec/32): the admin actively turns on a shareable
@@ -49,15 +50,8 @@ export function TeamInviteLinkDialog({
     if (!open) return;
     setCopied(false);
     setError(null);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open]);
+  useEscape(onClose, { enabled: open, preventDefault: true });
 
   if (!open) return null;
 

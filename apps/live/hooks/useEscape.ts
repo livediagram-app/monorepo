@@ -25,6 +25,9 @@ import { useEffect, useRef } from 'react';
 //   `stopPropagation` (default false): call e.stopPropagation() on
 //      the captured event so the global listener (which is still
 //      registered, just lost the race) doesn't fire too.
+//   `preventDefault` (default false): call e.preventDefault() on the
+//      Escape keydown, for the surfaces (ConfirmDialog,
+//      TeamInviteLinkDialog) that previously open-coded that.
 //
 // `onEscape` is captured through a ref so the hook doesn't re-bind
 // the listener on every render that produces a fresh callback
@@ -34,10 +37,16 @@ type UseEscapeOptions = {
   enabled?: boolean;
   capture?: boolean;
   stopPropagation?: boolean;
+  preventDefault?: boolean;
 };
 
 export function useEscape(onEscape: () => void, options: UseEscapeOptions = {}): void {
-  const { enabled = true, capture = false, stopPropagation = false } = options;
+  const {
+    enabled = true,
+    capture = false,
+    stopPropagation = false,
+    preventDefault = false,
+  } = options;
   const cbRef = useRef(onEscape);
   useEffect(() => {
     cbRef.current = onEscape;
@@ -50,9 +59,10 @@ export function useEscape(onEscape: () => void, options: UseEscapeOptions = {}):
     const handler = (e: Event) => {
       if (!(e instanceof KeyboardEvent) || e.key !== 'Escape') return;
       if (stopPropagation) e.stopPropagation();
+      if (preventDefault) e.preventDefault();
       cbRef.current();
     };
     target.addEventListener('keydown', handler, capture);
     return () => target.removeEventListener('keydown', handler, capture);
-  }, [enabled, capture, stopPropagation]);
+  }, [enabled, capture, stopPropagation, preventDefault]);
 }

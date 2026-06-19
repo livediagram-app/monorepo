@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Portal } from './Portal';
+import { useEscape } from '@/hooks/useEscape';
 
 // Branded confirmation modal. Visual sibling of DeleteAccountDialog
 // (same fly-up animation, same border/shadow stack, same button
@@ -51,17 +52,7 @@ export function ConfirmDialog({
     confirmRef.current?.focus();
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onCancel]);
+  useEscape(onCancel, { enabled: open, preventDefault: true });
 
   if (!open) return null;
 
