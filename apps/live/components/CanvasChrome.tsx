@@ -2,7 +2,7 @@ import {
   alignmentGuides,
   arrowSnapPoints,
   deriveTextColorForBg,
-  isProgressShape,
+  isSelfDrawingShape,
   snapToArrowPoint,
   type ArrowElement,
 } from '@livediagram/diagram';
@@ -690,12 +690,13 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const canvasH = Math.abs(drawDrag.currentY - drawDrag.startY);
             const widthPx = Math.max(canvasW * viewportZoom, 1);
             const heightPx = Math.max(canvasH * viewportZoom, 1);
-            // Progress shapes render via ProgressView, not ShapeSvgOverlay, so
-            // they fall back to the dashed-rect preview (pill / circle corners).
+            // The self-drawing shapes (progress / rail / rating / charts) render
+            // via their own views, not ShapeSvgOverlay (which would draw nothing
+            // for them), so they fall back to the dashed-rect preview.
             const usesSvg =
               pendingDraw.type === 'shape' &&
               isSvgRenderedShape(pendingDraw.kind) &&
-              !isProgressShape(pendingDraw.kind);
+              !isSelfDrawingShape(pendingDraw.kind);
             // Box intents: square / circle / stadium use border-
             // radius on the wrapping div (matching the BoxedElementView
             // at-rest treatment), every SVG-rendered shape kind
