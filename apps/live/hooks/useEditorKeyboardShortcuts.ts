@@ -92,10 +92,28 @@ type EditorKeyboardShortcutsDeps = {
   // currently-selected element's group. The callback handles both
   // cases (caller checks multi vs single selection state).
   onGroupOrUngroup: () => void;
-  // Cmd/Ctrl+L: toggle lock on the current selection (single or multi).
+  // Cmd/Ctrl+Shift+L: toggle lock on the current selection (single or
+  // multi). On Shift+L rather than plain Cmd+L so it never fights the
+  // browser's "focus the address bar" binding.
   onToggleLock: () => void;
   // Cmd/Ctrl+A: select every element on the active tab at once.
   onSelectAll: () => void;
+  // Cmd/Ctrl+D: duplicate the current selection (single or multi). The
+  // caller routes to the single- vs multi-select duplicate.
+  onDuplicate: () => void;
+  // Cmd/Ctrl+X: cut, i.e. copy the selection to the clipboard then delete
+  // it. The caller composes copy + the matching delete.
+  onCut: () => void;
+  // Cmd/Ctrl+Shift+] / +[: raise / lower the selection in the z-order.
+  // Both operate on the whole current selection.
+  onBringToFront: () => void;
+  onSendToBack: () => void;
+  // Shift+1: fit all content on the active tab to the viewport. A pure
+  // view action (allowed for view-role).
+  onFitToScreen: () => void;
+  // Escape with a live selection and no transient mode to cancel clears
+  // the selection (single + multi). Mirrors clicking empty canvas.
+  onDeselect: () => void;
   // Space-tap on a single selected element drops into label edit
   // mode (mirroring double-click on the element). Distinct from
   // Space-drag, which the canvas hook already binds to "temporary
@@ -135,6 +153,52 @@ type EditorKeyboardShortcutsDeps = {
   // checkbox lives in the keyboard-shortcuts modal; the storage
   // hook is `useShortcutsEnabled`.
   enabled: boolean;
+};
+
+// Plain-key (no modifier) tool + element shortcuts, as lookup tables so
+// the letter and number aliases share one action each (no if-ladder to
+// keep in sync). Keys are matched lowercased; number aliases mirror the
+// Excalidraw layout. Split at the read-only gate:
+//
+//   VIEW_TOOL_KEYS: non-mutating view tools, allowed for view-role.
+//   EDIT_KEYS:      mutating tools / element adds, editors only.
+//
+// Image (`9`) is handled outside the table because its callback is
+// nullable (guest deploys without an api worker hide it).
+// Exported for the unit test, which asserts the key -> action mapping
+// against a spy `live` (the effect itself needs jsdom, which this
+// workspace's node-env vitest doesn't run; see specs/18-testing.md).
+export type ShortcutAction = (live: EditorKeyboardShortcutsDeps) => void;
+
+export const VIEW_TOOL_KEYS: Record<string, ShortcutAction> = {
+  v: (l) => l.setCanvasTool('select'),
+  s: (l) => l.setCanvasTool('select'), // legacy alias (pre-`V` standard)
+  '1': (l) => l.setCanvasTool('select'),
+  h: (l) => l.setCanvasTool('pan'),
+  k: (l) => l.setCanvasTool('laser'),
+  i: (l) => l.setCanvasTool('isometric'), // spec/45: pans like Hand, non-mutating
+  z: (l) => l.onToggleZen(), // spec/26 focus mode
+};
+
+export const EDIT_KEYS: Record<string, ShortcutAction> = {
+  e: (l) => l.setCanvasTool('eraser'),
+  '0': (l) => l.setCanvasTool('eraser'),
+  p: (l) => l.onBeginFreehand(), // Pencil (P is free now Hand owns H)
+  f: (l) => l.onBeginFreehand(), // Pencil (legacy alias)
+  '7': (l) => l.onBeginFreehand(),
+  r: (l) => l.addShape('square'),
+  '2': (l) => l.addShape('square'),
+  o: (l) => l.addShape('circle'),
+  '4': (l) => l.addShape('circle'),
+  d: (l) => l.addShape('diamond'),
+  '3': (l) => l.addShape('diamond'),
+  c: (l) => l.addShape('cylinder'),
+  g: (l) => l.addShape('parallelogram'),
+  t: (l) => l.addText(),
+  '8': (l) => l.addText(),
+  n: (l) => l.addSticky(),
+  a: (l) => l.addArrow(),
+  '5': (l) => l.addArrow(),
 };
 
 export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): void {
@@ -213,6 +277,29 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
         return;
       }
 
+      // --- Escape clears the selection ---
+      // When Escape has no transient mode to cancel (the narrow first
+      // effect above owns format / group / pending-draw / Format /
+      // Isometric) and the user isn't typing, a live selection is
+      // dropped, mirroring a click on empty canvas. Guarded on the same
+      // mode flags so a single Escape does one thing: cancel the mode
+      // OR deselect, never both.
+      if (
+        key === 'Escape' &&
+        !inText &&
+        live.editingId === null &&
+        live.formatSourceId === null &&
+        live.groupSourceId === null &&
+        live.pendingDraw === null &&
+        live.canvasTool !== 'format' &&
+        live.canvasTool !== 'isometric' &&
+        (live.selectedId !== null || live.multiSelectedIds.size > 0)
+      ) {
+        e.preventDefault();
+        live.onDeselect();
+        return;
+      }
+
       // --- Delete / Backspace ---
       if (key === 'Delete' || key === 'Backspace') {
         if (live.isReadOnly) return;
@@ -280,12 +367,26 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
           live.copySelection();
           return;
         }
+        // Cut: copy + delete in one. The caller composes the two.
+        if (lower === 'x') {
+          e.preventDefault();
+          live.onCut();
+          return;
+        }
+        // Duplicate. Plain `d` is Diamond; the modifier disambiguates.
+        if (lower === 'd') {
+          e.preventDefault();
+          live.onDuplicate();
+          return;
+        }
         if (lower === 'g') {
           e.preventDefault();
           live.onGroupOrUngroup();
           return;
         }
-        if (lower === 'l') {
+        // Lock on Cmd/Ctrl+Shift+L (not plain Cmd+L, which the browser
+        // reserves for the address bar).
+        if (lower === 'l' && e.shiftKey) {
           e.preventDefault();
           live.onToggleLock();
           return;
@@ -295,19 +396,33 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
           live.onSelectAll();
           return;
         }
+        // Z-order: Cmd/Ctrl+Shift+] front, +[ back. Match on `code` so
+        // the shifted bracket characters (`}` / `{`) don't fool the key
+        // compare on non-US layouts.
+        if (e.shiftKey && (e.code === 'BracketRight' || key === ']' || key === '}')) {
+          e.preventDefault();
+          live.onBringToFront();
+          return;
+        }
+        if (e.shiftKey && (e.code === 'BracketLeft' || key === '[' || key === '{')) {
+          e.preventDefault();
+          live.onSendToBack();
+          return;
+        }
         return;
       }
 
       // --- Plain key tool + element-add shortcuts ---
-      // Mnemonic-first bindings:
-      //   S = Select, P = Pan, L = Laser, E = Eraser (tools)
-      //   R = Rectangle (square), O = Oval (circle), D = Diamond,
-      //   C = Cylinder, H = Hexagon, G = Parallelogram (shapes)
-      //   T = Text, N = Note (sticky), A = Arrow, I = Image
-      //   F = Freehand (Pencil — P is taken by Pan)
+      // Standards-aligned bindings (Excalidraw / tldraw / Figma / Miro),
+      // dispatched via VIEW_TOOL_KEYS / EDIT_KEYS above:
+      //   V (S alias) = Select, H = Hand, K = Laser, I = Isometric,
+      //   Z = Zen, E = Eraser, P (F alias) = Pencil (tools)
+      //   R = Rectangle, O = Oval, D = Diamond, C = Cylinder,
+      //   G = Parallelogram, T = Text, N = Note, A = Arrow (elements)
+      //   1-9/0 mirror the same actions (Excalidraw number row).
       // The plain shape keys never collide with Cmd/Ctrl+C / +G (copy /
-      // group), which are handled in the modifier block above and return
-      // before reaching here.
+      // group) etc., which are handled in the modifier block above and
+      // return before reaching here.
       // Bail on text-input focus + editing-label state so the user
       // can still type literal letters into a label or comment.
       // Element-add shortcuts also check isReadOnly so view-role
@@ -333,13 +448,24 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
         return;
       }
 
+      // --- Zoom to fit (Shift+1) ---
+      // Matched on `code` (not `key`) because Shift turns "1" into "!"
+      // on US layouts; `Digit1` is layout-stable. Non-mutating, so it
+      // runs before the read-only gate and before type-to-edit (which
+      // would otherwise seed a label with "!").
+      if (e.shiftKey && e.code === 'Digit1') {
+        e.preventDefault();
+        live.onFitToScreen();
+        return;
+      }
+
       // --- Type-to-edit (spec/09 Labels) ---
       // A printable key on a single selected, label-bearing element
       // opens its label editor seeded with that character, INSTEAD of
       // firing the tool / add shortcuts below — the user kept selecting
       // a shape, typing, and accidentally dropping new elements. Space
       // is excluded (it stays the pan / tap-to-edit modifier). View-role
-      // never types (so viewers keep S/P/L). A non-labelable selection
+      // never types (so viewers keep V / H / K). A non-labelable selection
       // returns false and falls through to the shortcuts.
       if (
         !live.isReadOnly &&
@@ -354,97 +480,31 @@ export function useEditorKeyboardShortcuts(deps: EditorKeyboardShortcutsDeps): v
         }
       }
 
-      if (lower === 's') {
+      // Non-mutating view tools (Select / Hand / Laser / Isometric /
+      // Zen): before the read-only gate so view-role visitors get them.
+      const viewAction = VIEW_TOOL_KEYS[lower];
+      if (viewAction) {
         e.preventDefault();
-        live.setCanvasTool('select');
+        viewAction(live);
         return;
       }
-      if (lower === 'p') {
-        e.preventDefault();
-        live.setCanvasTool('pan');
-        return;
-      }
-      if (lower === 'l') {
-        e.preventDefault();
-        live.setCanvasTool('laser');
-        return;
-      }
-      // I = Isometric view (spec/45). A non-mutating view tool (pans like
-      // Hand), so it sits with the other S / P / L switches above the
-      // read-only gate — view-role visitors can tilt the diagram too.
-      if (lower === 'i') {
-        e.preventDefault();
-        live.setCanvasTool('isometric');
-        return;
-      }
-      // Zen / focus mode (spec/26). Before the read-only gate so
-      // view-role visitors can focus too — it's a pure view toggle.
-      if (lower === 'z') {
-        e.preventDefault();
-        live.onToggleZen();
-        return;
-      }
+
       if (live.isReadOnly) return;
-      // E = Eraser. After the read-only gate (it deletes), unlike the
-      // non-mutating S / P / L tool switches above.
-      if (lower === 'e') {
-        e.preventDefault();
-        live.setCanvasTool('eraser');
-        return;
-      }
-      if (lower === 'r') {
-        e.preventDefault();
-        live.addShape('square');
-        return;
-      }
-      if (lower === 'o') {
-        e.preventDefault();
-        live.addShape('circle');
-        return;
-      }
-      if (lower === 'd') {
-        e.preventDefault();
-        live.addShape('diamond');
-        return;
-      }
-      if (lower === 'c') {
-        e.preventDefault();
-        live.addShape('cylinder');
-        return;
-      }
-      if (lower === 'h') {
-        e.preventDefault();
-        live.addShape('hexagon');
-        return;
-      }
-      if (lower === 'g') {
-        e.preventDefault();
-        live.addShape('parallelogram');
-        return;
-      }
-      if (lower === 't') {
-        e.preventDefault();
-        live.addText();
-        return;
-      }
-      if (lower === 'n') {
-        e.preventDefault();
-        live.addSticky();
-        return;
-      }
-      if (lower === 'a') {
-        e.preventDefault();
-        live.addArrow();
-        return;
-      }
-      if (lower === 'i' && live.onAddImage) {
+
+      // Image (`9`): separate from EDIT_KEYS because its callback is
+      // nullable on guest deploys without an api worker.
+      if (lower === '9' && live.onAddImage) {
         e.preventDefault();
         live.onAddImage();
         return;
       }
-      if (lower === 'f') {
+
+      // Mutating tools / element adds (Eraser / Pencil / shapes / Text /
+      // Note / Arrow), editors only.
+      const editAction = EDIT_KEYS[lower];
+      if (editAction) {
         e.preventDefault();
-        live.onBeginFreehand();
+        editAction(live);
         return;
       }
     };

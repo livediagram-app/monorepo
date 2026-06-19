@@ -277,7 +277,6 @@ export function PaletteShapesTab({
         dragKind="hexagon"
         filled
         active={pendingShapeKind === 'hexagon'}
-        shortcut="H"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
           <polygon
@@ -487,6 +486,7 @@ export function PaletteToolsTab({
           description="Sketch a freehand stroke. Drag to draw; release near the start to close the shape."
           onClick={beginFreehand}
           active={pendingDraw?.type === 'freehand'}
+          shortcut="P"
         >
           <svg
             width="18"
@@ -584,7 +584,7 @@ export function PaletteToolsTab({
             onClick={addImage}
             noTint
             active={pendingDraw?.type === 'image'}
-            shortcut="I"
+            shortcut="9"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <rect
