@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { useEscape } from '@/hooks/useEscape';
+import { normaliseUrl } from '@/lib/url-safety';
 import type { ElementLink } from '@livediagram/diagram';
 
 // Shared link picker, styled like the import / export dialogs (centred
@@ -41,14 +42,6 @@ const MODES: { id: Mode; label: string }[] = [
   { id: 'tab', label: 'Tab' },
   { id: 'diagram', label: 'Diagram' },
 ];
-
-// Prepend https:// to a bare host (no scheme). Leaves mailto:, http(s)://
-// etc. untouched so the user can paste any address.
-function normaliseUrl(raw: string): string {
-  const t = raw.trim();
-  if (!t) return t;
-  return /^[a-z][a-z0-9+.-]*:/i.test(t) ? t : `https://${t}`;
-}
 
 export function LinkPickerDialog({
   title,
