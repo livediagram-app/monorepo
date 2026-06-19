@@ -214,7 +214,7 @@ export function TemplatePicker({
                       : 'Welcome to this diagram'
                     : step === 'theme'
                       ? 'Pick a theme'
-                      : 'Pick a template'}
+                      : 'Quick Start'}
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
                 {isWizard
@@ -320,7 +320,7 @@ export function TemplatePicker({
                   className={`flex items-center justify-between gap-3 ${showIdentity ? 'mt-5' : ''}`}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Pick a template
+                    Quick Start
                   </p>
                   <input
                     type="text"

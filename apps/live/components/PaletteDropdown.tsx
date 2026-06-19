@@ -13,6 +13,9 @@ export type PaletteDropdownOption = {
   // Optional single-key shortcut letter rendered as a subtle badge in the
   // menu row (the canvas-tool dropdown uses S / P / L).
   shortcut?: string;
+  // When true the option is shown greyed out and can't be picked (e.g. canvas
+  // tools that need existing content, disabled on an empty canvas).
+  disabled?: boolean;
   // Optional group index for visual separation: a divider is drawn in the
   // menu wherever the group changes between two visible (non-selected)
   // options. Robust to the selected option being filtered out — dividers
@@ -254,11 +257,17 @@ export function PaletteDropdown({
                       type="button"
                       role="option"
                       aria-selected={false}
+                      disabled={opt.disabled}
                       onClick={() => {
+                        if (opt.disabled) return;
                         onChange(opt.id);
                         setOpen(false);
                       }}
-                      className={`flex w-full items-center gap-2 text-left text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${
+                      className={`flex w-full items-center gap-2 text-left text-slate-600 dark:text-slate-300 ${
+                        opt.disabled
+                          ? 'cursor-not-allowed opacity-40'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                      } ${
                         // Match the trigger's sizing so the options read as the
                         // same control AND are the same height as the selected
                         // item (`py-3`), which is an easier tap target on touch.

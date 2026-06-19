@@ -895,6 +895,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onReset={onResetPalette}
           minimalPanels={minimalPanels}
           onToggleMinimalPanels={onToggleMinimalPanels}
+          canvasEmpty={elements.length === 0}
           onAddShape={onAddShape}
           onAddIcon={onAddIcon}
           onAddTechIcon={onAddTechIcon}
