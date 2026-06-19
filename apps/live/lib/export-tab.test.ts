@@ -251,6 +251,29 @@ describe('exportTabAsSvg', () => {
     expect(svg).not.toContain('A & B <ok>');
   });
 
+  it('paints the backdrop pattern by default and omits it when turned off', async () => {
+    const themed = tab({
+      elements: [shape('s')],
+      backgroundPattern: 'grid',
+      patternColor: '#334155',
+    });
+    const withPattern = await text(exportTabAsSvg(themed));
+    expect(withPattern).toContain('<pattern id="lvd-export-bg"');
+    expect(withPattern).toContain('url(#lvd-export-bg)');
+
+    const without = await text(exportTabAsSvg(themed, { pattern: false }));
+    expect(without).not.toContain('lvd-export-bg');
+  });
+
+  it('omits the pattern for blank / unset backdrops', async () => {
+    const blank = await text(
+      exportTabAsSvg(tab({ elements: [shape('s')], backgroundPattern: 'blank' })),
+    );
+    expect(blank).not.toContain('lvd-export-bg');
+    const unset = await text(exportTabAsSvg(tab({ elements: [shape('s')] })));
+    expect(unset).not.toContain('lvd-export-bg');
+  });
+
   it('renders a colour-deferring shape with the canvas defaults, not flat white', async () => {
     // A shape with no explicit colours defers to the theme/type defaults; the
     // export must match what the canvas draws (brand-50 fill / brand-500 border)

@@ -315,3 +315,122 @@ function wavesBg(stroke: string): string {
     '</svg>")'
   );
 }
+
+// ── Background pattern as an SVG tile, for the image export (spec/48) ─────
+//
+// The editor paints the backdrop pattern as a CSS background-image; an export
+// can't capture that, so this returns the SAME pattern as one tile of raw SVG
+// (raw `#` colours) for the export to drop into an SVG `<pattern>` (and to
+// rasterise onto the PNG/PDF canvas). Returns null for the patterns that paint
+// no static image — Blank and the animated ones (their motion is a live
+// overlay, so a still frame is just the backdrop colour). The geometry mirrors
+// the CSS builders above; it lives here so the pattern catalogue stays in one
+// module.
+//
+// `scale` (the tab's pattern-size slider) is baked in: the tile grows and its
+// content scales with it, matching `scaleBackgroundSize`. `opacity` fades the
+// pattern colour in lockstep with the backdrop, like the CSS path.
+export type BackgroundPatternTile = { width: number; height: number; content: string };
+
+export function backgroundPatternTile(
+  pattern: BackgroundPattern,
+  patternColor: string,
+  opacity = 1,
+  scale = 1,
+): BackgroundPatternTile | null {
+  const c = applyAlpha(patternColor, opacity);
+  const minor = applyAlpha(patternColor, opacity * 0.4);
+  // Confetti's fixed multi-colour dots (raw `#`), mirroring CONFETTI_BG.
+  const confetti =
+    "<circle cx='8' cy='12' r='2' fill='#f87171'/><circle cx='25' cy='8' r='1.5' fill='#60a5fa'/>" +
+    "<circle cx='42' cy='15' r='2' fill='#facc15'/><circle cx='52' cy='5' r='1.5' fill='#34d399'/>" +
+    "<circle cx='5' cy='30' r='1.5' fill='#a78bfa'/><circle cx='20' cy='38' r='2' fill='#fb923c'/>" +
+    "<circle cx='38' cy='32' r='1.5' fill='#ec4899'/><circle cx='50' cy='42' r='2' fill='#34d399'/>" +
+    "<circle cx='10' cy='50' r='2' fill='#60a5fa'/><circle cx='30' cy='52' r='1.5' fill='#facc15'/>" +
+    "<circle cx='45' cy='55' r='2' fill='#f87171'/>";
+  // [baseW, baseH, inner SVG]. Geometry mirrors patternStyleFor / the *Bg
+  // builders above; a `default` (grid dots) covers grid + any unlisted kind.
+  const spec = ((): { w: number; h: number; inner: string } | null => {
+    switch (pattern) {
+      case 'blank':
+      case 'flow':
+      case 'drift':
+      case 'aurora':
+      case 'ripple':
+      case 'ribbons':
+        return null;
+      case 'lines':
+        return { w: 24, h: 24, inner: `<path d='M0 0.5 H24' stroke='${c}' stroke-width='1'/>` };
+      case 'stripes':
+        return { w: 24, h: 24, inner: `<path d='M0.5 0 V24' stroke='${c}' stroke-width='1'/>` };
+      case 'graph':
+        return {
+          w: 24,
+          h: 24,
+          inner: `<path d='M0 0.5 H24 M0.5 0 V24' stroke='${c}' stroke-width='1' fill='none'/>`,
+        };
+      case 'crosshatch':
+        return {
+          w: 18,
+          h: 18,
+          inner: `<path d='M0 18 L18 0 M0 0 L18 18' stroke='${c}' stroke-width='1' fill='none'/>`,
+        };
+      case 'diagonal':
+        return {
+          w: 18,
+          h: 18,
+          inner: `<path d='M0 18 L18 0' stroke='${c}' stroke-width='1' fill='none'/>`,
+        };
+      case 'waves':
+        return {
+          w: 48,
+          h: 24,
+          inner: `<path d='M0 12 Q12 4 24 12 T48 12' fill='none' stroke='${c}' stroke-width='1'/>`,
+        };
+      case 'isometric':
+        return {
+          w: 28,
+          h: 16,
+          inner: `<path d='M0 16 L28 0 M0 0 L28 16' stroke='${c}' stroke-width='1' fill='none'/>`,
+        };
+      case 'hexagonal':
+        return {
+          w: 28,
+          h: 49,
+          inner: `<path d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='${c}'/>`,
+        };
+      case 'confetti':
+        return { w: 60, h: 60, inner: confetti };
+      case 'checkerboard':
+        return {
+          w: 24,
+          h: 24,
+          inner: `<rect x='12' y='0' width='12' height='12' fill='${c}'/><rect x='0' y='12' width='12' height='12' fill='${c}'/>`,
+        };
+      case 'bricks':
+        return {
+          w: 36,
+          h: 36,
+          inner: `<path d='M0 0.5 H36 M0 18.5 H36 M0.5 0 V18 M18.5 18 V36' stroke='${c}' stroke-width='1' fill='none'/>`,
+        };
+      case 'engineering':
+        // Fine 24px minor grid (lighter) + a bolder major line every 120px.
+        return {
+          w: 120,
+          h: 120,
+          inner:
+            `<path d='M0 24 H120 M0 48 H120 M0 72 H120 M0 96 H120 M24 0 V120 M48 0 V120 M72 0 V120 M96 0 V120' stroke='${minor}' stroke-width='1' fill='none'/>` +
+            `<path d='M0 0.5 H120 M0.5 0 V120' stroke='${c}' stroke-width='2' fill='none'/>`,
+        };
+      case 'grid':
+      default:
+        return { w: 24, h: 24, inner: `<circle cx='12' cy='12' r='1' fill='${c}'/>` };
+    }
+  })();
+  if (!spec) return null;
+  return {
+    width: spec.w * scale,
+    height: spec.h * scale,
+    content: scale === 1 ? spec.inner : `<g transform='scale(${scale})'>${spec.inner}</g>`,
+  };
+}

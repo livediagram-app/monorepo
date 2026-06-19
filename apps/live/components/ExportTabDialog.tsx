@@ -54,6 +54,9 @@ export function ExportTabDialog({
   // isometric projection. Off by default — the standard export is flat top-down.
   // Only affects the image formats (PNG / SVG / PDF); JSON / Markdown ignore it.
   const [isometric, setIsometric] = useState(false);
+  // Backdrop pattern (spec/48): paint the tab's grid / dots / … pattern. On by
+  // default so the export matches the canvas; switch off for a clean backdrop.
+  const [pattern, setPattern] = useState(true);
   useEscape(onClose);
 
   const isSelection = scope === 'selection';
@@ -70,11 +73,11 @@ export function ExportTabDialog({
       } else if (format === 'markdown') {
         downloadBlob(exportTabAsMarkdown(tab), `${baseName}.md`);
       } else if (format === 'png') {
-        downloadBlob(await exportTabAsPng(tab, { isometric }), `${baseName}.png`);
+        downloadBlob(await exportTabAsPng(tab, { isometric, pattern }), `${baseName}.png`);
       } else if (format === 'svg') {
-        downloadBlob(exportTabAsSvg(tab, { isometric }), `${baseName}.svg`);
+        downloadBlob(exportTabAsSvg(tab, { isometric, pattern }), `${baseName}.svg`);
       } else if (format === 'pdf') {
-        downloadBlob(await exportTabAsPdf(tab, { isometric }), `${baseName}.pdf`);
+        downloadBlob(await exportTabAsPdf(tab, { isometric, pattern }), `${baseName}.pdf`);
       }
       track('Diagram', 'Exported', EXPORT_LABEL[format]);
       onClose();
@@ -177,6 +180,27 @@ export function ExportTabDialog({
               </span>
             </span>
             <ToggleSwitch presentational checked={isometric} label="Export isometric view" />
+          </button>
+          {/* Image-format option: paint the tab's backdrop pattern (grid / dots
+              / …). On by default so the export matches the canvas. */}
+          <button
+            type="button"
+            onClick={() => {
+              track('UI', 'Toggled', 'PatternExport');
+              setPattern((v) => !v);
+            }}
+            aria-pressed={pattern}
+            className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
+          >
+            <span className="flex flex-col">
+              <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                Background pattern
+              </span>
+              <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                Paint the tab's grid / dots / texture behind the diagram.
+              </span>
+            </span>
+            <ToggleSwitch presentational checked={pattern} label="Export background pattern" />
           </button>
           {error ? (
             <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">

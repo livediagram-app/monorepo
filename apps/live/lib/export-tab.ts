@@ -32,6 +32,7 @@ import {
   type TextRun,
 } from '@livediagram/diagram';
 import { framesFirst } from './canvas';
+import { backgroundPatternTile } from './canvas-backgrounds';
 import {
   isoCanvasMatrix,
   isoDepthLayers,
@@ -42,8 +43,49 @@ import {
 
 // Shared options for the image exports (PNG / SVG / PDF). `isometric` tilts
 // the rendered scene into the editor's isometric projection (spec/45 / 48),
-// off by default so the standard export stays a flat top-down view.
-export type ImageExportOpts = { isometric?: boolean };
+// off by default. `pattern` paints the tab's backdrop pattern (grid / dots /
+// …); on by default, the user can switch it off in the Export dialog.
+export type ImageExportOpts = { isometric?: boolean; pattern?: boolean };
+
+// Default backdrop pattern colour when a tab leaves it unset (matches the
+// editor's fallback).
+const EXPORT_PATTERN_COLOR = '#cbd5e1'; // slate-300
+
+// One <pattern> id for the export SVG / canvas rasterisation.
+const BG_PATTERN_ID = 'lvd-export-bg';
+
+// The tab's backdrop pattern as an SVG <defs> + a fill ref, or null when the
+// pattern is off / blank / unset. Shared by the SVG export (inline) and the
+// PNG/PDF rasteriser. Animated patterns + Blank return null (no static image).
+function backgroundPatternDefs(
+  tab: Tab,
+  opts: ImageExportOpts,
+): { defs: string; fill: string; width: number; height: number; content: string } | null {
+  if (opts.pattern === false || !tab.backgroundPattern) return null;
+  const tile = backgroundPatternTile(
+    tab.backgroundPattern,
+    tab.patternColor ?? EXPORT_PATTERN_COLOR,
+    tab.backgroundOpacity ?? 1,
+    tab.backgroundPatternScale ?? 1,
+  );
+  if (!tile) return null;
+  const defs =
+    `<defs><pattern id="${BG_PATTERN_ID}" patternUnits="userSpaceOnUse" ` +
+    `width="${r2(tile.width)}" height="${r2(tile.height)}">${tile.content}</pattern></defs>`;
+  return { defs, fill: `url(#${BG_PATTERN_ID})`, ...tile };
+}
+
+// Rasterise an SVG string to an Image (for drawing the pattern onto the PNG /
+// PDF canvas). Browser-only; the canvas renderer is never reached in non-DOM
+// test runs (no 2D context there).
+function svgToImage(svg: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('pattern render failed'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
 
 // ---------------------------------------------------------------------
 // File (JSON)
@@ -187,10 +229,10 @@ function contentBounds(elements: Element[]): { x: number; y: number; w: number; 
 // triangular head. Fancier rendering (rich text, padding, theme
 // patterns) is intentionally out of scope; the export is meant as
 // a faithful overview, not a pixel-perfect screenshot.
-function renderTabToCanvas(
+async function renderTabToCanvas(
   tab: Tab,
   opts: { scale?: number } & ImageExportOpts = {},
-): HTMLCanvasElement {
+): Promise<HTMLCanvasElement> {
   const scale = opts.scale ?? 2; // default 2× for crisp output
   const bounds = contentBounds(tab.elements);
   // Isometric export (spec/45 / 48): project the flat content through the iso
@@ -207,11 +249,25 @@ function renderTabToCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
   ctx.scale(scale, scale);
-  // Background — solid white. Painted across the whole canvas BEFORE the iso
-  // tilt so the triangular margins around the parallelogram fill too (theme
-  // backgrounds stay out of scope; flat white is the safest export default).
+  // Background colour, painted across the whole canvas BEFORE the iso tilt so
+  // the triangular margins around the parallelogram fill too. The pattern (if
+  // on) sits flat over it — like the editor, whose backdrop never tilts.
   ctx.fillStyle = tab.backgroundColor ?? EXPORT_BG;
   ctx.fillRect(0, 0, w / scale, h / scale);
+  const bg = backgroundPatternDefs(tab, opts);
+  if (bg) {
+    const wu = w / scale;
+    const hu = h / scale;
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.floor(w)}" height="${Math.floor(h)}" viewBox="0 0 ${r2(wu)} ${r2(hu)}">` +
+      `${bg.defs}<rect width="${r2(wu)}" height="${r2(hu)}" fill="${bg.fill}"/></svg>`;
+    try {
+      const img = await svgToImage(svg);
+      ctx.drawImage(img, 0, 0, wu, hu);
+    } catch {
+      // Pattern is decorative — a render failure must never abort the export.
+    }
+  }
   // Position the (projected) content min-corner at the padding offset, then
   // apply the iso projection so element coords map onto the tilted plane.
   ctx.translate(EXPORT_PADDING - draw.x, EXPORT_PADDING - draw.y);
@@ -918,6 +974,15 @@ function renderTabToSvg(tab: Tab, opts: ImageExportOpts = {}): string {
   parts.push(
     `<rect x="${r2(vbX)}" y="${r2(vbY)}" width="${r2(vbW)}" height="${r2(vbH)}" fill="${xmlEscape(tab.backgroundColor ?? EXPORT_BG)}"/>`,
   );
+  // Backdrop pattern (spec/48) over the colour, flat (never tilted — the
+  // editor's backdrop doesn't tilt in isometric either).
+  const bg = backgroundPatternDefs(tab, opts);
+  if (bg) {
+    parts.push(bg.defs);
+    parts.push(
+      `<rect x="${r2(vbX)}" y="${r2(vbY)}" width="${r2(vbW)}" height="${r2(vbH)}" fill="${bg.fill}"/>`,
+    );
+  }
   if (iso) {
     parts.push(`<g transform="matrix(${r2(iso.a)} ${r2(iso.b)} ${r2(iso.c)} ${r2(iso.d)} 0 0)">`);
     // All extrusion columns behind all element bodies (matching the canvas).
@@ -946,8 +1011,8 @@ export function exportTabAsSvg(tab: Tab, opts: ImageExportOpts = {}): Blob {
 // PNG
 // ---------------------------------------------------------------------
 
-export function exportTabAsPng(tab: Tab, opts: ImageExportOpts = {}): Promise<Blob> {
-  const canvas = renderTabToCanvas(tab, opts);
+export async function exportTabAsPng(tab: Tab, opts: ImageExportOpts = {}): Promise<Blob> {
+  const canvas = await renderTabToCanvas(tab, opts);
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
@@ -963,7 +1028,7 @@ export function exportTabAsPng(tab: Tab, opts: ImageExportOpts = {}): Promise<Bl
 // ---------------------------------------------------------------------
 
 export async function exportTabAsPdf(tab: Tab, opts: ImageExportOpts = {}): Promise<Blob> {
-  const canvas = renderTabToCanvas(tab, opts);
+  const canvas = await renderTabToCanvas(tab, opts);
   // Fetch the PNG bytes from the canvas, then embed them as a
   // /DCTDecode-less image — we use the simpler /FlateDecode raw
   // pixel-bytes encoding so we don't need a JPEG re-encoder. The

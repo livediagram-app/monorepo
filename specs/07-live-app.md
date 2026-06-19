@@ -149,3 +149,5 @@ The root layout (`apps/live/app/layout.tsx`) exports a `viewport` config that pi
 - **Multi-user team permissions beyond share links**: today a diagram is either private or shared via a per-link role. No teams, no per-user grants.
 
 (The previous "Auth UI" and "Export" bullets are now shipped: Clerk auth landed per [spec/04](04-auth-and-guest-access.md), and the active tab can be exported as JSON / Markdown / PNG / SVG / PDF via the `ExportTabDialog`.)
+
+The image exports (PNG / SVG / PDF) honour the tab's theme: per-element colours, or the same `defaultFillColor` / `defaultStrokeColor` / `defaultTextColor` the canvas uses for elements that defer to the theme, plus the tab's background colour. Two iOS-style toggles in the dialog tune the image output: **Isometric view** (off by default; tilts the scene into the isometric projection, see [spec/45](45-isometric-view.md)) and **Background pattern** (on by default; paints the tab's backdrop pattern — grid / dots / … — via `backgroundPatternTile` in `canvas-backgrounds.ts`, shared by the SVG and the PNG/PDF rasteriser).
