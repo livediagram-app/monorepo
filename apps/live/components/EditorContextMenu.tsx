@@ -392,24 +392,24 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                   <div className="px-2 py-1">
                     <BorderGrid label="Strength" cols={5}>
                       {BORDER_STROKES.map((v) => (
-                        <BorderButton
+                        <SizeButton
                           key={v}
                           active={(borderSrc?.strokeWidth ?? 'medium') === v}
                           onClick={() => props.onSetBorderStroke(v)}
                         >
                           <BorderStrokeIcon value={v} />
-                        </BorderButton>
+                        </SizeButton>
                       ))}
                     </BorderGrid>
                     <BorderGrid label="Pattern" cols={3}>
                       {BORDER_STYLES.map((v) => (
-                        <BorderButton
+                        <SizeButton
                           key={v}
                           active={(borderSrc?.strokeStyle ?? 'solid') === v}
                           onClick={() => props.onSetBorderStyle(v)}
                         >
                           <BorderStyleIcon value={v} />
-                        </BorderButton>
+                        </SizeButton>
                       ))}
                     </BorderGrid>
                   </div>
@@ -818,36 +818,36 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               <div className="px-2 py-1">
                 <BorderGrid label="Strength" cols={5}>
                   {BORDER_STROKES.map((v) => (
-                    <BorderButton
+                    <SizeButton
                       key={v}
                       active={borderStrokeVal === v}
                       onClick={() => props.onSetBorderStroke(v)}
                     >
                       <BorderStrokeIcon value={v} />
-                    </BorderButton>
+                    </SizeButton>
                   ))}
                 </BorderGrid>
                 <BorderGrid label="Pattern" cols={3}>
                   {BORDER_STYLES.map((v) => (
-                    <BorderButton
+                    <SizeButton
                       key={v}
                       active={borderStyleVal === v}
                       onClick={() => props.onSetBorderStyle(v)}
                     >
                       <BorderStyleIcon value={v} />
-                    </BorderButton>
+                    </SizeButton>
                   ))}
                 </BorderGrid>
                 {supportsBorderRadius(target) ? (
                   <BorderGrid label="Radius" cols={5}>
                     {BORDER_RADII.map((v) => (
-                      <BorderButton
+                      <SizeButton
                         key={v}
                         active={borderRadiusVal === v}
                         onClick={() => props.onSetBorderRadius(v)}
                       >
                         <BorderRadiusIcon value={v} />
-                      </BorderButton>
+                      </SizeButton>
                     ))}
                   </BorderGrid>
                 ) : null}
@@ -1278,23 +1278,6 @@ function BorderGrid({
       </p>
       <div className={`grid gap-1 ${colClass}`}>{children}</div>
     </div>
-  );
-}
-
-// Border preset button — SizeButton with the menu's active tone.
-function BorderButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <SizeButton active={active} onClick={onClick}>
-      {children}
-    </SizeButton>
   );
 }
 
