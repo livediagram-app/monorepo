@@ -184,6 +184,18 @@ describe('useElementStyle pie chart (spec/53)', () => {
     expect(el.pieSlices).toEqual([{ label: 'X', value: 5 }]);
     expect(el.chartLegend).toBe(false);
   });
+
+  it('replaces the line chart 2-D dataset (categories + series)', () => {
+    const a = createShape('line-chart', 0, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+    style.setLineDataSelected(['Q1', 'Q2'], [{ name: 'Rev', values: [3, 7] }]);
+    const el = result()[0] as {
+      lineCategories?: string[];
+      lineSeries?: { name: string; values: number[] }[];
+    };
+    expect(el.lineCategories).toEqual(['Q1', 'Q2']);
+    expect(el.lineSeries).toEqual([{ name: 'Rev', values: [3, 7] }]);
+  });
 });
 
 describe('useElementStyle shape style presets (spec/48)', () => {

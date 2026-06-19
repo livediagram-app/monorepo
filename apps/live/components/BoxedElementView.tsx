@@ -23,6 +23,7 @@ import {
   defaultTextColor,
   hasRichFormatting,
   isBarShape,
+  isLineShape,
   isPieShape,
   isProgressShape,
   isRailShape,
@@ -62,6 +63,7 @@ import { RailView } from './RailView';
 import { RatingView } from './RatingView';
 import { PieChartView } from './PieChartView';
 import { BarChartView } from './BarChartView';
+import { LineChartView } from './LineChartView';
 import { TechIconGlyph } from './tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
 import { isTechIconId } from '@/lib/tech-icons';
@@ -662,6 +664,14 @@ function BoxedElementViewImpl({
       ) : element.type === 'shape' && isBarShape(element.shape) ? (
         // Bar chart (spec/53): bars sized by value + a legend.
         <BarChartView
+          element={element}
+          fontFamily={fontFamily}
+          textColor={textColor}
+          palette={chartPalette}
+        />
+      ) : element.type === 'shape' && isLineShape(element.shape) ? (
+        // Line chart (spec/53): multi-series lines + a legend.
+        <LineChartView
           element={element}
           fontFamily={fontFamily}
           textColor={textColor}

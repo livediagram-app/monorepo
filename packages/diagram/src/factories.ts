@@ -1,5 +1,7 @@
 import {
   isBoxed,
+  LINE_DEFAULT_CATEGORIES,
+  LINE_DEFAULT_SERIES,
   PIE_DEFAULT_SLICES,
   RAIL_DEFAULT_POINTS,
   RAIL_POINT_STEP_PX,
@@ -89,6 +91,8 @@ export const SHAPE_DEFAULT_SIZE: Record<ShapeKind, { width: number; height: numb
   'pie-chart': { width: 280, height: 180 },
   // Bar chart: bars + a legend beside them.
   'bar-chart': { width: 280, height: 180 },
+  // Line chart: axes + lines + a legend; a touch wider for the x-axis labels.
+  'line-chart': { width: 320, height: 200 },
 };
 
 // New boxed elements default to Medium text size per spec 09 ("Text size").
@@ -149,6 +153,14 @@ export function createShape(kind: ShapeKind, x: number, y: number): ShapeElement
   // See spec/53.
   if (kind === 'pie-chart' || kind === 'bar-chart') {
     return { ...base, pieSlices: PIE_DEFAULT_SLICES.map((s) => ({ ...s })) };
+  }
+  // Line chart: shared categories + a couple of sample series (CSV-importable).
+  if (kind === 'line-chart') {
+    return {
+      ...base,
+      lineCategories: [...LINE_DEFAULT_CATEGORIES],
+      lineSeries: LINE_DEFAULT_SERIES.map((s) => ({ ...s, values: [...s.values] })),
+    };
   }
   return base;
 }

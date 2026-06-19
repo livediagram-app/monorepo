@@ -1,18 +1,24 @@
-# 53 — Data charts (pie + bar)
+# 53 — Data charts (pie + bar + line)
 
 Data charts are elements whose marks are sized by value, in a categorical
 palette, with an optional legend. The **Data** palette category holds them —
-**Pie** and **Bar** today, built so more chart kinds slot in beside them. Pie +
-bar share the same data model, animation set, legend toggle, and context-menu
-categories; only the rendering differs.
+**Pie**, **Bar**, and **Line** today, built so more chart kinds slot in beside
+them. They share the animation set, legend toggle, and context-menu categories;
+pie + bar also share the same 1-D data model, while the line chart carries a
+2-D dataset (see Model).
 
 ## Behaviour
 
-- Drag a **Pie** or **Bar** chart in from the palette's **Data** category. It
-  drops with three sample data points.
-- A **Data** context-menu category edits the chart: one row per datum — a
-  recolourable swatch, a **label**, and a **value** — plus add / remove. The
-  chart + legend redraw live from the data.
+- Drag a **Pie**, **Bar**, or **Line** chart in from the palette's **Data**
+  category. It drops with sample data.
+- A **Data** context-menu category edits the chart. Pie / bar: one row per
+  datum — a recolourable swatch, a **label**, and a **value** — plus add /
+  remove. Line: a 2-D **grid** (a row per category, a column per series, with
+  the series names along the top) plus add / remove row + series, and an
+  **Import CSV** button (header row = series names, first column = category
+  labels). The chart + legend redraw live from the data.
+- Hovering a mark (slice / bar / line point) shows a tooltip with its label +
+  value, regardless of the legend toggle.
 - A **Chart** context-menu category holds display options: a **Legend** toggle
   (on by default) that shows / hides the label key beside the chart.
 - The **Animation** category carries the chart-specific animations
@@ -29,24 +35,31 @@ categories; only the rendering differs.
 
 ## Model
 
-Pie chart is a `ShapeKind` `'pie-chart'` (like the progress / rating elements),
-not a new top-level type — so it inherits boxed-element behaviour with no new
-render/copy/export branches.
+Each chart is a `ShapeKind` (`'pie-chart'` / `'bar-chart'` / `'line-chart'`),
+not a new top-level type — so they inherit boxed-element behaviour. `isChartShape`
+groups all three (they're all in `isSelfDrawingShape` too).
 
-- `ShapeElement.pieSlices?: PieSlice[]` (`{ label, value, color? }`), plus
-  `pieAnim?` / `pieAnimSpeed?` / `pieAnimRepeat?`. The `PieSlice` / `PieAnim`
-  types, `PIE_ANIMS`, `PIE_PALETTE`, `PIE_DEFAULT_SLICES`, and `isPieShape()`
-  live in `packages/diagram/src/index.ts`.
-- Rendered by `PieChartView` (`apps/live/components/PieChartView.tsx`): SVG
-  wedges sized by value (a single 100% slice draws as a full circle), default
-  palette or per-slice colour, with a legend; the slice group carries the
-  `lvd-pie-*` animation (CSS in `globals.css`, reduced-motion-safe).
-  `element-variant.ts` gives it a borderless wrapper.
-- Setters in `useElementStyle.ts`: `setPieDataSelected(slices)` (the Data editor
-  builds the next array — add / remove / edit — and commits it) +
-  `setPieAnim*Selected`, gated to pie shapes.
-- Telemetry (spec/22): `track('Element', 'Added', 'PieChart')` on create,
-  `track('Element', 'Changed', 'PieData' | 'PieAnim')` on edits.
+- Pie + bar: `ShapeElement.pieSlices?: PieSlice[]` (`{ label, value, color? }`).
+- Line: `ShapeElement.lineCategories?: string[]` + `lineSeries?: LineSeries[]`
+  (`{ name, color?, values: number[] }`), aligned to the categories — a 2-D
+  dataset. `LINE_DEFAULT_CATEGORIES` / `LINE_DEFAULT_SERIES` seed a fresh chart.
+- All three share `pieAnim?` / `pieAnimSpeed?` / `pieAnimRepeat?` + `chartLegend?`.
+  The types + constants + `isPieShape` / `isBarShape` / `isLineShape` /
+  `isChartShape` live in `packages/diagram/src/index.ts`.
+- Rendered by `PieChartView` / `BarChartView` / `LineChartView`: SVG marks in the
+  default palette or a per-mark colour, with a `ChartLegend`; the mark group
+  carries the `lvd-pie-*` animation (CSS in `globals.css`, reduced-motion-safe),
+  the axes / labels stay still. `element-variant.ts` gives them a borderless
+  wrapper. Shared preamble lives in `lib/chart.ts` (`chartFrame` / `chartAnim`);
+  hover wiring in `useChartHover` + `ChartTooltip`.
+- CSV import (line): `parseCsvLineData` in `apps/live/lib/csv.ts` (quoted-field
+  aware) turns a pasted/uploaded CSV into categories + series.
+- Setters in `useElementStyle.ts`: `setPieDataSelected(slices)` (pie / bar),
+  `setLineDataSelected(categories, series)` (line), + `setChartLegendSelected` /
+  `setPieAnim*Selected`, all gated to chart shapes.
+- Telemetry (spec/22): `track('Element', 'Added', 'PieChart' | 'BarChart' |
+'LineChart')` on create, `track('Element', 'Changed', 'ChartData' | 'LineData'
+| 'ChartAnim' | 'ChartLegend')` on edits.
 
 Follows the composite-component pattern (spec/51, 52): a dedicated `ShapeKind`
 

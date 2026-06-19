@@ -14,6 +14,7 @@ import type {
   ElementLink,
   IconAnimation,
   IconPosition,
+  LineSeries,
   Padding,
   PieAnim,
   PieSlice,
@@ -131,6 +132,10 @@ export type ShapeElement = {
   pieAnimSpeed?: AnimationSpeed;
   pieAnimRepeat?: boolean;
   chartLegend?: boolean;
+  // Line chart (spec/53): the shared x-axis categories + one or more named
+  // series (CSV-importable). Only meaningful on the 'line-chart' kind.
+  lineCategories?: string[];
+  lineSeries?: LineSeries[];
   // Status marker (spec/49): a small glyph (traffic-light dot / checkbox) shown
   // just left of the label, or centred when the shape has no label. `markerSize`
   // is a TextSize bucket where 'scale' tracks the element's text size.

@@ -44,6 +44,7 @@ import {
   type ElementAnimation,
   type IconAnimation,
   type PieAnim,
+  type LineSeries,
   type PieSlice,
   type ProgressAnim,
   type RatingAnim,
@@ -737,6 +738,10 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setPieFieldSelected({ pieAnimRepeat: value }, 'ChartAnim');
   const setChartLegendSelected = (value: boolean) =>
     setPieFieldSelected({ chartLegend: value }, 'ChartLegend');
+  // Line chart (spec/53): replace the whole 2-D dataset (the grid editor / CSV
+  // import builds the next categories + series and commits them together).
+  const setLineDataSelected = (categories: string[], series: LineSeries[]) =>
+    setPieFieldSelected({ lineCategories: categories, lineSeries: series }, 'LineData');
 
   // Clear per-element colour overrides so the element falls back to
   // whatever the current tab theme dictates. Each colour field is set
@@ -858,6 +863,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     setPieAnimSpeedSelected,
     setPieAnimRepeatSelected,
     setChartLegendSelected,
+    setLineDataSelected,
     applyShapeColorPresetSelected,
     applyShapeBorderPresetSelected,
     resetShapeStyleSelected,

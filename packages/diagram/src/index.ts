@@ -235,6 +235,18 @@ export const PIE_DEFAULT_SLICES: readonly PieSlice[] = [
   { label: 'C', value: 20 },
 ];
 
+// Line chart (spec/53). Unlike the pie / bar single row of data, a line chart
+// is 2-D: shared x-axis `lineCategories` (e.g. months) and one or more
+// `lineSeries`, each a named line with a value per category (+ an optional
+// colour override). Editable as a grid and importable from CSV. Reuses the
+// shared `pieAnim` / `chartLegend` fields. The legend lists series names.
+export type LineSeries = { name: string; color?: string; values: number[] };
+export const LINE_DEFAULT_CATEGORIES: readonly string[] = ['Jan', 'Feb', 'Mar', 'Apr'];
+export const LINE_DEFAULT_SERIES: readonly LineSeries[] = [
+  { name: 'Series 1', values: [10, 25, 18, 32] },
+  { name: 'Series 2', values: [5, 12, 22, 16] },
+];
+
 export function isPieShape(kind: ShapeKind): boolean {
   return kind === 'pie-chart';
 }
@@ -243,13 +255,18 @@ export function isBarShape(kind: ShapeKind): boolean {
   return kind === 'bar-chart';
 }
 
-// Pie + bar are the "Data" charts: they share the labelled data
-// (`pieSlices`), the slice animation (`pieAnim`), the legend toggle
-// (`chartLegend`), and the Data / Chart / Animation context-menu categories.
-// The `pie*` field names are kept (not renamed to `chart*`) so saved diagrams
+export function isLineShape(kind: ShapeKind): boolean {
+  return kind === 'line-chart';
+}
+
+// Pie + bar + line are the "Data" charts: they share the slice animation
+// (`pieAnim`), the legend toggle (`chartLegend`), and the Data / Chart /
+// Animation context-menu categories. Pie + bar share the 1-D `pieSlices`; the
+// line chart carries its own 2-D `lineCategories` + `lineSeries` instead. The
+// `pie*` field names are kept (not renamed to `chart*`) so saved diagrams
 // round-trip without a migration.
 export function isChartShape(kind: ShapeKind): boolean {
-  return isPieShape(kind) || isBarShape(kind);
+  return isPieShape(kind) || isBarShape(kind) || isLineShape(kind);
 }
 
 // The "self-drawing" shape kinds: progress (bar / ring), timeline rail, rating,
@@ -378,6 +395,9 @@ export type ShapeKind =
   // `pieAnim` / `chartLegend` (below). The "Data" component family.
   | 'pie-chart'
   | 'bar-chart'
+  // Line chart (spec/53): a 2-D chart with `lineCategories` + `lineSeries`
+  // (CSV-importable). Shares `pieAnim` / `chartLegend`.
+  | 'line-chart'
   // Curated single-colour glyph from the icon catalogue. Which glyph
   // is carried by `iconId` (a registry key resolved in the live app's
   // icon catalogue, NOT a closed enum here, so adding icons is a

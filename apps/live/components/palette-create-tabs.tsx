@@ -51,6 +51,29 @@ export function PaletteDataTab({
         </svg>
       </IconButton>
       <IconButton
+        label="Add line chart"
+        caption="Line"
+        description="A multi-series line chart. Edit the data grid or import a CSV from the Data menu."
+        onClick={() => addShape('line-chart')}
+        dragKind="line-chart"
+        filled
+        active={pendingShapeKind === 'line-chart'}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M4 18 L9 11 L14 14 L20 6" />
+        </svg>
+      </IconButton>
+      <IconButton
         label="Add progress bar"
         caption="Progress"
         description="Horizontal progress bar. Set the percentage from its menu."
