@@ -976,9 +976,6 @@ function FreehandSvg({
 // the side named by `position`; icon + label are centred together as a
 // group. Everything is pointer-events-none so a drag still grabs the
 // shape; the label's own editor re-enables pointer events when active.
-// Fixed label sizes mirror element-labels' FIXED_FONT_PX; 'scale' has no
-// fixed px, so derive a reasonable size from the box for the inline case.
-const INLINE_FONT_PX = { sm: 14, md: 22, lg: 32 } as const;
 
 function ShapeInlineIconLayout({
   element,
@@ -1021,10 +1018,12 @@ function ShapeInlineIconLayout({
 }) {
   const isRow = position === 'left' || position === 'right';
   const iconFirst = position === 'left' || position === 'above';
+  // Fixed sizes reuse element-labels' FIXED_FONT_PX; 'scale' has no fixed px,
+  // so derive a reasonable size from the box for the inline icon+label case.
   const fontSize =
     textSize === 'scale'
       ? Math.max(12, Math.min(element.height * 0.26, 26))
-      : INLINE_FONT_PX[textSize];
+      : FIXED_FONT_PX[textSize];
   // Element-proportional size: a fraction of the shorter side, clamped so
   // it's neither a speck nor dominant. Used as the ceiling (and as the
   // size itself for an icon with no label — nothing to scale against).
