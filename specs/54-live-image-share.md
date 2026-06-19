@@ -36,13 +36,13 @@ The router already forwards `/api/*` to the api worker, so no router change.
 ## Renderer sharing (the build's main work)
 
 The SVG renderer currently lives in `apps/live/lib/export-tab.ts` (client-only)
-and the worker can't import from an app. So the tab→SVG renderer
-(`renderTabToSvg` + `describeBoxedExport` + `contentBounds` + the `svg*` helpers
-+ label-wrap + `arrowHeadRefs` + the iso matrix + `backgroundPatternTile` +
-`framesFirst`) must move into a **new shared, DOM-free package**
-(`@livediagram/render`), imported by **both** the live editor's export and the
-api worker. The label-measure helper already degrades to a character-width
-estimate when there's no `document`, so it runs in the Worker.
+and the worker can't import from an app. So the tab→SVG renderer must move into
+a **new shared, DOM-free package** (`@livediagram/render`), imported by **both**
+the live editor's export and the api worker. What moves: `renderTabToSvg`,
+`describeBoxedExport`, `contentBounds`, the `svg*` helpers, the label-wrap,
+`arrowHeadRefs`, the iso matrix, `backgroundPatternTile`, and `framesFirst`. The
+label-measure helper already degrades to a character-width estimate when there's
+no `document`, so it runs in the Worker.
 
 This is a sizeable extraction (it touches the export / canvas / isometric code
 paths), so it's tracked as its own change to keep it well-tested and the export
