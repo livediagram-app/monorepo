@@ -8,13 +8,13 @@
 // `lvd-pie-*` animation (grow / pop / spin / pulse), reduced-motion-safe.
 
 import {
-  ANIMATION_SPEED_FACTOR,
   animLoops,
   PIE_DEFAULT_SLICES,
   PIE_LOOPING_ANIMS,
   PIE_PALETTE,
   type ShapeElement,
 } from '@livediagram/diagram';
+import { animClass, animSpeedVars } from '@/lib/icons';
 
 export function BarChartView({
   element,
@@ -52,11 +52,10 @@ export function BarChartView({
   const anim = element.pieAnim;
   const loops = animLoops(anim, element.pieAnimRepeat, PIE_LOOPING_ANIMS);
   const groupStyle = anim
-    ? ({
+    ? {
         transformOrigin: `${barAreaW / 2}px ${baseY}px`,
-        '--lvd-pie-speed': ANIMATION_SPEED_FACTOR[element.pieAnimSpeed ?? 'normal'],
-        '--lvd-pie-iter': loops ? 'infinite' : 1,
-      } as React.CSSProperties)
+        ...animSpeedVars('pie', element.pieAnimSpeed, loops),
+      }
     : undefined;
 
   return (
@@ -77,7 +76,7 @@ export function BarChartView({
           stroke="#cbd5e1"
           strokeWidth={1}
         />
-        <g className={anim ? `lvd-pie-${anim}` : undefined} style={groupStyle}>
+        <g className={animClass('pie', anim)} style={groupStyle}>
           {data.map((d, i) => {
             const barH = (Math.max(0, d.value) / maxVal) * fullH;
             const cx = padX + slot * (i + 0.5);
