@@ -206,7 +206,11 @@ function GetStartedContent() {
 
   return (
     <AuthCard
-      subtitle={phase === 1 ? 'Create your account' : 'Check your email'}
+      subtitle={
+        phase === 1
+          ? 'Create a free account to keep your diagrams and work across multiple devices.'
+          : 'Check your email'
+      }
       error={error}
       footer={
         <>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DiagramBuildAnimation } from './DiagramBuildAnimation';
 
 // Full-screen "loading your diagram…" placeholder. Stand-in for the
 // editor chrome while the post-mount fetch resolves a ?d= or ?s= URL.
@@ -22,20 +23,7 @@ export function DiagramLoading() {
   return (
     <div className="flex flex-1 items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-3">
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 32 32"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          className="animate-spin text-brand-500"
-          aria-hidden
-        >
-          <circle cx="16" cy="16" r="12" strokeOpacity="0.18" />
-          <path d="M28 16a12 12 0 0 0-12-12" />
-        </svg>
+        <DiagramBuildAnimation />
         <p className="text-sm font-medium text-slate-600">Loading your diagram…</p>
         {slow ? (
           <div className="mt-2 flex flex-col items-center gap-2">

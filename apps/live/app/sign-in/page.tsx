@@ -204,7 +204,7 @@ function SignInContent() {
 
   return (
     <AuthCard
-      subtitle="Sign in to your account"
+      subtitle="Sign in to keep your diagrams and work across multiple devices."
       error={error}
       footer={
         <>
