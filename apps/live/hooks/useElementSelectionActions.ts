@@ -178,11 +178,11 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
     track('Element', 'Duplicated');
     const offset = 24;
     const boxedSources = activeTab.elements.filter(
-      (el) => multiSelectedIds.has(el.id) && isBoxed(el),
-    ) as BoxedElement[];
+      (el): el is BoxedElement => multiSelectedIds.has(el.id) && isBoxed(el),
+    );
     const arrowSources = activeTab.elements.filter(
-      (el) => multiSelectedIds.has(el.id) && el.type === 'arrow',
-    ) as ArrowElement[];
+      (el): el is ArrowElement => multiSelectedIds.has(el.id) && el.type === 'arrow',
+    );
     if (boxedSources.length === 0 && arrowSources.length === 0) return;
     const boxedIdMap = new Map<string, string>();
     const boxedCopies: BoxedElement[] = boxedSources.map((s) => {
