@@ -286,34 +286,24 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   };
 
   // Toggle the header row / column band on the selected table(s).
-  const setTableHeaderRowSelected = () => {
+  // Toggle a boolean structure flag on every selected table. The three table
+  // toggles differ only in the field + telemetry type, so they share one body.
+  const toggleTableFlag = (
+    field: 'headerRow' | 'headerColumn' | 'zebra',
+    telemetryType: 'TableHeaderRow' | 'TableHeaderColumn' | 'TableZebra',
+  ) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
-    track('Element', 'Toggled', 'TableHeaderRow');
+    track('Element', 'Toggled', telemetryType);
     commit((els) =>
       els.map((el) =>
-        ids.has(el.id) && el.type === 'table' ? { ...el, headerRow: !el.headerRow } : el,
+        ids.has(el.id) && el.type === 'table' ? { ...el, [field]: !el[field] } : el,
       ),
     );
   };
-  const setTableZebraSelected = () => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    track('Element', 'Toggled', 'TableZebra');
-    commit((els) =>
-      els.map((el) => (ids.has(el.id) && el.type === 'table' ? { ...el, zebra: !el.zebra } : el)),
-    );
-  };
-  const setTableHeaderColumnSelected = () => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    track('Element', 'Toggled', 'TableHeaderColumn');
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'table' ? { ...el, headerColumn: !el.headerColumn } : el,
-      ),
-    );
-  };
+  const setTableHeaderRowSelected = () => toggleTableFlag('headerRow', 'TableHeaderRow');
+  const setTableZebraSelected = () => toggleTableFlag('zebra', 'TableZebra');
+  const setTableHeaderColumnSelected = () => toggleTableFlag('headerColumn', 'TableHeaderColumn');
 
   const setArrowStyleSelected = (style: ArrowStyle) => {
     const ids = currentSelectionIds();
