@@ -1,0 +1,38 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "The Format Painter", description: "Copy one element's styling onto others in a single click with the format painter in livediagram.", path: "/help/tips-and-tricks/format-painter/" });
+
+<ArticleLayout title="The Format Painter" description="Style one element the way you want, then paint that look onto as many others as you like." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
+
+The format painter copies the styling of one element and applies it to others, so a diagram stays visually consistent without re-dialling every colour, border, and text setting by hand. Style one element exactly how you want it, then spread that look across the canvas.
+
+## Painting a style
+
+The format painter comes in two forms. The quick one-shot version copies a source element's style and applies it to the next element you click, then ends. The persistent version lives in the palette as the **Format** tool (a paintbrush icon), so you can keep painting target after target.
+
+Picking the Format tool walks you through two phases with an on-screen banner:
+
+<Step n={1}>
+First the banner reads "Select a base element to copy its style". Click the element whose look you want to reuse.
+</Step>
+
+<Step n={2}>
+The banner then reads "Tap elements to paint this style onto them". Every element you click now takes on the base element's formatting, and the base stays armed so you can keep going.
+</Step>
+
+Click **Done**, or switch to another tool, to exit. Leaving the tool disarms the base element.
+
+## What it copies
+
+The format painter copies cosmetic styling: fill, border, and text colours, border weight and pattern, text formatting, and looping element animations, which are all cosmetic so they travel with the paint.
+
+A couple of things stay put by design: aspect-ratio lock is not currently copied, so a painted element keeps its own width-to-height behaviour. The painter applies styling, not size or position, so your layout is never disturbed.
+
+Because it only mutates elements, the format painter is available to editors. View-only visitors will not see it, since there is nothing for them to change.
+
+<Tip>
+Build one "reference" element with the exact colours, border, and text you want, then use the persistent Format tool to bring every related element into line in a few quick clicks.
+</Tip>
+
+</ArticleLayout>

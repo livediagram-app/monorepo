@@ -1,0 +1,44 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Presentation Mode", description: "Turn a diagram into a slideshow that reveals elements one step at a time, with each element's note shown as narration.", path: "/help/features/presentation/" });
+
+<ArticleLayout title="Presentation Mode" description="Step through a diagram as a progressive-reveal slideshow, with notes as your narration track." categoryTitle="Features" categorySlug="features" subArticles={getSubArticles("presentation")}>
+
+Presentation mode turns the current tab into a slideshow. Instead of showing the whole diagram at once, it starts with an empty canvas and reveals one part at a time as you advance, building the picture up in front of your audience. It is made for the moment you walk someone through a diagram on a call or a projector.
+
+## How the reveal works
+
+Presentation mode is a progressive reveal, not a camera fly-around:
+
+- The presentation begins empty, keeping the tab's background, pattern, and theme.
+- Each **step** reveals one more part of the diagram. Everything already revealed stays on screen.
+- The view animates to fit what is shown so far, leaning toward the newly revealed element so the audience's eye lands on it.
+- Stepping back hides the most recent step again.
+
+Steps are worked out automatically from the diagram, so there is nothing to set up per slide. Each boxed element, a shape, text, sticky, image, table, or freehand sketch, is one step, in the order it was added. Elements in a group reveal together as a single step. Arrows are not their own step: an arrow appears as soon as both of its endpoints have been revealed. Comment threads never show during a presentation.
+
+## Notes as narration
+
+If an element has a **note**, that note appears in a caption panel at the bottom of the screen when the element comes up. No note, no panel. This gives you a built-in narration track: write a sentence on each element and read it off as you advance. The note is shown on screen to whoever is watching.
+
+## Starting, controlling, and exiting
+
+Start a presentation with the **Present** action: it is a button on the zoom dock next to the zen-mode toggle, an entry in the command palette, and a keyboard shortcut. Presenting hides all the chrome (header, tabs, and panels) and makes the canvas non-interactive, so nothing can be edited by accident.
+
+- **Advance:** the right arrow, Space, Page Down, or a click.
+- **Back:** the left arrow or Page Up.
+- **Jump:** Home and End go to the first and last step.
+- **Exit:** Escape, which restores your previous view and chrome.
+
+A small heads-up display shows your position, like "7 / 23", and fades when idle. Presentation mode is available to everyone, including people viewing through a share link, since presenting is read-only by nature, so a viewer can narrate a shared diagram too.
+
+<Tip>Add a short note to each key element before you present. The notes become your script, appearing exactly when their element does.</Tip>
+
+<FeatureGrid>
+<Feature slug="zen-mode" title="Zen Mode">Hide the chrome for a calmer canvas without stepping through slides.</Feature>
+<Feature slug="comments" title="Comments">Notes drive the narration; comments stay hidden while presenting.</Feature>
+</FeatureGrid>
+
+</ArticleLayout>

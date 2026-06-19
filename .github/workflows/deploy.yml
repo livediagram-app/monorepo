@@ -78,6 +78,13 @@ jobs:
           path: apps/telemetry/out
           retention-days: 1
 
+      - name: Upload help build
+        uses: actions/upload-artifact@v4
+        with:
+          name: help-out
+          path: apps/help/out
+          retention-days: 1
+
   deploy-marketing:
     name: Deploy marketing
     needs: build
@@ -139,6 +146,39 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         working-directory: apps/telemetry
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: pnpm exec wrangler deploy
+
+  deploy-help:
+    name: Deploy help
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: help-out
+          path: apps/help/out
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: apps/help
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -288,7 +328,7 @@ jobs:
     name: Deploy router
     # Router has service bindings to marketing + live + api, so all
     # three must exist before it deploys.
-    needs: [deploy-marketing, deploy-live, deploy-api, deploy-telemetry]
+    needs: [deploy-marketing, deploy-live, deploy-api, deploy-telemetry, deploy-help]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

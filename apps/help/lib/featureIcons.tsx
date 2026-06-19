@@ -1,0 +1,184 @@
+import type { ReactNode } from 'react';
+
+/** Feature slug → icon (full <svg>). Used by the home grid, the features
+ *  index, and the MDX <Feature> cards. Outline glyphs at w-6 h-6,
+ *  `currentColor` so the call site sets the hue (see featureColours.ts).
+ *  Add an entry here when adding a feature landing page. Missing slugs fall
+ *  back to the `canvas` icon at the call site. */
+function Glyph({ children }: { children: ReactNode }) {
+  return (
+    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+const s = { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 1.5 } as const;
+
+export const FEATURE_ICONS: Record<string, ReactNode> = {
+  canvas: (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
+      <path d="M3 9h18M8 4v5" {...s} />
+    </Glyph>
+  ),
+  'shapes-and-arrows': (
+    <Glyph>
+      <rect x="3" y="4" width="7" height="7" rx="1" {...s} />
+      <circle cx="17.5" cy="17.5" r="3.5" {...s} />
+      <path d="M10 7.5h4.5M14.5 7.5l-2-2M14.5 7.5l-2 2" {...s} />
+    </Glyph>
+  ),
+  drawing: (
+    <Glyph>
+      <path d="M3 17.5c2-6 5 3 7-1s4-7 11-9" {...s} />
+      <path d="M16 4l4 1-1 4" {...s} />
+    </Glyph>
+  ),
+  'selecting-and-grouping': (
+    <Glyph>
+      <path
+        d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"
+        {...s}
+      />
+      <rect x="9" y="9" width="6" height="6" rx="1" {...s} />
+    </Glyph>
+  ),
+  'text-and-fonts': (
+    <Glyph>
+      <path d="M5 6V5h14v1M12 5v14M9 19h6" {...s} />
+    </Glyph>
+  ),
+  themes: (
+    <Glyph>
+      <path
+        d="M12 3a9 9 0 100 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5S14 13 16 13h2a3 3 0 003-3c0-4-4.5-7-9-7z"
+        {...s}
+      />
+      <circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="9.5" r="1" fill="currentColor" stroke="none" />
+    </Glyph>
+  ),
+  templates: (
+    <Glyph>
+      <rect x="3" y="3" width="18" height="18" rx="2" {...s} />
+      <path d="M3 9h18M9 21V9" {...s} />
+    </Glyph>
+  ),
+  tabs: (
+    <Glyph>
+      <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...s} />
+    </Glyph>
+  ),
+  comments: (
+    <Glyph>
+      <path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-6.4A8 8 0 1121 12z" {...s} />
+    </Glyph>
+  ),
+  links: (
+    <Glyph>
+      <path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.5 1.5" {...s} />
+      <path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7L12 19" {...s} />
+    </Glyph>
+  ),
+  images: (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
+      <circle cx="8.5" cy="9.5" r="1.5" {...s} />
+      <path d="M21 16l-5-5L5 20" {...s} />
+    </Glyph>
+  ),
+  explorer: (
+    <Glyph>
+      <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...s} />
+    </Glyph>
+  ),
+  teams: (
+    <Glyph>
+      <path
+        d="M17 20v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 9a4 4 0 100-8 4 4 0 000 8zM23 20v-2a4 4 0 00-3-3.87M16 1.13a4 4 0 010 7.75"
+        {...s}
+      />
+    </Glyph>
+  ),
+  sharing: (
+    <Glyph>
+      <circle cx="18" cy="5" r="3" {...s} />
+      <circle cx="6" cy="12" r="3" {...s} />
+      <circle cx="18" cy="19" r="3" {...s} />
+      <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" {...s} />
+    </Glyph>
+  ),
+  presentation: (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="12" rx="2" {...s} />
+      <path d="M12 16v4M8 20h8" {...s} />
+    </Glyph>
+  ),
+  'zen-mode': (
+    <Glyph>
+      <path d="M3 12h4l2 5 4-12 2 7h6" {...s} />
+    </Glyph>
+  ),
+  ai: (
+    <Glyph>
+      <path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8L12 3z" {...s} />
+      <path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" {...s} />
+    </Glyph>
+  ),
+  'markdown-import': (
+    <Glyph>
+      <rect x="3" y="6" width="18" height="12" rx="2" {...s} />
+      <path d="M6 14V10l2 2 2-2v4M14 10v4M14 14l2-2M14 14l-2-2" {...s} />
+    </Glyph>
+  ),
+  history: (
+    <Glyph>
+      <path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8" {...s} />
+      <path d="M3 4v4h4M12 8v4l3 2" {...s} />
+    </Glyph>
+  ),
+  'session-tools': (
+    <Glyph>
+      <circle cx="12" cy="13" r="8" {...s} />
+      <path d="M12 9v4l2 2M9 2h6" {...s} />
+    </Glyph>
+  ),
+  'data-elements': (
+    <Glyph>
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...s} />
+    </Glyph>
+  ),
+  'style-presets': (
+    <Glyph>
+      <path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5L12 16l-5 2.7 1-5.5-4-3.9 5.5-.8L12 3z" {...s} />
+    </Glyph>
+  ),
+  'layout-cleanup': (
+    <Glyph>
+      <rect x="3" y="3" width="7" height="7" rx="1" {...s} />
+      <rect x="14" y="3" width="7" height="7" rx="1" {...s} />
+      <rect x="3" y="14" width="7" height="7" rx="1" {...s} />
+      <rect x="14" y="14" width="7" height="7" rx="1" {...s} />
+    </Glyph>
+  ),
+  isometric: (
+    <Glyph>
+      <path d="M12 3l9 5v8l-9 5-9-5V8l9-5z" {...s} />
+      <path d="M12 12l9-4M12 12v9M12 12L3 8" {...s} />
+    </Glyph>
+  ),
+  annotations: (
+    <Glyph>
+      <circle cx="12" cy="12" r="9" {...s} />
+      <path d="M12 8v4M12 16h.01" {...s} />
+    </Glyph>
+  ),
+  'technology-icons': (
+    <Glyph>
+      <rect x="4" y="4" width="16" height="16" rx="2" {...s} />
+      <path d="M9 4v16M15 4v16M4 9h16M4 15h16" {...s} />
+    </Glyph>
+  ),
+};

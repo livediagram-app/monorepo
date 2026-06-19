@@ -9,10 +9,11 @@ All deployments run **via GitHub Actions** to **Cloudflare Workers**. The deploy
 | `apps/marketing` | `livediagram-marketing` | Static assets only (Next.js `output: 'export'`). |
 | `apps/live`      | `livediagram-live`      | Static assets + a tiny path-rewrite worker.      |
 | `apps/telemetry` | `livediagram-telemetry` | Static assets only (public dashboard, spec/22).  |
+| `apps/help`      | `livediagram-help`      | Static assets only (help centre, spec/55).       |
 | `apps/api`       | `livediagram-api`       | Worker (D1 binding + Durable Object).            |
-| `apps/router`    | `livediagram-router`    | Worker (service bindings to the other four).     |
+| `apps/router`    | `livediagram-router`    | Worker (service bindings to the other five).     |
 
-The marketing worker serves files from `apps/marketing/out/` (`output: 'export'`). The live worker serves files from `apps/live/out/` plus a small worker (`apps/live/src/worker.ts`) that rewrites every `/diagram/<id>` request to the single statically-built `/diagram/placeholder/` page — see [14-new-diagram-route.md](14-new-diagram-route.md). The telemetry worker is static-assets-only like marketing, served under `/telemetry` ([22-telemetry](22-telemetry.md)). The api worker holds the REST + WebSocket layer (see [11-api.md](11-api.md)). The router holds **no application logic** — only `MARKETING`, `LIVE`, `TELEMETRY`, and `API` service bindings that forward requests to the right downstream worker.
+The marketing worker serves files from `apps/marketing/out/` (`output: 'export'`). The live worker serves files from `apps/live/out/` plus a small worker (`apps/live/src/worker.ts`) that rewrites every `/diagram/<id>` request to the single statically-built `/diagram/placeholder/` page — see [14-new-diagram-route.md](14-new-diagram-route.md). The telemetry worker is static-assets-only like marketing, served under `/telemetry` ([22-telemetry](22-telemetry.md)). The help worker is static-assets-only too, served under `/help` ([55-help-app](55-help-app.md)). The api worker holds the REST + WebSocket layer (see [11-api.md](11-api.md)). The router holds **no application logic** — only `MARKETING`, `LIVE`, `TELEMETRY`, `HELP`, and `API` service bindings that forward requests to the right downstream worker.
 
 `wrangler.toml` for each app sits at the app root and is the source of truth for the worker's name, compatibility date, `[assets]`, `[[services]]`, `[[d1_databases]]`, and Durable Object bindings. Account-level identifiers (account id, custom domain, secrets) **never** go in `wrangler.toml` — they live in environment variables or the Cloudflare dashboard. See [06-secrets-policy.md](06-secrets-policy.md).
 
@@ -45,7 +46,7 @@ CI is the gate you check before deploying, but it does **not** trigger the deplo
 
 Jobs:
 
-1. **build** — installs deps, runs `pnpm build`, uploads `apps/marketing/out` and `apps/live/out` as workflow artifacts.
+1. **build** — installs deps, runs `pnpm build`, uploads `apps/marketing/out`, `apps/live/out`, `apps/telemetry/out`, and `apps/help/out` as workflow artifacts.
 2. **deploy-marketing** — downloads `marketing-out`, runs `pnpm exec wrangler deploy` from `apps/marketing/`.
 3. **deploy-live** — downloads `live-out`, runs `pnpm exec wrangler deploy` from `apps/live/`.
 4. **deploy-api** — runs:
@@ -53,11 +54,12 @@ Jobs:
    - `pnpm exec wrangler d1 migrations apply DB --remote` applies any pending migrations BEFORE the worker deploy so the new code never briefly runs against an older schema. If this step fails the job halts and surfaces a precise error pointing at the missing token scopes. (Wrangler 4 dropped the `--yes` flag; the command is non-interactive by default in CI.)
    - `pnpm exec wrangler deploy` from `apps/api/`.
 5. **deploy-telemetry** — downloads `telemetry-out`, runs `pnpm exec wrangler deploy` from `apps/telemetry/` (in parallel with marketing/live/api).
-6. **deploy-router** — depends on **deploy-marketing**, **deploy-live**, **deploy-api**, and **deploy-telemetry**. Runs `pnpm exec wrangler deploy` from `apps/router/`. The router's service bindings target the four workers above, so it must deploy after they exist.
+6. **deploy-help** — downloads `help-out`, runs `pnpm exec wrangler deploy` from `apps/help/` (in parallel with the others).
+7. **deploy-router** — depends on **deploy-marketing**, **deploy-live**, **deploy-api**, **deploy-telemetry**, and **deploy-help**. Runs `pnpm exec wrangler deploy` from `apps/router/`. The router's service bindings target the five workers above, so it must deploy after they exist.
 
-`deploy-marketing`, `deploy-live`, `deploy-api`, and `deploy-telemetry` run in parallel; `deploy-router` waits for all four.
+`deploy-marketing`, `deploy-live`, `deploy-api`, `deploy-telemetry`, and `deploy-help` run in parallel; `deploy-router` waits for all five.
 
-All five jobs use raw `pnpm exec wrangler` rather than `cloudflare/wrangler-action` — wrangler 4 ships sensible defaults and the explicit invocation makes the workflow log read 1:1 against a local run.
+All six jobs use raw `pnpm exec wrangler` rather than `cloudflare/wrangler-action` — wrangler 4 ships sensible defaults and the explicit invocation makes the workflow log read 1:1 against a local run.
 
 ## Required GitHub Action secrets
 
@@ -88,7 +90,7 @@ Cloudflare dashboard → any zone → right sidebar → **Account ID** (copy).
 
 ## First deploy
 
-On the first run, none of the workers exist yet. The job ordering handles this: `deploy-marketing`, `deploy-live`, `deploy-api`, and `deploy-telemetry` run first and create those workers, then `deploy-router` runs, by which point its four service-binding targets already exist, so wrangler accepts the bindings.
+On the first run, none of the workers exist yet. The job ordering handles this: `deploy-marketing`, `deploy-live`, `deploy-api`, `deploy-telemetry`, and `deploy-help` run first and create those workers, then `deploy-router` runs, by which point its five service-binding targets already exist, so wrangler accepts the bindings.
 
 Subsequent deploys are idempotent updates.
 
@@ -98,6 +100,7 @@ Production lives at **`https://livediagram.app`**. The apex routes to the router
 
 - `https://livediagram.app/api/*` → api worker (REST + WebSocket).
 - `https://livediagram.app/live` and `https://livediagram.app/live/<anything>` → live editor (the router strips the `/live` prefix before forwarding).
+- `https://livediagram.app/telemetry` → telemetry dashboard; `https://livediagram.app/help` → help centre (both prefix-stripped).
 - Everything else → marketing.
 
 The workers themselves remain reachable at their default `*.workers.dev` URLs for direct testing.

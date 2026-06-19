@@ -1,0 +1,33 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Auto-Align", description: "Snap every element's position and size onto a tidy grid so near-aligned shapes line up exactly and drift disappears.", path: "/help/features/layout-cleanup/auto-align/" });
+
+<ArticleLayout title="Auto-Align" description="A quick grid snap for when shapes are nearly lined up but a few pixels off." categoryTitle="Features" categorySlug="features" parentArticle={{ title: "Layout Cleanup", slug: "layout-cleanup" }} subArticles={getSubArticles("layout-cleanup").filter((a) => a.slug !== "auto-align")}>
+
+Auto-Align is the gentle tidier. It rounds every boxed element's position and size to a fixed grid, and snaps free arrow endpoints to the same grid, so shapes that were almost aligned become exactly aligned and tiny drift collapses. The use case is "these things are a few pixels off", not "this diagram has no layout".
+
+## What it does
+
+- It is **structure-blind**: it never reads the arrow graph or considers how shapes connect. It just snaps positions and sizes to the grid.
+- It **never moves anything far**. Because it only rounds to the nearest grid line, a shape that was roughly in place stays roughly in place, only neater.
+- It is **idempotent**: running it a second time changes nothing, because everything is already on the grid.
+
+## Running it
+
+<Step n={1}>Right-click an empty part of the canvas (or the active tab) to open the context menu.</Step>
+
+<Step n={2}>Open the **Cleanup** category and choose **Auto-Align**.</Step>
+
+<Step n={3}>Everything on the tab snaps to the grid in a single undoable step.</Step>
+
+If the result isn't what you wanted, one undo restores the previous positions exactly. The action also leaves a single activity-log entry, so it reads as one change in the history.
+
+## When to use it instead of Auto Layout
+
+Reach for Auto-Align when the diagram already looks right and you just want it crisp: rows that should share a baseline, columns that should share an edge, shapes that should be the same size. If instead the diagram has no real layout, or you want positions computed from how shapes are connected, use [Auto Layout](/help/features/layout-cleanup/auto-layout/) instead. Auto Layout actually runs Auto-Align as its final step, so the structural tool gives you grid alignment for free.
+
+<Tip>Auto-Align is safe to run often. Since it's idempotent and never relocates anything far, it's a low-risk way to keep a diagram looking tidy as you work.</Tip>
+
+</ArticleLayout>

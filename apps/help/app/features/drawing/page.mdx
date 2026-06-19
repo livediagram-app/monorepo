@@ -1,0 +1,46 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({
+  title: "Drawing and Sketch",
+  description:
+    "Sketch freehand with the Pencil tool, with an optional shape-recognition mode that turns rough strokes into real shapes.",
+  path: "/help/features/drawing/",
+});
+
+<ArticleLayout
+  title="Drawing and Sketch"
+  description="Sketch freehand on the canvas with the Pencil, and optionally let livediagram tidy your strokes into real shapes."
+  categoryTitle="Features"
+  categorySlug="features"
+  subArticles={getSubArticles("drawing")}
+>
+
+Sometimes the fastest way to capture an idea is to draw it. The Pencil tool lets you sketch freehand on the canvas, producing smooth hand-drawn strokes you can move, resize, and style like any other element. An optional shape-recognition mode goes one step further and turns rough sketches into real shapes.
+
+## The Pencil tool
+
+The Pencil is a gestural tool: pick it from the palette (or press `F`), and the next drag on the canvas draws a stroke. A small mode banner reads "Drag to draw" with a Cancel action, and the cursor swaps to a pencil glyph so you know you are in draw mode.
+
+<Step n={1}>Select the Pencil from the palette.</Step>
+<Step n={2}>Drag across the canvas to draw. A live preview follows your pointer.</Step>
+<Step n={3}>Release to commit the stroke. A stray click with no drag does not create anything.</Step>
+
+On release, your raw points are smoothed into a clean, hand-drawn curve rather than a jagged polyline. If you release near where you started, the path closes into a custom shape and fills, which is the way to sketch a bespoke outline.
+
+## Styling a sketch
+
+A committed sketch is a regular boxed element. Its stroke colour follows the tab's theme so it reads as part of the diagram rather than a separate annotation layer, and a closed path fills with the theme's fill colour. From there you can:
+
+- Move it, resize it (the path scales proportionally), and lock or group it.
+- Recolour its stroke and fill from the element's Colours controls.
+- Apply the format painter, themes, and comments, exactly as with any shape.
+
+## Shape recognition
+
+Turn on shape recognition from the magic-wand toggle in the Pencil's banner, and your sketches are matched against real shapes on commit. A rough square becomes a square, a loop becomes a circle, and a straight stroke becomes an arrow. See [Shape recognition](/help/features/drawing/shape-recognition/) for the details and which kinds are detected.
+
+<Tip>Shape recognition is a per-tool toggle that sticks across sessions, so once you find your preference it stays set the next time you reach for the Pencil.</Tip>
+
+</ArticleLayout>

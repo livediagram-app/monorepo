@@ -1,0 +1,37 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Comments", description: "Leave comments on the canvas to give feedback, ask questions, and track decisions, then resolve them once they are handled.", path: "/help/features/comments/" });
+
+<ArticleLayout title="Comments" description="Drop a comment anywhere on the canvas to ask a question or leave feedback, then resolve it once it has been handled." categoryTitle="Features" categorySlug="features" subArticles={getSubArticles("comments")}>
+
+Comments let you have a conversation on top of a diagram without changing the diagram itself. Drop one on the canvas where it matters, leave a question or a piece of feedback, and resolve it once it has been dealt with. They are the lightweight way to review work, agree on changes, and keep a record of why something is the way it is.
+
+## Leaving a comment
+
+A comment is pinned to a place on the canvas, so the reader sees exactly what you are talking about.
+
+<Step n={1}>Pick up the comment tool and click the spot on the canvas you want to comment on.</Step>
+
+<Step n={2}>Type your note and post it. The comment stays anchored to that point as a marker.</Step>
+
+<Step n={3}>Click any marker to open its thread and read or reply to what is there.</Step>
+
+Because comments sit alongside the elements rather than inside them, you can leave feedback on a draft without nudging anyone's shapes or arrows out of place.
+
+## Resolving comments
+
+Once a comment has been actioned, resolve it to clear it from the working view while keeping the record. Resolving keeps the canvas focused on what still needs attention rather than on questions that are already settled. Use comments to:
+
+- **Request changes** during a review without editing someone else's work directly.
+- **Ask a question** anchored to the exact element it is about.
+- **Capture a decision** so the reasoning is not lost once the diagram changes.
+
+## Comments and collaboration
+
+The canvas is multiplayer, so comments are part of how a group works on a diagram together. A collaborator can answer a question where it was asked, and a reviewer can leave feedback for the author to pick up later. Because the canvas works without signing in, a guest you hand a share link to can read and join the conversation too.
+
+<Tip>Keep each comment to one point. A marker that asks a single, specific question is far easier to resolve than a long thread covering five unrelated things.</Tip>
+
+</ArticleLayout>

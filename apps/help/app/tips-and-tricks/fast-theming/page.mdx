@@ -1,0 +1,33 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Theme a Diagram Fast", description: "Combine themes and one-click style presets to make a livediagram look polished in seconds.", path: "/help/tips-and-tricks/fast-theming/" });
+
+<ArticleLayout title="Theme a Diagram Fast" description="Set the overall look with a theme, then add emphasis to key elements with one-click style presets." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
+
+A clean, consistent look does not have to mean fiddling with colours one element at a time. Pair a [theme](/help/features/themes/) for the whole tab with [style presets](/help/features/style-presets/) on the elements that matter, and a rough diagram becomes a polished one in seconds.
+
+## Start with a theme
+
+A theme sets the look of the whole tab at once. Picking one writes its colours, background, and pattern onto the tab, and from then on new elements inherit the theme's fill, border, and text colours, so everything you add stays on-brand automatically.
+
+The catalogue ships with twelve default themes, with more available behind a "Show more themes" toggle, including dark and multi-colour options. Themes are organised by temperament (Cool, Warm, Dark, Multi-colour, Formal), so you can browse by mood rather than scanning a wall of swatches.
+
+Switching theme is non-destructive to deliberate choices: a background pattern you hand-picked survives a theme change rather than resetting, and existing elements keep their colours unless you re-apply them.
+
+## Add emphasis with presets
+
+Once the overall look is set, **style presets** let you make individual elements stand out without dialling each field by hand. Right-click a single shape and open the **Presets** category at the top of the menu.
+
+For shapes you get two independent rows you can freely combine:
+
+- **Colour**: eight one-click variations derived from the active theme, spanning soft, tinted, solid, bold, outline, and muted looks, with label colour auto-contrasted so text stays readable.
+- **Border**: weight, pattern, and corner-radius combinations, from sharp un-rounded to fully rounded.
+
+Arrows get their own set of eight presets that combine line pattern, thickness, and an optional flow animation. Every preset includes a **Reset to default** option that returns the element to its theme look in one click.
+
+<Tip>
+Theme the tab first so new elements arrive on-brand, then use colour and border presets to lift just the handful of elements you want the reader's eye to land on.
+</Tip>
+
+</ArticleLayout>

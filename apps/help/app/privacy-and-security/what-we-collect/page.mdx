@@ -1,0 +1,36 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "What We Collect", description: "livediagram records anonymous, first-party, opt-out product events, published openly on a public dashboard. Here is exactly what that means.", path: "/help/privacy-and-security/what-we-collect/" });
+
+<ArticleLayout title="What We Collect" description="Anonymous, first-party product events, published on a public dashboard, with a one-click opt-out." categoryTitle="Privacy and Security" categorySlug="privacy-and-security">
+
+livediagram measures which features get used so the project knows what works, and it does this without creepy tracking. The analytics are anonymous, first-party, and off unless the deployment turns them on. There are no third-party trackers, no ad pixels, and nothing is ever sold or shared beyond a dashboard anyone can read.
+
+## What an event looks like
+
+When telemetry is enabled, the editor records small product events made of just three fields: a category, an action, and an optional preset type. For example, "a diagram was created", or "a square element was added". That is the entire shape of an event.
+
+- **No identity.** Events carry no user id, no account, and no IP address.
+- **No content.** They never include a diagram name, tab name, participant name, element text, share code, or diagram id.
+- **Only a fixed vocabulary.** The type is always a preset value from a closed list, such as a shape kind or a share role, never anything you typed.
+
+Because the server only accepts values from that fixed vocabulary, the data can only ever describe known, safe actions.
+
+## The public dashboard
+
+Whatever is collected is published openly at the public [telemetry dashboard](/telemetry). It shows aggregate counts over Today, the last 7 days, and the last month, grouped by category and action. Old rows are swept automatically, so this is recent trend data, not a permanent archive. The whole point is transparency: anyone can see precisely what is measured.
+
+## How to opt out
+
+You are always in control of your own browser.
+
+<Step n={1}>Open **Settings** in the editor.</Step>
+<Step n={2}>Turn off the telemetry option.</Step>
+<Step n={3}>From that point on, your browser sends nothing, regardless of the deployment's setting.</Step>
+
+The opt-out itself is the last signal your browser sends, so even leaving is recorded only as an anonymous "someone opted out", never tied to you.
+
+<Note>Telemetry is **off by default**. On a self-hosted deployment it stays completely off unless the operator explicitly enables it, so a fork or private instance emits and serves nothing.</Note>
+
+</ArticleLayout>

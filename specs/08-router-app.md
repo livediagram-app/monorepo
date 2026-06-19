@@ -12,6 +12,7 @@ A small Cloudflare Worker that fronts the apex domain (`livediagram.app`) and ro
 | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `/api`, `/api/*`                                                                                                                   | api worker (`apps/api`)          |
 | `/telemetry`, `/telemetry/*`                                                                                                       | telemetry app (`apps/telemetry`) |
+| `/help`, `/help/*`                                                                                                                 | help app (`apps/help`), stripped |
 | `/live/*` (the live app's `_next` assets only)                                                                                     | live app (`apps/live`), stripped |
 | live page routes: `/diagram/*`, `/explorer/*`, `/new`, `/join`, `/sign-in`, `/get-started`, `/embed`, `/sso-callback`, `/icon.svg` | live app (`apps/live`), as-is    |
 | everything else                                                                                                                    | marketing app (`apps/marketing`) |
@@ -24,7 +25,7 @@ The one thing that keeps a `/live` prefix is the live app's bundled **`_next` as
 
 ## Implementation
 
-The Worker has four **service bindings**, one to each downstream app (MARKETING / LIVE / API / TELEMETRY). `forwardStripped()` is shared by the two prefix-stripped paths (live assets + telemetry):
+The Worker has five **service bindings**, one to each downstream app (MARKETING / LIVE / API / TELEMETRY / HELP). `forwardStripped()` is shared by the prefix-stripped paths (live assets + telemetry + help):
 
 ```ts
 // sketch, real source: apps/router/src/index.ts
@@ -73,10 +74,11 @@ The router worker is **not required for local dev**. Each app runs on its own po
 | marketing | `http://localhost:3001/`                                                                                             |
 | live      | `http://localhost:3002/new`, `/explorer/recent`, ... (clean routes; no router, so assets serve at `/_next` directly) |
 | telemetry | `http://localhost:3003/telemetry` (basePath baked in)                                                                |
+| help      | `http://localhost:3004/help` (basePath baked in)                                                                     |
 | api       | `http://localhost:8787/api/...` (wrangler dev)                                                                       |
 
 Visit whichever you're working on directly. The router only matters in production where everything serves from one hostname.
 
 ## Routing infrastructure, not logic
 
-The router is **routing infrastructure**, not application logic, holding no data and running no business rules. That separation is non-negotiable: if you find yourself adding business logic to the router, stop, the logic belongs in a service the router forwards to (marketing, live, telemetry, or api).
+The router is **routing infrastructure**, not application logic, holding no data and running no business rules. That separation is non-negotiable: if you find yourself adding business logic to the router, stop, the logic belongs in a service the router forwards to (marketing, live, telemetry, help, or api).

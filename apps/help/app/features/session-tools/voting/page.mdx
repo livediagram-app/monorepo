@@ -1,0 +1,35 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Dot Voting", description: "Give each participant a budget of dots to prioritise elements, with live tallies and a results reveal.", path: "/help/features/session-tools/voting/" });
+
+<ArticleLayout title="Dot Voting" description="Run a live dot-voting round on the canvas to prioritise as a group." categoryTitle="Features" categorySlug="features" parentArticle={{ title: "Session Tools", slug: "session-tools" }} subArticles={getSubArticles("session-tools").filter((a) => a.slug !== "voting")}>
+
+Dot-voting is a quick way for a group to prioritise. Each participant gets a budget of dots to spend on the elements they care about most, the dots tally up live, and you reveal the winners at the end. It is ideal for narrowing a wall of retro stickies or brainstorm ideas down to the few worth acting on.
+
+## Running a vote
+
+Dot-voting is controlled from **Tab Settings → Session → Vote**.
+
+<Step n={1}>Set the **dots per person** with the stepper, then choose **Start vote**. A banner tells each participant how many dots they have left.</Step>
+
+<Step n={2}>While the vote is open, participants click the elements they want to back. A live "N cast" readout tracks the total.</Step>
+
+<Step n={3}>Choose **End vote** to close casting (the tallies stay put), then **Show results** to reveal the winners. **Clear** ends the session.</Step>
+
+## Casting and retracting dots
+
+While a vote is open, clicking a votable element places one of your dots on it. Stacking several of your dots on one element is allowed, each one counts separately. You can only spend up to your budget; once it is gone, the banner shows nothing left to place.
+
+Every element with dots shows a **tally pill**. The pill is filled in your brand colour when it holds one of your dots, and clicking it **retracts** one of yours. Non-votable elements still behave normally, so the board stays fully editable during a vote.
+
+**Votable** elements are shapes, sticky notes, and images. Section backdrops (frames), text, freehand drawings, tables, arrows, and annotations are not votable, so you vote on the ideas, not the scaffolding around them.
+
+## Revealing the result
+
+**Show results** rings the top element or elements so the winner is obvious at a glance. If two or more elements tie for the lead, they are all flagged as joint winners. View-only visitors can watch the counts and the reveal but cannot cast a dot, so observers see the outcome without skewing it.
+
+<Tip>A common rule of thumb is roughly one dot per three or four options. Set the stepper before you start the vote, then leave it: keeping budgets small forces real choices.</Tip>
+
+</ArticleLayout>

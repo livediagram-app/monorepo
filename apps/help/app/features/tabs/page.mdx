@@ -1,0 +1,40 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Tabs and Tab Folders", description: "A diagram in livediagram holds many tabs, each its own canvas. Group related tabs into collapsible folders and keep large diagrams organised.", path: "/help/features/tabs/" });
+
+<ArticleLayout title="Tabs and Tab Folders" description="One diagram, many canvases. Tabs let you split a project across several boards, and tab folders keep that list tidy as it grows." categoryTitle="Features" categorySlug="features" subArticles={getSubArticles("tabs")}>
+
+A diagram is not a single canvas. It is a collection of **tabs**, each its own independent board with its own elements, layout, theme, and background. New diagrams start with one empty tab, and you add more whenever a piece of work deserves its own space. The tab bar sits along the bottom of the editor, and the active tab fills the canvas area above it.
+
+## What a tab is
+
+Each tab is a self-contained canvas inside the diagram. A tab carries its own elements, its own theme and background pattern, and an optional lock state, all independent of the other tabs around it. Common ways people split work across tabs:
+
+- An **Overview** tab with the high-level picture, and detail tabs behind it.
+- One tab per system, team, or phase of a project.
+- A scratch tab for ideas you are not ready to file yet.
+
+Tabs are ordered, and you can drag them to reorder them in the bar. The `+` button adds a new empty tab and switches to it.
+
+## Naming and reordering tabs
+
+Tabs start with default names like `Tab 1` and `Tab 2`, and you can rename any of them:
+
+- **Double-click** a tab label to edit it inline. Enter commits, Escape cancels.
+- The same rename action lives in each tab's right-click or ellipsis menu.
+- **Auto-rename on first edit:** while a tab still has its default name, editing the label of its first element renames the tab to match. This only happens once, so later edits leave a renamed tab alone.
+
+Drag a tab to a new position to reorder it. Reordering only moves the tab in the list, it never touches the content on any tab.
+
+## Going further
+
+<FeatureGrid>
+  <Feature slug="tabs" title="Tab Folders">Group related tabs under a named, collapsible folder so a long tab bar stays readable.</Feature>
+  <Feature slug="tabs" title="Linking Across Tabs">Link an element to another tab, or to a specific element on it, for clean drill-downs.</Feature>
+</FeatureGrid>
+
+<Tip>Tabs can be reused across diagrams behind the scenes, so a shared reference board such as a glossary can live in more than one diagram at once. Editing it in one place updates it everywhere.</Tip>
+
+</ArticleLayout>

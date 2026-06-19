@@ -6,14 +6,14 @@ This guide is the practical path: provision Cloudflare resources, configure secr
 
 ## What you'll provision on Cloudflare
 
-| Resource                             | Used by          | Why                                                                                                                                                                                |
-| ------------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Workers paid plan**                | All five workers | Durable Objects (per-diagram realtime room) need the paid plan.                                                                                                                    |
-| **D1 database**                      | `apps/api`       | Diagrams, tabs, comments, folders, share links, shared-with index, change log, image metadata, user preferences, teams + membership + team library, custom themes, telemetry rows. |
-| **Durable Object namespace**         | `apps/api`       | One stateful room per diagram for realtime presence + ops.                                                                                                                         |
-| **R2 bucket** (optional)             | `apps/api`       | Image uploads. The api degrades to `503 images-unavailable` without it.                                                                                                            |
-| **Rate Limiter bindings** (optional) | `apps/api`       | Per-owner write throttle + per-IP telemetry throttle.                                                                                                                              |
-| **Custom domain**                    | `apps/router`    | The router worker serves your hostname; downstream workers don't need their own domain.                                                                                            |
+| Resource                             | Used by         | Why                                                                                                                                                                                |
+| ------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Workers paid plan**                | All six workers | Durable Objects (per-diagram realtime room) need the paid plan.                                                                                                                    |
+| **D1 database**                      | `apps/api`      | Diagrams, tabs, comments, folders, share links, shared-with index, change log, image metadata, user preferences, teams + membership + team library, custom themes, telemetry rows. |
+| **Durable Object namespace**         | `apps/api`      | One stateful room per diagram for realtime presence + ops.                                                                                                                         |
+| **R2 bucket** (optional)             | `apps/api`      | Image uploads. The api degrades to `503 images-unavailable` without it.                                                                                                            |
+| **Rate Limiter bindings** (optional) | `apps/api`      | Per-owner write throttle + per-IP telemetry throttle.                                                                                                                              |
+| **Custom domain**                    | `apps/router`   | The router worker serves your hostname; downstream workers don't need their own domain.                                                                                            |
 
 What you do NOT need:
 
@@ -115,21 +115,22 @@ After the one-time Cloudflare setup:
 git clone https://github.com/livediagram-app/monorepo livediagram
 cd livediagram
 pnpm install
-pnpm build           # static export for marketing + live + telemetry
+pnpm build           # static export for marketing + live + telemetry + help
 # Then deploy each worker (run from the repo root):
 pnpm --filter @livediagram/marketing exec wrangler deploy
 pnpm --filter @livediagram/live exec wrangler deploy
 pnpm --filter @livediagram/telemetry exec wrangler deploy
+pnpm --filter @livediagram/help exec wrangler deploy
 pnpm --filter @livediagram/api exec wrangler deploy
-pnpm --filter @livediagram/router exec wrangler deploy   # last, depends on the four above
+pnpm --filter @livediagram/router exec wrangler deploy   # last, depends on the five above
 ```
 
-Deploy order matters: the router's service bindings reference the four other workers, so it can't deploy until they exist. The GitHub Actions deploy workflow encodes this as a job dependency.
+Deploy order matters: the router's service bindings reference the five other workers, so it can't deploy until they exist. The GitHub Actions deploy workflow encodes this as a job dependency.
 
 Or just push to `main` and use the bundled GitHub Actions workflows:
 
 - `.github/workflows/ci.yml` runs lint / format / typecheck / test / build on every PR and push.
-- `.github/workflows/deploy.yml` is **manually triggered** from the Actions tab. It builds once then deploys all five workers in the right order.
+- `.github/workflows/deploy.yml` is **manually triggered** from the Actions tab. It builds once then deploys all six workers in the right order.
 
 See [spec/10](../specs/10-deployment.md) for the deeper deploy mechanics, including how D1 migrations run BEFORE the worker deploy so the new code never briefly runs against the old schema.
 
@@ -173,9 +174,10 @@ Add a custom-domain route to the router worker (`apps/router/wrangler.toml`) and
 - `/` → marketing
 - `/diagram/*`, `/explorer/*`, `/new`, `/join`, `/sign-in`, `/get-started`, `/embed`, `/sso-callback` → live editor (clean routes; `/live/*` carries only its `_next` assets)
 - `/telemetry` → telemetry dashboard
+- `/help` → help centre
 - `/api/*` → api worker
 
-The four downstream workers don't need their own domain; the router fans out via service bindings.
+The five downstream workers don't need their own domain; the router fans out via service bindings.
 
 ## What can break, and how to debug
 

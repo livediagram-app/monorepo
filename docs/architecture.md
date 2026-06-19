@@ -1,12 +1,13 @@
 # Architecture
 
-A pnpm + Turborepo monorepo: five Cloudflare-deployed apps and seven shared packages. Everything runs on Cloudflare Workers (Static Assets for the Next.js apps); there's no Node-hosted backend.
+A pnpm + Turborepo monorepo: six Cloudflare-deployed apps and seven shared packages. Everything runs on Cloudflare Workers (Static Assets for the Next.js apps); there's no Node-hosted backend.
 
 ```
 apps/
   marketing/    static landing site (Next.js export, /)
   live/         the editor (Next.js export; clean routes)
   telemetry/    public anonymous-events dashboard (Next.js export, /telemetry)
+  help/         help centre (Next.js export + MDX, /help)
   api/          REST + WebSocket worker (D1 + Durable Objects + R2, /api)
   router/       service-binding router stitching the apps under one hostname
 packages/
@@ -32,8 +33,9 @@ marketing/      off-site copy + media for listings and promotion (see specs/23)
 | `apps/marketing` | The landing site at `/`. Pure static HTML built with `next export`. Hero, feature grid, FAQ, legal, comparison pages.                                                                                                                                   | `livediagram-marketing` |
 | `apps/live`      | The editor at clean routes (`/diagram/*`, `/explorer/*`, `/new`, `/join`, ...; only its `_next` assets keep a `/live` prefix). Next.js static export plus a tiny path-rewrite worker that maps every `/diagram/<id>` to the same statically-built page. | `livediagram-live`      |
 | `apps/telemetry` | A read-only dashboard at `/telemetry` that renders aggregate anonymous events from the api's D1 table.                                                                                                                                                  | `livediagram-telemetry` |
+| `apps/help`      | The help centre at `/help`. Next.js static export with MDX article bodies plus a TypeScript article index. Hero search, category + feature grids, article pages with auto TOC. No third-party scripts.                                                  | `livediagram-help`      |
 | `apps/api`       | The REST + WebSocket worker at `/api/*`. Holds the D1 binding and the per-diagram Durable Object realtime room. Plus the `change_log` retention cron.                                                                                                   | `livediagram-api`       |
-| `apps/router`    | A worker that holds no business logic, only `MARKETING` / `LIVE` / `TELEMETRY` / `API` service bindings that forward by path prefix.                                                                                                                    | `livediagram-router`    |
+| `apps/router`    | A worker that holds no business logic, only `MARKETING` / `LIVE` / `TELEMETRY` / `HELP` / `API` service bindings that forward by path prefix.                                                                                                           | `livediagram-router`    |
 
 ## The shared packages
 
@@ -71,6 +73,6 @@ Two equivalent identity paths: an `X-Owner-Id` header (a per-browser UUID from `
 
 ## Deployment
 
-GitHub Actions → Cloudflare Workers, manually triggered after a green CI run. Build artefacts get uploaded once, then four workers (marketing / live / telemetry / api) ship in parallel and the router deploys last because its service bindings need the others to exist.
+GitHub Actions → Cloudflare Workers, manually triggered after a green CI run. Build artefacts get uploaded once, then five workers (marketing / live / telemetry / help / api) ship in parallel and the router deploys last because its service bindings need the others to exist.
 
 See [Self-hosting](self-hosting.md) for the step-by-step, and [spec/10](../specs/10-deployment.md) for the deeper deployment contract.

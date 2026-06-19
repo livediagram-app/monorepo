@@ -42,6 +42,7 @@ Turbo spins up all four dev servers in parallel:
 | `apps/marketing` | `http://localhost:3001`                                             |
 | `apps/live`      | `http://localhost:3002` (clean routes: /new, /explorer/recent, ...) |
 | `apps/telemetry` | `http://localhost:3003/telemetry`                                   |
+| `apps/help`      | `http://localhost:3004/help`                                        |
 | `apps/api`       | `http://localhost:8787/api`                                         |
 
 The `router` app has no dev server: it's a one-file production worker holding service bindings, not application logic. In dev you call each app on its own port.

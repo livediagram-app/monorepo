@@ -1,0 +1,10 @@
+name = "livediagram-help"
+compatibility_date = "2026-05-29"
+
+# Static assets only — Cloudflare Workers serves files from `./out`
+# (Next.js static export output). No worker code needed; the router
+# worker forwards `/help/*` here after stripping the prefix (see
+# apps/router + specs/55). Same pattern as the telemetry app.
+[assets]
+directory = "./out"
+not_found_handling = "404-page"

@@ -22,3 +22,7 @@ service = "livediagram-api"
 [[services]]
 binding = "TELEMETRY"
 service = "livediagram-telemetry"
+
+[[services]]
+binding = "HELP"
+service = "livediagram-help"

@@ -1,0 +1,31 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Deleting Your Data", description: "How to delete a diagram in livediagram, and how guest and account data are scoped to you.", path: "/help/account-and-data/deleting-your-data/" });
+
+<ArticleLayout title="Deleting Your Data" description="Remove a diagram when you no longer need it, and understand how your data is scoped whether you are a guest or signed in." categoryTitle="Account and Data" categorySlug="account-and-data">
+
+You own your diagrams, and removing one is straightforward. It helps to know how your data is scoped first, because that determines what "your data" means whether you are working as a guest or signed in.
+
+## Deleting a diagram
+
+You can delete a diagram from the [Explorer](/explorer/recent) or from the editor. Open the row's ellipsis menu, or the Current Diagram menu in the Explorer panel, and choose **Delete**.
+
+Deleting a diagram removes it along with the content that belongs only to it, such as its tabs, comments, and activity history, since those are linked to the diagram. If the diagram had a share link, that link stops resolving too.
+
+If you have organised diagrams into [folders](/help/features/explorer/), you can also tidy up by moving diagrams between folders or removing folders, separately from deleting the diagrams themselves.
+
+## How your data is scoped
+
+Where your data lives depends on how you are identified:
+
+- **As a guest**, your diagrams are owned by your [per-browser id](/help/account-and-data/guest-identity/), stored in that one browser. Your data is scoped to that browser, so clearing the browser's storage removes the app's link to your guest content, and using a different browser or device shows a fresh, empty workspace.
+- **When signed in**, your diagrams are owned by your account and synced across every device where you sign in. Deleting a diagram removes it everywhere, because the account is the single source of truth.
+
+Because guest content is per browser, the simplest way to clear everything you created as a guest is to delete the diagrams you no longer want, or to clear that browser's storage, which removes the app's record of your guest identity on that device.
+
+<Tip>
+If you plan to clear your browser, sign in first if you want to keep anything. Your guest diagrams migrate into the account on sign-up, so they survive the clear.
+</Tip>
+
+</ArticleLayout>

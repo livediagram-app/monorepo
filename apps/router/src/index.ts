@@ -6,11 +6,13 @@ export interface Env {
   LIVE: Fetcher;
   API: Fetcher;
   TELEMETRY: Fetcher;
+  HELP: Fetcher;
 }
 
 const LIVE_PATH = '/live';
 const API_PATH = '/api';
 const TELEMETRY_PATH = '/telemetry';
+const HELP_PATH = '/help';
 
 // The live app's top-level page route segments. These serve at CLEAN
 // URLs (no `/live` prefix) — the live worker's `out/` files are already
@@ -52,6 +54,10 @@ function isTelemetryPath(pathname: string): boolean {
   return pathname === TELEMETRY_PATH || pathname.startsWith(`${TELEMETRY_PATH}/`);
 }
 
+function isHelpPath(pathname: string): boolean {
+  return pathname === HELP_PATH || pathname.startsWith(`${HELP_PATH}/`);
+}
+
 // Forward to a basePath app, stripping the path prefix. Next.js's
 // basePath rewrites the URLs in the emitted HTML/JS (so links + asset
 // refs carry the prefix) but does NOT shift the file layout — files
@@ -88,6 +94,11 @@ export default {
       // The public transparency dashboard (spec/22), a basePath:'/telemetry'
       // static app — same prefix-strip as the live app's assets.
       return forwardStripped(request, url, TELEMETRY_PATH, env.TELEMETRY);
+    }
+    if (isHelpPath(url.pathname)) {
+      // The help centre (spec/55), a basePath:'/help' static app — same
+      // prefix-strip as telemetry.
+      return forwardStripped(request, url, HELP_PATH, env.HELP);
     }
     // Clean live-app page routes (/diagram, /explorer, /new, ...) and
     // its root-served icon: forwarded AS-IS (no strip — the worker's

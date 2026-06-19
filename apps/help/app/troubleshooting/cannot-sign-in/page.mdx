@@ -1,0 +1,31 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Cannot Sign In", description: "A checklist for sign-in problems in livediagram, and a reminder that the canvas always works as a guest.", path: "/help/troubleshooting/cannot-sign-in/" });
+
+<ArticleLayout title="Cannot Sign In" description="What to try when sign-in will not complete, and why you can keep working in the meantime." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
+
+Before anything else, the good news: **you do not need to sign in to use livediagram**. The canvas always works without an account, so a sign-in problem never blocks you from building or sharing a diagram. You can continue as a guest and sort the account out later. With that safety net in mind, here is how to get sign-in working.
+
+## First, keep working
+
+If sign-in is failing and you just want to get on with it, choose **Continue as guest** or head straight to a [new diagram](/new). Everything works: persistence, sharing, and real-time collaboration. When you do sign up later, the diagrams you built as a guest migrate into your new account automatically, so nothing is lost. See [working as a guest](/help/getting-started/working-as-a-guest/).
+
+## Sign-in checklist
+
+1. **Check the email code.** Sign-in uses a 6-digit code sent to your email. Look in spam, and request a fresh code if the first one is slow or expired.
+2. **Use the same email** you originally signed up with. A different address creates or expects a different account.
+3. **Reload and retry.** A stalled sign-in form usually clears with a refresh.
+4. **Disable interfering extensions.** Privacy or script-blocking extensions can break the sign-in flow. Try an incognito window with extensions off.
+5. **Check the Google option.** If you used Google sign-in before, use the same button rather than the email code, and make sure pop-ups are not blocked.
+
+## If sign-in is not available at all
+
+On some deployments, sign-in is simply not turned on. This is a fully supported mode, not an error.
+
+- If you see a notice that sign-in is **not enabled**, the instance is running in guest-only mode. There is no account to sign into; just continue as a guest.
+- This is common on self-hosted instances. See [configuration and optional auth](/help/self-hosting/configuration/).
+
+If you are on the hosted site, expected sign-in to work, and it still will not complete after the checklist above, [contact us](/help/contact/) with the email address you are using and the error you see. Keep working as a guest in the meantime, your diagrams are safe.
+
+</ArticleLayout>

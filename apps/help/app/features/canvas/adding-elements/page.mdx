@@ -1,0 +1,48 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { getSubArticles } from "@/lib/articles";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({
+  title: "Adding Elements",
+  description:
+    "Add shapes, text, arrows and more from the floating palette, dropping or drawing them on the canvas.",
+  path: "/help/features/canvas/adding-elements/",
+});
+
+<ArticleLayout
+  title="Adding Elements"
+  description="Drop shapes from the palette with a tap, or drag to draw them at the size you want."
+  categoryTitle="Features"
+  categorySlug="features"
+  parentArticle={{ title: "The Canvas", slug: "canvas" }}
+  subArticles={getSubArticles("canvas").filter((a) => a.slug !== "adding-elements")}
+>
+
+Every element on the canvas starts from the floating command palette. The palette organises its contents into category tabs so it stays compact however much it holds, and adding an element is usually a single tap.
+
+## Picking a category
+
+The palette's tabs (Shapes, Tools, Devices, Icons) work as a joined segmented control: click a tab to open its panel, click the active tab again to collapse it, or click another to switch. Only one is open at a time. Shapes is open by default.
+
+- **Shapes** holds the common nodes: square, circle, diamond, cylinder, parallelogram, hexagon, document, stadium, and more.
+- **Tools** carries the other kinds, including text, arrows, sticky notes, tables, and frames.
+- **Devices** offers UI device frames (browser window, monitor, laptop, phone, tablet) for wireframing.
+- **Icons** is a searchable grid of single-colour glyphs you can drop on the canvas or onto a shape.
+
+## Dropping or drawing a shape
+
+The draw-capable tiles (shapes, text, sticky notes, arrows and similar) arm a combined gesture when you click them.
+
+<Step n={1}>Click a tile in the palette. It stays pressed to show it is armed.</Step>
+<Step n={2}>Tap an empty spot on the canvas to drop the element at its natural size on that point.</Step>
+<Step n={3}>Or, instead of a single tap, drag out a box and release to create the element at that size.</Step>
+
+If a boxed element is already selected when you add another, the new one inherits its width and height, so you can chain together similarly-sized nodes quickly. Circles and diamonds are an exception: they are inherently square, so they snap back to a square using the larger inherited dimension.
+
+## Centre-placed elements
+
+A few kinds skip the draw gesture and simply land at the centre of the visible viewport, already selected, so you can drag them where you want. Icons and tables work this way: consecutive adds stack at the same centre point, and the selection moves to the newest one so you can nudge it off or undo without guesswork.
+
+<Tip>Icons can be added to a shape rather than as standalone elements: drag an icon tile onto a shape, or click an icon while a shape is selected, and it attaches beside that shape's label.</Tip>
+
+</ArticleLayout>

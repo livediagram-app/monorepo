@@ -1,0 +1,34 @@
+import { ArticleLayout } from "@/components/ArticleLayout";
+import { helpMetadata } from "@/lib/seo";
+
+export const metadata = helpMetadata({ title: "Data Privacy", description: "Where your livediagram diagrams live, what is stored, and the control you have over your own data.", path: "/help/privacy-and-security/data-privacy/" });
+
+<ArticleLayout title="Data Privacy" description="Where your diagrams live, what gets stored, and how you stay in control of your own data." categoryTitle="Privacy and Security" categorySlug="privacy-and-security">
+
+Your diagrams are the whole point, so it helps to know exactly where they live and who can reach them. livediagram stores diagrams on Cloudflare infrastructure behind an authenticated API, never in some third-party analytics product, and you keep control of them whether you sign in or stay a guest.
+
+## Where your diagrams live
+
+Diagrams are saved through a single Cloudflare Worker API that holds the database binding. The browser never talks to the database directly.
+
+- **Durable storage** lives in Cloudflare D1, the API's database. Each diagram, its tabs, folders, share links, and change history are rows there.
+- **Real-time state** (who is in the room, live cursors, in-flight edits) lives in a Cloudflare Durable Object, one room per diagram, while people are actively collaborating.
+- **Images** you add are stored in Cloudflare object storage and served back through the same API.
+
+Nothing about your diagram content is handed to an outside vendor. The hosted version runs entirely on Cloudflare, and a self-hoster runs the same stack on their own account.
+
+## What is stored, and who can read it
+
+A diagram is owned by an identity. That identity is either a signed-in account or, for guests, a per-browser id kept in your browser's local storage. Only the owner, people holding a valid [share link](/help/features/sharing/), and (in future) team members can read a diagram. Requests for a diagram you cannot access return a plain "not found", so the API never even confirms a private diagram exists.
+
+The [activity log](/help/features/activity-and-history/) keeps a per-diagram record of editorial changes with author attribution, and older entries are swept automatically after 90 days.
+
+## Staying in control
+
+- **Guest by default.** You can build and share diagrams without ever creating an account. See [working as a guest](/help/getting-started/working-as-a-guest/).
+- **Share on your terms.** Add a [share password](/help/privacy-and-security/share-link-security/) or an expiry to any share link, and revoke links at any time.
+- **Delete what you own.** Deleting a diagram removes it and its tabs, share links, and history. Signed-in users can delete their whole account, which wipes their diagrams, folders, images, and stored preferences.
+
+<Note>livediagram does not claim end-to-end encryption. Diagram content is protected by authentication and access controls, not by client-side encryption.</Note>
+
+</ArticleLayout>

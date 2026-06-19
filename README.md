@@ -5,7 +5,7 @@ A collaborative diagram editor that works without signing in. Open a link, draw,
 **Live at [livediagram.app](https://livediagram.app).** MIT-licensed and self-hostable end-to-end.
 
 ```
-apps/        marketing site + editor + telemetry dashboard + api + router
+apps/        marketing site + editor + telemetry dashboard + help centre + api + router
 packages/    shared diagram model, wire-format types, UI primitives, configs
 specs/       product source of truth, read these before adding features
 docs/        practical guides for using, hosting, and contributing
@@ -29,7 +29,8 @@ marketing/   off-site copy + media for listings and promotion (see specs/23)
 - **Editor** is the canvas, served at clean routes (`/new`, `/diagram/<id>`, `/explorer/...`; no `/live` prefix). Guests get a per-browser identity and full persistence; signed-in users get the same plus cross-device sync.
 - **API** at `/api/*` is a Cloudflare Worker (REST + WebSocket realtime room per diagram, backed by D1).
 - **Telemetry** at `/telemetry` is the public anonymous-events dashboard (off in OSS forks by default).
-- **Router** stitches the four under one hostname.
+- **Help** at `/help` is the static help centre (guides, feature docs, troubleshooting).
+- **Router** stitches the five under one hostname.
 
 The whole stack runs on Cloudflare Workers (Static Assets for the Next.js apps). There's no Node-hosted backend, no SSR, no Next.js API routes.
 
