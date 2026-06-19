@@ -1747,19 +1747,29 @@ function PieAnimTiles({
   );
 }
 
-function ProgressRow({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const pct = clampPercent(value);
+// A labelled 0–100 range slider with a right-aligned `{pct}%` readout. Shared
+// by the Progress percentage + the Layer opacity rows; each owns its own
+// value<->pct conversion and passes the already-resolved pct in.
+function PercentSliderRow({
+  label,
+  pct,
+  onPct,
+}: {
+  label: string;
+  pct: number;
+  onPct: (pct: number) => void;
+}) {
   return (
     <div className="px-3 py-1.5">
-      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Percentage</p>
+      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{label}</p>
       <div className="mt-1 flex items-center gap-2">
         <input
           type="range"
           min={0}
           max={100}
           value={pct}
-          onChange={(e) => onChange(Number(e.target.value))}
-          aria-label="Percentage"
+          onChange={(e) => onPct(Number(e.target.value))}
+          aria-label={label}
           className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
         />
         <span className="w-10 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -1768,6 +1778,10 @@ function ProgressRow({ value, onChange }: { value: number; onChange: (v: number)
       </div>
     </div>
   );
+}
+
+function ProgressRow({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return <PercentSliderRow label="Percentage" pct={clampPercent(value)} onPct={onChange} />;
 }
 
 // Progress fill-animation tiles (spec/46): None / Fill / Pulse / Stripes, plus
@@ -1813,25 +1827,12 @@ function ProgressAnimTiles({
 }
 
 function OpacityRow({ value, onChange }: { value: number; onChange: (opacity: number) => void }) {
-  const pct = Math.round(value * 100);
   return (
-    <div className="px-3 py-1.5">
-      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Opacity</p>
-      <div className="mt-1 flex items-center gap-2">
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={pct}
-          onChange={(e) => onChange(Number(e.target.value) / 100)}
-          aria-label="Opacity"
-          className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-500 dark:bg-slate-700"
-        />
-        <span className="w-10 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
-          {pct}%
-        </span>
-      </div>
-    </div>
+    <PercentSliderRow
+      label="Opacity"
+      pct={Math.round(value * 100)}
+      onPct={(p) => onChange(p / 100)}
+    />
   );
 }
 
