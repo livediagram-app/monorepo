@@ -277,13 +277,13 @@ both of which set `templatePickerMode='templates'` (`templateGridOpen`). It no
 longer auto-opens just because a tab has no elements, so a freshly-created
 (truly blank) diagram lands on the canvas rather than behind the picker.
 
-The **empty-canvas hint** is a subdued, **dismissible bottom banner**
-(`EmptyCanvasBanner`), shown while the active tab has no elements — not the old
-centre-of-canvas card, which read as a half-finished modal. It shares the
-bottom-banner slot with the sign-in / theme banners (yielding to the sign-in
-one), hides while a draw tool is armed or Quick Start is open, and persists its
-dismissal per-device (`useDismissibleBanner`). Editors get a **Quick Start**
-button on it; viewers get a passive "nothing here yet" line.
+The **empty-canvas hint** is a subdued **bottom banner** (`EmptyCanvasBanner`),
+shown while the active tab has no elements — not the old centre-of-canvas card,
+which read as a half-finished modal. It is **not dismissible** (it simply goes
+away once the canvas has content). It shares the bottom-banner slot with the
+sign-in / theme banners (yielding to the sign-in one) and hides while a draw
+tool is armed or Quick Start is open. Editors get a **Quick Start** button on
+it; viewers get a passive "nothing here yet" line.
 
 A soft, decorative **animated backdrop** (`AnimatedLinesBackdrop`) sits behind
 the card: thick multi-colour curved lines that slowly flow along their paths via

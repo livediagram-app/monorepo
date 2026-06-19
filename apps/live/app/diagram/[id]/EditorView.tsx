@@ -423,12 +423,10 @@ export function EditorView() {
   const signInTimerEnabled = clerkEnabled && !clerkUserId && !embedMode && !signInDismissed;
   const signInDelayElapsed = useDelayedReveal(SIGNIN_BANNER_DELAY_MS, signInTimerEnabled);
   const showSignInBanner = signInTimerEnabled && !zenMode && signInDelayElapsed;
-  // Empty-canvas hint (spec/14): a dismissible bottom banner while the active
-  // tab has no elements. Hidden in zen / embed, while a draw tool is armed, or
-  // while Quick Start is open; yields the bottom slot to the sign-in banner.
-  const { dismissed: emptyHintDismissed, dismiss: dismissEmptyHint } = useDismissibleBanner(
-    'livediagram:empty-canvas-hint-dismissed:v1',
-  );
+  // Empty-canvas hint (spec/14): a bottom banner while the active tab has no
+  // elements. Not dismissible — it just goes away once there's content. Hidden
+  // in zen / embed, while a draw tool is armed, or while Quick Start is open;
+  // yields the bottom slot to the sign-in banner.
   const showEmptyCanvasBanner =
     hydrated &&
     !zenMode &&
@@ -436,7 +434,6 @@ export function EditorView() {
     !showSignInBanner &&
     !templateGridOpen &&
     !pendingDraw &&
-    !emptyHintDismissed &&
     activeTab.elements.length === 0;
   // Stable references for the two list-shaped props the Explorer +
   // Activity panels take, so those (React.memo'd) panels don't
@@ -1427,7 +1424,6 @@ export function EditorView() {
           tabName={activeTab.name}
           readOnly={isReadOnly}
           onQuickStart={openTemplatePicker}
-          onDismiss={dismissEmptyHint}
         />
       ) : null}
       {/* Offer to match the editor chrome to the active tab's theme

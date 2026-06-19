@@ -1,26 +1,24 @@
 'use client';
 
-// Empty-canvas hint (spec/14). A subdued, dismissible bottom banner shown while
-// the active tab has no elements — replacing the old centre-of-canvas card so
-// the hint stays unobtrusive (a truly blank diagram reads as blank, not as a
-// half-finished modal). Sits in the same bottom slot as the sign-in / theme
-// banners; the host (EditorView) decides visibility + which banner wins the
-// slot. For editors it offers a Quick Start (template grid) button; viewers get
-// a passive "nothing here yet" line instead (they can't add content).
-
-import { CloseIcon } from './CloseIcon';
+// Empty-canvas hint (spec/14). A subdued bottom banner shown while the active
+// tab has no elements — replacing the old centre-of-canvas card so the hint
+// stays unobtrusive (a truly blank diagram reads as blank, not as a
+// half-finished modal). Not dismissible: it simply goes away once the canvas
+// has content (or a draw tool / Quick Start is engaged). Sits in the same
+// bottom slot as the sign-in / theme banners; the host (EditorView) decides
+// visibility + which banner wins the slot. For editors it offers a Quick Start
+// (template grid) button; viewers get a passive "nothing here yet" line instead
+// (they can't add content).
 
 export function EmptyCanvasBanner({
   tabName,
   readOnly,
   onQuickStart,
-  onDismiss,
   placementClassName = 'bottom-0 z-40 pb-16',
 }: {
   tabName: string;
   readOnly: boolean;
   onQuickStart: () => void;
-  onDismiss: () => void;
   placementClassName?: string;
 }) {
   return (
@@ -63,14 +61,6 @@ export function EmptyCanvasBanner({
             Quick Start
           </button>
         )}
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Dismiss"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        >
-          <CloseIcon size={15} />
-        </button>
       </div>
     </div>
   );
