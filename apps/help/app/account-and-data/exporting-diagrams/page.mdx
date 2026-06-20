@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Exporting Diagrams", description: "Get your livediagram out of the app as an image, or embed a read-only live view elsewhere.", path: "/help/account-and-data/exporting-diagrams/" });
+export const metadata = helpMetadata({
+  title: 'Exporting Diagrams',
+  description:
+    'Get your livediagram out of the app as an image, or embed a read-only live view elsewhere.',
+  path: '/help/account-and-data/exporting-diagrams/',
+});
 
 <ArticleLayout title="Exporting Diagrams" description="Take your work with you as a shareable image, or drop a live read-only view into another site." categoryTitle="Account and Data" categorySlug="account-and-data">
 
@@ -21,14 +26,15 @@ An image is the right choice when you need a fixed snapshot: a diagram for a rep
 
 ## Embedding a live view
 
-When you want the diagram to keep updating wherever it lives, [embed it](/help/features/sharing/embeds/) instead. An embed is a read-only iframe of a shared diagram that you can drop into Notion, a wiki, or any doc that accepts an iframe.
+When you want the diagram to keep updating wherever it lives, [embed it](/help/collaboration/sharing/embeds/) instead. An embed is a read-only iframe of a shared diagram that you can drop into Notion, a wiki, or any doc that accepts an iframe.
 
 An embed is always read-only, whatever role the share link carries, so editing happens back in the full editor. It hides all the editor chrome, leaving just the canvas with pan and zoom, and it stays live: as the diagram is edited, the embed updates in place rather than showing a stale snapshot.
 
 To grab one, open the Share dialog and use the **Embed** copy button next to a link. It copies a ready-made iframe snippet, sized sensibly, that you can paste straight into your page.
 
 <Tip>
-Reach for an image when you need a fixed snapshot, and an embed when you want the diagram to keep updating in place wherever you have put it.
+  Reach for an image when you need a fixed snapshot, and an embed when you want the diagram to keep
+  updating in place wherever you have put it.
 </Tip>
 
 </ArticleLayout>

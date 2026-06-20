@@ -1,0 +1,62 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Roles and Invites',
+  description:
+    'How team roles work and the two ways to bring people into a team: by email address or with a shareable invite link.',
+  path: '/help/collaboration/teams/roles-and-invites/',
+});
+
+<ArticleLayout title="Roles and Invites" description="Admin and Member roles, plus the two ways to bring people into a team." categoryTitle="Collaboration" categorySlug="collaboration" parentArticle={{ title: "Teams", slug: "teams" }} subArticles={getSubArticles("teams").filter((a) => a.slug !== "roles-and-invites")}>
+
+A team has two roles and two ways in. Roles decide who may manage the team; invites decide who joins. Everything here needs a signed-in account, since teams are keyed to your account and invites are matched by your verified email.
+
+## Admin and Member
+
+The person who creates a team is its first **Admin**. Admins can:
+
+- invite people by email,
+- turn the shareable invite link on or off,
+- change a member's role,
+- edit the team name and organisation,
+- remove a member or cancel an invite,
+- delete the team.
+
+**Members** can see the team and its member list and work in the shared library, but cannot manage membership.
+
+One rule shapes the whole team: the **last remaining Admin** cannot be demoted, removed, or leave. If you are the only Admin you will not see a Leave action on your own row. To step away, promote someone else to Admin first, or delete the team. Deleting a team removes all of its member rows.
+
+## Inviting by email
+
+<Step n={1}>Open your team in the Explorer and use the invite-by-email row (Admins only).</Step>
+<Step n={2}>Enter the person's email address. This creates a pending invite for that address.</Step>
+<Step n={3}>
+  Tell them out of band that you have invited them. (Email delivery is not part of this version, so
+  the invite lands in their in-app Invites section rather than their inbox.)
+</Step>
+
+When that person signs in with the same email address, the invite appears in their Explorer **Invites** section, showing the team name, organisation, and member count. They then choose:
+
+- **Accept**, which adds them to the team as a Member, or
+- **Decline**, which removes the invite. An Admin can re-invite the same address later.
+
+A pending invite grants no access until it is accepted.
+
+## The shareable invite link
+
+As an alternative, an Admin can turn on a **shareable invite link**. Anyone signed in who opens it can join the team as a Member.
+
+- It is off by default; an Admin generates it deliberately.
+- It **expires after one week**. Regenerating it rotates the link and resets the week.
+- An Admin can turn it off at any time from the **Invite by link** button on the team page.
+
+Opening the link lands on a join page that shows what team you are joining. A signed-in visitor sees Join or Decline; a signed-out visitor is asked to sign in or create an account first, then returns to finish joining.
+
+<Tip>
+  The invite link is a credential: anyone who has the URL can join while it is active. Turn it off
+  once your team is assembled, and rely on per-email invites for tighter control.
+</Tip>
+
+</ArticleLayout>

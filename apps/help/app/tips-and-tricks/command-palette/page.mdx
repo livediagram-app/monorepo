@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "The Command Palette", description: "The floating palette is where you pick tools and add shapes, icons, and components to your diagram in livediagram.", path: "/help/tips-and-tricks/command-palette/" });
+export const metadata = helpMetadata({
+  title: 'The Command Palette',
+  description:
+    'The floating palette is where you pick tools and add shapes, icons, and components to your diagram in livediagram.',
+  path: '/help/tips-and-tricks/command-palette/',
+});
 
 <ArticleLayout title="The Command Palette" description="Pick tools and drop new elements onto the canvas from the floating palette that sits on top of your diagram." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
 
@@ -29,7 +34,8 @@ If a boxed element is already selected when you add another, the new one inherit
 The palette is fully movable: drag its header to reposition it, and use the collapse button to shrink it to a banner and reclaim canvas space. On phones it opens instead from the top-right mobile dock.
 
 <Tip>
-Prefer a tidier workspace? Turn on the **Minimal panel layout** in Settings to swap the floating palette for a compact dock of buttons that open each panel as a popover.
+  Prefer a tidier workspace? Turn on the **Minimal panel layout** in Settings to swap the floating
+  palette for a compact dock of buttons that open each panel as a popover.
 </Tip>
 
 </ArticleLayout>

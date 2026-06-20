@@ -1,11 +1,16 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Keyboard Essentials", description: "The handful of livediagram keyboard shortcuts worth learning first: tools, panning, zen mode, and more.", path: "/help/getting-started/keyboard-essentials/" });
+export const metadata = helpMetadata({
+  title: 'Keyboard Essentials',
+  description:
+    'The handful of livediagram keyboard shortcuts worth learning first: tools, panning, zen mode, and more.',
+  path: '/help/getting-started/keyboard-essentials/',
+});
 
 <ArticleLayout title="Keyboard Essentials" description="The small set of shortcuts worth learning first to work quickly on the canvas." categoryTitle="Getting Started" categorySlug="getting-started">
 
-You can do everything in livediagram with the mouse, but a few keyboard shortcuts make working on the [canvas](/help/features/canvas/) much faster. This is the short list worth committing to memory. For the complete reference, see [keyboard shortcuts](/help/tips-and-tricks/keyboard-shortcuts/).
+You can do everything in livediagram with the mouse, but a few keyboard shortcuts make working on the [canvas](/help/canvas/the-canvas/) much faster. This is the short list worth committing to memory. For the complete reference, see [keyboard shortcuts](/help/tips-and-tricks/keyboard-shortcuts/).
 
 ## Switching tools
 
@@ -15,7 +20,7 @@ The canvas tools each have a single-key shortcut, matching the conventions in to
 - **`H`**: Hand tool (drag empty canvas to pan around).
 - **`K`**: Laser pointer (a glowing trail your collaborators see during a presentation).
 - **`E`**: Eraser (press, or hold and drag, to delete elements).
-- **`Z`**: Zen mode, which hides all the chrome for distraction-free work. See [Zen mode](/help/features/zen-mode/).
+- **`Z`**: Zen mode, which hides all the chrome for distraction-free work. See [Zen mode](/help/tools/zen-mode/).
 
 ## Moving the view
 
@@ -34,6 +39,9 @@ A few shortcuts cover the actions you repeat most:
 - **Escape** cancels an in-progress text edit or closes an open dialog.
 - **Enter** commits text, or confirms a dialog.
 
-<Tip>The editor has a built-in shortcuts dialog: open it from the button on the tab bar to see the full list any time without leaving your diagram.</Tip>
+<Tip>
+  The editor has a built-in shortcuts dialog: open it from the button on the tab bar to see the full
+  list any time without leaving your diagram.
+</Tip>
 
 </ArticleLayout>

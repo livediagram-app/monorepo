@@ -1,0 +1,41 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'The Canvas',
+  description:
+    'The infinite canvas where you build diagrams, with a floating palette for adding shapes and tools.',
+  path: '/help/canvas/the-canvas/',
+});
+
+<ArticleLayout
+  title="The Canvas"
+  description="The infinite canvas where every diagram comes together, with a floating palette always within reach."
+  categoryTitle="Canvas"
+  categorySlug="canvas"
+  subArticles={getSubArticles("the-canvas")}
+>
+
+The canvas is where you actually build diagrams in livediagram. It is an open, scrollable surface you can pan and zoom freely, with a floating command palette sitting on top of it for adding elements and switching tools. Everything works straight away, no sign-in required, so you can [open a fresh canvas](/new) and start placing shapes in seconds.
+
+## The command palette
+
+A small floating panel sits over the canvas, labelled `PALETTE`, holding a row of controls for adding elements. It starts in the top-right corner on desktop, but the header row doubles as a drag handle: press it and drag to move the whole palette anywhere on the canvas. Clicking a button never starts a drag, so you can reposition the panel and still tap buttons cleanly.
+
+The palette groups its contents into category tabs (Shapes, Tools, Devices, Icons), shown as a joined segmented control where one tab is open at a time. Shapes is open by default since it is the most common starting point on a fresh canvas. A collapse button beside the `PALETTE` label hides the body and leaves the title row as a slim banner, giving you back canvas space while keeping the panel one click away.
+
+## Adding elements
+
+Most elements are added straight from the palette. The Shapes tab carries the common nodes (square, circle, diamond, cylinder, hexagon, and more), while the Tools tab holds text, arrows, sticky notes, tables, and other kinds. Clicking a shape tile arms a combined gesture: a tap drops the element at your pointer, and a drag sizes it as you go. See [Adding elements](/help/canvas/the-canvas/adding-elements/) for the full walkthrough.
+
+## Moving around
+
+The canvas is effectively infinite, so you are never boxed in. Use the Hand tool, a middle-click drag, or hold Space and drag to pan, and the on-screen zoom controls to scale the view. The [Panning and zooming](/help/canvas/the-canvas/pan-and-zoom/) article covers every way to navigate. You can also restyle the backdrop per tab from the [Tab Appearance dialog](/help/canvas/the-canvas/changing-the-background/).
+
+<Tip>
+  The palette's position is remembered until you reload the page, so once you nudge it somewhere
+  comfortable it stays put for the rest of your session.
+</Tip>
+
+</ArticleLayout>

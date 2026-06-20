@@ -1,0 +1,57 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Tab Folders',
+  description:
+    'Group related tabs in a diagram under a named, collapsible folder so a long tab bar stays organised and readable.',
+  path: '/help/tabs/using-tabs/tab-folders/',
+});
+
+<ArticleLayout title="Tab Folders" description="Once a diagram grows past a handful of tabs, group the related ones under a named, collapsible folder along the tab bar." categoryTitle="Tabs" categorySlug="tabs" parentArticle={{ title: "Tabs and Tab Folders", slug: "using-tabs" }} subArticles={getSubArticles("using-tabs").filter((a) => a.slug !== "tab-folders")}>
+
+When a diagram's tab bar fills up, a flat list of tabs gets hard to scan. A **tab folder** gathers related tabs under one named chip you can collapse down when you are not using it. Put three tabs under "Organisation" and two under "Plans", collapse the ones you are done with, and the bar stays calm.
+
+## How folders work
+
+A few things are worth knowing about how tab folders behave:
+
+- **One level.** A folder holds tabs. Folders never contain other folders.
+- **A folder is just a name.** There is no separate folder object to create or delete. A folder exists as long as at least one tab carries its name, and it disappears when the last tab leaves it.
+- **Per-diagram.** If a tab is shared into more than one diagram, it can sit in a folder in one diagram and be loose in another. The folder belongs to the diagram, not to the tab's content.
+- **Folders are contiguous.** A folder's tabs always sit next to each other in the bar, drawn under a single chip with the folder's name and a small count badge.
+
+## Putting tabs in folders
+
+There are two ways to change which folder a tab belongs to.
+
+<Step n={1}>
+  Drag and drop. Drag a tab onto a folder's tabs (or onto its chip, which works even when the folder
+  is collapsed) to join that folder. Drop it among the loose tabs to make it loose again, or onto a
+  different folder to move it there.
+</Step>
+
+<Step n={2}>
+  The tab menu. Open a tab's right-click or ellipsis menu and choose "Add to Folder". Pick an
+  existing folder in the diagram, choose "New folder" to type a fresh name, or "Remove from folder"
+  to make the tab loose. New folder names must be non-empty and must not collide with an existing
+  folder in the same diagram.
+</Step>
+
+## Collapsing and renaming
+
+The folder chip carries a folder glyph that is drawn closed when collapsed and open when expanded, so the icon itself tells you the state.
+
+- **Click the chip** to toggle between collapsed (just the chip) and expanded (the chip plus its tab pills).
+- **Double-click the chip** to rename the folder. Renaming rewrites the name on every tab in it.
+- If the active tab is inside a collapsed folder, the folder force-expands so you can always see where you are. Move out of it and it auto-collapses again.
+
+Collapse and expand state is per browser, so collapsing a folder for yourself never changes what a collaborator sees.
+
+<Tip>
+  Give folders short, sentence-style names like "Plans" or "Back office". The name shows on the chip
+  with a count badge, so a tight name keeps the bar readable.
+</Tip>
+
+</ArticleLayout>

@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "How Guest Identity Works", description: "Understand how livediagram identifies you as a guest with a per-browser id, and what that means for your diagrams.", path: "/help/account-and-data/guest-identity/" });
+export const metadata = helpMetadata({
+  title: 'How Guest Identity Works',
+  description:
+    'Understand how livediagram identifies you as a guest with a per-browser id, and what that means for your diagrams.',
+  path: '/help/account-and-data/guest-identity/',
+});
 
 <ArticleLayout title="How Guest Identity Works" description="The canvas works without signing in. Here is how livediagram knows which diagrams are yours when you are a guest." categoryTitle="Account and Data" categorySlug="account-and-data">
 
@@ -25,7 +30,8 @@ Because your guest content is tied to a single browser, clearing that browser's 
 If you want your diagrams to follow you across browsers and devices, [signing in](/help/account-and-data/signing-in/) is the answer. When you create an account, the diagrams you built as a guest migrate into it automatically, so you do not lose the work you have already done.
 
 <Tip>
-Doing serious work as a guest? Create an account before clearing your browser data. Your guest diagrams move into the account on sign-up, so nothing is left behind.
+  Doing serious work as a guest? Create an account before clearing your browser data. Your guest
+  diagrams move into the account on sign-up, so nothing is left behind.
 </Tip>
 
 </ArticleLayout>

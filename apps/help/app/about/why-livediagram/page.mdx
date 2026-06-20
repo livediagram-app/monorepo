@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Why Use livediagram?", description: "livediagram is free, open source, needs no sign-in to start, and is multiplayer from the very first shape.", path: "/help/about/why-livediagram/" });
+export const metadata = helpMetadata({
+  title: 'Why Use livediagram?',
+  description:
+    'livediagram is free, open source, needs no sign-in to start, and is multiplayer from the very first shape.',
+  path: '/help/about/why-livediagram/',
+});
 
 <ArticleLayout title="Why Use livediagram?" description="Free and open source, no sign-in wall, and real-time collaboration from the very first shape." categoryTitle="About livediagram" categorySlug="about">
 
@@ -21,19 +26,30 @@ The whole codebase is **MIT-licensed** and publicly viewable. That has real cons
 
 ## No sign-in wall
 
-The [canvas always works without signing in](/help/getting-started/guest-vs-account/). A first-time visitor can open a [new diagram](/new), build something real, and only later be asked to create an account, never blocked by a modal before they have even started. An [account](/help/getting-started/guest-vs-account/) adds cross-device sync and [teams](/help/features/teams/), but it is never a gate in front of the editor.
+The [canvas always works without signing in](/help/getting-started/guest-vs-account/). A first-time visitor can open a [new diagram](/new), build something real, and only later be asked to create an account, never blocked by a modal before they have even started. An [account](/help/getting-started/guest-vs-account/) adds cross-device sync and [teams](/help/collaboration/teams/), but it is never a gate in front of the editor.
 
 ## Multiplayer from the first shape
 
-Collaboration is not a bolt-on. Hand someone a [share link](/help/features/sharing/) and they join the same canvas, where everyone sees live cursors, live selections, and every edit as it happens. To keep edits from colliding, an element another person currently has selected is gently locked for everyone else.
+Collaboration is not a bolt-on. Hand someone a [share link](/help/collaboration/sharing/) and they join the same canvas, where everyone sees live cursors, live selections, and every edit as it happens. To keep edits from colliding, an element another person currently has selected is gently locked for everyone else.
 
 <FeatureGrid>
-<Feature slug="sharing" title="Real-time sharing">Hand over a link and collaborate live, even with guests.</Feature>
-<Feature slug="canvas" title="The canvas">Shapes, arrows, and freehand on one fast surface.</Feature>
-<Feature slug="themes" title="Themes">Recolour a whole diagram to match your style.</Feature>
-<Feature slug="templates" title="Templates">Start from a ready-made layout instead of a blank page.</Feature>
+  <Feature slug="sharing" title="Real-time sharing">
+    Hand over a link and collaborate live, even with guests.
+  </Feature>
+  <Feature slug="canvas" title="The canvas">
+    Shapes, arrows, and freehand on one fast surface.
+  </Feature>
+  <Feature slug="themes" title="Themes">
+    Recolour a whole diagram to match your style.
+  </Feature>
+  <Feature slug="templates" title="Templates">
+    Start from a ready-made layout instead of a blank page.
+  </Feature>
 </FeatureGrid>
 
-<Tip>The best argument for livediagram is the canvas itself. Open a [new diagram](/new) and try it, no account needed.</Tip>
+<Tip>
+  The best argument for livediagram is the canvas itself. Open a [new diagram](/new) and try it, no
+  account needed.
+</Tip>
 
 </ArticleLayout>

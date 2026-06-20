@@ -1,0 +1,43 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Share Passwords',
+  description:
+    'Add an optional password to a diagram so anyone opening a share link must enter it first.',
+  path: '/help/collaboration/sharing/share-passwords/',
+});
+
+<ArticleLayout title="Share Passwords" description="Gate every share link to a diagram behind a single password." categoryTitle="Collaboration" categorySlug="collaboration" parentArticle={{ title: "Sharing and Embeds", slug: "sharing" }} subArticles={getSubArticles("sharing").filter((a) => a.slug !== "share-passwords")}>
+
+A share password is an optional password on a diagram. When it is set, anyone opening any share link for that diagram must enter the password before they can see it. It is there to stop people guessing or stumbling onto a share URL, not to provide strong encryption.
+
+## How it works
+
+The password belongs to the **diagram**, not to a single link. One password covers every share link you create for that diagram. Once a visitor enters it correctly, it stays in effect for their whole session, so their reads, edits, the activity log, images, and realtime all stay authorised.
+
+As the owner you always bypass the password. The prompt only ever appears for people coming in through a share link.
+
+## Setting a password
+
+<Step n={1}>Open the **Share** dialog on your diagram.</Step>
+<Step n={2}>Find the **Password** row beneath the list of links.</Step>
+<Step n={3}>
+  Type a password and choose **Save**. To turn it off again, clear the field or choose **Remove**.
+</Step>
+
+The password field always shows the current value in plain text, so you can read it back and copy it to whoever needs it. Anyone you have already shared with will be re-prompted on their next action once you set or change it.
+
+## What visitors see
+
+When someone opens a protected share link, they get a full-screen password card with a single input instead of the canvas. Entering the right password opens the diagram; a wrong one shows an error and lets them try again.
+
+Embedded diagrams behave the same way: the password prompt appears inside the embed frame. Because browsers keep each site's storage separate, a visitor enters the password once per site where the diagram is embedded.
+
+<Tip>
+  Pair a password with a [share link expiry](/help/collaboration/sharing/share-link-expiry/) for a
+  link that both needs a secret and stops working after a set time.
+</Tip>
+
+</ArticleLayout>

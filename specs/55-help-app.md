@@ -22,23 +22,41 @@ livediagram is free and MIT-licensed with no plan for a paid tier (see [spec/03]
 
 ## Information architecture
 
-`lib/articles.ts` is the single source of truth for categories and articles. Two flat arrays (`categories`, `articles`) plus helpers (`getArticlesByCategory`, `getSubArticles`, `searchArticles`). An article's `categorySlug` is its full nested path (e.g. `features/canvas`); `parentSlug` links a sub-article to its feature landing page.
+`lib/articles.ts` is the single source of truth for categories and articles. Two flat arrays (`categories`, `articles`) plus helpers (`getArticlesByCategory`, `getSubArticles`, `searchArticles`). An article's `categorySlug` is its full nested path (e.g. `canvas/the-canvas`); `parentSlug` links a sub-article to its feature landing page.
 
-Categories:
+Categories fall into two kinds. The **support** categories carry standalone articles; the **feature** categories (`kind: 'feature'`) carry the in-depth feature guides and are grouped under a separate "Feature Guides" heading on the home page and the `/features` index. Each feature category has a card-grid index page at `/help/<slug>/` (shared `FeatureCategoryIndex` component), and within it each feature has its own landing page plus optional sub-articles.
 
-| slug                   | title                | icon      |
-| ---------------------- | -------------------- | --------- |
-| `about`                | About livediagram    | info      |
-| `getting-started`      | Getting Started      | rocket    |
-| `features`             | Features             | grid      |
-| `tips-and-tricks`      | Tips and Tricks      | lightbulb |
-| `account-and-data`     | Account and Data     | user      |
-| `privacy-and-security` | Privacy and Security | shield    |
-| `self-hosting`         | Self-Hosting         | server    |
-| `troubleshooting`      | Troubleshooting      | wrench    |
-| `contact`              | Contact              | mail      |
+| slug                   | title                | icon      | kind    |
+| ---------------------- | -------------------- | --------- | ------- |
+| `about`                | About livediagram    | info      | support |
+| `getting-started`      | Getting Started      | rocket    | support |
+| `tips-and-tricks`      | Tips and Tricks      | lightbulb | support |
+| `account-and-data`     | Account and Data     | user      | support |
+| `privacy-and-security` | Privacy and Security | shield    | support |
+| `self-hosting`         | Self-Hosting         | server    | support |
+| `troubleshooting`      | Troubleshooting      | wrench    | support |
+| `contact`              | Contact              | mail      | support |
+| `explorer`             | Explorer             | folder    | feature |
+| `palette`              | Palette              | palette   | feature |
+| `canvas`               | Canvas               | frame     | feature |
+| `tabs`                 | Tabs                 | tabs      | feature |
+| `customisation`        | Customisation        | swatch    | feature |
+| `collaboration`        | Collaboration        | users     | feature |
+| `tools`                | Tools                | tools     | feature |
 
-`features` is special: it has a landing page per feature (each its own help page, listed on the home + features index), and each feature can have sub-articles. Feature landing pages and articles are grounded in the existing feature specs (canvas/09, themes/29+42+44, tabs/13+17+30, comments, links/40, images/19, explorer/15, teams/32+35, sharing/24+33+34, presentation/31, zen/26, AI/25, markdown import/27, history/12, session tools/39, data elements/46+51+52+53, presets/48, layout cleanup/47, isometric/45, annotations/38, markers/49, technology icons/41, drawing, selection/groups, text+fonts/28).
+The feature categories group the feature guides by area:
+
+- **Explorer** — folders for organising diagrams (explorer/15).
+- **Palette** — adding elements: shapes and arrows (09), drawing (drawing + shape recognition), images (19), technology icons (41), data elements (46+51+52+53).
+- **Canvas** — the infinite canvas (09), selecting and grouping (selection/groups), links and link cards (40), annotations (38).
+- **Tabs** — multiple boards and tab folders (13+17+30).
+- **Customisation** — themes (29+42+44), templates, style presets (48), text and fonts (28), isometric (45).
+- **Collaboration** — comments, teams (32+35), sharing and embeds (24+33+34), activity and history (12), session tools (39).
+- **Tools** — AI assistance (25), zen mode (26), Markdown import (27), layout cleanup (47).
+
+Where a feature's name would equal its category slug, the landing slug is distinguished (`the-canvas`, `the-explorer`, `using-tabs`) so a feature slug never equals a category slug (which would break the breadcrumb's parent link).
+
+There is **no Presentation Mode guide**: spec/31 is a draft and the feature is not built, so the article was unpublished rather than ship documentation for a non-existent feature.
 
 ## In-editor entry point
 

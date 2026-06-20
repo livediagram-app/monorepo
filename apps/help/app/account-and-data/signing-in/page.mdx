@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Signing In", description: "Signing in to livediagram is optional and free. Learn what an account adds and how your guest diagrams move across.", path: "/help/account-and-data/signing-in/" });
+export const metadata = helpMetadata({
+  title: 'Signing In',
+  description:
+    'Signing in to livediagram is optional and free. Learn what an account adds and how your guest diagrams move across.',
+  path: '/help/account-and-data/signing-in/',
+});
 
 <ArticleLayout title="Signing In" description="An account is optional and free. It keeps your diagrams in sync across devices, and your guest work comes with you." categoryTitle="Account and Data" categorySlug="account-and-data">
 
@@ -27,7 +32,8 @@ The migration moves your guest content, including your diagrams, folders, shared
 The process runs once, the first time you are signed in, and is safe to repeat: a second attempt simply moves nothing. Once your account syncs everything, the Explorer's sign-in nudge disappears, because there is nothing left to prompt you about.
 
 <Tip>
-Build freely as a guest, then sign up when you want your diagrams everywhere. The hand-off is automatic, so there is no manual import to do.
+  Build freely as a guest, then sign up when you want your diagrams everywhere. The hand-off is
+  automatic, so there is no manual import to do.
 </Tip>
 
 </ArticleLayout>

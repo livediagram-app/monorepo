@@ -1,28 +1,28 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Presenting from the Canvas", description: "Walk an audience through a diagram with presentation mode, zen mode, and the laser pointer in livediagram.", path: "/help/tips-and-tricks/presenting-well/" });
+export const metadata = helpMetadata({
+  title: 'Presenting from the Canvas',
+  description:
+    'Walk an audience through a diagram with zen mode and the laser pointer in livediagram.',
+  path: '/help/tips-and-tricks/presenting-well/',
+});
 
-<ArticleLayout title="Presenting from the Canvas" description="Turn a finished diagram into a clear story with presentation mode, a distraction-free view, and a laser pointer." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
+<ArticleLayout title="Presenting from the Canvas" description="Turn a finished diagram into a clear story with a distraction-free view and a laser pointer." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
 
-A finished diagram shows everything at once, which is great for reference but harder to narrate. livediagram gives you a few ways to walk an audience through your work, whether you are on a call, a projector, or sharing your screen.
+A finished diagram shows everything at once, which is great for reference but harder to narrate. livediagram gives you a couple of ways to focus an audience as you walk through your work, whether you are on a call, a projector, or sharing your screen.
 
-## Presentation mode
+## Zen mode
 
-[Presentation mode](/help/features/presentation/) turns the current tab into a slideshow. Instead of showing the whole diagram at once, it reveals it one step at a time: each step brings in another element, already-revealed elements stay visible, and the camera animates to keep the newly revealed part in view.
+When you want the full canvas with nothing else competing for attention, [Zen mode](/help/tools/zen-mode/) hides every piece of chrome, the header, tab bar, palette, and panels, leaving only the canvas and zoom controls. It is purely a view state: it changes nothing about the diagram and is not synced to other participants, so each viewer focuses independently. Toggle it with `Z` (or the button on the zoom controls), and exit with `Escape`.
 
-Steps are derived automatically from the diagram in creation order, so there is nothing to author. Grouped elements reveal together, and arrows appear as soon as both of their endpoints are on screen. When an element has a note, that note shows in a caption panel at the bottom of the screen as its narration.
-
-Advance with the arrow keys, `Space`, `Page Down`, or a click, and step back with the left arrow or `Page Up`. `Home` and `End` jump to the first and last step, and `Esc` exits and restores your previous view. Presenting is read-only by nature, so it is available to everyone, including share-link viewers narrating a diagram they were sent.
-
-## Zen mode and the laser
-
-When you want the full canvas without stepping through it, [Zen mode](/help/features/zen-mode/) hides every piece of chrome, the header, tab bar, palette, and panels, leaving only the canvas and zoom controls. It is purely a view state: it changes nothing about the diagram and is not synced to other participants, so each viewer focuses independently. Toggle it with `Z` (or the button on the zoom controls), and exit with `Escape`.
+## The laser pointer
 
 For pointing things out live, switch to the **Laser** tool (`K`). Moving the pointer leaves a glowing trail in your participant colour that fades after about a second, and on a shared session other people see your laser in real time, so you can sweep across the diagram and direct the room's attention.
 
 <Tip>
-Add short notes to the key elements before you present. In presentation mode they become your narration captions automatically, so you have a built-in script.
+  Reveal a busy diagram gradually by building it up tab by tab, then switch to Zen mode and use the
+  laser to walk the room through each step.
 </Tip>
 
 </ArticleLayout>

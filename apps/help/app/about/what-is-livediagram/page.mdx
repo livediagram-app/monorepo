@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "What is livediagram?", description: "livediagram is a free, open-source, real-time multiplayer diagram editor that runs in your browser, with no sign-in needed to start.", path: "/help/about/what-is-livediagram/" });
+export const metadata = helpMetadata({
+  title: 'What is livediagram?',
+  description:
+    'livediagram is a free, open-source, real-time multiplayer diagram editor that runs in your browser, with no sign-in needed to start.',
+  path: '/help/about/what-is-livediagram/',
+});
 
 <ArticleLayout title="What is livediagram?" description="A free, open-source canvas where teams build diagrams and mindmaps together, in real time, right in the browser." categoryTitle="About livediagram" categorySlug="about">
 
@@ -9,12 +14,12 @@ livediagram is a web app where people build **diagrams and mindmaps together in 
 
 ## A multiplayer canvas
 
-The heart of livediagram is the [canvas](/help/features/canvas/). You drop down shapes, connect them with arrows, drag things around, and the diagram takes shape as you work. When more than one person is in the same diagram, everyone sees live cursors, who has what selected, and every change as it happens.
+The heart of livediagram is the [canvas](/help/canvas/the-canvas/). You drop down shapes, connect them with arrows, drag things around, and the diagram takes shape as you work. When more than one person is in the same diagram, everyone sees live cursors, who has what selected, and every change as it happens.
 
-- **Shapes and arrows** for flowcharts, system diagrams, and process maps. See [Shapes and arrows](/help/features/shapes-and-arrows/).
+- **Shapes and arrows** for flowcharts, system diagrams, and process maps. See [Shapes and arrows](/help/palette/shapes-and-arrows/).
 - **Mindmaps and brainstorms** built from quick, keyboard-driven nodes.
 - **Real-time presence** so collaborators never overwrite each other by surprise.
-- **Tabs** to keep related views of one diagram in a single place. See [Tabs](/help/features/tabs/).
+- **Tabs** to keep related views of one diagram in a single place. See [Tabs](/help/tabs/using-tabs/).
 
 ## Built for teams who think visually
 
@@ -26,6 +31,9 @@ To make that frictionless, the canvas **always works without signing in**. You c
 
 livediagram is **MIT-licensed** and **free for everyone**. There is no paid tier and no plan to introduce one. A free hosted version runs at livediagram.app, and because the whole codebase is open, anyone can self-host it on their own infrastructure. Every feature is available to every user. See [Why use livediagram?](/help/about/why-livediagram/).
 
-<Tip>The fastest way to understand livediagram is to use it. Open a [new diagram](/new) and drop in a couple of shapes, no sign-up needed.</Tip>
+<Tip>
+  The fastest way to understand livediagram is to use it. Open a [new diagram](/new) and drop in a
+  couple of shapes, no sign-up needed.
+</Tip>
 
 </ArticleLayout>

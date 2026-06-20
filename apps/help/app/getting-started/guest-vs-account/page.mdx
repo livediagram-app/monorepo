@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Guest vs Account", description: "The livediagram canvas always works without signing in. Learn what you get as a guest and what an account adds.", path: "/help/getting-started/guest-vs-account/" });
+export const metadata = helpMetadata({
+  title: 'Guest vs Account',
+  description:
+    'The livediagram canvas always works without signing in. Learn what you get as a guest and what an account adds.',
+  path: '/help/getting-started/guest-vs-account/',
+});
 
 <ArticleLayout title="Guest vs Account" description="The canvas always works without signing in. Here is what a guest gets, and what an account adds on top." categoryTitle="Getting Started" categorySlug="getting-started">
 
@@ -24,7 +29,7 @@ Creating a free account (sign-in lives at the sign-in route, sign-up at the get-
 
 - **Cross-device sync.** Your diagrams travel with your account, so they appear on every device you sign in to.
 - **A persistent identity.** Your display name comes from your profile rather than being set per session.
-- **[Teams](/help/features/teams/).** Join or create a team to work in a shared space with teammates.
+- **[Teams](/help/collaboration/teams/).** Join or create a team to work in a shared space with teammates.
 
 Accounts are free like everything else in livediagram, there is no paid tier.
 
@@ -34,6 +39,9 @@ You do not lose anything by signing up. The first time you sign in, the diagrams
 
 The two paths also coexist forever: a signed-in user can hand a [share link](/help/getting-started/sharing-your-diagram/) to a guest, who edits the same diagram with no account at all.
 
-<Note>livediagram is open source, and accounts are optional. A self-hosted deployment can run in pure-guest mode with no sign-in at all, and the editor stays fully usable.</Note>
+<Note>
+  livediagram is open source, and accounts are optional. A self-hosted deployment can run in
+  pure-guest mode with no sign-in at all, and the editor stays fully usable.
+</Note>
 
 </ArticleLayout>

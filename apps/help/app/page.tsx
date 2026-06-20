@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { SearchInput } from '@/components/SearchInput';
 import { CategoryCard } from '@/components/CategoryCard';
-import { FeatureArticleCard } from '@/components/FeatureArticleCard';
 import { Breadcrumb } from '@/components/Breadcrumb';
-import { categories, getArticlesByCategory } from '@/lib/articles';
+import { categories } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = helpMetadata({
@@ -14,7 +13,8 @@ export const metadata: Metadata = helpMetadata({
 });
 
 export default function HelpHome() {
-  const featureArticles = getArticlesByCategory('features');
+  const supportCategories = categories.filter((c) => c.kind !== 'feature' && c.slug !== 'contact');
+  const featureCategories = categories.filter((c) => c.kind === 'feature');
 
   return (
     <div>
@@ -69,11 +69,9 @@ export default function HelpHome() {
       <section className="mx-auto max-w-7xl px-4 pb-12 md:px-8">
         <div className="mb-10 border-t border-slate-200" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories
-            .filter((c) => c.slug !== 'contact')
-            .map((category) => (
-              <CategoryCard key={category.slug} category={category} />
-            ))}
+          {supportCategories.map((category) => (
+            <CategoryCard key={category.slug} category={category} />
+          ))}
         </div>
       </section>
 
@@ -81,11 +79,11 @@ export default function HelpHome() {
         <div className="mb-10 border-t border-slate-200" />
         <h2 className="mb-2 text-2xl font-bold text-slate-900 md:text-3xl">Feature Guides</h2>
         <p className="mb-8 text-base leading-relaxed text-slate-500 md:text-lg">
-          In-depth guides for everything in the editor.
+          In-depth guides for everything in the editor, grouped by area.
         </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {featureArticles.map((article) => (
-            <FeatureArticleCard key={article.slug} article={article} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featureCategories.map((category) => (
+            <CategoryCard key={category.slug} category={category} />
           ))}
         </div>
       </section>

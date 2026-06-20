@@ -1,18 +1,23 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Who is livediagram For?", description: "livediagram is for teams who think visually and need to do that thinking together: engineering, product, design, and cross-functional groups.", path: "/help/about/who-is-it-for/" });
+export const metadata = helpMetadata({
+  title: 'Who is livediagram For?',
+  description:
+    'livediagram is for teams who think visually and need to do that thinking together: engineering, product, design, and cross-functional groups.',
+  path: '/help/about/who-is-it-for/',
+});
 
 <ArticleLayout title="Who is livediagram For?" description="Teams who think visually and need to do that thinking together, from engineering and product to workshops and retros." categoryTitle="About livediagram" categorySlug="about">
 
-livediagram is for teams who think visually and need to do that thinking **together**. A single-player diagramming tool is not the point. The product shines when several people are on the same canvas at once, building one shared diagram in [real time](/help/features/sharing/). That said, it works just as well for one person sketching something out, and the [canvas always works without signing in](/help/getting-started/guest-vs-account/).
+livediagram is for teams who think visually and need to do that thinking **together**. A single-player diagramming tool is not the point. The product shines when several people are on the same canvas at once, building one shared diagram in [real time](/help/collaboration/sharing/). That said, it works just as well for one person sketching something out, and the [canvas always works without signing in](/help/getting-started/guest-vs-account/).
 
 ## The teams it serves
 
 A few groups feel right at home:
 
-- **Engineering teams** sketching architecture, sequence flows, and system designs. Use [shapes and arrows](/help/features/shapes-and-arrows/), [technology icons](/help/features/technology-icons/) for cloud and infrastructure marks, and [tabs](/help/features/tabs/) to keep related views together.
-- **Product and design teams** mapping user journeys, information architecture, and brainstorms with [shapes](/help/features/shapes-and-arrows/), [text and fonts](/help/features/text-and-fonts/), and [themes](/help/features/themes/).
+- **Engineering teams** sketching architecture, sequence flows, and system designs. Use [shapes and arrows](/help/palette/shapes-and-arrows/), [technology icons](/help/palette/technology-icons/) for cloud and infrastructure marks, and [tabs](/help/tabs/using-tabs/) to keep related views together.
+- **Product and design teams** mapping user journeys, information architecture, and brainstorms with [shapes](/help/palette/shapes-and-arrows/), [text and fonts](/help/customisation/text-and-fonts/), and [themes](/help/customisation/themes/).
 - **Cross-functional groups** in workshops, planning sessions, and retrospectives, where everyone needs to contribute at once and see each other's input live.
 
 ## Ways people use it
@@ -20,16 +25,28 @@ A few groups feel right at home:
 The same canvas covers a wide range of work:
 
 <FeatureGrid>
-<Feature slug="shapes-and-arrows" title="Flowcharts and process maps">Boxes, connectors, and labelled arrows for any structured flow.</Feature>
-<Feature slug="canvas" title="Architecture diagrams">System designs, service maps, and sequence flows.</Feature>
-<Feature slug="drawing" title="Brainstorms and mindmaps">Quick freehand sketches and fast, keyboard-driven nodes.</Feature>
-<Feature slug="presentation" title="Workshops and retros">Step through a diagram live while a group watches and contributes.</Feature>
+  <Feature slug="shapes-and-arrows" title="Flowcharts and process maps">
+    Boxes, connectors, and labelled arrows for any structured flow.
+  </Feature>
+  <Feature slug="canvas" title="Architecture diagrams">
+    System designs, service maps, and sequence flows.
+  </Feature>
+  <Feature slug="drawing" title="Brainstorms and mindmaps">
+    Quick freehand sketches and fast, keyboard-driven nodes.
+  </Feature>
+  <Feature slug="presentation" title="Workshops and retros">
+    Step through a diagram live while a group watches and contributes.
+  </Feature>
 </FeatureGrid>
 
 ## Whether you sign in or not
 
-livediagram is friction-free on purpose. A first-time visitor can build a real diagram as a [guest](/help/getting-started/guest-vs-account/) and only later create an account to sync across devices and join [teams](/help/features/teams/). A signed-in user can still hand a share link to a guest who edits without any account at all.
+livediagram is friction-free on purpose. A first-time visitor can build a real diagram as a [guest](/help/getting-started/guest-vs-account/) and only later create an account to sync across devices and join [teams](/help/collaboration/teams/). A signed-in user can still hand a share link to a guest who edits without any account at all.
 
-<Tip>Not sure where to begin? Start with [Your first diagram](/help/getting-started/your-first-diagram/), it walks you through creating one in a couple of minutes.</Tip>
+<Tip>
+  Not sure where to begin? Start with [Your first
+  diagram](/help/getting-started/your-first-diagram/), it walks you through creating one in a couple
+  of minutes.
+</Tip>
 
 </ArticleLayout>

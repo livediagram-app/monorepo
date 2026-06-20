@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Configuration and Optional Auth", description: "How a self-hosted livediagram is configured: environment variables, optional Clerk sign-in, and the pure-guest fallback.", path: "/help/self-hosting/configuration/" });
+export const metadata = helpMetadata({
+  title: 'Configuration and Optional Auth',
+  description:
+    'How a self-hosted livediagram is configured: environment variables, optional Clerk sign-in, and the pure-guest fallback.',
+  path: '/help/self-hosting/configuration/',
+});
 
 <ArticleLayout title="Configuration and Optional Auth" description="The environment variables that shape a self-hosted instance, and how sign-in degrades gracefully to pure-guest mode." categoryTitle="Self-Hosting" categorySlug="self-hosting">
 
@@ -31,8 +36,15 @@ This is what lets a self-hoster run with zero outbound runtime traffic beyond th
 
 The API identifies the owner of a request in one of two equivalent ways: a verified sign-in token, or a per-browser guest id sent as a header. When sign-in is not configured, every request simply uses the guest path, and the editor stays fully usable, with persistence, sharing, and real-time collaboration all working.
 
-<Note>Other optional toggles follow the same pattern: telemetry is off unless explicitly enabled, and AI assistance only appears when an AI key is configured on the API Worker. Unset means off, every time.</Note>
+<Note>
+  Other optional toggles follow the same pattern: telemetry is off unless explicitly enabled, and AI
+  assistance only appears when an AI key is configured on the API Worker. Unset means off, every
+  time.
+</Note>
 
-<Tip>For the exact variable names and where each one lives, follow the repository's `docs/self-hosting.md` and each app's example configuration file.</Tip>
+<Tip>
+  For the exact variable names and where each one lives, follow the repository's
+  `docs/self-hosting.md` and each app's example configuration file.
+</Tip>
 
 </ArticleLayout>

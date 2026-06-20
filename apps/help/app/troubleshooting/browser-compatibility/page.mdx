@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Browser Compatibility", description: "Which browsers livediagram supports, and how to fix display or behaviour problems caused by an old browser or extensions.", path: "/help/troubleshooting/browser-compatibility/" });
+export const metadata = helpMetadata({
+  title: 'Browser Compatibility',
+  description:
+    'Which browsers livediagram supports, and how to fix display or behaviour problems caused by an old browser or extensions.',
+  path: '/help/troubleshooting/browser-compatibility/',
+});
 
 <ArticleLayout title="Browser Compatibility" description="livediagram runs in modern browsers. Here is what is supported and how to clear up browser-related glitches." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
 
@@ -31,7 +36,10 @@ Use a current version of any mainstream evergreen browser.
 - **Do not block live connections.** Some networks and extensions block the connection real-time collaboration depends on; see [real-time collaboration problems](/help/troubleshooting/collaboration-issues/).
 - **Try another device.** If a problem follows you to a fresh browser on the same machine, test a different device to separate a browser issue from a network one.
 
-<Tip>For the smoothest experience, especially with large diagrams and live collaboration, use the latest version of Chrome, Edge, Firefox, or Safari on a desktop.</Tip>
+<Tip>
+  For the smoothest experience, especially with large diagrams and live collaboration, use the
+  latest version of Chrome, Edge, Firefox, or Safari on a desktop.
+</Tip>
 
 If a problem persists across an up-to-date browser and an incognito window, [contact us](/help/contact/) with your browser name and version and a description of what you see.
 

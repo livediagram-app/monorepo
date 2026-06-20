@@ -1,0 +1,39 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Build, Clean, Ask, and Review',
+  description: 'The four AI modes in livediagram and when to reach for each one.',
+  path: '/help/tools/ai/ai-tools/',
+});
+
+<ArticleLayout title="Build, Clean, Ask, and Review" description="The four AI modes, what each one does, and when to use it." categoryTitle="Tools" categorySlug="tools" parentArticle={{ title: "AI Assistance", slug: "ai" }} subArticles={getSubArticles("ai").filter((a) => a.slug !== "ai-tools")}>
+
+The AI panel has four modes, picked from tabs at the top: **Build**, **Ask**, **Review**, and **Clean**. Each takes the same prompt box, but they treat the diagram differently. Two of them change the canvas, and two of them only read it.
+
+## The two modes that change the diagram
+
+**Build** is the starting point for new structure. Describe what you want and it adds the elements to draft it, choosing which nodes and connections to create. Build can also edit elements you already have, so the same mode covers "make me a flow for onboarding" and "rename these boxes and connect them". When Build produces a fresh, connected diagram of several nodes, the editor tidies the geometry for you: peers are sized consistently, ranks are spaced evenly, and arrows are re-pointed so connectors don't wander. Small additive edits keep the placement you already arranged.
+
+**Clean** works on what is already on the tab. It fixes label typos and normalises sizes, positions, and styles so a diagram that grew messily reads consistently. Clean respects your layout rather than re-flowing it, so it is the safe choice once a diagram is arranged the way you like.
+
+Both Build and Clean apply as a single block, so one **Undo** (Ctrl+Z) reverses the whole operation.
+
+## The two modes that only read
+
+**Ask** answers questions about the diagram without touching it. Use it to get your bearings on a diagram someone else made, or to check your own: "what happens if the payment fails?" or "which steps have no outgoing arrow?". The answer streams into the panel as text.
+
+**Review** gives written feedback on the structure and content as a whole: gaps, unclear labels, missing connections, anything that reads awkwardly. It is a second opinion before you share, not a change to accept.
+
+## Focus and context
+
+Whatever the mode, the assistant only ever sees the **active tab**. If you have elements selected when you send a request, those are marked as the focus: the assistant concentrates its edits there while still seeing the rest of the tab, so an arrow whose other end sits outside the selection stays connected correctly. With nothing selected, the whole tab is fair game.
+
+<Note>
+  Prompts are kept short by design, so think of each request as one clear instruction. If a result
+  is not quite right, adjust the prompt and send again rather than stacking corrections into one
+  long message.
+</Note>
+
+</ArticleLayout>

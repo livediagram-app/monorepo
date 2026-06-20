@@ -1,0 +1,49 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Shapes and Arrows',
+  description:
+    'Build diagrams from shapes and connectors, with arrows of every style, draggable handles and shape markers.',
+  path: '/help/palette/shapes-and-arrows/',
+});
+
+<ArticleLayout
+  title="Shapes and Arrows"
+  description="The building blocks of every diagram: shapes to hold ideas and arrows to connect them."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("shapes-and-arrows")}
+>
+
+Shapes and arrows are the heart of any diagram. Shapes hold your nodes, from a plain square or circle to a cylinder, hexagon, or device frame, and arrows connect them into flows, hierarchies, and relationships. livediagram gives arrows real flexibility: every line style, draggable curve and elbow handles, connections that snap onto other arrows, and small status markers you can show inside a shape.
+
+## Shapes
+
+Add shapes from the palette's Shapes tab. A selected shape can be morphed into another kind in place from its right-click menu, preserving its size and colours, so you are never locked into your first choice. Boxed shapes carry colours, text, and alignment options, all reachable from the element's context menu.
+
+## Arrows
+
+Arrows link two points on the canvas. An arrow's endpoint can sit freely, pin to a shape's connection anchor (so it tracks the shape as it moves), or attach along another arrow. From the arrow's context menu you can set its line style, thickness, dash pattern, and arrowheads. See [Arrow styles](/help/palette/shapes-and-arrows/arrow-styles/) for the full set, and [Curve and elbow handles](/help/palette/shapes-and-arrows/curve-and-elbow-handles/) for shaping the path by hand.
+
+## Connections and markers
+
+Two features make connectors and shapes more expressive:
+
+<FeatureGrid>
+  <Feature slug="shapes-and-arrows" title="Connecting arrows to arrows">
+    Snap an arrow endpoint to a point along another arrow, the sequence-diagram pattern, and it
+    rides along as the line moves.
+  </Feature>
+  <Feature slug="shapes-and-arrows" title="Shape markers">
+    Show a traffic-light dot or a checkbox inside a shape to flag status at a glance.
+  </Feature>
+</FeatureGrid>
+
+<Tip>
+  Need a connector to bend around other elements? Switch its line style to Angled for a clean
+  axis-aligned elbow, then drag the handle to position the bend.
+</Tip>
+
+</ArticleLayout>

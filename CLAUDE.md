@@ -30,7 +30,7 @@ The help centre (`apps/help`, spec/55) has a hand-curated registry at [`apps/hel
 
 So, whenever you add (or remove/rename) a help article:
 
-- Add (or update) its entry in the `articles` array in `apps/help/lib/articles.ts` — `slug`, `title`, `description`, `category`, `categorySlug` (the full nested path, e.g. `features/canvas`), and `parentSlug` for a sub-article — **in the same change** as the new `apps/help/app/.../page.mdx`.
+- Add (or update) its entry in the `articles` array in `apps/help/lib/articles.ts` — `slug`, `title`, `description`, `category`, `categorySlug` (the full nested path, e.g. `canvas/the-canvas`), and `parentSlug` for a sub-article — **in the same change** as the new `apps/help/app/.../page.mdx`.
 - Bump the matching `categories[].articleCount` (and add a `categories` entry if it's a brand-new top-level category).
 - The registry `description` is the **short search-card summary** and is intentionally separate from the MDX `helpMetadata` description (the longer SEO/OG meta) — write a concise one, don't just copy the meta.
 

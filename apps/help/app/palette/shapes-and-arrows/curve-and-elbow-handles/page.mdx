@@ -1,0 +1,49 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Curve and Elbow Handles',
+  description:
+    "Shape a connector's path by hand by dragging the curve or elbow handle on a curved or angled arrow.",
+  path: '/help/palette/shapes-and-arrows/curve-and-elbow-handles/',
+});
+
+<ArticleLayout
+  title="Curve and Elbow Handles"
+  description="Drag a handle to bow a curve or position an elbow exactly where the diagram needs it."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  parentArticle={{ title: "Shapes and Arrows", slug: "shapes-and-arrows" }}
+  subArticles={getSubArticles("shapes-and-arrows").filter((a) => a.slug !== "curve-and-elbow-handles")}
+>
+
+Straight lines are not always enough. When two connectors would overlap, or a line needs to route around a shape, a curved or angled arrow gives you a path you can shape by hand. Both styles expose a draggable handle on the line that controls how it bends.
+
+## Choosing a bendable style
+
+The handle appears once you give the arrow a curved or angled geometry. Open the arrow's right-click context menu and, under the **Pointer** category, set the **Line style**:
+
+- **Curved** draws a gentle bezier that bows away from the straight chord between the endpoints.
+- **Angled** draws an axis-aligned L-shaped elbow, with horizontal and vertical segments meeting at a bend.
+
+## Dragging the handle
+
+<Step n={1}>Select the arrow so its handle becomes visible on the line.</Step>
+<Step n={2}>
+  For a curved arrow, drag the handle to control how far and which way the line bows.
+</Step>
+<Step n={3}>For an angled arrow, drag the handle to move where the elbow bends.</Step>
+
+Releasing the drag commits the new shape, and like other drag edits it collapses into a single undo step, so one tap of undo returns the line to where it was before you started.
+
+## Keeping connections intact
+
+Reshaping an arrow does not break its endpoints. If an end is pinned to a shape, or attached along [another arrow](/help/palette/shapes-and-arrows/arrow-to-arrow/), it stays connected while you bend the line, and an attached endpoint keeps riding at the same point along its target. This means you can route a connector cleanly without losing the relationships it represents.
+
+<Tip>
+  If a curve or elbow ends up in the wrong place after the endpoints move, just drag the handle
+  again, the path is always re-shapeable while the arrow is selected.
+</Tip>
+
+</ArticleLayout>

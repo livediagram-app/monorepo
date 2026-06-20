@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Self-Hosting Overview", description: "Why and how you can run your own copy of livediagram. It is MIT-licensed and runs entirely on Cloudflare.", path: "/help/self-hosting/self-hosting-overview/" });
+export const metadata = helpMetadata({
+  title: 'Self-Hosting Overview',
+  description:
+    'Why and how you can run your own copy of livediagram. It is MIT-licensed and runs entirely on Cloudflare.',
+  path: '/help/self-hosting/self-hosting-overview/',
+});
 
 <ArticleLayout title="Self-Hosting Overview" description="Run your own copy of livediagram on your own infrastructure, with the same feature set as the hosted version." categoryTitle="Self-Hosting" categorySlug="self-hosting">
 
@@ -34,6 +39,10 @@ A self-hosted instance has no required calls to any outside service.
 - **Telemetry is off by default.** A self-host emits and serves nothing unless you explicitly enable it.
 - **No license gating.** Nothing phones home to unlock features.
 
-<Tip>Ready to deploy? See [deploying livediagram](/help/self-hosting/deploying-livediagram/) for the shape of the apps, then [configuration and optional auth](/help/self-hosting/configuration/) for the settings you can turn on.</Tip>
+<Tip>
+  Ready to deploy? See [deploying livediagram](/help/self-hosting/deploying-livediagram/) for the
+  shape of the apps, then [configuration and optional auth](/help/self-hosting/configuration/) for
+  the settings you can turn on.
+</Tip>
 
 </ArticleLayout>

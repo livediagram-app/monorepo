@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Deploying livediagram", description: "How livediagram is structured as a set of Cloudflare Workers and deployed via GitHub Actions. A conceptual overview for self-hosters.", path: "/help/self-hosting/deploying-livediagram/" });
+export const metadata = helpMetadata({
+  title: 'Deploying livediagram',
+  description:
+    'How livediagram is structured as a set of Cloudflare Workers and deployed via GitHub Actions. A conceptual overview for self-hosters.',
+  path: '/help/self-hosting/deploying-livediagram/',
+});
 
 <ArticleLayout title="Deploying livediagram" description="The apps that make up livediagram and how they deploy to Cloudflare. A conceptual map, with the repo as the authoritative guide." categoryTitle="Self-Hosting" categorySlug="self-hosting">
 
@@ -34,8 +39,15 @@ Deployments run through **GitHub Actions to Cloudflare Workers**. In broad strok
 
 Deploying needs a Cloudflare API token and account id, supplied as repository secrets, never committed to source.
 
-<Note>This is a conceptual overview, not a step-by-step runbook. For exact commands, required token permissions, and first-deploy ordering, follow the repository's `docs/self-hosting.md` and the deployment workflow in the source.</Note>
+<Note>
+  This is a conceptual overview, not a step-by-step runbook. For exact commands, required token
+  permissions, and first-deploy ordering, follow the repository's `docs/self-hosting.md` and the
+  deployment workflow in the source.
+</Note>
 
-<Tip>Next, see [configuration and optional auth](/help/self-hosting/configuration/) for the environment variables that turn optional features on or off.</Tip>
+<Tip>
+  Next, see [configuration and optional auth](/help/self-hosting/configuration/) for the environment
+  variables that turn optional features on or off.
+</Tip>
 
 </ArticleLayout>

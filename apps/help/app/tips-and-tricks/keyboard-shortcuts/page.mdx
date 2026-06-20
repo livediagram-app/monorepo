@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Keyboard Shortcuts", description: "Find the keyboard shortcuts that speed up the livediagram editor, and learn how to turn them off if they get in your way.", path: "/help/tips-and-tricks/keyboard-shortcuts/" });
+export const metadata = helpMetadata({
+  title: 'Keyboard Shortcuts',
+  description:
+    'Find the keyboard shortcuts that speed up the livediagram editor, and learn how to turn them off if they get in your way.',
+  path: '/help/tips-and-tricks/keyboard-shortcuts/',
+});
 
 <ArticleLayout title="Keyboard Shortcuts" description="Work faster on the canvas with single-key tools and the shortcuts dialog, and switch shortcuts off whenever you need to." categoryTitle="Tips and Tricks" categorySlug="tips-and-tricks">
 
@@ -17,7 +22,7 @@ The most useful canvas-tool keys are:
 - `H` for the **Hand** (pan) tool, the default on touch viewports.
 - `K` for the **Laser** pointer, for drawing attention while you present.
 - `E` for the **Eraser**, to delete elements by pressing or dragging over them.
-- `Z` to toggle [Zen mode](/help/features/zen-mode/) on and off, with `Escape` to exit it.
+- `Z` to toggle [Zen mode](/help/tools/zen-mode/) on and off, with `Escape` to exit it.
 
 The shortcuts dialog stays available in every role, so view-only visitors can see the same reference.
 
@@ -30,7 +35,8 @@ When shortcuts are turned off, the editor stops responding to the single-key bin
 The editor is also careful about context: even with shortcuts on, typing into a text label or an input never triggers a tool key. A `z` typed into a label is just a `z`, never a jump into Zen mode.
 
 <Tip>
-If a single key keeps switching your tool while you work, open Settings from the footer gear and turn shortcuts off. You can turn them back on the moment you want the speed again.
+  If a single key keeps switching your tool while you work, open Settings from the footer gear and
+  turn shortcuts off. You can turn them back on the moment you want the speed again.
 </Tip>
 
 </ArticleLayout>

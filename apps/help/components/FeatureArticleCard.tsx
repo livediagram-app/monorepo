@@ -19,7 +19,7 @@ export function FeatureArticleCard({ article }: { article: Article }) {
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: `${colour}1f`, color: colour }}
         >
-          {FEATURE_ICONS[article.slug] ?? FEATURE_ICONS.canvas}
+          {FEATURE_ICONS[article.slug] ?? FEATURE_ICONS['the-canvas']}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="mb-1 text-lg font-semibold text-slate-900">{article.title}</h3>

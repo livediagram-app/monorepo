@@ -1,0 +1,47 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Share Link Expiry',
+  description:
+    'Give a share link a lifetime so it stops granting access after a week, a month, or six months.',
+  path: '/help/collaboration/sharing/share-link-expiry/',
+});
+
+<ArticleLayout title="Share Link Expiry" description="Set a share link to expire after a fixed time, then extend or delete it later." categoryTitle="Collaboration" categorySlug="collaboration" parentArticle={{ title: "Sharing and Embeds", slug: "sharing" }} subArticles={getSubArticles("sharing").filter((a) => a.slug !== "share-link-expiry")}>
+
+A share link is a standing invitation: anyone holding the URL keeps the link's role for as long as it lives. An expiry bounds that. You can give a link a lifetime when you create it, so it stops working on its own without you having to remember to revoke it. It complements the [share password](/help/collaboration/sharing/share-passwords/) as a second self-serve control.
+
+## Choosing a lifetime
+
+When you create a link in the **Share** dialog, an expiry dropdown sits next to the role toggle. You can pick:
+
+- **Never**, the default, which is the original behaviour: the link lasts until you delete it.
+- **1 Week**
+- **1 Month**
+- **6 Months**
+
+Pick the shortest span that fits, like "1 Week" for a workshop group or "1 Month" for a project review.
+
+## What happens when a link expires
+
+When a link's lifetime runs out, it stops granting access everywhere at once. The share URL and any embed using it show the same not-found surface as a deleted link, and it stops opening the realtime room. People already viewing through it lose access on their next load or save.
+
+Active links with a deadline show a small countdown chip in the dialog, like "6d left", so you can see at a glance how long each one has.
+
+## Inactive links: extend or delete
+
+Expired links do not vanish. They move into an **Inactive share links** section in the Share dialog, where each one shows an "Expired" badge and its URL. From there you can:
+
+- **Extend** the link, which gives it a fresh deadline using its original duration (for example "Extend 1 week") and moves it back to Active, or
+- **Delete** it for good.
+
+You can also extend a link that is still active to push its deadline further out.
+
+<Tip>
+  Want to change a link's lifetime after creating it? A never-expiring link cannot be extended, so
+  the simplest route is to delete it and create a new one with the lifetime you want.
+</Tip>
+
+</ArticleLayout>

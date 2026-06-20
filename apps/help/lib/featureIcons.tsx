@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
  *  index, and the MDX <Feature> cards. Outline glyphs at w-6 h-6,
  *  `currentColor` so the call site sets the hue (see featureColours.ts).
  *  Add an entry here when adding a feature landing page. Missing slugs fall
- *  back to the `canvas` icon at the call site. */
+ *  back to the `the-canvas` icon at the call site. */
 function Glyph({ children }: { children: ReactNode }) {
   return (
     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -16,7 +16,7 @@ function Glyph({ children }: { children: ReactNode }) {
 const s = { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 1.5 } as const;
 
 export const FEATURE_ICONS: Record<string, ReactNode> = {
-  canvas: (
+  'the-canvas': (
     <Glyph>
       <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
       <path d="M3 9h18M8 4v5" {...s} />
@@ -66,7 +66,7 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <path d="M3 9h18M9 21V9" {...s} />
     </Glyph>
   ),
-  tabs: (
+  'using-tabs': (
     <Glyph>
       <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...s} />
     </Glyph>
@@ -89,7 +89,7 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <path d="M21 16l-5-5L5 20" {...s} />
     </Glyph>
   ),
-  explorer: (
+  'the-explorer': (
     <Glyph>
       <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...s} />
     </Glyph>
@@ -108,12 +108,6 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <circle cx="6" cy="12" r="3" {...s} />
       <circle cx="18" cy="19" r="3" {...s} />
       <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" {...s} />
-    </Glyph>
-  ),
-  presentation: (
-    <Glyph>
-      <rect x="3" y="4" width="18" height="12" rx="2" {...s} />
-      <path d="M12 16v4M8 20h8" {...s} />
     </Glyph>
   ),
   'zen-mode': (

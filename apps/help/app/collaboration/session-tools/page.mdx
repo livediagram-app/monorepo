@@ -1,0 +1,36 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Session Tools',
+  description:
+    'A per-tab timer and live dot-voting for running interactive workshops, synced to every participant.',
+  path: '/help/collaboration/session-tools/',
+});
+
+<ArticleLayout title="Session Tools" description="A per-tab timer and live dot-voting that turn a shared diagram into an interactive workshop board." categoryTitle="Collaboration" categorySlug="collaboration" subArticles={getSubArticles("session-tools")}>
+
+Session tools make a shared diagram interactive for live workshops. There are two: a **timer** for time-boxing an activity, and **dot-voting** for prioritising as a group. Both are run by the facilitator and synced to everyone in the room in real time, so they pair naturally with collaborative boards like retros, brainstorms, and planning sessions.
+
+## Built for facilitating live
+
+Both tools are controlled from the **Current Tab settings**, under a **Session** section. Each is scoped to a single tab, so different tabs can run different activities, and the state rides the same sync as everything else on the canvas. That means people who join late or reload simply see the current state: a timer mid-countdown, or the votes cast so far, with nothing to set up again.
+
+- **Timer** counts down a fixed duration or counts up as a stopwatch, shown as a floating pill at the top of the canvas. See [The Timer](/help/collaboration/session-tools/timer/).
+- **Dot-voting** lets each participant spend a budget of dots on the elements they care about, with live tallies and a results reveal. See [Dot Voting](/help/collaboration/session-tools/voting/).
+
+## Who can do what
+
+Session tools follow the diagram's roles automatically. Anyone with an **edit** link can run the controls and take part: starting the timer, casting votes. **View-only** visitors can still watch, they see the timer ticking and the live vote counts, but they cannot control the session or cast a dot. Typically the facilitator and participants share an edit link, while observers follow a view link.
+
+## What does and does not get recorded
+
+Starting or pausing a timer, and starting, ending, or revealing a vote, each leave a single line in the [Activity history](/help/collaboration/history/) so you can see the shape of the session afterwards. The individual dot casts, which happen fast and often, are deliberately not logged, and neither tool adds to Undo: starting a timer or placing a dot is not the kind of thing you would want to Ctrl+Z.
+
+<Tip>
+  Share an **edit** link with everyone who should vote or be timed, and a **view** link with anyone
+  who only needs to watch. The roles do the gating for you, with no extra setup.
+</Tip>
+
+</ArticleLayout>

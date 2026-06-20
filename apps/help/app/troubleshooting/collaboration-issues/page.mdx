@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "Real-Time Collaboration Problems", description: "A checklist for when live cursors, presence, or collaborators' edits are not showing up in livediagram.", path: "/help/troubleshooting/collaboration-issues/" });
+export const metadata = helpMetadata({
+  title: 'Real-Time Collaboration Problems',
+  description:
+    "A checklist for when live cursors, presence, or collaborators' edits are not showing up in livediagram.",
+  path: '/help/troubleshooting/collaboration-issues/',
+});
 
 <ArticleLayout title="Real-Time Collaboration Problems" description="What to try when cursors, presence, or live edits are not coming through during collaboration." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
 
@@ -10,7 +15,7 @@ Real-time collaboration in livediagram works through a per-diagram room: everyon
 ## When you see no one else
 
 1. **Confirm everyone is in the same diagram.** Live presence is per diagram. Two people on different diagrams, or on different copies, will not see each other.
-2. **Make sure others actually have access.** Collaborators need a valid [share link](/help/features/sharing/) (or to be the owner). If their link expired, was revoked, or needs a password, they may not be connected at all. See [share link security](/help/privacy-and-security/share-link-security/).
+2. **Make sure others actually have access.** Collaborators need a valid [share link](/help/collaboration/sharing/) (or to be the owner). If their link expired, was revoked, or needs a password, they may not be connected at all. See [share link security](/help/privacy-and-security/share-link-security/).
 3. **Reload the page.** A refresh re-establishes the live connection and re-sends presence. This clears most transient glitches.
 4. **Check your network.** Real-time relies on a live connection that some corporate networks, VPNs, or firewalls block. Try a different network or a mobile hotspot to confirm.
 

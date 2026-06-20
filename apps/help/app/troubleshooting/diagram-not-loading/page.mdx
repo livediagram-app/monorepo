@@ -1,7 +1,12 @@
-import { ArticleLayout } from "@/components/ArticleLayout";
-import { helpMetadata } from "@/lib/seo";
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
 
-export const metadata = helpMetadata({ title: "A Diagram Will Not Load", description: "A checklist for when a livediagram diagram does not open, including expired or revoked share links and password gates.", path: "/help/troubleshooting/diagram-not-loading/" });
+export const metadata = helpMetadata({
+  title: 'A Diagram Will Not Load',
+  description:
+    'A checklist for when a livediagram diagram does not open, including expired or revoked share links and password gates.',
+  path: '/help/troubleshooting/diagram-not-loading/',
+});
 
 <ArticleLayout title="A Diagram Will Not Load" description="A practical checklist for when a diagram does not open, from share-link issues to connection hiccups." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
 
@@ -26,7 +31,7 @@ A share link is the most common reason a diagram refuses to load, and the fixes 
 
 1. **Try a different browser or an incognito window** to rule out an extension or cached state. See [browser compatibility](/help/troubleshooting/browser-compatibility/).
 2. **Try another device** on a different network to separate a local problem from a diagram problem.
-3. **Confirm you are signed in as the right identity.** A guest diagram is tied to the browser that made it; a different browser or a signed-in account owns a different set of diagrams. See [working as a guest](/help/getting-started/working-as-a-guest/).
+3. **Confirm you are signed in as the right identity.** A guest diagram is tied to the browser that made it; a different browser or a signed-in account owns a different set of diagrams. See [working as a guest](/help/getting-started/guest-vs-account/).
 
 If none of this helps, the diagram itself may be reachable but stuck on real-time connection; see [real-time collaboration problems](/help/troubleshooting/collaboration-issues/). If you are still stuck, [contact us](/help/contact/) with the URL you used and what you see.
 
