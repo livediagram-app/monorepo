@@ -4,6 +4,7 @@ import { isValidTelemetryEvent } from '@livediagram/api-schema';
 import { insertTelemetryEvents } from '../db';
 import { isLocalhostPair } from '../origin-check';
 import { noContent, notFound } from '../responses';
+import { clientIp } from '../client-ip';
 import type { RouteContext } from './context';
 
 // Anonymous telemetry ingest (spec/22). Batched POST of
@@ -36,7 +37,7 @@ export async function handleEvents(ctx: RouteContext): Promise<Response> {
   const origin = request.headers.get('Origin');
   if (origin && origin !== url.origin && !isLocalhostPair(origin, url.origin)) return noop;
   if (env.EVENTS_RATE_LIMITER) {
-    const ip = request.headers.get('CF-Connecting-IP') ?? 'anonymous';
+    const ip = clientIp(request);
     const { success } = await env.EVENTS_RATE_LIMITER.limit({ key: ip });
     if (!success) return noop;
   }

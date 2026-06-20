@@ -1,4 +1,5 @@
 import { badRequest, CORS_HEADERS, json, missingAuth, rateLimited } from '../responses';
+import { clientIp } from '../client-ip';
 import type { RouteContext } from './context';
 import type { AiMode, AiRequest } from '@livediagram/api-schema';
 
@@ -364,7 +365,7 @@ export async function handleAi(ctx: RouteContext): Promise<Response> {
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, { status: 405 });
 
   if (env.AI_RATE_LIMITER) {
-    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+    const ip = clientIp(request, 'unknown');
     const { success } = await env.AI_RATE_LIMITER.limit({ key: ip });
     if (!success) return rateLimited();
   }

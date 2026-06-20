@@ -2,6 +2,7 @@ import { getClerkIdentity } from './auth/clerk';
 import { deleteOldChangeLogEntries, deleteOldEvents } from './db';
 import { DiagramRoom } from './diagram-room';
 import { CORS_HEADERS, json, notFound, rateLimited } from './responses';
+import { clientIp } from './client-ip';
 import { handleAccount } from './routes/account';
 import { handleAi } from './routes/ai';
 import { handleCapabilities } from './routes/capabilities';
@@ -90,7 +91,7 @@ export default {
     // password and is otherwise an unauthenticated read exempt from the
     // write limiter above. Per-IP. Absent binding → allow (self-host).
     if (request.method === 'GET' && segments[1] === 'share' && env.SHARE_RATE_LIMITER) {
-      const ip = request.headers.get('CF-Connecting-IP') ?? 'anonymous';
+      const ip = clientIp(request);
       if (!(await env.SHARE_RATE_LIMITER.limit({ key: ip })).success) return rateLimited();
     }
 
