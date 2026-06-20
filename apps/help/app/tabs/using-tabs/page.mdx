@@ -1,15 +1,19 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
-import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
 export const metadata = helpMetadata({
-  title: 'Tabs and Tab Folders',
+  title: 'Tabs',
   description:
-    'A diagram in livediagram holds many tabs, each its own canvas. Group related tabs into collapsible folders and keep large diagrams organised.',
+    'A diagram in livediagram holds many tabs, each its own independent canvas. Add, name, reorder, and switch between them along the tab bar.',
   path: '/help/tabs/using-tabs/',
 });
 
-<ArticleLayout title="Tabs and Tab Folders" description="One diagram, many canvases. Tabs let you split a project across several boards, and tab folders keep that list tidy as it grows." categoryTitle="Tabs" categorySlug="tabs" subArticles={getSubArticles("using-tabs")}>
+<ArticleLayout
+  title="Tabs"
+  description="One diagram, many canvases. Tabs let you split a project across several boards, each with its own elements, theme, and background."
+  categoryTitle="Tabs"
+  categorySlug="tabs"
+>
 
 A diagram is not a single canvas. It is a collection of **tabs**, each its own independent board with its own elements, layout, theme, and background. New diagrams start with one empty tab, and you add more whenever a piece of work deserves its own space. The tab bar sits along the bottom of the editor, and the active tab fills the canvas area above it.
 
@@ -33,16 +37,15 @@ Tabs start with default names like `Tab 1` and `Tab 2`, and you can rename any o
 
 Drag a tab to a new position to reorder it. Reordering only moves the tab in the list, it never touches the content on any tab.
 
-## Going further
+## More with tabs
 
-<FeatureGrid>
-  <Feature slug="tabs" title="Tab Folders">
-    Group related tabs under a named, collapsible folder so a long tab bar stays readable.
-  </Feature>
-  <Feature slug="tabs" title="Linking Across Tabs">
-    Link an element to another tab, or to a specific element on it, for clean drill-downs.
-  </Feature>
-</FeatureGrid>
+Each tab also carries its own menu of actions, covered in their own guides:
+
+- **[Tab Folders](/help/tabs/tab-folders/)** group related tabs under a named, collapsible chip so a long tab bar stays readable.
+- **[Linking Across Tabs](/help/tabs/linking-tabs/)** turns any element into a jump point to another tab.
+- **[Add a Tab to Another Diagram](/help/tabs/add-to-diagram/)** copies a tab into a different diagram.
+- **[Importing](/help/tabs/import-tabs/)** and **[Exporting](/help/tabs/export-tabs/)** move a tab's contents in and out as a file.
+- **[Cleaning Up a Tab](/help/tabs/tab-cleanup/)** tidies a tab's layout in one click.
 
 <Tip>
   Tabs can be reused across diagrams behind the scenes, so a shared reference board such as a

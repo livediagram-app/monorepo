@@ -131,9 +131,9 @@ export const categories: Category[] = [
   {
     slug: 'tabs',
     title: 'Tabs',
-    description: 'Keep multiple boards in one diagram, grouped into folders.',
+    description: 'Multiple boards per diagram: folders, links, import/export, and cleanup.',
     icon: 'tabs',
-    articleCount: 1,
+    articleCount: 7,
     kind: 'feature',
   },
   {
@@ -458,8 +458,50 @@ export const articles: Article[] = [
   },
   {
     slug: 'using-tabs',
-    title: 'Tabs and Tab Folders',
-    description: 'Multiple boards in one diagram, grouped into folders.',
+    title: 'Tabs',
+    description: 'Multiple boards in one diagram: add, name, reorder, and switch between them.',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'tab-folders',
+    title: 'Tab Folders',
+    description: 'Group related tabs under a named, collapsible folder along the tab bar.',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'linking-tabs',
+    title: 'Linking Across Tabs',
+    description: 'Turn an element into a jump point to another tab, element, diagram, or URL.',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'add-to-diagram',
+    title: 'Add a Tab to Another Diagram',
+    description: 'Copy the active tab into another diagram you own from the tab menu.',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'import-tabs',
+    title: 'Importing a Tab',
+    description: 'Import a JSON or Markdown file into the active tab (it replaces the contents).',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'export-tabs',
+    title: 'Exporting a Tab',
+    description: 'Export the active tab as PNG, SVG, PDF, Markdown, or a livediagram JSON file.',
+    category: 'Tabs',
+    categorySlug: 'tabs',
+  },
+  {
+    slug: 'tab-cleanup',
+    title: 'Cleaning Up a Tab',
+    description: 'Tidy a tab in one click: snap to a grid, or auto-lay-out from the arrows.',
     category: 'Tabs',
     categorySlug: 'tabs',
   },
@@ -755,24 +797,6 @@ export const articles: Article[] = [
     category: 'Customisation',
     categorySlug: 'customisation/themes',
     parentSlug: 'themes',
-  },
-
-  // ---- Sub-articles: Tabs ----
-  {
-    slug: 'tab-folders',
-    title: 'Tab Folders',
-    description: 'Group a diagram’s tabs into collapsible folders.',
-    category: 'Tabs',
-    categorySlug: 'tabs/using-tabs',
-    parentSlug: 'using-tabs',
-  },
-  {
-    slug: 'linking-tabs',
-    title: 'Linking Across Tabs',
-    description: 'Make an element jump to another tab when clicked.',
-    category: 'Tabs',
-    categorySlug: 'tabs/using-tabs',
-    parentSlug: 'using-tabs',
   },
 
   // ---- Sub-articles: Links ----

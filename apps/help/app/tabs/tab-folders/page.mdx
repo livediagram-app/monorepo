@@ -1,15 +1,14 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
-import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
 export const metadata = helpMetadata({
   title: 'Tab Folders',
   description:
     'Group related tabs in a diagram under a named, collapsible folder so a long tab bar stays organised and readable.',
-  path: '/help/tabs/using-tabs/tab-folders/',
+  path: '/help/tabs/tab-folders/',
 });
 
-<ArticleLayout title="Tab Folders" description="Once a diagram grows past a handful of tabs, group the related ones under a named, collapsible folder along the tab bar." categoryTitle="Tabs" categorySlug="tabs" parentArticle={{ title: "Tabs and Tab Folders", slug: "using-tabs" }} subArticles={getSubArticles("using-tabs").filter((a) => a.slug !== "tab-folders")}>
+<ArticleLayout title="Tab Folders" description="Once a diagram grows past a handful of tabs, group the related ones under a named, collapsible folder along the tab bar." categoryTitle="Tabs" categorySlug="tabs">
 
 When a diagram's tab bar fills up, a flat list of tabs gets hard to scan. A **tab folder** gathers related tabs under one named chip you can collapse down when you are not using it. Put three tabs under "Organisation" and two under "Plans", collapse the ones you are done with, and the bar stays calm.
 

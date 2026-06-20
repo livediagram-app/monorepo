@@ -36,6 +36,12 @@ export const FEATURE_ENTITY_HEX: Record<string, string> = {
   'team-spaces': '#a855f7',
   'image-gallery': '#ec4899',
   'themes-library': '#d946ef',
+  'tab-folders': '#3b82f6',
+  'linking-tabs': '#10b981',
+  'add-to-diagram': '#6366f1',
+  'import-tabs': '#0891b2',
+  'export-tabs': '#0284c7',
+  'tab-cleanup': '#2563eb',
 };
 
 /** Default colour used when no slug match is found. */

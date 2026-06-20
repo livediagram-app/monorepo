@@ -1,0 +1,42 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Exporting a Tab',
+  description:
+    'Export the active tab as PNG, SVG, PDF, Markdown, or a livediagram JSON file. Image exports respect the isometric view and background pattern.',
+  path: '/help/tabs/export-tabs/',
+});
+
+<ArticleLayout
+  title="Exporting a Tab"
+  description="Take a tab out of livediagram: download it as an image, a PDF, a Markdown outline, or a JSON file you can import back."
+  categoryTitle="Tabs"
+  categorySlug="tabs"
+>
+
+**Export** downloads the active tab in the format you need, whether that is an image for a doc, a PDF to print, or a file to move the tab into another diagram.
+
+## Export formats
+
+From the tab ellipsis menu, expand the **Content** section and choose **Export**, then pick a format:
+
+- **PNG** — a raster image, good for pasting into docs and chat.
+- **SVG** — a crisp vector image that scales to any size.
+- **PDF** — a print-ready page of the tab.
+- **Markdown** — the tab's structure as a Markdown outline.
+- **JSON** — a portable `.livediagram-tab.json` file that [imports](/help/tabs/import-tabs/) back with full fidelity.
+
+The file downloads named after the tab, so exports stay easy to tell apart.
+
+## What the image exports capture
+
+The PNG, SVG, and PDF exports render the tab as it looks, including its [isometric view](/help/customisation/isometric/) if that is on and the canvas background pattern, so what you download matches what you see. JSON and Markdown capture the underlying content rather than the rendered picture.
+
+<Tip>
+  Reach for **SVG** when the image might be resized or printed large, it stays sharp at any scale,
+  unlike a fixed-resolution PNG. For sharing a live, always-current view instead of a static file,
+  see [Sharing and Embeds](/help/collaboration/sharing/).
+</Tip>
+
+</ArticleLayout>

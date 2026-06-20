@@ -1,0 +1,38 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Cleaning Up a Tab',
+  description:
+    'The Cleanup section of the tab menu tidies a tab in one click: snap elements to a grid, or auto-lay-out the whole board from its arrows.',
+  path: '/help/tabs/tab-cleanup/',
+});
+
+<ArticleLayout
+  title="Cleaning Up a Tab"
+  description="Tidy a messy tab in one click: snap everything to a tidy grid, or recompute the whole layout from the arrows between elements."
+  categoryTitle="Tabs"
+  categorySlug="tabs"
+>
+
+A board that grew organically can end up slightly misaligned or tangled. The **Cleanup** section of the tab ellipsis menu tidies the active tab in a single click, so you do not have to nudge elements into place by hand.
+
+## Two ways to tidy
+
+Expand the **Cleanup** section in the tab menu to find two tidiers:
+
+- **Auto-align** snaps the current positions onto a tidy grid, straightening rows and columns while keeping your overall arrangement. Reach for it when the layout is basically right but a little ragged.
+- **Auto Layout** recomputes positions from the arrow graph, laying the diagram out from scratch based on how its elements connect. Reach for it when you want the structure rebuilt rather than nudged.
+
+Both act on the whole tab at once, and like any edit they can be undone if the result is not what you wanted.
+
+## More on layout
+
+Cleanup is the same toolset as the [Layout Cleanup](/help/tools/layout-cleanup/) feature, surfaced right on the tab menu so it is one click away while you work. See that guide for the details of how [Auto-Align](/help/tools/layout-cleanup/auto-align/) and [Auto Layout](/help/tools/layout-cleanup/auto-layout/) decide where things go.
+
+<Tip>
+  Try **Auto-align** first, it is the gentler of the two and keeps your layout recognisable. Fall
+  back to **Auto Layout** when a board needs rebuilding from its connections.
+</Tip>
+
+</ArticleLayout>

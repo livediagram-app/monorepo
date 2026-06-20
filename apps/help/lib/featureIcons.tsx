@@ -221,4 +221,43 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       />
     </Glyph>
   ),
+  // Tabs guides.
+  'tab-folders': (
+    <Glyph>
+      <path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" {...s} />
+      <path d="M3 11h18" {...s} />
+    </Glyph>
+  ),
+  'linking-tabs': (
+    <Glyph>
+      <path d="M10 13a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.3 1.3" {...s} />
+      <path d="M14 11a4 4 0 0 0-5.7-.3L5.7 13.3a4 4 0 0 0 5.7 5.7l1.3-1.3" {...s} />
+    </Glyph>
+  ),
+  'add-to-diagram': (
+    <Glyph>
+      <rect x="3" y="3" width="12" height="12" rx="2" {...s} />
+      <path d="M9 21h10a2 2 0 0 0 2-2V9" {...s} />
+      <path d="M17 13v4M15 15h4" {...s} />
+    </Glyph>
+  ),
+  'import-tabs': (
+    <Glyph>
+      <rect x="4" y="4" width="16" height="16" rx="2" {...s} />
+      <path d="M12 3v9M9 9l3 3 3-3" {...s} />
+    </Glyph>
+  ),
+  'export-tabs': (
+    <Glyph>
+      <rect x="4" y="4" width="16" height="16" rx="2" {...s} />
+      <path d="M12 14V4M9 7l3-3 3 3" {...s} />
+    </Glyph>
+  ),
+  'tab-cleanup': (
+    <Glyph>
+      <path d="M3 21l6-6" {...s} />
+      <path d="M9 9l6 6 5-5a3 3 0 0 0-4-4z" {...s} />
+      <path d="M14 6l4 4" {...s} />
+    </Glyph>
+  ),
 };

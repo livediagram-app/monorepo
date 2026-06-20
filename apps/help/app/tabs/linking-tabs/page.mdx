@@ -1,15 +1,14 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
-import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
 export const metadata = helpMetadata({
   title: 'Linking Across Tabs',
   description:
     'Link an element to another tab, or to a specific element on it, so a diagram with many tabs becomes navigable like a small site.',
-  path: '/help/tabs/using-tabs/linking-tabs/',
+  path: '/help/tabs/linking-tabs/',
 });
 
-<ArticleLayout title="Linking Across Tabs" description="Turn any element into a jump point: link it to another tab, a specific element on that tab, another diagram, or an external address." categoryTitle="Tabs" categorySlug="tabs" parentArticle={{ title: "Tabs and Tab Folders", slug: "using-tabs" }} subArticles={getSubArticles("using-tabs").filter((a) => a.slug !== "linking-tabs")}>
+<ArticleLayout title="Linking Across Tabs" description="Turn any element into a jump point: link it to another tab, a specific element on that tab, another diagram, or an external address." categoryTitle="Tabs" categorySlug="tabs">
 
 A diagram spread across many tabs is far more useful when you can move between them by clicking the canvas itself. Any element can carry a **link**, and that link can point at another tab in the same diagram. Click the element, and the editor jumps you there. It turns a multi-tab diagram into something you navigate like a small site.
 

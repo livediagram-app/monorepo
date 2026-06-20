@@ -49,7 +49,7 @@ The feature categories group the feature guides by area:
 - **Explorer** — the diagram library (explorer/15, teams/32+35): The Explorer overview, Recent, Shared with you, My Work and folders, Team Spaces, Image Gallery, and Saved Themes, one guide per sidebar section.
 - **Palette** — adding elements: shapes and arrows (09), drawing (drawing + shape recognition), images (19), technology icons (41), data elements (46+51+52+53).
 - **Canvas** — the infinite canvas (09), selecting and grouping (selection/groups), links and link cards (40), annotations (38).
-- **Tabs** — multiple boards and tab folders (13+17+30).
+- **Tabs** — multiple boards (13+17+30): Tabs, Tab Folders, Linking Across Tabs, Add a Tab to Another Diagram, Importing (27), Exporting, and Cleanup (47), one guide per tab-menu action.
 - **Customisation** — themes (29+42+44), templates, style presets (48), text and fonts (28), isometric (45).
 - **Collaboration** — comments, teams (32+35), sharing and embeds (24+33+34), activity and history (12), session tools (39).
 - **Tools** — AI assistance (25), zen mode (26), Markdown import (27), layout cleanup (47).

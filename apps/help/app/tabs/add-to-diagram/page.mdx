@@ -1,0 +1,37 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Add a Tab to Another Diagram',
+  description:
+    'Copy the active tab into another diagram you own, straight from the tab menu, to reuse a board across projects.',
+  path: '/help/tabs/add-to-diagram/',
+});
+
+<ArticleLayout
+  title="Add a Tab to Another Diagram"
+  description="Reuse a tab elsewhere: copy the active tab into another of your diagrams in a couple of clicks."
+  categoryTitle="Tabs"
+  categorySlug="tabs"
+>
+
+Sometimes a tab you built in one diagram belongs in another, a reference board, a template flow, or a section you want to carry over. **Add to Diagram** copies the active tab into another diagram you own, without leaving the editor.
+
+## Copying a tab across
+
+<Step n={1}>Open the active tab's ellipsis menu and expand the **Organise** section.</Step>
+<Step n={2}>Choose **Add to Diagram**.</Step>
+<Step n={3}>Pick the destination diagram from your list. The tab is copied into it.</Step>
+
+The option is only available when you actually have somewhere to copy to: if this is your only diagram, **Add to Diagram** is greyed out until you create another.
+
+## What gets copied
+
+Add to Diagram makes a copy, so the original tab stays exactly where it is. The destination diagram gets the tab's elements and layout as a new tab of its own. From there it is an ordinary tab in that diagram: rename it, fold it into a [tab folder](/help/tabs/tab-folders/), or restyle it without affecting the source.
+
+<Tip>
+  Building the same starter board again and again? Keep a master copy in one diagram and use **Add
+  to Diagram** to drop it into each new project, then tailor it from there.
+</Tip>
+
+</ArticleLayout>

@@ -1,0 +1,40 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Importing a Tab',
+  description:
+    'Import a JSON or Markdown file into the active tab. Importing replaces the tab contents, so the dialog warns you first.',
+  path: '/help/tabs/import-tabs/',
+});
+
+<ArticleLayout
+  title="Importing a Tab"
+  description="Bring a tab's contents in from a file. Import a livediagram JSON export or a Markdown outline into the active tab."
+  categoryTitle="Tabs"
+  categorySlug="tabs"
+>
+
+**Import** brings content into the active tab from a file. It is the counterpart to [exporting](/help/tabs/export-tabs/): export a tab to a file from one diagram, import it into a tab somewhere else.
+
+## Import formats
+
+From the tab ellipsis menu, expand the **Content** section and choose **Import**, then pick a format:
+
+- **JSON** reads a livediagram tab export (a `.livediagram-tab.json` file) and restores its elements exactly, the highest-fidelity round trip.
+- **Markdown** turns a Markdown outline into a themed tree diagram, the same conversion as [Markdown Import](/help/tools/markdown-import/), so you can draft structure in text and bring it onto the canvas.
+
+After you pick a format, a file picker opens; choose the file and the tab updates.
+
+## Import replaces the tab
+
+Importing **replaces the active tab's contents** with what comes in from the file, it does not merge. Because that is destructive, the dialog leads with a warning naming the tab about to be overwritten, so you can back out before committing. If you want to keep the current board, add a new tab first and import into that.
+
+Import is unavailable while a tab is locked, since a locked tab is protected from edits.
+
+<Tip>
+  Want to combine boards instead of replacing one? Import into a fresh tab, then copy the elements
+  you want across to your working tab.
+</Tip>
+
+</ArticleLayout>
