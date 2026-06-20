@@ -1,0 +1,30 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Alignment Guides',
+  description:
+    'Show faint snap lines while you move or resize an element, so you can line it up with the edges and centres of other elements.',
+  path: '/help/palette/alignment-guides/',
+});
+
+<ArticleLayout
+  title="Alignment Guides"
+  description="Show snap lines while moving or resizing so you can align elements by eye."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("alignment-guides")}
+>
+
+Alignment Guides is a toggle, and it is on by default. You will find it behind the gear (settings) icon in the header of the floating command palette, which opens a small settings popover.
+
+## What it does
+
+When the setting is on, faint snap lines appear while you move or resize an element. They show when it lines up with the edges or centres of other elements, so you can align things by eye without measuring. In the settings popover the hint reads: "Show snap lines while moving or resizing."
+
+## When to turn it off
+
+Switch it off for a cleaner drag with no snapping hints. With the toggle off, elements move and resize freely and the guide lines stay out of the way, which suits fine adjustments where the snapping would otherwise get in your path.
+
+</ArticleLayout>

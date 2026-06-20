@@ -1,0 +1,30 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Auto-Attach Arrows',
+  description:
+    'Keep arrows pinned to the nearest face of a shape as it moves, so connectors always point at the right spot.',
+  path: '/help/palette/auto-attach-arrows/',
+});
+
+<ArticleLayout
+  title="Auto-Attach Arrows"
+  description="Re-pin arrows to the nearest face of a shape automatically as that shape moves."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("auto-attach-arrows")}
+>
+
+Auto-Attach Arrows is a toggle, and it is on by default. You will find it behind the gear (settings) icon in the header of the floating command palette, which opens a small settings popover.
+
+## What it does
+
+When the setting is on, arrows re-pin to the nearest face or edge of a shape as that shape moves. The connector follows along, so it keeps pointing at the right spot without you having to tidy up endpoints by hand. In the settings popover the hint reads: "Re-pin arrows to the nearest face as shapes move."
+
+## When to turn it off
+
+Switch it off if you want arrow endpoints to stay exactly where you put them. With the toggle off, an endpoint holds its position rather than re-attaching as a shape is dragged, which is handy when you have positioned a connector deliberately and do not want it to move.
+
+</ArticleLayout>

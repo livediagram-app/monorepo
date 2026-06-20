@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { FeatureArticleCard } from '@/components/FeatureArticleCard';
-import { categories, getArticlesByCategory } from '@/lib/articles';
+import { categories, getCategoryGroups } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
 // Shared index page for a feature-guide category (Explorer, Palette, Canvas,
@@ -23,7 +23,7 @@ export function featureCategoryMetadata(slug: string): Metadata {
 
 export function FeatureCategoryIndex({ slug }: { slug: string }) {
   const cat = category(slug);
-  const items = getArticlesByCategory(slug);
+  const groups = getCategoryGroups(slug);
   return (
     <div>
       <Breadcrumb items={[{ label: cat.title }]} />
@@ -32,11 +32,18 @@ export function FeatureCategoryIndex({ slug }: { slug: string }) {
         <p className="mb-8 text-base leading-relaxed text-slate-500 md:text-lg">
           {cat.description}
         </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((article) => (
-            <FeatureArticleCard key={article.slug} article={article} />
-          ))}
-        </div>
+        {groups.map(({ group, articles }) => (
+          <section key={group || 'all'} className="mb-10 last:mb-0">
+            {group && (
+              <h2 className="mb-4 text-lg font-semibold text-slate-800 md:text-xl">{group}</h2>
+            )}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {articles.map((article) => (
+                <FeatureArticleCard key={article.slug} article={article} />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

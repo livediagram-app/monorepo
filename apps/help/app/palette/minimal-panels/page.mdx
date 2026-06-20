@@ -1,0 +1,30 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Minimal Panels',
+  description:
+    'Swap the floating panels for a compact button bar, with each panel opening as a popover. Ideal for small screens or a tidier workspace.',
+  path: '/help/palette/minimal-panels/',
+});
+
+<ArticleLayout
+  title="Minimal Panels"
+  description="Swap the floating panels for a compact button bar where each panel opens as a popover."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("minimal-panels")}
+>
+
+Minimal Panels is a toggle, and it is off by default. You will find it behind the gear (settings) icon in the header of the floating command palette, which opens a small settings popover. It is only shown when the layout supports it.
+
+## What it does
+
+When the setting is on, the floating panels (Explorer, Palette, Editor, and AI) are swapped for a compact button bar, a dock. Each panel then opens as a popover from its button instead of floating on the canvas. In the settings popover the hint reads: "Swap floating panels for a compact button bar."
+
+## When to use it
+
+Minimal Panels is good for small screens, where floating panels can crowd the canvas, and for anyone who simply prefers a tidier workspace. Tap a button in the dock to open that panel as a popover, then dismiss it to give the canvas back its full width.
+
+</ArticleLayout>

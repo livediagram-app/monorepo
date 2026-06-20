@@ -1,0 +1,35 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Laser Pointer',
+  description:
+    'Use the Laser Pointer mode in livediagram to draw a temporary, fading trail that highlights parts of a diagram while presenting.',
+  path: '/help/palette/laser/',
+});
+
+<ArticleLayout
+  title="Laser Pointer"
+  description="Draw a temporary, fading trail to draw attention while presenting."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("laser")}
+>
+
+The Laser Pointer mode gives you a temporary laser trail for drawing attention while presenting or walking a group through a diagram. Choose it from the mode picker at the top of the floating command palette, or press **`K`**.
+
+## How it works
+
+Move the cursor to leave a glowing trail that fades on its own. It is purely for emphasis: it draws nothing permanent and changes none of your elements, so you can gesture freely without altering the diagram.
+
+## When it is unavailable
+
+The Laser Pointer is disabled on an empty canvas. Add an element and the mode becomes available again.
+
+<Tip>
+  The Laser Pointer pairs well with live collaboration, letting everyone watching see exactly what
+  you are pointing at.
+</Tip>
+
+</ArticleLayout>

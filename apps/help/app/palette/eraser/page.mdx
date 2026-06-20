@@ -1,0 +1,38 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Eraser',
+  description:
+    'Use the Eraser mode in livediagram to quickly delete elements by clicking or dragging across them.',
+  path: '/help/palette/eraser/',
+});
+
+<ArticleLayout
+  title="Eraser"
+  description="Delete elements quickly by clicking or dragging across them."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("eraser")}
+>
+
+The Eraser mode is the fastest way to remove elements from the canvas. Choose it from the mode picker at the top of the floating command palette, or press **`E`**.
+
+## Erasing elements
+
+- **Click** an element to delete it.
+- **Drag** across several elements to remove them all in one sweep.
+
+This is quicker than selecting elements and then deleting them, especially when you want to clear out a cluster of shapes or arrows at once.
+
+## When it is unavailable
+
+The Eraser is disabled when the canvas is empty, since there is nothing to erase. Add at least one element and the mode becomes available again.
+
+<Note>
+  Erasing removes elements straight away. If you take off something you meant to keep, undo the
+  change to bring it back.
+</Note>
+
+</ArticleLayout>

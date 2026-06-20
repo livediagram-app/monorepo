@@ -1,0 +1,35 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Hand',
+  description:
+    'Use the Hand mode in livediagram to pan around the canvas without moving any of your elements.',
+  path: '/help/palette/hand/',
+});
+
+<ArticleLayout
+  title="Hand"
+  description="Pan and scroll the canvas without moving any of your elements."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("hand")}
+>
+
+The Hand mode lets you move your view of the canvas without touching the elements on it. Choose it from the mode picker at the top of the floating command palette, or press **`H`**.
+
+## Panning the canvas
+
+Grab the surface and drag to move your view in any direction. This is the quickest way to navigate a large diagram when the part you want is off-screen.
+
+## Why a dedicated mode
+
+You can also pan while in Select mode by other means, but those rely on holding an extra key or button. The Hand mode makes panning the only thing a drag does, so there is no risk of accidentally moving an element while you are getting around your diagram.
+
+<Tip>
+  Hand mode is handy when you are presenting or reviewing a busy canvas and want to scroll freely
+  without disturbing anything.
+</Tip>
+
+</ArticleLayout>

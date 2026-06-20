@@ -1,0 +1,40 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Components',
+  description:
+    'The palette Components tab holds pre-assembled blocks (banners, callouts, stat rows, process steps, heroes, and headers) that you drop as a unit and then edit like any other elements.',
+  path: '/help/palette/components/',
+});
+
+<ArticleLayout
+  title="Components"
+  description="Pre-assembled, composite blocks you drop as a single unit and then restyle and edit on the canvas."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("components")}
+>
+
+The **Components** tab holds pre-assembled, composite blocks. Instead of building a layout shape by shape, you drop a ready-made arrangement as a unit and then tailor it to your diagram.
+
+## What the tab contains
+
+- **Banner** is a themed title block with an accent bar.
+- **Callout** is a soft note box with an icon, a title, and a body.
+- **Stat Row** is a set of three KPI cards side by side.
+- **Process Steps** is a row of numbered circles joined by arrows.
+- **Hero** is a large image with a caption card, so it needs image upload to be available.
+- **Header** is a website-style bar with an avatar and navigation.
+
+## How components behave
+
+Each component drops as a ready-made arrangement of ordinary elements: the same shapes, text, images, and arrows you would place by hand, just pre-arranged for you. Once it is on the canvas you can restyle it, regroup it, ungroup it to reach the individual pieces, and edit any part exactly as you would anything else. Nothing about a component is locked or special after it lands.
+
+<Tip>
+  Drop a component to get the structure right, then recolour it with your theme and swap the
+  placeholder text. It is faster than arranging the pieces from scratch.
+</Tip>
+
+</ArticleLayout>

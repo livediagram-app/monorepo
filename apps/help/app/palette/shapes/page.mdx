@@ -1,0 +1,49 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Shapes',
+  description:
+    'Add squares, circles, cylinders, hexagons and more from the Shapes tab, morph one kind into another in place, and flag status with shape markers.',
+  path: '/help/palette/shapes/',
+});
+
+<ArticleLayout
+  title="Shapes"
+  description="The nodes of every diagram: drop a shape, style it, and morph it into another kind whenever you change your mind."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("shapes")}
+>
+
+Shapes hold the ideas in your diagram. The palette's **Shapes** tab covers the everyday set, a square, circle, diamond, cylinder, parallelogram, hexagon, document, stadium, cloud, triangle, trapezoid, star, and speech bubble, so there is a node for flowcharts, data stores, decisions, and notes alike.
+
+## Adding a shape
+
+Open the **Shapes** tab in the floating palette and click a shape to drop it on the canvas, or drag to draw it at the size you want. Once placed, a shape behaves like any other element: move, resize, recolour, group, and theme it as usual.
+
+## Morphing between kinds
+
+A selected shape can be morphed into another kind in place from its right-click menu, preserving its size and colours, so you are never locked into your first choice. Turn a square into a cylinder or a hexagon into a diamond without redrawing it or losing its styling.
+
+## Styling and text
+
+Boxed shapes carry colours, text, and alignment options, all reachable from the element's context menu. Double-click a shape to add a label, then set its size, weight, and alignment from the Text controls.
+
+## Status markers
+
+A shape can show a small status glyph, a traffic-light dot or a checkbox, right inside it, so you can flag state without adding a separate element.
+
+<FeatureGrid>
+  <Feature slug="shapes" title="Shape markers">
+    Show a traffic-light dot or a checkbox inside a shape to flag status at a glance.
+  </Feature>
+</FeatureGrid>
+
+<Tip>
+  Reach for [Arrows](/help/palette/arrows/) to connect your shapes into a flow once they are on the
+  canvas.
+</Tip>
+
+</ArticleLayout>

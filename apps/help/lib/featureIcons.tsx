@@ -22,11 +22,92 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <path d="M3 9h18M8 4v5" {...s} />
     </Glyph>
   ),
-  'shapes-and-arrows': (
+  // Palette → Selection Modes.
+  select: (
     <Glyph>
-      <rect x="3" y="4" width="7" height="7" rx="1" {...s} />
-      <circle cx="17.5" cy="17.5" r="3.5" {...s} />
-      <path d="M10 7.5h4.5M14.5 7.5l-2-2M14.5 7.5l-2 2" {...s} />
+      <path d="M5 3l6 16 2.5-6.5L20 10 5 3z" {...s} />
+    </Glyph>
+  ),
+  hand: (
+    <Glyph>
+      <path
+        d="M8 11V5.5a1.5 1.5 0 013 0V10m0-.5V4.5a1.5 1.5 0 013 0V10m0-.5V6a1.5 1.5 0 013 0v6a7 7 0 01-7 7h-1a6 6 0 01-5-3l-2.5-4a1.6 1.6 0 012.7-1.7L8 13"
+        {...s}
+      />
+    </Glyph>
+  ),
+  eraser: (
+    <Glyph>
+      <path d="M4 14l6-6 7 7-4 4H8l-4-4a1 1 0 010-1.4z" {...s} />
+      <path d="M10 8l6 6M9 19h11" {...s} />
+    </Glyph>
+  ),
+  'format-painter': (
+    <Glyph>
+      <path d="M4 5a1 1 0 011-1h11a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1z" {...s} />
+      <path d="M17 6h2a1 1 0 011 1v3a1 1 0 01-1 1h-6a1 1 0 00-1 1v2M11 15h2v6h-2z" {...s} />
+    </Glyph>
+  ),
+  laser: (
+    <Glyph>
+      <circle cx="12" cy="12" r="2.5" {...s} />
+      <path
+        d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"
+        {...s}
+      />
+    </Glyph>
+  ),
+  spotlight: (
+    <Glyph>
+      <path d="M9 3l3 7M15 3l-1 7M9.5 10h5l1.2 9a1 1 0 01-1 1.2H9.3a1 1 0 01-1-1.2z" {...s} />
+    </Glyph>
+  ),
+  'isometric-mode': (
+    <Glyph>
+      <path d="M12 3l9 5v8l-9 5-9-5V8l9-5z" {...s} />
+      <path d="M12 12l9-4M12 12v9M12 12L3 8" {...s} />
+    </Glyph>
+  ),
+  // Palette → Elements.
+  shapes: (
+    <Glyph>
+      <rect x="3" y="4" width="8" height="8" rx="1" {...s} />
+      <circle cx="16.5" cy="16" r="4" {...s} />
+      <path d="M14 4l5 5M19 4l-5 5" {...s} />
+    </Glyph>
+  ),
+  arrows: (
+    <Glyph>
+      <path d="M3 12h15M14 7l5 5-5 5" {...s} />
+    </Glyph>
+  ),
+  tools: (
+    <Glyph>
+      <path
+        d="M14.5 5.5a3.5 3.5 0 00-4.8 4.6l-6 6a1.5 1.5 0 002.1 2.1l6-6a3.5 3.5 0 004.6-4.8l-2.3 2.3-2-2 2.4-2.2z"
+        {...s}
+      />
+    </Glyph>
+  ),
+  components: (
+    <Glyph>
+      <rect x="3" y="3" width="7" height="7" rx="1" {...s} />
+      <rect x="14" y="3" width="7" height="7" rx="1" {...s} />
+      <rect x="3" y="14" width="7" height="7" rx="1" {...s} />
+      <path d="M17.5 14v7M14 17.5h7" {...s} />
+    </Glyph>
+  ),
+  devices: (
+    <Glyph>
+      <rect x="2" y="4" width="14" height="10" rx="1" {...s} />
+      <path d="M2 17h12" {...s} />
+      <rect x="17" y="9" width="5" height="11" rx="1" {...s} />
+    </Glyph>
+  ),
+  icons: (
+    <Glyph>
+      <circle cx="12" cy="12" r="9" {...s} />
+      <path d="M9.5 10a2.5 2.5 0 015 0c0 1.7-2.5 2-2.5 3.5M12 17h.01" {...s} />
     </Glyph>
   ),
   drawing: (
@@ -169,10 +250,38 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <path d="M12 8v4M12 16h.01" {...s} />
     </Glyph>
   ),
-  'technology-icons': (
+  technology: (
     <Glyph>
       <rect x="4" y="4" width="16" height="16" rx="2" {...s} />
       <path d="M9 4v16M15 4v16M4 9h16M4 15h16" {...s} />
+    </Glyph>
+  ),
+  // Palette → Palette Settings.
+  'auto-attach-arrows': (
+    <Glyph>
+      <rect x="3" y="9" width="6" height="6" rx="1" {...s} />
+      <rect x="15" y="9" width="6" height="6" rx="1" {...s} />
+      <path d="M9 12h6M13 10l2 2-2 2" {...s} />
+    </Glyph>
+  ),
+  'alignment-guides': (
+    <Glyph>
+      <path d="M12 3v18" {...s} />
+      <rect x="4" y="6" width="6" height="4" rx="1" {...s} />
+      <rect x="14" y="14" width="6" height="4" rx="1" {...s} />
+    </Glyph>
+  ),
+  'minimal-panels': (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
+      <path d="M3 8h18M6 14h4M6 17h7" {...s} />
+    </Glyph>
+  ),
+  'reset-palette-position': (
+    <Glyph>
+      <path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8" {...s} />
+      <path d="M3 4v4h4" {...s} />
+      <rect x="14" y="4" width="6" height="6" rx="1" {...s} />
     </Glyph>
   ),
   // Explorer section guides.

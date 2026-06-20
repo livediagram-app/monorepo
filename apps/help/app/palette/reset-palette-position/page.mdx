@@ -1,0 +1,30 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Reset Palette Position',
+  description:
+    'Snap the floating command palette back to its default corner after you have dragged it around the canvas.',
+  path: '/help/palette/reset-palette-position/',
+});
+
+<ArticleLayout
+  title="Reset Palette Position"
+  description="Snap the floating command palette back to its default top-right corner."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("reset-palette-position")}
+>
+
+Reset Palette Position is an action (a button), not a toggle. You will find it behind the gear (settings) icon in the header of the floating command palette, which opens a small settings popover.
+
+## What it does
+
+The palette is movable: you can drag it around the canvas to wherever suits your work. This action snaps it back to its default corner, the top-right. Use it whenever the palette has drifted somewhere awkward and you want it back in its familiar spot.
+
+## When it is available
+
+The button is disabled when the palette is already at the default position, and its hint then reads: "Already at the default corner." Once you have moved the palette, the button becomes active and its hint reads: "Snap back to the default corner."
+
+</ArticleLayout>

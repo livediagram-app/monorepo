@@ -6,7 +6,6 @@
  *  emerald / amber / rose) so cards stay coherent with the product. */
 export const FEATURE_ENTITY_HEX: Record<string, string> = {
   'the-canvas': '#0ea5e9',
-  'shapes-and-arrows': '#6366f1',
   drawing: '#f97316',
   'selecting-and-grouping': '#8b5cf6',
   'text-and-fonts': '#0891b2',
@@ -29,7 +28,27 @@ export const FEATURE_ENTITY_HEX: Record<string, string> = {
   'layout-cleanup': '#2563eb',
   isometric: '#9333ea',
   annotations: '#eab308',
-  'technology-icons': '#0ea5e9',
+  // Palette → Selection Modes
+  select: '#0ea5e9',
+  hand: '#0891b2',
+  eraser: '#f43f5e',
+  'format-painter': '#8b5cf6',
+  laser: '#ef4444',
+  spotlight: '#f59e0b',
+  'isometric-mode': '#9333ea',
+  // Palette → Elements
+  shapes: '#6366f1',
+  arrows: '#3b82f6',
+  tools: '#14b8a6',
+  components: '#d946ef',
+  devices: '#0284c7',
+  icons: '#ec4899',
+  technology: '#0ea5e9',
+  // Palette → Palette Settings
+  'auto-attach-arrows': '#10b981',
+  'alignment-guides': '#22c55e',
+  'minimal-panels': '#64748b',
+  'reset-palette-position': '#475569',
   recent: '#0ea5e9',
   'shared-with-you': '#10b981',
   'my-work': '#f59e0b',

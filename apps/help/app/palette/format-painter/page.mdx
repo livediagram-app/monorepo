@@ -1,0 +1,34 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Format Painter',
+  description:
+    "Use the Format Painter mode in livediagram to copy one element's style and paint it onto others.",
+  path: '/help/palette/format-painter/',
+});
+
+<ArticleLayout
+  title="Format Painter"
+  description="Copy one element's style and paint it onto other elements."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("format-painter")}
+>
+
+The Format Painter mode copies the look of one element (its colours, line, and text styling) and applies it to others, so a set of shapes can share a consistent style without setting each one by hand. Choose it from the mode picker at the top of the floating command palette.
+
+## How to use it
+
+<Step n={1}>Pick the Format Painter mode from the palette.</Step>
+<Step n={2}>Click a source element to copy its look.</Step>
+<Step n={3}>Click each element you want to apply that style to.</Step>
+
+Every element you click takes on the copied colours, line, and text styling.
+
+## Learn more
+
+For a fuller walkthrough, including tips on which properties carry across, see [Using the Format Painter](/help/canvas/selecting-and-grouping/using-the-format-painter/).
+
+</ArticleLayout>

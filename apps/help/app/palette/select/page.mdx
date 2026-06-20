@@ -1,0 +1,38 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Select',
+  description:
+    'The default pointer mode in livediagram, used to select, move, resize, and edit elements on the canvas.',
+  path: '/help/palette/select/',
+});
+
+<ArticleLayout
+  title="Select"
+  description="The default pointer mode for selecting, moving, resizing, and editing elements."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("select")}
+>
+
+Select is the default mode for working on the canvas, and the one you spend most of your time in. You can switch to it from the mode picker at the top of the floating command palette, or press **`V`**.
+
+## What you can do
+
+In Select mode the pointer interacts directly with your elements:
+
+- **Click** an element to select it.
+- **Drag a marquee** across empty canvas to select many elements at once.
+- **Drag** an element to move it.
+- **Drag its handles** to resize.
+- **Double-click** to edit a label.
+
+## Returning here
+
+Select is your home base. After you finish with any other tool (Hand, Eraser, the Format Painter, and so on), come back to Select to carry on editing. Choosing a different tool changes what a click or drag does, so returning to Select restores normal selection and editing behaviour.
+
+<Tip>Press `V` from anywhere to jump straight back to Select without opening the mode picker.</Tip>
+
+</ArticleLayout>

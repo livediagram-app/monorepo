@@ -1,0 +1,35 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Spotlight',
+  description:
+    'Use the Spotlight mode in livediagram to dim the canvas and highlight the element under your cursor, focusing attention on one thing at a time.',
+  path: '/help/palette/spotlight/',
+});
+
+<ArticleLayout
+  title="Spotlight"
+  description="Dim the canvas and spotlight the element under your cursor."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("spotlight")}
+>
+
+The Spotlight mode dims the canvas and spotlights the element under your cursor, so a viewer's attention lands on one thing at a time. Choose it from the mode picker at the top of the floating command palette.
+
+## How it works
+
+As you move the cursor, the element beneath it stays bright while everything around it is dimmed. This is useful when you are talking through a diagram and want to focus the room on a single shape before moving on to the next.
+
+## Availability
+
+Spotlight is **desktop only**, and is disabled on an empty canvas. Add an element on a desktop browser and the mode becomes available.
+
+<Tip>
+  Spotlight works well alongside the Laser Pointer when presenting: dim the rest of the canvas, then
+  point out the detail you want to discuss.
+</Tip>
+
+</ArticleLayout>

@@ -7,6 +7,10 @@ export interface Article {
   categorySlug: string;
   /** Feature-landing slug this article hangs off, if it's a sub-article. */
   parentSlug?: string;
+  /** Optional sub-category heading used to group a feature category's landing
+   *  cards on its index page (e.g. Palette → "Selection Modes" / "Elements" /
+   *  "Palette Settings"). Landings without a group render in a single grid. */
+  group?: string;
 }
 
 /**
@@ -105,8 +109,8 @@ export const categories: Category[] = [
   {
     slug: 'palette',
     title: 'Palette',
-    description: 'Add shapes, arrows, drawings, images, icons, and data elements.',
-    articleCount: 5,
+    description: 'Selection modes, every element you can add, and the palette settings.',
+    articleCount: 18,
     kind: 'feature',
   },
   {
@@ -405,19 +409,152 @@ export const articles: Article[] = [
     category: 'Canvas',
     categorySlug: 'canvas',
   },
+  // ---- Palette landings: Selection Modes ----
   {
-    slug: 'shapes-and-arrows',
-    title: 'Shapes and Arrows',
-    description: 'Every shape and arrow style, with draggable curve and elbow handles.',
+    slug: 'select',
+    title: 'Select',
+    description: 'The default pointer for selecting, moving, and editing elements.',
     category: 'Palette',
     categorySlug: 'palette',
+    group: 'Selection Modes',
   },
   {
-    slug: 'drawing',
-    title: 'Drawing and Sketch',
-    description: 'Freehand drawing with the Pencil, plus shape recognition.',
+    slug: 'hand',
+    title: 'Hand',
+    description: 'Grab and pan the canvas without moving any elements.',
     category: 'Palette',
     categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  {
+    slug: 'eraser',
+    title: 'Eraser',
+    description: 'Click or drag across elements to delete them quickly.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  {
+    slug: 'format-painter',
+    title: 'Format Painter',
+    description: "Copy one element's style and paint it onto others.",
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  {
+    slug: 'laser',
+    title: 'Laser Pointer',
+    description: 'A temporary laser trail for drawing attention while presenting.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  {
+    slug: 'spotlight',
+    title: 'Spotlight',
+    description: 'Dim the canvas and spotlight the element under your cursor.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  {
+    slug: 'isometric-mode',
+    title: 'Isometric Mode',
+    description: 'Toggle the tab into a tilted, isometric perspective.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Selection Modes',
+  },
+  // ---- Palette landings: Elements ----
+  {
+    slug: 'shapes',
+    title: 'Shapes',
+    description: 'Squares, circles, cylinders and more, with morphing and markers.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'arrows',
+    title: 'Arrows',
+    description: 'Connectors of every style, with draggable curve and elbow handles.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'tools',
+    title: 'Tools',
+    description: 'Text, pencil, tables, frames, charts and the rest of the Tools tab.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'components',
+    title: 'Components',
+    description: 'Pre-assembled blocks like banners, callouts, and stat rows.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'devices',
+    title: 'Devices',
+    description: 'Browser, phone, laptop and other wireframing frames.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'icons',
+    title: 'Icons',
+    description: 'A searchable catalogue of single-colour glyphs.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  {
+    slug: 'technology',
+    title: 'Technology',
+    description: 'Full-colour AWS, Azure, and infrastructure icons.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Elements',
+  },
+  // ---- Palette landings: Palette Settings ----
+  {
+    slug: 'auto-attach-arrows',
+    title: 'Auto-Attach Arrows',
+    description: 'Re-pin arrows to the nearest face as shapes move.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Palette Settings',
+  },
+  {
+    slug: 'alignment-guides',
+    title: 'Alignment Guides',
+    description: 'Show snap lines while moving or resizing elements.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Palette Settings',
+  },
+  {
+    slug: 'minimal-panels',
+    title: 'Minimal Panels',
+    description: 'Swap floating panels for a compact button bar.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Palette Settings',
+  },
+  {
+    slug: 'reset-palette-position',
+    title: 'Reset Palette Position',
+    description: 'Snap the palette back to its default corner.',
+    category: 'Palette',
+    categorySlug: 'palette',
+    group: 'Palette Settings',
   },
   {
     slug: 'selecting-and-grouping',
@@ -509,13 +646,6 @@ export const articles: Article[] = [
     description: 'Link elements across tabs or to URLs, and bookmark cards.',
     category: 'Canvas',
     categorySlug: 'canvas',
-  },
-  {
-    slug: 'images',
-    title: 'Images',
-    description: 'Add images to the canvas from your per-owner gallery.',
-    category: 'Palette',
-    categorySlug: 'palette',
   },
   {
     slug: 'the-explorer',
@@ -623,13 +753,6 @@ export const articles: Article[] = [
     categorySlug: 'collaboration',
   },
   {
-    slug: 'data-elements',
-    title: 'Data and Chart Elements',
-    description: 'Progress bars, ratings, pie charts, and timeline rails.',
-    category: 'Palette',
-    categorySlug: 'palette',
-  },
-  {
     slug: 'style-presets',
     title: 'Style Presets',
     description: 'One-click colour and line-style variations for shapes and arrows.',
@@ -656,13 +779,6 @@ export const articles: Article[] = [
     description: 'Drop a marker with a note that readers hover to read.',
     category: 'Canvas',
     categorySlug: 'canvas',
-  },
-  {
-    slug: 'technology-icons',
-    title: 'Technology Icons',
-    description: 'Full-colour AWS, Azure, and infra icons for architecture diagrams.',
-    category: 'Palette',
-    categorySlug: 'palette',
   },
 
   // ---- Sub-articles: Canvas ----
@@ -691,47 +807,73 @@ export const articles: Article[] = [
     parentSlug: 'the-canvas',
   },
 
-  // ---- Sub-articles: Shapes and Arrows ----
+  // ---- Sub-articles: Shapes ----
+  {
+    slug: 'shape-markers',
+    title: 'Shape Markers',
+    description: 'Traffic-light dots and a checkbox glyph inside a shape.',
+    category: 'Palette',
+    categorySlug: 'palette/shapes',
+    parentSlug: 'shapes',
+  },
+
+  // ---- Sub-articles: Arrows ----
   {
     slug: 'arrow-styles',
     title: 'Arrow Styles',
     description: 'Straight, curved, and elbow arrows and how to switch between them.',
     category: 'Palette',
-    categorySlug: 'palette/shapes-and-arrows',
-    parentSlug: 'shapes-and-arrows',
+    categorySlug: 'palette/arrows',
+    parentSlug: 'arrows',
   },
   {
     slug: 'curve-and-elbow-handles',
     title: 'Curve and Elbow Handles',
     description: 'Drag the handles to shape an arrow exactly how you want.',
     category: 'Palette',
-    categorySlug: 'palette/shapes-and-arrows',
-    parentSlug: 'shapes-and-arrows',
+    categorySlug: 'palette/arrows',
+    parentSlug: 'arrows',
   },
   {
     slug: 'arrow-to-arrow',
     title: 'Connecting Arrows to Arrows',
     description: 'Snap an arrow endpoint onto another arrow for sequence diagrams.',
     category: 'Palette',
-    categorySlug: 'palette/shapes-and-arrows',
-    parentSlug: 'shapes-and-arrows',
-  },
-  {
-    slug: 'shape-markers',
-    title: 'Shape Markers',
-    description: 'Traffic-light dots and a checkbox glyph inside a shape.',
-    category: 'Palette',
-    categorySlug: 'palette/shapes-and-arrows',
-    parentSlug: 'shapes-and-arrows',
+    categorySlug: 'palette/arrows',
+    parentSlug: 'arrows',
   },
 
-  // ---- Sub-articles: Drawing ----
+  // ---- Sub-articles: Tools ----
+  {
+    slug: 'drawing',
+    title: 'Drawing and Sketch',
+    description: 'Freehand drawing with the Pencil, plus shape recognition.',
+    category: 'Palette',
+    categorySlug: 'palette/tools',
+    parentSlug: 'tools',
+  },
+  {
+    slug: 'images',
+    title: 'Images',
+    description: 'Add images to the canvas from your per-owner gallery.',
+    category: 'Palette',
+    categorySlug: 'palette/tools',
+    parentSlug: 'tools',
+  },
+  {
+    slug: 'data-elements',
+    title: 'Data and Chart Elements',
+    description: 'Progress bars, ratings, pie charts, and timeline rails.',
+    category: 'Palette',
+    categorySlug: 'palette/tools',
+    parentSlug: 'tools',
+  },
   {
     slug: 'shape-recognition',
     title: 'Shape Recognition',
     description: 'Let the Pencil snap rough sketches into clean shapes.',
     category: 'Palette',
-    categorySlug: 'palette/drawing',
+    categorySlug: 'palette/tools/drawing',
     parentSlug: 'drawing',
   },
 
@@ -903,7 +1045,7 @@ export const articles: Article[] = [
     title: 'Progress Bars and Rings',
     description: 'Show a 0–100% value with fill animations.',
     category: 'Palette',
-    categorySlug: 'palette/data-elements',
+    categorySlug: 'palette/tools/data-elements',
     parentSlug: 'data-elements',
   },
   {
@@ -911,7 +1053,7 @@ export const articles: Article[] = [
     title: 'Rating',
     description: 'A 1–5 star rating element with a score picker.',
     category: 'Palette',
-    categorySlug: 'palette/data-elements',
+    categorySlug: 'palette/tools/data-elements',
     parentSlug: 'data-elements',
   },
   {
@@ -919,7 +1061,7 @@ export const articles: Article[] = [
     title: 'Pie Chart',
     description: 'An editable pie chart built from label and value rows.',
     category: 'Palette',
-    categorySlug: 'palette/data-elements',
+    categorySlug: 'palette/tools/data-elements',
     parentSlug: 'data-elements',
   },
 
@@ -994,6 +1136,26 @@ export const articles: Article[] = [
 
 export function getArticlesByCategory(categorySlug: string): Article[] {
   return articles.filter((a) => a.categorySlug === categorySlug);
+}
+
+/**
+ * A feature category's landing cards, split into sub-category groups in the
+ * order each group first appears in {@link articles}. Used by the category
+ * index to render grouped sections (e.g. Palette's Selection Modes / Elements
+ * / Palette Settings). A category whose landings have no `group` collapses to
+ * a single section with an empty `group` label, so callers can render a plain
+ * grid unchanged.
+ */
+export function getCategoryGroups(categorySlug: string): { group: string; articles: Article[] }[] {
+  const items = getArticlesByCategory(categorySlug);
+  const groups: { group: string; articles: Article[] }[] = [];
+  for (const article of items) {
+    const label = article.group ?? '';
+    const existing = groups.find((g) => g.group === label);
+    if (existing) existing.articles.push(article);
+    else groups.push({ group: label, articles: [article] });
+  }
+  return groups;
 }
 
 export function getSubArticles(parentSlug: string): Article[] {

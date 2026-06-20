@@ -1,0 +1,34 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Isometric Mode',
+  description:
+    'Use Isometric Mode in livediagram to toggle the current tab into a tilted, three-dimensional perspective.',
+  path: '/help/palette/isometric-mode/',
+});
+
+<ArticleLayout
+  title="Isometric Mode"
+  description="Toggle the current tab into a tilted, isometric perspective."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("isometric-mode")}
+>
+
+Isometric Mode toggles the current tab into a tilted, isometric (3D-looking) perspective, giving a flat diagram a sense of depth. Choose it from the mode picker at the top of the floating command palette, or press **`I`**.
+
+## How it works
+
+The mode restyles how the whole tab is rendered, tilting it into the isometric view. Toggle it again to return to the flat view. It is a toggle for the current tab, so it affects everything on that tab at once.
+
+## When it is unavailable
+
+Isometric Mode is disabled on an empty canvas. Add an element and the mode becomes available again.
+
+## Learn more
+
+For a fuller walkthrough, see [Isometric View](/help/customisation/isometric/).
+
+</ArticleLayout>

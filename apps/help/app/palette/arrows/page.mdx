@@ -1,0 +1,49 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Arrows',
+  description:
+    'Connect elements with arrows of every style, with draggable curve and elbow handles and endpoints that snap onto shapes or other arrows.',
+  path: '/help/palette/arrows/',
+});
+
+<ArticleLayout
+  title="Arrows"
+  description="Connectors that link your diagram together, with every line style and handles you can shape by hand."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  subArticles={getSubArticles("arrows")}
+>
+
+Arrows are how a diagram turns a pile of shapes into a flow, a hierarchy, or a relationship. Add one with the **Arrow** tool in the palette's **Tools** tab, then connect, style, and reshape it however the diagram needs. livediagram gives arrows real flexibility: every line style, draggable curve and elbow handles, and endpoints that snap onto shapes or even onto other arrows.
+
+## Drawing and connecting
+
+An arrow links two points on the canvas. An arrow's endpoint can sit freely, pin to a shape's connection anchor (so it tracks the shape as it moves), or attach along another arrow. Drag from a shape's edge to quick-connect, or drop a plain arrow from the palette and position its ends by hand.
+
+## Styling the line
+
+From the arrow's context menu you can set its line style, thickness, dash pattern, and arrowheads, and add a label. The controls are independent, so you can mix any line with any head. See [Arrow styles](/help/palette/arrows/arrow-styles/) for the full set.
+
+## Shaping the path
+
+Curved and angled arrows expose a draggable handle so you can bow a curve or position an elbow exactly where the diagram needs it, without breaking the arrow's connections.
+
+<FeatureGrid>
+  <Feature slug="arrows" title="Curve and elbow handles">
+    Drag the handle on a curved or angled arrow to shape its path by hand.
+  </Feature>
+  <Feature slug="arrows" title="Connecting arrows to arrows">
+    Snap an arrow endpoint to a point along another arrow, the sequence-diagram pattern, and it
+    rides along as the line moves.
+  </Feature>
+</FeatureGrid>
+
+<Tip>
+  Need a connector to bend around other elements? Switch its line style to Angled for a clean
+  axis-aligned elbow, then drag the handle to position the bend.
+</Tip>
+
+</ArticleLayout>
