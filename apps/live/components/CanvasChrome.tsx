@@ -150,6 +150,8 @@ export function CanvasChrome(props: CanvasChromeProps) {
     marquee,
     minimalPanels,
     onToggleMinimalPanels,
+    settings,
+    onChangeSettings,
     onActivityRowClick,
     onAddArrow,
     onAddImage,
@@ -848,6 +850,8 @@ export function CanvasChrome(props: CanvasChromeProps) {
           onReset={onResetPalette}
           minimalPanels={minimalPanels}
           onToggleMinimalPanels={onToggleMinimalPanels}
+          settings={settings}
+          onChangeSettings={onChangeSettings}
           canvasEmpty={elements.length === 0}
           onAddShape={onAddShape}
           onAddIcon={onAddIcon}

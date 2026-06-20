@@ -206,11 +206,41 @@ on" state.
 
 ## UI placement
 
-Global preferences (auto-rebind, draw-to-add, minimal-panels, AI,
-telemetry) sit in the Settings dialog. Per-tool preferences (today:
-`recogniseShapes` for the pencil) sit next to the tool they affect,
-because walking the user back to a separate dialog to flip a per-tool
-behaviour is friction the tool's banner already solves.
+Global preferences (draw-to-add, minimal-panels, AI, telemetry) sit
+in the Settings dialog. Canvas-behaviour preferences (`autoRebindArrows`,
+`alignmentGuides`) sit in a Palette settings popover, next to the canvas
+they affect. Per-tool preferences (today: `recogniseShapes` for the
+pencil) sit next to the tool they affect, because walking the user back
+to a separate dialog to flip a per-tool behaviour is friction the tool's
+banner already solves.
+
+The Palette popover is the first step in retiring the Settings dialog
+entirely: settings move out to the surfaces they govern, so the user
+flips them where they see their effect rather than in a context-free
+modal.
+
+- **Palette settings popover**: `apps/live/components/PaletteSettingsPopover.tsx`.
+  Trigger: a sliders (gear) icon button in the Palette header — the only
+  header affordance besides minimise (desktop floating panel only; the
+  mobile dock palette has no header). Opens a small portal-rendered popover
+  anchored under the button with iOS-style switches (`ToggleSwitch` from
+  `palette-controls`) and concise labels:
+  - "Auto-attach arrows" (`autoRebindArrows`) and "Alignment guides"
+    (`alignmentGuides`) — reads / writes the lifted `userPreferences` state
+    in editor-page through the same `setUserPreferences` +
+    `writeUserPreferences` round-trip as the Settings dialog, emitting the
+    same `AutoRebind*` / `AlignmentGuides*` telemetry before persisting.
+  - "Minimal panels" (`minimalPanels`) — the panel-layout toggle that used
+    to be its own header button. Turning it on docks the panels (and so
+    hides this popover); the Settings dialog's Interface group remains the
+    way back out, since the docked palette has no header to reopen the
+    popover from.
+  - A "Reset position" action (not a toggle) that snaps the Palette back to
+    its default corner, replacing the old reset-position header button. It
+    is disabled when the panel is already at the default corner, and closes
+    the popover when fired.
+
+  Closes on outside click or Escape.
 
 - **Settings dialog**: `apps/live/components/SettingsDialog.tsx`,
   lazy-loaded via `next/dynamic` (matches the other on-demand
@@ -224,9 +254,10 @@ behaviour is friction the tool's banner already solves.
   Notifications, Accessibility, AI, Privacy) so the growing list stays scannable; only
   the first group (Canvas) is open by default and the rest start
   collapsed, so the dialog opens compact and the user expands what they
-  need. The Canvas group holds `autoRebindArrows` and `alignmentGuides`
-  (element add is now a single always-on tap-or-drag gesture with no
-  setting — see [spec/09](09-canvas-and-command-palette.md)). The Interface group holds `minimalPanels`, whose
+  need. (`autoRebindArrows` and `alignmentGuides` have moved out to the
+  Palette settings popover described above; element add is a single
+  always-on tap-or-drag gesture with no setting — see
+  [spec/09](09-canvas-and-command-palette.md).) The Interface group holds `minimalPanels`, whose
   description notes the dock layout is always on for mobile. The
   Notifications group holds `notificationsEnabled`, whose description
   notes that errors are always shown regardless. The

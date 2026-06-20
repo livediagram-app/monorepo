@@ -702,6 +702,11 @@ export function EditorView() {
         onCommitDraw={commitDraw}
         onCommitFreehand={commitFreehand}
         recogniseShapes={userPreferences.recogniseShapes !== false}
+        settings={userPreferences}
+        onChangeSettings={(next) => {
+          setUserPreferences(next);
+          writeUserPreferences(next, selfParticipant?.id ?? null);
+        }}
         minimalPanels={userPreferences.minimalPanels === true}
         onToggleMinimalPanels={() => {
           const next: UserPreferences = {

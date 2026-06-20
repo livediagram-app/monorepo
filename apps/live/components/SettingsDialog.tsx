@@ -20,18 +20,17 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef);
 
-  const autoRebind = settings.autoRebindArrows !== false;
   const telemetryOn = settings.telemetryEnabled !== false;
   const aiEnabled = settings.aiAssistanceEnabled === true;
   const minimalPanels = settings.minimalPanels === true;
-  const alignmentGuides = settings.alignmentGuides !== false;
   const reduceMotion = settings.reduceMotion === true;
   const notificationsOn = settings.notificationsEnabled !== false;
 
   // Single-open accordion: the title of the one expanded group (or null).
-  // Opening one collapses the rest. Starts on Canvas so the dialog lands
-  // with a section showing.
-  const [openGroup, setOpenGroup] = useState<string | null>('Canvas');
+  // Opening one collapses the rest. Starts on Interface so the dialog lands
+  // with a section showing (the Canvas group's toggles moved to the Palette
+  // settings popover — see spec/20).
+  const [openGroup, setOpenGroup] = useState<string | null>('Interface');
   const groupProps = (title: string) => ({
     title,
     open: openGroup === title,
@@ -71,26 +70,6 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
             </button>
           </header>
           <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
-            <SettingsGroup {...groupProps('Canvas')}>
-              <ToggleRow
-                label="Auto-attach arrows when elements move"
-                description="Arrows connected to a shape re-pin to whichever face reads most naturally as you drag. Turn off to keep arrow anchors fixed at whatever you chose originally."
-                checked={autoRebind}
-                onChange={(v) => {
-                  track('UI', 'Toggled', v ? 'AutoRebindOn' : 'AutoRebindOff');
-                  onChange({ ...settings, autoRebindArrows: v });
-                }}
-              />
-              <ToggleRow
-                label="Show alignment guides"
-                description="Draws faint lines along the edges and centres a shape shares with its neighbours as you move or resize it, so you can see why it snapped and line things up on a busy canvas. The snap still happens either way; turn this off for a bare canvas."
-                checked={alignmentGuides}
-                onChange={(v) => {
-                  track('UI', 'Toggled', v ? 'AlignmentGuidesOn' : 'AlignmentGuidesOff');
-                  onChange({ ...settings, alignmentGuides: v });
-                }}
-              />
-            </SettingsGroup>
             <SettingsGroup {...groupProps('Interface')}>
               <ToggleRow
                 label="Minimal panel layout"

@@ -18,6 +18,7 @@ import type {
 import type { ArrowEnd, DragMode, QuickConnectDirection, QuickConnectKind } from '@/lib/canvas';
 import type { PendingDraw } from '@/lib/draw-mode';
 import type { TemplateKind } from '@/lib/templates';
+import type { UserPreferences } from '@/lib/user-preferences';
 import type { ChangeLogEntry, DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import type { TeamDiagramRow, TeamFolderRow } from '@/hooks/useTeamLibrariesSweep';
 import type { CanvasTool } from './CommandPalette';
@@ -172,6 +173,11 @@ export type CanvasProps = {
   // Toggle the minimal-panel layout. Surfaced in the Palette header
   // (desktop) as the one-click normal <-> minimal switch.
   onToggleMinimalPanels?: () => void;
+  // Lifted user preferences + a write-through setter, forwarded to the
+  // Palette settings popover (spec/20). Holds the canvas-behaviour
+  // toggles (auto-attach arrows, alignment guides) that the popover edits.
+  settings: UserPreferences;
+  onChangeSettings: (next: UserPreferences) => void;
   onCancelDraw: () => void;
   onUndo: () => void;
   onRedo: () => void;

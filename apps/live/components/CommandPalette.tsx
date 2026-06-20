@@ -3,7 +3,9 @@ import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { IconButton, PaletteTintProvider, type PaletteTint } from './palette-controls';
 import type { ShapeKind } from '@livediagram/diagram';
 import type { PendingDraw } from '@/lib/draw-mode';
+import type { UserPreferences } from '@/lib/user-preferences';
 import { MovablePanel } from './MovablePanel';
+import { PaletteSettingsPopover } from './PaletteSettingsPopover';
 import { PaletteTabBar } from './PaletteTabBar';
 import { PaletteDropdown } from './PaletteDropdown';
 import { PaletteShapesTab, PaletteToolsTab, PaletteComponentsTab } from './palette-create-tabs';
@@ -48,6 +50,12 @@ type CommandPaletteProps = {
   // the always-available way back out of minimal mode.
   minimalPanels?: boolean;
   onToggleMinimalPanels?: () => void;
+  // User preferences + a write-through setter, for the Palette settings
+  // popover (gear in the header, left of reset). Holds the canvas-behaviour
+  // toggles (auto-attach arrows, alignment guides) that used to live in the
+  // Settings dialog. See spec/20.
+  settings: UserPreferences;
+  onChangeSettings: (next: UserPreferences) => void;
   // True when the active tab has no elements. Disables the canvas tools that
   // need existing content (Eraser / Format / Laser / Spotlight / Isometric).
   canvasEmpty?: boolean;
@@ -132,6 +140,8 @@ export function CommandPalette({
   onReset,
   minimalPanels,
   onToggleMinimalPanels,
+  settings,
+  onChangeSettings,
   canvasEmpty,
   onAddShape,
   onAddIcon,
@@ -320,39 +330,19 @@ export function CommandPalette({
       forceDockMode={forceDockMode}
       flushTop
       growBody
-      onReset={onReset}
       onMoveTo={onMoveTo}
-      headerExtra={
-        onToggleMinimalPanels ? (
-          // Desktop panel-layout toggle, sat just left of the reset button.
-          // Hidden on mobile (minimal layout is forced there, so the toggle
-          // is moot). The Settings dialog mirrors it as the way back out.
-          <span className="hidden sm:contents">
-            <Tooltip
-              title={minimalPanels ? 'Normal panels' : 'Minimal panels'}
-              description={
-                minimalPanels
-                  ? 'Switch back to the floating Palette / Explorer panels.'
-                  : 'Collapse the panels into a compact button bar.'
-              }
-            >
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={onToggleMinimalPanels}
-                aria-label={minimalPanels ? 'Use normal panel layout' : 'Use minimal panel layout'}
-                aria-pressed={!!minimalPanels}
-                className={`flex h-5 w-5 items-center justify-center rounded transition ${
-                  minimalPanels
-                    ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200'
-                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
-                }`}
-              >
-                <PanelLayoutIcon />
-              </button>
-            </Tooltip>
-          </span>
-        ) : null
+      // The settings popover is the palette's only header affordance besides
+      // minimise: it now hosts the panel-layout toggle and the reset-position
+      // action that each used to be their own header button.
+      headerActions={
+        <PaletteSettingsPopover
+          settings={settings}
+          onChange={onChangeSettings}
+          minimalPanels={minimalPanels}
+          onToggleMinimalPanels={onToggleMinimalPanels}
+          onResetPosition={onReset}
+          resettable={position !== null}
+        />
       }
       collapsible
       // The category / canvas-tool dropdowns portal their menus to
@@ -408,7 +398,7 @@ export function CommandPalette({
                 {
                   id: 'laser',
                   label: 'Laser',
-                  shortcut: 'L',
+                  shortcut: 'K',
                   icon: <LaserIcon />,
                   group: 1,
                   disabled: canvasEmpty,
@@ -981,27 +971,5 @@ export function CommandPalette({
         />
       </PaletteTintProvider>
     </MovablePanel>
-  );
-}
-
-// Panel-layout glyph (a panel split into a sidebar + body) for the header
-// minimal-panels toggle. Moved here from TabBar when the toggle relocated
-// into the palette header.
-function PanelLayoutIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="4" width="14" height="12" rx="1.5" />
-      <path d="M8 4v12" />
-    </svg>
   );
 }

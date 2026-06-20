@@ -35,6 +35,14 @@ type MovablePanelProps = {
   // surface a status badge in the header without inventing a new
   // bar. Pointer events stay live so buttons inside still click.
   headerExtra?: ReactNode;
+  // Optional action controls rendered inside the header's button group,
+  // immediately to the LEFT of the reset-position button. Unlike
+  // `headerExtra` (which sits before the button group, by the title),
+  // this slots into the same tight cluster as reset / minimise — for
+  // panel-scoped affordances that belong with the chrome buttons (the
+  // Palette's settings popover trigger). Only rendered in the desktop
+  // floating-panel header; the mobile dock popover has no header.
+  headerActions?: ReactNode;
   // When provided, a "restore default" button appears to the left of
   // the minimise button. Wired by the caller to clear position state
   // so the panel snaps back to its default corner.
@@ -146,6 +154,7 @@ export function MovablePanel({
   defaultCorner,
   width = 'w-56',
   headerExtra,
+  headerActions,
   onReset,
   onMoveTo,
   onMinimize,
@@ -489,7 +498,12 @@ export function MovablePanel({
             {headerExtra}
           </div>
         ) : null}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
+          {headerActions ? (
+            <div onPointerDown={(e) => e.stopPropagation()} className="flex items-center gap-1">
+              {headerActions}
+            </div>
+          ) : null}
           {onReset ? (
             // Hidden on mobile: drag-to-move isn't available on touch
             // (the title row is repurposed as a tap-to-collapse target,
