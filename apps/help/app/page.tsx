@@ -74,7 +74,7 @@ export default function HelpHome() {
 
       <section className="mx-auto max-w-7xl px-4 pb-16 md:px-8">
         <div className="mb-10 border-t border-slate-200" />
-        <h2 className="mb-2 text-2xl font-bold text-slate-900 md:text-3xl">Feature Guides</h2>
+        <h2 className="mb-2 text-2xl font-bold text-slate-900 md:text-3xl">Features</h2>
         <p className="mb-8 text-base leading-relaxed text-slate-500 md:text-lg">
           In-depth guides for everything in the editor, grouped by area.
         </p>
