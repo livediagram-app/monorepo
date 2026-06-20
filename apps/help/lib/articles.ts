@@ -21,6 +21,17 @@ export function articleHref(article: Pick<Article, 'categorySlug' | 'slug'>): st
   return `/${article.categorySlug}/${article.slug}/`;
 }
 
+/**
+ * Canonical in-app path to a category landing page (`/<slug>/`, trailing slash
+ * to match `trailingSlash: true`). `slug` is a category slug — top-level
+ * (`features`) or a nested feature path (`features/shapes-and-arrows`), both of
+ * which have a landing page. Sibling of {@link articleHref}; one source for the
+ * category-link shape the cards / breadcrumbs / sitemap built by hand.
+ */
+export function categoryHref(slug: string): string {
+  return `/${slug}/`;
+}
+
 export interface Category {
   slug: string;
   title: string;

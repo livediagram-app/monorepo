@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Category } from '@/lib/articles';
+import { categoryHref, type Category } from '@/lib/articles';
 
 const icons: Record<string, React.ReactNode> = {
   info: (
@@ -155,7 +155,7 @@ const icons: Record<string, React.ReactNode> = {
 export function CategoryCard({ category }: { category: Category }) {
   return (
     <Link
-      href={`/${category.slug}`}
+      href={categoryHref(category.slug)}
       className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
     >
       <div className="flex items-start gap-4">

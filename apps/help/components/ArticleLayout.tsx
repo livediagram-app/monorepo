@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Breadcrumb } from './Breadcrumb';
 import { SectionedContent } from './SectionedContent';
 import { TableOfContents } from './TableOfContents';
-import { articleHref, type Article } from '@/lib/articles';
+import { articleHref, categoryHref, type Article } from '@/lib/articles';
 
 /** Sidebar card: shows the TOC and/or a "Learn more" list of related
  *  guides. Renders nothing visible if both are empty (CSS hides it). */
@@ -79,17 +79,17 @@ export function ArticleLayout({
   // the parent title.
   const showCategory = categoryTitle !== title && categoryTitle !== parentArticle?.title;
   const parentHref =
-    parentArticle?.slug === categorySlug
-      ? `/${categorySlug}`
-      : `/${categorySlug}/${parentArticle?.slug}`;
+    parentArticle && parentArticle.slug !== categorySlug
+      ? articleHref({ categorySlug, slug: parentArticle.slug })
+      : categoryHref(categorySlug);
   const breadcrumbItems = parentArticle
     ? [
-        ...(showCategory ? [{ label: categoryTitle, href: `/${categorySlug}` }] : []),
+        ...(showCategory ? [{ label: categoryTitle, href: categoryHref(categorySlug) }] : []),
         { label: parentArticle.title, href: parentHref },
         { label: title },
       ]
     : showCategory
-      ? [{ label: categoryTitle, href: `/${categorySlug}` }, { label: title }]
+      ? [{ label: categoryTitle, href: categoryHref(categorySlug) }, { label: title }]
       : [{ label: title }];
 
   return (

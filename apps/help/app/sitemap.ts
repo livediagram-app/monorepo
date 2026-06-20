@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { articleHref, articles, categories } from '@/lib/articles';
+import { articleHref, articles, categories, categoryHref } from '@/lib/articles';
 
 const BASE = 'https://livediagram.app/help';
 
@@ -15,7 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   for (const cat of categories) {
     entries.push({
-      url: `${BASE}/${cat.slug}/`,
+      url: `${BASE}${categoryHref(cat.slug)}`,
       changeFrequency: cat.slug === 'contact' ? 'monthly' : 'weekly',
       priority: cat.slug === 'contact' ? 0.5 : 0.8,
     });
