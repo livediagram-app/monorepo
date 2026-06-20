@@ -85,16 +85,25 @@ export class DiagramRoom implements DurableObject {
   // for server-originated events (share-link revoked, owner-side
   // forced disconnects). Senders aren't excluded because the
   // originator is the worker itself, not any of the connected peers.
-  broadcastSystemOp(op: unknown): void {
-    const payload: ServerMessage = { kind: 'op', from: 'system', op };
+  // Serialize once and send to every connected session (optionally excluding
+  // one, e.g. the op's originator). A send that throws means a dead socket, so
+  // drop it from the map. The single place that reaps failed sockets.
+  broadcast(payload: ServerMessage, except?: WebSocket): void {
     const serialized = JSON.stringify(payload);
     for (const ws of this.sessions.keys()) {
+      if (ws === except) continue;
       try {
         ws.send(serialized);
       } catch {
         this.sessions.delete(ws);
       }
     }
+  }
+
+  broadcastSystemOp(op: unknown): void {
+    // System ops broadcast to ALL peers: the originator is the worker itself,
+    // not any connected session, so nobody is excluded.
+    this.broadcast({ kind: 'op', from: 'system', op });
   }
 
   handleSession(ws: WebSocket, verifiedRole?: 'edit' | 'view', verifiedOwner?: string): void {
@@ -159,17 +168,8 @@ export class DiagramRoom implements DurableObject {
           const tabId = (msg.op as { tabId?: unknown }).tabId;
           if (typeof tabId === 'string') sender.tabId = tabId;
         }
-        const payload: ServerMessage = { kind: 'op', from: sender.id, op: msg.op };
-        const serialized = JSON.stringify(payload);
-        for (const peer of this.sessions.keys()) {
-          if (peer !== ws) {
-            try {
-              peer.send(serialized);
-            } catch {
-              this.sessions.delete(peer);
-            }
-          }
-        }
+        // Relay to every OTHER peer (exclude the sender — they already have it).
+        this.broadcast({ kind: 'op', from: sender.id, op: msg.op }, ws);
       }
     });
 
@@ -187,14 +187,6 @@ export class DiagramRoom implements DurableObject {
     for (const p of this.sessions.values()) {
       if (p) participants.push(p);
     }
-    const payload: ServerMessage = { kind: 'presence', participants };
-    const serialized = JSON.stringify(payload);
-    for (const ws of this.sessions.keys()) {
-      try {
-        ws.send(serialized);
-      } catch {
-        this.sessions.delete(ws);
-      }
-    }
+    this.broadcast({ kind: 'presence', participants });
   }
 }
