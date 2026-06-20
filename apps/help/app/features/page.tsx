@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Breadcrumb } from '@/components/Breadcrumb';
-import { articles, getArticlesByCategory } from '@/lib/articles';
+import { articleHref, articles, getArticlesByCategory } from '@/lib/articles';
 import { FEATURE_ENTITY_HEX, FEATURE_FALLBACK_HEX } from '@/lib/featureColours';
 import { FEATURE_ICONS } from '@/lib/featureIcons';
 import { helpMetadata } from '@/lib/seo';
@@ -31,7 +31,7 @@ export default function FeaturesPage() {
             return (
               <Link
                 key={article.slug}
-                href={`/${article.categorySlug}/${article.slug}`}
+                href={articleHref(article)}
                 className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
               >
                 <div className="flex items-start gap-4">

@@ -9,6 +9,18 @@ export interface Article {
   parentSlug?: string;
 }
 
+/**
+ * Canonical in-app path to an article page. Trailing slash to match the help
+ * app's `trailingSlash: true` (so internal links resolve directly instead of
+ * 308-redirecting). `next/link` prepends the `/help` basePath at render; the
+ * sitemap, which needs absolute URLs, prepends the origin + `/help` itself.
+ * One source for the `/<categorySlug>/<slug>/` shape every card / list / sitemap
+ * entry was spelling out by hand.
+ */
+export function articleHref(article: Pick<Article, 'categorySlug' | 'slug'>): string {
+  return `/${article.categorySlug}/${article.slug}/`;
+}
+
 export interface Category {
   slug: string;
   title: string;

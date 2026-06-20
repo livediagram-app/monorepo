@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { searchArticles, type Article } from '@/lib/articles';
+import { articleHref, searchArticles, type Article } from '@/lib/articles';
 
 export function SearchInput({ large = false }: { large?: boolean }) {
   const [query, setQuery] = useState('');
@@ -66,7 +66,7 @@ export function SearchInput({ large = false }: { large?: boolean }) {
           {results.map((article) => (
             <Link
               key={`${article.categorySlug}/${article.slug}`}
-              href={`/${article.categorySlug}/${article.slug}`}
+              href={articleHref(article)}
               onClick={() => {
                 setIsOpen(false);
                 setQuery('');

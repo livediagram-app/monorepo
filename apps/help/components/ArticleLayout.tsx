@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Breadcrumb } from './Breadcrumb';
 import { SectionedContent } from './SectionedContent';
 import { TableOfContents } from './TableOfContents';
-import type { Article } from '@/lib/articles';
+import { articleHref, type Article } from '@/lib/articles';
 
 /** Sidebar card: shows the TOC and/or a "Learn more" list of related
  *  guides. Renders nothing visible if both are empty (CSS hides it). */
@@ -26,7 +26,7 @@ function SidebarCard({ subArticles }: { subArticles?: Article[] }) {
             {subArticles!.map((a, i) => (
               <li key={a.slug}>
                 <Link
-                  href={`/${a.categorySlug}/${a.slug}`}
+                  href={articleHref(a)}
                   className="flex items-center gap-2.5 py-1 text-sm text-slate-600 transition-colors hover:text-brand-700"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">

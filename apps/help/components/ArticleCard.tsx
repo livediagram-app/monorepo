@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import type { Article } from '@/lib/articles';
+import { articleHref, type Article } from '@/lib/articles';
 
 export function ArticleCard({ article }: { article: Article }) {
   return (
     <Link
-      href={`/${article.categorySlug}/${article.slug}`}
+      href={articleHref(article)}
       className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
     >
       <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-brand-700">
