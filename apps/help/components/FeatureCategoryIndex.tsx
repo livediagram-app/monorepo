@@ -4,11 +4,11 @@ import { FeatureArticleCard } from '@/components/FeatureArticleCard';
 import { categories, getCategoryGroups } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
 
-// Shared index page for a feature-guide category (Explorer, Palette, Canvas,
-// Tabs, Customisation, Collaboration, Tools — spec/55). A card grid of the
-// category's feature landings, reusing FeatureArticleCard so each keeps its
+// Shared index page for a feature-guide category (User Interface, Explorer,
+// Palette, Canvas, Tabs, Collaboration, Tools, ... — spec/55). A card grid of
+// the category's feature landings, reusing FeatureArticleCard so each keeps its
 // icon, accent colour, and "N guides" badge. Each app/<slug>/page.tsx is a
-// thin wrapper around this so the seven indexes stay in one place.
+// thin wrapper around this so the category indexes stay in one place.
 
 function category(slug: string) {
   const cat = categories.find((c) => c.slug === slug);
