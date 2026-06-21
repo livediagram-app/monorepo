@@ -1,8 +1,8 @@
-# Canvas and command palette
+# Canvas and palette
 
-The live app's canvas is where users actually build diagrams. A floating **command palette** sits on top of the canvas with controls for adding elements.
+The live app's canvas is where users actually build diagrams. A floating **palette** sits on top of the canvas with controls for adding elements.
 
-## Command palette
+## Palette
 
 A small floating panel **initially placed in the top-right corner of the canvas**. The panel has a **`PALETTE` header label** in block caps above the buttons, and below it a row of icon buttons — one per primitive that can be added to the canvas.
 
@@ -39,7 +39,7 @@ Desktop users can opt into the mobile-style dock via the **"Minimal panel layout
 
 ## Explorer panel
 
-A second floating panel, pinned to the **top-left** of the canvas by default. Shares the same draggable + minimisable behaviour as the [Command palette](#command-palette) via the shared `MovablePanel` component. Title: `EXPLORER`.
+A second floating panel, pinned to the **top-left** of the canvas by default. Shares the same draggable + minimisable behaviour as the [Palette](#palette) via the shared `MovablePanel` component. Title: `EXPLORER`.
 
 Sections, top to bottom:
 
@@ -685,7 +685,7 @@ Animations only fire on mount, so they naturally trigger once per element. Switc
 - **Click a shape** to select it. Selection is visible as a thicker brand-tinted outline plus four corner handles.
 - **Click the empty canvas background** (anywhere not on a shape, palette, or popover) to deselect.
 - Single-element selection coexists with **multi-select** (the [Marquee box-select](#marquee-box-select) section below) and **group select** (the Group action in the selection toolbar / context menu). The single-element popover is suppressed for multi-selections, where the `MultiSelectionToolbar` takes over. Its buttons are Duplicate, Group, Lock / Unlock, **Export**, and Delete. The selection's right-click (or toolbar-ellipsis) context menu holds **only** the type-aware formatting categories (Colours / Text / Border for boxed, Line + Pointer for arrows); it does not repeat those toolbar action buttons. **Export** opens the same Export dialog as the tab-level export, but scoped to just the selected elements (a derived tab whose `elements` are the multi-selection); the heading reads "Export selection" and every format (Markdown / PDF / PNG / SVG / File) renders only those elements. Pinned arrow endpoints that reference an element outside the selection keep their reference but render from the origin in the visual exports.
-- Clicking the command palette never affects selection.
+- Clicking the palette never affects selection.
 
 ### Selection popover
 

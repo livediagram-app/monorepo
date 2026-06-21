@@ -21,7 +21,7 @@ The goal is an **OpenAPI 3.1 document** for `/api/*` that is generated from the 
 - One OpenAPI 3.1 document covering every `/api/*` endpoint (the surface enumerated in spec/11): path template, method, summary, auth scheme, request body schema, response schema(s), and the meaningful status codes (200/201/204/400/401/403/404/409).
 - Served at **`GET /api/openapi.json`** — public, no auth, cacheable. It's the contract, not data, so a token holder isn't needed.
 - **Component schemas reuse `@livediagram/api-schema`**: DTO shapes are generated from those TS types, never re-typed by hand. Adding a field to a DTO updates the doc automatically.
-- **A drift test** (CI) that fails when a route is reachable in the worker's dispatch but absent from the OpenAPI doc, or vice versa. This mirrors the test-pinned template / theme catalogues ([spec/09](09-canvas-and-command-palette.md)): the doc cannot fall behind the code without turning CI red.
+- **A drift test** (CI) that fails when a route is reachable in the worker's dispatch but absent from the OpenAPI doc, or vice versa. This mirrors the test-pinned template / theme catalogues ([spec/09](09-canvas-and-palette.md)): the doc cannot fall behind the code without turning CI red.
 - Self-hostable: the doc is produced at build time and served by the worker. No external service, no secrets, works in pure-guest mode (Clerk unset).
 
 ## Non-goals (v1)

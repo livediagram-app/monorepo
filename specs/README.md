@@ -17,7 +17,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 06  | [Secrets policy](06-secrets-policy.md)                             | No secrets in source — the repo is public                                                                  |
 | 07  | [Live app](07-live-app.md)                                         | The diagram editor app (clean routes, no `/live` prefix)                                                   |
 | 08  | [Router app](08-router-app.md)                                     | Path-based routing across apps (`/` → marketing; `/diagram`, `/explorer`, `/new`, ... → editor)            |
-| 09  | [Canvas + command palette](09-canvas-and-command-palette.md)       | Floating palette for adding shapes (square, circle) to the canvas                                          |
+| 09  | [Canvas + palette](09-canvas-and-palette.md)                       | Floating palette for adding shapes (square, circle) to the canvas                                          |
 | 10  | [Deployment](10-deployment.md)                                     | GitHub Actions → Cloudflare Workers pipeline for all five apps                                             |
 | 11  | [API app](11-api.md)                                               | REST + WebSocket API: D1 storage + Durable Object realtime room                                            |
 | 12  | [Activity and audit log](12-activity-and-audit.md)                 | Per-diagram change log + Activity Panel UI + surgical revert                                               |

@@ -32,7 +32,7 @@ export type CanvasProps = {
   tabName: string;
   tabLocked: boolean;
   // True for a view-only ('view' share role) session: the editing chrome
-  // (command palette, selection + multi-select toolbars) is suppressed.
+  // (palette, selection + multi-select toolbars) is suppressed.
   readOnly: boolean;
   // Owner of the diagram, looked up by the page (selfParticipant when
   // the viewer is the owner; the live-presence row for the owner-id

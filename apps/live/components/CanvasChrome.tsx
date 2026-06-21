@@ -89,7 +89,7 @@ type CanvasChromeProps = CanvasProps & ChromeExtras;
 
 // The floating chrome layer of the canvas: empty-state prompt, template
 // picker, multi-select toolbar, mode banners, mobile dock, Explorer, the
-// Activity / Comments / Editor / Context panels, the command palette, and
+// Activity / Comments / Editor / Context panels, the palette, and
 // the zoom / undo cluster. Extracted from Canvas.tsx verbatim; consumes
 // Canvas's props plus the computed ChromeExtras.
 

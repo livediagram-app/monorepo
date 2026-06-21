@@ -257,7 +257,7 @@ modal.
   need. (`autoRebindArrows` and `alignmentGuides` have moved out to the
   Palette settings popover described above; element add is a single
   always-on tap-or-drag gesture with no setting — see
-  [spec/09](09-canvas-and-command-palette.md).) The Interface group holds `minimalPanels`, whose
+  [spec/09](09-canvas-and-palette.md).) The Interface group holds `minimalPanels`, whose
   description notes the dock layout is always on for mobile. The
   Notifications group holds `notificationsEnabled`, whose description
   notes that errors are always shown regardless. The

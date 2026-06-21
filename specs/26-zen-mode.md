@@ -10,7 +10,7 @@ When zen mode is on, the editor hides:
 
 - the editor header (top bar),
 - the tab bar,
-- the command palette (tools + add-element), the context / inspector
+- the palette (tools + add-element), the context / inspector
   panel, the Explorer, the Activity panel, the comments panel, the AI
   panel, the mobile dock, and the owner / role status badge,
 - the empty-canvas prompt and the undo/redo history dock.
@@ -64,4 +64,4 @@ and minimal-panel toggles.
   the tool row rather than inside the tool group.
 
 See also [spec/07](07-live-app.md) (editor chrome) and
-[spec/09](09-canvas-and-command-palette.md) (palette tool row + shortcuts).
+[spec/09](09-canvas-and-palette.md) (palette tool row + shortcuts).

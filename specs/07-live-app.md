@@ -34,7 +34,7 @@ Three regions stacked vertically, filling the viewport:
 ├────────────────────────────────────────────────────┤
 │                                                    │
 │   Canvas area — viewport with zoom + pan + the     │
-│   floating Command Palette, Explorer, Context,     │
+│   floating Palette, Explorer, Context,     │
 │   Activity, and selection chrome on top.           │
 │                                                    │
 ├────────────────────────────────────────────────────┤
@@ -43,7 +43,7 @@ Three regions stacked vertically, filling the viewport:
 ```
 
 - **Header:** brand wordmark, diagram-name field (click to rename), and the Share button. The private/shared/team badge sits next to the title (Team when the diagram lives in a team library and has no share links, spec/35). (The full-page `/explorer` library is reached from the AuthControls menu, the mobile dock, and the **Explorer** link in the marketing site header — not from the editor header itself.)
-- **Canvas:** owns most of the viewport. See [09-canvas-and-command-palette.md](09-canvas-and-command-palette.md) for the full surface — shapes, arrows, marquee, multi-select, floating palettes, plus the activity / context panels.
+- **Canvas:** owns most of the viewport. See [09-canvas-and-palette.md](09-canvas-and-palette.md) for the full surface — shapes, arrows, marquee, multi-select, floating palettes, plus the activity / context panels.
 - **Tab bar:** horizontal row of tabs with `+` to add. Click to switch, double-click to rename, drag to reorder.
 
 ## What the editor supports today
@@ -79,10 +79,10 @@ This complements the marketing site's SEO policy (see [16-marketing-site.md](16-
 
 ## UI light / dark mode
 
-The editor ships with a UI **light / dark mode** toggle, distinct from the per-tab diagram themes (`apps/live/lib/themes.ts`, see [spec/09](09-canvas-and-command-palette.md)). Diagram themes recolour CANVAS content (background, element fill / stroke / text); the UI mode recolours the editor CHROME (tab bar, editor header, panels, body backdrop) around it. The two are independent: a Slate-themed diagram still sits on a dark UI when the toggle is flipped.
+The editor ships with a UI **light / dark mode** toggle, distinct from the per-tab diagram themes (`apps/live/lib/themes.ts`, see [spec/09](09-canvas-and-palette.md)). Diagram themes recolour CANVAS content (background, element fill / stroke / text); the UI mode recolours the editor CHROME (tab bar, editor header, panels, body backdrop) around it. The two are independent: a Slate-themed diagram still sits on a dark UI when the toggle is flipped.
 
 - The toggle lives on the right edge of the TabBar (sun / moon icon button). Hover tooltips ("Switch to dark mode" / "Switch to light mode") spell out the next state.
-- **Theme-match nudge.** When the active tab's theme doesn't match the UI mode — a dark-backdrop theme viewed in light mode, or a light theme in dark mode — a dismissible floating prompt (`ThemeModeBanner`) appears bottom-centre (above the tab bar, the same slot the sign-in banner uses, and it yields to that banner when both apply). "This tab uses a dark theme → Dark mode" flips `useUiMode` to match. "Dark vs light" is decided by the resolved theme's backdrop luminance (`isLightColor`), so it works for built-in and custom themes alike. Hidden in zen / embed. Dismissal is keyed to the specific theme+mode mismatch, so dismissing it on one tab still lets it re-offer on a differently-themed tab. The theme picker's category drill-in offers the same switch inline ([spec/09](09-canvas-and-command-palette.md)).
+- **Theme-match nudge.** When the active tab's theme doesn't match the UI mode — a dark-backdrop theme viewed in light mode, or a light theme in dark mode — a dismissible floating prompt (`ThemeModeBanner`) appears bottom-centre (above the tab bar, the same slot the sign-in banner uses, and it yields to that banner when both apply). "This tab uses a dark theme → Dark mode" flips `useUiMode` to match. "Dark vs light" is decided by the resolved theme's backdrop luminance (`isLightColor`), so it works for built-in and custom themes alike. Hidden in zen / embed. Dismissal is keyed to the specific theme+mode mismatch, so dismissing it on one tab still lets it re-offer on a differently-themed tab. The theme picker's category drill-in offers the same switch inline ([spec/09](09-canvas-and-palette.md)).
 - Preference persists in `localStorage` under `livediagram:v2:ui-mode` (values `'light'` / `'dark'`). `hooks/useUiMode.ts` owns the toggle + the `.dark` class on `documentElement`.
 - The choice is applied on **every** route by a tiny inline script in the root layout (`app/layout.tsx`) that runs before first paint. This matters because `useUiMode` is only mounted by the TabBar — the welcome / template-picker flow and the standalone `/new` route never render it, so without the layout script they'd render light over the dark body. The script reads the same localStorage key and adds `.dark` synchronously, so there's no light-mode flash on any surface.
 - Default is light. There is no auto-prefers-color-scheme detection in v1 (the toggle is explicit so the choice is the user's, not the OS's) — the layout script likewise only honours the stored value, it never reads the OS preference.

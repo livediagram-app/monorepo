@@ -31,7 +31,7 @@ self-host that opts out). The editor never depends on the fonts loading.
   menu (and, for arrows, the right-click context menu's Text category).
   Sets `Element.font`. "Tab default" clears the override.
 - **Per tab** — the **Font** category of the tab / canvas context menu
-  ([spec/09](09-canvas-and-command-palette.md)), holding:
+  ([spec/09](09-canvas-and-palette.md)), holding:
   - **Font** — sets `Tab.font`: the default for **every** text element on
     the tab that hasn't set its own. "Default" clears it.
   - **Default size for new elements** — sets `Tab.defaultTextSize`, which
@@ -81,4 +81,4 @@ the label renderers (`element-labels.tsx`), `TableView`, and `ArrowView`
 apply the resolved stack; `useElementStyle.setFontSelected` and
 `useTabCanvas.setTabFont` are the mutators. See also
 [spec/05](05-diagram-structure.md) and
-[spec/09](09-canvas-and-command-palette.md).
+[spec/09](09-canvas-and-palette.md).

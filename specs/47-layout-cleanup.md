@@ -1,7 +1,7 @@
 # Layout cleanup
 
 The tab / canvas context menu carries a **Cleanup** category (next to Look & Feel
-and Font, see [spec/09](09-canvas-and-command-palette.md)) holding the two layout
+and Font, see [spec/09](09-canvas-and-palette.md)) holding the two layout
 tidiers. They are complementary, not duplicates: one snaps current positions, the
 other recomputes them from the graph. Both are editor-only (they mutate) and run a
 single undoable operation.

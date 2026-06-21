@@ -104,7 +104,7 @@ Added to the existing routes in [11-api.md](11-api.md). All JSON except where no
 
 ### Palette
 
-A new **Image** entry in the Palette's **Tools** accordion (see [09](09-canvas-and-command-palette.md)). Like the other draw-capable tools, picking it arms the draw-to-size gesture: a tap drops a default-size `ImageElement` (`imageId: null`) and a drag sizes it, then the image picker opens to attach a file.
+A new **Image** entry in the Palette's **Tools** accordion (see [09](09-canvas-and-palette.md)). Like the other draw-capable tools, picking it arms the draw-to-size gesture: a tap drops a default-size `ImageElement` (`imageId: null`) and a drag sizes it, then the image picker opens to attach a file.
 
 ### Placeholder rendering
 

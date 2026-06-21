@@ -1,6 +1,6 @@
 # Multi-colour (rainbow) themes
 
-Most themes in the catalogue ([spec/09](09-canvas-and-command-palette.md), `apps/live/lib/themes.ts`) paint every element one colour — a single fill / stroke / text triple applied uniformly. **Multi-colour themes** instead carry a _palette_ of several colour triples and assign each branch of the diagram's hierarchy a different one, the way XMind's "Rainbow" theme tints each main branch of a mind map a distinct hue.
+Most themes in the catalogue ([spec/09](09-canvas-and-palette.md), `apps/live/lib/themes.ts`) paint every element one colour — a single fill / stroke / text triple applied uniformly. **Multi-colour themes** instead carry a _palette_ of several colour triples and assign each branch of the diagram's hierarchy a different one, the way XMind's "Rainbow" theme tints each main branch of a mind map a distinct hue.
 
 ## What they are
 
@@ -57,4 +57,4 @@ Applying any theme already emits `track('Theme', 'Changed', <label>)` ([spec/22]
 
 ## Counts
 
-The catalogue ships **26 themes** (12 default + 14 extra), the extras including a Dark category (Pine, Charcoal, Plum, Abyss, Espresso) and five multi-colour themes (Rainbow, Pastel, Tropical, Autumn, Jewel). The counts are pinned by `apps/live/lib/themes.test.ts` and cited in [spec/09](09-canvas-and-command-palette.md), [spec/16](16-marketing-site.md), and [spec/23](23-marketing-assets.md); all four move together.
+The catalogue ships **26 themes** (12 default + 14 extra), the extras including a Dark category (Pine, Charcoal, Plum, Abyss, Espresso) and five multi-colour themes (Rainbow, Pastel, Tropical, Autumn, Jewel). The counts are pinned by `apps/live/lib/themes.test.ts` and cited in [spec/09](09-canvas-and-palette.md), [spec/16](16-marketing-site.md), and [spec/23](23-marketing-assets.md); all four move together.

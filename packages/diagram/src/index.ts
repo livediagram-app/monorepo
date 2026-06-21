@@ -1,7 +1,7 @@
 // Shared domain types for diagrams. Consumed by the live app's canvas today,
 // and (later) by the persistence store, API workers, and any other code that
 // handles diagram data. See specs/05-diagram-structure.md and
-// specs/09-canvas-and-command-palette.md.
+// specs/09-canvas-and-palette.md.
 
 // Live session-tool types used by the `Tab.timer` / `Tab.vote` fields
 // below. Type-only import (erased at build) so the index <-> session

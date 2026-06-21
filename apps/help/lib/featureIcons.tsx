@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  *  `currentColor` so the call site sets the hue (see featureColours.ts).
  *  Add an entry here when adding a feature landing page. Missing slugs fall
  *  back to the `the-canvas` icon at the call site. */
-function Glyph({ children }: { children: ReactNode }) {
+export function Glyph({ children }: { children: ReactNode }) {
   return (
     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
       {children}
@@ -13,7 +13,15 @@ function Glyph({ children }: { children: ReactNode }) {
   );
 }
 
-const s = { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 1.5 } as const;
+/** Shared stroke props for every outline glyph. Exported so sibling icon sets
+ *  (see articleIcons.tsx) draw in the same weight without re-declaring it. */
+export const iconStroke = {
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  strokeWidth: 1.5,
+} as const;
+
+const s = iconStroke;
 
 export const FEATURE_ICONS: Record<string, ReactNode> = {
   'the-canvas': (

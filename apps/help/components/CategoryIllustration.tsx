@@ -665,6 +665,54 @@ const SCENES: Record<string, React.ReactNode> = {
       ))}
     </>
   ),
+
+  // Supported devices: a monitor, a tablet, and a phone side by side, each
+  // showing the same little node-and-arrow diagram, scaled to the screen.
+  'supported-devices': (
+    <>
+      {/* Monitor */}
+      <rect
+        x={28}
+        y={30}
+        width={120}
+        height={70}
+        rx={6}
+        className="fill-white stroke-brand-300"
+        strokeWidth={2}
+      />
+      <rect x={80} y={100} width={16} height={10} className="fill-brand-200" />
+      <rect x={64} y={108} width={48} height={5} rx={2.5} className="fill-brand-300" />
+      <Node x={44} y={46} w={34} h={20} />
+      <Node x={104} y={64} w={30} h={18} accent />
+      <path d="M78 56 H104" className="stroke-brand-400" strokeWidth={2} />
+      {/* Tablet */}
+      <rect
+        x={170}
+        y={34}
+        width={70}
+        height={86}
+        rx={8}
+        className="fill-white stroke-brand-300"
+        strokeWidth={2}
+      />
+      <Node x={182} y={50} w={26} h={16} />
+      <Node x={206} y={84} w={24} h={16} accent />
+      <path d="M195 66 V84" className="stroke-brand-400" strokeWidth={2} />
+      {/* Phone */}
+      <rect
+        x={258}
+        y={44}
+        width={40}
+        height={76}
+        rx={8}
+        className="fill-white stroke-brand-300"
+        strokeWidth={2}
+      />
+      <Node x={266} y={58} w={24} h={14} />
+      <Node x={266} y={86} w={24} h={14} accent />
+      <path d="M278 72 V86" className="stroke-brand-400" strokeWidth={2} />
+    </>
+  ),
 };
 
 export function CategoryIllustration({ slug }: { slug: string }) {

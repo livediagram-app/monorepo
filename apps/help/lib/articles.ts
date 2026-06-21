@@ -50,44 +50,58 @@ export const categories: Category[] = [
   {
     slug: 'about',
     title: 'About livediagram',
-    description: 'What livediagram is, who it is for, and why it exists.',
+    description:
+      'Get to know livediagram: what it is, who it helps, and the ideas behind a free, open canvas.',
     articleCount: 4,
   },
   {
     slug: 'getting-started',
     title: 'Getting Started',
-    description: 'New here? Create your first diagram and learn the basics.',
+    description:
+      'Go from a blank canvas to a shared diagram in minutes, with the basics every new user needs.',
     articleCount: 6,
   },
   {
     slug: 'tips-and-tricks',
     title: 'Tips and Tricks',
-    description: 'Shortcuts and lesser-known features to work faster.',
+    description:
+      'Work faster with the shortcuts, hidden features, and small habits experienced users rely on.',
     articleCount: 5,
   },
   {
     slug: 'account-and-data',
     title: 'Account and Data',
-    description: 'Guest access, signing in, syncing, exporting, and deleting data.',
+    description:
+      'Stay in control of your work: how guest access, signing in, syncing, exporting, and deletion work.',
     articleCount: 4,
   },
   {
     slug: 'privacy-and-security',
     title: 'Privacy and Security',
-    description: 'How your data is handled, what we collect, and link protection.',
+    description:
+      'Know exactly how your diagrams are stored, what we collect, and how to keep shared links safe.',
     articleCount: 4,
   },
   {
     slug: 'self-hosting',
     title: 'Self-Hosting',
-    description: 'Run your own livediagram instance. It is open source and free.',
+    description:
+      'Run livediagram on your own infrastructure, with the full feature set, free and open source.',
     articleCount: 3,
   },
   {
     slug: 'troubleshooting',
     title: 'Troubleshooting',
-    description: 'Fixes for common problems with the editor and collaboration.',
+    description:
+      'Get unstuck fast with fixes for the most common editor and collaboration problems.',
     articleCount: 5,
+  },
+  {
+    slug: 'supported-devices',
+    title: 'Supported Devices',
+    description:
+      'How livediagram works on a computer, a tablet, and a phone, and what to expect on each.',
+    articleCount: 3,
   },
   {
     slug: 'contact',
@@ -102,56 +116,64 @@ export const categories: Category[] = [
   {
     slug: 'explorer',
     title: 'Explorer',
-    description: 'Recent, Shared, My Work, Teams, the image gallery, and saved themes.',
+    description:
+      'Organise everything you build: how the Explorer keeps your diagrams, folders, teams, and assets easy to find and manage.',
     articleCount: 8,
     kind: 'feature',
   },
   {
     slug: 'palette',
     title: 'Palette',
-    description: 'Selection modes, every element you can add, and the palette settings.',
+    description:
+      'Your launchpad for everything on the canvas: every selection mode, element, and palette setting explained.',
     articleCount: 18,
     kind: 'feature',
   },
   {
     slug: 'canvas',
     title: 'Canvas',
-    description: 'Place, select, group, link, and annotate on the infinite canvas.',
+    description:
+      'Master the infinite canvas where diagrams come together: placing, selecting, grouping, linking, and annotating.',
     articleCount: 4,
     kind: 'feature',
   },
   {
     slug: 'tabs',
     title: 'Tabs',
-    description: 'Multiple boards per diagram: folders, links, import/export, and cleanup.',
+    description:
+      'Keep a whole project in one diagram: organise, link, and move between multiple boards with tabs.',
     articleCount: 7,
     kind: 'feature',
   },
   {
     slug: 'customisation',
     title: 'Customisation',
-    description: 'Themes, templates, fonts, style presets, and isometric views.',
+    description:
+      'Make any diagram look exactly how you want with themes, templates, fonts, presets, and isometric views.',
     articleCount: 5,
     kind: 'feature',
   },
   {
     slug: 'collaboration',
     title: 'Collaboration',
-    description: 'Comments, teams, sharing, history, and live session tools.',
+    description:
+      'Work together in real time: comments, teams, sharing, change history, and live session tools.',
     articleCount: 5,
     kind: 'feature',
   },
   {
     slug: 'tools',
     title: 'Tools',
-    description: 'AI, zen mode, light/dark mode, Markdown import, and layout cleanup.',
+    description:
+      'Do more with less effort using the editor helpers: AI, zen mode, light and dark mode, Markdown import, and cleanup.',
     articleCount: 5,
     kind: 'feature',
   },
   {
     slug: 'search-panel',
     title: 'Search Panel',
-    description: 'Jump to any diagram, folder, team, tab, or element, and add to the canvas.',
+    description:
+      'Find anything in seconds: jump to any diagram, folder, team, tab, or element, and add new elements to the canvas.',
     articleCount: 1,
     kind: 'feature',
   },
@@ -255,7 +277,7 @@ export const articles: Article[] = [
   },
   {
     slug: 'command-palette',
-    title: 'The Command Palette',
+    title: 'The Palette',
     description: 'Add any shape or run any command from the floating palette.',
     category: 'Tips and Tricks',
     categorySlug: 'tips-and-tricks',
@@ -407,6 +429,29 @@ export const articles: Article[] = [
     description: 'How autosave works and how to recover with history.',
     category: 'Troubleshooting',
     categorySlug: 'troubleshooting',
+  },
+
+  // ---- Supported Devices ----
+  {
+    slug: 'desktop',
+    title: 'Desktop',
+    description: 'The full editor on a computer, with every tool, shortcut, and panel.',
+    category: 'Supported Devices',
+    categorySlug: 'supported-devices',
+  },
+  {
+    slug: 'tablet',
+    title: 'Tablet',
+    description: 'Using livediagram on a tablet, and how a keyboard changes what you can do.',
+    category: 'Supported Devices',
+    categorySlug: 'supported-devices',
+  },
+  {
+    slug: 'mobile',
+    title: 'Mobile',
+    description: 'The touch-friendly editor on a phone, with the compact dock and gestures.',
+    category: 'Supported Devices',
+    categorySlug: 'supported-devices',
   },
 
   // ============ Features (landing pages) ============
@@ -801,7 +846,7 @@ export const articles: Article[] = [
   {
     slug: 'adding-elements',
     title: 'Adding Elements',
-    description: 'Use the command palette and double-click to place shapes.',
+    description: 'Use the palette and double-click to place shapes.',
     category: 'Canvas',
     categorySlug: 'canvas/the-canvas',
     parentSlug: 'the-canvas',

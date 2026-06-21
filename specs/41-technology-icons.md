@@ -1,6 +1,6 @@
 # 41 — Technology icons
 
-A **Technology** category in the command palette: full-colour brand icons for the
+A **Technology** category in the palette: full-colour brand icons for the
 infrastructure services people put on system-architecture diagrams (AWS S3,
 Lambda, EC2, Azure Functions, Kubernetes, Postgres, ...). They sit beside the
 existing **Icons** category but are deliberately a separate surface, because

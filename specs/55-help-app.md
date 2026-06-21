@@ -37,6 +37,7 @@ Categories fall into two kinds. The **support** categories carry standalone arti
 | `privacy-and-security` | Privacy and Security | shield    | support |
 | `self-hosting`         | Self-Hosting         | server    | support |
 | `troubleshooting`      | Troubleshooting      | wrench    | support |
+| `supported-devices`    | Supported Devices    | devices   | support |
 | `contact`              | Contact              | mail      | support |
 | `explorer`             | Explorer             | folder    | feature |
 | `palette`              | Palette              | palette   | feature |
@@ -50,7 +51,7 @@ Categories fall into two kinds. The **support** categories carry standalone arti
 The feature categories group the feature guides by area:
 
 - **Explorer** — the diagram library (explorer/15, teams/32+35): The Explorer overview, Recent, Shared with you, My Work and folders, Team Spaces, Image Gallery, and Saved Themes, one guide per sidebar section.
-- **Palette** — the floating command palette, in three sub-categories grouped on the index (see "Sub-category grouping" below): **Selection Modes** (one guide per tool-picker mode: Select, Hand, Eraser, Format Painter, Laser, Spotlight, Isometric), **Elements** (one guide per palette tab: Shapes (+ shape markers), Arrows (+ arrow styles, curve/elbow handles, arrow-to-arrow), Tools (+ drawing/shape-recognition, images, data elements 46+51+52+53), Components, Devices, Icons, Technology 41), and **Palette Settings** (one guide per gear-menu setting: Auto-Attach Arrows, Alignment Guides, Minimal Panels, Reset Palette Position).
+- **Palette** — the floating palette, in three sub-categories grouped on the index (see "Sub-category grouping" below): **Selection Modes** (one guide per tool-picker mode: Select, Hand, Eraser, Format Painter, Laser, Spotlight, Isometric), **Elements** (one guide per palette tab: Shapes (+ shape markers), Arrows (+ arrow styles, curve/elbow handles, arrow-to-arrow), Tools (+ drawing/shape-recognition, images, data elements 46+51+52+53), Components, Devices, Icons, Technology 41), and **Palette Settings** (one guide per gear-menu setting: Auto-Attach Arrows, Alignment Guides, Minimal Panels, Reset Palette Position).
 - **Canvas** — the infinite canvas (09), selecting and grouping (selection/groups), links and link cards (40), annotations (38).
 - **Tabs** — multiple boards (13+17+30): Tabs, Tab Folders, Linking Across Tabs, Add a Tab to Another Diagram, Importing (27), Exporting, and Cleanup (47), one guide per tab-menu action.
 - **Customisation** — themes (29+42+44), templates, style presets (48), text and fonts (28), isometric (45).
@@ -77,4 +78,4 @@ A `deploy-help` job in `.github/workflows/deploy.yml` mirrors `deploy-telemetry`
 ## Out of scope (for now)
 
 - Contextual deep-links from specific editor dialogs to specific articles (MT's modal `?` buttons). The single editor Help link covers the entry point; per-dialog links can come later.
-- Help results inside the editor's command palette / search.
+- Help results inside the editor's palette / search.

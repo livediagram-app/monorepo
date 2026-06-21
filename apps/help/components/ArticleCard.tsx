@@ -1,22 +1,41 @@
 import Link from 'next/link';
 import { articleHref, type Article } from '@/lib/articles';
+import { FEATURE_ICONS } from '@/lib/featureIcons';
+import { SUPPORT_ARTICLE_ICONS, SUPPORT_ARTICLE_FALLBACK } from '@/lib/articleIcons';
 
 export function ArticleCard({ article, number }: { article: Article; number?: number }) {
+  // A numbered card (e.g. Getting Started) leads with its step badge; every
+  // other support-article card leads with a brand-toned topic icon so no card
+  // is a bare title. Bespoke support icon first, then any feature-icon that
+  // shares the slug, then a generic document glyph.
+  const icon =
+    number === undefined
+      ? (SUPPORT_ARTICLE_ICONS[article.slug] ??
+        FEATURE_ICONS[article.slug] ??
+        SUPPORT_ARTICLE_FALLBACK)
+      : null;
   return (
     <Link
       href={articleHref(article)}
       className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
     >
       <div className="flex items-start gap-3">
-        {number !== undefined && (
+        {number !== undefined ? (
           <span
             aria-hidden
             className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
           >
             {number}
           </span>
+        ) : (
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100"
+          >
+            {icon}
+          </span>
         )}
-        <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-brand-700">
+        <h3 className="mt-1 font-semibold text-slate-900 transition-colors group-hover:text-brand-700">
           {article.title}
         </h3>
       </div>

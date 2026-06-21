@@ -1,6 +1,6 @@
 # 42 — Canvas + Theme dialog
 
-A focused modal for changing the active tab's **canvas style** and **theme**, reached from the canvas right-click menu. The same controls still live in the floating palette's Current Tab accordions ([spec/09](09-canvas-and-command-palette.md)); this dialog is a second, larger entry point that brings them front-and-centre when the user explicitly asks to change the canvas or theme.
+A focused modal for changing the active tab's **canvas style** and **theme**, reached from the canvas right-click menu. The same controls still live in the floating palette's Current Tab accordions ([spec/09](09-canvas-and-palette.md)); this dialog is a second, larger entry point that brings them front-and-centre when the user explicitly asks to change the canvas or theme.
 
 ## Why
 
@@ -19,7 +19,7 @@ The pattern grid, canvas/pattern colour pickers, opacity slider, and theme grid 
 
 The canvas-style controls, identical to the palette's **Canvas** accordion (and sharing the exact component, `CanvasStyleControls`, so the two can never drift):
 
-- **Pattern** — the pattern grid. The dialog has room to show **all** patterns at once (a 7-wide grid, no "Show more" toggle); the narrow palette accordion keeps the 4-wide grid with the toggle. ([spec/09](09-canvas-and-command-palette.md) lists the patterns.)
+- **Pattern** — the pattern grid. The dialog has room to show **all** patterns at once (a 7-wide grid, no "Show more" toggle); the narrow palette accordion keeps the 4-wide grid with the toggle. ([spec/09](09-canvas-and-palette.md) lists the patterns.)
 - **Colours** — Canvas colour + Pattern colour swatches.
 - **Opacity** — the pattern-opacity slider with its percentage readout.
 - **Size** — the pattern-size slider (50%–200%, default 100%) with its percentage readout, directly under Opacity. Writes `backgroundPatternScale` on the tab; `tabBackgroundStyle` multiplies every tile's `background-size` by it (never the pan phase, so the pattern still tracks panning at any size). Blank has no tile, so the slider is a no-op there.

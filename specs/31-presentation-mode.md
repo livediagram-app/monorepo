@@ -34,7 +34,7 @@ Derived automatically from the diagram; nothing is authored per-slide in v1.
 
 ## Entry, controls, exit
 
-- Enter via a **Present** action: zoom-dock button next to the zen-mode toggle, command palette entry, and a keyboard shortcut (proposed `Shift+P`; plain `P` is risky next to existing single-key tool shortcuts).
+- Enter via a **Present** action: zoom-dock button next to the zen-mode toggle, palette entry, and a keyboard shortcut (proposed `Shift+P`; plain `P` is risky next to existing single-key tool shortcuts).
 - Presentation mode implies the **zen-mode chrome treatment** ([spec/26](26-zen-mode.md)): all panels, header, tab bar, and palette hidden. Additionally the canvas becomes non-interactive for editing (no selection, no drag, no palette), regardless of the user's role.
 - Advance: `→`, `Space`, `Page Down`, or click. Back: `←`, `Page Up`. `Home`/`End` jump to first/last step. `Esc` exits and restores the prior viewport and chrome.
 - A minimal HUD shows step position (`7 / 23`) and exit hint, fading out when idle.

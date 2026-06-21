@@ -94,4 +94,4 @@ Implementation: `apps/live/lib/markdown-import.ts` (pure parser + layout +
 parser stays out of the initial editor bundle. The dialog is
 `apps/live/components/ImportTabDialog.tsx`. See also
 [spec/05](05-diagram-structure.md) (element model) and
-[spec/09](09-canvas-and-command-palette.md) (import/export menu).
+[spec/09](09-canvas-and-palette.md) (import/export menu).

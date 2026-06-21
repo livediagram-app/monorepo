@@ -6,7 +6,7 @@ read its note floating above everything; click it to edit the note.
 
 Annotations are a first-class element type. They build on the existing
 per-element **note** feature (`note?: string` on every boxed element, edited
-through `NotePopover` / `useEditorNotes`, see [spec/09](09-canvas-and-command-palette.md));
+through `NotePopover` / `useEditorNotes`, see [spec/09](09-canvas-and-palette.md));
 an annotation is just the dedicated, palette-addable element whose entire
 purpose is to carry one.
 
@@ -26,7 +26,7 @@ purpose is to carry one.
 
 ## Adding one
 
-- **Tools tab** of the command palette has an **Annotation** button. Clicking
+- **Tools tab** of the palette has an **Annotation** button. Clicking
   it drops a new annotation at the viewport centre (instant-drop, no
   draw-to-size — like Table / Icon), selects it, and is one undoable commit.
 - New annotations inherit the active theme's colours via the same

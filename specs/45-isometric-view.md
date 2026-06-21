@@ -60,7 +60,7 @@ Available to everyone, including view-only visitors (looking is read-only).
 
 ## How it's toggled
 
-- **Tool dropdown** in the command palette (its own isometric-cube icon).
+- **Tool dropdown** in the palette (its own isometric-cube icon).
   The picker is grouped with menu dividers — editing tools (Select / Hand /
   Eraser), then presenter tools (Laser / Spotlight), then Isometric on its
   own at the end. Selecting it switches the cursor mode the same way Select /
@@ -155,6 +155,6 @@ export reads with depth, not as a flat tilted plane.
   placement remains out of scope (see the view-modes discussion; it would
   need a `z` field in the model and a different renderer).
 
-See also [spec/09](09-canvas-and-command-palette.md) (the tool row +
+See also [spec/09](09-canvas-and-palette.md) (the tool row +
 shortcuts), [spec/26](26-zen-mode.md) (view-only, non-synced view state), and
 [spec/05](05-diagram-structure.md) (the 2D element model this projects).
