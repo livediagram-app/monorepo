@@ -328,12 +328,6 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <rect x="14" y="14" width="7" height="7" rx="1" {...s} />
     </Glyph>
   ),
-  isometric: (
-    <Glyph>
-      <path d="M12 3l9 5v8l-9 5-9-5V8l9-5z" {...s} />
-      <path d="M12 12l9-4M12 12v9M12 12L3 8" {...s} />
-    </Glyph>
-  ),
   annotations: (
     <Glyph>
       <circle cx="12" cy="12" r="9" {...s} />

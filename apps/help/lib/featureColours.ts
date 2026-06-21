@@ -40,7 +40,6 @@ export const FEATURE_ENTITY_HEX: Record<string, string> = {
   'data-elements': '#22c55e',
   'style-presets': '#e11d48',
   'layout-cleanup': '#2563eb',
-  isometric: '#9333ea',
   annotations: '#eab308',
   // Palette → Selection Modes
   select: '#0ea5e9',

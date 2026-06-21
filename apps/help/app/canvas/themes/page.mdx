@@ -1,0 +1,43 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Themes',
+  description:
+    'Restyle a whole diagram in one click with a theme, browse them by category, and build your own custom themes to reuse.',
+  path: '/help/canvas/themes/',
+});
+
+<ArticleLayout
+  title="Themes"
+  description="Recolour an entire tab in a single click, browse a catalogue of themes by category, and save your own to reuse across diagrams."
+  categoryTitle="Canvas"
+  categorySlug="canvas"
+  subArticles={getSubArticles("themes")}
+>
+
+A theme is the fastest way to make a diagram look intentional. Instead of colouring each shape, border, and background by hand, pick a theme and livediagram recolours the whole tab at once, from the canvas backdrop to every element on it. The catalogue ships a generous spread of looks, and you can save your own themes too.
+
+## What a theme covers
+
+A theme sets the canvas background and pattern together with the fill, border, and text colours of your elements, so the diagram reads as one coherent style. Most themes paint every element the same colours; some are cleverer, tinting each branch of a hierarchy a different hue, or colouring each shape kind by its meaning. Switching themes recolours your shapes but leaves your [fonts](/help/canvas/text-and-fonts/) untouched.
+
+## Browsing and applying
+
+You change a tab's theme from the Tab Appearance dialog, reached from the canvas right-click menu, where themes are organised into categories you can browse and drill into. Applying a theme updates the canvas live as you click. See [Changing the theme](/help/canvas/themes/changing-theme/) for the full walkthrough.
+
+## Beyond a single colour
+
+Two kinds of theme go past the one-colour look. [Multi-colour themes](/help/canvas/themes/multicolour-themes/) give each branch of a mind map or hierarchy its own hue, the way a rainbow mind map does. And when no built-in theme fits, [custom themes](/help/canvas/themes/custom-themes/) let you author your own palette, save it to your account, and reuse it across diagrams.
+
+## Quick emphasis
+
+For tweaks to a single element rather than the whole diagram, the [style presets](/help/canvas/style-presets/) in the right-click menu offer one-click colour and border variations derived from the active theme, so a key shape can stand out while still matching the overall look.
+
+<Tip>
+  Every control in the Tab Appearance dialog applies live with no Apply or Cancel, so you can click
+  through themes and watch the canvas change behind the dialog until one feels right.
+</Tip>
+
+</ArticleLayout>

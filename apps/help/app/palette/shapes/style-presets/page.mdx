@@ -6,10 +6,10 @@ export const metadata = helpMetadata({
   title: 'Style Presets',
   description:
     'Restyle a shape or arrow in one click with theme-derived colour, border, and animated line presets.',
-  path: '/help/customisation/style-presets/',
+  path: '/help/palette/shapes/style-presets/',
 });
 
-<ArticleLayout title="Style Presets" description="Create variety and emphasis on key elements in one click, without dialling each field by hand." categoryTitle="Customisation" categorySlug="customisation" subArticles={getSubArticles("style-presets")}>
+<ArticleLayout title="Style Presets" description="Create variety and emphasis on key elements in one click, without dialling each field by hand." categoryTitle="Palette" categorySlug="palette" parentArticle={{ title: "Shapes", slug: "shapes" }} subArticles={getSubArticles("shapes").filter((a) => a.slug !== "style-presets")}>
 
 Sometimes you want a shape to stand out, or a set of arrows to look consistent, without fiddling with fill, border, weight, and pattern one control at a time. Style presets give you a **Presets** category in the selected-element context menu with ready-made looks you can apply in a single click. The category sits at the top of the appearance group, just above Animation, and presets always track your active theme so they stay on-brand.
 
