@@ -520,38 +520,6 @@ const SCENES: Record<string, React.ReactNode> = {
     </>
   ),
 
-  // Customisation: theme swatches + a recolour brush.
-  customisation: (
-    <>
-      {[
-        ['fill-brand-500', 96],
-        ['fill-brand-300', 130],
-        ['fill-emerald-400', 164],
-        ['fill-amber-400', 198],
-      ].map(([cls, x]) => (
-        <circle
-          key={x as number}
-          cx={x as number}
-          cy={50}
-          r="15"
-          className={`${cls} stroke-white`}
-          strokeWidth={3}
-        />
-      ))}
-      <rect
-        x={96}
-        y={78}
-        width={120}
-        height={14}
-        rx={7}
-        className="fill-white stroke-brand-300"
-        strokeWidth={2}
-      />
-      <rect x={96} y={78} width={64} height={14} rx={7} className="fill-brand-400" />
-      <circle cx="160" cy="85" r="9" className="fill-white stroke-brand-500" strokeWidth={2.5} />
-    </>
-  ),
-
   // Collaboration: a shared card, three overlapping avatars, and a comment bubble.
   collaboration: (
     <>
