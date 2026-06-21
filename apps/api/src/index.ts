@@ -170,45 +170,50 @@ export default {
   async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     if (event.cron === '0 3 * * *') {
       const now = Date.now();
-      const changeLogCutoff = now - CHANGE_LOG_RETENTION_MS;
-      ctx.waitUntil(
-        deleteOldChangeLogEntries(env, changeLogCutoff)
-          .then((count) => {
-            // wrangler tail shows these so an oversized sweep
-            // surfaces in observability without needing a metrics
-            // pipeline. A zero is fine: most days nothing's older
-            // than 90 days yet.
-            console.log(`change_log sweep: deleted ${count} entries older than ${changeLogCutoff}`);
-          })
-          .catch((err) => {
-            console.error('change_log sweep failed', err);
-          }),
+      scheduleSweep(
+        ctx,
+        env,
+        'change_log',
+        'entries',
+        now - CHANGE_LOG_RETENTION_MS,
+        deleteOldChangeLogEntries,
       );
-
-      const eventsCutoff = now - EVENTS_RETENTION_MS;
-      ctx.waitUntil(
-        deleteOldEvents(env, eventsCutoff)
-          .then((count) => {
-            console.log(`events sweep: deleted ${count} rows older than ${eventsCutoff}`);
-          })
-          .catch((err) => {
-            console.error('events sweep failed', err);
-          }),
-      );
-
-      const unusedImageCutoff = now - UNUSED_IMAGE_RETENTION_MS;
-      ctx.waitUntil(
-        deleteOldUnusedImages(env, unusedImageCutoff)
-          .then((count) => {
-            console.log(`image sweep: deleted ${count} images older than ${unusedImageCutoff}`);
-          })
-          .catch((err) => {
-            console.error('image sweep failed', err);
-          }),
+      scheduleSweep(ctx, env, 'events', 'rows', now - EVENTS_RETENTION_MS, deleteOldEvents);
+      scheduleSweep(
+        ctx,
+        env,
+        'image',
+        'images',
+        now - UNUSED_IMAGE_RETENTION_MS,
+        deleteOldUnusedImages,
       );
     }
   },
 } satisfies ExportedHandler<Env>;
+
+// Run one daily retention sweep in the background: delete rows older than
+// `cutoff`, then log the count (or the failure) to `wrangler tail`. The three
+// sweeps (change_log / events / unused images) shared this exact waitUntil +
+// then/catch shape; `label` + `unit` keep each log line reading naturally. A
+// zero is the normal case most days — observability without a metrics pipeline.
+function scheduleSweep(
+  ctx: ExecutionContext,
+  env: Env,
+  label: string,
+  unit: string,
+  cutoff: number,
+  deleteOlderThan: (env: Env, cutoff: number) => Promise<number>,
+): void {
+  ctx.waitUntil(
+    deleteOlderThan(env, cutoff)
+      .then((count) => {
+        console.log(`${label} sweep: deleted ${count} ${unit} older than ${cutoff}`);
+      })
+      .catch((err) => {
+        console.error(`${label} sweep failed`, err);
+      }),
+  );
+}
 
 // 90 days in ms. Pulled out as a named constant because the
 // scheduled handler is the only caller and naming it makes the
