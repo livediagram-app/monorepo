@@ -170,9 +170,15 @@ export const FEATURE_ICONS: Record<string, ReactNode> = {
       <path d="M21 16l-5-5L5 20" {...s} />
     </Glyph>
   ),
-  'the-explorer': (
+  'explorer-page': (
     <Glyph>
       <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...s} />
+    </Glyph>
+  ),
+  'explorer-panel': (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
+      <path d="M9 4v16" {...s} />
     </Glyph>
   ),
   teams: (

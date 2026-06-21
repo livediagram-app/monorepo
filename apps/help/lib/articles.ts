@@ -51,7 +51,7 @@ export const categories: Category[] = [
     slug: 'about',
     title: 'About livediagram',
     description: 'What livediagram is, who it is for, and why it exists.',
-    articleCount: 3,
+    articleCount: 4,
   },
   {
     slug: 'getting-started',
@@ -103,7 +103,7 @@ export const categories: Category[] = [
     slug: 'explorer',
     title: 'Explorer',
     description: 'Recent, Shared, My Work, Teams, the image gallery, and saved themes.',
-    articleCount: 7,
+    articleCount: 8,
     kind: 'feature',
   },
   {
@@ -188,6 +188,14 @@ export const articles: Article[] = [
     slug: 'why-livediagram',
     title: 'Why Use livediagram?',
     description: 'Free, open source, no sign-in wall, real-time collaboration. Here is why.',
+    category: 'About livediagram',
+    categorySlug: 'about',
+    parentSlug: 'about',
+  },
+  {
+    slug: 'what-is-open-source',
+    title: 'What is Open Source?',
+    description: 'What open source means, and what livediagram being MIT-licensed gives you.',
     category: 'About livediagram',
     categorySlug: 'about',
     parentSlug: 'about',
@@ -648,9 +656,17 @@ export const articles: Article[] = [
     categorySlug: 'canvas',
   },
   {
-    slug: 'the-explorer',
-    title: 'The Explorer',
-    description: 'How the Explorer is laid out: the sidebar sections, list view, and folders.',
+    slug: 'explorer-page',
+    title: 'Explorer Page',
+    description: 'The full-page library: the sidebar sections, list view, and folders.',
+    category: 'Explorer',
+    categorySlug: 'explorer',
+  },
+  {
+    slug: 'explorer-panel',
+    title: 'Explorer Panel',
+    description:
+      'The compact in-editor Explorer for switching diagrams without leaving the canvas.',
     category: 'Explorer',
     categorySlug: 'explorer',
   },

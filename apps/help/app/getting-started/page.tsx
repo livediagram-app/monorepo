@@ -22,8 +22,8 @@ export default function GettingStartedPage() {
           New here? These guides get you up and running quickly.
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article) => (
-            <ArticleCard key={article.slug} article={article} />
+          {articles.map((article, index) => (
+            <ArticleCard key={article.slug} article={article} number={index + 1} />
           ))}
         </div>
       </div>

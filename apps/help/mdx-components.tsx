@@ -1,6 +1,7 @@
 import type { MDXComponents } from 'mdx/types';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { articles, categories, articleHref, categoryHref } from '@/lib/articles';
 import { FEATURE_ENTITY_HEX, FEATURE_FALLBACK_HEX } from '@/lib/featureColours';
 import { FEATURE_ICONS } from '@/lib/featureIcons';
 
@@ -70,7 +71,16 @@ function Note({ children }: { children: ReactNode }) {
 function Feature({ slug, title, children }: { slug?: string; title: string; children: ReactNode }) {
   const colour = slug ? (FEATURE_ENTITY_HEX[slug] ?? FEATURE_FALLBACK_HEX) : FEATURE_FALLBACK_HEX;
   const icon = slug ? FEATURE_ICONS[slug] : null;
-  const href = slug ? `/features/${slug}/` : undefined;
+  // Resolve the slug to a real page: an article landing first, then a feature
+  // category index, otherwise render a non-linking card (so a slug with no
+  // destination never becomes a dead link). `Link` prepends the /help basePath,
+  // so these hrefs omit it.
+  const article = slug ? articles.find((a) => a.slug === slug) : undefined;
+  const href = article
+    ? articleHref(article)
+    : slug && categories.some((c) => c.slug === slug)
+      ? categoryHref(slug)
+      : undefined;
 
   const card = (
     <div

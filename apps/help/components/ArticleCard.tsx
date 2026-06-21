@@ -1,15 +1,25 @@
 import Link from 'next/link';
 import { articleHref, type Article } from '@/lib/articles';
 
-export function ArticleCard({ article }: { article: Article }) {
+export function ArticleCard({ article, number }: { article: Article; number?: number }) {
   return (
     <Link
       href={articleHref(article)}
       className="card-glow group block rounded-xl bg-white p-5 transition-colors duration-300 hover:bg-brand-50/30 sm:p-6"
     >
-      <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-brand-700">
-        {article.title}
-      </h3>
+      <div className="flex items-start gap-3">
+        {number !== undefined && (
+          <span
+            aria-hidden
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
+          >
+            {number}
+          </span>
+        )}
+        <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-brand-700">
+          {article.title}
+        </h3>
+      </div>
       <p className="mt-2 text-sm leading-relaxed text-slate-500">{article.description}</p>
       <span className="mt-3 inline-flex items-center gap-1 text-sm text-brand-600 transition-all group-hover:gap-2">
         Read article

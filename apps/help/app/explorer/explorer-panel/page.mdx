@@ -1,0 +1,33 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Explorer Panel',
+  description:
+    'The floating Explorer panel is the compact diagram switcher inside the editor and the new-diagram flow, built for finding a diagram fast while you work.',
+  path: '/help/explorer/explorer-panel/',
+});
+
+<ArticleLayout
+  title="Explorer Panel"
+  description="The compact Explorer inside the editor: find and open another diagram without leaving the one you are in."
+  categoryTitle="Explorer"
+  categorySlug="explorer"
+>
+
+The floating **Explorer panel** is the compact side panel you meet inside the editor and the new-diagram flow. Where the [full-page Explorer](/help/explorer/explorer-page/) is the complete library, the panel is built for one job: finding a diagram fast while you are mid-task, without leaving the canvas you are on.
+
+## What the panel shows
+
+The panel carries the same sections as the full page, trimmed to fit a side rail: your **Recent** diagrams up top for the common case, plus access to **My Work**, **Shared with you**, and **Team Spaces** when you need to reach further. Pick one and it opens straight away; the diagram you were in stays put behind it.
+
+It is the same data as the full page, just a quicker door into it: folders, ownership, and sharing all behave identically, so anything you can open from the [Explorer page](/help/explorer/explorer-page/) you can open here too.
+
+## When you will see it
+
+- **In the editor**, to jump to another diagram without going back to the library.
+- **In the new-diagram flow**, to pick an existing diagram instead of starting blank.
+
+Like everywhere else in the Explorer, the panel works whether or not you are signed in, showing the diagrams your browser or account owns.
+
+</ArticleLayout>
