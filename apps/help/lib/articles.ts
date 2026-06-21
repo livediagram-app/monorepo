@@ -197,6 +197,51 @@ export const supportCategories: Category[] = categories.filter(
 );
 
 export const articles: Article[] = [
+  // ---- User Interface ----
+  {
+    slug: 'panel-layout',
+    title: 'Panel Layout',
+    description: 'The floating panels that frame the canvas, and how they are arranged.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'toolbar',
+    title: 'The Toolbar',
+    description: 'The contextual toolbar that appears when you select one or more elements.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'context-menus',
+    title: 'Context Menus',
+    description: 'Right-click menus across the editor, each scoped to what you clicked.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'zoom-controls',
+    title: 'Zoom Controls',
+    description: 'Move in and out of the canvas, fit the diagram to the screen, and reset to 100%.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'tab-bar',
+    title: 'The Tab Bar',
+    description:
+      'Switch between the boards in a diagram, add new ones, and group them into folders.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'quick-controls',
+    title: 'Quick Controls',
+    description: 'The always-available actions tucked into the corner of the editor.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+
   // ---- About ----
   {
     slug: 'what-is-livediagram',

@@ -24,6 +24,42 @@ export const iconStroke = {
 const s = iconStroke;
 
 export const FEATURE_ICONS: Record<string, ReactNode> = {
+  // User Interface.
+  'panel-layout': (
+    <Glyph>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...s} />
+      <path d="M9 4v16M15 12h6" {...s} />
+    </Glyph>
+  ),
+  toolbar: (
+    <Glyph>
+      <rect x="3" y="8" width="18" height="6" rx="2" {...s} />
+      <path d="M7 11h.01M11 11h.01M15 11h.01" {...s} />
+    </Glyph>
+  ),
+  'context-menus': (
+    <Glyph>
+      <rect x="5" y="3" width="14" height="18" rx="2" {...s} />
+      <path d="M9 8h6M9 12h6M9 16h3" {...s} />
+    </Glyph>
+  ),
+  'zoom-controls': (
+    <Glyph>
+      <circle cx="11" cy="11" r="7" {...s} />
+      <path d="M21 21l-4.3-4.3M8 11h6M11 8v6" {...s} />
+    </Glyph>
+  ),
+  'tab-bar': (
+    <Glyph>
+      <path d="M3 8a2 2 0 012-2h4l1.5 2H21v9a2 2 0 01-2 2H5a2 2 0 01-2-2z" {...s} />
+    </Glyph>
+  ),
+  'quick-controls': (
+    <Glyph>
+      <circle cx="6" cy="18" r="3" {...s} />
+      <path d="M14 14l7-7M14 7h7v7" {...s} />
+    </Glyph>
+  ),
   'the-canvas': (
     <Glyph>
       <rect x="3" y="4" width="18" height="16" rx="2" {...s} />

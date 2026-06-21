@@ -5,6 +5,12 @@
  *  are drawn from a cool, on-brand palette (sky / indigo / teal / violet /
  *  emerald / amber / rose) so cards stay coherent with the product. */
 export const FEATURE_ENTITY_HEX: Record<string, string> = {
+  'panel-layout': '#6366f1',
+  toolbar: '#6366f1',
+  'context-menus': '#6366f1',
+  'zoom-controls': '#6366f1',
+  'tab-bar': '#6366f1',
+  'quick-controls': '#6366f1',
   'the-canvas': '#0ea5e9',
   drawing: '#f97316',
   'selecting-and-grouping': '#8b5cf6',
