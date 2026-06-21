@@ -83,6 +83,90 @@ export async function deleteImage(env: Env, id: string): Promise<void> {
   await env.DB.prepare('DELETE FROM images WHERE id = ?').bind(id).run();
 }
 
+// Pure decision behind the daily unused-image sweep (spec/19
+// "Retention"). Given the candidate ids (images already filtered to
+// "older than the 30-day floor") and every tab body in the store,
+// return the ids that NO diagram references — the set safe to delete.
+//
+// Pulled out of `deleteOldUnusedImages` so the reference scan has a
+// unit-test surface without a live D1 / R2 binding (the delete loop
+// itself needs one). Same split as the change_log / events sweeps.
+//
+// The scan is store-wide, not owner-scoped: a shared tab (spec/17) can
+// place an image inside another owner's diagram, so a candidate is kept
+// the moment ANY tab references it. An unparseable tab is skipped
+// (treated as no reference) the same way `imageUsageByOwner` does;
+// because candidates are only ever removed from the delete set, a
+// malformed tab can never cause a referenced image to be reaped.
+export function unusedImageIds(candidateIds: string[], tabBodies: string[]): string[] {
+  const candidates = new Set(candidateIds);
+  for (const body of tabBodies) {
+    if (candidates.size === 0) break;
+    let tab: Tab;
+    try {
+      tab = JSON.parse(body) as Tab;
+    } catch {
+      continue;
+    }
+    for (const el of tab.elements ?? []) {
+      if (!isBoxed(el) || el.type !== 'image') continue;
+      const imageId = (el as { imageId?: string | null }).imageId;
+      if (imageId) candidates.delete(imageId);
+    }
+  }
+  return [...candidates];
+}
+
+// R2 delete() accepts up to 1000 keys per call; chunk the sweep's
+// deletes to stay under that ceiling. The matching D1 row deletes ride
+// the same chunk as one DB.batch.
+const IMAGE_DELETE_CHUNK = 1000;
+
+// Daily retention sweep (spec/19 "Retention"). Deletes images that are
+// BOTH older than `cutoff` AND referenced by no diagram, from R2 first
+// then D1 (matching DELETE /api/images/:id). Returns the number of
+// images deleted.
+//
+// A no-op returning 0 when the worker has no R2 binding: a self-host
+// without image storage has nothing to sweep. Newer-than-cutoff images
+// are exempt regardless of usage, so a freshly uploaded image that
+// hasn't been placed on the canvas yet isn't reaped out from under the
+// user.
+export async function deleteOldUnusedImages(env: Env, cutoff: number): Promise<number> {
+  if (!env.IMAGES) return 0;
+  const images = env.IMAGES;
+
+  const candidateRows = await env.DB.prepare('SELECT id FROM images WHERE created_at < ?')
+    .bind(cutoff)
+    .all<{ id: string }>();
+  const candidateIds = (candidateRows.results ?? []).map((r) => r.id);
+  if (candidateIds.length === 0) return 0;
+
+  // One pass over every tab body to learn which candidates are still
+  // referenced. Store-wide (not owner-scoped) on purpose — see
+  // `unusedImageIds`.
+  const tabRows = await env.DB.prepare('SELECT data FROM tabs').all<{ data: string }>();
+  const unused = unusedImageIds(
+    candidateIds,
+    (tabRows.results ?? []).map((r) => r.data),
+  );
+  if (unused.length === 0) return 0;
+
+  let deleted = 0;
+  for (let i = 0; i < unused.length; i += IMAGE_DELETE_CHUNK) {
+    const chunk = unused.slice(i, i + IMAGE_DELETE_CHUNK);
+    // R2 first: a partial failure then leaves a D1 row whose object is
+    // gone (re-swept next run), never an orphaned R2 object no candidate
+    // query would re-surface.
+    await images.delete(chunk);
+    await env.DB.batch(
+      chunk.map((id) => env.DB.prepare('DELETE FROM images WHERE id = ?').bind(id)),
+    );
+    deleted += chunk.length;
+  }
+  return deleted;
+}
+
 // Total image count + summed byte_size for one owner. Drives the
 // soft-cap enforcement in POST /api/images (spec/19) plus the usage
 // bar surfaced in the picker. Single grouped query so the worker

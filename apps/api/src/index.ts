@@ -1,5 +1,5 @@
 import { getClerkIdentity } from './auth/clerk';
-import { deleteOldChangeLogEntries, deleteOldEvents } from './db';
+import { deleteOldChangeLogEntries, deleteOldEvents, deleteOldUnusedImages } from './db';
 import { DiagramRoom } from './diagram-room';
 import { CORS_HEADERS, json, notFound, rateLimited } from './responses';
 import { clientIp } from './client-ip';
@@ -163,7 +163,8 @@ export default {
   // fires two independent retention sweeps:
   //   - change_log, 90-day floor (item #16 / spec/12).
   //   - events,     60-day floor (spec/22 "Retention").
-  // Both are no-ops when nothing is over the floor; both use
+  //   - images,     30-day floor, unused only (spec/19 "Retention").
+  // All are no-ops when nothing is over the floor; all use
   // `ctx.waitUntil` so they run concurrently and the worker can
   // exit as soon as the schedule callback returns.
   async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
@@ -194,6 +195,17 @@ export default {
             console.error('events sweep failed', err);
           }),
       );
+
+      const unusedImageCutoff = now - UNUSED_IMAGE_RETENTION_MS;
+      ctx.waitUntil(
+        deleteOldUnusedImages(env, unusedImageCutoff)
+          .then((count) => {
+            console.log(`image sweep: deleted ${count} images older than ${unusedImageCutoff}`);
+          })
+          .catch((err) => {
+            console.error('image sweep failed', err);
+          }),
+      );
     }
   },
 } satisfies ExportedHandler<Env>;
@@ -208,3 +220,10 @@ const CHANGE_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 // the surfaced window, leaving headroom for a future "Last 60
 // days" view to populate). See spec/22 "Retention".
 const EVENTS_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
+
+// 30 days in ms. The unused-image sweep only reaps images this old
+// AND referenced by no diagram, so the floor is the safety margin: a
+// freshly uploaded image not yet placed on the canvas is never reaped
+// out from under the user. Generous on purpose — storage hygiene, not
+// an aggressive GC. See spec/19 "Retention".
+const UNUSED_IMAGE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
