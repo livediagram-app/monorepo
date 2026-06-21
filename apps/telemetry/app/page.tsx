@@ -123,6 +123,11 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 const categoryColor = (c: string) => CATEGORY_COLORS[c] ?? '#94a3b8';
 
+// `part` as a percentage of `whole` (0–100, unrounded). Callers apply their own
+// Math.round / toFixed / clamp + the `%` unit. One definition for the bar-width
+// and share-label maths that recur across the dashboard.
+const pct = (part: number, whole: number): number => (part / whole) * 100;
+
 type Group = { category: string; subtotal: number; items: TelemetryCount[] };
 
 function groupByCategory(rows: TelemetryCount[]): Group[] {
@@ -440,7 +445,7 @@ function WindowStrip({ today, last7, last30 }: { today: number; last7: number; l
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
               className="h-full rounded-full bg-brand-500"
-              style={{ width: `${Math.round((b.value / max) * 100)}%` }}
+              style={{ width: `${Math.round(pct(b.value, max))}%` }}
             />
           </div>
         </div>
@@ -481,7 +486,7 @@ function SparklineBars({
           description={`${v.toLocaleString()} events`}
           className="flex-1 items-end self-stretch"
         >
-          <div className={barClassName} style={{ height: `${Math.max(2, (v / max) * 100)}%` }} />
+          <div className={barClassName} style={{ height: `${Math.max(2, pct(v, max))}%` }} />
         </Tooltip>
       ))}
     </div>
@@ -527,9 +532,9 @@ function CategoryShareBar({ groups, total }: { groups: Group[]; total: number })
           <Tooltip
             key={g.category}
             title={g.category}
-            description={`${((g.subtotal / total) * 100).toFixed(1)}% of events`}
+            description={`${pct(g.subtotal, total).toFixed(1)}% of events`}
             className="h-full"
-            style={{ width: `${(g.subtotal / total) * 100}%` }}
+            style={{ width: `${pct(g.subtotal, total)}%` }}
           >
             <div className="h-full w-full" style={{ backgroundColor: categoryColor(g.category) }} />
           </Tooltip>
@@ -544,7 +549,7 @@ function CategoryShareBar({ groups, total }: { groups: Group[]; total: number })
               style={{ backgroundColor: categoryColor(g.category) }}
             />
             <span>{g.category}</span>
-            <span className="text-slate-400">{((g.subtotal / total) * 100).toFixed(1)}%</span>
+            <span className="text-slate-400">{pct(g.subtotal, total).toFixed(1)}%</span>
           </li>
         ))}
       </ul>
@@ -582,7 +587,7 @@ function TopNLeaderboard({ rows, n = 10 }: { rows: TelemetryCount[]; n?: number 
                 <span
                   className="absolute inset-y-0 left-0 rounded-full"
                   style={{
-                    width: `${(row.count / top) * 100}%`,
+                    width: `${pct(row.count, top)}%`,
                     backgroundColor: categoryColor(row.category),
                   }}
                 />
