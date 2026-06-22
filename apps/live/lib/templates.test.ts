@@ -168,11 +168,14 @@ describe('buildTemplatedTab', () => {
 
   it('recolours shape elements with the chosen theme palette', () => {
     // `flowchart` seeds plain shapes (the blank template is now empty,
-    // spec/14), so its first shape pins the recolouring contract: a single-
-    // colour theme writes the same fill / stroke / text triple onto it.
+    // spec/14), so its first preset-free shape pins the recolouring
+    // contract: a single-colour theme writes the same fill / stroke / text
+    // triple onto it. (Some flowchart shapes now carry a `colorPreset`
+    // (spec/48) whose colours are re-derived from the theme instead, so we
+    // skip those here and assert the plain-recolour path on a bare shape.)
     const tab = buildTemplatedTab('flowchart', 'slate', 'tab-1', 'name');
     const slate = getTheme('slate');
-    const shape = tab.elements.find((el) => el.type === 'shape');
+    const shape = tab.elements.find((el) => el.type === 'shape' && !el.colorPreset);
     expect(shape).toBeDefined();
     if (shape && shape.type === 'shape') {
       expect(shape.fillColor).toBe(slate.elementFill);
@@ -183,10 +186,14 @@ describe('buildTemplatedTab', () => {
 
   it('leaves shape colours untouched when the theme provides no overrides', () => {
     // The brand theme has all three element fields null, so recolouring is a
-    // no-op: the first shape keeps exactly the colours the raw builder gave it.
-    const raw = buildTemplate('flowchart', 0, 0).find((el) => el.type === 'shape');
+    // no-op: a preset-free shape keeps exactly the colours the raw builder
+    // gave it. (Preset-carrying shapes (spec/48) DO get re-derived colours
+    // even under brand, so compare a bare shape to isolate the no-op path.)
+    const raw = buildTemplate('flowchart', 0, 0).find(
+      (el) => el.type === 'shape' && !el.colorPreset,
+    );
     const tab = buildTemplatedTab('flowchart', 'brand', 'tab-1', 'name');
-    const shape = tab.elements.find((el) => el.type === 'shape');
+    const shape = tab.elements.find((el) => el.type === 'shape' && !el.colorPreset);
     expect(shape).toBeDefined();
     expect(raw).toBeDefined();
     if (shape?.type === 'shape' && raw?.type === 'shape') {

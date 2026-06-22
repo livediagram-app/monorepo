@@ -172,6 +172,8 @@ function buildMindMapTree(cx: number, cy: number): Element[] {
     label: 'Content strategy',
     textSize: 'md' as const,
     borderRadius: 'lg' as const,
+    // Root of the tree → strongest preset so the topic anchors the outline.
+    colorPreset: 'bold',
   };
   const branchLabels = ['Blog', 'Social', 'Email', 'Video'];
   const leafLabels = ['SEO articles', 'Campaigns', 'Newsletter', 'Tutorials'];
@@ -182,6 +184,9 @@ function buildMindMapTree(cx: number, cy: number): Element[] {
     height: branchH,
     label,
     borderRadius: 'md' as const,
+    // First-level branches: a gentle tint sits below the bold root, above
+    // the plain leaves — a legible three-tier hierarchy.
+    colorPreset: 'soft',
   }));
   const leaves = leafLabels.map((label, i) => ({
     ...createShape('square', leafX, branchYs[i]! - leafH / 2),
@@ -218,6 +223,8 @@ function buildBubbleMap(cx: number, cy: number): Element[] {
     height: centerSize,
     label: 'Our product',
     textSize: 'lg' as const,
+    // Central topic of the bubble map → hero preset.
+    colorPreset: 'bold',
   };
   const labels = ['Fast', 'Reliable', 'Simple', 'Affordable', 'Secure', 'Supported'];
   const n = labels.length;
@@ -281,13 +288,16 @@ function buildSwimlane(cx: number, cy: number): Element[] {
     height: stepH,
     label,
   });
-  const order = box('Place order', 0, 0);
+  // Entry step of the process → strongest preset so the flow's start reads.
+  const order = { ...box('Place order', 0, 0), colorPreset: 'bold' };
   const review = box('Review', 1, 1);
   const approve = {
     ...createShape('diamond', colX(2) - 60, laneCY(1) - 42),
     width: 120,
     height: 84,
     label: 'Approve?',
+    // The decision gate → a tint highlights the branch point.
+    colorPreset: 'soft',
   };
   const ship = box('Ship', 3, 2);
   const arrows = [
@@ -323,6 +333,8 @@ function buildDecisionTree(cx: number, cy: number): Element[] {
     width: dW,
     height: dH,
     label: 'Bug valid?',
+    // Root question of the tree → strongest preset.
+    colorPreset: 'bold',
   };
   const a = {
     ...createShape('square', cx - 180 - bW / 2, top + 150),
@@ -335,6 +347,8 @@ function buildDecisionTree(cx: number, cy: number): Element[] {
     width: dW,
     height: dH,
     label: 'Critical?',
+    // The follow-up decision: a tint marks it as the second-level question.
+    colorPreset: 'soft',
   };
   const b = {
     ...createShape('square', cx + 70 - bW / 2, top + 320),
@@ -369,6 +383,8 @@ function buildApprovalWorkflow(cx: number, cy: number): Element[] {
     width: w,
     height: h,
     label: 'Submit',
+    // Entry point of the workflow → strongest preset.
+    colorPreset: 'bold',
   };
   const review = {
     ...createShape('square', x0 + gap - w / 2, cy - h / 2),
@@ -381,6 +397,8 @@ function buildApprovalWorkflow(cx: number, cy: number): Element[] {
     width: 130,
     height: 84,
     label: 'Approved?',
+    // The approval gate is the pivotal step → a tint draws the eye to it.
+    colorPreset: 'soft',
   };
   const done = {
     ...createShape('stadium', x0 + 3 * gap - w / 2, cy - h / 2),
@@ -416,6 +434,8 @@ function buildDataFlow(cx: number, cy: number): Element[] {
     width: 120,
     height: 120,
     label: 'Process order',
+    // The process is the heart of a data-flow diagram → hero preset.
+    colorPreset: 'bold',
   };
   const store = {
     ...createShape('cylinder', cx + 180, cy - 60),
@@ -457,6 +477,8 @@ function buildMindMap(cx: number, cy: number): Element[] {
     height: centerSize,
     label: 'Product launch',
     textSize: 'lg' as const,
+    // Central nucleus of the mind map → hero preset.
+    colorPreset: 'bold',
   };
 
   type BranchSpec = {
@@ -516,6 +538,8 @@ function buildMindMap(cx: number, cy: number): Element[] {
       height: branchH,
       label,
       textSize: 'md' as const,
+      // First-level branches sit between the bold centre and plain leaves.
+      colorPreset: 'soft',
     };
   });
 
@@ -614,6 +638,8 @@ function buildOrgChart(cx: number, cy: number): Element[] {
     height: headH,
     label: 'CEO',
     textSize: 'lg' as const,
+    // Top of the org chart → strongest preset.
+    colorPreset: 'bold',
   };
 
   const vpLabels = ['VP Engineering', 'VP Sales', 'VP Operations'];
@@ -624,6 +650,8 @@ function buildOrgChart(cx: number, cy: number): Element[] {
     height: vpH,
     label,
     textSize: 'sm' as const,
+    // Second tier (VPs): a tint above the plain direct-report leaves.
+    colorPreset: 'soft',
   }));
 
   // Two direct reports under each VP. Labels are kept short on purpose
@@ -690,6 +718,8 @@ function buildFlowchart(cx: number, cy: number): Element[] {
     height: termH,
     label: 'Start',
     textSize: 'md' as const,
+    // Entry terminator of the flow → strongest preset.
+    colorPreset: 'bold',
   };
   const step1 = {
     ...createShape('square', cx - procW / 2, step1Y),
@@ -704,6 +734,8 @@ function buildFlowchart(cx: number, cy: number): Element[] {
     height: decH,
     label: 'Email valid?',
     textSize: 'md' as const,
+    // The branch point is the decision worth highlighting → a gentle tint.
+    colorPreset: 'soft',
   };
   const step2 = {
     ...createShape('square', cx - procW / 2, step2Y),

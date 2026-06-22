@@ -24,6 +24,11 @@ import {
   FlowKindGlyph,
   IconAnimKindGlyph,
 } from '@/components/context-menu-icons';
+import { onMouseHover, useRevertOnUnmount } from '@/components/hover-preview';
+
+// Stable no-op so a tile grid without preview handlers (e.g. a future caller)
+// still calls useRevertOnUnmount unconditionally (hook-rule safe).
+const NOOP = () => {};
 
 // Prepend the "None" option to a kinds list for the picker tile grids. The
 // generic return type ((T | null)[]) lets each `.map` infer its element type,
@@ -70,17 +75,30 @@ export function AnimationTiles({
   speed,
   onSet,
   onSetSpeed,
+  onPreview,
+  onPreviewEnd,
 }: {
   animation: ElementAnimation | null;
   speed: AnimationSpeed;
   onSet: (v: ElementAnimation | null) => void;
   onSetSpeed: (v: AnimationSpeed) => void;
+  // Desktop hover-to-preview (spec/09): play the hovered motion live on the
+  // selection without committing; onPreviewEnd reverts. Omitted = no preview.
+  onPreview?: (v: ElementAnimation | null) => void;
+  onPreviewEnd?: () => void;
 }) {
+  useRevertOnUnmount(onPreviewEnd ?? NOOP);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
         {withNone(ELEMENT_ANIMATIONS).map((v) => (
-          <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
+          <SizeButton
+            key={v ?? 'none'}
+            active={animation === v}
+            onClick={() => onSet(v)}
+            onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
+            onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
+          >
             <TileLabel glyph={<AnimationKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
         ))}
@@ -97,17 +115,29 @@ export function FlowTiles({
   speed,
   onSet,
   onSetSpeed,
+  onPreview,
+  onPreviewEnd,
 }: {
   flow: ArrowFlow | null;
   speed: AnimationSpeed;
   onSet: (v: ArrowFlow | null) => void;
   onSetSpeed: (v: AnimationSpeed) => void;
+  // Desktop hover-to-preview (spec/09), as in AnimationTiles.
+  onPreview?: (v: ArrowFlow | null) => void;
+  onPreviewEnd?: () => void;
 }) {
+  useRevertOnUnmount(onPreviewEnd ?? NOOP);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
         {withNone(ARROW_FLOWS).map((v) => (
-          <SizeButton key={v ?? 'none'} active={flow === v} onClick={() => onSet(v)}>
+          <SizeButton
+            key={v ?? 'none'}
+            active={flow === v}
+            onClick={() => onSet(v)}
+            onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
+            onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
+          >
             <TileLabel glyph={<FlowKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
         ))}
@@ -126,17 +156,29 @@ export function IconAnimationTiles({
   speed,
   onSet,
   onSetSpeed,
+  onPreview,
+  onPreviewEnd,
 }: {
   animation: IconAnimation | null;
   speed: AnimationSpeed;
   onSet: (v: IconAnimation | null) => void;
   onSetSpeed: (v: AnimationSpeed) => void;
+  // Desktop hover-to-preview (spec/09), as in AnimationTiles.
+  onPreview?: (v: IconAnimation | null) => void;
+  onPreviewEnd?: () => void;
 }) {
+  useRevertOnUnmount(onPreviewEnd ?? NOOP);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
         {withNone(ICON_ANIMATIONS).map((v) => (
-          <SizeButton key={v ?? 'none'} active={animation === v} onClick={() => onSet(v)}>
+          <SizeButton
+            key={v ?? 'none'}
+            active={animation === v}
+            onClick={() => onSet(v)}
+            onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
+            onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
+          >
             <TileLabel glyph={<IconAnimKindGlyph kind={v} />} label={v ?? 'None'} />
           </SizeButton>
         ))}

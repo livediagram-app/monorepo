@@ -663,6 +663,104 @@ function FlowGlowGlyph() {
   );
 }
 
+// Shake — a tile with horizontal motion ticks either side.
+function AnimShakeGlyph() {
+  return (
+    <AnimSvg>
+      <rect x="5" y="4.5" width="6" height="7" rx="1.5" />
+      <path d="M2 8h1.6M12.4 8H14" opacity="0.7" />
+    </AnimSvg>
+  );
+}
+
+// Jelly — a squashed blob (wider than tall) with squeeze ticks.
+function AnimJellyGlyph() {
+  return (
+    <AnimSvg>
+      <ellipse cx="8" cy="8.5" rx="5.3" ry="3.6" />
+      <path d="M8 1.6v1.6M8 12.8v1.6" opacity="0.55" />
+    </AnimSvg>
+  );
+}
+
+// Float — a tile drifting, hinted by an arc above it.
+function AnimFloatGlyph() {
+  return (
+    <AnimSvg>
+      <rect x="4.5" y="6" width="7" height="7" rx="1.5" />
+      <path d="M3 4.5q5-3 10 0" opacity="0.55" />
+    </AnimSvg>
+  );
+}
+
+// Swing — a pendulum: a pivot, an arm, a bob, and a swept arc.
+function AnimSwingGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M8 2.5V9" />
+      <circle cx="8" cy="10.8" r="2.2" fill="currentColor" stroke="none" />
+      <path d="M4.5 4.2a5 5 0 0 1 7 0" opacity="0.5" />
+    </AnimSvg>
+  );
+}
+
+// Flow: a line being drawn on — solid, then a faint dashed remainder.
+function FlowDrawGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 8H8" />
+      <path d="M8 8h3" opacity="0.3" strokeDasharray="1.6 1.6" />
+      <path d="M10 5 13 8 10 11" />
+    </AnimSvg>
+  );
+}
+
+// Flow: a glowing dot trailing a fading tail toward an arrowhead.
+function FlowCometGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 8H6.5" opacity="0.4" />
+      <circle cx="8" cy="8" r="1.9" fill="currentColor" stroke="none" />
+      <path d="M10.5 5.5 13.5 8 10.5 10.5" />
+    </AnimSvg>
+  );
+}
+
+// Flow: nested rainbow arcs (colour cycling).
+function FlowRainbowGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 11.5a6 6 0 0 1 12 0" />
+      <path d="M4.2 11.5a3.8 3.8 0 0 1 7.6 0" opacity="0.6" />
+      <path d="M6.4 11.5a1.6 1.6 0 0 1 3.2 0" opacity="0.35" />
+    </AnimSvg>
+  );
+}
+
+// Flow: a hard-blinking line (full segment, faint gap, a spark).
+function FlowStrobeGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 8H5.5" />
+      <path d="M8.5 8h2" opacity="0.25" />
+      <path d="M10.5 5.5 13.5 8 10.5 10.5" />
+      <path d="M7 5.4v1.3M7 9.3v1.3" opacity="0.7" />
+    </AnimSvg>
+  );
+}
+
+// Flow: fast speed lines toward an arrowhead.
+function FlowWindGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M2 5.5H8" />
+      <path d="M2 8H10" />
+      <path d="M2 10.5H7.5" />
+      <path d="M10 5 13 8 10 11" />
+    </AnimSvg>
+  );
+}
+
 // Dispatchers used by the context menu's Animation / Flow tiles. `null` is the
 // "None" option.
 export function AnimationKindGlyph({ kind }: { kind: ElementAnimation | null }) {
@@ -673,6 +771,10 @@ export function AnimationKindGlyph({ kind }: { kind: ElementAnimation | null }) 
   if (kind === 'gradient') return <AnimGradientGlyph />;
   if (kind === 'bounce') return <AnimBounceGlyph />;
   if (kind === 'wobble') return <AnimWobbleGlyph />;
+  if (kind === 'shake') return <AnimShakeGlyph />;
+  if (kind === 'jelly') return <AnimJellyGlyph />;
+  if (kind === 'float') return <AnimFloatGlyph />;
+  if (kind === 'swing') return <AnimSwingGlyph />;
   return <AnimNoneGlyph />;
 }
 
@@ -683,6 +785,11 @@ export function FlowKindGlyph({ kind }: { kind: ArrowFlow | null }) {
   if (kind === 'pulse') return <FlowPulseGlyph />;
   if (kind === 'grow') return <FlowGrowGlyph />;
   if (kind === 'glow') return <FlowGlowGlyph />;
+  if (kind === 'draw') return <FlowDrawGlyph />;
+  if (kind === 'comet') return <FlowCometGlyph />;
+  if (kind === 'rainbow') return <FlowRainbowGlyph />;
+  if (kind === 'strobe') return <FlowStrobeGlyph />;
+  if (kind === 'wind') return <FlowWindGlyph />;
   return <AnimNoneGlyph />;
 }
 
@@ -750,6 +857,44 @@ function IconAnimTadaGlyph() {
   );
 }
 
+// Flip — a coin flip, hinted by an edge-on ellipse + mirroring arrows.
+function IconAnimFlipGlyph() {
+  return (
+    <AnimSvg>
+      <ellipse cx="8" cy="8" rx="2.6" ry="5" />
+      <path d="M2 8h1.4M12.6 8H14M3 6.6 1.6 8 3 9.4M13 6.6 14.4 8 13 9.4" opacity="0.7" />
+    </AnimSvg>
+  );
+}
+// Jump — a squashed base with an up arrow (squash-and-stretch hop).
+function IconAnimJumpGlyph() {
+  return (
+    <AnimSvg>
+      <ellipse cx="8" cy="12" rx="3.2" ry="1.4" opacity="0.6" />
+      <path d="M8 9.5V3.5M5.5 6 8 3.5 10.5 6" />
+    </AnimSvg>
+  );
+}
+// Swing — a pendulum from the top (matches the boxed Swing glyph).
+function IconAnimSwingGlyph() {
+  return (
+    <AnimSvg>
+      <path d="M8 2.5V9" />
+      <circle cx="8" cy="10.8" r="2.2" fill="currentColor" stroke="none" />
+      <path d="M4.5 4.2a5 5 0 0 1 7 0" opacity="0.5" />
+    </AnimSvg>
+  );
+}
+// Float — a glyph drifting along a dashed orbit.
+function IconAnimFloatGlyph() {
+  return (
+    <AnimSvg>
+      <circle cx="8" cy="8" r="1.8" fill="currentColor" stroke="none" />
+      <ellipse cx="8" cy="8" rx="5.5" ry="3" strokeDasharray="2 2" opacity="0.5" />
+    </AnimSvg>
+  );
+}
+
 export function IconAnimKindGlyph({ kind }: { kind: IconAnimation | null }) {
   if (kind === 'spin') return <IconAnimSpinGlyph />;
   if (kind === 'beat') return <IconAnimBeatGlyph />;
@@ -758,6 +903,10 @@ export function IconAnimKindGlyph({ kind }: { kind: IconAnimation | null }) {
   if (kind === 'wiggle') return <IconAnimWiggleGlyph />;
   if (kind === 'flash') return <IconAnimFlashGlyph />;
   if (kind === 'tada') return <IconAnimTadaGlyph />;
+  if (kind === 'flip') return <IconAnimFlipGlyph />;
+  if (kind === 'jump') return <IconAnimJumpGlyph />;
+  if (kind === 'swing') return <IconAnimSwingGlyph />;
+  if (kind === 'float') return <IconAnimFloatGlyph />;
   return <AnimNoneGlyph />;
 }
 

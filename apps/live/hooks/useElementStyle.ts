@@ -60,7 +60,12 @@ import {
   type TextAlignY,
   type TextSize,
 } from '@livediagram/diagram';
-import { getTheme } from '@/lib/themes';
+import { getTheme, type ShapeColorPreset } from '@/lib/themes';
+import {
+  applyArrowPresetToEl,
+  applyBorderPresetToEl,
+  applyColorPresetToEl,
+} from '@/lib/style-presets';
 import { track } from '@/lib/telemetry';
 
 type EditorElementStyleDeps = {
@@ -224,27 +229,38 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
     scheduleElementChangeLog(logField);
   };
 
+  // Hand-editing any colour breaks a shape's colour-preset binding (spec/48):
+  // the user has diverged from the preset, so a later theme change must NOT
+  // pull the shape back onto the preset's variant. Clearing `colorPreset` on a
+  // shape (a no-op field on other types) keeps that invariant in one place.
   const setFillColorSelected = (color: string) =>
     commitSelectedStyle('fillColor', (el) =>
-      el.type === 'shape' || el.type === 'sticky' || el.type === 'freehand' || el.type === 'table'
-        ? { ...el, fillColor: color }
-        : el,
+      el.type === 'shape'
+        ? { ...el, fillColor: color, colorPreset: undefined }
+        : el.type === 'sticky' || el.type === 'freehand' || el.type === 'table'
+          ? { ...el, fillColor: color }
+          : el,
     );
 
   const setStrokeColorSelected = (color: string) =>
     commitSelectedStyle('strokeColor', (el) =>
-      el.type === 'shape' ||
-      el.type === 'sticky' ||
-      el.type === 'arrow' ||
-      el.type === 'freehand' ||
-      el.type === 'table'
-        ? { ...el, strokeColor: color }
-        : el,
+      el.type === 'shape'
+        ? { ...el, strokeColor: color, colorPreset: undefined }
+        : el.type === 'sticky' ||
+            el.type === 'arrow' ||
+            el.type === 'freehand' ||
+            el.type === 'table'
+          ? { ...el, strokeColor: color }
+          : el,
     );
 
   const setTextColorSelected = (color: string) =>
     commitSelectedStyle('textColor', (el) =>
-      isBoxed(el) || el.type === 'arrow' ? { ...el, textColor: color } : el,
+      el.type === 'shape'
+        ? { ...el, textColor: color, colorPreset: undefined }
+        : isBoxed(el) || el.type === 'arrow'
+          ? { ...el, textColor: color }
+          : el,
     );
 
   // Table header-band colours (debounced like the other colour
@@ -469,20 +485,10 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   // preset writes fill+stroke+text — or width+style+radius — at once).
   // Colour and border presets are independent: each touches only its own
   // fields so the two combine. Shapes only.
-  const applyShapeColorPresetSelected = (preset: {
-    fill: string;
-    stroke: string;
-    text: string;
-  }) => {
+  const applyShapeColorPresetSelected = (preset: ShapeColorPreset) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'shape'
-          ? { ...el, fillColor: preset.fill, strokeColor: preset.stroke, textColor: preset.text }
-          : el,
-      ),
-    );
+    commit((els) => els.map((el) => (ids.has(el.id) ? applyColorPresetToEl(el, preset) : el)));
     track('Element', 'Changed', 'StylePreset');
   };
   const applyShapeBorderPresetSelected = (preset: {
@@ -492,18 +498,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   }) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'shape'
-          ? {
-              ...el,
-              strokeWidth: preset.stroke,
-              strokeStyle: preset.style,
-              borderRadius: preset.radius,
-            }
-          : el,
-      ),
-    );
+    commit((els) => els.map((el) => (ids.has(el.id) ? applyBorderPresetToEl(el, preset) : el)));
     track('Element', 'Changed', 'BorderPreset');
   };
   // Reset a preset-styled shape back to its theme default: colour overrides
@@ -530,6 +525,9 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
           strokeWidth: undefined,
           strokeStyle: undefined,
           borderRadius: undefined,
+          // Drop the colour-preset binding too — reset returns to the plain
+          // theme look, so there's no preset to re-derive on a theme change.
+          colorPreset: undefined,
         };
       }),
     );
@@ -547,20 +545,7 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
   }) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
-    const px = ARROW_THICKNESS_PX[preset.thickness];
-    commit((els) =>
-      els.map((el) =>
-        ids.has(el.id) && el.type === 'arrow'
-          ? {
-              ...el,
-              strokeStyle: preset.style,
-              strokeWidth: px,
-              flow: preset.flow,
-              flowSpeed: preset.flow ? (el.flowSpeed ?? 'normal') : el.flowSpeed,
-            }
-          : el,
-      ),
-    );
+    commit((els) => els.map((el) => (ids.has(el.id) ? applyArrowPresetToEl(el, preset) : el)));
     track('Element', 'Changed', 'ArrowPreset');
   };
   // Reset a preset-styled arrow: drop its line pattern / thickness / flow
@@ -772,6 +757,8 @@ export function useElementStyle(deps: EditorElementStyleDeps) {
             ...(theme.elementText !== null
               ? { textColor: theme.elementText }
               : { textColor: undefined }),
+            // Reset-to-theme also drops any colour-preset binding (spec/48).
+            colorPreset: undefined,
           };
         }
         if (el.type === 'text') {

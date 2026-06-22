@@ -57,4 +57,4 @@ Opening the dialog fires `track('UI', 'Opened', 'CanvasStyle')` (Change Canvas) 
 
 - `CanvasStyleControls` — pattern grid + colour swatches + opacity slider. Rendered by both the palette's Canvas accordion and the dialog's Canvas tab.
 - `ThemeCategoryBrowser` — the theme overview/drill-in. Rendered by both the New-diagram picker and the dialog's Theme tab.
-- The dialog follows the existing modal contract (`Portal` + backdrop + `useEscape`, see `SettingsDialog`).
+- The dialog follows the existing modal contract (`Portal` + `useEscape` + a full-screen click-catcher, see `SettingsDialog`) — but with **no dimming / blur backdrop**: because every control applies live, the catcher is left transparent so the user can watch the canvas background + theme update behind the dialog as they click. The catcher still closes on an outside click and swallows pointer / right-click events so an edit doesn't leak to the canvas while it's open.

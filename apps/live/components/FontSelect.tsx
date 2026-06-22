@@ -1,12 +1,13 @@
 import { FONTS } from '@/lib/fonts';
+import { SizeButton } from '@/components/palette-controls';
 
-// Shared font dropdown (spec/28) used by the rich-text toolbar's font
-// flyout and the Tab Appearance modal's Font tab. A styled native
-// <select> so keyboard + accessibility come for free; each option
-// previews in its own face. The closed control stays in the compact UI
-// font (matching the surrounding tiny labels) rather than rendering
-// the selected value in its own typeface, which read oversized next to
-// them. `value` is the stored font id (or null for the default option).
+// Shared font picker (spec/28) used by the Tab Appearance menu's Font
+// category. A compact 2-column grid of tiles rather than a native <select>:
+// each tile renders the font's NAME in its own typeface, so the list is a
+// genuine preview ("Caveat" looks like Caveat) instead of a row of look-alike
+// names you have to guess between. Native <option> font-family is ignored by
+// macOS / several browsers, which is exactly the guesswork this removes.
+// `value` is the stored font id (or null for the default option).
 export function FontSelect({
   value,
   onChange,
@@ -21,20 +22,21 @@ export function FontSelect({
   ariaLabel?: string;
 }) {
   return (
-    <select
-      aria-label={ariaLabel}
-      value={value ?? ''}
-      // Empty option → null (clear the override / use the default).
-      onChange={(e) => onChange(e.target.value || null)}
-      onPointerDown={(e) => e.stopPropagation()}
-      className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 outline-none transition hover:border-slate-300 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
-    >
-      <option value="">{defaultLabel}</option>
+    <div role="group" aria-label={ariaLabel} className="grid grid-cols-2 gap-1">
+      {/* Default option in the plain UI font — it's the absence of a face, so
+          there's nothing to preview. */}
+      <SizeButton active={value == null} onClick={() => onChange(null)}>
+        <span className="truncate">{defaultLabel}</span>
+      </SizeButton>
       {FONTS.map((f) => (
-        <option key={f.id} value={f.id} style={{ fontFamily: f.stack }}>
-          {f.label}
-        </option>
+        <SizeButton key={f.id} active={value === f.id} onClick={() => onChange(f.id)}>
+          {/* The name rendered in its own face — the whole point: read the
+              voice, don't guess from the label. */}
+          <span className="truncate" style={{ fontFamily: f.stack }}>
+            {f.label}
+          </span>
+        </SizeButton>
       ))}
-    </select>
+    </div>
   );
 }

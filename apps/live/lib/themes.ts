@@ -391,6 +391,12 @@ export function themePresetColors(theme: ThemeDefinition): string[] {
 // together. Derived from the active theme so the offered presets always match
 // it, the same way themePresetColors derives the colour-picker swatches.
 export type ShapeColorPreset = {
+  // Stable identity for the preset, independent of the theme it's rendered
+  // for (spec/48). Stored on a shape's `colorPreset` so a theme change can
+  // re-derive the same variant for the new theme. The emphasis variants are
+  // fixed tokens ('theme', 'soft', 'tinted', 'solid', 'bold', 'outline',
+  // 'muted', 'inked'); multi-colour themes' per-branch cards are 'branch-<i>'.
+  id: string;
   name: string;
   fill: string;
   stroke: string;
@@ -412,33 +418,53 @@ export function shapeColorPresets(theme: ThemeDefinition): ShapeColorPreset[] {
 
   const pool: ShapeColorPreset[] = [];
   // Lead with the theme's own look so "the current theme" is one click away.
-  pool.push({ name: 'Theme', fill: baseFill, stroke: accent, text: baseText });
+  pool.push({ id: 'theme', name: 'Theme', fill: baseFill, stroke: accent, text: baseText });
   // Multi-colour themes: a tinted card per branch hue for genuine variety.
   if (theme.palette && theme.palette.length > 0) {
-    for (const entry of theme.palette) {
+    theme.palette.forEach((entry, i) => {
       pool.push({
+        id: `branch-${i}`,
         name: 'Branch',
         fill: tint(entry.stroke, 0.8),
         stroke: entry.stroke,
         text: shade(entry.stroke, 0.45),
       });
-    }
+    });
   }
   // Accent-derived emphasis variants — always appended so single-accent themes
   // get a full spread and palette themes pad to eight.
   pool.push(
-    { name: 'Soft', fill: tint(accent, 0.85), stroke: tint(accent, 0.4), text: shade(accent, 0.5) },
-    { name: 'Tinted', fill: tint(accent, 0.6), stroke: accent, text: shade(accent, 0.45) },
-    { name: 'Solid', fill: accent, stroke: shade(accent, 0.25), text: labelOn(accent) },
     {
+      id: 'soft',
+      name: 'Soft',
+      fill: tint(accent, 0.85),
+      stroke: tint(accent, 0.4),
+      text: shade(accent, 0.5),
+    },
+    {
+      id: 'tinted',
+      name: 'Tinted',
+      fill: tint(accent, 0.6),
+      stroke: accent,
+      text: shade(accent, 0.45),
+    },
+    {
+      id: 'solid',
+      name: 'Solid',
+      fill: accent,
+      stroke: shade(accent, 0.25),
+      text: labelOn(accent),
+    },
+    {
+      id: 'bold',
       name: 'Bold',
       fill: shade(accent, 0.3),
       stroke: shade(accent, 0.55),
       text: labelOn(shade(accent, 0.3)),
     },
-    { name: 'Outline', fill: '#ffffff', stroke: accent, text: shade(accent, 0.3) },
-    { name: 'Muted', fill: '#f1f5f9', stroke: '#94a3b8', text: '#475569' },
-    { name: 'Inked', fill: '#0f172a', stroke: '#334155', text: '#f8fafc' },
+    { id: 'outline', name: 'Outline', fill: '#ffffff', stroke: accent, text: shade(accent, 0.3) },
+    { id: 'muted', name: 'Muted', fill: '#f1f5f9', stroke: '#94a3b8', text: '#475569' },
+    { id: 'inked', name: 'Inked', fill: '#0f172a', stroke: '#334155', text: '#f8fafc' },
   );
 
   const seen = new Set<string>();
@@ -450,6 +476,30 @@ export function shapeColorPresets(theme: ThemeDefinition): ShapeColorPreset[] {
     out.push(p);
   }
   return out.slice(0, 8);
+}
+
+// Resolve a stored `colorPreset` id (spec/48) to its colours UNDER A GIVEN
+// THEME. Returns null when the theme has no such variant (e.g. a 'branch-2'
+// preset after switching to a single-accent theme that has no branches) so the
+// caller can leave the shape's current colours in place rather than blank them.
+export function shapeColorPresetById(
+  theme: ThemeDefinition,
+  id: string | undefined,
+): ShapeColorPreset | null {
+  if (!id) return null;
+  return shapeColorPresets(theme).find((p) => p.id === id) ?? null;
+}
+
+// Re-derive a single shape's colours from its bound colour preset for `theme`.
+// Used by the theme-change paths so a preset-styled shape tracks the new
+// theme's matching variant instead of staying pinned to the old theme's
+// colours. A non-shape, or a shape with no `colorPreset` (or a preset the
+// theme lacks), is returned untouched.
+export function rederiveColorPresetForTheme(el: Element, theme: ThemeDefinition): Element {
+  if (el.type !== 'shape' || !el.colorPreset) return el;
+  const preset = shapeColorPresetById(theme, el.colorPreset);
+  if (!preset) return el;
+  return { ...el, fillColor: preset.fill, strokeColor: preset.stroke, textColor: preset.text };
 }
 
 // A categorical palette derived from the active theme, for charts (spec/53):
@@ -602,6 +652,11 @@ export function resetThemeElement(el: Element, theme: ThemeDefinition): Element 
   for (const { element, theme: themeKey } of fields) {
     patch[element] = theme[themeKey] ?? undefined;
   }
+  // A hard reset drops any colour-preset binding (spec/48) too: the shape is
+  // being forced back to the plain theme look, so the preset no longer holds.
+  if (el.type === 'shape' && el.colorPreset) {
+    return { ...el, ...patch, colorPreset: undefined } as Element;
+  }
   return { ...el, ...patch } as Element;
 }
 
@@ -687,7 +742,14 @@ function elementThemeView(
 // entry point.
 export function recolourElementsForTheme(elements: Element[], theme: ThemeDefinition): Element[] {
   const branches = theme.palette ? assignBranches(elements) : null;
-  return elements.map((el) => recolourElementForTheme(el, elementThemeView(theme, el, branches)));
+  return elements.map((el) =>
+    // A shape bound to a colour preset (spec/48) takes the preset's variant for
+    // this theme, not the plain branch / base colours — so a template's Bold
+    // key element stays Bold in whatever theme it's built with.
+    el.type === 'shape' && el.colorPreset
+      ? rederiveColorPresetForTheme(el, theme)
+      : recolourElementForTheme(el, elementThemeView(theme, el, branches)),
+  );
 }
 
 // Graph-aware counterpart to `switchThemeElement`: the in-editor
@@ -702,11 +764,17 @@ export function switchThemeElements(
   const prevBranches = prev.palette ? assignBranches(elements) : null;
   const nextBranches = next.palette ? assignBranches(elements) : null;
   return elements.map((el) =>
-    switchThemeElement(
-      el,
-      elementThemeView(prev, el, prevBranches),
-      elementThemeView(next, el, nextBranches),
-    ),
+    // Preset-bound shapes (spec/48) re-derive their preset for the new theme
+    // instead of being preserved as a manual override — picking a new theme
+    // moves a Bold-preset shape to that theme's Bold look rather than stranding
+    // it on the previous theme's colours.
+    el.type === 'shape' && el.colorPreset
+      ? rederiveColorPresetForTheme(el, next)
+      : switchThemeElement(
+          el,
+          elementThemeView(prev, el, prevBranches),
+          elementThemeView(next, el, nextBranches),
+        ),
   );
 }
 

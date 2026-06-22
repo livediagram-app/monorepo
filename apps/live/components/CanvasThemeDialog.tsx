@@ -77,7 +77,12 @@ export function CanvasThemeDialog({
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
+        // No dimming / blur backdrop: every control applies live to the tab, so
+        // the user needs to SEE the canvas background + theme change behind the
+        // dialog as they click (spec/42). The full-screen layer stays as a
+        // transparent click-catcher (click-outside / right-click guard) so an
+        // accidental edit doesn't leak to the canvas while it's open.
+        className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div
           role="dialog"

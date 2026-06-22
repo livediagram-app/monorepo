@@ -28,9 +28,16 @@ describe('FONTS catalogue invariants', () => {
     }
   });
 
-  it('every Google family spec covers the editor weights 400 / 500 / 700', () => {
+  it('every multi-weight Google family spec covers the editor weights 400 / 500 / 700', () => {
+    // Most families ship a weight axis and must expose 400/500/700 for the
+    // editor's regular/medium/bold text. A single-weight family (no `:wght@`
+    // suffix, e.g. Permanent Marker) is allowed and reuses its one face.
     for (const f of FONTS) {
-      expect(f.google).toContain('wght@400;500;700');
+      if (f.google.includes(':wght@')) {
+        expect(f.google).toContain('wght@400;500;700');
+      } else {
+        expect(f.google).not.toContain(':');
+      }
     }
   });
 });

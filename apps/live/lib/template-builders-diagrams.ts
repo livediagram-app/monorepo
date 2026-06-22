@@ -221,6 +221,8 @@ export function buildFishbone(cx: number, cy: number): Element[] {
     height: effectH,
     label: 'Late delivery',
     textSize: 'md',
+    // The effect is the outcome every cause feeds into → hero preset.
+    colorPreset: 'bold',
   });
 
   // Spine arrow → pointing at the Effect card.
@@ -278,6 +280,8 @@ export function buildPyramid(cx: number, cy: number): Element[] {
       height: tierH,
       label,
       textSize: 'md',
+      // The apex (first tier) is the focal point of the pyramid → hero preset.
+      ...(i === 0 ? { colorPreset: 'bold' } : {}),
     });
   });
   // Top-to-bottom order in the source array reads peak-down, but
@@ -306,6 +310,8 @@ export function buildFlywheel(cx: number, cy: number): Element[] {
     height: hubSize,
     label: 'Growth flywheel',
     textSize: 'md' as const,
+    // The hub drives the whole loop → hero preset.
+    colorPreset: 'bold',
   };
   elements.push(hub);
 

@@ -628,6 +628,92 @@
   animation: lvd-wobble calc(0.9s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
 }
 
+/* Shake — a quick horizontal jitter (independent `translate`, like bounce, so
+ * it composes with an element's own rotation). */
+@keyframes lvd-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: -4px 0;
+  }
+  40% {
+    translate: 4px 0;
+  }
+  60% {
+    translate: -3px 0;
+  }
+  80% {
+    translate: 3px 0;
+  }
+}
+.lvd-anim-shake {
+  animation: lvd-shake calc(0.7s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+/* Jelly — a squash-and-stretch wobble driven by the independent `scale`
+ * property (so it composes with rotation; origin-center on the wrapper keeps
+ * it pinned). */
+@keyframes lvd-jelly {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  30% {
+    scale: 1.12 0.88;
+  }
+  50% {
+    scale: 0.9 1.1;
+  }
+  70% {
+    scale: 1.04 0.96;
+  }
+}
+.lvd-anim-jelly {
+  animation: lvd-jelly calc(1s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+/* Float — a slow ambient drift in a small circle (independent `translate`). */
+@keyframes lvd-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: 3px -3px;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+  75% {
+    translate: -3px -3px;
+  }
+}
+.lvd-anim-float {
+  animation: lvd-float calc(4s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
+/* Swing — a pendulum rocking from the top edge (independent `rotate` +
+ * transform-origin top, so it composes with rotation; the only quirk is a
+ * manually-rotated element's pivot shifts to its top while swinging). */
+@keyframes lvd-swing {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 5deg;
+  }
+  75% {
+    rotate: -5deg;
+  }
+}
+.lvd-anim-swing {
+  transform-origin: top center;
+  animation: lvd-swing calc(2s * var(--lvd-anim-speed, 1)) ease-in-out infinite;
+}
+
 /* SVG-shape trace: the shape's own outline becomes a marching dash that runs
  * the true perimeter (ShapeSvgOverlay swaps the main outline to this class +
  * a dash pattern). period = dash + gap = 18, so -18 loops seamlessly. */
@@ -742,6 +828,73 @@
 .lvd-arrow-glow {
   animation: lvd-arrow-glow calc(1.6s * var(--lvd-flow-speed, 1)) ease-in-out infinite;
 }
+/* Draw: the line repeatedly draws itself on from start to end. The path sets
+ * pathLength="1" (in ArrowView) so the inline dasharray "1 1" + this offset are
+ * in normalised units regardless of the real length; offset 1 → 0 reveals it. */
+@keyframes lvd-arrow-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.lvd-arrow-draw {
+  animation: lvd-arrow-draw calc(1.6s * var(--lvd-flow-speed, 1)) ease-in-out infinite;
+}
+/* Rainbow: cycle the stroke colour through the spectrum. Overrides the static
+ * stroke (a CSS animation on `stroke` beats the presentation attribute) so it
+ * reads on any base colour. */
+@keyframes lvd-arrow-rainbow {
+  0% {
+    stroke: #ef4444;
+  }
+  16% {
+    stroke: #f59e0b;
+  }
+  33% {
+    stroke: #22c55e;
+  }
+  50% {
+    stroke: #06b6d4;
+  }
+  66% {
+    stroke: #3b82f6;
+  }
+  83% {
+    stroke: #a855f7;
+  }
+  100% {
+    stroke: #ef4444;
+  }
+}
+.lvd-arrow-rainbow {
+  animation: lvd-arrow-rainbow calc(3s * var(--lvd-flow-speed, 1)) linear infinite;
+}
+/* Strobe: a hard on/off blink (vs pulse's smooth breathe). steps(1) keeps each
+ * transition instant. */
+@keyframes lvd-arrow-strobe {
+  0% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.12;
+  }
+}
+.lvd-arrow-strobe {
+  animation: lvd-arrow-strobe calc(0.9s * var(--lvd-flow-speed, 1)) steps(1, end) infinite;
+}
+/* Wind: fast, sparse long dashes marching toward the head — motion / speed
+ * lines. The long-dash pattern (set inline in ArrowView) distinguishes it from
+ * the denser even dashes; period 26 → -26 loops seamlessly. */
+@keyframes lvd-arrow-wind {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+.lvd-arrow-wind {
+  animation: lvd-arrow-wind calc(0.5s * var(--lvd-flow-speed, 1)) linear infinite;
+}
 
 /* Animated icon glyphs (spec/09): any icon can opt into one of these via the
  * icon context menu (the element's `iconAnimation`). The whole SVG glyph
@@ -826,15 +979,71 @@
     transform: scale(1.12) rotate(-4deg);
   }
 }
+@keyframes lvd-icon-flip {
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@keyframes lvd-icon-jump {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  10% {
+    transform: translateY(0) scaleY(0.84);
+  }
+  40%,
+  55% {
+    transform: translateY(-3px) scaleY(1.06);
+  }
+  75% {
+    transform: translateY(0) scaleY(0.9);
+  }
+}
+@keyframes lvd-icon-swing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(12deg);
+  }
+  75% {
+    transform: rotate(-12deg);
+  }
+}
+@keyframes lvd-icon-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1.5px, -1.5px);
+  }
+  50% {
+    transform: translate(0, -2.5px);
+  }
+  75% {
+    transform: translate(-1.5px, -1.5px);
+  }
+}
 .lvd-icon-spin,
 .lvd-icon-beat,
 .lvd-icon-pulse,
 .lvd-icon-bounce,
 .lvd-icon-wiggle,
 .lvd-icon-flash,
-.lvd-icon-tada {
+.lvd-icon-tada,
+.lvd-icon-flip,
+.lvd-icon-jump,
+.lvd-icon-swing,
+.lvd-icon-float {
   transform-box: fill-box;
   transform-origin: center;
+}
+/* Swing pivots from the glyph's top edge rather than its centre. */
+.lvd-icon-swing {
+  transform-origin: top center;
 }
 /* --lvd-icon-anim-speed (set inline from iconAnimationSpeed) scales every
  * icon-animation duration the same way --lvd-anim-speed does for boxed
@@ -859,6 +1068,18 @@
 }
 .lvd-icon-tada {
   animation: lvd-icon-tada calc(1.4s * var(--lvd-icon-anim-speed, 1)) ease-in-out infinite;
+}
+.lvd-icon-flip {
+  animation: lvd-icon-flip calc(1.6s * var(--lvd-icon-anim-speed, 1)) ease-in-out infinite;
+}
+.lvd-icon-jump {
+  animation: lvd-icon-jump calc(0.9s * var(--lvd-icon-anim-speed, 1)) ease-in-out infinite;
+}
+.lvd-icon-swing {
+  animation: lvd-icon-swing calc(1.4s * var(--lvd-icon-anim-speed, 1)) ease-in-out infinite;
+}
+.lvd-icon-float {
+  animation: lvd-icon-float calc(3.5s * var(--lvd-icon-anim-speed, 1)) ease-in-out infinite;
 }
 
 /* Progress elements (spec/46): animate HOW the fill behaves. 'fill' grows it
@@ -1059,6 +1280,10 @@
   .lvd-anim-gradient,
   .lvd-anim-bounce,
   .lvd-anim-wobble,
+  .lvd-anim-shake,
+  .lvd-anim-jelly,
+  .lvd-anim-float,
+  .lvd-anim-swing,
   .lvd-svg-glow,
   .lvd-svg-pulse,
   .lvd-trace-run,
@@ -1071,6 +1296,10 @@
   .lvd-arrow-pulse,
   .lvd-arrow-grow,
   .lvd-arrow-glow,
+  .lvd-arrow-draw,
+  .lvd-arrow-rainbow,
+  .lvd-arrow-strobe,
+  .lvd-arrow-wind,
   .lvd-icon-spin,
   .lvd-icon-beat,
   .lvd-icon-pulse,
@@ -1078,6 +1307,10 @@
   .lvd-icon-wiggle,
   .lvd-icon-flash,
   .lvd-icon-tada,
+  .lvd-icon-flip,
+  .lvd-icon-jump,
+  .lvd-icon-swing,
+  .lvd-icon-float,
   .lvd-prog-grow,
   .lvd-prog-pulse,
   .lvd-prog-stripes,

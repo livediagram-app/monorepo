@@ -111,6 +111,15 @@ export type ShapeElement = {
   strokeWidth?: BorderStroke;
   strokeStyle?: BorderStyle;
   borderRadius?: BorderRadius;
+  // Colour-preset binding (spec/48). When a one-click colour preset is applied
+  // to a shape, we store the preset's stable id (e.g. 'bold', 'soft',
+  // 'branch-0') alongside the concrete fill / stroke / text it wrote. This lets
+  // a later theme change RE-DERIVE the preset for the new theme (the Bold look
+  // of theme B instead of staying pinned to theme A's Bold colours) rather than
+  // treating the preset colours as an immovable manual override. Cleared the
+  // moment the user hand-edits a colour or resets to theme, since the binding
+  // no longer holds. Only meaningful on shapes.
+  colorPreset?: string;
   // Timeline rail (spec/51): how many evenly-spaced points sit above the rail
   // line. Only meaningful on the 'timeline-rail' kind; clamped to
   // RAIL_MIN_POINTS..RAIL_MAX_POINTS.

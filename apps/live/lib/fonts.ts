@@ -1,8 +1,9 @@
 // Curated text fonts (spec/28). Each text-bearing element and each tab
 // can pick one; the id is stored in the model and mapped to a CSS stack
-// here at render time. Eight Google Fonts spanning sans / rounded /
-// serif / slab / mono / handwriting so a diagram can take on a distinct
-// voice without an open-ended font field.
+// here at render time. Eleven Google Fonts spanning neutral / geometric /
+// rounded / condensed / techy sans, serif / display serif / slab, mono,
+// and handwriting / marker — a wide enough spread that a diagram can take
+// on a distinct voice without an open-ended font field.
 //
 // Fonts are a progressive enhancement: the stack always ends in a system
 // fallback and the stylesheet loads with `display=swap`, so if Google
@@ -32,13 +33,6 @@ export const FONTS: readonly FontOption[] = [
     google: 'Inter:wght@400;500;700',
   },
   {
-    id: 'roboto',
-    label: 'Roboto',
-    kind: 'Sans-serif',
-    stack: "'Roboto', ui-sans-serif, system-ui, sans-serif",
-    google: 'Roboto:wght@400;500;700',
-  },
-  {
     id: 'poppins',
     label: 'Poppins',
     kind: 'Geometric',
@@ -53,11 +47,36 @@ export const FONTS: readonly FontOption[] = [
     google: 'Nunito:wght@400;500;700',
   },
   {
+    id: 'oswald',
+    label: 'Oswald',
+    kind: 'Condensed',
+    stack: "'Oswald', ui-sans-serif, system-ui, sans-serif",
+    google: 'Oswald:wght@400;500;700',
+  },
+  {
+    id: 'space-grotesk',
+    label: 'Space Grotesk',
+    kind: 'Techy sans',
+    stack: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+    google: 'Space+Grotesk:wght@400;500;700',
+  },
+  {
     id: 'lora',
     label: 'Lora',
     kind: 'Serif',
     stack: "'Lora', ui-serif, Georgia, serif",
     google: 'Lora:wght@400;500;700',
+  },
+  {
+    id: 'abril-fatface',
+    label: 'Abril Fatface',
+    kind: 'Display serif',
+    stack: "'Abril Fatface', ui-serif, Georgia, serif",
+    // A dramatic fat-face didone, chosen over a second book serif (Playfair)
+    // so the display option reads as clearly distinct from Lora rather than a
+    // near-twin. Ships a single weight, so it has no :wght@ axis; the editor's
+    // medium/bold reuse that one face.
+    google: 'Abril+Fatface',
   },
   {
     id: 'roboto-slab',
@@ -79,6 +98,15 @@ export const FONTS: readonly FontOption[] = [
     kind: 'Handwriting',
     stack: "'Caveat', ui-sans-serif, cursive",
     google: 'Caveat:wght@400;500;700',
+  },
+  {
+    id: 'permanent-marker',
+    label: 'Permanent Marker',
+    kind: 'Marker',
+    stack: "'Permanent Marker', ui-sans-serif, cursive",
+    // Permanent Marker ships a single weight, so it has no :wght@ axis;
+    // the editor's medium/bold just reuse that one face.
+    google: 'Permanent+Marker',
   },
 ];
 

@@ -1,24 +1,28 @@
 # Fonts
 
 Let users set the **typeface** of text on the canvas — per element and as
-a per-tab default — from a curated set of eight Google Fonts.
+a per-tab default — from a curated set of eleven Google Fonts.
 
-## The eight fonts
+## The eleven fonts
 
-A spread of voices so a diagram can read as crisp, friendly, formal, or
-hand-drawn. Defined once in `apps/live/lib/fonts.ts` (id + label + CSS
-stack + Google family spec):
+A wide spread of voices so a diagram can read as crisp, friendly, formal,
+hand-drawn, or bold. Defined once in `apps/live/lib/fonts.ts` (id + label
 
-| id            | Label       | Style          |
-| ------------- | ----------- | -------------- |
-| `inter`       | Inter       | Sans-serif     |
-| `roboto`      | Roboto      | Sans-serif     |
-| `poppins`     | Poppins     | Geometric sans |
-| `nunito`      | Nunito      | Rounded sans   |
-| `lora`        | Lora        | Serif          |
-| `roboto-slab` | Roboto Slab | Slab serif     |
-| `roboto-mono` | Roboto Mono | Monospace      |
-| `caveat`      | Caveat      | Handwriting    |
+- CSS stack + Google family spec):
+
+| id                 | Label            | Style          |
+| ------------------ | ---------------- | -------------- |
+| `inter`            | Inter            | Sans-serif     |
+| `poppins`          | Poppins          | Geometric sans |
+| `nunito`           | Nunito           | Rounded sans   |
+| `oswald`           | Oswald           | Condensed sans |
+| `space-grotesk`    | Space Grotesk    | Techy sans     |
+| `lora`             | Lora             | Serif          |
+| `abril-fatface`    | Abril Fatface    | Display serif  |
+| `roboto-slab`      | Roboto Slab      | Slab serif     |
+| `roboto-mono`      | Roboto Mono      | Monospace      |
+| `caveat`           | Caveat           | Handwriting    |
+| `permanent-marker` | Permanent Marker | Marker         |
 
 Each CSS stack ends in a system fallback, and the stylesheet loads with
 `display=swap`, so text stays visible (in the fallback face) while a font
@@ -73,10 +77,17 @@ Font`.
 A single Google Fonts stylesheet (`googleFontsHref()`) is linked in the
 live app's root layout, with `preconnect` hints. One request defines
 every `@font-face`; browsers only download a family once it's actually
-applied to an element, so listing all eight is cheap.
+applied to an element, so listing all eleven is cheap.
+
+Both pickers **preview each face**: the per-element font menu shows an
+`Aa` glyph in the font beside its name, and the per-tab picker
+(`components/FontSelect.tsx`) renders each option's **name in its own
+typeface** in a compact tile grid (a native `<select>` can't — browsers /
+macOS ignore `font-family` on `<option>`, so the names would all look alike).
 
 Implementation: `apps/live/lib/fonts.ts` (catalogue + resolver),
-`components/FontSelect.tsx` (the shared dropdown, used by both pickers),
+`components/FontSelect.tsx` (the per-tab font grid; element fonts use the
+rich-text toolbar's own font grid in `RichTextToolbar.tsx`),
 the label renderers (`element-labels.tsx`), `TableView`, and `ArrowView`
 apply the resolved stack; `useElementStyle.setFontSelected` and
 `useTabCanvas.setTabFont` are the mutators. See also

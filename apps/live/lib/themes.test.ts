@@ -21,6 +21,7 @@ import {
   resetThemeElement,
   resetThemeElementsToTheme,
   resolveTheme,
+  rederiveColorPresetForTheme,
   shapeColorPresets,
   switchThemeBackdrop,
   switchThemeElement,
@@ -156,6 +157,56 @@ describe('shapeColorPresets (spec/48)', () => {
     const presets = shapeColorPresets(rainbow);
     expect(presets.length).toBeLessThanOrEqual(8);
     expect(presets.length).toBeGreaterThan(0);
+  });
+
+  it('assigns stable ids including the emphasis tokens', () => {
+    const ids = shapeColorPresets(getTheme('slate')).map((p) => p.id);
+    expect(ids).toContain('theme');
+    expect(ids).toContain('bold');
+    // ids are unique
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('colour-preset re-derivation across themes (spec/48)', () => {
+  it('re-derives a bound shape to the matching preset of the new theme', () => {
+    const slate = getTheme('slate');
+    const midnight = getTheme('midnight');
+    const slateBold = shapeColorPresets(slate).find((p) => p.id === 'bold')!;
+    const midnightBold = shapeColorPresets(midnight).find((p) => p.id === 'bold')!;
+
+    const shape = {
+      ...createShape('square', 0, 0),
+      colorPreset: 'bold',
+      fillColor: slateBold.fill,
+      strokeColor: slateBold.stroke,
+      textColor: slateBold.text,
+    };
+
+    const [out] = switchThemeElements([shape], slate, midnight) as Array<typeof shape>;
+    expect(out!.fillColor).toBe(midnightBold.fill);
+    expect(out!.strokeColor).toBe(midnightBold.stroke);
+    expect(out!.textColor).toBe(midnightBold.text);
+    // The binding survives so the next theme change re-derives again.
+    expect(out!.colorPreset).toBe('bold');
+  });
+
+  it('leaves a shape with no colour-preset binding to the normal preserve-customs walk', () => {
+    const slate = getTheme('slate');
+    const midnight = getTheme('midnight');
+    // A hand-picked colour with NO colorPreset is preserved, not re-derived.
+    const shape = { ...createShape('square', 0, 0), fillColor: '#abcdef' };
+    const [out] = switchThemeElements([shape], slate, midnight) as Array<typeof shape>;
+    expect(out!.fillColor).toBe('#abcdef');
+  });
+
+  it('rederiveColorPresetForTheme no-ops on an unknown preset / non-shape', () => {
+    const slate = getTheme('slate');
+    const shape = { ...createShape('square', 0, 0), colorPreset: 'branch-9' };
+    // No 'branch-9' on a single-accent theme → untouched.
+    expect(rederiveColorPresetForTheme(shape, slate)).toBe(shape);
+    const arrow = createPinnedArrow('a', 'e', 'b', 'w');
+    expect(rederiveColorPresetForTheme(arrow, slate)).toBe(arrow);
   });
 });
 

@@ -10,6 +10,7 @@ import {
   type TextRun,
 } from '@livediagram/diagram';
 import { patchTab } from './editor-page-helpers';
+import type { EditorContextMenuState } from '@/components/EditorContextMenu';
 
 type SetState<T> = Dispatch<SetStateAction<T>>;
 
@@ -48,6 +49,12 @@ export function useSelectionEditing(opts: {
     setEditCursorAtEnd: SetState<boolean>;
     setMultiSelectedIds: SetState<Set<string>>;
     setDiagramName: SetState<string>;
+    // Retarget an open element context menu when the selection moves to a
+    // different element, so the menu reflects the newly-selected element's
+    // state (animation / speed / colours) instead of the previous one — the
+    // menu lingers across a plain click because element pointerdown stops
+    // propagation, so without this it would show stale values.
+    setContextMenu: SetState<EditorContextMenuState | null>;
   };
 }) {
   const {
@@ -73,6 +80,7 @@ export function useSelectionEditing(opts: {
     setEditCursorAtEnd,
     setMultiSelectedIds,
     setDiagramName,
+    setContextMenu,
   } = set;
 
   const beginFormatPainter = () => {
@@ -231,6 +239,11 @@ export function useSelectionEditing(opts: {
     // Clicking a single element always collapses any active multi-selection
     // down to that one element — the user's intent is unambiguous.
     setMultiSelectedIds(new Set());
+    // If an element context menu is open, retarget it to the newly-selected
+    // element so its categories (notably Animation + speed) reflect the new
+    // element rather than the previously-clicked one. The menu only lingers in
+    // 'element' mode; a 'multi' menu is left to its own dismissal.
+    setContextMenu((cur) => (cur && cur.mode === 'element' ? { ...cur, elementId: id } : cur));
   };
 
   // Shift-click membership toggle. Folds a current single-selection

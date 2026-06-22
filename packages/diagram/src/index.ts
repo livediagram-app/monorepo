@@ -89,11 +89,14 @@ export type TextAlignY = 'top' | 'middle' | 'bottom';
 // expanding ring), 'blink' a status breathe (opacity), 'glow' a soft halo,
 // 'trace' a light running the element's outline, 'gradient' a moving gradient
 // blending the fill + accent colours, 'bounce' a vertical bob, 'wobble' a
-// tilt wiggle. trace / gradient render against the true shape outline (an SVG
-// stroke / fill for SVG-rendered shapes, the CSS border / background for
-// CSS-rendered shapes + other boxed elements); bounce / wobble drive the
-// independent `translate` / `rotate` CSS properties so they compose with an
-// element's own rotation rather than clobbering it.
+// tilt wiggle, 'shake' a quick horizontal jitter, 'jelly' a squash-and-stretch,
+// 'float' a slow circular drift, 'swing' a pendulum from the top edge. trace /
+// gradient render against the true shape outline (an SVG stroke / fill for
+// SVG-rendered shapes, the CSS border / background for CSS-rendered shapes +
+// other boxed elements); bounce / wobble / shake / jelly / float / swing drive
+// the independent `translate` / `rotate` / `scale` CSS properties so they
+// compose with an element's own rotation rather than clobbering it (swing also
+// pivots from `transform-origin: top center`).
 export type ElementAnimation =
   | 'pulse'
   | 'blink'
@@ -101,7 +104,11 @@ export type ElementAnimation =
   | 'trace'
   | 'gradient'
   | 'bounce'
-  | 'wobble';
+  | 'wobble'
+  | 'shake'
+  | 'jelly'
+  | 'float'
+  | 'swing';
 export const ELEMENT_ANIMATIONS: readonly ElementAnimation[] = [
   'pulse',
   'blink',
@@ -110,6 +117,10 @@ export const ELEMENT_ANIMATIONS: readonly ElementAnimation[] = [
   'gradient',
   'bounce',
   'wobble',
+  'shake',
+  'jelly',
+  'float',
+  'swing',
 ];
 
 // Animation / flow speed (spec/09). A multiplier on each animation's tuned
@@ -131,10 +142,23 @@ export const ANIMATION_SPEED_FACTOR: Record<AnimationSpeed, number> = {
 // icon can opt into one of these via the icon context menu (they used to be
 // hard-wired to a few icon ids and always-on). 'spin' rotates, 'beat' is the
 // heart double-pump (scale), 'pulse' breathes opacity, 'bounce' bobs, 'wiggle'
-// tilts, 'flash' blinks, 'tada' is a celebratory scale + rotate. Undefined =
-// static. Mapped to a `lvd-icon-*` class; loop speed comes from the separate
-// `iconAnimationSpeed` field (slow / normal / fast), same as boxed elements.
-export type IconAnimation = 'spin' | 'beat' | 'pulse' | 'bounce' | 'wiggle' | 'flash' | 'tada';
+// tilts, 'flash' blinks, 'tada' is a celebratory scale + rotate, 'flip' a coin
+// flip (rotateY), 'jump' a squash-and-stretch hop, 'swing' a pendulum from the
+// top, 'float' a slow circular drift. Undefined = static. Mapped to a
+// `lvd-icon-*` class; loop speed comes from the separate `iconAnimationSpeed`
+// field (slow / normal / fast), same as boxed elements.
+export type IconAnimation =
+  | 'spin'
+  | 'beat'
+  | 'pulse'
+  | 'bounce'
+  | 'wiggle'
+  | 'flash'
+  | 'tada'
+  | 'flip'
+  | 'jump'
+  | 'swing'
+  | 'float';
 export const ICON_ANIMATIONS: readonly IconAnimation[] = [
   'spin',
   'beat',
@@ -143,6 +167,10 @@ export const ICON_ANIMATIONS: readonly IconAnimation[] = [
   'wiggle',
   'flash',
   'tada',
+  'flip',
+  'jump',
+  'swing',
+  'float',
 ];
 
 // Where an inline icon sits relative to its shape's text label (the
@@ -300,8 +328,25 @@ export function clampPercent(value: number): number {
 // the connector (CSS stroke-dashoffset), 'dots' sends a dot travelling the
 // path (CSS offset-path), 'beads' marches a row of round dots, 'pulse' breathes
 // the line's opacity, 'grow' breathes its thickness, 'glow' pulses a soft halo
-// around it. All show / emphasise the direction of data / process flow.
-export type ArrowFlow = 'dashes' | 'dots' | 'beads' | 'pulse' | 'grow' | 'glow';
+// around it, 'draw' repeatedly draws the line on from start to end (a
+// pathLength-normalised stroke-dashoffset reveal), 'comet' sends a glowing dot
+// with a fading tail along the path (a staggered fleet of offset-path dots),
+// 'rainbow' cycles the stroke colour through the spectrum, 'strobe' blinks the
+// line hard on/off (stepped stroke-opacity), 'wind' marches fast sparse long
+// dashes like speed lines. All show / emphasise the direction of data /
+// process flow.
+export type ArrowFlow =
+  | 'dashes'
+  | 'dots'
+  | 'beads'
+  | 'pulse'
+  | 'grow'
+  | 'glow'
+  | 'draw'
+  | 'comet'
+  | 'rainbow'
+  | 'strobe'
+  | 'wind';
 export const ARROW_FLOWS: readonly ArrowFlow[] = [
   'dashes',
   'dots',
@@ -309,6 +354,11 @@ export const ARROW_FLOWS: readonly ArrowFlow[] = [
   'pulse',
   'grow',
   'glow',
+  'draw',
+  'comet',
+  'rainbow',
+  'strobe',
+  'wind',
 ];
 
 export type BackgroundPattern =

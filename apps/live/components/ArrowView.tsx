@@ -102,19 +102,34 @@ type ArrowViewProps = {
 
 const BRAND_600 = 'rgb(2 132 199)';
 
-// Per-flow path styling. Every flow except 'dots' (a travelling <circle>)
-// animates the line itself via a class; dashes / beads also swap in their own
-// dash pattern, while pulse / grow / glow keep the user's static stroke and
-// just breathe opacity / thickness / a halo. A missing entry (no flow, or
-// 'dots') leaves the path on its static style.
+// Per-flow path styling. Every flow except 'dots' (a travelling <circle>) and
+// 'comet' (a small fleet of travelling dots) animates the line itself via a
+// class; dashes / beads / draw / wind also swap in their own dash pattern,
+// while pulse / grow / glow / rainbow / strobe keep the user's static stroke
+// and just breathe opacity / thickness / a halo / its colour. A missing entry
+// (no flow, or 'dots' / 'comet') leaves the path on its static style.
 const FLOW_PATH_CLASS: Partial<Record<ArrowFlow, string>> = {
   dashes: 'lvd-arrow-flow',
   beads: 'lvd-arrow-beads',
   pulse: 'lvd-arrow-pulse',
   grow: 'lvd-arrow-grow',
   glow: 'lvd-arrow-glow',
+  draw: 'lvd-arrow-draw',
+  rainbow: 'lvd-arrow-rainbow',
+  strobe: 'lvd-arrow-strobe',
+  wind: 'lvd-arrow-wind',
 };
-const FLOW_PATH_DASH: Partial<Record<ArrowFlow, string>> = { dashes: '8 6', beads: '0.1 12' };
+// 'draw' normalises the path to pathLength=1, so its dash pattern is in those
+// units (one full-length dash + an equal gap that the reveal slides through).
+const FLOW_PATH_DASH: Partial<Record<ArrowFlow, string>> = {
+  dashes: '8 6',
+  beads: '0.1 12',
+  draw: '1 1',
+  wind: '16 10',
+};
+// 'comet' renders the head plus three trailing dots (decreasing size + opacity,
+// staggered along the path) so it reads as a glowing dot with a fading tail.
+const COMET_DOTS = [0, 1, 2, 3];
 
 // The on-canvas arrow grips (endpoints, curve / elbow bend points) are fixed
 // SVG shapes a few px across — fine for a mouse, fiddly for a fingertip. On
@@ -189,20 +204,23 @@ function ArrowViewImpl({
   // flow / speed change (a speed change restarts the CSS animation).
   const flowPathRef = useRef<SVGPathElement>(null);
   const flowDotRef = useRef<SVGCircleElement>(null);
+  // 'comet' is a group of dots; pin its whole subtree (each trailing dot keeps
+  // its negative animation-delay, so they stay a phase-locked tail).
+  const flowCometRef = useRef<SVGGElement>(null);
   useEffect(() => {
     if (!arrow.flow || typeof window === 'undefined') return;
     const raf = window.requestAnimationFrame(() => {
-      const pin = (node: Element | null) =>
-        node?.getAnimations().forEach((a) => {
-          try {
-            a.startTime = 0;
-          } catch {
-            // Some engines disallow setting startTime on a CSS animation; the
-            // arrow still flows, just not phase-locked. Best-effort.
-          }
-        });
-      pin(flowPathRef.current);
-      pin(flowDotRef.current);
+      const pin = (a: Animation) => {
+        try {
+          a.startTime = 0;
+        } catch {
+          // Some engines disallow setting startTime on a CSS animation; the
+          // arrow still flows, just not phase-locked. Best-effort.
+        }
+      };
+      flowPathRef.current?.getAnimations().forEach(pin);
+      flowDotRef.current?.getAnimations().forEach(pin);
+      flowCometRef.current?.getAnimations({ subtree: true }).forEach(pin);
     });
     return () => window.cancelAnimationFrame(raf);
   }, [arrow.flow, arrow.flowSpeed]);
@@ -309,6 +327,9 @@ function ArrowViewImpl({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
+        // 'draw' normalises the path length to 1 so its reveal dash maths is
+        // length-independent (see FLOW_PATH_DASH + lvd-arrow-draw).
+        pathLength={arrow.flow === 'draw' ? 1 : undefined}
         // Flowing arrow (spec/09): dashes / beads march a fixed pattern along
         // the path (the class animates stroke-dashoffset), overriding the
         // static strokeStyle dasharray; pulse / grow / glow animate the line in
@@ -405,6 +426,35 @@ function ArrowViewImpl({
           }
           aria-hidden
         />
+      ) : null}
+
+      {/* Flowing arrow (spec/09), 'comet': a glowing dot trailing a fading tail.
+          Same offset-path travel as 'dots' but a fleet of dots, each lagging
+          the head by a fixed fraction of the loop (negative animation-delay)
+          and shrinking / fading, so it reads as a comet. */}
+      {arrow.flow === 'comet' ? (
+        <g ref={flowCometRef} aria-hidden>
+          {COMET_DOTS.map((i) => (
+            <circle
+              key={i}
+              r={Math.max(1.5, strokeWidth * (1.7 - i * 0.32))}
+              fill={baseStroke}
+              className="lvd-arrow-dot"
+              style={
+                {
+                  offsetPath: `path('${pathD}')`,
+                  offsetRotate: '0deg',
+                  pointerEvents: 'none',
+                  opacity: 1 - i * 0.22,
+                  // Lag scales with the speed factor so the tail length stays
+                  // constant across slow / normal / fast.
+                  animationDelay: `${-0.1 * i * flowFactor}s`,
+                  '--lvd-flow-speed': flowFactor,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </g>
       ) : null}
 
       {showLabel ? (

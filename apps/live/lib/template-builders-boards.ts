@@ -395,6 +395,8 @@ export function buildSwot(cx: number, cy: number): Element[] {
     textSize: 'md',
     textBold: true,
     textAlignX: 'center',
+    // The subject under analysis ties all four quadrants together → hero preset.
+    colorPreset: 'bold',
   });
 
   return elements;

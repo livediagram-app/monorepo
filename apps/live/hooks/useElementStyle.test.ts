@@ -203,17 +203,26 @@ describe('useElementStyle shape style presets (spec/48)', () => {
     const a = createShape('square', 0, 0);
     const { style, result } = harness([a], new Set([a.id]));
 
-    style.applyShapeColorPresetSelected({ fill: '#fee2e2', stroke: '#ef4444', text: '#7f1d1d' });
+    style.applyShapeColorPresetSelected({
+      id: 'bold',
+      name: 'Bold',
+      fill: '#fee2e2',
+      stroke: '#ef4444',
+      text: '#7f1d1d',
+    });
 
     const el = result()[0] as {
       fillColor?: string;
       strokeColor?: string;
       textColor?: string;
       strokeStyle?: string;
+      colorPreset?: string;
     };
     expect(el.fillColor).toBe('#fee2e2');
     expect(el.strokeColor).toBe('#ef4444');
     expect(el.textColor).toBe('#7f1d1d');
+    // The preset id is recorded so a theme change can re-derive it (spec/48).
+    expect(el.colorPreset).toBe('bold');
     // Border fields are independent of the colour preset.
     expect(el.strokeStyle).toBeUndefined();
   });
@@ -240,7 +249,13 @@ describe('useElementStyle shape style presets (spec/48)', () => {
     const a = createShape('square', 0, 0);
     const { style, result } = harness([a], new Set([a.id]));
 
-    style.applyShapeColorPresetSelected({ fill: '#fee2e2', stroke: '#ef4444', text: '#7f1d1d' });
+    style.applyShapeColorPresetSelected({
+      id: 'bold',
+      name: 'Bold',
+      fill: '#fee2e2',
+      stroke: '#ef4444',
+      text: '#7f1d1d',
+    });
     style.applyShapeBorderPresetSelected({ stroke: 'thick', style: 'dotted', radius: 'lg' });
     style.resetShapeStyleSelected();
 
@@ -248,10 +263,31 @@ describe('useElementStyle shape style presets (spec/48)', () => {
       strokeWidth?: string;
       strokeStyle?: string;
       borderRadius?: string;
+      colorPreset?: string;
     };
     expect(el.strokeWidth).toBeUndefined();
     expect(el.strokeStyle).toBeUndefined();
     expect(el.borderRadius).toBeUndefined();
+    // Reset also drops the colour-preset binding (spec/48).
+    expect(el.colorPreset).toBeUndefined();
+  });
+
+  it('clears the colour-preset binding when a colour is hand-edited', () => {
+    const a = createShape('square', 0, 0);
+    const { style, result } = harness([a], new Set([a.id]));
+
+    style.applyShapeColorPresetSelected({
+      id: 'bold',
+      name: 'Bold',
+      fill: '#fee2e2',
+      stroke: '#ef4444',
+      text: '#7f1d1d',
+    });
+    style.setFillColorSelected('#123456');
+
+    const el = result()[0] as { fillColor?: string; colorPreset?: string };
+    expect(el.fillColor).toBe('#123456');
+    expect(el.colorPreset).toBeUndefined();
   });
 });
 

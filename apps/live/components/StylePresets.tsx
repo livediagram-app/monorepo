@@ -24,6 +24,7 @@ import type { ShapeColorPreset } from '@/lib/themes';
 import { SizeButton } from '@/components/palette-controls';
 import { MenuActionButton } from '@/components/PortalMenu';
 import { ShapeGlyph } from '@/components/shape-icon';
+import { onMouseHover, useRevertOnUnmount } from '@/components/hover-preview';
 
 // ── Static preset table ─────────────────────────────────────────────────
 
@@ -143,6 +144,9 @@ export function ShapePresets({
   current,
   onApplyColor,
   onApplyBorder,
+  onPreviewColor,
+  onPreviewBorder,
+  onPreviewEnd,
   onReset,
 }: {
   // The selected shape's kind, so the preview tiles match it.
@@ -153,14 +157,22 @@ export function ShapePresets({
     fillColor?: string;
     strokeColor?: string;
     textColor?: string;
+    // The bound colour-preset id (spec/48), when the shape was styled from a
+    // preset — the robust way to highlight the active colour tile across themes.
+    colorPreset?: string;
     strokeWidth?: BorderStroke;
     strokeStyle?: BorderStyle;
     borderRadius?: BorderRadius;
   };
   onApplyColor: (preset: ShapeColorPreset) => void;
   onApplyBorder: (preset: ShapeBorderPreset) => void;
+  // Hover preview (desktop pointer only): show the preset live, revert on leave.
+  onPreviewColor: (preset: ShapeColorPreset) => void;
+  onPreviewBorder: (preset: ShapeBorderPreset) => void;
+  onPreviewEnd: () => void;
   onReset: () => void;
 }) {
+  useRevertOnUnmount(onPreviewEnd);
   const eq = (a?: string, b?: string) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
   return (
     <div className="px-2 py-1">
@@ -168,13 +180,19 @@ export function ShapePresets({
       <div className="mb-1.5 grid grid-cols-4 gap-1">
         {colorPresets.map((p) => (
           <SizeButton
-            key={p.name}
+            key={p.id}
             active={
-              eq(current.fillColor, p.fill) &&
-              eq(current.strokeColor, p.stroke) &&
-              eq(current.textColor, p.text)
+              // Bound by preset id when the shape carries one (tracks across
+              // themes); otherwise fall back to an exact colour-triple match.
+              current.colorPreset
+                ? current.colorPreset === p.id
+                : eq(current.fillColor, p.fill) &&
+                  eq(current.strokeColor, p.stroke) &&
+                  eq(current.textColor, p.text)
             }
             onClick={() => onApplyColor(p)}
+            onPointerEnter={onMouseHover(() => onPreviewColor(p))}
+            onPointerLeave={onMouseHover(onPreviewEnd)}
           >
             <PresetLabel name={p.name}>
               <ColorPresetSwatch preset={p} shape={shape} />
@@ -193,6 +211,8 @@ export function ShapePresets({
               (current.borderRadius ?? 'sm') === p.radius
             }
             onClick={() => onApplyBorder(p)}
+            onPointerEnter={onMouseHover(() => onPreviewBorder(p))}
+            onPointerLeave={onMouseHover(onPreviewEnd)}
           >
             <PresetLabel name={p.name}>
               <BorderPresetSwatch preset={p} shape={shape} />
@@ -235,13 +255,19 @@ function ArrowPresetSwatch({ preset }: { preset: ArrowPreset }) {
 export function ArrowPresets({
   current,
   onApply,
+  onPreview,
+  onPreviewEnd,
   onReset,
 }: {
   // The arrow's current style, to highlight a matching preset.
   current: { strokeStyle?: BorderStyle; flow?: ArrowFlow };
   onApply: (preset: ArrowPreset) => void;
+  // Hover preview (desktop pointer only): show the preset live, revert on leave.
+  onPreview: (preset: ArrowPreset) => void;
+  onPreviewEnd: () => void;
   onReset: () => void;
 }) {
+  useRevertOnUnmount(onPreviewEnd);
   return (
     <div className="px-2 py-1.5">
       <div className="grid grid-cols-4 gap-1">
@@ -250,6 +276,8 @@ export function ArrowPresets({
             key={p.name}
             active={(current.strokeStyle ?? 'solid') === p.style && current.flow === p.flow}
             onClick={() => onApply(p)}
+            onPointerEnter={onMouseHover(() => onPreview(p))}
+            onPointerLeave={onMouseHover(onPreviewEnd)}
           >
             <PresetLabel name={p.name}>
               <ArrowPresetSwatch preset={p} />

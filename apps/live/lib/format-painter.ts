@@ -82,6 +82,7 @@ export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement
     strokeWidth?: BorderStroke;
     strokeStyle?: BorderStyle;
     borderRadius?: BorderRadius;
+    colorPreset?: string;
     font?: string;
     richText?: TextRun[];
   };
@@ -95,6 +96,10 @@ export function paintableBoxedFields(source: BoxedElement): Partial<BoxedElement
     opacity: source.opacity,
     fillColor: source.fillColor,
     strokeColor: source.strokeColor,
+    // Colour-preset binding (spec/48): carried alongside the colours so a
+    // painted shape tracks the theme exactly like the source did. A target
+    // that isn't a shape harmlessly ignores the stray key.
+    colorPreset: ext.colorPreset,
     textColor: uniformRunValue(rt, 'color') ?? source.textColor,
     textSize: uniformRunValue(rt, 'size') ?? source.textSize,
     textAlignX: source.textAlignX,

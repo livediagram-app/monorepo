@@ -235,16 +235,32 @@ type EditorContextMenuProps = {
   onApplyShapeColorPreset: (preset: ShapeColorPreset) => void;
   onApplyShapeBorderPreset: (preset: ShapeBorderPreset) => void;
   onResetShapeStyle: () => void;
+  // Hover-to-preview (spec/48): on a desktop pointer, hovering a preset tile
+  // shows it live on the selected element; it only sticks on click. The
+  // `onPreview*` callbacks apply the ephemeral preview; `onPreviewStyleEnd`
+  // reverts it when the pointer leaves the tile without clicking. Shared across
+  // the shape colour / border and arrow preset rows.
+  onPreviewShapeColorPreset: (preset: ShapeColorPreset) => void;
+  onPreviewShapeBorderPreset: (preset: ShapeBorderPreset) => void;
+  onPreviewArrowPreset: (preset: ArrowPreset) => void;
+  onPreviewStyleEnd: () => void;
   // Arrow style presets (spec/48): one-click line looks (pattern / thickness /
   // optional flow animation) for the selected arrow, plus a reset.
   onApplyArrowPreset: (preset: ArrowPreset) => void;
   onResetArrowStyle: () => void;
-  // Animated elements (spec/09): a looping animation on boxed elements, and a
-  // flow animation on arrows. `null` clears it.
+  // Animated elements (spec/09): a looping animation on boxed elements, a flow
+  // animation on arrows, and a glyph animation on icons. `null` clears it. The
+  // onSet* commit; the onPreview* play it live on hover (desktop) and
+  // onAnimationPreviewEnd reverts when the pointer leaves the tile — same
+  // hover-to-preview flow as the style presets above (shared useStylePreview).
   onSetAnimation: (value: ElementAnimation | null) => void;
   onSetArrowFlow: (value: ArrowFlow | null) => void;
   onSetIconAnimation: (value: IconAnimation | null) => void;
   onSetIconAnimationSpeed: (value: AnimationSpeed) => void;
+  onPreviewAnimation: (value: ElementAnimation | null) => void;
+  onPreviewArrowFlow: (value: ArrowFlow | null) => void;
+  onPreviewIconAnimation: (value: IconAnimation | null) => void;
+  onAnimationPreviewEnd: () => void;
   onSetProgress: (value: number) => void;
   onSetProgressAnim: (value: ProgressAnim | null) => void;
   onSetProgressAnimSpeed: (value: AnimationSpeed) => void;
@@ -385,6 +401,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                     speed={boxedSel[0]!.animationSpeed ?? 'normal'}
                     onSet={props.onSetAnimation}
                     onSetSpeed={props.onSetAnimationSpeed}
+                    onPreview={props.onPreviewAnimation}
+                    onPreviewEnd={props.onAnimationPreviewEnd}
                   />
                 </MenuAccordionSection>
               ) : null}
@@ -399,6 +417,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                     speed={arrowSrc.flowSpeed ?? 'normal'}
                     onSet={props.onSetArrowFlow}
                     onSetSpeed={props.onSetFlowSpeed}
+                    onPreview={props.onPreviewArrowFlow}
+                    onPreviewEnd={props.onAnimationPreviewEnd}
                   />
                 </MenuAccordionSection>
               ) : null}
@@ -713,12 +733,16 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 fillColor: (target as { fillColor?: string }).fillColor,
                 strokeColor: (target as { strokeColor?: string }).strokeColor,
                 textColor: (target as { textColor?: string }).textColor,
+                colorPreset: (target as { colorPreset?: string }).colorPreset,
                 strokeWidth: (target as { strokeWidth?: BorderStroke }).strokeWidth,
                 strokeStyle: (target as { strokeStyle?: BorderStyle }).strokeStyle,
                 borderRadius: (target as { borderRadius?: BorderRadius }).borderRadius,
               }}
               onApplyColor={(p) => props.onApplyShapeColorPreset(p)}
               onApplyBorder={(p) => props.onApplyShapeBorderPreset(p)}
+              onPreviewColor={(p) => props.onPreviewShapeColorPreset(p)}
+              onPreviewBorder={(p) => props.onPreviewShapeBorderPreset(p)}
+              onPreviewEnd={props.onPreviewStyleEnd}
               onReset={() => {
                 props.onResetShapeStyle();
                 onClose();
@@ -738,6 +762,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
             <ArrowPresets
               current={{ strokeStyle: target.strokeStyle, flow: target.flow }}
               onApply={(p) => props.onApplyArrowPreset(p)}
+              onPreview={(p) => props.onPreviewArrowPreset(p)}
+              onPreviewEnd={props.onPreviewStyleEnd}
               onReset={() => {
                 props.onResetArrowStyle();
                 onClose();
@@ -871,6 +897,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 }
                 onSet={props.onSetIconAnimation}
                 onSetSpeed={props.onSetIconAnimationSpeed}
+                onPreview={props.onPreviewIconAnimation}
+                onPreviewEnd={props.onAnimationPreviewEnd}
               />
             ) : (
               <AnimationTiles
@@ -878,6 +906,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
                 speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
                 onSet={props.onSetAnimation}
                 onSetSpeed={props.onSetAnimationSpeed}
+                onPreview={props.onPreviewAnimation}
+                onPreviewEnd={props.onAnimationPreviewEnd}
               />
             )}
           </MenuAccordionSection>
@@ -897,6 +927,8 @@ export function EditorContextMenu(props: EditorContextMenuProps) {
               speed={(target as { flowSpeed?: AnimationSpeed }).flowSpeed ?? 'normal'}
               onSet={props.onSetArrowFlow}
               onSetSpeed={props.onSetFlowSpeed}
+              onPreview={props.onPreviewArrowFlow}
+              onPreviewEnd={props.onAnimationPreviewEnd}
             />
           </MenuAccordionSection>
         ) : null}
