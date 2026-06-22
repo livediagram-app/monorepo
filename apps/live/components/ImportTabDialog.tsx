@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 import { useEscape } from '@/hooks/useEscape';
 import type { ImportOutcome } from '@/lib/import-tab';
 
@@ -63,6 +64,14 @@ export function ImportTabDialog({ tabName, onImport, onClose }: ImportTabDialogP
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Pick a format to import a file into the current tab.
             </p>
+            <div className="mt-1.5">
+              <HelpArticleLink
+                article="importTabs"
+                variant="text"
+                title="Importing tabs"
+                description="What you can import and how it replaces the tab."
+              />
+            </div>
           </div>
           <button
             type="button"
@@ -101,6 +110,16 @@ export function ImportTabDialog({ tabName, onImport, onClose }: ImportTabDialogP
               onClick={() => void handle('markdown')}
             />
           </div>
+          <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+            Importing a Markdown outline?{' '}
+            <HelpArticleLink
+              article="markdownImport"
+              variant="text"
+              label="See how it maps to a tree"
+              title="Markdown import"
+              description="How headings and lists become a themed tree diagram."
+            />
+          </p>
           {error ? (
             <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
               {error}

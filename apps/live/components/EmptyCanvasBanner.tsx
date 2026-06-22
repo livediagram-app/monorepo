@@ -1,5 +1,7 @@
 'use client';
 
+import { HelpArticleLink } from './HelpArticleLink';
+
 // Empty-canvas hint (spec/14). A subdued bottom banner shown while the active
 // tab has no elements — replacing the old centre-of-canvas card so the hint
 // stays unobtrusive (a truly blank diagram reads as blank, not as a
@@ -53,13 +55,20 @@ export function EmptyCanvasBanner({
           </p>
         </div>
         {readOnly ? null : (
-          <button
-            type="button"
-            onClick={onQuickStart}
-            className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
-          >
-            Quick Start
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <HelpArticleLink
+              article="yourFirstDiagram"
+              title="Your first diagram"
+              description="A short walkthrough of building your first diagram."
+            />
+            <button
+              type="button"
+              onClick={onQuickStart}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/15"
+            >
+              Quick Start
+            </button>
+          </div>
         )}
       </div>
     </div>

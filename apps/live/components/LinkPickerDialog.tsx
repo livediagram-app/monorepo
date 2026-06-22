@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 import { useEscape } from '@/hooks/useEscape';
 import { normaliseUrl } from '@/lib/url-safety';
 import type { ElementLink } from '@livediagram/diagram';
@@ -101,6 +102,18 @@ export function LinkPickerDialog({
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Jump to a tab, open another diagram, or go to a web address.
             </p>
+            <div className="mt-1.5">
+              <HelpArticleLink
+                article={mode === 'tab' ? 'linkingTabs' : 'links'}
+                variant="text"
+                title={mode === 'tab' ? 'Linking tabs' : 'Links'}
+                description={
+                  mode === 'tab'
+                    ? 'How linking to another tab works.'
+                    : 'Linking elements to tabs, diagrams, and web addresses.'
+                }
+              />
+            </div>
           </div>
           <button
             type="button"

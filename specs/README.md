@@ -63,6 +63,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 53  | [Pie chart](53-pie-chart.md)                                       | Data palette category + pie chart element: editable label/value rows + chart-specific slice animations     |
 | 54  | [Live image share link](54-live-image-share.md)                    | Proposal: share-link-scoped `<img>`-able SVG endpoint that re-renders the diagram live (shared renderer)   |
 | 55  | [Help app](55-help-app.md)                                         | Standalone `/help` help centre (MDX articles + client search), in livediagram's light brand                |
+| 56  | [Contextual help links](56-contextual-help-links.md)               | Reusable `HelpArticleLink` deep-linking editor surfaces to their help article; `HELP_ARTICLES` slug source |
 
 ## Workflow
 

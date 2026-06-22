@@ -17,6 +17,7 @@ import type { BackgroundPattern } from '@livediagram/diagram';
 import { useEscape } from '@/hooks/useEscape';
 import { CanvasStyleControls } from './CanvasStyleControls';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 import { CustomThemePicker } from './CustomThemePicker';
 import { ResetIcon } from './palette-icons';
 import { Portal } from './Portal';
@@ -88,9 +89,20 @@ export function CanvasThemeDialog({
               reads as a single unit rather than two stacked divider rows. */}
           <div className="flex flex-col gap-3 border-b border-slate-200 px-4 pb-3 pt-3 dark:border-slate-800">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Tab Appearance
-              </h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Tab Appearance
+                </h2>
+                <HelpArticleLink
+                  article={tab === 'canvas' ? 'changingTheBackground' : 'changingTheme'}
+                  title={tab === 'canvas' ? 'Canvas background' : 'Themes'}
+                  description={
+                    tab === 'canvas'
+                      ? 'How to change the canvas background and pattern.'
+                      : 'How to switch and customise tab themes.'
+                  }
+                />
+              </div>
               <button
                 type="button"
                 onClick={onClose}

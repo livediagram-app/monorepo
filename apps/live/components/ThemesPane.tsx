@@ -15,6 +15,7 @@ import { materialiseCustomTheme } from '@/lib/custom-theme-registry';
 import { useCustomThemes } from './CustomThemeProvider';
 import { CustomThemeBuilder, type CustomThemeDraft } from './CustomThemeBuilder';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 import { Portal } from './Portal';
 import { ThemeSwatch } from './ThemeSwatch';
 import { Tooltip } from './Tooltip';
@@ -66,6 +67,14 @@ export function ThemesPane() {
           <p className="mt-1 text-xs text-slate-400">
             Build your own palette and reuse it across diagrams.
           </p>
+          <div className="mt-3 flex justify-center">
+            <HelpArticleLink
+              article="customThemes"
+              variant="text"
+              title="Custom themes"
+              description="How to build a palette and reuse it across diagrams."
+            />
+          </div>
           <button
             type="button"
             onClick={() => setBuilding('new')}

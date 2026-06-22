@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { CloseIcon } from './CloseIcon';
 import { Portal } from './Portal';
+import { HelpArticleLink } from './HelpArticleLink';
 import { useEscape } from '@/hooks/useEscape';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { track } from '@/lib/telemetry';
@@ -79,6 +80,14 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                   track('UI', 'Toggled', v ? 'MinimalPanelsOn' : 'MinimalPanelsOff');
                   onChange({ ...settings, minimalPanels: v });
                 }}
+                help={
+                  <HelpArticleLink
+                    article="minimalPanels"
+                    variant="text"
+                    title="Minimal panels"
+                    description="How the compact button bar works."
+                  />
+                }
               />
             </SettingsGroup>
             <SettingsGroup {...groupProps('Notifications')}>
@@ -113,6 +122,14 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                     track('AI', 'Toggled', v ? 'AiOn' : 'AiOff');
                     onChange({ ...settings, aiAssistanceEnabled: v });
                   }}
+                  help={
+                    <HelpArticleLink
+                      article="aiTools"
+                      variant="text"
+                      title="AI tools"
+                      description="What the Build, Ask, Review, and Clean modes do."
+                    />
+                  }
                 />
               </SettingsGroup>
             )}
@@ -125,6 +142,14 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                   track('UI', 'Toggled', v ? 'TelemetryOn' : 'TelemetryOff');
                   onChange({ ...settings, telemetryEnabled: v });
                 }}
+                help={
+                  <HelpArticleLink
+                    article="whatWeCollect"
+                    variant="text"
+                    title="What we collect"
+                    description="Exactly which anonymous events are sent, and what isn't."
+                  />
+                }
               />
             </SettingsGroup>
           </div>
@@ -182,13 +207,17 @@ function ToggleRow({
   description,
   checked,
   onChange,
+  help,
 }: {
   label: string;
   description: string;
   checked: boolean;
   onChange: (next: boolean) => void;
+  // Optional "Learn more" link rendered beneath the row, outside the
+  // <label> so clicking it doesn't toggle the checkbox.
+  help?: ReactNode;
 }) {
-  return (
+  const row = (
     <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 transition hover:border-brand-300 dark:border-slate-700 dark:hover:border-brand-500/60">
       <input
         type="checkbox"
@@ -203,6 +232,13 @@ function ToggleRow({
         </span>
       </span>
     </label>
+  );
+  if (!help) return row;
+  return (
+    <div className="flex flex-col gap-1">
+      {row}
+      <div className="pl-3">{help}</div>
+    </div>
   );
 }
 

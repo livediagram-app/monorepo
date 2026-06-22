@@ -5,6 +5,7 @@ import type { ChangeLogEntry } from '@/lib/api-client';
 import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from './EditorHeader';
 import { TrashIcon } from './explorer-icons';
+import { HelpArticleLink } from './HelpArticleLink';
 import { MovablePanel } from './MovablePanel';
 import { Tooltip } from './Tooltip';
 
@@ -82,6 +83,13 @@ function ActivityPanelImpl({
       onMoveTo={onMoveTo}
       onMinimize={onToggleMinimized}
       headerExtra={<SaveStatusBadge status={saveStatus} savedAt={savedAt} />}
+      headerActions={
+        <HelpArticleLink
+          article="revertingChanges"
+          title="Activity & revert"
+          description="How the change log works and how to revert an edit."
+        />
+      }
     >
       <div className="flex flex-1 flex-col gap-2 px-3 pb-3 pt-1">
         {/* Undo / Redo bar lives at the top so the most common actions

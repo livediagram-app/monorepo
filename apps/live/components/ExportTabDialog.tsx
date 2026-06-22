@@ -12,6 +12,7 @@ import {
   exportTabAsSvg,
 } from '@/lib/export-tab';
 import { track } from '@/lib/telemetry';
+import { HelpArticleLink } from './HelpArticleLink';
 
 // Telemetry (spec/22): map the internal format key to the public label
 // the dashboard shows. 'file' is the portable .json export.
@@ -111,6 +112,14 @@ export function ExportTabDialog({
                 ? 'Pick a format to download the selected elements.'
                 : 'Pick a format to download the current tab.'}
             </p>
+            <div className="mt-1.5">
+              <HelpArticleLink
+                article="exportingDiagrams"
+                variant="text"
+                title="Exporting diagrams"
+                description="What each export format is for and how to use it."
+              />
+            </div>
           </div>
           <button
             type="button"
@@ -161,26 +170,33 @@ export function ExportTabDialog({
           </div>
           {/* Image-format option: an iOS-style toggle to tilt PNG / SVG / PDF
               into the isometric projection (spec/45 / 48). Off by default. */}
-          <button
-            type="button"
-            onClick={() => {
-              // Fire before the flip so an opt-out still reaches the wire.
-              track('UI', 'Toggled', 'IsometricExport');
-              setIsometric((v) => !v);
-            }}
-            aria-pressed={isometric}
-            className="mt-3 flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
-          >
-            <span className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                Isometric view
+          <div className="mt-3 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                // Fire before the flip so an opt-out still reaches the wire.
+                track('UI', 'Toggled', 'IsometricExport');
+                setIsometric((v) => !v);
+              }}
+              aria-pressed={isometric}
+              className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
+            >
+              <span className="flex flex-col">
+                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                  Isometric view
+                </span>
+                <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                  Tilt the PNG / SVG / PDF into the isometric projection.
+                </span>
               </span>
-              <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                Tilt the PNG / SVG / PDF into the isometric projection.
-              </span>
-            </span>
-            <ToggleSwitch presentational checked={isometric} label="Export isometric view" />
-          </button>
+              <ToggleSwitch presentational checked={isometric} label="Export isometric view" />
+            </button>
+            <HelpArticleLink
+              article="isometricMode"
+              title="Isometric view"
+              description="How the isometric projection works."
+            />
+          </div>
           {/* Image-format option: paint the tab's backdrop pattern (grid / dots
               / …). On by default so the export matches the canvas. */}
           <button

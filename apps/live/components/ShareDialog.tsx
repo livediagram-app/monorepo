@@ -12,6 +12,7 @@ import { useEscape } from '@/hooks/useEscape';
 import { useToast } from '@/hooks/useToast';
 import { TrashIcon } from './explorer-icons';
 import { Tooltip } from './Tooltip';
+import { HelpArticleLink } from './HelpArticleLink';
 
 type ShareDialogProps = {
   participant: Participant;
@@ -222,6 +223,14 @@ export function ShareDialog({
                 Anyone with an editor link joins in real time; a view-only link lets people watch
                 without changing anything.
               </p>
+              <div className="mt-1.5">
+                <HelpArticleLink
+                  article="sharing"
+                  variant="text"
+                  title="Sharing"
+                  description="Roles, real-time collaboration, and how share links work."
+                />
+              </div>
             </div>
             <button
               type="button"
@@ -278,7 +287,14 @@ export function ShareDialog({
             {/* Primary action: mint a link. The empty state below
                 points back up here. */}
             <div className="flex flex-col gap-2">
-              <p className={sectionLabel}>New link</p>
+              <div className="flex items-center gap-1.5">
+                <p className={sectionLabel}>New link</p>
+                <HelpArticleLink
+                  article="shareLinkExpiry"
+                  title="Link expiry"
+                  description="How link lifetime works and where expired links go."
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex flex-1 items-stretch gap-1 rounded-md border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
                   <RoleButton
@@ -475,7 +491,14 @@ export function ShareDialog({
                 actions above, so it sits last. */}
             <div className="flex flex-col gap-4 border-t border-slate-100 pt-4 dark:border-slate-800">
               <div className="flex flex-col gap-1.5">
-                <p className={sectionLabel}>Password</p>
+                <div className="flex items-center gap-1.5">
+                  <p className={sectionLabel}>Password</p>
+                  <HelpArticleLink
+                    article="sharePasswords"
+                    title="Share passwords"
+                    description="How the optional password gate protects every link."
+                  />
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"

@@ -5,6 +5,7 @@ import type { Element } from '@livediagram/diagram';
 import { apiAiStream, type AiMode, type AiConversationTurn } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 import { Tooltip } from './Tooltip';
+import { HelpArticleLink } from './HelpArticleLink';
 
 type Props = {
   contextElements: Element[]; // all tab elements
@@ -207,23 +208,30 @@ export function AiPanelContent({
   return (
     <div className="flex flex-col">
       {/* Mode tabs */}
-      <div className="flex gap-0.5 border-b border-slate-100 px-2 py-1.5 dark:border-slate-800">
-        {MODES.map((m) => (
-          <Tooltip key={m.id} title={m.label} description={m.tooltip}>
-            <button
-              type="button"
-              onClick={() => setMode(m.id)}
-              className={
-                mode === m.id
-                  ? 'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold bg-brand-500 text-white transition'
-                  : 'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
-              }
-            >
-              {m.icon}
-              {m.label}
-            </button>
-          </Tooltip>
-        ))}
+      <div className="flex items-center justify-between gap-1 border-b border-slate-100 px-2 py-1.5 dark:border-slate-800">
+        <div className="flex gap-0.5">
+          {MODES.map((m) => (
+            <Tooltip key={m.id} title={m.label} description={m.tooltip}>
+              <button
+                type="button"
+                onClick={() => setMode(m.id)}
+                className={
+                  mode === m.id
+                    ? 'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold bg-brand-500 text-white transition'
+                    : 'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+                }
+              >
+                {m.icon}
+                {m.label}
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+        <HelpArticleLink
+          article="aiTools"
+          title="AI tools"
+          description="What Build, Ask, Review, and Clean each do."
+        />
       </div>
 
       {/* Suggestions — only for modes where quick-action shortcuts make sense */}

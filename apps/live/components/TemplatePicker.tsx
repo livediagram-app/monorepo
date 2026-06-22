@@ -11,6 +11,7 @@ import { BackBar } from './ThemeCategoryBrowser';
 import { CustomThemePicker } from './CustomThemePicker';
 import { CategoryCard, TemplateCard } from './template-picker-cards';
 import { Tooltip } from './Tooltip';
+import { HelpArticleLink } from './HelpArticleLink';
 
 type TemplatePickerProps = {
   // 'welcome' — first-run modal: identity, template, theme, confirm.
@@ -225,6 +226,16 @@ export function TemplatePicker({
                     ? 'This is the name from your account; others will see it on this diagram.'
                     : 'Pick the name people will see while you collaborate on this diagram.'}
               </p>
+              {showTemplates ? (
+                <div className="mt-1.5">
+                  <HelpArticleLink
+                    article="templates"
+                    variant="text"
+                    title="Templates"
+                    description="How templates give you a themed starting point."
+                  />
+                </div>
+              ) : null}
             </div>
             <button
               type="button"

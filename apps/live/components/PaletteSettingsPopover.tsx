@@ -1,8 +1,9 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Portal } from './Portal';
 import { Tooltip } from './Tooltip';
+import { HelpArticleLink } from './HelpArticleLink';
 import { ToggleSwitch } from './palette-controls';
 import { GearIcon } from './tab-bar-icons';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -130,6 +131,13 @@ export function PaletteSettingsPopover({
                   !autoRebind ? 'AutoRebindOn' : 'AutoRebindOff',
                 )
               }
+              help={
+                <HelpArticleLink
+                  article="autoAttachArrows"
+                  title="Auto-attach arrows"
+                  description="How arrows re-pin to shapes as they move."
+                />
+              }
             />
             <SettingRow
               label="Alignment guides"
@@ -141,6 +149,13 @@ export function PaletteSettingsPopover({
                   !alignment ? 'AlignmentGuidesOn' : 'AlignmentGuidesOff',
                 )
               }
+              help={
+                <HelpArticleLink
+                  article="alignmentGuides"
+                  title="Alignment guides"
+                  description="How snap lines help you line elements up."
+                />
+              }
             />
             {onToggleMinimalPanels ? (
               <SettingRow
@@ -149,6 +164,13 @@ export function PaletteSettingsPopover({
                 checked={!!minimalPanels}
                 // Telemetry + persistence live in the caller's handler.
                 onToggle={onToggleMinimalPanels}
+                help={
+                  <HelpArticleLink
+                    article="minimalPanels"
+                    title="Minimal panels"
+                    description="The compact button bar that replaces floating panels."
+                  />
+                }
               />
             ) : null}
             {onResetPosition ? (
@@ -218,13 +240,17 @@ function SettingRow({
   hint,
   checked,
   onToggle,
+  help,
 }: {
   label: string;
   hint: string;
   checked: boolean;
   onToggle: () => void;
+  // Optional help affordance rendered beside (not inside) the row button,
+  // so the `?` link isn't nested in the row's interactive element.
+  help?: ReactNode;
 }) {
-  return (
+  const row = (
     <button
       type="button"
       role="switch"
@@ -238,5 +264,12 @@ function SettingRow({
       </span>
       <ToggleSwitch checked={checked} label={label} presentational />
     </button>
+  );
+  if (!help) return row;
+  return (
+    <div className="flex items-center gap-1 pr-1">
+      <span className="min-w-0 flex-1">{row}</span>
+      {help}
+    </div>
   );
 }

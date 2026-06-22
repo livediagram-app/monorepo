@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useEscape } from '@/hooks/useEscape';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 
 // Keyboard shortcut catalogue + per-device disable toggle. The
 // modal lists every shortcut the editor binds today and lets the
@@ -132,6 +133,14 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               ⌘ = Cmd on Mac, Ctrl on Windows / Linux
             </p>
+            <div className="mt-1.5">
+              <HelpArticleLink
+                article="keyboardShortcuts"
+                variant="text"
+                title="Keyboard shortcuts"
+                description="The full shortcut reference and tips for faster editing."
+              />
+            </div>
           </div>
           <button
             type="button"

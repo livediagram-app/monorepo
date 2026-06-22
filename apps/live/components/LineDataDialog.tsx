@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { LineSeries } from '@livediagram/diagram';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 import { useEscape } from '@/hooks/useEscape';
 import { parseCsvLineData } from '@/lib/csv';
 
@@ -73,6 +74,14 @@ export function LineDataDialog({
               A row per category, a column per series. Or import a CSV (header = series names, first
               column = categories).
             </p>
+            <div className="mt-1.5">
+              <HelpArticleLink
+                article="dataElements"
+                variant="text"
+                title="Data elements"
+                description="Charts and data-driven elements, and how to edit their data."
+              />
+            </div>
           </div>
           <button
             type="button"

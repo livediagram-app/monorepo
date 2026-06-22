@@ -2,6 +2,7 @@
 
 import type { BoxedElement } from '@livediagram/diagram';
 import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
+import { HelpArticleLink } from './HelpArticleLink';
 import { MovablePanel } from './MovablePanel';
 
 export type CommentRow = {
@@ -70,6 +71,13 @@ export function CommentsPanel({
         <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-white">
           {rows.length}
         </span>
+      }
+      headerActions={
+        <HelpArticleLink
+          article="comments"
+          title="Comments"
+          description="Leaving, reading, and resolving comments on elements."
+        />
       }
       position={position}
       defaultCorner="top-right-stacked"

@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Portal } from './Portal';
 import { CloseIcon } from './CloseIcon';
+import { HelpArticleLink } from './HelpArticleLink';
 
 type Reason = {
   icon: ReactNode;
@@ -134,6 +135,14 @@ export function SignInReasonsModal({
           </ul>
 
           <div className="flex shrink-0 flex-col-reverse items-center gap-2 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end dark:border-slate-800">
+            <div className="sm:mr-auto">
+              <HelpArticleLink
+                article="guestVsAccount"
+                variant="text"
+                title="Guest vs account"
+                description="What changes when you sign in, and what stays the same."
+              />
+            </div>
             <button
               type="button"
               onClick={onClose}

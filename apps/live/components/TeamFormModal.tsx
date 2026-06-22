@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Portal } from './Portal';
+import { HelpArticleLink } from './HelpArticleLink';
 
 // Create / edit form for a team (spec/32): name + organisation.
 // Visual sibling of ConfirmDialog (same backdrop, fly-up animation,
@@ -90,6 +91,14 @@ export function TeamFormModal({
               >
                 {title}
               </h2>
+              <div className="mt-1.5">
+                <HelpArticleLink
+                  article="teamRolesAndInvites"
+                  variant="text"
+                  title="Teams"
+                  description="Admin and Member roles, and how invites work."
+                />
+              </div>
               <label className="mt-4 block">
                 <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                   Team name
