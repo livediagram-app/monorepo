@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ShareLinkControls } from '@/components/illustrations/privacy';
 
 export const metadata = helpMetadata({
   title: 'Share Link Security',
@@ -11,6 +12,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Share Link Security" description="Two self-serve controls, a share password and link expiry, that bound who can open a shared diagram and for how long." categoryTitle="Privacy and Security" categorySlug="privacy-and-security">
 
 A share link is a capability: anyone holding the URL has its role. That is what makes sharing frictionless, but it also means a link left lying around keeps working. livediagram gives you two controls to tighten that up, a password on the diagram and an expiry on each link. Both are set from the Share dialog, and both apply to everyone except you, the owner.
+
+<Figure caption="The Share dialog carries both controls: an expiry on each link and a single password on the diagram.">
+  <ShareLinkControls />
+</Figure>
 
 ## Share password
 

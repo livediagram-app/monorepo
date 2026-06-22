@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { SignInCard, MigrateOnSignUp } from '@/components/illustrations/account';
 
 export const metadata = helpMetadata({
   title: 'Signing In',
@@ -21,6 +22,10 @@ There are two routes:
 
 Accounts are free, with no paid tier and nothing to upgrade. After signing in, a returning user lands on the [Explorer](/explorer/recent) to see their existing diagrams, while a brand-new sign-up lands on the new-diagram flow to start building.
 
+<Figure caption="Sign in with an email code, or with Google where it is enabled." width="narrow">
+  <SignInCard />
+</Figure>
+
 Sign-in is an optional capability of livediagram. On self-hosted instances where accounts have not been configured, the sign-in pages show a friendly "not enabled" notice with a "Continue as guest" option, and the editor works exactly as before.
 
 ## Your guest diagrams come with you
@@ -28,6 +33,10 @@ Sign-in is an optional capability of livediagram. On self-hosted instances where
 The best part of signing up is that you keep the work you have already done. When you create an account, the diagrams you built as a guest migrate into it automatically, so nothing is lost.
 
 The migration moves your guest content, including your diagrams, folders, shared-link records, images, and saved preferences, from your per-browser guest id over to your new account. From then on, that content is owned by your account and follows you to any browser or device where you sign in.
+
+<Figure caption="On sign-up, your guest diagrams move from the per-browser id over to your new account.">
+  <MigrateOnSignUp />
+</Figure>
 
 The process runs once, the first time you are signed in, and is safe to repeat: a second attempt simply moves nothing. Once your account syncs everything, the Explorer's sign-in nudge disappears, because there is nothing left to prompt you about.
 

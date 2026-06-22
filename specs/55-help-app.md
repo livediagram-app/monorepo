@@ -63,6 +63,37 @@ Where a feature's name would equal its category slug, the landing slug is distin
 
 There is **no Presentation Mode guide**: spec/31 is a draft and the feature is not built, so the article was unpublished rather than ship documentation for a non-existent feature.
 
+## In-article illustrations
+
+Articles were text-heavy, so each section that benefits from a picture carries a
+**figure**: an inline SVG mock of the real editor surface it describes (the
+palette, a dialog, the tab bar, a flow of shapes, live cursors, ...). They are
+SVG, not screenshots, so they stay crisp, theme with the brand ramp, add zero
+binary assets to the static export, and never drift from a UI rebrand the way a
+captured screenshot would.
+
+The system has three layers, all under `apps/help`:
+
+- **`components/illustrations/primitives.tsx`** — the shared SVG kit (`Scene`,
+  `Shape`, `Arrow`, `SelectionBox`, `Cursor`, `Avatar`, `Panel`, `Dialog`,
+  `Button`, `Tabs`, `Menu`, `Tile`, `Label`, `TextBar`). Every figure composes
+  from these so the house style (white panels, slate borders, sky-blue `brand`
+  accents) lands in one place. This is the no-duplication rule applied to art.
+- **`components/illustrations/<area>.tsx`** — one file per area (canvas, palette,
+  collaboration, ...) exporting named **scene** components (e.g.
+  `CanvasOverview`, `ThemePicker`) built from the primitives. Branch hues beyond
+  brand use the on-brand accent set (emerald / violet / amber / rose / teal /
+  indigo) already used by `featureColours`.
+- **`components/Figure.tsx`** — frames any scene in an "editor viewport" card
+  with an optional caption. Registered globally in `mdx-components.tsx` (like
+  `Tip` / `Note`), so an article only imports the specific scene and writes
+  `<Figure caption="…"><Scene/></Figure>`.
+
+Figures are added to the sections that genuinely benefit (a concrete UI surface,
+a before/after, a spatial relationship), not to every section; reference-only or
+purely conceptual sections stay text. Scenes are reused across articles wherever
+the same surface recurs rather than redrawn.
+
 ## In-editor entry point
 
 The editor's `TabBar` gains a **Help** link on its right edge, beside the existing GitHub link — a plain `<a href="/help/" target="_blank">` (same convention as the GitHub link, no editor-page wiring). It fires `track('UI', 'Opened', 'Help')` (see [spec/22](22-telemetry.md); reuses existing `UI`/`Opened` enum pair). A "Help" link also lives in the help app's own header/footer.

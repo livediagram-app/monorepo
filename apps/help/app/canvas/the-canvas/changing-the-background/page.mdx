@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { CanvasBackground } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Changing the Canvas Background',
@@ -36,6 +37,10 @@ The Canvas tab gathers the backdrop controls:
 - **Size** is a slider (50% to 200%) that scales each pattern tile, so you can make a grid finer or coarser.
 
 The animated patterns are theme-matched and reduced-motion safe: if you prefer reduced motion, each one simply freezes on a pleasant still frame.
+
+<Figure caption="The Tab Appearance dialog with the canvas-colour swatches, one selected and applied live.">
+  <CanvasBackground />
+</Figure>
 
 ## The Theme tab
 

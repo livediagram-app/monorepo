@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { MyWorkTree } from '@/components/illustrations/explorer';
 
 export const metadata = helpMetadata({
   title: 'My Work and Folders',
@@ -24,6 +25,10 @@ Diagrams you have not filed anywhere sit in **Unsorted**, so a freshly created d
 ## Folders
 
 Folders give your library structure without forcing it. Every diagram is in exactly one folder, or none, and folders can nest, so you can build something like "Projects / Customer / Engagement" when you want that depth, or keep everything flat under Unsorted when you do not.
+
+<Figure caption="An Unsorted bucket sits above the folders you create, which can nest as deep as a project needs.">
+  <MyWorkTree />
+</Figure>
 
 <Step n={1}>
   Create a folder with the **New folder** action (the plus beside the My Work heading adds one at

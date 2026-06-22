@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { RevertStep } from '@/components/illustrations/activity-panel';
 
 export const metadata = helpMetadata({
   title: 'Reverting a Change',
@@ -20,6 +21,10 @@ export const metadata = helpMetadata({
 ## What revert does
 
 Revert cancels one specific past change from the history, wherever it sits in the list, and leaves everything that came after it untouched.
+
+<Figure caption="Reverting one past entry cancels just that change while the later rows stay.">
+  <RevertStep />
+</Figure>
 
 ## How it differs from undo
 

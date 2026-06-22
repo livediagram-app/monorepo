@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { SharedWithYou } from '@/components/illustrations/explorer';
 
 export const metadata = helpMetadata({
   title: 'Shared With You',
@@ -20,6 +21,10 @@ export const metadata = helpMetadata({
 ## How a diagram gets here
 
 When you open a [share link](/help/collaboration/sharing/) that someone sent you, that diagram is remembered and added to **Shared with you**. You do not have to do anything extra: opening the link once is enough for it to show up here afterwards. Until you have opened a shared link, the section stays empty, with a prompt explaining that anything shared with you will land here.
+
+<Figure caption="Shared diagrams collect here, each card showing the owner's avatar and a shared badge.">
+  <SharedWithYou />
+</Figure>
 
 ## Working with shared diagrams
 

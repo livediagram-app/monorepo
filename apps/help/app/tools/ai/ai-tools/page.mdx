@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { AiPanel, AiBuild } from '@/components/illustrations/tools';
 
 export const metadata = helpMetadata({
   title: 'Build, Clean, Ask, and Review',
@@ -12,9 +13,17 @@ export const metadata = helpMetadata({
 
 The AI panel has four modes, picked from tabs at the top: **Build**, **Ask**, **Review**, and **Clean**. Each takes the same prompt box, but they treat the diagram differently. Two of them change the canvas, and two of them only read it.
 
+<Figure caption="All four modes share one prompt box; the tabs at the top switch between them.">
+  <AiPanel />
+</Figure>
+
 ## The two modes that change the diagram
 
 **Build** is the starting point for new structure. Describe what you want and it adds the elements to draft it, choosing which nodes and connections to create. Build can also edit elements you already have, so the same mode covers "make me a flow for onboarding" and "rename these boxes and connect them". When Build produces a fresh, connected diagram of several nodes, the editor tidies the geometry for you: peers are sized consistently, ranks are spaced evenly, and arrows are re-pointed so connectors don't wander. Small additive edits keep the placement you already arranged.
+
+<Figure caption="Build turns a short prompt into a fresh, connected diagram that the editor lays out for you.">
+  <AiBuild />
+</Figure>
 
 **Clean** works on what is already on the tab. It fixes label typos and normalises sizes, positions, and styles so a diagram that grew messily reads consistently. Clean respects your layout rather than re-flowing it, so it is the safe choice once a diagram is arranged the way you like.
 

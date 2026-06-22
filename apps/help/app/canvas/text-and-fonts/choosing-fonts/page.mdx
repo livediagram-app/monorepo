@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { FontPicker } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Choosing Fonts',
@@ -35,6 +36,10 @@ The set spans a deliberate spread of voices:
 ## Setting a font on one element
 
 To change a single element's typeface, open its inline text-editing controls and pick a font from the menu. For arrows, the font option lives in the right-click context menu's text controls. Choosing a font sets it on that element alone; choosing the "Tab default" option clears the override so the element follows the tab again.
+
+<Figure caption="The font menu on a selected element, with one typeface highlighted to apply to that element alone.">
+  <FontPicker />
+</Figure>
 
 ## Setting a tab default
 

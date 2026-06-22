@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { articles, categories, articleHref, categoryHref } from '@/lib/articles';
 import { FEATURE_ENTITY_HEX, FEATURE_FALLBACK_HEX } from '@/lib/featureColours';
 import { FEATURE_ICONS } from '@/lib/featureIcons';
+import { Figure } from './components/Figure';
 
 /** Numbered step indicator for walkthroughs. Shows section.step numbering
  *  via CSS counters (see globals.css). */
@@ -120,7 +121,7 @@ function FeatureGrid({ children }: { children: ReactNode }) {
   return <div className="my-5 grid grid-cols-1 gap-3 md:grid-cols-2">{children}</div>;
 }
 
-export { Step, Tip, Note, Feature, FeatureGrid };
+export { Step, Tip, Note, Feature, FeatureGrid, Figure };
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -192,6 +193,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Note,
     Feature,
     FeatureGrid,
+    Figure,
     ...components,
   };
 }

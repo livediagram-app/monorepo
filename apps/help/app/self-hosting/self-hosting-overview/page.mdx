@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { StackOverview } from '@/components/illustrations/self-hosting';
 
 export const metadata = helpMetadata({
   title: 'Self-Hosting Overview',
@@ -30,6 +31,10 @@ livediagram runs entirely on Cloudflare. The frontends are static (built with Ne
 - **Cloudflare Durable Objects** power the per-diagram real-time room.
 
 This means there is no separate database server, no container fleet, and no always-on box to babysit. You deploy Workers and static assets to your Cloudflare account.
+
+<Figure caption="The whole stack: static apps and the router in front of the api Worker, which owns D1 and the Durable Object room.">
+  <StackOverview />
+</Figure>
 
 ## What you keep control of
 

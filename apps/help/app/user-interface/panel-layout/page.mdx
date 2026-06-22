@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { PanelLayout } from '@/components/illustrations/user-interface';
 
 export const metadata = helpMetadata({
   title: 'Panel Layout',
@@ -18,6 +19,10 @@ export const metadata = helpMetadata({
 Everything around the canvas is a **panel**: a small, self-contained piece of the interface that floats over the board rather than taking a fixed slot in a rigid layout. The canvas itself fills the screen, and the panels sit on top of it at the edges, so the diagram always has room to breathe.
 
 You will meet a handful of them: the [palette](/help/palette/) for adding things, the [tab bar](/help/user-interface/tab-bar/) for moving between boards, the [toolbar](/help/user-interface/toolbar/) that appears when something is selected, the [zoom controls](/help/user-interface/zoom-controls/), and the [quick controls](/help/user-interface/quick-controls/) in the corner. Each is covered in its own guide.
+
+<Figure caption="The canvas fills the screen, with the floating panels tucked around its edges: palette top-right, quick controls and tab bar at the bottom, zoom in the corner.">
+  <PanelLayout />
+</Figure>
 
 Panels stay out of the way: they appear when they are useful and tuck back when they are not, and several can be dragged to a spot that suits you. The point is a calm workspace where the canvas is the star and the controls are within reach without crowding it.
 

@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { CleanupBeforeAfter } from '@/components/illustrations/tabs';
 
 export const metadata = helpMetadata({
   title: 'Cleaning Up a Tab',
@@ -25,6 +26,10 @@ Expand the **Cleanup** section in the tab menu to find two tidiers:
 - **Auto Layout** recomputes positions from the arrow graph, laying the diagram out from scratch based on how its elements connect. Reach for it when you want the structure rebuilt rather than nudged.
 
 Both act on the whole tab at once, and like any edit they can be undone if the result is not what you wanted.
+
+<Figure caption="Cleanup takes a scattered, misaligned board and snaps it into tidy rows and columns in one click.">
+  <CleanupBeforeAfter />
+</Figure>
 
 ## More on layout
 

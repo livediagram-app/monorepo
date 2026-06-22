@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { RequestRouting, DeployFlow } from '@/components/illustrations/self-hosting';
 
 export const metadata = helpMetadata({
   title: 'Deploying livediagram',
@@ -28,6 +29,10 @@ There is also a **help** app (the site you are reading now), which is another st
 
 The router Worker inspects the path and forwards accordingly: `/api/*` to the api Worker, `/telemetry` to the dashboard, the editor's known route segments to the live app, and everything else to marketing. Because the router has service bindings to the other apps, those apps must exist before the router can be deployed.
 
+<Figure caption="The router forwards each request to an app by matching the URL path.">
+  <RequestRouting />
+</Figure>
+
 ## How it deploys
 
 Deployments run through **GitHub Actions to Cloudflare Workers**. In broad strokes:
@@ -38,6 +43,10 @@ Deployments run through **GitHub Actions to Cloudflare Workers**. In broad strok
 4. Database migrations are applied to D1 as part of the api deploy, before the new Worker code goes live.
 
 Deploying needs a Cloudflare API token and account id, supplied as repository secrets, never committed to source.
+
+<Figure caption="GitHub Actions deploys the four apps in parallel, then the router last because its bindings depend on them.">
+  <DeployFlow />
+</Figure>
 
 <Note>
   This is a conceptual overview, not a step-by-step runbook. For exact commands, required token

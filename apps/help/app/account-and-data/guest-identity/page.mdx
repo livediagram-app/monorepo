@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { GuestIdentity } from '@/components/illustrations/account';
 
 export const metadata = helpMetadata({
   title: 'How Guest Identity Works',
@@ -15,6 +16,10 @@ The canvas always works without signing in. You can land on [a new diagram](/new
 ## Your per-browser id
 
 The first time you visit, livediagram mints a unique guest id and stores it in your browser's `localStorage`. Every diagram, folder, and image you create as a guest is owned by that id, which is how the app knows which content to show you when you come back.
+
+<Figure caption="A per-browser guest id owns the diagrams you create, with no sign-in required.">
+  <GuestIdentity />
+</Figure>
 
 Two things follow from this:
 

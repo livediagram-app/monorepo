@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { FormatPainter } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Using the Format Painter',
@@ -34,6 +35,10 @@ The format painter works in two steps: pick up a look, then put it down.
 </Step>
 
 Because it copies the styling rather than the content, the target keeps its own text and position. Only its look changes.
+
+<Figure caption="The format painter lifts a styled element's look and applies it to the target, keeping the target's own text.">
+  <FormatPainter />
+</Figure>
 
 ## Painting across many elements
 

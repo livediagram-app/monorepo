@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { DataElementsOverview } from '@/components/illustrations/palette-data';
 
 export const metadata = helpMetadata({
   title: 'Data and Chart Elements',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Data and Chart Elements" description="Turn plain numbers into something you can read at a glance, right on the canvas." categoryTitle="Palette" categorySlug="palette" parentArticle={{ title: "Tools", slug: "tools" }} subArticles={getSubArticles("data-elements")}>
 
 Most diagrams are shapes and arrows, but sometimes you want to show a value: how far along a project is, how good something scored, how a total splits up, or where milestones fall on a line. livediagram has a small family of data elements for exactly that. They live in the **Tools** tab of the floating palette and behave like any other shape once they land, so you can move, resize, recolour, group, and theme them as usual.
+
+<Figure caption="The data elements at a glance: a progress bar and ring, a star rating, a pie chart, and a timeline rail.">
+  <DataElementsOverview />
+</Figure>
 
 ## What you can add
 

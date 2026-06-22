@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { PieChartWithLegend } from '@/components/illustrations/palette-data';
 
 export const metadata = helpMetadata({
   title: 'Pie Chart',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Pie Chart" description="Split a total into slices you edit as plain label and value rows, drawn in your theme's colours." categoryTitle="Palette" categorySlug="palette" parentArticle={{ title: "Data and Chart Elements", slug: "data-elements" }} subArticles={getSubArticles("data-elements").filter((a) => a.slug !== "pie-chart")}>
 
 A pie chart shows how a total divides into parts. Each slice is sized by its value, coloured from your active theme, and labelled, so a reader sees the breakdown at a glance. You build the chart from a short list of label and value rows, with no spreadsheet required.
+
+<Figure caption="A pie chart of four labelled slices with the legend key beside it.">
+  <PieChartWithLegend />
+</Figure>
 
 ## Adding one
 

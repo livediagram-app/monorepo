@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ActivityOverview } from '@/components/illustrations/activity-panel';
 
 export const metadata = helpMetadata({
   title: 'What the Activity Panel Is',
@@ -20,6 +21,10 @@ export const metadata = helpMetadata({
 ## A running record of your diagram
 
 The Activity Panel is a floating, movable panel that keeps a list of every change made to the tab you are looking at. Each line tells you who made the change and when, so you always have a clear picture of how your diagram came to look the way it does.
+
+<Figure caption="The Activity Panel lists recent changes with who, what, and when.">
+  <ActivityOverview />
+</Figure>
 
 ## Opening and moving it
 

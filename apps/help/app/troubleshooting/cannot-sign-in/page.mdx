@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { SignInError } from '@/components/illustrations/troubleshooting';
 
 export const metadata = helpMetadata({
   title: 'Cannot Sign In',
@@ -17,6 +18,10 @@ Before anything else, the good news: **you do not need to sign in to use livedia
 If sign-in is failing and you just want to get on with it, choose **Continue as guest** or head straight to a [new diagram](/new). Everything works: persistence, sharing, and real-time collaboration. When you do sign up later, the diagrams you built as a guest migrate into your new account automatically, so nothing is lost. See [working as a guest](/help/getting-started/guest-vs-account/).
 
 ## Sign-in checklist
+
+<Figure caption="A wrong email code shows an inline error. Request a fresh code with Resend code and retry.">
+  <SignInError />
+</Figure>
 
 1. **Check the email code.** Sign-in uses a 6-digit code sent to your email. Look in spam, and request a fresh code if the first one is slow or expired.
 2. **Use the same email** you originally signed up with. A different address creates or expects a different account.

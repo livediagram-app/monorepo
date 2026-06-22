@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { CustomTheme } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Custom Themes',
@@ -41,6 +42,10 @@ You build a theme from the **Custom** category in the Tab Appearance Theme tab. 
 </Step>
 
 A live preview shows a few sample shapes in your in-progress theme, rendered the same way the canvas would, so you see the result before saving. **Save** stores the theme and applies it to the active tab.
+
+<Figure caption="The theme builder's colour wells for fill, border, text, and canvas, with a Save action.">
+  <CustomTheme />
+</Figure>
 
 ## Saving and reusing
 

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { AddingElements } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Adding Elements',
@@ -42,6 +43,10 @@ The draw-capable tiles (shapes, text, sticky notes, arrows and similar) arm a co
 </Step>
 
 If a boxed element is already selected when you add another, the new one inherits its width and height, so you can chain together similarly-sized nodes quickly. Circles and diamonds are an exception: they are inherently square, so they snap back to a square using the larger inherited dimension.
+
+<Figure caption="Click a shape tile, then drop it on the canvas; it lands selected, ready to move or resize.">
+  <AddingElements />
+</Figure>
 
 ## Centre-placed elements
 

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { PanAndZoom } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Panning and Zooming',
@@ -30,6 +31,10 @@ Panning slides the canvas under your view without moving any elements.
 - **Two-finger trackpad.** A two-finger gesture pans on a trackpad.
 
 When you pan, background patterns track the pan offset and tile seamlessly, so the texture stays continuous however far you travel.
+
+<Figure caption="Drag empty canvas with the grabbing hand to pan, and use the on-screen zoom controls to scale the view.">
+  <PanAndZoom />
+</Figure>
 
 ## Zooming
 

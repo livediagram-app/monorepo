@@ -1,5 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { NewDiagramWelcome } from '@/components/illustrations/getting-started';
+import { AddingElements, CanvasOverview } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Your First Diagram',
@@ -11,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Your First Diagram" description="From a blank canvas to a connected flow in a couple of minutes, with no account required." categoryTitle="Getting Started" categorySlug="getting-started">
 
 The quickest way to learn livediagram is to build something. This walkthrough takes you from a blank canvas to a small connected diagram. You do not need to sign in, the [canvas always works as a guest](/help/getting-started/guest-vs-account/).
+
+<Figure caption="Every diagram starts from the new-diagram welcome flow: pick Blank or a ready-made template.">
+  <NewDiagramWelcome />
+</Figure>
 
 ## Create a new diagram
 
@@ -54,6 +60,10 @@ The quickest way to learn livediagram is to build something. This walkthrough ta
 
 For the full set of shapes, devices, and icons you can drop, see the [Palette](/help/palette/) guides.
 
+<Figure caption="Drag a tile from the Palette onto the canvas to drop a shape, which lands selected.">
+  <AddingElements />
+</Figure>
+
 ## Connect them with arrows
 
 <Step n={1}>
@@ -74,6 +84,10 @@ For the full set of shapes, devices, and icons you can drop, see the [Palette](/
 ## Keep going
 
 You now have a connected diagram. From here you can:
+
+<Figure caption="A few shapes joined by arrows, with the Palette docked top-right: the editor at a glance.">
+  <CanvasOverview />
+</Figure>
 
 - **Move and multi-select.** Drag to reposition; drag on empty canvas to marquee-select several elements at once.
 - **Recolour everything** with a [theme](/help/canvas/themes/).

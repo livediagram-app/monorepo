@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { FormatPainter } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'The Format Painter',
@@ -29,6 +30,10 @@ Picking the Format tool walks you through two phases with an on-screen banner:
 </Step>
 
 Click **Done**, or switch to another tool, to exit. Leaving the tool disarms the base element.
+
+<Figure caption="The format painter lifts a styled element's look and paints it onto the next element you click.">
+  <FormatPainter />
+</Figure>
 
 ## What it copies
 

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { AutoAlignGrid } from '@/components/illustrations/tools';
 
 export const metadata = helpMetadata({
   title: 'Auto-Align',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Auto-Align" description="A quick grid snap for when shapes are nearly lined up but a few pixels off." categoryTitle="Tools" categorySlug="tools" parentArticle={{ title: "Layout Cleanup", slug: "layout-cleanup" }} subArticles={getSubArticles("layout-cleanup").filter((a) => a.slug !== "auto-align")}>
 
 Auto-Align is the gentle tidier. It rounds every boxed element's position and size to a fixed grid, and snaps free arrow endpoints to the same grid, so shapes that were almost aligned become exactly aligned and tiny drift collapses. The use case is "these things are a few pixels off", not "this diagram has no layout".
+
+<Figure caption="Shapes that sit a few pixels off the grid snap onto the nearest grid lines.">
+  <AutoAlignGrid />
+</Figure>
 
 ## What it does
 

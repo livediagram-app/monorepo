@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SearchCreateTab } from '@/components/illustrations/search-panel';
 
 export const metadata = helpMetadata({
   title: 'Creating a Tab from Search',
@@ -23,6 +24,10 @@ As well as finding things, the [search panel](/help/search-panel/the-search-pane
 ## When it appears
 
 The action surfaces when your query reads like a request for a tab, for example typing `tab` or `new`. It only shows inside a diagram, where there is something to add a tab to, never from the Explorer. Because it is an action rather than a match, it does not steal the default `Enter`: an actual match still wins the first slot, and you arrow down to the **Create new tab** result to choose it deliberately.
+
+<Figure caption="A real match keeps the first slot, with Create new tab offered below as a deliberate action.">
+  <SearchCreateTab />
+</Figure>
 
 ## What it does
 

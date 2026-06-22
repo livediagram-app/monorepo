@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SharePassword } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Share Passwords',
@@ -28,6 +29,10 @@ As the owner you always bypass the password. The prompt only ever appears for pe
 </Step>
 
 The password field always shows the current value in plain text, so you can read it back and copy it to whoever needs it. Anyone you have already shared with will be re-prompted on their next action once you set or change it.
+
+<Figure caption="The Share dialog gains a password row beneath the links, gating every link behind one secret.">
+  <SharePassword />
+</Figure>
 
 ## What visitors see
 

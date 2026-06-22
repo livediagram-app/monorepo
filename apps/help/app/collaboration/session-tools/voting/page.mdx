@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { DotVoting } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Dot Voting',
@@ -37,6 +38,10 @@ Dot-voting is controlled from **Tab Settings → Session → Vote**.
 While a vote is open, clicking a votable element places one of your dots on it. Stacking several of your dots on one element is allowed, each one counts separately. You can only spend up to your budget; once it is gone, the banner shows nothing left to place.
 
 Every element with dots shows a **tally pill**. The pill is filled in your brand colour when it holds one of your dots, and clicking it **retracts** one of yours. Non-votable elements still behave normally, so the board stays fully editable during a vote.
+
+<Figure caption="Each votable element carries a tally pill, with a banner tracking dots left and the leader ringed.">
+  <DotVoting />
+</Figure>
 
 **Votable** elements are shapes, sticky notes, and images. Section backdrops (frames), text, freehand drawings, tables, arrows, and annotations are not votable, so you vote on the ideas, not the scaffolding around them.
 

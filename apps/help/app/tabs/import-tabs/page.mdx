@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ImportMenu, ImportWarning } from '@/components/illustrations/tabs';
 
 export const metadata = helpMetadata({
   title: 'Importing a Tab',
@@ -26,11 +27,19 @@ From the tab ellipsis menu, expand the **Content** section and choose **Import**
 
 After you pick a format, a file picker opens; choose the file and the tab updates.
 
+<Figure caption="The Content section of the tab menu opens Import, offering JSON for a full-fidelity round trip or Markdown for an outline.">
+  <ImportMenu />
+</Figure>
+
 ## Import replaces the tab
 
 Importing **replaces the active tab's contents** with what comes in from the file, it does not merge. Because that is destructive, the dialog leads with a warning naming the tab about to be overwritten, so you can back out before committing. If you want to keep the current board, add a new tab first and import into that.
 
 Import is unavailable while a tab is locked, since a locked tab is protected from edits.
+
+<Figure caption="Because importing overwrites the tab, the dialog warns you first and names the tab about to be replaced.">
+  <ImportWarning />
+</Figure>
 
 <Tip>
   Want to combine boards instead of replacing one? Import into a fresh tab, then copy the elements

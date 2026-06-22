@@ -1,6 +1,10 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import {
+  ArrowsConnecting,
+  CurveElbowHandles,
+} from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Arrows',
@@ -23,6 +27,10 @@ Arrows are how a diagram turns a pile of shapes into a flow, a hierarchy, or a r
 
 An arrow links two points on the canvas. An arrow's endpoint can sit freely, pin to a shape's connection anchor (so it tracks the shape as it moves), or attach along another arrow. Drag from a shape's edge to quick-connect, or drop a plain arrow from the palette and position its ends by hand.
 
+<Figure caption="Arrows of different styles wiring shapes into a flow.">
+  <ArrowsConnecting />
+</Figure>
+
 ## Styling the line
 
 From the arrow's context menu you can set its line style, thickness, dash pattern, and arrowheads, and add a label. The controls are independent, so you can mix any line with any head. See [Arrow styles](/help/palette/arrows/arrow-styles/) for the full set.
@@ -30,6 +38,10 @@ From the arrow's context menu you can set its line style, thickness, dash patter
 ## Shaping the path
 
 Curved and angled arrows expose a draggable handle so you can bow a curve or position an elbow exactly where the diagram needs it, without breaking the arrow's connections.
+
+<Figure caption="Dragging the handle on a curved arrow bows its path by hand.">
+  <CurveElbowHandles />
+</Figure>
 
 <FeatureGrid>
   <Feature slug="arrows" title="Curve and elbow handles">

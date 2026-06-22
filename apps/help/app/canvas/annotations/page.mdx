@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { Annotation } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Annotations',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Annotations" description="A lightweight way to attach an explanatory note to a spot on the canvas without cluttering it." categoryTitle="Canvas" categorySlug="canvas" subArticles={getSubArticles("annotations")}>
 
 An annotation is a small themed circle holding a fixed note symbol, a way to pin a piece of explanation to a spot on the canvas without adding a box of text that gets in the way. The note itself stays hidden until you want it: hover the marker to read it, click it to edit. It's perfect for footnotes, callouts, and reviewer comments that should be available but not in the foreground.
+
+<Figure caption="An annotation marker pinned beside a shape, with its note revealed on hover.">
+  <Annotation />
+</Figure>
 
 ## What it is
 

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { TechnologyCatalogue } from '@/components/illustrations/palette-catalogues';
 
 export const metadata = helpMetadata({
   title: 'Technology',
@@ -22,6 +23,10 @@ The first cut covers a curated set of common services across three providers:
 - **Generic infrastructure:** Kubernetes, Docker, PostgreSQL, MySQL, Redis, MongoDB, Kafka, Nginx, RabbitMQ, Elasticsearch, GraphQL.
 
 Each icon is a brand-coloured rounded tile with a white line-art symbol, the AWS resource-icon visual language, applied uniformly across all three providers for a cohesive look.
+
+<Figure caption="The Technology tab shows a grid of full-colour brand tiles, each in its own accent hue with a caption beneath.">
+  <TechnologyCatalogue />
+</Figure>
 
 ## Adding one
 

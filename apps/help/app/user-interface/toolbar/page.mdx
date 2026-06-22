@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ContextualToolbar, MultiSelectToolbar } from '@/components/illustrations/user-interface';
 
 export const metadata = helpMetadata({
   title: 'The Toolbar',
@@ -17,12 +18,20 @@ export const metadata = helpMetadata({
 
 Select something on the canvas and a **toolbar** appears next to it, holding the actions that apply to what you have selected. It is contextual: it shows up only when there is a selection, and its contents change to match.
 
+<Figure caption="With one element selected, the toolbar floats beside it carrying that element's styling and actions.">
+  <ContextualToolbar />
+</Figure>
+
 ## What it offers
 
 - **One element selected** — the styling and actions for that element: colours and borders, text and font, layer order, links and comments, lock, duplicate, and delete. The exact set depends on the element kind (a shape, an arrow, an image, and a data element each expose what is relevant to them).
 - **Several elements selected** — the actions that make sense across a group: align and distribute, group or ungroup, shared styling, and bulk delete. This is the fastest way to tidy a cluster of elements into line.
 
 The toolbar follows your selection so the controls are always close to what they affect, and disappears the moment you deselect, handing the canvas back.
+
+<Figure caption="Select several elements and the toolbar switches to the cross-selection actions: align, distribute, group, shared styling, and bulk delete.">
+  <MultiSelectToolbar />
+</Figure>
 
 <Tip>
   Copy one element's look onto others with the [format painter](/help/palette/format-painter/),

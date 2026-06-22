@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { PencilStroke, ShapeRecognition } from '@/components/illustrations/palette-tools';
 
 export const metadata = helpMetadata({
   title: 'Drawing and Sketch',
@@ -32,6 +33,10 @@ The Pencil is a gestural tool: pick it from the palette (or press `F`), and the 
 
 On release, your raw points are smoothed into a clean, hand-drawn curve rather than a jagged polyline. If you release near where you started, the path closes into a custom shape and fills, which is the way to sketch a bespoke outline.
 
+<Figure caption="The Pencil in draw mode, with a smoothed freehand stroke and the Drag to draw banner.">
+  <PencilStroke />
+</Figure>
+
 ## Styling a sketch
 
 A committed sketch is a regular boxed element. Its stroke colour follows the tab's theme so it reads as part of the diagram rather than a separate annotation layer, and a closed path fills with the theme's fill colour. From there you can:
@@ -43,6 +48,10 @@ A committed sketch is a regular boxed element. Its stroke colour follows the tab
 ## Shape recognition
 
 Turn on shape recognition from the magic-wand toggle in the Pencil's banner, and your sketches are matched against real shapes on commit. A rough square becomes a square, a loop becomes a circle, and a straight stroke becomes an arrow. See [Shape recognition](/help/palette/tools/drawing/shape-recognition/) for the details and which kinds are detected.
+
+<Figure caption="With recognition on, a rough sketch snaps into a clean shape on commit.">
+  <ShapeRecognition />
+</Figure>
 
 <Tip>
   Shape recognition is a per-tool toggle that sticks across sessions, so once you find your

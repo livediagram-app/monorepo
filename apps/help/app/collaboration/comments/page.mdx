@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { CommentThread } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Comments',
@@ -24,6 +25,10 @@ A comment is pinned to a place on the canvas, so the reader sees exactly what yo
 <Step n={3}>Click any marker to open its thread and read or reply to what is there.</Step>
 
 Because comments sit alongside the elements rather than inside them, you can leave feedback on a draft without nudging anyone's shapes or arrows out of place.
+
+<Figure caption="A comment pin on the canvas opens a threaded popover with replies, avatars, and a resolve check.">
+  <CommentThread />
+</Figure>
 
 ## Resolving comments
 

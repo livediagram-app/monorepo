@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SpotlightMode } from '@/components/illustrations/palette-modes';
 
 export const metadata = helpMetadata({
   title: 'Spotlight',
@@ -22,6 +23,10 @@ The Spotlight mode dims the canvas and spotlights the element under your cursor,
 ## How it works
 
 As you move the cursor, the element beneath it stays bright while everything around it is dimmed. This is useful when you are talking through a diagram and want to focus the room on a single shape before moving on to the next.
+
+<Figure caption="Spotlight is lit in the mode picker, dimming the canvas except a bright circle around the cursor.">
+  <SpotlightMode />
+</Figure>
 
 ## Availability
 

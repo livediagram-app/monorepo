@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ThemePicker } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Changing the Theme',
@@ -19,6 +20,10 @@ export const metadata = helpMetadata({
 >
 
 Changing a diagram's look is a matter of picking a new theme and watching the canvas update. livediagram brings the theme picker front and centre in a dedicated dialog, with the same category browse you see when starting a new diagram, so there is plenty of room to compare looks.
+
+<Figure caption="The Tab Appearance dialog's Theme tab, a grid of swatch cards with the applied theme outlined.">
+  <ThemePicker />
+</Figure>
 
 ## Opening the dialog
 

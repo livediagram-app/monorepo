@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ActivityEntries } from '@/components/illustrations/activity-panel';
 
 export const metadata = helpMetadata({
   title: 'How the Activity Panel Works',
@@ -32,6 +33,10 @@ A continuous action becomes a single entry, not dozens of them. One drag to move
 ## Finding what changed
 
 Click an entry to jump straight to the element it changed, so you do not have to hunt for it on the canvas.
+
+<Figure caption="Click an entry to jump to its element, or use Clear Activity to wipe the tab's history.">
+  <ActivityEntries />
+</Figure>
 
 ## What the panel keeps
 

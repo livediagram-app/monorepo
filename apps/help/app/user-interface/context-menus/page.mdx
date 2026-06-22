@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ElementContextMenu } from '@/components/illustrations/user-interface';
 
 export const metadata = helpMetadata({
   title: 'Context Menus',
@@ -16,6 +17,10 @@ export const metadata = helpMetadata({
 >
 
 A **context menu** is the menu you get by right-clicking (or long-pressing on touch). Each one is scoped to whatever you clicked, so it only ever offers actions that make sense there.
+
+<Figure caption="Right-clicking an element opens a menu of just its actions: cut, copy, duplicate, style, link, and delete.">
+  <ElementContextMenu />
+</Figure>
 
 ## Where you will find them
 

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { Templates } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Templates',
@@ -22,6 +23,10 @@ A blank canvas is freeing, but sometimes you would rather start with structure a
 ## Starting from a template
 
 When you [create a new diagram](/new), you can pick a template rather than an empty canvas. Each template arrives with its elements laid out and a [theme](/help/canvas/themes/) already applied, so the look is coherent from the first moment. From there it is an ordinary diagram: move, edit, add, and delete elements exactly as you would on any canvas.
+
+<Figure caption="The new-diagram screen offers a grid of ready-made, themed templates to start from.">
+  <Templates />
+</Figure>
 
 ## Choosing a theme as you start
 

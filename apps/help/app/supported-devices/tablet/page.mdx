@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { TabletRotate, TabletLandscape } from '@/components/illustrations/devices';
 
 export const metadata = helpMetadata({
   title: 'Tablet',
@@ -21,6 +22,10 @@ livediagram chooses its layout from how wide the editor is on screen, not from t
 
 Rotating the tablet switches between the two, so if you want the full set of panels, turn it to landscape.
 
+<Figure caption="Held in portrait you get the compact dock; rotate to landscape and the full floating panels return.">
+  <TabletRotate />
+</Figure>
+
 ## Touch works everywhere
 
 However the tablet is held, the touch gestures are the same as on a phone: pinch to zoom, drag to move around, tap to select, and press and hold for an element's menu. Drag handles and buttons get extra padding on touch so they are easy to hit.
@@ -33,6 +38,10 @@ A few things are built for a physical keyboard. If you pair a keyboard with your
 - **Held-key shortcuts**, like Shift to keep an element's proportions while resizing, or to add to a selection.
 
 Without a keyboard you can still do all of this through the palette and on-screen controls; a keyboard just adds the faster way.
+
+<Figure caption="A landscape tablet has room for the full layout, the same floating palette and panels as a computer.">
+  <TabletLandscape />
+</Figure>
 
 <Tip>
   Holding the tablet in landscape gives you the most room and the full set of panels, which is the

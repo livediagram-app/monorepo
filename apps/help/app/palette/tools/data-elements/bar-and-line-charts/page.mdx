@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { BarAndLineCharts } from '@/components/illustrations/palette-data';
 
 export const metadata = helpMetadata({
   title: 'Bar and Line Charts',
@@ -19,6 +20,10 @@ export const metadata = helpMetadata({
 >
 
 Where a [pie chart](/help/palette/tools/data-elements/pie-chart/) shows one total split into slices, **bar and line charts** plot one or more series across categories, so they suit trends over time, comparisons, and any "value per category" data. Both are ordinary canvas elements: they drop in with sample data and recolour with the active [theme](/help/canvas/themes/).
+
+<Figure caption="A bar chart for comparing categories and a line chart for a trend across them.">
+  <BarAndLineCharts />
+</Figure>
 
 ## Adding one
 

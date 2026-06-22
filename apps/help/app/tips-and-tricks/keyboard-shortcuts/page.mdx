@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { KeyboardShortcuts, ShortcutsToggle } from '@/components/illustrations/tips';
 
 export const metadata = helpMetadata({
   title: 'Keyboard Shortcuts',
@@ -26,9 +27,17 @@ The most useful canvas-tool keys are:
 
 The shortcuts dialog stays available in every role, so view-only visitors can see the same reference.
 
+<Figure caption="The shortcuts dialog pairs each single-key tool with the action it triggers.">
+  <KeyboardShortcuts />
+</Figure>
+
 ## Turning shortcuts off
 
 Single-key shortcuts are handy, but they are not for everyone. You can switch them off entirely from the Settings dialog, which is reached from the gear button in the editor footer.
+
+<Figure caption="Flip the shortcuts toggle off in Settings so a stray key press never changes your tool.">
+  <ShortcutsToggle />
+</Figure>
 
 When shortcuts are turned off, the editor stops responding to the single-key bindings, so a stray key press never changes your tool unexpectedly. Like every other preference, this choice is stored per device for guests and synced across devices once you sign in, so you only set it once.
 

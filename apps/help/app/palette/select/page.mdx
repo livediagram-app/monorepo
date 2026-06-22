@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SelectMode } from '@/components/illustrations/palette-modes';
 
 export const metadata = helpMetadata({
   title: 'Select',
@@ -28,6 +29,10 @@ In Select mode the pointer interacts directly with your elements:
 - **Drag** an element to move it.
 - **Drag its handles** to resize.
 - **Double-click** to edit a label.
+
+<Figure caption="Select is lit in the mode picker, with a shape selected and its resize handles showing.">
+  <SelectMode />
+</Figure>
 
 ## Returning here
 

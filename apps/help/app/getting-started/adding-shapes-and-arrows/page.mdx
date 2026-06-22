@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ShapePalette, QuickConnect } from '@/components/illustrations/getting-started';
 
 export const metadata = helpMetadata({
   title: 'Adding Shapes and Arrows',
@@ -15,6 +16,10 @@ Almost every diagram is shapes joined by arrows. livediagram makes both fast: sh
 ## Adding shapes
 
 The **Palette** panel (top-right of the canvas, labelled `PALETTE`) groups everything you can add into tabs: **Shapes**, **Tools**, **Devices**, and **Icons**. Shapes is open by default.
+
+<Figure caption="The Palette groups everything you can add into tabs, with shapes laid out as a tile grid.">
+  <ShapePalette />
+</Figure>
 
 <Step n={1}>
   Open the **Shapes** tab and pick a shape: square, circle, diamond, cylinder, hexagon, stadium, and
@@ -35,6 +40,10 @@ Beyond plain shapes, the **Devices** tab has UI frames for wireframes (browser, 
 ## Connecting with arrows
 
 The fastest way to draw an arrow is **quick-connect**:
+
+<Figure caption="Hover a shape to surface its + handles, then drag from one onto a second shape to pin an arrow.">
+  <QuickConnect />
+</Figure>
 
 <Step n={1}>Hover over a shape. Small **+** affordances appear around it.</Step>
 

@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ConfigSources, GuestFallback } from '@/components/illustrations/self-hosting';
 
 export const metadata = helpMetadata({
   title: 'Configuration and Optional Auth',
@@ -22,6 +23,10 @@ Secrets and settings never live in source code, since the repository is public. 
 
 Each app that needs configuration ships an example file documenting which variables it expects, so you can see at a glance what to set.
 
+<Figure caption="Each surface reads configuration at runtime, so no secrets ever live in the public source.">
+  <ConfigSources />
+</Figure>
+
 ## Optional sign-in
 
 Authentication is provided by an optional integration with Clerk, and the app supports three modes depending on what you configure.
@@ -35,6 +40,10 @@ This is what lets a self-hoster run with zero outbound runtime traffic beyond th
 ## Guest-only fallback
 
 The API identifies the owner of a request in one of two equivalent ways: a verified sign-in token, or a per-browser guest id sent as a header. When sign-in is not configured, every request simply uses the guest path, and the editor stays fully usable, with persistence, sharing, and real-time collaboration all working.
+
+<Figure caption="Whether Clerk is configured or not, requests resolve to a working editor.">
+  <GuestFallback />
+</Figure>
 
 <Note>
   Other optional toggles follow the same pattern: telemetry is off unless explicitly enabled, and AI

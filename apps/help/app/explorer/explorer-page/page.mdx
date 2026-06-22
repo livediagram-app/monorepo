@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ExplorerOverview, MyWorkTree } from '@/components/illustrations/explorer';
 
 export const metadata = helpMetadata({
   title: 'Explorer Page',
@@ -19,6 +20,10 @@ The full-page [Explorer](/explorer/recent) is the complete library view, modelle
 
 The sidebar is the spine of the page. Each section below is a different way into your work, so the thing you want is never more than a click away. Here is what each one is for.
 
+<Figure caption="The full-page Explorer: a sidebar of sections on the left, and the chosen section's diagrams on the right.">
+  <ExplorerOverview />
+</Figure>
+
 ## Recent diagrams
 
 [Recent](/help/explorer/recent/) is the default view, and the one most people live in. It lists the diagrams you opened or edited most recently, newest first, so getting back to whatever you had open last is a single click. There is nothing to organise here: it updates itself as you work, which makes it the fastest route back into current work.
@@ -30,6 +35,10 @@ The sidebar is the spine of the page. Each section below is a different way into
 ## My Work
 
 [My Work](/help/explorer/my-work/) is your own library: an **Unsorted** bucket that catches new diagrams, plus the nested folders you create to organise them by project, customer, or topic. This is where you do the actual filing, dragging diagrams into folders, renaming, and nesting folders inside folders, so a growing pile of diagrams stays manageable.
+
+<Figure caption="My Work is a folder tree: an Unsorted bucket plus folders you can nest as deep as you like.">
+  <MyWorkTree />
+</Figure>
 
 ## Team Spaces
 

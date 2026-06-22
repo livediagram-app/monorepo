@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { TimerControl } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'The Timer',
@@ -15,6 +16,10 @@ The timer time-boxes an activity for the whole room. Set it going and a clock pi
 ## Setting it up
 
 The timer lives in **Tab Settings → Session → Timer**.
+
+<Figure caption="The timer controls toggle between countdown and stopwatch, with minute presets and Start.">
+  <TimerControl />
+</Figure>
 
 <Step n={1}>
   Choose **Countdown** and pick a duration (1, 3, 5, or 10 minute presets), or choose **Stopwatch**

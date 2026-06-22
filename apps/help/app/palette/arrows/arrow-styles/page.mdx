@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ArrowStyles } from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Arrow Styles',
@@ -25,6 +26,10 @@ An arrow is far more than a plain line. Select a connector and open its right-cl
 - **Line style** picks the geometry: **Straight** (a single line), **Curved** (a gentle bezier bow), or **Angled** (an axis-aligned L-shaped elbow). Curved and angled lines expose a draggable handle so you can shape the path by hand, covered in [Curve and elbow handles](/help/palette/arrows/curve-and-elbow-handles/).
 - **Line thickness** snaps to four presets (Thin, Medium, Thick, Extra-thick).
 - **Line pattern** sets the stroke to Solid, Dashed, or Dotted.
+
+<Figure caption="The same connector shown straight, curved, and angled.">
+  <ArrowStyles />
+</Figure>
 
 ## Arrowheads
 

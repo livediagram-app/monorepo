@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { CurveElbowHandles } from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Curve and Elbow Handles',
@@ -36,6 +37,10 @@ The handle appears once you give the arrow a curved or angled geometry. Open the
 <Step n={3}>For an angled arrow, drag the handle to move where the elbow bends.</Step>
 
 Releasing the drag commits the new shape, and like other drag edits it collapses into a single undo step, so one tap of undo returns the line to where it was before you started.
+
+<Figure caption="Dragging a curved arrow's handle controls how far and which way the line bows.">
+  <CurveElbowHandles />
+</Figure>
 
 ## Keeping connections intact
 

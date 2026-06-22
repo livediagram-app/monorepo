@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SearchTeams } from '@/components/illustrations/search-panel';
 
 export const metadata = helpMetadata({
   title: 'Searching Teams',
@@ -29,6 +30,10 @@ A single **Teams** group gathers three kinds of match:
 - **Team diagrams** shared inside a team.
 
 Team folders and diagrams are shown with an **"in &lt;team&gt;"** suffix, so when a name appears in more than one place you can tell which team it belongs to at a glance. Picking a team folder lands you on the team page with that folder already open.
+
+<Figure caption="The Teams group: the team itself, plus its shared folders and diagrams tagged with their team.">
+  <SearchTeams />
+</Figure>
 
 ## Signed-in only
 

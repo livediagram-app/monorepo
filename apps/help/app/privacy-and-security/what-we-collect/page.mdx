@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { TelemetryToggle } from '@/components/illustrations/privacy';
 
 export const metadata = helpMetadata({
   title: 'What We Collect',
@@ -29,6 +30,10 @@ Whatever is collected is published openly at the public [telemetry dashboard](/t
 ## How to opt out
 
 You are always in control of your own browser.
+
+<Figure caption="One switch in Settings turns telemetry off for your browser, whatever the deployment is set to.">
+  <TelemetryToggle />
+</Figure>
 
 <Step n={1}>Open **Settings** in the editor.</Step>
 <Step n={2}>Turn off the telemetry option.</Step>

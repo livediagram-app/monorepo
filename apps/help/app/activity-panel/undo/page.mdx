@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { UndoStep } from '@/components/illustrations/activity-panel';
 
 export const metadata = helpMetadata({
   title: 'Undo',
@@ -25,6 +26,10 @@ Undo takes back your most recent change. You can:
 - Click the undo button, which lives in the controls at the bottom-right and at the top of the Activity Panel.
 
 A whole drag counts as a single step, so one undo takes you all the way back to before you started dragging.
+
+<Figure caption="Pressing Cmd or Ctrl plus Z steps back your most recent change.">
+  <UndoStep />
+</Figure>
 
 ## Undo is personal
 

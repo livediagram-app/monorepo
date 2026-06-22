@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SearchTabsAndElements } from '@/components/illustrations/search-panel';
 
 export const metadata = helpMetadata({
   title: 'Finding Tabs and Elements',
@@ -33,6 +34,10 @@ The **Elements** group matches elements by their label and, when you pick one, s
 ### Text inside tables
 
 Tables do not have a single label, their text lives in the cells. So a table matches through its **cells**: the first cell whose text matches your query becomes the result's label, and picking it takes you to that table. That means you can find a value tucked inside a table without remembering which table, or which tab, it is on.
+
+<Figure caption="In-diagram scope: tabs and elements, including text matched inside a table cell.">
+  <SearchTabsAndElements />
+</Figure>
 
 <Tip>
   This scope only appears inside a diagram. From the Explorer or the dashboard, search covers your

@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ImageGallery } from '@/components/illustrations/explorer';
 
 export const metadata = helpMetadata({
   title: 'Image Gallery',
@@ -20,6 +21,10 @@ The **Image gallery** lives in the Explorer's **Library** section and collects e
 ## What it shows
 
 Each uploaded image appears as a thumbnail with a **Used in** badge derived from where it is referenced, so you can tell at a glance which images are doing work and which are orphaned bytes safe to remove. You can upload a new image straight from the gallery, the same way you would from the canvas.
+
+<Figure caption="Each thumbnail carries a used-in badge and a delete control, so unused uploads are easy to spot and clear.">
+  <ImageGallery />
+</Figure>
 
 ## Deleting images
 

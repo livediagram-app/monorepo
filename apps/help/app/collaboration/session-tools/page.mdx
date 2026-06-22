@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SessionTools } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Session Tools',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Session Tools" description="A per-tab timer and live dot-voting that turn a shared diagram into an interactive workshop board." categoryTitle="Collaboration" categorySlug="collaboration" subArticles={getSubArticles("session-tools")}>
 
 Session tools make a shared diagram interactive for live workshops. There are two: a **timer** for time-boxing an activity, and **dot-voting** for prioritising as a group. Both are run by the facilitator and synced to everyone in the room in real time, so they pair naturally with collaborative boards like retros, brainstorms, and planning sessions.
+
+<Figure caption="A shared countdown timer pill above a dot-voting tally: the two session tools on one canvas.">
+  <SessionTools />
+</Figure>
 
 ## Built for facilitating live
 

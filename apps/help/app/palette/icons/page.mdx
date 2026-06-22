@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { IconsCatalogue } from '@/components/illustrations/palette-catalogues';
 
 export const metadata = helpMetadata({
   title: 'Icons',
@@ -26,6 +27,10 @@ The catalogue is organised into categories so you can browse when you are not su
 ## Searching and placing
 
 When you know what you need, search by name (for example "server", "heart", or "calendar") and the catalogue filters to matching icons as you type. Click one to place it on the canvas, then resize and position it like any other element. Its colour follows your theme, so changing the theme recolours every placed icon at once.
+
+<Figure caption="The Icons tab is a searchable grid of single-colour glyphs, filtered live as you type in the search field.">
+  <IconsCatalogue />
+</Figure>
 
 ## Line-art icons versus brand marks
 

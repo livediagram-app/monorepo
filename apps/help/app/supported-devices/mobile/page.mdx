@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { MobileEditor, TouchGestures } from '@/components/illustrations/devices';
 
 export const metadata = helpMetadata({
   title: 'Mobile',
@@ -18,6 +19,10 @@ On a small screen the floating panels are replaced by a **compact dock** in the 
 
 The editor also opens zoomed out a little so you land on a useful overview of the whole diagram, and when you add a new element it slides into view automatically.
 
+<Figure caption="On a phone a compact dock replaces the floating panels and the diagram is zoomed to fit, keeping the canvas front and centre.">
+  <MobileEditor />
+</Figure>
+
 ## Touch gestures
 
 Your fingers do the work a mouse would on a computer:
@@ -28,6 +33,10 @@ Your fingers do the work a mouse would on a computer:
 - **Press and hold** an element (a long press) to open its menu, the touch version of a right-click.
 
 Buttons and drag handles have a little extra invisible padding on touch, so they are easier to hit accurately with a fingertip.
+
+<Figure caption="Your fingers do the work a mouse would: pinch to zoom, drag to pan, tap to select, and press and hold for the menu.">
+  <TouchGestures />
+</Figure>
 
 ## What works differently on a phone
 

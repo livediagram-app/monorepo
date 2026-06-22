@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { TeamMembers, TeamSharedTree } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Teams',
@@ -25,11 +26,19 @@ In the Explorer sidebar you will find a **Teams** section. It lists every team y
 
 There are two roles. **Admins** can invite people, change roles, edit the team, remove members, and delete the team. **Members** can see the team and its members and work in the shared library. The last remaining Admin cannot leave or be demoted, so a team always has someone in charge. Promote another member first, or delete the team.
 
+<Figure caption="A team's member list, each row tagged with an Admin or Member role badge.">
+  <TeamMembers />
+</Figure>
+
 You can add people by email address or by turning on a shareable invite link. See [Roles and Invites](/help/collaboration/teams/roles-and-invites/) for the full handshake.
 
 ## The shared library
 
 Every team has its own folder tree of diagrams, shown as a **Team diagrams** card on the team page. Any joined member can create, rename, duplicate, move, and delete diagrams there, so the work belongs to the whole team rather than to one person. See [Team Shared Diagrams](/help/collaboration/teams/team-shared-diagrams/) for how placement and ownership work.
+
+<Figure caption="The Team diagrams card holds a shared folder tree every member can manage.">
+  <TeamSharedTree />
+</Figure>
 
 <Tip>
   If your invite does not appear, make sure you are signed in with the same email address it was

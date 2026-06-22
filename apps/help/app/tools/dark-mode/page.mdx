@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { LightDarkToggle } from '@/components/illustrations/tools';
 
 export const metadata = helpMetadata({
   title: 'Light and Dark Mode',
@@ -16,6 +17,10 @@ export const metadata = helpMetadata({
 >
 
 livediagram has a **light / dark mode** for the editor itself. It is the sun-or-moon button on the right edge of the tab bar: click it to flip the editor between light and dark, and the icon (and its tooltip) always shows the mode you will switch to next.
+
+<Figure caption="The sun/moon toggle on the tab bar flips the editor's chrome between light and dark.">
+  <LightDarkToggle />
+</Figure>
 
 ## The interface, not the canvas
 

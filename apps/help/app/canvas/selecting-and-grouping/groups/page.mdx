@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { Groups } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Groups',
@@ -23,6 +24,10 @@ A multi-selection is temporary: click empty canvas and it scatters again. A grou
 ## Creating a group
 
 Start by [selecting the elements](/help/canvas/selecting-and-grouping/multi-select/) you want to bind together, then group them. From that point on, clicking any one member selects the whole group, and dragging it moves every member at once while preserving their relative positions. A captioned shape, a legend, or a cluster that represents a single component all stay glued together as you push the rest of the diagram about.
+
+<Figure caption="Grouped elements share one selection outline and travel together as a single unit.">
+  <Groups />
+</Figure>
 
 ## Working with a group
 

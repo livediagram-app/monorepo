@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ThemePicker } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Theme a Diagram Fast',
@@ -19,6 +20,10 @@ A theme sets the look of the whole tab at once. Picking one writes its colours, 
 The catalogue ships with twelve default themes, with more available behind a "Show more themes" toggle, including dark and multi-colour options. Themes are organised by temperament (Cool, Warm, Dark, Multi-colour, Formal), so you can browse by mood rather than scanning a wall of swatches.
 
 Switching theme is non-destructive to deliberate choices: a background pattern you hand-picked survives a theme change rather than resetting, and existing elements keep their colours unless you re-apply them.
+
+<Figure caption="Pick a theme to recolour the whole tab at once, then new elements arrive on-brand.">
+  <ThemePicker />
+</Figure>
 
 ## Add emphasis with presets
 

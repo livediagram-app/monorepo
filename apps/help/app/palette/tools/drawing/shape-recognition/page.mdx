@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ShapeRecognition } from '@/components/illustrations/palette-tools';
 
 export const metadata = helpMetadata({
   title: 'Shape Recognition',
@@ -19,6 +20,10 @@ export const metadata = helpMetadata({
 >
 
 Shape recognition is an opt-in mode for the [Pencil tool](/help/palette/tools/drawing/). With it on, a rough sketch is matched against real shapes when you release, so a wobbly square becomes a proper square and a quick loop becomes a circle, no need to draw precisely.
+
+<Figure caption="A wobbly hand-drawn outline matched into a clean square once the wand toggle is on.">
+  <ShapeRecognition />
+</Figure>
 
 ## Turning it on
 

@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ExportMenu } from '@/components/illustrations/account';
 
 export const metadata = helpMetadata({
   title: 'Exporting Diagrams',
@@ -11,6 +12,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Exporting Diagrams" description="Take your work with you as a shareable image, or drop a live read-only view into another site." categoryTitle="Account and Data" categorySlug="account-and-data">
 
 Your diagrams are not locked inside livediagram. When you want a copy to drop into a slide deck, a document, or a chat, you can export the current tab as an image. And when you want the diagram to stay live wherever you put it, you can embed a read-only view instead.
+
+<Figure caption="Export the current tab as a PNG, SVG, or PDF, or grab a live embed instead.">
+  <ExportMenu />
+</Figure>
 
 ## Exporting as an image
 

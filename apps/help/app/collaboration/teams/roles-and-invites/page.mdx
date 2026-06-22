@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { RolesAndInvites } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Roles and Invites',
@@ -43,6 +44,10 @@ When that person signs in with the same email address, the invite appears in the
 - **Decline**, which removes the invite. An Admin can re-invite the same address later.
 
 A pending invite grants no access until it is accepted.
+
+<Figure caption="Member rows show their role badges above the invite-by-email row that adds someone new.">
+  <RolesAndInvites />
+</Figure>
 
 ## The shareable invite link
 

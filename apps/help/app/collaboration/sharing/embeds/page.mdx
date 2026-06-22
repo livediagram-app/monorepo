@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { EmbeddedDiagram } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Read-Only Embeds',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Read-Only Embeds" description="Put a live, view-only diagram inside another page with a ready-made embed snippet." categoryTitle="Collaboration" categorySlug="collaboration" parentArticle={{ title: "Sharing and Embeds", slug: "sharing" }} subArticles={getSubArticles("sharing").filter((a) => a.slug !== "embeds")}>
 
 A read-only embed places a live copy of a diagram inside another page, like a wiki, a doc, Notion, or your own site. It shows the canvas, hides all the editing tools, and stays up to date as the diagram is edited. It is the simplest way to keep a diagram visible where your readers already are.
+
+<Figure caption="A read-only diagram sits inside a host page, with the copy-paste iframe snippet that embeds it.">
+  <EmbeddedDiagram />
+</Figure>
 
 ## What an embed shows
 

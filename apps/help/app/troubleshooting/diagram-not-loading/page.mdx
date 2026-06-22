@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { StuckCanvas } from '@/components/illustrations/troubleshooting';
 
 export const metadata = helpMetadata({
   title: 'A Diagram Will Not Load',
@@ -11,6 +12,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="A Diagram Will Not Load" description="A practical checklist for when a diagram does not open, from share-link issues to connection hiccups." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
 
 When a diagram does not open, the cause is usually access-related rather than data loss. livediagram deliberately returns the same "not found" surface for a diagram you cannot reach as for one that truly does not exist, so a blank or "not found" screen does not mean your work is gone. Work through the checks below in order.
+
+<Figure caption="A diagram stuck mid-load. A reload re-runs the load from scratch and clears most transient blips.">
+  <StuckCanvas />
+</Figure>
 
 ## Quick checks
 

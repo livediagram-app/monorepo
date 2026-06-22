@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ThemePicker } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Themes',
@@ -26,6 +27,10 @@ A theme sets the canvas background and pattern together with the fill, border, a
 ## Browsing and applying
 
 You change a tab's theme from the Tab Appearance dialog, reached from the canvas right-click menu, where themes are organised into categories you can browse and drill into. Applying a theme updates the canvas live as you click. See [Changing the theme](/help/canvas/themes/changing-theme/) for the full walkthrough.
+
+<Figure caption="The theme picker shows a grid of swatch cards; clicking one recolours the whole tab live.">
+  <ThemePicker />
+</Figure>
 
 ## Beyond a single colour
 

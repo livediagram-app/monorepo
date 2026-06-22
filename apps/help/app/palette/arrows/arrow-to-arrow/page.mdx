@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ArrowToArrow } from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Connecting Arrows to Arrows',
@@ -19,6 +20,10 @@ export const metadata = helpMetadata({
 >
 
 An arrow's endpoint can connect to a point along another arrow's line, not just to a shape. This is the classic sequence-diagram pattern: messages attach to a lifeline (itself an arrow) at a chosen height, and stay attached as the lifeline moves.
+
+<Figure caption="A message arrow snapped onto a lifeline at one of its evenly-spaced snap points.">
+  <ArrowToArrow />
+</Figure>
 
 ## Snapping to a line
 

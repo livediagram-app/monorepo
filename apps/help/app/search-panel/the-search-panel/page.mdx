@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { SearchOverview } from '@/components/illustrations/search-panel';
 
 export const metadata = helpMetadata({
   title: 'The Search Panel',
@@ -29,6 +30,10 @@ The panel pops up near the top of the screen and blurs the canvas behind it so y
 ## What search covers
 
 Type a few letters and matches appear, grouped by what they are. What is in scope depends on where you open it:
+
+<Figure caption="One query, with matches grouped by type and the first result preselected.">
+  <SearchOverview />
+</Figure>
 
 - **Always:** your **[diagrams and folders](/help/search-panel/the-search-panel/search-diagrams/)**, and the **diagrams shared with you**.
 - **When signed in:** your **[teams](/help/search-panel/the-search-panel/search-teams/)** and their shared folders and diagrams.

@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { LiveCursors, PresenceSelection } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Live Presence',
@@ -23,6 +24,10 @@ Open a diagram with other people and it comes alive. Everyone sees each other mo
 
 You see everyone else's pointer move around the canvas, each labelled with their name in their own colour. Cursors are tied to a tab, so you only see the cursors of the people looking at the same tab as you. When someone moves to a different tab, their cursor follows them there.
 
+<Figure caption="Live cursors carry each person's name and colour, with a presence avatar stack showing who is in the diagram.">
+  <LiveCursors />
+</Figure>
+
 ## Who is here, and where
 
 Each person is given a colour and a name. Signed-in people show their account name; everyone else gets a friendly auto-generated name like "Curious Otter". You can see who is around in two places:
@@ -33,6 +38,10 @@ Each person is given a colour and a name. Signed-in people show their account na
 ## Seeing what others have selected
 
 When someone selects an element, a small badge with their initials appears on it, so you always know what a teammate is working on. While they have it selected, that element is gently locked for everyone else, with a "Locked to (name)" note, so two people can not fight over the same shape at once. It frees up again the moment they click away.
+
+<Figure caption="A teammate's selection is badged with their initials and gently locked to them while they edit.">
+  <PresenceSelection />
+</Figure>
 
 ## Shared laser pointer
 

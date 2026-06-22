@@ -1,6 +1,11 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import {
+  ShapeGallery,
+  ShapeMorph,
+  ShapeMarkers,
+} from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Shapes',
@@ -19,6 +24,10 @@ export const metadata = helpMetadata({
 
 Shapes hold the ideas in your diagram. The palette's **Shapes** tab covers the everyday set, a square, circle, diamond, cylinder, parallelogram, hexagon, document, stadium, cloud, triangle, trapezoid, star, and speech bubble, so there is a node for flowcharts, data stores, decisions, and notes alike.
 
+<Figure caption="A sample of the shape kinds the Shapes tab offers.">
+  <ShapeGallery />
+</Figure>
+
 ## Adding a shape
 
 Open the **Shapes** tab in the floating palette and click a shape to drop it on the canvas, or drag to draw it at the size you want. Once placed, a shape behaves like any other element: move, resize, recolour, group, and theme it as usual.
@@ -27,6 +36,10 @@ Open the **Shapes** tab in the floating palette and click a shape to drop it on 
 
 A selected shape can be morphed into another kind in place from its right-click menu, preserving its size and colours, so you are never locked into your first choice. Turn a square into a cylinder or a hexagon into a diamond without redrawing it or losing its styling.
 
+<Figure caption="Morphing a square into a cylinder in place keeps its size and colours.">
+  <ShapeMorph />
+</Figure>
+
 ## Styling and text
 
 Boxed shapes carry colours, text, and alignment options, all reachable from the element's context menu. Double-click a shape to add a label, then set its size, weight, and alignment from the Text controls.
@@ -34,6 +47,10 @@ Boxed shapes carry colours, text, and alignment options, all reachable from the 
 ## Status markers
 
 A shape can show a small status symbol, a traffic-light dot or a checkbox, right inside it, so you can flag status without adding a separate element.
+
+<Figure caption="A traffic-light dot and a checkbox marker shown inside shapes.">
+  <ShapeMarkers />
+</Figure>
 
 <FeatureGrid>
   <Feature slug="shapes" title="Shape markers">

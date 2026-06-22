@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { RedoStep } from '@/components/illustrations/activity-panel';
 
 export const metadata = helpMetadata({
   title: 'Redo',
@@ -26,6 +27,10 @@ Redo re-applies something you just undid. You can:
 - Click the redo button, which lives in the controls at the bottom-right and at the top of the Activity Panel.
 
 When you redo, the change is put back and its line reappears in the Activity Panel.
+
+<Figure caption="Redo re-applies the change you just undid and its line returns to the list.">
+  <RedoStep />
+</Figure>
 
 ## Stepping back and forth
 

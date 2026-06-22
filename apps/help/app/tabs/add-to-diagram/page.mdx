@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { AddToDiagramMenu } from '@/components/illustrations/tabs';
 
 export const metadata = helpMetadata({
   title: 'Add a Tab to Another Diagram',
@@ -24,6 +25,10 @@ Sometimes a tab you built in one diagram belongs in another, a reference board, 
 <Step n={3}>Pick the destination diagram from your list. The tab is copied into it.</Step>
 
 The option is only available when you actually have somewhere to copy to: if this is your only diagram, **Add to Diagram** is greyed out until you create another.
+
+<Figure caption="Add to Diagram in the tab menu opens a picker listing your other diagrams to copy the tab into.">
+  <AddToDiagramMenu />
+</Figure>
 
 ## What gets copied
 

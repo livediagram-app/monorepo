@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { StylePresets } from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Style Presets',
@@ -21,6 +22,10 @@ Right-click a single shape and open the **Presets** category to find two rows yo
 - **Border** offers up to eight border variations that combine weight (thin / medium / thick), pattern (solid / dotted / dashed), and corner radius (none / small / medium / large / full), including a sharp un-rounded preset and a rounded one.
 
 Colour and border presets are independent: applying one never disturbs the other, so they combine. You might pair a tinted colour with a dashed, un-rounded border, for example. **Reset to default** clears the shape's colour and border overrides, returning it to its theme default in one click.
+
+<Figure caption="One-click colour and border presets restyle a shape without dialling each field by hand.">
+  <StylePresets />
+</Figure>
 
 ## Arrow presets
 

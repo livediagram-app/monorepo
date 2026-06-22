@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ShapeMarkers } from '@/components/illustrations/palette-shapes-arrows';
 
 export const metadata = helpMetadata({
   title: 'Shape Markers',
@@ -19,6 +20,10 @@ export const metadata = helpMetadata({
 >
 
 A marker is a small status symbol shown inside a shape: a traffic-light dot or a checkbox. It lets you flag status at a glance, such as a red, amber, or green status, or a to-do that is done or not, without adding a separate element to the canvas.
+
+<Figure caption="A traffic-light dot and a checkbox marker sit just left of each shape's label.">
+  <ShapeMarkers />
+</Figure>
 
 ## The markers
 

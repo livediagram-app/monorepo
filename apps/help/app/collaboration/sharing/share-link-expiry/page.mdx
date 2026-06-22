@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { ShareExpiry } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Share Link Expiry',
@@ -23,6 +24,10 @@ When you create a link in the **Share** dialog, an expiry dropdown sits next to 
 - **6 Months**
 
 Pick the shortest span that fits, like "1 Week" for a workshop group or "1 Month" for a project review.
+
+<Figure caption="The Share dialog's expiry dropdown offers a week, a month, or six months next to each link.">
+  <ShareExpiry />
+</Figure>
 
 ## What happens when a link expires
 

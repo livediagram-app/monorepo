@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { ConnectionState } from '@/components/illustrations/troubleshooting';
 
 export const metadata = helpMetadata({
   title: 'Real-Time Collaboration Problems',
@@ -11,6 +12,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Real-Time Collaboration Problems" description="What to try when cursors, presence, or live edits are not coming through during collaboration." categoryTitle="Troubleshooting" categorySlug="troubleshooting">
 
 Real-time collaboration in livediagram works through a per-diagram room: everyone editing the same diagram connects to it over a live connection, and that room relays cursors, who is selecting what, which tab people are on, and edits as they happen. When something is not coming through, it is almost always the connection to that room rather than your data. Work through the checks below.
+
+<Figure caption="A dropped live connection: collaborators fade out while the room reconnects. A reload re-arms it.">
+  <ConnectionState />
+</Figure>
 
 ## When you see no one else
 

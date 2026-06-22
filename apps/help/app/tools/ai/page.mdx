@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { AiPanel } from '@/components/illustrations/tools';
 
 export const metadata = helpMetadata({
   title: 'AI Assistance',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="AI Assistance" description="An optional assistant that builds, tidies, reviews, and answers questions about the diagram on the active tab." categoryTitle="Tools" categorySlug="tools" subArticles={getSubArticles("ai")}>
 
 AI Assistance is an optional panel that works alongside you on the canvas. It can draft new structure from a prompt, tidy up an existing diagram, answer questions about what is on the tab, and give feedback on how it reads. It is built around four modes, all driven from a single panel.
+
+<Figure caption="The Assistant panel: one prompt box, with Build, Ask, Review, and Clean modes across the top.">
+  <AiPanel />
+</Figure>
 
 ## An optional feature
 

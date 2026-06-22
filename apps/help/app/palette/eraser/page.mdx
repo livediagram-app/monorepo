@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { EraserMode } from '@/components/illustrations/palette-modes';
 
 export const metadata = helpMetadata({
   title: 'Eraser',
@@ -25,6 +26,10 @@ The Eraser mode is the fastest way to remove elements from the canvas. Choose it
 - **Drag** across several elements to remove them all in one sweep.
 
 This is quicker than selecting elements and then deleting them, especially when you want to clear out a cluster of shapes or arrows at once.
+
+<Figure caption="Eraser mode is lit in the mode picker, and a drag sweeps across shapes, removing the ones it has crossed.">
+  <EraserMode />
+</Figure>
 
 ## When it is unavailable
 

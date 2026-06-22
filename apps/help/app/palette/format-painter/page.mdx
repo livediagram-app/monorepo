@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { FormatPainterMode } from '@/components/illustrations/palette-modes';
 
 export const metadata = helpMetadata({
   title: 'Format Painter',
@@ -26,6 +27,10 @@ The Format Painter mode copies the look of one element (its colours, line, and t
 <Step n={3}>Click each element you want to apply that style to.</Step>
 
 Every element you click takes on the copied colours, line, and text styling.
+
+<Figure caption="The Format Painter is lit in the mode picker, copying the source shape's style onto another.">
+  <FormatPainterMode />
+</Figure>
 
 ## Learn more
 

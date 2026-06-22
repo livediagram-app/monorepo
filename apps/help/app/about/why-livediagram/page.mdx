@@ -1,5 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { OpenCanvas } from '@/components/illustrations/about';
+import { LiveCursors } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Why Use livediagram?',
@@ -28,9 +30,17 @@ The whole codebase is **MIT-licensed** and publicly viewable. That has real cons
 
 The [canvas always works without signing in](/help/getting-started/guest-vs-account/). A first-time visitor can open a [new diagram](/new), build something real, and only later be asked to create an account, never blocked by a modal before they have even started. An [account](/help/getting-started/guest-vs-account/) adds cross-device sync and [teams](/help/collaboration/teams/), but it is never a gate in front of the editor.
 
+<Figure caption="You start building straight away, with no sign-in gate in front of the canvas.">
+  <OpenCanvas />
+</Figure>
+
 ## Multiplayer from the first shape
 
 Collaboration is not a bolt-on. Hand someone a [share link](/help/collaboration/sharing/) and they join the same canvas, where everyone sees live cursors, live selections, and every edit as it happens. To keep edits from colliding, an element another person currently has selected is gently locked for everyone else.
+
+<Figure caption="Multiplayer from the start: live cursors and presence the moment someone joins.">
+  <LiveCursors />
+</Figure>
 
 <FeatureGrid>
   <Feature slug="sharing" title="Real-time sharing">

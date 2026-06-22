@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { MulticolourTheme } from '@/components/illustrations/canvas';
 
 export const metadata = helpMetadata({
   title: 'Multi-Colour Themes',
@@ -29,6 +30,10 @@ livediagram ships several multi-colour themes, grouped under the picker's Multi-
 ## How a branch is decided
 
 livediagram works out the branches from your arrows. An arrow whose ends are both pinned to elements defines a parent-to-child link. The roots of the hierarchy, the centre of a mind map or the top of an org chart, take the trunk colour, and each of a root's direct children starts a fresh branch hue that flows down the whole subtree beneath it. So a top-level limb and all of its sub-topics share one colour.
+
+<Figure caption="A multi-colour theme gives the neutral root a trunk colour and tints each branch its own hue.">
+  <MulticolourTheme />
+</Figure>
 
 Elements that no arrow touches each pick up the next colour in turn, so even a flat board of scattered shapes gets a spread of hues rather than collapsing to one. Arrows take the colour of the branch they feed into, so each connector matches its limb.
 

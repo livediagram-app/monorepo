@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { IsometricMode } from '@/components/illustrations/palette-modes';
 
 export const metadata = helpMetadata({
   title: 'Isometric Mode',
@@ -22,6 +23,10 @@ Isometric Mode toggles the current tab into a tilted, isometric (3D-looking) per
 ## How it works
 
 The mode restyles how the whole tab is rendered, tilting it into the isometric view. Toggle it again to return to the flat view. It is a toggle for the current tab, so it affects everything on that tab at once.
+
+<Figure caption="Isometric Mode is lit in the mode picker, tilting the tab's shapes into a three-dimensional view.">
+  <IsometricMode />
+</Figure>
 
 ## When it is unavailable
 

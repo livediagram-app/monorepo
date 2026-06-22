@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { DeleteDialog } from '@/components/illustrations/account';
 
 export const metadata = helpMetadata({
   title: 'Deleting Your Data',
@@ -17,6 +18,10 @@ You own your diagrams, and removing one is straightforward. It helps to know how
 You can delete a diagram from the [Explorer](/explorer/recent) or from the editor. Open the row's ellipsis menu, or the Current Diagram menu in the Explorer panel, and choose **Delete**.
 
 Deleting a diagram removes it along with the content that belongs only to it, such as its tabs, comments, and activity history, since those are linked to the diagram. If the diagram had a share link, that link stops resolving too.
+
+<Figure caption="Deleting a diagram also removes its tabs, comments, and history, and cannot be undone." width="narrow">
+  <DeleteDialog />
+</Figure>
 
 If you have organised diagrams into [folders](/help/explorer/explorer-page/), you can also tidy up by moving diagrams between folders or removing folders, separately from deleting the diagrams themselves.
 

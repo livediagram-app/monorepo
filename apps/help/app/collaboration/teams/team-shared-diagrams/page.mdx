@@ -1,6 +1,7 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { getSubArticles } from '@/lib/articles';
 import { helpMetadata } from '@/lib/seo';
+import { TeamSharedTree } from '@/components/illustrations/collaboration';
 
 export const metadata = helpMetadata({
   title: 'Team Shared Diagrams',
@@ -12,6 +13,10 @@ export const metadata = helpMetadata({
 <ArticleLayout title="Team Shared Diagrams" description="A shared library of diagrams and folders that everyone on the team can manage." categoryTitle="Collaboration" categorySlug="collaboration" parentArticle={{ title: "Teams", slug: "teams" }} subArticles={getSubArticles("teams").filter((a) => a.slug !== "team-shared-diagrams")}>
 
 Every team has a shared library: a folder tree plus diagrams that all joined members can see and manage. It works just like your personal folder tree, only shared. It appears as a **Team diagrams** card on the team page in the Explorer.
+
+<Figure caption="A per-team folder tree of diagrams, each carrying a Team badge that any joined member can manage.">
+  <TeamSharedTree />
+</Figure>
 
 ## What everyone can do
 

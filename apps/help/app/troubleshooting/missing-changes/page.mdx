@@ -1,5 +1,6 @@
 import { ArticleLayout } from '@/components/ArticleLayout';
 import { helpMetadata } from '@/lib/seo';
+import { SavedState, ActivityHistory } from '@/components/illustrations/troubleshooting';
 
 export const metadata = helpMetadata({
   title: 'My Changes Are Missing',
@@ -25,9 +26,17 @@ Changes are saved automatically after you make them, per tab, to the server, not
 
 If you edited offline or on a flaky connection, a save may not have reached the server. Reconnect, make sure the diagram is loaded, and let the autosave run again.
 
+<Figure caption="When autosave settles, the editor confirms your work reached the server.">
+  <SavedState />
+</Figure>
+
 ## Recover from history
 
 If a specific change was undone, reverted, or overwritten, the [Activity Panel](/help/activity-panel/what-it-is/) is your recovery tool.
+
+<Figure caption="The Activity Panel lists recent edits with who made each one, and reverts a single entry without disturbing the rest.">
+  <ActivityHistory />
+</Figure>
 
 1. **Open the Activity Panel.** It lists recent edits on the current tab, newest first, with who made each one.
 2. **Find the change** you are missing in the list.
