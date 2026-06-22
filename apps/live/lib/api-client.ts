@@ -25,7 +25,11 @@ export type {
 // Core plumbing the app uses directly (base URL, identity headers,
 // token / share-password session state). The internal helpers
 // (expectOk family, apiDelete, envelope types) stay package-local to
-// lib/api/* and are deliberately not re-exported here.
+// lib/api/* and are deliberately not re-exported here — except
+// `ApiError`, the error type every call throws on non-2xx: callers
+// catch it to branch on `err.status` / `err.code` (the api worker's
+// snake_case error token), so it belongs in the public surface.
+export { ApiError } from './api/core';
 export {
   API_BASE,
   DIAGRAM_LIST_LOAD_SAFETY_MS,

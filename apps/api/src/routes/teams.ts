@@ -245,7 +245,7 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
     const member = await getTeamMember(env, segments[4]!);
     if (!member || member.teamId !== teamId) return notFound();
     if (member.userId === null || member.userId !== clerkUserId) {
-      return json({ error: 'not_your_invite' }, { status: 403 });
+      return forbidden('not_your_invite');
     }
     if (member.status === 'invited') await acceptTeamMember(env, member.id);
     const updated = await getTeamMember(env, member.id);
@@ -300,5 +300,5 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
 // the call sites read as intent (and a future audit of "who can hit
 // this" greps to one symbol).
 function adminRequired(): Response {
-  return json({ error: 'admin_required' }, { status: 403 });
+  return forbidden('admin_required');
 }

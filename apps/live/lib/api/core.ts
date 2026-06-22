@@ -187,12 +187,51 @@ export async function apiHeaders(
   return h;
 }
 
-// Response-handling shape every fetch call here used to inline:
-// throw a labelled Error on non-2xx, otherwise parse JSON. The `action`
-// string gets baked into the thrown message so debugging keeps the
-// caller's intent without a stack walk.
+// The error every non-2xx response throws. Carries the HTTP `status`
+// AND the api worker's `error` token (`code`) so callers can branch on
+// the specific rule that fired (`forbidden` vs `admin_required`,
+// `password_invalid`, `gallery_full`, …) instead of re-fetching or
+// guessing from the status alone. Before this, every helper threw a
+// bare `Error` whose message embedded the status and DROPPED the
+// `error` field — the api worker's snake_case error envelope
+// (responses.ts) reached the client and went straight in the bin.
+//
+// `message` keeps the exact `${action} failed: ${status}` shape the
+// helpers always threw, so logs and any string-matching callers are
+// unaffected; `status` / `code` are purely additive.
+export class ApiError extends Error {
+  readonly action: string;
+  readonly status: number;
+  readonly code: string | null;
+  constructor(action: string, status: number, code: string | null) {
+    super(`${action} failed: ${status}`);
+    this.name = 'ApiError';
+    this.action = action;
+    this.status = status;
+    this.code = code;
+  }
+}
+
+// Pull the api worker's `error` token out of a failed response body
+// without disturbing the caller's own `res.json()` (we read a clone).
+// Tolerant of empty / non-JSON bodies (503 from a missing binding,
+// network-level failures) — returns null rather than throwing a second
+// error on top of the first.
+async function readErrorCode(res: Response): Promise<string | null> {
+  try {
+    const body = (await res.clone().json()) as { error?: unknown };
+    return typeof body?.error === 'string' ? body.error : null;
+  } catch {
+    return null;
+  }
+}
+
+// Response-handling shape every fetch call here used to inline: throw
+// an `ApiError` (status + the worker's error token) on non-2xx,
+// otherwise parse JSON. The `action` string gets baked into the thrown
+// message so debugging keeps the caller's intent without a stack walk.
 export async function expectOk<T>(res: Response, action: string): Promise<T> {
-  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+  if (!res.ok) throw new ApiError(action, res.status, await readErrorCode(res));
   return (await res.json()) as T;
 }
 
@@ -201,21 +240,23 @@ export async function expectOk<T>(res: Response, action: string): Promise<T> {
 // caller wants to handle (welcome flow, share-resolution etc.)
 export async function expectOkOrNull<T>(res: Response, action: string): Promise<T | null> {
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+  if (!res.ok) throw new ApiError(action, res.status, await readErrorCode(res));
   return (await res.json()) as T;
 }
 
 // For endpoints with no response body (DELETE, write-only PUT). Same
 // error-on-non-ok contract; nothing to return.
 export async function expectOkVoid(res: Response, action: string): Promise<void> {
-  if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
+  if (!res.ok) throw new ApiError(action, res.status, await readErrorCode(res));
 }
 
 // DELETE that tolerates 404 — used everywhere "remove this if it
 // exists" is the semantic. A racing concurrent delete shouldn't
 // throw.
 async function expectOkOr404Void(res: Response, action: string): Promise<void> {
-  if (!res.ok && res.status !== 404) throw new Error(`${action} failed: ${res.status}`);
+  if (!res.ok && res.status !== 404) {
+    throw new ApiError(action, res.status, await readErrorCode(res));
+  }
 }
 
 // Shared DELETE shape. Every apiDelete*-style endpoint in this file

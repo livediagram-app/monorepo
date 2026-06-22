@@ -1,5 +1,17 @@
 import { sha256Hex, type ImageSummary } from '@livediagram/api-schema';
-import { apiUploadImage } from './api-client';
+import { ApiError, apiUploadImage } from './api-client';
+
+// Map the api worker's upload error tokens (responses.ts / images.ts)
+// to messages safe to render inline in the picker. The client-side
+// gate below already pre-rejects bad type / oversize files, so these
+// fire on the races it can't see — most importantly `gallery_full`,
+// the per-owner cap that only the server knows about (spec/19).
+const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
+  gallery_full: 'Your image gallery is full. Delete some images and try again.',
+  unsupported_type: 'Unsupported file type. Use PNG, JPEG, WebP, or GIF.',
+  file_too_large: `Too large. Limit is ${(10 * 1024 * 1024) / (1024 * 1024)} MB.`,
+  images_unavailable: 'Image uploads are not available on this server.',
+};
 
 // Shared client-side file → /api/images upload flow. Called from
 // the editor's ImagePicker AND from the Explorer Image Gallery so
@@ -64,6 +76,8 @@ export async function uploadImageFile(ownerId: string, file: File): Promise<Uplo
       originalName: file.name,
     });
   } catch (e) {
+    const mapped = e instanceof ApiError && e.code ? UPLOAD_ERROR_MESSAGES[e.code] : undefined;
+    if (mapped) throw new ImageUploadError(mapped);
     const raw = e instanceof Error ? e.message : 'Upload failed.';
     throw new ImageUploadError(raw);
   }

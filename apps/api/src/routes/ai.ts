@@ -1,4 +1,11 @@
-import { badRequest, CORS_HEADERS, json, missingAuth, rateLimited } from '../responses';
+import {
+  badRequest,
+  CORS_HEADERS,
+  json,
+  methodNotAllowed,
+  missingAuth,
+  rateLimited,
+} from '../responses';
 import { clientIp } from '../client-ip';
 import type { RouteContext } from './context';
 import type { AiMode, AiRequest } from '@livediagram/api-schema';
@@ -362,7 +369,7 @@ export async function handleAi(ctx: RouteContext): Promise<Response> {
   const owner = ctx.resolveOwner();
   if (!owner) return missingAuth();
 
-  if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, { status: 405 });
+  if (request.method !== 'POST') return methodNotAllowed();
 
   if (env.AI_RATE_LIMITER) {
     const ip = clientIp(request, 'unknown');

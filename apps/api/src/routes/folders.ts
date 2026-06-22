@@ -15,7 +15,7 @@ import {
   updateFolder,
 } from '../db';
 import type { FolderDTO } from '../types';
-import { badRequest, forbidden, json, noContent, notFound } from '../responses';
+import { badRequest, conflict, forbidden, json, noContent, notFound } from '../responses';
 import { requireOwner, type RouteContext } from './context';
 
 // Joined-member check for team-scoped folder verbs. Membership is
@@ -103,7 +103,7 @@ export async function handleFolders(ctx: RouteContext): Promise<Response> {
         )
           return notFound();
         if (await folderMoveWouldCycle(env, id, body.parentId)) {
-          return json({ error: 'cycle' }, { status: 409 });
+          return conflict('cycle');
         }
       }
       await updateFolder(env, id, { name: body.name, parentId: body.parentId });

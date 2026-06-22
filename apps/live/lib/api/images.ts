@@ -54,11 +54,12 @@ export async function apiUploadImage(
     headers,
     body: file.bytes,
   });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(`upload image failed: ${res.status} ${body.error ?? ''}`.trim());
-  }
-  return res.json() as Promise<{ image: ImageSummary; deduped: boolean }>;
+  // Goes through the shared `expectOk` like every other call, instead
+  // of the bespoke status-string concat this used to do. On failure it
+  // throws `ApiError` carrying the worker's `error` token (`gallery_full`,
+  // `unsupported_type`, `file_too_large`, …) so the caller can map it to
+  // a friendly message rather than show a raw status.
+  return expectOk<{ image: ImageSummary; deduped: boolean }>(res, 'upload image');
 }
 
 export async function apiDeleteImage(ownerId: string, imageId: string): Promise<void> {

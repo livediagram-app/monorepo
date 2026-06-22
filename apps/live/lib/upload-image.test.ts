@@ -7,9 +7,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // unit test.
 vi.mock('./api-client', () => ({
   apiUploadImage: vi.fn(),
+  // Stand-in for the real ApiError (lib/api/core.ts): same shape so
+  // `e instanceof ApiError` + `e.code` in uploadImageFile work under
+  // the mock. Lets us exercise the error-token → friendly-message map
+  // without dragging the real fetch/dedupe plumbing in.
+  ApiError: class ApiError extends Error {
+    readonly status: number;
+    readonly code: string | null;
+    constructor(action: string, status: number, code: string | null) {
+      super(`${action} failed: ${status}`);
+      this.name = 'ApiError';
+      this.status = status;
+      this.code = code;
+    }
+  },
 }));
 
-import { apiUploadImage } from './api-client';
+import { ApiError, apiUploadImage } from './api-client';
 import { ImageUploadError, UPLOAD_MAX_BYTES, uploadImageFile } from './upload-image';
 
 const apiUploadImageMock = vi.mocked(apiUploadImage);
@@ -138,11 +152,23 @@ describe('uploadImageFile, happy path', () => {
   });
 
   it('wraps a thrown apiUploadImage error in ImageUploadError so callers can render the message inline', async () => {
-    apiUploadImageMock.mockRejectedValue(new Error('upload image failed: 413 file-too-large'));
+    apiUploadImageMock.mockRejectedValue(new Error('upload image failed: 413'));
     const file = makeFile([1, 2, 3, 4], 'image/png');
     const err = await uploadImageFile('owner-a', file).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ImageUploadError);
     expect((err as ImageUploadError).message).toContain('413');
+  });
+
+  it('maps a gallery_full ApiError token to the friendly cap message (the payoff of surfacing error codes)', async () => {
+    // The client-side gate can't see the per-owner gallery cap
+    // (spec/19) — only the server knows. Now that ApiError carries the
+    // worker's snake_case error token, uploadImageFile turns it into a
+    // human message instead of a raw "failed: 403".
+    apiUploadImageMock.mockRejectedValue(new ApiError('upload image', 403, 'gallery_full'));
+    const file = makeFile([1, 2, 3, 4], 'image/png');
+    const err = await uploadImageFile('owner-a', file).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ImageUploadError);
+    expect((err as ImageUploadError).message).toContain('gallery is full');
   });
 
   it('returns null-dimension failure as a friendly ImageUploadError, not as a thrown raw error', async () => {

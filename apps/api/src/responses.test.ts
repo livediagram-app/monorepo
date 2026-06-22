@@ -5,6 +5,7 @@ import {
   forbidden,
   imagesUnavailable,
   json,
+  methodNotAllowed,
   missingAuth,
   notFound,
   rateLimited,
@@ -80,30 +81,46 @@ describe('badRequest', () => {
   });
 });
 
+describe('methodNotAllowed', () => {
+  it('returns a 405 with the canonical { error: "method_not_allowed" } envelope', async () => {
+    const res = methodNotAllowed();
+    expect(res.status).toBe(405);
+    expect(await readJson(res)).toEqual({ error: 'method_not_allowed' });
+  });
+});
+
 describe('forbidden', () => {
   it('returns a 403 with the canonical { error: "forbidden" } envelope', async () => {
     const res = forbidden();
     expect(res.status).toBe(403);
     expect(await readJson(res)).toEqual({ error: 'forbidden' });
   });
+
+  it('names the specific rule in the error token when a reason is passed', async () => {
+    // Keeps the 403 envelope uniform while letting the client branch
+    // on which rule fired (teams: admin_required / not_your_invite).
+    const res = forbidden('admin_required');
+    expect(res.status).toBe(403);
+    expect(await readJson(res)).toEqual({ error: 'admin_required' });
+  });
 });
 
 describe('imagesUnavailable', () => {
-  it('returns a 503 with the canonical { error: "images-unavailable" } envelope', async () => {
+  it('returns a 503 with the canonical { error: "images_unavailable" } envelope', async () => {
     // Surfaced when the R2 binding is unset (self-host without
     // R2). The 503 lets clients fall back gracefully rather than
     // treating it as a permanent server error.
     const res = imagesUnavailable();
     expect(res.status).toBe(503);
-    expect(await readJson(res)).toEqual({ error: 'images-unavailable' });
+    expect(await readJson(res)).toEqual({ error: 'images_unavailable' });
   });
 });
 
 describe('rateLimited', () => {
-  it('returns a 429 with the canonical { error: "rate-limited" } envelope', async () => {
+  it('returns a 429 with the canonical { error: "rate_limited" } envelope', async () => {
     const res = rateLimited();
     expect(res.status).toBe(429);
-    expect(await readJson(res)).toEqual({ error: 'rate-limited' });
+    expect(await readJson(res)).toEqual({ error: 'rate_limited' });
   });
 });
 

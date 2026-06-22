@@ -49,16 +49,28 @@ export function badRequest(msg: string): Response {
   return json({ error: 'bad_request', message: msg }, { status: 400 });
 }
 
-export function forbidden(): Response {
-  return json({ error: 'forbidden' }, { status: 403 });
+// 403 with the canonical `forbidden` token by default. Pass a `reason`
+// to name the specific rule that fired (e.g. `admin_required`,
+// `not_your_invite`) while keeping the 403 envelope uniform — the
+// client reads the `error` token to branch. Tokens are snake_case to
+// match every other error in this file.
+export function forbidden(reason = 'forbidden'): Response {
+  return json({ error: reason }, { status: 403 });
+}
+
+// 405 for a known route hit with the wrong method. Canonical home for
+// the `{ error: 'method_not_allowed' }` literal that several routes
+// (capabilities, ai) had inlined.
+export function methodNotAllowed(): Response {
+  return json({ error: 'method_not_allowed' }, { status: 405 });
 }
 
 export function imagesUnavailable(): Response {
-  return json({ error: 'images-unavailable' }, { status: 503 });
+  return json({ error: 'images_unavailable' }, { status: 503 });
 }
 
 export function rateLimited(): Response {
-  return json({ error: 'rate-limited' }, { status: 429 });
+  return json({ error: 'rate_limited' }, { status: 429 });
 }
 
 // Clerk-only surfaces (teams, spec/32). Unlike missingAuth() below —

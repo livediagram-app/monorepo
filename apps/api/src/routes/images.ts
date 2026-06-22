@@ -70,7 +70,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
     if (!ACCEPTED_IMAGE_TYPES.includes(declaredType as AcceptedImageType)) {
       return json(
         {
-          error: 'unsupported-type',
+          error: 'unsupported_type',
           acceptedTypes: ACCEPTED_IMAGE_TYPES,
         },
         { status: 415 },
@@ -81,7 +81,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
       return badRequest('missing or invalid Content-Length');
     }
     if (declaredLen > MAX_IMAGE_BYTES) {
-      return json({ error: 'file-too-large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
+      return json({ error: 'file_too_large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
     }
     // Early dedupe via the client-supplied SHA (spec/19). The client
     // computes sha256(bytes) before posting and sends it as
@@ -116,7 +116,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
       if (maxImages !== null && totals.count >= maxImages) {
         return json(
           {
-            error: 'gallery-full',
+            error: 'gallery_full',
             reason: 'count',
             limit: maxImages,
             current: totals.count,
@@ -127,7 +127,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
       if (maxBytes !== null && totals.bytes + declaredLen > maxBytes) {
         return json(
           {
-            error: 'gallery-full',
+            error: 'gallery_full',
             reason: 'bytes',
             limit: maxBytes,
             current: totals.bytes,
@@ -147,13 +147,13 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
       // Defence-in-depth: Content-Length is client-supplied
       // and could lie. Re-check after the buffer has fully
       // landed.
-      return json({ error: 'file-too-large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
+      return json({ error: 'file_too_large', limitBytes: MAX_IMAGE_BYTES }, { status: 413 });
     }
     const sniffed = sniffImageType(new Uint8Array(bytes.slice(0, 16)));
     if (!sniffed || sniffed !== declaredType) {
       return json(
         {
-          error: 'unsupported-type',
+          error: 'unsupported_type',
           acceptedTypes: ACCEPTED_IMAGE_TYPES,
         },
         { status: 415 },
@@ -186,7 +186,7 @@ export async function handleImages(ctx: RouteContext): Promise<Response> {
         // the original (which would leak the metadata we're
         // trying to remove). The user can re-export a clean
         // copy and retry.
-        return json({ error: 'malformed-jpeg' }, { status: 415 });
+        return json({ error: 'malformed_jpeg' }, { status: 415 });
       }
     }
     const id = crypto.randomUUID();
