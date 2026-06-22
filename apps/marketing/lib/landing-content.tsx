@@ -344,6 +344,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
       },
       {
         art: <LockArt />,
+        href: '/help/canvas/locking/',
         title: 'Lock anything in place',
         description:
           'Lock an element, or a whole tab, and it turns read-only, so a finished part of the diagram cannot be nudged or edited by accident.',
@@ -421,6 +422,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
       },
       {
         art: <TabLockArt />,
+        href: '/help/tabs/locking-tabs/',
         title: 'Lock a tab',
         description:
           'Lock a tab and everything on it becomes read-only. Adds, edits, and theme changes are blocked until you unlock it.',
