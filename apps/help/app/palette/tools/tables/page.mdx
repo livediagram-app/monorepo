@@ -1,0 +1,43 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Tables',
+  description:
+    'Drop an editable grid on the canvas and fill it in by double-clicking a cell, with rows and columns you add or remove as you go.',
+  path: '/help/palette/tools/tables/',
+});
+
+<ArticleLayout
+  title="Tables"
+  description="An editable grid of cells for tabular content, right on the canvas."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  parentArticle={{ title: 'Tools', slug: 'tools' }}
+  subArticles={getSubArticles('tools').filter((a) => a.slug !== 'tables')}
+>
+
+A table is an editable grid for the parts of a diagram that are easier to read as rows and columns: a comparison, a schedule, a small data set, a legend. It lives on the canvas like any other element, so you can place, resize, recolour, group, and move it freely.
+
+## Adding one
+
+<Step n={1}>Open the floating palette and switch to the **Tools** tab.</Step>
+<Step n={2}>
+  Click **Add table**. A small grid (3&nbsp;&times;&nbsp;3 to start) drops onto the canvas.
+</Step>
+<Step n={3}>
+  **Double-click any cell** to type. Move between cells as you would expect and the table grows to
+  fit your text.
+</Step>
+
+## Editing the grid
+
+Add or remove rows and columns as your content changes, so you are never stuck with the starting size. The table is a real canvas element underneath, so its colours follow the active [theme](/help/canvas/themes/), and you can restyle, group, and align it alongside everything else.
+
+<Tip>
+  Reach for a table when a cluster of shapes is really just rows and columns, a single grid stays
+  tidier and is far quicker to edit.
+</Tip>
+
+</ArticleLayout>

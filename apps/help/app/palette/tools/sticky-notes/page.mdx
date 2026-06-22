@@ -1,0 +1,37 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Sticky Notes',
+  description:
+    'Drop a coloured note card on the canvas for short annotations, ideas, and brainstorm items.',
+  path: '/help/palette/tools/sticky-notes/',
+});
+
+<ArticleLayout
+  title="Sticky Notes"
+  description="A coloured note card for short annotations and brainstorm items."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  parentArticle={{ title: 'Tools', slug: 'tools' }}
+  subArticles={getSubArticles('tools').filter((a) => a.slug !== 'sticky-notes')}
+>
+
+A sticky note is a small coloured card for a short piece of text: an idea, a question, a label, a brainstorm item. It is the digital version of the paper sticky, and it behaves like any other canvas element once placed.
+
+## Adding one
+
+<Step n={1}>Open the floating palette and switch to the **Tools** tab.</Step>
+<Step n={2}>Click **Add sticky note**, then type your text.</Step>
+
+## Working with them
+
+Stickies move, resize, group, and recolour like everything else, and their colour follows the active [theme](/help/canvas/themes/). Scatter a wall of them for a brainstorm, then drag related ones together, or pull them into a [frame](/help/palette/tools/) or [group](/help/canvas/selecting-and-grouping/groups/) to organise the result.
+
+<Tip>
+  Sticky notes pair naturally with [dot voting](/help/collaboration/session-tools/dot-voting/) in a
+  live session, capture ideas on stickies, then vote on them together.
+</Tip>
+
+</ArticleLayout>

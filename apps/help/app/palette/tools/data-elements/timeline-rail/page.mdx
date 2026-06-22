@@ -1,0 +1,42 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { getSubArticles } from '@/lib/articles';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Timeline Rail',
+  description:
+    'Add a horizontal rail of evenly spaced, labelled points for roadmaps, process steps, and sequences of events.',
+  path: '/help/palette/tools/data-elements/timeline-rail/',
+});
+
+<ArticleLayout
+  title="Timeline Rail"
+  description="A horizontal track of evenly spaced, labelled points for roadmaps and process steps."
+  categoryTitle="Palette"
+  categorySlug="palette"
+  parentArticle={{ title: 'Data and Chart Elements', slug: 'data-elements' }}
+  subArticles={getSubArticles('data-elements').filter((a) => a.slug !== 'timeline-rail')}
+>
+
+A timeline rail is a horizontal line with evenly spaced, labelled points along it, the natural shape for a roadmap, a release schedule, a process, or any sequence of milestones. It keeps the points evenly spaced for you, so the rail always looks deliberate.
+
+## Adding one
+
+<Step n={1}>Open the floating palette and switch to the **Tools** tab.</Step>
+<Step n={2}>
+  Click **Add timeline rail**. It drops in with a few sample points already spaced along it.
+</Step>
+<Step n={3}>
+  Label each point by editing its text, and set how many points the rail has from its context menu.
+</Step>
+
+## Adjusting the points
+
+Right-click the rail to open its menu and use the **Points** stepper to add or remove points; the rail re-spaces them evenly each time. Like every data element it is an ordinary canvas element, so it moves, resizes, groups, and recolours with the active [theme](/help/canvas/themes/).
+
+<Tip>
+  Pair a timeline rail with [sticky notes](/help/palette/tools/sticky-notes/) above each point to
+  annotate what happens at each milestone.
+</Tip>
+
+</ArticleLayout>
