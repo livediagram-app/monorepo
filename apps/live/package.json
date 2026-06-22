@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/dev.mjs",
-    "dev:webpack": "node scripts/dev.mjs --webpack",
+    "dev": "node ../../scripts/next-dev.mjs --port 3002",
+    "dev:webpack": "node ../../scripts/next-dev.mjs --port 3002 --webpack",
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "eslint .",

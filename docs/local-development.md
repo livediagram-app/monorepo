@@ -130,5 +130,5 @@ Tests live alongside the code they cover, as `*.test.ts` / `*.test.tsx` files. T
 
 ## Two gotchas
 
-- **Don't run `pnpm build` while `pnpm dev` is alive on `apps/live`.** They both write to `apps/live/.next/` and race on `_buildManifest.tmp.*`. The dev server uses `.next-dev/` to avoid the collision in most cases, but anything invoking `next build` from the same checkout (a CI-style `pnpm build` at the repo root, for instance) will still trip. Stop `dev`, run `build`, restart `dev`.
+- **The Next.js dev servers (`live`, `help`) run through `scripts/next-dev.mjs`.** It frees the port, points dev at an isolated `.next-dev/` cache, and wipes that cache on every start, so a `next build` running in the same checkout can't corrupt the dev server (the recurring "unstyled help page" / `Cannot find module './NNNN.js'` failures) and a crashed restart never inherits a broken cache. `help` runs on webpack (passing `--webpack`) because its `remark-gfm` MDX tables need the JS plugin pipeline Turbopack skips; `live` uses Turbopack. If a dev server ever does get stuck, stop it and restart — the wipe-on-start clears it. Still avoid running `pnpm build` from the repo root while a dev server is alive.
 - **The api worker's local D1 file lives at `apps/api/.wrangler/state/v3/d1/`.** Delete the folder to start over with an empty database.

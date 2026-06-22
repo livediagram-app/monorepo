@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3004",
+    "dev": "node ../../scripts/next-dev.mjs --port 3004 --webpack",
     "build": "next build",
     "start": "next start -p 3004",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next out node_modules .turbo"
+    "clean": "rm -rf .next .next-dev out node_modules .turbo"
   },
   "dependencies": {
     "@livediagram/ui": "workspace:*",

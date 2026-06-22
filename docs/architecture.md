@@ -19,6 +19,7 @@ packages/
   tailwind-config/shared Tailwind theme (brand palette)
   vitest-config/  shared Vitest defaults
 specs/          product source of truth, read these before adding features
+scripts/        repo-wide dev tooling (next-dev.mjs: shared Next.js dev launcher)
 marketing/      off-site copy + media for listings and promotion (see specs/23)
   copy/         taglines, descriptions, tags, the canonical fact sheet
   media/

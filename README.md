@@ -8,6 +8,7 @@ A collaborative diagram editor that works without signing in. Open a link, draw,
 apps/        marketing site + editor + telemetry dashboard + help centre + api + router
 packages/    shared diagram model, wire-format types, UI primitives, configs
 specs/       product source of truth, read these before adding features
+scripts/     repo-wide dev tooling (shared Next.js dev launcher)
 docs/        practical guides for using, hosting, and contributing
 marketing/   off-site copy + media for listings and promotion (see specs/23)
 ```
