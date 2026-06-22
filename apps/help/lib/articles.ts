@@ -1018,14 +1018,6 @@ export const articles: Article[] = [
     categorySlug: 'canvas/selecting-and-grouping',
     parentSlug: 'selecting-and-grouping',
   },
-  {
-    slug: 'using-the-format-painter',
-    title: 'Using the Format Painter',
-    description: 'Copy one element’s style onto others.',
-    category: 'Canvas',
-    categorySlug: 'canvas/selecting-and-grouping',
-    parentSlug: 'selecting-and-grouping',
-  },
 
   // ---- Sub-articles: Text and Fonts ----
   {
