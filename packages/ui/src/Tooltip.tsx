@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { POPOVER_VIEWPORT_MARGIN, clampIntoRange } from './popover';
 
 type TooltipProps = {
   title: ReactNode;
@@ -27,7 +28,8 @@ type Placement = 'top' | 'bottom' | 'left' | 'right';
 
 const TOOLTIP_WIDTH = 224; // matches w-56
 const GAP = 10;
-const VIEWPORT_MARGIN = 8;
+// Edge inset shared with every other floating box (packages/ui/popover).
+const VIEWPORT_MARGIN = POPOVER_VIEWPORT_MARGIN;
 
 // Custom tooltip with a bold title and a one-line description. Appears next
 // to the wrapped element on hover/focus. Rendered via portal so it isn't
@@ -93,16 +95,12 @@ export function Tooltip({
       // viewport. The arrow stays pinned to the trigger's centre
       // even when the card slides.
       const idealLeft = triggerCenterX - cardWidth / 2;
-      const minLeft = VIEWPORT_MARGIN;
-      const maxLeft = vw - VIEWPORT_MARGIN - cardWidth;
-      left = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+      left = clampIntoRange(idealLeft, VIEWPORT_MARGIN, vw - VIEWPORT_MARGIN - cardWidth);
       top = placement === 'top' ? trigger.top - cardHeight - GAP : trigger.bottom + GAP;
       arrowOffset = triggerCenterX - left;
     } else {
       const idealTop = triggerCenterY - cardHeight / 2;
-      const minTop = VIEWPORT_MARGIN;
-      const maxTop = vh - VIEWPORT_MARGIN - cardHeight;
-      top = Math.max(minTop, Math.min(maxTop, idealTop));
+      top = clampIntoRange(idealTop, VIEWPORT_MARGIN, vh - VIEWPORT_MARGIN - cardHeight);
       left = placement === 'right' ? trigger.right + GAP : trigger.left - cardWidth - GAP;
       arrowOffset = triggerCenterY - top;
     }

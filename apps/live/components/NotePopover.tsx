@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { clampIntoRange } from '@livediagram/ui';
 import { Portal } from './Portal';
 import { VIEWPORT_EDGE_MARGIN as EDGE_MARGIN } from '@/lib/clamp-to-viewport';
 
@@ -69,7 +70,7 @@ export function NotePopover({ elementId, initial, onCommit, onClose, readOnly }:
       // Clamp horizontally so a popover anchored on a near-edge
       // element doesn't run off the viewport.
       const halfW = WIDTH / 2;
-      left = Math.max(halfW + EDGE_MARGIN, Math.min(left, window.innerWidth - halfW - EDGE_MARGIN));
+      left = clampIntoRange(left, halfW + EDGE_MARGIN, window.innerWidth - halfW - EDGE_MARGIN);
       // Flip above the element if there's no room below.
       if (top + 220 > window.innerHeight - EDGE_MARGIN) {
         top = rect.top - GAP - 220;

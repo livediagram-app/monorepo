@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { clampIntoRange } from '@livediagram/ui';
 import { Portal } from './Portal';
 import { VIEWPORT_EDGE_MARGIN as EDGE } from '@/lib/clamp-to-viewport';
 
@@ -56,10 +57,9 @@ export function ConfirmPopover({
       const side: 'left' | 'right' = roomLeft ? 'left' : 'right';
       const left = side === 'left' ? a.left - GAP - WIDTH : a.right + GAP;
       // Vertically centre on the anchor, clamped to the viewport.
-      let top = a.top + a.height / 2 - h / 2;
-      top = Math.max(EDGE, Math.min(top, window.innerHeight - h - EDGE));
+      const top = clampIntoRange(a.top + a.height / 2 - h / 2, EDGE, window.innerHeight - h - EDGE);
       // Arrow sits level with the anchor's centre, relative to the panel.
-      const arrowTop = Math.max(ARROW, Math.min(a.top + a.height / 2 - top, h - ARROW * 2));
+      const arrowTop = clampIntoRange(a.top + a.height / 2 - top, ARROW, h - ARROW * 2);
       setLayout({ left, top, side, arrowTop });
     };
     place();

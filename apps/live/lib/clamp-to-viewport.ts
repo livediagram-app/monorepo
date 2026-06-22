@@ -16,10 +16,14 @@
 // - Returns the new adjust unconditionally; the caller compares
 //   against its previous state to avoid setState-loops.
 
+import { POPOVER_VIEWPORT_MARGIN } from '@livediagram/ui';
+
 // The px gap floating UI keeps from the viewport edge. Shared by the clamp
 // below and by the popovers / menus / toolbars that run their own edge-aware
-// positioning, so the inset is defined once instead of copied per component.
-export const VIEWPORT_EDGE_MARGIN = 8;
+// positioning. Sourced from @livediagram/ui so the inset is one value across
+// the package boundary (the Tooltip in packages/ui uses the same constant);
+// re-exported under the historical name so existing importers are unchanged.
+export const VIEWPORT_EDGE_MARGIN = POPOVER_VIEWPORT_MARGIN;
 
 export type ViewportAdjust = { x: number; y: number };
 
