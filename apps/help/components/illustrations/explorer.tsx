@@ -553,7 +553,7 @@ export function SharedWithYou() {
         className="fill-white stroke-slate-200"
         strokeWidth={1.5}
       />
-      <g transform="translate(40 22)">
+      <g transform="translate(40 32)">
         <SidebarGlyph kind="shared" active />
       </g>
       <Label x={56} y={32} size={11} weight={700} tone="strong">
@@ -660,7 +660,7 @@ export function TeamSpace() {
         className="fill-white stroke-slate-200"
         strokeWidth={1.5}
       />
-      <g transform="translate(40 22)">
+      <g transform="translate(40 32)">
         <SidebarGlyph kind="team" active />
       </g>
       <Label x={56} y={32} size={11} weight={700} tone="strong">

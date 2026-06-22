@@ -589,9 +589,9 @@ export function MinimalPanels() {
             <circle cx="1" cy="1" r="1" className="fill-slate-200" />
           </pattern>
         </defs>
-        <Panel x={28} y={32} w={56} h={48} title="EXPLORER" />
-        <Panel x={134} y={30} w={56} h={70} title="PALETTE" />
-        <Panel x={120} y={120} w={70} h={58} title="EDITOR" />
+        <Panel x={28} y={32} w={74} h={48} title="EXPLORER" />
+        <Panel x={120} y={30} w={70} h={70} title="PALETTE" />
+        <Panel x={112} y={120} w={76} h={58} title="EDITOR" />
         <Label x={108} y={200} size={9} weight={700} anchor="middle" tone="muted">
           Floating panels
         </Label>
