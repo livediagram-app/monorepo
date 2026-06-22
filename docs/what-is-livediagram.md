@@ -16,10 +16,10 @@ The unit of value is the team, not the individual. See [spec/00](../specs/00-pur
 
 ## What's built today
 
-- **Canvas primitives**: shapes (ten core), sticky notes, text, images, arrows (straight / curved / angled with draggable curve / elbow handles, configurable thickness + arrowhead size, optional labels), freehand sketches via the Pencil tool (smooth SVG paths with optional shape-recognition mode that auto-converts rectangles / circles / diamonds / lines), comment threads, per-element links + locks.
+- **Canvas primitives**: shapes (fourteen geometric primitives plus frames, device mockups for wireframing, progress bars / rings, star ratings, timeline rails, and pie / bar / line charts, plus a curated single-colour icon catalogue), tables, sticky notes, text, images, arrows (straight / curved / angled with draggable curve / elbow handles, configurable thickness + arrowhead size, optional labels), freehand sketches via the Pencil tool (smooth SVG paths with optional shape-recognition mode that auto-converts rectangles / circles / diamonds / lines), comment threads, per-element links + locks.
 - **Multi-select**: marquee drag, shift-click, format painter, groups.
 - **Rotation**: free-rotate any boxed element about its centre via a dedicated handle; the angle round-trips through copy / paste / duplicate / save (spec/09).
-- **Templates**: seventeen starters (Blank, Mind map, Flowchart, Kanban, SWOT, Retrospective, Org chart, Timeline, Fishbone, Pyramid, Flywheel, Venn, User journey, Logo design, plus three UI wireframes).
+- **Templates**: thirty starters across eight categories (mind maps, flowcharts, hierarchies, planning, project management, strategy, design, technical), from Blank, Flowchart, Kanban, and SWOT to Gantt, ER diagram, sequence diagram, system architecture, and three UI wireframes.
 - **Themes**: twenty-seven presets (including the multi-colour palettes from spec/29) that recolour the canvas, every shape, every arrow in one click, plus a custom-theme builder that saves owner-scoped themes to the database (spec/44).
 - **Multiplayer**: live presence, cursors, selection rings, comments, laser-pointer broadcast via per-diagram Durable Object rooms.
 - **Audit log**: every change recorded per-tab; one-click revert on any entry, even after later edits.
