@@ -6,40 +6,41 @@ import { Rotation } from '@/components/illustrations/element-properties';
 export const metadata = helpMetadata({
   title: 'Rotating Elements',
   description:
-    'Tilt an element to a preset angle from the Rotation category of the right-click menu, or drag its rotate handle for a free angle.',
+    'Tilt an element to a preset angle from the Rotation category of the right-click menu or the search command palette.',
   path: '/help/canvas/rotation/',
 });
 
-<ArticleLayout title="Rotating Elements" description="Tilt a shape, label, or image to a preset angle, or drag the rotate handle to set your own." categoryTitle="Canvas" categorySlug="canvas" subArticles={getSubArticles("rotation")}>
+<ArticleLayout title="Rotating Elements" description="Tilt a shape, label, or image to a preset 45° angle from the right-click menu or the search palette." categoryTitle="Canvas" categorySlug="canvas" subArticles={getSubArticles("rotation")}>
 
 Most elements sit upright, but sometimes a shape, label, or image reads better at an angle: a tilted callout, a diagonal banner, a label following a sloped arrow. The **Rotation** controls turn an element to the angle you want.
 
-<Figure caption="A square rotated 45° over its upright outline, with the rotate handle above it.">
+<Figure caption="A square rotated 45° over its upright outline, with the angle read off the snap arc.">
   <Rotation />
 </Figure>
 
 ## Snap to a preset angle
 
-Right-click an element and open the **Rotation** category. It offers eight preset angles, every 45° around the circle: **0°, 45°, 90°, 135°, 180°, 225°, 270°,** and **315°**. Each tile previews the orientation, so you can see the result before you pick it. Choosing one snaps the element to that exact angle, which keeps a row of tilted elements perfectly consistent.
+Right-click an element and open the **Rotation** category. It offers eight preset angles, every 45° around the circle: **0°, 45°, 90°, 135°, 180°, 225°, 270°,** and **315°**. Each tile previews the orientation, so you can see the result before you pick it. Choosing one snaps the element to that exact angle, which keeps a row of tilted elements perfectly consistent. Picking **0°** sets it back upright.
 
-## Drag the rotate handle for a free angle
+## Rotate from the search palette
 
-For an angle that isn't a multiple of 45°, select a single element and drag the **rotate handle**, the small knob on a short stem above its top edge. The element turns to follow the pointer. The corner resize handles stay visible while it's rotated, so you can keep adjusting its size at the new angle.
+With a single element selected, open the search palette (`⌘.` / `Ctrl .`) and type **rotate** for quick **Rotate 90°**, **Rotate 180°**, **Rotate 270°**, and **Reset rotation** actions — the keyboard-only route to the same result, without opening the menu.
 
 <Note>
-  The rotate handle is hidden while a quick-action ring is open around the element, so the two
-  controls never clash. Close the ring and the handle returns.
+  Rotation uses these fixed 45° steps rather than a free-drag handle, so tilted elements stay
+  consistent with one another and any angle is easy to reproduce or undo.
 </Note>
 
 ## Good to know
 
 - Rotation is a per-element property, so different elements on the same tab can sit at different angles.
+- The corner resize handles are hidden while an element is rotated; set it back to **0°** to resize it, then re-apply the angle.
 - Some markers, like annotations, deliberately stay upright. A tilted note marker reads as a mistake, so rotation is kept off for them.
 - The **Bounce** and **Wobble** [animations](/help/canvas/animations/) compose with an element's rotation, so a tilted shape still bobs or wiggles around its angle.
 
 <Tip>
-  Use the preset angles when you want several elements to share the exact same tilt, and the rotate
-  handle when you're eyeballing a one-off angle.
+  Use a preset angle when you want several elements to share the exact same tilt; reach for the
+  search palette's **Rotate** actions when your hands are already on the keyboard.
 </Tip>
 
 </ArticleLayout>

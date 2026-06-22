@@ -499,7 +499,7 @@
   animation: fa-ripple 2.4s ease-out infinite;
 }
 
-/* shape rotation, a gentle rock to the 15° snap angle and back (the origin
+/* shape rotation, a snap to the 45° preset angle and back (the origin
    is set inline on the rotating <g> so it pivots about the shape's centre). */
 @keyframes fa-rotate {
   0%,
@@ -508,7 +508,7 @@
   }
   44%,
   70% {
-    transform: rotate(15deg);
+    transform: rotate(45deg);
   }
   92%,
   100% {

@@ -607,9 +607,10 @@ function SparkleIcon({ light = false }: { light?: boolean }) {
   );
 }
 
-// Shape rotation: a selected shape with a rotate handle on a stem above it,
-// rocking to the 15° snap angle and back. Resize handles are hidden while
-// rotating, matching the editor (snaps to 15°, Shift for free) (spec/09).
+// Shape rotation: a selected shape snapping to a preset 45° angle and back,
+// matching the editor's preset-angle rotation (the Rotation right-click
+// category + the search palette's Rotate actions; no free-drag handle)
+// (spec/09).
 export function RotateArt() {
   return (
     <Frame canvas>
@@ -640,20 +641,10 @@ export function RotateArt() {
             stroke={BLUE_STROKE}
             strokeWidth="2"
           />
-          {/* stem + rotate handle */}
-          <line x1="110" y1="30" x2="110" y2="17" stroke={SKY} strokeWidth="1.5" />
-          <circle cx="110" cy="14" r="4" fill="#fff" stroke={SKY} strokeWidth="1.8" />
-          <path
-            d="M108.4 14 a1.6 1.6 0 1 1 0.5 1.15"
-            fill="none"
-            stroke={SKY}
-            strokeWidth="1"
-            strokeLinecap="round"
-          />
         </g>
       </svg>
       <span className="absolute bottom-1.5 right-2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-medium text-slate-500 shadow-sm">
-        snaps to 15°
+        45° presets
       </span>
     </Frame>
   );

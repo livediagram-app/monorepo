@@ -919,7 +919,8 @@ export const articles: Article[] = [
   {
     slug: 'rotation',
     title: 'Rotating Elements',
-    description: 'Snap an element to a preset angle or drag its rotate handle.',
+    description:
+      'Snap an element to a preset 45° angle from the right-click menu or search palette.',
     category: 'Canvas',
     categorySlug: 'canvas',
   },

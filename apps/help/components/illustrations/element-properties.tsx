@@ -79,22 +79,6 @@ export function Rotation() {
           className="fill-brand-500 stroke-brand-600"
           strokeWidth={2}
         />
-        {/* Rotation handle stem + knob */}
-        <line
-          x1={cx}
-          y1={cy - 46}
-          x2={cx}
-          y2={cy - 70}
-          className="stroke-brand-500"
-          strokeWidth={2}
-        />
-        <circle
-          cx={cx}
-          cy={cy - 70}
-          r={5}
-          className="fill-white stroke-brand-500"
-          strokeWidth={2}
-        />
       </g>
       {/* Snap-angle arc + readout */}
       <path

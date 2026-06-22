@@ -572,9 +572,9 @@ export const LANDING_SECTIONS: LandingSection[] = [
       {
         art: <RotateArt />,
         href: '/help/canvas/rotation/',
-        title: 'Rotate to any angle',
+        title: 'Rotate to a preset angle',
         description:
-          'Grab the rotate handle above a selected shape and turn it to any angle. As you near square it eases onto the nearest 15°, or hold Shift to switch the snap off, and pinned arrows keep tracking the shape as it turns.',
+          'Tilt a selected shape to a preset 45° angle from the right-click Rotation menu, or type "rotate" in the search palette for quick 90°/180°/270° turns. Fixed steps keep tilted elements consistent, and pinned arrows keep tracking the shape as it turns.',
       },
       {
         art: <AlignmentGuidesArt />,
