@@ -34,11 +34,16 @@ function ArrowButton({
   muted?: boolean;
 }) {
   const stroke = muted ? 'stroke-slate-300' : 'stroke-brand-500';
-  // A small curved arrow: undo points anticlockwise-left, redo clockwise-right.
-  const d =
+  // Hook arrows matching the editor's Undo / Redo controls (apps/live
+  // ActivityPanel UndoIcon / RedoIcon): a shaft that curves back on itself with
+  // a chevron head. Authored in the editor's 16-unit space and re-centred on the
+  // button (translate -8, scale ~0.82 → the glyph's (8,8) centre lands at the
+  // origin and the ~11-unit glyph sits comfortably inside the r=9 circle).
+  const body =
     dir === 'undo'
-      ? 'M5 -3 a6 6 0 1 0 6 6 M5 -3 l-4 -1 M5 -3 l1 4'
-      : 'M-5 -3 a6 6 0 1 1 -6 6 M-5 -3 l4 -1 M-5 -3 l-1 4';
+      ? 'M3.5 6.5h6.75A3.25 3.25 0 0 1 13.5 9.75v0a3.25 3.25 0 0 1 -3.25 3.25H6'
+      : 'M12.5 6.5H5.75A3.25 3.25 0 0 0 2.5 9.75v0A3.25 3.25 0 0 0 5.75 13H10';
+  const head = dir === 'undo' ? 'M6 3.5L3 6.5L6 9.5' : 'M10 3.5L13 6.5L10 9.5';
   return (
     <g transform={`translate(${cx} ${cy})`}>
       <circle
@@ -46,14 +51,24 @@ function ArrowButton({
         className={`fill-white ${muted ? 'stroke-slate-200' : 'stroke-brand-300'}`}
         strokeWidth={1.5}
       />
-      <path
-        d={d}
-        fill="none"
-        className={stroke}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <g transform="translate(-6.56 -6.56) scale(0.82)">
+        <path
+          d={body}
+          fill="none"
+          className={stroke}
+          strokeWidth={1.9}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={head}
+          fill="none"
+          className={stroke}
+          strokeWidth={1.9}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
     </g>
   );
 }
