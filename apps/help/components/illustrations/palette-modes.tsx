@@ -145,14 +145,14 @@ export function ModeRow({
 }) {
   const gap = 34;
   const tilesW = MODES.length * gap - (gap - 26);
-  const panelW = tilesW + 24;
-  const labelGap = title ? 18 : 0;
+  const panelW = tilesW + 28;
+  const labelGap = title ? 26 : 0;
   return (
-    <Panel x={x} y={y} w={panelW} h={42 + labelGap} title={title ? 'PALETTE' : undefined}>
+    <Panel x={x} y={y} w={panelW} h={43 + labelGap} title={title ? 'PALETTE' : undefined}>
       {MODES.map((m, i) => {
         const on = m.key === active;
-        const tx = x + 12 + i * gap;
-        const ty = y + labelGap + 8;
+        const tx = x + 14 + i * gap;
+        const ty = y + labelGap + 7;
         return (
           <Tile key={m.key} x={tx} y={ty} active={on}>
             <m.Glyph on={on} />
@@ -328,9 +328,9 @@ export function SpotlightMode() {
       {/* Dimming veil with a hole over the focused shape */}
       <rect
         x={0}
-        y={72}
+        y={96}
         width={420}
-        height={158}
+        height={134}
         className="fill-slate-900/55"
         mask="url(#spotlight-hole)"
       />
@@ -352,8 +352,8 @@ export function SpotlightMode() {
  *  isometric, three-dimensional view. */
 export function IsometricMode() {
   // Project flat (cx, cy) onto a simple isometric plane around a centre.
-  const ox = 230;
-  const oy = 150;
+  const ox = 236;
+  const oy = 168;
   const iso = (cx: number, cy: number): [number, number] => [
     ox + (cx - cy) * 0.86,
     oy + (cx + cy) * 0.5,
@@ -362,7 +362,7 @@ export function IsometricMode() {
   function IsoCard({
     cx,
     cy,
-    half = 40,
+    half = 36,
     accent = false,
     label,
   }: {
@@ -412,7 +412,7 @@ export function IsometricMode() {
   const a = iso(-70, -30);
   const b = iso(70, 30);
   return (
-    <Scene w={420} h={230}>
+    <Scene w={420} h={264}>
       <ModeRow active="isometric" />
       <line
         x1={a[0]}
@@ -447,7 +447,7 @@ export function PaletteSettings({
     <Scene w={400} h={234} bg="plain">
       <Panel x={92} y={26} w={216} h={182} title="PALETTE SETTINGS">
         {rows.map((r, i) => {
-          const ry = 64 + i * 36;
+          const ry = 70 + i * 34;
           const hot = highlight === r.key;
           return (
             <g key={r.key}>
@@ -456,15 +456,15 @@ export function PaletteSettings({
                   x={100}
                   y={ry - 12}
                   width={200}
-                  height={30}
+                  height={28}
                   rx={7}
                   className="fill-brand-50"
                 />
               )}
               <Label
                 x={108}
-                y={ry + 3}
-                size={11}
+                y={ry + 2}
+                size={10}
                 weight={hot ? 600 : 400}
                 tone={hot ? 'accent' : 'body'}
               >
@@ -484,10 +484,10 @@ export function PaletteSettings({
           );
         })}
         {/* Reset action */}
-        <line x1={100} y1={172} x2={300} y2={172} className="stroke-slate-200" strokeWidth={1.5} />
+        <line x1={100} y1={168} x2={300} y2={168} className="stroke-slate-200" strokeWidth={1.5} />
         <Button
           x={108}
-          y={180}
+          y={176}
           w={184}
           h={22}
           label="Reset palette position"

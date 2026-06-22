@@ -81,7 +81,7 @@ export function OpenCanvas() {
           className="fill-white stroke-slate-200"
           strokeWidth={2}
         />
-        <Label x={52} y={22} anchor="middle" size={11} weight={700} tone="muted">
+        <Label x={52} y={22} anchor="middle" size={10} weight={700} tone="muted">
           Sign in
         </Label>
         <rect x={16} y={36} width={72} height={16} rx={5} className="fill-slate-100" />

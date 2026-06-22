@@ -161,7 +161,7 @@ export function ConfigSources() {
  *  identity path, but the editor works either way. */
 export function GuestFallback() {
   return (
-    <Scene w={420} h={230}>
+    <Scene w={420} h={244}>
       {/* The config toggle */}
       <Shape x={148} y={20} w={124} h={40} kind="diamond" label="Clerk set?" labelTone="strong" />
 
@@ -191,7 +191,7 @@ export function GuestFallback() {
       />
       <Arrow from={[94, 144]} to={[170, 176]} kind="curved" tone="muted" />
       <Arrow from={[324, 144]} to={[250, 176]} kind="curved" tone="muted" />
-      <TextBar x={140} y={206} w={140} tone="faint" />
+      <TextBar x={140} y={226} w={140} tone="faint" />
     </Scene>
   );
 }

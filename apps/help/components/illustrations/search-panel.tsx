@@ -101,12 +101,12 @@ export function SearchOverlay({
       <g transform={`translate(${px + 32} ${fieldY + fieldH / 2})`}>
         <Magnifier tone="accent" />
       </g>
-      <Label x={px + 48} y={fieldY + fieldH / 2 + 1} size={13} tone="strong" weight={500}>
+      <Label x={px + 48} y={fieldY + fieldH / 2 + 1} size={11} tone="strong" weight={500}>
         {query}
       </Label>
       {/* text caret */}
       <rect
-        x={px + 48 + query.length * 7 + 3}
+        x={px + 48 + query.length * 6 + 3}
         y={fieldY + 9}
         width={1.5}
         height={fieldH - 18}
@@ -116,7 +116,7 @@ export function SearchOverlay({
       {/* groups */}
       {laidGroups.map((g, gi) => (
         <g key={gi}>
-          <Label x={px + 16} y={g.headY + groupHeadH / 2 + 1} size={9} weight={700} tone="muted">
+          <Label x={px + 16} y={g.headY + groupHeadH / 2 + 1} size={8} weight={700} tone="muted">
             {g.title.toUpperCase()}
           </Label>
           {g.rows.map((r, ri) => {
@@ -138,14 +138,14 @@ export function SearchOverlay({
                 <Label
                   x={px + 44}
                   y={cy + 1}
-                  size={11}
+                  size={10}
                   weight={r.active || r.action ? 600 : 400}
                   tone={r.active || r.action ? 'accent' : 'body'}
                 >
                   {r.label}
                 </Label>
                 {r.meta && (
-                  <Label x={px + pw - 16} y={cy + 1} size={9.5} tone="muted" anchor="end">
+                  <Label x={px + pw - 16} y={cy + 1} size={8} tone="muted" anchor="end">
                     {r.meta}
                   </Label>
                 )}

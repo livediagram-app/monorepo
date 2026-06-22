@@ -29,7 +29,7 @@ export function ShapeGallery() {
         return (
           <g key={i}>
             <Shape x={sx + 16} y={sy} w={cw - 32} h={ch} kind={c.kind} accent={i === 0} />
-            <Label x={sx + cw / 2} y={sy + ch + 16} anchor="middle" size={11} tone="muted">
+            <Label x={sx + cw / 2} y={sy + ch + 16} anchor="middle" size={9} tone="muted">
               {c.label}
             </Label>
           </g>
@@ -43,20 +43,20 @@ export function ShapeGallery() {
  *  right-click menu's shape-kind picker. */
 export function ShapeMorph() {
   return (
-    <Scene w={420} h={220}>
-      <Shape x={40} y={78} w={104} h={60} kind="rect" accent label="Store" />
-      <SelectionBox x={40} y={78} w={104} h={60} />
-      <Arrow from={[152, 108]} to={[244, 108]} kind="curved" tone="muted" dashed />
-      <Shape x={252} y={74} w={104} h={68} kind="cylinder" accent label="Store" />
+    <Scene w={420} h={240}>
+      <Shape x={40} y={138} w={104} h={60} kind="rect" accent label="Store" />
+      <SelectionBox x={40} y={138} w={104} h={60} />
+      <Arrow from={[152, 168]} to={[244, 168]} kind="curved" tone="muted" dashed />
+      <Shape x={252} y={134} w={104} h={68} kind="cylinder" accent label="Store" />
       <Menu
-        x={150}
-        y={28}
+        x={135}
+        y={26}
         w={150}
         items={['Square', 'Cylinder', 'Diamond', 'Hexagon']}
         active={1}
         rowH={24}
       />
-      <Label x={160} y={20} size={10} weight={700} tone="muted">
+      <Label x={145} y={18} size={8} weight={700} tone="muted">
         SHAPE
       </Label>
     </Scene>
@@ -71,7 +71,7 @@ export function ShapeMarkers() {
       {/* Traffic-light dot */}
       <Shape x={44} y={56} w={140} h={58} kind="rect" label="" />
       <circle cx={70} cy={85} r={9} className="fill-emerald-500 stroke-white" strokeWidth={2} />
-      <Label x={90} y={86} size={13} weight={500} tone="strong">
+      <Label x={90} y={86} size={10} weight={500} tone="strong">
         On track
       </Label>
       {/* Checkbox marker */}
@@ -93,7 +93,7 @@ export function ShapeMarkers() {
           strokeLinejoin="round"
         />
       </g>
-      <Label x={284} y={86} size={13} weight={500} tone="strong">
+      <Label x={284} y={86} size={10} weight={500} tone="strong">
         Done
       </Label>
     </Scene>
@@ -105,7 +105,7 @@ export function StylePresets() {
   const colours = ['fill-brand-500', 'fill-emerald-500', 'fill-violet-500', 'fill-amber-500'];
   return (
     <Scene w={420} h={220}>
-      <Label x={210} y={22} anchor="middle" size={11} weight={700} tone="muted">
+      <Label x={210} y={22} anchor="middle" size={8} weight={700} tone="muted">
         PRESETS
       </Label>
       {/* Colour swatch row */}
@@ -196,7 +196,7 @@ export function ArrowStyles() {
             <Shape x={ax} y={48} w={36} h={28} kind="rect" />
             <Shape x={bx - 36} y={104} w={36} h={28} kind="rect" />
             <Arrow from={[ax + 36, 62]} to={[bx - 36, 118]} kind={c.kind} />
-            <Label x={x0 + cw / 2} y={168} anchor="middle" size={11} weight={600} tone="muted">
+            <Label x={x0 + cw / 2} y={168} anchor="middle" size={10} weight={600} tone="muted">
               {c.label}
             </Label>
           </g>

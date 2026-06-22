@@ -21,8 +21,8 @@ import {
 /** A compact palette panel reused by several canvas scenes. */
 function MiniPalette({ x, y }: { x: number; y: number }) {
   return (
-    <Panel x={x} y={y} w={104} h={104} title="PALETTE">
-      <Tile x={x + 10} y={y + 28} active>
+    <Panel x={x} y={y} w={104} h={112} title="PALETTE">
+      <Tile x={x + 10} y={y + 36} active>
         <rect
           x={-7}
           y={-7}
@@ -34,10 +34,10 @@ function MiniPalette({ x, y }: { x: number; y: number }) {
           fill="none"
         />
       </Tile>
-      <Tile x={x + 42} y={y + 28}>
+      <Tile x={x + 42} y={y + 36}>
         <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
       </Tile>
-      <Tile x={x + 74} y={y + 28}>
+      <Tile x={x + 74} y={y + 36}>
         <path
           d="M0 -8 L8 0 L0 8 L-8 0 Z"
           className="stroke-brand-500"
@@ -45,13 +45,13 @@ function MiniPalette({ x, y }: { x: number; y: number }) {
           fill="none"
         />
       </Tile>
-      <Tile x={x + 10} y={y + 64}>
+      <Tile x={x + 10} y={y + 70}>
         <path d="M-8 -6 h16 v12 h-16 Z" className="stroke-brand-500" strokeWidth={2} fill="none" />
       </Tile>
-      <Tile x={x + 42} y={y + 64}>
+      <Tile x={x + 42} y={y + 70}>
         <ellipse rx={8} ry={6} className="stroke-brand-500" strokeWidth={2} fill="none" />
       </Tile>
-      <Tile x={x + 74} y={y + 64}>
+      <Tile x={x + 74} y={y + 70}>
         <path
           d="M-7 -7 h14 l-3 14 h-8 Z"
           className="stroke-brand-500"
@@ -73,9 +73,9 @@ export function CanvasOverview() {
       <Shape x={172} y={172} w={84} h={44} kind="rect" accent label="Done" />
       <Arrow from={[124, 116]} to={[172, 116]} />
       <Arrow from={[214, 140]} to={[214, 172]} />
-      <Panel x={288} y={20} w={112} h={120} title="PALETTE">
-        <Tabs x={296} y={48} items={['Shapes', 'Tools']} active={0} tabW={48} h={20} />
-        <Tile x={298} y={76} active>
+      <Panel x={288} y={20} w={112} h={132} title="PALETTE">
+        <Tabs x={296} y={50} items={['Shapes', 'Tools']} active={0} tabW={48} h={20} />
+        <Tile x={298} y={80} active>
           <rect
             x={-7}
             y={-7}
@@ -87,10 +87,10 @@ export function CanvasOverview() {
             fill="none"
           />
         </Tile>
-        <Tile x={330} y={76}>
+        <Tile x={330} y={80}>
           <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={362} y={76}>
+        <Tile x={362} y={80}>
           <path
             d="M0 -8 L8 0 L0 8 L-8 0 Z"
             className="stroke-brand-500"
@@ -98,7 +98,7 @@ export function CanvasOverview() {
             fill="none"
           />
         </Tile>
-        <Tile x={298} y={106}>
+        <Tile x={298} y={112}>
           <path
             d="M-8 -6 h16 v12 h-16 Z"
             className="stroke-brand-500"
@@ -106,10 +106,10 @@ export function CanvasOverview() {
             fill="none"
           />
         </Tile>
-        <Tile x={330} y={106}>
+        <Tile x={330} y={112}>
           <path d="M-7 7 L7 -7" className="stroke-brand-500" strokeWidth={2} />
         </Tile>
-        <Tile x={362} y={106}>
+        <Tile x={362} y={112}>
           <path d="M-7 0 h14 M0 -7 v14" className="stroke-brand-500" strokeWidth={2} />
         </Tile>
       </Panel>
@@ -181,15 +181,24 @@ export function CanvasBackground() {
   ];
   return (
     <Scene w={420} h={240} bg="plain">
-      <Dialog x={96} y={26} w={228} h={188} title="Tab Appearance" sceneW={420} sceneH={240}>
-        <Label x={112} y={58} size={11} weight={700} tone="muted">
+      <Dialog
+        x={96}
+        y={20}
+        w={228}
+        h={200}
+        title="Tab Appearance"
+        sceneW={420}
+        sceneH={240}
+        scrim={false}
+      >
+        <Label x={112} y={56} size={8} weight={700} tone="muted">
           BACKGROUND
         </Label>
         {swatches.map((cls, i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
           const sx = 112 + col * 68;
-          const sy = 70 + row * 56;
+          const sy = 68 + row * 56;
           const sel = i === 2;
           return (
             <g key={i}>
@@ -206,7 +215,7 @@ export function CanvasBackground() {
             </g>
           );
         })}
-        <Button x={244} y={186} w={64} label="Done" variant="primary" />
+        <Button x={244} y={184} w={64} label="Done" variant="primary" />
       </Dialog>
     </Scene>
   );
@@ -291,12 +300,12 @@ export function ThemePicker() {
   ];
   return (
     <Scene w={420} h={240} bg="plain">
-      <Dialog x={70} y={22} w={280} h={196} title="Theme" sceneW={420} sceneH={240}>
+      <Dialog x={70} y={18} w={280} h={204} title="Theme" sceneW={420} sceneH={240} scrim={false}>
         {themes.map(([a, b, c], i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
           const sx = 86 + col * 88;
-          const sy = 56 + row * 76;
+          const sy = 64 + row * 76;
           const sel = i === 0;
           return (
             <g key={i}>
@@ -383,12 +392,21 @@ export function CustomTheme() {
   ];
   return (
     <Scene w={420} h={220} bg="plain">
-      <Dialog x={96} y={24} w={228} h={172} title="Custom Theme" sceneW={420} sceneH={220}>
+      <Dialog
+        x={96}
+        y={16}
+        w={228}
+        h={188}
+        title="Custom Theme"
+        sceneW={420}
+        sceneH={220}
+        scrim={false}
+      >
         {wells.map(([name, cls], i) => {
-          const wy = 56 + i * 30;
+          const wy = 60 + i * 28;
           return (
             <g key={i}>
-              <Label x={112} y={wy + 9} size={11} tone="body">
+              <Label x={112} y={wy + 9} size={10} tone="body">
                 {name}
               </Label>
               <rect
@@ -403,7 +421,7 @@ export function CustomTheme() {
             </g>
           );
         })}
-        <Button x={206} y={166} w={100} label="Save theme" variant="primary" />
+        <Button x={206} y={170} w={100} label="Save theme" variant="primary" />
       </Dialog>
     </Scene>
   );
@@ -412,13 +430,22 @@ export function CustomTheme() {
 /** Starting from a template: a grid of ready-made diagram thumbnails. */
 export function Templates() {
   return (
-    <Scene w={420} h={230} bg="plain">
-      <Dialog x={56} y={20} w={308} h={196} title="Templates" sceneW={420} sceneH={230}>
+    <Scene w={420} h={236} bg="plain">
+      <Dialog
+        x={56}
+        y={16}
+        w={308}
+        h={204}
+        title="Templates"
+        sceneW={420}
+        sceneH={236}
+        scrim={false}
+      >
         {[0, 1, 2, 3, 4, 5].map((i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
           const sx = 74 + col * 96;
-          const sy = 52 + row * 76;
+          const sy = 64 + row * 76;
           return (
             <g key={i}>
               <rect
@@ -478,7 +505,7 @@ export function FontPicker() {
       <Shape x={40} y={84} w={120} h={56} kind="rect" label="Step one" labelTone="strong" />
       <SelectionBox x={40} y={84} w={120} h={56} />
       <Menu x={196} y={44} w={150} items={fonts} active={2} rowH={24} />
-      <Label x={206} y={36} size={10} weight={700} tone="muted">
+      <Label x={206} y={36} size={8} weight={700} tone="muted">
         FONT
       </Label>
       <Arrow from={[160, 96]} to={[196, 80]} kind="curved" tone="muted" dashed />

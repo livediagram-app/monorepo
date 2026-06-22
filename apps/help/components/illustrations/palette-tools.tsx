@@ -144,13 +144,13 @@ const TOOLS_TILES: [string, () => ReactElement][] = [
  *  Pencil tile selected, exactly what you see when you switch tabs. */
 export function ToolsTab() {
   const cols = 4;
-  const gx = 16;
-  const gy = 76;
+  const gx = 12;
+  const gy = 84;
   const step = 56;
   return (
     <Scene w={300} h={236} bg="plain">
       <Panel x={36} y={20} w={228} h={200} title="PALETTE">
-        <Tabs x={50} y={48} items={['Shapes', 'Tools']} active={1} tabW={88} h={22} />
+        <Tabs x={48} y={54} items={['Shapes', 'Tools']} active={1} tabW={88} h={22} />
         {TOOLS_TILES.map(([label, Glyph], i) => {
           const col = i % cols;
           const row = Math.floor(i / cols);
@@ -285,14 +285,23 @@ export function ImageElement() {
  *  thumbnails plus an upload drop-zone. */
 export function ImagePicker() {
   return (
-    <Scene w={420} h={240} bg="plain">
-      <Dialog x={70} y={20} w={280} h={200} title="Add image" sceneW={420} sceneH={240}>
-        <Tabs x={86} y={46} items={['Upload', 'Gallery']} active={1} tabW={84} h={22} />
+    <Scene w={420} h={246} bg="plain">
+      <Dialog
+        x={70}
+        y={20}
+        w={280}
+        h={206}
+        title="Add image"
+        sceneW={420}
+        sceneH={246}
+        scrim={false}
+      >
+        <Tabs x={86} y={66} items={['Upload', 'Gallery']} active={1} tabW={84} h={22} />
         {[0, 1, 2, 3, 4, 5].map((i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
-          const sx = 88 + col * 84;
-          const sy = 82 + row * 62;
+          const sx = 90 + col * 84;
+          const sy = 98 + row * 62;
           const hues = [
             'fill-brand-200',
             'fill-emerald-200',

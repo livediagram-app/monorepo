@@ -29,19 +29,19 @@ function SidebarRow({
   glyph?: 'recent' | 'shared' | 'folder' | 'team' | 'image' | 'theme' | 'doc';
 }) {
   const rowH = 22;
-  const gx = x + 10 + indent;
+  const gx = x + 16 + indent;
   return (
     <g>
       {active && (
-        <rect x={x + 4} y={y} width={w - 8} height={rowH} rx={6} className="fill-brand-50" />
+        <rect x={x + 8} y={y} width={w - 16} height={rowH} rx={7} className="fill-brand-50" />
       )}
       <g transform={`translate(${gx} ${y + rowH / 2})`}>
         <SidebarGlyph kind={glyph ?? 'doc'} active={active} />
       </g>
       <Label
-        x={gx + 18}
+        x={gx + 16}
         y={y + rowH / 2 + 1}
-        size={11}
+        size={10}
         weight={active ? 700 : 500}
         tone={active ? 'accent' : 'body'}
       >
@@ -340,11 +340,11 @@ function DiagramRow({
         strokeWidth={1}
       />
       <rect x={x + 11} y={y + 11} width={9} height={8} rx={1.5} className="fill-brand-300" />
-      <Label x={x + 38} y={y + 12} size={10.5} weight={600} tone="strong">
+      <Label x={x + 40} y={y + 12} size={10} weight={600} tone="strong">
         {title}
       </Label>
       {meta && (
-        <Label x={x + 38} y={y + 22} size={8.5} tone="muted">
+        <Label x={x + 40} y={y + 22} size={8} tone="muted">
           {meta}
         </Label>
       )}
@@ -384,13 +384,13 @@ function ExplorerSidebar({
         strokeWidth={1.5}
       />
       {/* Brand mark */}
-      <circle cx={x + 16} cy={y + 16} r={6} className="fill-brand-500" />
-      <Label x={x + 28} y={y + 17} size={11} weight={700} tone="strong">
+      <circle cx={x + 22} cy={y + 20} r={6} className="fill-brand-500" />
+      <Label x={x + 34} y={y + 21} size={11} weight={700} tone="strong">
         Explorer
       </Label>
       <SidebarRow
         x={x}
-        y={y + 32}
+        y={y + 40}
         w={w}
         label="Recent"
         count={8}
@@ -399,24 +399,24 @@ function ExplorerSidebar({
       />
       <SidebarRow
         x={x}
-        y={y + 56}
+        y={y + 66}
         w={w}
         label="Shared with you"
         count={3}
         active={active === 1}
         glyph="shared"
       />
-      <Label x={x + 12} y={y + 90} size={8} weight={700} tone="muted">
+      <Label x={x + 18} y={y + 100} size={8} weight={700} tone="muted">
         MY WORK
       </Label>
-      <SidebarRow x={x} y={y + 96} w={w} label="Unsorted" active={active === 2} glyph="folder" />
-      <SidebarRow x={x} y={y + 120} w={w} label="Projects" active={active === 3} glyph="folder" />
-      <Label x={x + 12} y={y + 154} size={8} weight={700} tone="muted">
+      <SidebarRow x={x} y={y + 108} w={w} label="Unsorted" active={active === 2} glyph="folder" />
+      <SidebarRow x={x} y={y + 134} w={w} label="Projects" active={active === 3} glyph="folder" />
+      <Label x={x + 18} y={y + 168} size={8} weight={700} tone="muted">
         TEAMS
       </Label>
       <SidebarRow
         x={x}
-        y={y + 160}
+        y={y + 176}
         w={w}
         label="Design"
         count={4}
@@ -454,8 +454,8 @@ export function ExplorerOverview() {
       {/* Card grid */}
       <DiagramCard x={192} y={60} title="Onboarding" thumb="flow" />
       <DiagramCard x={296} y={60} title="Data model" thumb="grid" />
-      <DiagramCard x={192} y={148} title="Org chart" thumb="tree" />
-      <DiagramCard x={296} y={148} title="API flow" thumb="flow" />
+      <DiagramCard x={192} y={144} title="Org chart" thumb="tree" />
+      <DiagramCard x={296} y={144} title="API flow" thumb="flow" />
     </Scene>
   );
 }
@@ -486,22 +486,22 @@ export function ExplorerPanel() {
       {/* The floating panel */}
       <rect
         x={28}
-        y={24}
+        y={20}
         width={188}
-        height={182}
+        height={196}
         rx={10}
         className="fill-white stroke-slate-300"
         strokeWidth={2}
       />
-      <Label x={44} y={42} size={11} weight={700} tone="strong">
+      <Label x={44} y={40} size={11} weight={700} tone="strong">
         Explorer
       </Label>
       <line x1={28} y1={54} x2={216} y2={54} className="stroke-slate-200" strokeWidth={1.5} />
-      <SidebarRow x={28} y={62} w={188} label="Recent" count={8} active glyph="recent" />
-      <DiagramRow x={40} y={88} w={164} title="Onboarding flow" meta="edited 2m ago" active />
-      <DiagramRow x={40} y={122} w={164} title="Data model" meta="edited today" />
-      <SidebarRow x={28} y={158} w={188} label="My Work" glyph="folder" />
-      <SidebarRow x={28} y={180} w={188} label="Shared with you" count={3} glyph="shared" />
+      <SidebarRow x={28} y={66} w={188} label="Recent" count={8} active glyph="recent" />
+      <DiagramRow x={40} y={92} w={164} title="Onboarding flow" meta="edited 2m ago" active />
+      <DiagramRow x={40} y={126} w={164} title="Data model" meta="edited today" />
+      <SidebarRow x={28} y={162} w={188} label="My Work" glyph="folder" />
+      <SidebarRow x={28} y={184} w={188} label="Shared with you" count={3} glyph="shared" />
     </Scene>
   );
 }
@@ -522,12 +522,12 @@ export function RecentList() {
       <g transform="translate(40 22)">
         <SidebarGlyph kind="recent" active />
       </g>
-      <Label x={56} y={32} size={11} weight={700} tone="strong">
+      <Label x={56} y={32} size={10.5} weight={700} tone="strong">
         Recent diagrams
       </Label>
       <g>
-        <rect x={148} y={25} width={20} height={13} rx={6.5} className="fill-brand-500" />
-        <Label x={158} y={32} anchor="middle" size={9} weight={700} tone="onAccent">
+        <rect x={178} y={25} width={20} height={13} rx={6.5} className="fill-brand-500" />
+        <Label x={188} y={32} anchor="middle" size={9} weight={700} tone="onAccent">
           8
         </Label>
       </g>
@@ -637,12 +637,12 @@ export function MyWorkTree() {
         My Work
       </Label>
       <line x1={24} y1={44} x2={396} y2={44} className="stroke-slate-200" strokeWidth={1.5} />
-      {row(52, 'Unsorted', 0, { glyph: 'folder' })}
-      {row(78, 'Projects', 0, { open: true })}
-      {row(104, 'Acme Corp', 24, { open: true })}
-      {row(130, 'Kickoff diagram', 48, { glyph: 'doc' })}
-      {row(156, 'Architecture', 48, { glyph: 'doc', active: true })}
-      {row(182, 'Internal', 24, { glyph: 'folder' })}
+      {row(56, 'Unsorted', 0, { glyph: 'folder' })}
+      {row(82, 'Projects', 0, { open: true })}
+      {row(108, 'Acme Corp', 24, { open: true })}
+      {row(134, 'Kickoff diagram', 48, { glyph: 'doc' })}
+      {row(160, 'Architecture', 48, { glyph: 'doc', active: true })}
+      {row(186, 'Internal', 24, { glyph: 'folder' })}
     </Scene>
   );
 }

@@ -65,7 +65,7 @@ export function DesktopEditor() {
       </g>
       {/* Floating palette, docked right */}
       <Panel x={296} y={66} w={84} h={116} title="PALETTE">
-        <Tile x={306} y={92} active>
+        <Tile x={307} y={100} active>
           <rect
             x={-7}
             y={-7}
@@ -77,10 +77,10 @@ export function DesktopEditor() {
             fill="none"
           />
         </Tile>
-        <Tile x={344} y={92}>
+        <Tile x={343} y={100}>
           <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={306} y={126}>
+        <Tile x={307} y={138}>
           <path
             d="M0 -8 L8 0 L0 8 L-8 0 Z"
             className="stroke-brand-500"
@@ -88,7 +88,7 @@ export function DesktopEditor() {
             fill="none"
           />
         </Tile>
-        <Tile x={344} y={126}>
+        <Tile x={343} y={138}>
           <path
             d="M-7 0 h14 M7 -4 l3 4 -3 4"
             className="stroke-brand-500"
@@ -127,7 +127,7 @@ export function DesktopShortcuts() {
   return (
     <Scene w={420} h={170} bg="plain">
       <Panel x={48} y={30} w={324} h={108}>
-        <Label x={64} y={52} size={11} weight={700} tone="muted">
+        <Label x={64} y={52} size={10} weight={700} tone="muted">
           KEYBOARD SHORTCUTS
         </Label>
         {keys.map((k, i) => {
@@ -143,10 +143,10 @@ export function DesktopShortcuts() {
                 className="fill-slate-50 stroke-slate-300"
                 strokeWidth={1.5}
               />
-              <Label x={kx + 31} y={84} anchor="middle" size={13} weight={700} tone="accent">
+              <Label x={kx + 31} y={84} anchor="middle" size={11} weight={700} tone="accent">
                 {k.label}
               </Label>
-              <Label x={kx + 31} y={114} anchor="middle" size={10} tone="muted">
+              <Label x={kx + 31} y={114} anchor="middle" size={9} tone="muted">
                 {k.sub}
               </Label>
             </g>
@@ -183,8 +183,8 @@ export function TabletLandscape() {
         <MiniFlow x={0} y={0} />
       </g>
       {/* Floating palette, like desktop */}
-      <Panel x={300} y={74} w={72} h={100} title="PALETTE">
-        <Tile x={310} y={98} active>
+      <Panel x={298} y={72} w={76} h={104} title="PALETTE">
+        <Tile x={308} y={104} active>
           <rect
             x={-7}
             y={-7}
@@ -196,10 +196,10 @@ export function TabletLandscape() {
             fill="none"
           />
         </Tile>
-        <Tile x={342} y={98}>
+        <Tile x={340} y={104}>
           <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={310} y={132}>
+        <Tile x={308} y={138}>
           <path
             d="M0 -8 L8 0 L0 8 L-8 0 Z"
             className="stroke-brand-500"
@@ -207,7 +207,7 @@ export function TabletLandscape() {
             fill="none"
           />
         </Tile>
-        <Tile x={342} y={132}>
+        <Tile x={340} y={138}>
           <path
             d="M-7 0 h14 M7 -4 l3 4 -3 4"
             className="stroke-brand-500"
@@ -216,7 +216,7 @@ export function TabletLandscape() {
           />
         </Tile>
       </Panel>
-      <Label x={210} y={210} anchor="middle" size={11} weight={600} tone="muted">
+      <Label x={210} y={210} anchor="middle" size={10} weight={600} tone="muted">
         Landscape: full layout
       </Label>
     </Scene>
@@ -256,7 +256,7 @@ export function TabletRotate() {
         <g transform="translate(44 76) scale(0.42)">
           <MiniFlow x={0} y={0} showLabels={false} />
         </g>
-        <Label x={84} y={208} anchor="middle" size={11} weight={600} tone="muted">
+        <Label x={84} y={208} anchor="middle" size={10} weight={600} tone="muted">
           Portrait: dock
         </Label>
       </g>
@@ -314,7 +314,7 @@ export function TabletRotate() {
           className="fill-slate-100 stroke-slate-200"
           strokeWidth={1}
         />
-        <Label x={322} y={180} anchor="middle" size={11} weight={600} tone="muted">
+        <Label x={322} y={180} anchor="middle" size={10} weight={600} tone="muted">
           Landscape: panels
         </Label>
       </g>
@@ -422,7 +422,7 @@ export function TouchGestures() {
     },
   ];
   return (
-    <Scene w={420} h={150} bg="plain">
+    <Scene w={420} h={134} bg="plain">
       {tiles.map((t, i) => {
         const tx = 28 + i * 98;
         return (
@@ -436,8 +436,8 @@ export function TouchGestures() {
               className="fill-white stroke-slate-200"
               strokeWidth={2}
             />
-            <g transform={`translate(${tx + 41} 60)`}>{t.glyph}</g>
-            <Label x={tx + 41} y={94} anchor="middle" size={12} weight={600} tone="body">
+            <g transform={`translate(${tx + 41} 58)`}>{t.glyph}</g>
+            <Label x={tx + 41} y={92} anchor="middle" size={10} weight={600} tone="body">
               {t.title}
             </Label>
           </g>

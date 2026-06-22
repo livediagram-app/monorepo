@@ -31,7 +31,7 @@ export function AiPanel() {
           tabW={58}
           h={24}
         />
-        <Label x={84} y={102} size={10} weight={700} tone="muted">
+        <Label x={84} y={100} size={8} weight={700} tone="muted">
           PROMPT
         </Label>
         <rect
@@ -57,20 +57,20 @@ export function AiBuild() {
   return (
     <Scene w={420} h={220}>
       {/* Prompt card */}
-      <Panel x={20} y={70} w={150} h={80} title="BUILD">
+      <Panel x={20} y={66} w={150} h={92} title="BUILD">
         <rect
-          x={32}
-          y={100}
-          width={126}
-          height={40}
+          x={34}
+          y={104}
+          width={122}
+          height={42}
           rx={7}
           className="fill-slate-50 stroke-slate-200"
           strokeWidth={1.5}
         />
-        <Label x={40} y={114} size={9} tone="body">
+        <Label x={44} y={119} size={9} tone="body">
           Flow for
         </Label>
-        <Label x={40} y={127} size={9} tone="body">
+        <Label x={44} y={132} size={9} tone="body">
           onboarding
         </Label>
       </Panel>
@@ -240,7 +240,7 @@ export function LightDarkToggle() {
           d="M16 34 a10 10 0 0 1 10 -10 H192 a10 10 0 0 1 10 10 V46 H16 Z"
           className="fill-slate-100"
         />
-        <Label x={28} y={36} size={9} weight={700} tone="muted">
+        <Label x={28} y={36} size={8} weight={700} tone="muted">
           TABS
         </Label>
         {/* Sun glyph */}
@@ -273,7 +273,7 @@ export function LightDarkToggle() {
           d="M218 34 a10 10 0 0 1 10 -10 H394 a10 10 0 0 1 10 10 V46 H218 Z"
           className="fill-slate-700"
         />
-        <Label x={230} y={36} size={9} weight={700} className="fill-slate-400">
+        <Label x={230} y={36} size={8} weight={700} className="fill-slate-400">
           TABS
         </Label>
         {/* Moon glyph */}

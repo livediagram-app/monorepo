@@ -40,11 +40,11 @@ export function KeyboardShortcuts() {
     <Scene w={420} h={236} bg="plain">
       <Panel x={92} y={20} w={236} h={196} title="KEYBOARD SHORTCUTS">
         {rows.map(([key, action], i) => {
-          const ry = 44 + i * 33;
+          const ry = 56 + i * 31;
           return (
             <g key={key}>
               <KeyCap x={108} y={ry} label={key} />
-              <Label x={148} y={ry + 12} size={12} tone="body">
+              <Label x={148} y={ry + 12} size={10} tone="body">
                 {action}
               </Label>
             </g>
@@ -60,7 +60,7 @@ export function ShortcutsToggle() {
   return (
     <Scene w={420} h={200} bg="plain">
       <Panel x={86} y={28} w={248} h={144} title="SETTINGS">
-        <Label x={102} y={72} size={12} weight={600} tone="strong">
+        <Label x={102} y={72} size={10} weight={600} tone="strong">
           Keyboard shortcuts
         </Label>
         <TextBar x={102} y={88} w={150} tone="faint" />
@@ -68,7 +68,7 @@ export function ShortcutsToggle() {
         <rect x={284} y={62} width={36} height={20} rx={10} className="fill-brand-500" />
         <circle cx={310} cy={72} r={7} className="fill-white" />
         <line x1={102} y1={112} x2={318} y2={112} className="stroke-slate-200" strokeWidth={1.5} />
-        <Label x={102} y={132} size={12} weight={600} tone="strong">
+        <Label x={102} y={132} size={10} weight={600} tone="strong">
           Minimal panel layout
         </Label>
         {/* Toggle switch, set off */}
@@ -86,12 +86,12 @@ export function CommandPalette() {
     <Scene w={420} h={240}>
       <Shape x={28} y={150} w={72} h={42} kind="rect" label="Start" />
       <Arrow from={[100, 171]} to={[150, 150]} kind="curved" tone="muted" dashed />
-      <Panel x={222} y={20} w={178} h={200} title="PALETTE">
+      <Panel x={222} y={16} w={178} h={208} title="PALETTE">
         {/* Tool toggles */}
-        <Tile x={234} y={48} active>
+        <Tile x={234} y={52} active>
           <path d="M-6 -7 L-6 7 L-1 2 L3 8 L6 6 L2 1 L8 1 Z" className="fill-white" />
         </Tile>
-        <Tile x={266} y={48}>
+        <Tile x={266} y={52}>
           <path
             d="M-4 4 v-6 a2 2 0 0 1 4 0 v4 m0 -2 a2 2 0 0 1 4 0 v3 a6 6 0 0 1 -6 6 a6 6 0 0 1 -5 -3"
             className="stroke-brand-500"
@@ -99,10 +99,10 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={298} y={48}>
+        <Tile x={298} y={52}>
           <circle r={3} className="fill-brand-500" />
         </Tile>
-        <Tile x={330} y={48}>
+        <Tile x={330} y={52}>
           <rect
             x={-7}
             y={-3}
@@ -113,14 +113,14 @@ export function CommandPalette() {
             strokeWidth={1.5}
           />
         </Tile>
-        <Tile x={362} y={48}>
+        <Tile x={362} y={52}>
           <rect x={-7} y={-6} width={13} height={9} rx={1.5} className="fill-brand-500" />
           <path d="M-6 5 l8 -3" className="stroke-slate-500" strokeWidth={1.5} />
         </Tile>
         {/* Category tabs */}
-        <Tabs x={234} y={84} items={['Shapes', 'Tools', 'Icons']} active={0} tabW={52} h={20} />
+        <Tabs x={234} y={90} items={['Shapes', 'Tools', 'Icons']} active={0} tabW={52} h={20} />
         {/* Shape results grid */}
-        <Tile x={234} y={114} size={30}>
+        <Tile x={234} y={118} size={30}>
           <rect
             x={-8}
             y={-8}
@@ -132,10 +132,10 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={272} y={114} size={30}>
+        <Tile x={272} y={118} size={30}>
           <circle r={8} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={310} y={114} size={30}>
+        <Tile x={310} y={118} size={30}>
           <path
             d="M0 -9 L9 0 L0 9 L-9 0 Z"
             className="stroke-brand-500"
@@ -143,7 +143,7 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={348} y={114} size={30}>
+        <Tile x={348} y={118} size={30}>
           <path
             d="M-9 -6 a9 6 0 0 1 18 0 v12 a9 6 0 0 1 -18 0 Z"
             className="stroke-brand-500"
@@ -151,7 +151,7 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={234} y={152} size={30}>
+        <Tile x={234} y={158} size={30}>
           <path
             d="M-6 -8 h12 v16 h-12 Z"
             className="stroke-brand-500"
@@ -159,7 +159,7 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={272} y={152} size={30}>
+        <Tile x={272} y={158} size={30}>
           <path
             d="M-9 0 L-4 -8 H4 L9 0 L4 8 H-4 Z"
             className="stroke-brand-500"
@@ -167,7 +167,7 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={310} y={152} size={30}>
+        <Tile x={310} y={158} size={30}>
           <rect
             x={-9}
             y={-5}
@@ -179,10 +179,10 @@ export function CommandPalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={348} y={152} size={30}>
+        <Tile x={348} y={158} size={30}>
           <path d="M-8 8 L0 -8 L8 8 Z" className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Button x={234} y={188} w={154} h={22} label="Minimal panel layout" variant="ghost" />
+        <Button x={234} y={194} w={154} h={22} label="Minimal panel layout" variant="ghost" />
       </Panel>
     </Scene>
   );
@@ -202,13 +202,13 @@ export function ZenMode() {
       <Arrow from={[268, 164]} to={[330, 120]} kind="curved" />
       {/* Zoom controls, bottom-right, the one chrome Zen mode keeps */}
       <Panel x={306} y={194} w={96} h={30}>
-        <Label x={322} y={210} size={14} weight={700} tone="muted">
+        <Label x={322} y={210} size={13} weight={700} tone="muted">
           −
         </Label>
         <Label x={354} y={210} size={10} weight={600} tone="body" anchor="middle">
           100%
         </Label>
-        <Label x={388} y={210} size={14} weight={700} tone="muted">
+        <Label x={388} y={210} size={13} weight={700} tone="muted">
           +
         </Label>
       </Panel>

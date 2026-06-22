@@ -9,58 +9,74 @@ import { Scene, Shape, Arrow, Panel, Dialog, Tabs, Tile, Label, Avatar } from '.
  *  the entry point to every diagram. */
 export function NewDiagramWelcome() {
   return (
-    <Scene w={420} h={230} bg="plain">
-      <Dialog x={48} y={20} w={324} h={192} title="New diagram" sceneW={420} sceneH={230}>
+    <Scene w={420} h={236} bg="plain">
+      <Dialog
+        x={48}
+        y={18}
+        w={324}
+        h={200}
+        title="New diagram"
+        sceneW={420}
+        sceneH={236}
+        scrim={false}
+      >
+        {/* Top-right chrome: a help icon button to the left of the close X. */}
+        <g className="stroke-slate-400" strokeWidth={1.6} fill="none" strokeLinecap="round">
+          <circle cx={338} cy={38} r={7} />
+          <path d="M335.6 35.8 a2.4 2.4 0 1 1 2.9 2.4 v1.2" />
+          <path d="M357 35 l7 7 M364 35 l-7 7" />
+        </g>
+        <circle cx={338} cy={41.6} r={0.7} className="fill-slate-400" />
         {/* Blank card, selected */}
         <rect
           x={66}
-          y={56}
+          y={72}
           width={92}
-          height={120}
+          height={116}
           rx={9}
           className="fill-white stroke-brand-500"
           strokeWidth={2.5}
         />
         <path
-          d="M96 100 h32 M112 84 v32"
+          d="M96 122 h32 M112 106 v32"
           className="stroke-brand-400"
           strokeWidth={3}
           strokeLinecap="round"
         />
-        <Label x={112} y={160} anchor="middle" size={11} weight={700} tone="strong">
+        <Label x={112} y={174} anchor="middle" size={11} weight={700} tone="strong">
           Blank
         </Label>
         {/* Template card A */}
         <rect
           x={170}
-          y={56}
+          y={72}
           width={92}
-          height={120}
+          height={116}
           rx={9}
           className="fill-white stroke-slate-200"
           strokeWidth={1.5}
         />
-        <rect x={184} y={72} width={26} height={18} rx={3} className="fill-brand-200" />
-        <rect x={222} y={72} width={26} height={18} rx={3} className="fill-brand-400" />
-        <line x1={210} y1={81} x2={222} y2={81} className="stroke-slate-300" strokeWidth={2} />
-        <rect x={196} y={104} width={40} height={16} rx={3} className="fill-brand-300" />
-        <Label x={216} y={160} anchor="middle" size={11} weight={600} tone="body">
+        <rect x={184} y={92} width={26} height={18} rx={3} className="fill-brand-200" />
+        <rect x={222} y={92} width={26} height={18} rx={3} className="fill-brand-400" />
+        <line x1={210} y1={101} x2={222} y2={101} className="stroke-slate-300" strokeWidth={2} />
+        <rect x={196} y={124} width={40} height={16} rx={3} className="fill-brand-300" />
+        <Label x={216} y={174} anchor="middle" size={11} weight={600} tone="body">
           Flowchart
         </Label>
         {/* Template card B */}
         <rect
           x={274}
-          y={56}
+          y={72}
           width={92}
-          height={120}
+          height={116}
           rx={9}
           className="fill-white stroke-slate-200"
           strokeWidth={1.5}
         />
-        <circle cx={320} cy={88} r={11} className="fill-emerald-200" />
-        <rect x={290} y={108} width={26} height={16} rx={3} className="fill-violet-300" />
-        <rect x={324} y={108} width={26} height={16} rx={3} className="fill-amber-300" />
-        <Label x={320} y={160} anchor="middle" size={11} weight={600} tone="body">
+        <circle cx={320} cy={104} r={11} className="fill-emerald-200" />
+        <rect x={290} y={124} width={26} height={16} rx={3} className="fill-violet-300" />
+        <rect x={324} y={124} width={26} height={16} rx={3} className="fill-amber-300" />
+        <Label x={320} y={174} anchor="middle" size={11} weight={600} tone="body">
           Mind map
         </Label>
       </Dialog>
@@ -72,18 +88,18 @@ export function NewDiagramWelcome() {
  *  surface every element comes from. */
 export function ShapePalette() {
   return (
-    <Scene w={420} h={230}>
-      <Panel x={96} y={20} w={228} h={190} title="PALETTE">
+    <Scene w={420} h={236}>
+      <Panel x={96} y={20} w={228} h={196} title="PALETTE">
         <Tabs
-          x={108}
-          y={48}
+          x={110}
+          y={54}
           items={['Shapes', 'Tools', 'Devices', 'Icons']}
           active={0}
           tabW={50}
           h={22}
         />
         {/* Shape tiles, two rows */}
-        <Tile x={114} y={84} active>
+        <Tile x={114} y={92} active>
           <rect
             x={-7}
             y={-7}
@@ -95,10 +111,10 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={154} y={84}>
+        <Tile x={154} y={92}>
           <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={194} y={84}>
+        <Tile x={194} y={92}>
           <path
             d="M0 -8 L8 0 L0 8 L-8 0 Z"
             className="stroke-brand-500"
@@ -106,7 +122,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={234} y={84}>
+        <Tile x={234} y={92}>
           <path
             d="M-8 -4 a8 4 0 0 1 16 0 v8 a8 4 0 0 1 -16 0 Z"
             className="stroke-brand-500"
@@ -114,7 +130,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={274} y={84}>
+        <Tile x={274} y={92}>
           <path
             d="M-5 -7 h10 l4 7 l-4 7 h-10 l-4 -7 Z"
             className="stroke-brand-500"
@@ -122,7 +138,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={114} y={124}>
+        <Tile x={114} y={132}>
           <rect
             x={-8}
             y={-6}
@@ -134,7 +150,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={154} y={124}>
+        <Tile x={154} y={132}>
           <path
             d="M-8 -6 h16 v12 h-16 Z"
             className="stroke-brand-500"
@@ -142,7 +158,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={194} y={124}>
+        <Tile x={194} y={132}>
           <path
             d="M-7 -7 h14 l-3 14 h-8 Z"
             className="stroke-brand-500"
@@ -150,7 +166,7 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={234} y={124}>
+        <Tile x={234} y={132}>
           <path
             d="M-6 -8 l4 0 l6 8 l-6 8 l-4 0 l6 -8 Z"
             className="stroke-brand-500"
@@ -158,19 +174,19 @@ export function ShapePalette() {
             fill="none"
           />
         </Tile>
-        <Tile x={274} y={124}>
+        <Tile x={274} y={132}>
           <path d="M0 -8 L8 8 H-8 Z" className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
         {/* Undo / redo footer */}
         <path
-          d="M120 178 a8 8 0 1 1 -2 -6 m0 0 v-5 m0 5 h-5"
+          d="M120 192 a8 8 0 1 1 -2 -6 m0 0 v-5 m0 5 h-5"
           className="stroke-slate-400"
           strokeWidth={2}
           fill="none"
           strokeLinecap="round"
         />
         <path
-          d="M148 178 a8 8 0 1 0 2 -6 m0 0 v-5 m0 5 h5"
+          d="M148 192 a8 8 0 1 0 2 -6 m0 0 v-5 m0 5 h5"
           className="stroke-slate-400"
           strokeWidth={2}
           fill="none"
@@ -237,7 +253,7 @@ export function GuestVsAccount() {
       <Label x={110} y={40} anchor="middle" size={12} weight={700} tone="strong">
         Guest
       </Label>
-      <Label x={110} y={56} anchor="middle" size={9} weight={600} tone="muted">
+      <Label x={110} y={56} anchor="middle" size={8} weight={600} tone="muted">
         SAVED IN THIS BROWSER
       </Label>
       {/* Single browser window */}
@@ -256,7 +272,7 @@ export function GuestVsAccount() {
       <Shape x={70} y={108} w={36} h={22} kind="rect" />
       <Shape x={120} y={132} w={34} h={20} kind="circle" accent />
       <Arrow from={[106, 119]} to={[120, 142]} tone="muted" head={false} width={2} />
-      <Label x={110} y={196} anchor="middle" size={9} tone="muted">
+      <Label x={110} y={196} anchor="middle" size={8} tone="muted">
         Per-browser id
       </Label>
 
@@ -273,7 +289,7 @@ export function GuestVsAccount() {
       <Label x={310} y={40} anchor="middle" size={12} weight={700} tone="accent">
         Account
       </Label>
-      <Label x={310} y={56} anchor="middle" size={9} weight={600} tone="muted">
+      <Label x={310} y={56} anchor="middle" size={8} weight={600} tone="muted">
         SYNCED ACROSS DEVICES
       </Label>
       {/* Cloud syncing two devices */}
@@ -334,7 +350,7 @@ function KeyCap({ x, y, label, w = 40 }: { x: number; y: number; label: string; 
         x={x + w / 2}
         y={y + h / 2 - 1}
         anchor="middle"
-        size={label.length > 2 ? 11 : 16}
+        size={label.length > 2 ? 10 : 14}
         weight={700}
         tone="strong"
       >
@@ -360,7 +376,7 @@ export function KeyboardEssentials() {
         return (
           <g key={k.label}>
             <KeyCap x={kx} y={40} label={k.label} />
-            <Label x={kx + 20} y={98} anchor="middle" size={11} weight={600} tone="body">
+            <Label x={kx + 20} y={98} anchor="middle" size={10} weight={600} tone="body">
               {k.caption}
             </Label>
           </g>

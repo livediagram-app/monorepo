@@ -211,7 +211,7 @@ export function RenamingTab() {
       </g>
       <TabPill x={204} y={barY + 8} w={62} label="Billing" />
       <AddTabButton x={274} y={barY + 8} />
-      <Label x={88} y={barY - 12} size={11} tone="muted">
+      <Label x={88} y={barY - 12} size={9} tone="muted">
         Double-click to rename
       </Label>
     </Scene>
@@ -224,7 +224,7 @@ export function TabFolderStates() {
   return (
     <Scene w={420} h={210}>
       {/* Expanded */}
-      <Label x={14} y={26} size={11} weight={700} tone="muted">
+      <Label x={14} y={26} size={8} weight={700} tone="muted">
         EXPANDED
       </Label>
       <rect
@@ -242,7 +242,7 @@ export function TabFolderStates() {
       <TabPill x={232} y={44} w={54} label="Q3" />
 
       {/* Collapsed */}
-      <Label x={14} y={120} size={11} weight={700} tone="muted">
+      <Label x={14} y={120} size={8} weight={700} tone="muted">
         COLLAPSED
       </Label>
       <rect
@@ -391,8 +391,8 @@ export function ExportMenu() {
 export function ImportWarning() {
   return (
     <Scene w={420} h={200} bg="plain">
-      {/* Scrim + card, drawn inline so we can shape the warning ourselves */}
-      <rect x={0} y={0} width={420} height={200} className="fill-slate-900/20" />
+      {/* Card drawn inline so we can shape the warning ourselves. No scrim: the
+          scene has no canvas behind it, so a flat grey wash would just dull it. */}
       <rect
         x={86}
         y={36}
@@ -461,7 +461,7 @@ export function ImportWarning() {
 export function CleanupBeforeAfter() {
   return (
     <Scene w={420} h={210}>
-      <Label x={14} y={22} size={11} weight={700} tone="muted">
+      <Label x={14} y={22} size={8} weight={700} tone="muted">
         BEFORE
       </Label>
       {/* Scattered, misaligned */}
@@ -475,7 +475,7 @@ export function CleanupBeforeAfter() {
       {/* Divider arrow */}
       <Arrow from={[196, 105]} to={[226, 105]} kind="straight" />
 
-      <Label x={246} y={22} size={11} weight={700} tone="muted">
+      <Label x={246} y={22} size={8} weight={700} tone="muted">
         AFTER
       </Label>
       {/* Snapped to a tidy grid */}

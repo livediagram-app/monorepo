@@ -42,7 +42,7 @@ function ArrowButton({
   return (
     <g transform={`translate(${cx} ${cy})`}>
       <circle
-        r={11}
+        r={9}
         className={`fill-white ${muted ? 'stroke-slate-200' : 'stroke-brand-300'}`}
         strokeWidth={1.5}
       />
@@ -89,10 +89,10 @@ function ActivityRow({
         />
       )}
       <Avatar cx={x + 16} cy={y + 14} r={9} initial={row.initial} colour={row.colour} />
-      <Label x={x + 32} y={y + 11} size={11} weight={600} tone="strong">
+      <Label x={x + 32} y={y + 11} size={10} weight={600} tone="strong">
         {row.what}
       </Label>
-      <Label x={x + 32} y={y + 22} size={9} tone="muted">
+      <Label x={x + 32} y={y + 22} size={8} tone="muted">
         {row.when}
       </Label>
     </g>
@@ -181,7 +181,7 @@ export function ActivityPanel({
         {footer === 'clear' && (
           <Button
             x={px + pw - 96}
-            y={py + ph - 30}
+            y={py + ph - 34}
             w={84}
             h={20}
             label="Clear Activity"
@@ -190,8 +190,8 @@ export function ActivityPanel({
         )}
         {footer === 'status' && (
           <>
-            <circle cx={rowX + 5} cy={py + ph - 18} r={4} className="fill-emerald-500" />
-            <Label x={rowX + 16} y={py + ph - 17} size={10} weight={600} tone="muted">
+            <circle cx={rowX + 5} cy={py + ph - 20} r={4} className="fill-emerald-500" />
+            <Label x={rowX + 16} y={py + ph - 19} size={10} weight={600} tone="muted">
               Saving…
             </Label>
           </>
@@ -230,10 +230,10 @@ export function UndoStep() {
         {/* Top row fading out as it is undone */}
         <g opacity={0.4}>
           <Avatar cx={42 + 16} cy={54 + 14} r={9} initial="Y" colour="brand" />
-          <Label x={42 + 32} y={54 + 11} size={11} weight={600} tone="muted">
+          <Label x={42 + 32} y={54 + 11} size={10} weight={600} tone="muted">
             Added a Square
           </Label>
-          <Label x={42 + 32} y={54 + 22} size={9} tone="muted">
+          <Label x={42 + 32} y={54 + 22} size={8} tone="muted">
             just now
           </Label>
           <path d="M52 66 L256 80" className="stroke-slate-300" strokeWidth={1.5} />
@@ -246,10 +246,10 @@ export function UndoStep() {
           return (
             <g key={i}>
               <Avatar cx={42 + 16} cy={ry + 14} r={9} initial={r.i} colour={r.c} />
-              <Label x={42 + 32} y={ry + 11} size={11} weight={600} tone="strong">
+              <Label x={42 + 32} y={ry + 11} size={10} weight={600} tone="strong">
                 {r.w}
               </Label>
-              <Label x={42 + 32} y={ry + 22} size={9} tone="muted">
+              <Label x={42 + 32} y={ry + 22} size={8} tone="muted">
                 {r.t}
               </Label>
             </g>
@@ -285,12 +285,12 @@ export function RedoStep() {
         <ArrowButton cx={28 + 264 - 20} cy={18 + 11} dir="redo" />
         {/* Top row coming back as it is redone */}
         <g>
-          <rect x={42} y={50} width={236} height={28} rx={6} className="fill-brand-50" />
-          <Avatar cx={42 + 16} cy={50 + 14} r={9} initial="Y" colour="brand" />
-          <Label x={42 + 32} y={50 + 11} size={11} weight={600} tone="accent">
+          <rect x={42} y={54} width={236} height={28} rx={6} className="fill-brand-50" />
+          <Avatar cx={42 + 16} cy={54 + 14} r={9} initial="Y" colour="brand" />
+          <Label x={42 + 32} y={54 + 11} size={10} weight={600} tone="accent">
             Added a Square
           </Label>
-          <Label x={42 + 32} y={50 + 22} size={9} tone="muted">
+          <Label x={42 + 32} y={54 + 22} size={8} tone="muted">
             just now
           </Label>
         </g>
@@ -298,14 +298,14 @@ export function RedoStep() {
           { i: 'A', c: 'emerald' as Tone, w: 'Moved an Arrow', t: '2 min ago' },
           { i: 'Y', c: 'brand' as Tone, w: 'Recoloured', t: '5 min ago' },
         ].map((r, i) => {
-          const ry = 86 + i * 32;
+          const ry = 90 + i * 32;
           return (
             <g key={i}>
               <Avatar cx={42 + 16} cy={ry + 14} r={9} initial={r.i} colour={r.c} />
-              <Label x={42 + 32} y={ry + 11} size={11} weight={600} tone="strong">
+              <Label x={42 + 32} y={ry + 11} size={10} weight={600} tone="strong">
                 {r.w}
               </Label>
-              <Label x={42 + 32} y={ry + 22} size={9} tone="muted">
+              <Label x={42 + 32} y={ry + 22} size={8} tone="muted">
                 {r.t}
               </Label>
             </g>

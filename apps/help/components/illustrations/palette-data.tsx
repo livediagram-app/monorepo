@@ -161,19 +161,20 @@ function Pie({ cx, cy, r = 56 }: { cx: number; cy: number; r?: number }) {
   );
 }
 
-/** A legend keying the shared pie slices: a colour chip, label, and value. */
-function PieLegend({ x, y }: { x: number; y: number }) {
+/** A legend keying the shared pie slices: a colour chip, label, and value.
+ *  `valueX` is the value column's right edge, relative to `x`. */
+function PieLegend({ x, y, valueX = 88 }: { x: number; y: number; valueX?: number }) {
   return (
     <g>
       {PIE_SLICES.map((s, i) => {
-        const ry = y + i * 26;
+        const ry = y + i * 24;
         return (
           <g key={i}>
-            <rect x={x} y={ry} width={14} height={14} rx={3} className={s.cls} />
-            <Label x={x + 22} y={ry + 8} size={11} tone="body" weight={500}>
+            <rect x={x} y={ry} width={12} height={12} rx={3} className={s.cls} />
+            <Label x={x + 20} y={ry + 7} size={9} tone="body" weight={500}>
               {s.label}
             </Label>
-            <Label x={x + 96} y={ry + 8} size={11} tone="muted" anchor="end">
+            <Label x={x + valueX} y={ry + 7} size={9} tone="muted" anchor="end">
               {s.value}%
             </Label>
           </g>
@@ -209,7 +210,7 @@ function TimelineRail({ x, y, w, points }: { x: number; y: number; w: number; po
               className="fill-brand-500 stroke-white"
               strokeWidth={2.5}
             />
-            <Label x={px} y={y + 22} anchor="middle" size={10} weight={600} tone="body">
+            <Label x={px} y={y + 20} anchor="middle" size={9} weight={600} tone="body">
               {p}
             </Label>
           </g>
@@ -233,14 +234,14 @@ export function DataElementsOverview() {
         <ProgressRing cx={252} cy={53} r={22} pct={65} />
       </Panel>
       <Panel x={312} y={18} w={88} h={70} title="RATING">
-        <StarRow x={326} cy={58} r={8} filled={4} gap={17} />
+        <StarRow x={326} cy={62} r={8} filled={4} gap={17} />
       </Panel>
       <Panel x={20} y={104} w={172} h={120} title="PIE">
-        <Pie cx={74} cy={166} r={44} />
-        <PieLegend x={132} y={134} />
+        <Pie cx={70} cy={172} r={38} />
+        <PieLegend x={122} y={140} valueX={58} />
       </Panel>
       <Panel x={208} y={104} w={192} h={120} title="TIMELINE">
-        <TimelineRail x={232} y={158} w={148} points={['Plan', 'Build', 'Beta', 'GA']} />
+        <TimelineRail x={234} y={170} w={144} points={['Plan', 'Build', 'Beta', 'GA']} />
       </Panel>
     </Scene>
   );
@@ -251,11 +252,11 @@ export function ProgressBarAndRing() {
   return (
     <Scene w={420} h={200}>
       <Panel x={36} y={42} w={216} h={116} title="PROGRESS">
-        <Label x={50} y={78} size={11} tone="muted">
+        <Label x={50} y={80} size={9} tone="muted">
           Bar
         </Label>
-        <ProgressBar x={50} y={92} w={188} h={26} pct={70} />
-        <Label x={50} y={138} size={10} tone="muted">
+        <ProgressBar x={50} y={94} w={188} h={26} pct={70} />
+        <Label x={50} y={138} size={9} tone="muted">
           Fills from the left
         </Label>
       </Panel>

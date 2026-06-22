@@ -450,6 +450,7 @@ export function Dialog({
   children,
   sceneW = 400,
   sceneH = 240,
+  scrim = true,
 }: {
   x: number;
   y: number;
@@ -459,10 +460,13 @@ export function Dialog({
   children?: ReactNode;
   sceneW?: number;
   sceneH?: number;
+  /** The dimmed backdrop behind the dialog. Set false when the scene has no
+   *  canvas behind the dialog, so it isn't a flat grey block. */
+  scrim?: boolean;
 }) {
   return (
     <g>
-      <rect x={0} y={0} width={sceneW} height={sceneH} className="fill-slate-900/20" />
+      {scrim && <rect x={0} y={0} width={sceneW} height={sceneH} className="fill-slate-900/10" />}
       <rect
         x={x}
         y={y}

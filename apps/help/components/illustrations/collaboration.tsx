@@ -27,14 +27,14 @@ export function CommentThread() {
       <Panel x={176} y={36} w={224} h={168} title="COMMENT">
         {/* First message */}
         <Avatar cx={194} cy={70} r={11} initial="A" colour="brand" />
-        <Label x={212} y={64} size={11} weight={700} tone="strong">
+        <Label x={212} y={64} size={10} weight={700} tone="strong">
           Aria
         </Label>
         <TextBar x={212} y={78} w={160} />
         <TextBar x={212} y={88} w={120} tone="faint" />
         {/* Reply */}
         <Avatar cx={194} cy={120} r={11} initial="J" colour="violet" />
-        <Label x={212} y={114} size={11} weight={700} tone="strong">
+        <Label x={212} y={114} size={10} weight={700} tone="strong">
           Jae
         </Label>
         <TextBar x={212} y={128} w={140} />
@@ -120,9 +120,12 @@ function ShareDialog({ variant }: { variant: ShareVariant }) {
   const dy = 18;
   const dw = 308;
   const dh = variant === 'links' ? 204 : 212;
+  // The expiry variant floats an open dropdown below the dialog, so the scene
+  // needs extra height for it to land inside the viewBox.
+  const sceneH = variant === 'expiry' ? 284 : 240;
   return (
-    <Scene w={420} h={240} bg="plain">
-      <Dialog x={dx} y={dy} w={dw} h={dh} title="Share" sceneW={420} sceneH={240}>
+    <Scene w={420} h={sceneH} bg="plain">
+      <Dialog x={dx} y={dy} w={dw} h={dh} title="Share" sceneW={420} sceneH={sceneH} scrim={false}>
         {/* Edit link row */}
         <ShareLinkRow x={dx + 16} y={dy + 50} role="Edit" />
         {/* View link row */}
@@ -138,7 +141,7 @@ function ShareDialog({ variant }: { variant: ShareVariant }) {
               className="stroke-slate-200"
               strokeWidth={1.5}
             />
-            <Label x={dx + 16} y={dy + 150} size={11} weight={700} tone="muted">
+            <Label x={dx + 16} y={dy + 150} size={8} weight={700} tone="muted">
               PASSWORD
             </Label>
             <rect
@@ -167,7 +170,7 @@ function ShareDialog({ variant }: { variant: ShareVariant }) {
               className="stroke-slate-200"
               strokeWidth={1.5}
             />
-            <Label x={dx + 16} y={dy + 150} size={11} weight={700} tone="muted">
+            <Label x={dx + 16} y={dy + 150} size={8} weight={700} tone="muted">
               LINK EXPIRES
             </Label>
             {/* Dropdown */}
@@ -400,7 +403,7 @@ export function TeamMembers() {
           return (
             <g key={m.name}>
               <Avatar cx={92} cy={ry} r={13} initial={m.initial} colour={m.colour} />
-              <Label x={114} y={ry} size={12} weight={600} tone="strong">
+              <Label x={114} y={ry} size={10} weight={600} tone="strong">
                 {m.name}
               </Label>
               <RoleBadge x={272} y={ry - 10} role={m.role} />
@@ -429,19 +432,19 @@ export function RolesAndInvites() {
       <Panel x={56} y={18} w={308} h={184} title="MEMBERS & INVITES">
         {/* Member rows */}
         <Avatar cx={80} cy={56} r={12} initial="A" colour="brand" />
-        <Label x={100} y={56} size={12} weight={600} tone="strong">
+        <Label x={100} y={56} size={10} weight={600} tone="strong">
           Aria
         </Label>
         <RoleBadge x={286} y={46} role="Admin" />
         <line x1={72} y1={78} x2={348} y2={78} className="stroke-slate-100" strokeWidth={1.5} />
         <Avatar cx={80} cy={98} r={12} initial="J" colour="violet" />
-        <Label x={100} y={98} size={12} weight={600} tone="strong">
+        <Label x={100} y={98} size={10} weight={600} tone="strong">
           Jae
         </Label>
         <RoleBadge x={286} y={88} role="Member" />
         {/* Invite-by-email row */}
         <line x1={72} y1={124} x2={348} y2={124} className="stroke-slate-200" strokeWidth={1.5} />
-        <Label x={72} y={142} size={11} weight={700} tone="muted">
+        <Label x={72} y={142} size={8} weight={700} tone="muted">
           INVITE BY EMAIL
         </Label>
         <rect
@@ -507,7 +510,7 @@ export function TeamSharedTree() {
                 {r.label}
               </Label>
               {r.badge && (
-                <g transform={`translate(${320} ${ry - 6})`}>
+                <g transform={`translate(${308} ${ry - 6})`}>
                   <rect
                     width={34}
                     height={16}
@@ -562,7 +565,7 @@ function TimerPill({ x, y, time, label }: { x: number; y: number; time: string; 
       <Label x={x + 36} y={y + 17} size={15} weight={700} tone="strong">
         {time}
       </Label>
-      <Label x={x + 36} y={y + 28} size={7} weight={600} tone="muted">
+      <Label x={x + 36} y={y + 28} size={8} weight={600} tone="muted">
         {label}
       </Label>
       {/* pause control */}
@@ -642,9 +645,9 @@ export function SessionTools() {
   return (
     <Scene w={420} h={230}>
       <TimerPill x={136} y={16} time="4:32" label="COUNTDOWN" />
-      <VoteShape x={56} y={110} label="Idea A" count={3} mine winner />
-      <VoteShape x={210} y={110} label="Idea B" count={1} />
-      <VoteShape x={326} y={110} label="Idea C" count={2} />
+      <VoteShape x={24} y={110} label="Idea A" count={3} mine winner />
+      <VoteShape x={158} y={110} label="Idea B" count={1} />
+      <VoteShape x={292} y={110} label="Idea C" count={2} />
     </Scene>
   );
 }
@@ -681,7 +684,7 @@ export function TimerControl() {
           Stopwatch
         </Label>
         {/* Duration presets */}
-        <Label x={104} y={100} size={10} weight={700} tone="muted">
+        <Label x={104} y={100} size={8} weight={700} tone="muted">
           MINUTES
         </Label>
         {presets.map((p, i) => {
@@ -734,9 +737,9 @@ export function DotVoting() {
           2 dots left · 7 cast
         </Label>
       </g>
-      <VoteShape x={50} y={100} label="Reduce WIP" count={4} mine winner />
-      <VoteShape x={210} y={100} label="Pair more" count={1} />
-      <VoteShape x={326} y={100} label="Auto tests" count={2} mine />
+      <VoteShape x={24} y={100} label="Reduce WIP" count={4} mine winner />
+      <VoteShape x={158} y={100} label="Pair more" count={1} />
+      <VoteShape x={292} y={100} label="Auto tests" count={2} mine />
     </Scene>
   );
 }

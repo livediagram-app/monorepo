@@ -51,17 +51,17 @@ export function DiagramStorage() {
         strokeWidth={2}
         strokeDasharray="6 5"
       />
-      <Label x={334} y={44} anchor="middle" size={10} weight={700} tone="muted">
+      <Label x={334} y={44} anchor="middle" size={8} weight={700} tone="muted">
         CLOUDFLARE
       </Label>
-      <Shape x={284} y={56} w={100} h={32} kind="cylinder" label="D1" labelTone="strong" />
-      <Shape x={284} y={104} w={100} h={30} kind="rect" label="Room" labelTone="strong" />
-      <Shape x={284} y={146} w={100} h={30} kind="rect" label="Images" labelTone="strong" />
-      <Arrow from={[228, 110]} to={[284, 80]} kind="curved" tone="muted" />
-      <Arrow from={[228, 124]} to={[284, 120]} tone="muted" />
-      <Arrow from={[228, 134]} to={[284, 160]} kind="curved" tone="muted" />
+      <Shape x={284} y={54} w={100} h={30} kind="cylinder" label="D1" labelTone="strong" />
+      <Shape x={284} y={94} w={100} h={30} kind="rect" label="Room" labelTone="strong" />
+      <Shape x={284} y={134} w={100} h={30} kind="rect" label="Images" labelTone="strong" />
+      <Arrow from={[228, 110]} to={[284, 75]} kind="curved" tone="muted" />
+      <Arrow from={[228, 124]} to={[284, 109]} tone="muted" />
+      <Arrow from={[228, 134]} to={[284, 149]} kind="curved" tone="muted" />
 
-      <Shield x={266} y={150} scale={0.9} />
+      <Shield x={296} y={190} scale={0.7} />
     </Scene>
   );
 }
@@ -87,13 +87,13 @@ export function AccessControl() {
       </Panel>
 
       {/* Owner, allowed in */}
-      <Label x={20} y={64} size={11} weight={600} tone="body">
+      <Label x={20} y={64} size={10} weight={600} tone="body">
         Owner
       </Label>
       <Arrow from={[60, 80]} to={[150, 92]} tone="accent" />
 
       {/* Stranger, refused */}
-      <Label x={20} y={150} size={11} weight={600} tone="body">
+      <Label x={20} y={150} size={10} weight={600} tone="body">
         Not the owner
       </Label>
       <Arrow from={[88, 150]} to={[150, 128]} tone="muted" dashed head={false} />
@@ -123,19 +123,28 @@ export function AccessControl() {
 export function TelemetryToggle() {
   return (
     <Scene w={420} h={210} bg="plain">
-      <Dialog x={70} y={26} w={280} h={158} title="Settings" sceneW={420} sceneH={210}>
-        <Label x={86} y={66} size={11} weight={700} tone="muted">
+      <Dialog
+        x={70}
+        y={26}
+        w={280}
+        h={158}
+        title="Settings"
+        sceneW={420}
+        sceneH={210}
+        scrim={false}
+      >
+        <Label x={86} y={76} size={8} weight={700} tone="muted">
           PRIVACY
         </Label>
 
         {/* Telemetry row */}
-        <Label x={86} y={96} size={12} weight={600} tone="strong">
+        <Label x={86} y={102} size={10} weight={600} tone="strong">
           Anonymous telemetry
         </Label>
-        <TextBar x={86} y={110} w={150} tone="faint" />
+        <TextBar x={86} y={116} w={150} tone="faint" />
 
         {/* Toggle switch, off */}
-        <g transform="translate(286 90)">
+        <g transform="translate(286 92)">
           <rect
             width={44}
             height={24}
@@ -164,7 +173,7 @@ export function ShareLinkControls() {
   const dh = 204;
   return (
     <Scene w={420} h={240} bg="plain">
-      <Dialog x={dx} y={dy} w={dw} h={dh} title="Share" sceneW={420} sceneH={240}>
+      <Dialog x={dx} y={dy} w={dw} h={dh} title="Share" sceneW={420} sceneH={240} scrim={false}>
         {/* Share link row with an expiry pill */}
         <rect
           x={dx + 16}
@@ -213,7 +222,7 @@ export function ShareLinkControls() {
           className="stroke-slate-200"
           strokeWidth={1.5}
         />
-        <Label x={dx + 16} y={dy + 110} size={11} weight={700} tone="muted">
+        <Label x={dx + 16} y={dy + 108} size={8} weight={700} tone="muted">
           PASSWORD
         </Label>
         <rect
@@ -239,7 +248,7 @@ export function ShareLinkControls() {
           className="stroke-slate-200"
           strokeWidth={1.5}
         />
-        <Label x={dx + 16} y={dy + 180} size={11} weight={700} tone="muted">
+        <Label x={dx + 16} y={dy + 178} size={8} weight={700} tone="muted">
           INACTIVE SHARE LINKS
         </Label>
         <TextBar x={dx + 16} y={dy + 190} w={120} tone="faint" />
@@ -255,7 +264,7 @@ export function PublicCode() {
     <Scene w={420} h={210}>
       <Panel x={70} y={26} w={280} h={158} title="REPOSITORY (PUBLIC)">
         {/* Open-book / visible glyph */}
-        <g transform="translate(94 60)">
+        <g transform="translate(94 66)">
           <circle r={9} className="fill-none stroke-brand-500" strokeWidth={2} />
           <circle r={3} className="fill-brand-500" />
           <path
@@ -265,16 +274,16 @@ export function PublicCode() {
             strokeWidth={1.5}
           />
         </g>
-        <Label x={116} y={61} size={11} weight={600} tone="strong">
+        <Label x={116} y={67} size={10} weight={600} tone="strong">
           MIT licensed
         </Label>
 
         {/* Source lines */}
-        <TextBar x={94} y={92} w={220} />
-        <TextBar x={110} y={106} w={150} tone="faint" />
-        <TextBar x={110} y={120} w={184} tone="faint" />
-        <TextBar x={94} y={134} w={120} />
-        <TextBar x={110} y={148} w={166} tone="faint" />
+        <TextBar x={94} y={98} w={220} />
+        <TextBar x={110} y={112} w={150} tone="faint" />
+        <TextBar x={110} y={126} w={184} tone="faint" />
+        <TextBar x={94} y={140} w={120} />
+        <TextBar x={110} y={154} w={166} tone="faint" />
       </Panel>
     </Scene>
   );

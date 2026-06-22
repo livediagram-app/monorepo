@@ -11,17 +11,17 @@ export function StuckCanvas() {
   return (
     <Scene w={420} h={220}>
       {/* Spinner: a faint full ring plus a brand arc */}
-      <circle cx={210} cy={92} r={20} className="fill-none stroke-slate-200" strokeWidth={5} />
+      <circle cx={210} cy={84} r={20} className="fill-none stroke-slate-200" strokeWidth={5} />
       <path
-        d="M210 72 a20 20 0 0 1 20 20"
+        d="M210 64 a20 20 0 0 1 20 20"
         className="fill-none stroke-brand-500"
         strokeWidth={5}
         strokeLinecap="round"
       />
-      <Label x={210} y={130} anchor="middle" size={12} weight={600} tone="muted">
+      <Label x={210} y={126} anchor="middle" size={12} weight={600} tone="muted">
         Loading diagram…
       </Label>
-      <Button x={172} y={150} w={76} label="Reload" variant="primary" />
+      <Button x={172} y={148} w={76} label="Reload" variant="primary" />
     </Scene>
   );
 }
@@ -32,7 +32,7 @@ export function SignInError() {
   return (
     <Scene w={420} h={240} bg="plain">
       <Panel x={108} y={26} w={204} h={188}>
-        <Label x={210} y={50} anchor="middle" size={14} weight={700} tone="strong">
+        <Label x={210} y={50} anchor="middle" size={13} weight={700} tone="strong">
           Sign in
         </Label>
         <Label x={124} y={76} size={10} weight={600} tone="muted">
@@ -71,7 +71,7 @@ export function ConnectionState() {
       <Panel x={70} y={40} w={280} h={120} title="LIVE">
         {/* Connection indicator: amber dot + reconnecting label */}
         <circle cx={88} cy={78} r={6} className="fill-amber-400" />
-        <Label x={102} y={79} size={12} weight={600} tone="strong">
+        <Label x={102} y={79} size={10} weight={600} tone="strong">
           Reconnecting…
         </Label>
         {/* Faded collaborator avatars (presence not syncing) */}
@@ -113,11 +113,11 @@ export function BrowserTiles() {
             />
             <circle cx={tx + 42} cy={70} r={18} className={`fill-none ${ring}`} strokeWidth={4} />
             <circle cx={tx + 42} cy={70} r={6} className="fill-slate-200" />
-            <Label x={tx + 42} y={106} anchor="middle" size={11} weight={600} tone="body">
+            <Label x={tx + 42} y={106} anchor="middle" size={10} weight={600} tone="body">
               {name}
             </Label>
             {/* Up-to-date check badge */}
-            <g transform={`translate(${tx + 66} ${42})`}>
+            <g transform={`translate(${tx + 64} ${44})`}>
               <circle r={9} className="fill-emerald-500 stroke-white" strokeWidth={2} />
               <path
                 d="M-4 0 L-1 3 L4 -3"
@@ -221,7 +221,7 @@ export function ActivityHistory() {
     <Scene w={420} h={240}>
       <Panel x={92} y={20} w={236} h={200} title="ACTIVITY">
         {rows.map((row, i) => {
-          const ry = 50 + i * 38;
+          const ry = 58 + i * 38;
           const selected = i === 1;
           return (
             <g key={i}>

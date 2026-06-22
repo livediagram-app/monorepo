@@ -20,34 +20,34 @@ function CatalogueGrid({
   children: ReactNode;
 }) {
   return (
-    <Scene w={400} h={240} bg="plain">
-      <Panel x={40} y={20} w={320} h={200} title="PALETTE">
+    <Scene w={400} h={252} bg="plain">
+      <Panel x={40} y={18} w={320} h={216} title="PALETTE">
         <Tabs
-          x={52}
-          y={50}
+          x={56}
+          y={54}
           items={['Components', 'Devices', 'Icons', 'Technology']}
           active={active}
-          tabW={74}
+          tabW={72}
           h={22}
         />
         {/* Search field */}
         <rect
-          x={52}
-          y={80}
-          width={296}
+          x={56}
+          y={86}
+          width={288}
           height={24}
           rx={7}
           className="fill-slate-50 stroke-slate-200"
           strokeWidth={1.5}
         />
-        <circle cx={66} cy={92} r={5} className="fill-none stroke-slate-400" strokeWidth={1.6} />
+        <circle cx={70} cy={98} r={5} className="fill-none stroke-slate-400" strokeWidth={1.6} />
         <path
-          d="M69.5 95.5 L74 100"
+          d="M73.5 101.5 L78 106"
           className="stroke-slate-400"
           strokeWidth={1.6}
           strokeLinecap="round"
         />
-        <Label x={80} y={93} size={11} tone="muted">
+        <Label x={84} y={99} size={10} tone="muted">
           {search}
         </Label>
         {children}
@@ -63,62 +63,62 @@ export function ComponentsCatalogue() {
     <CatalogueGrid active={0} search="Search components">
       {/* Banner card */}
       <rect
-        x={52}
-        y={116}
-        width={142}
+        x={56}
+        y={124}
+        width={140}
         height={42}
         rx={8}
         className="fill-white stroke-slate-200"
         strokeWidth={1.5}
       />
-      <rect x={52} y={116} width={6} height={42} rx={3} className="fill-brand-500" />
-      <Label x={68} y={130} size={10} weight={700} tone="strong">
+      <rect x={56} y={124} width={6} height={42} rx={3} className="fill-brand-500" />
+      <Label x={72} y={138} size={10} weight={700} tone="strong">
         Banner
       </Label>
-      <TextBar x={68} y={142} w={96} />
+      <TextBar x={72} y={150} w={94} />
       {/* Callout card */}
       <rect
-        x={206}
-        y={116}
-        width={142}
+        x={204}
+        y={124}
+        width={140}
         height={42}
         rx={8}
         className="fill-brand-50 stroke-brand-200"
         strokeWidth={1.5}
       />
-      <circle cx={222} cy={131} r={7} className="fill-brand-400" />
-      <Label x={222} y={132} anchor="middle" size={9} weight={700} tone="onAccent">
+      <circle cx={220} cy={139} r={7} className="fill-brand-400" />
+      <Label x={220} y={140} anchor="middle" size={9} weight={700} tone="onAccent">
         i
       </Label>
-      <TextBar x={236} y={126} w={92} tone="accent" />
-      <TextBar x={236} y={138} w={70} tone="faint" />
+      <TextBar x={234} y={134} w={92} tone="accent" />
+      <TextBar x={234} y={146} w={70} tone="faint" />
       {/* Stat row card */}
       <rect
-        x={52}
-        y={166}
-        width={296}
+        x={56}
+        y={174}
+        width={288}
         height={42}
         rx={8}
         className="fill-white stroke-slate-200"
         strokeWidth={1.5}
       />
       {[0, 1, 2].map((i) => {
-        const sx = 64 + i * 96;
+        const sx = 68 + i * 94;
         return (
           <g key={i}>
             <rect
               x={sx}
-              y={174}
-              width={84}
+              y={182}
+              width={82}
               height={26}
               rx={5}
               className="fill-slate-50 stroke-slate-200"
               strokeWidth={1}
             />
-            <Label x={sx + 42} y={184} anchor="middle" size={11} weight={700} tone="accent">
+            <Label x={sx + 41} y={192} anchor="middle" size={11} weight={700} tone="accent">
               {['98%', '1.2k', '4.7'][i]}
             </Label>
-            <TextBar x={sx + 22} y={192} w={40} tone="faint" />
+            <TextBar x={sx + 21} y={200} w={40} tone="faint" />
           </g>
         );
       })}
@@ -135,51 +135,51 @@ export function DevicesCatalogue() {
       <g>
         <rect
           x={56}
-          y={120}
-          width={148}
-          height={88}
+          y={124}
+          width={146}
+          height={78}
           rx={8}
           className="fill-white stroke-slate-300"
           strokeWidth={2}
         />
-        <rect x={56} y={120} width={148} height={18} rx={8} className="fill-slate-100" />
-        <rect x={56} y={132} width={148} height={6} className="fill-slate-100" />
-        <circle cx={66} cy={129} r={2.5} className="fill-slate-300" />
-        <circle cx={74} cy={129} r={2.5} className="fill-slate-300" />
-        <circle cx={82} cy={129} r={2.5} className="fill-slate-300" />
+        <rect x={56} y={124} width={146} height={18} rx={8} className="fill-slate-100" />
+        <rect x={56} y={136} width={146} height={6} className="fill-slate-100" />
+        <circle cx={66} cy={133} r={2.5} className="fill-slate-300" />
+        <circle cx={74} cy={133} r={2.5} className="fill-slate-300" />
+        <circle cx={82} cy={133} r={2.5} className="fill-slate-300" />
         <rect
           x={92}
-          y={125}
-          width={104}
+          y={129}
+          width={102}
           height={8}
           rx={4}
           className="fill-white stroke-slate-200"
           strokeWidth={1}
         />
-        <TextBar x={66} y={150} w={120} tone="faint" />
-        <TextBar x={66} y={164} w={92} tone="faint" />
-        <rect x={66} y={178} width={60} height={20} rx={4} className="fill-brand-100" />
-        <Label x={130} y={214} anchor="middle" size={9} tone="muted">
+        <TextBar x={66} y={154} w={118} tone="faint" />
+        <TextBar x={66} y={167} w={92} tone="faint" />
+        <rect x={66} y={179} width={58} height={16} rx={4} className="fill-brand-100" />
+        <Label x={129} y={216} anchor="middle" size={9} tone="muted">
           Web Browser
         </Label>
       </g>
       {/* Phone */}
       <g>
         <rect
-          x={224}
-          y={120}
+          x={222}
+          y={124}
           width={48}
-          height={88}
+          height={78}
           rx={9}
           className="fill-white stroke-slate-300"
           strokeWidth={2}
         />
-        <rect x={236} y={124} width={24} height={3} rx={1.5} className="fill-slate-200" />
-        <TextBar x={232} y={138} w={32} tone="faint" />
-        <rect x={232} y={148} width={32} height={22} rx={4} className="fill-brand-100" />
-        <TextBar x={232} y={178} w={32} tone="faint" />
-        <TextBar x={232} y={188} w={22} tone="faint" />
-        <Label x={248} y={214} anchor="middle" size={9} tone="muted">
+        <rect x={234} y={128} width={24} height={3} rx={1.5} className="fill-slate-200" />
+        <TextBar x={230} y={142} w={32} tone="faint" />
+        <rect x={230} y={152} width={32} height={20} rx={4} className="fill-brand-100" />
+        <TextBar x={230} y={180} w={32} tone="faint" />
+        <TextBar x={230} y={190} w={22} tone="faint" />
+        <Label x={246} y={216} anchor="middle" size={9} tone="muted">
           Phone
         </Label>
       </g>
@@ -187,20 +187,20 @@ export function DevicesCatalogue() {
       <g>
         <rect
           x={290}
-          y={122}
-          width={58}
+          y={130}
+          width={56}
           height={40}
           rx={4}
           className="fill-white stroke-slate-300"
           strokeWidth={2}
         />
-        <rect x={296} y={128} width={46} height={28} rx={2} className="fill-slate-50" />
+        <rect x={296} y={136} width={44} height={28} rx={2} className="fill-slate-50" />
         <path
-          d="M284 166 H354 L350 158 H288 Z"
+          d="M284 174 H352 L348 166 H288 Z"
           className="fill-slate-100 stroke-slate-300"
           strokeWidth={1.5}
         />
-        <Label x={319} y={214} anchor="middle" size={9} tone="muted">
+        <Label x={318} y={216} anchor="middle" size={9} tone="muted">
           Laptop
         </Label>
       </g>
@@ -354,8 +354,8 @@ export function IconsCatalogue() {
       {glyphs.map((g, i) => {
         const col = i % 6;
         const row = Math.floor(i / 6);
-        const tx = 52 + col * 50;
-        const ty = 116 + row * 46;
+        const tx = 56 + col * 48;
+        const ty = 124 + row * 46;
         const sel = i === 0;
         return (
           <g key={i}>
@@ -499,8 +499,8 @@ export function TechnologyCatalogue() {
       {tiles.map((t, i) => {
         const col = i % 4;
         const row = Math.floor(i / 4);
-        const tx = 56 + col * 76;
-        const ty = 116 + row * 48;
+        const tx = 60 + col * 74;
+        const ty = 124 + row * 48;
         return (
           <g key={i}>
             <rect x={tx} y={ty} width={36} height={36} rx={8} className={t.fill} />

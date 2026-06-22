@@ -12,41 +12,41 @@ import { Scene, Shape, Arrow, SelectionBox, Panel, Tile, Menu, Label } from './p
 function ZoomCluster({ x, y }: { x: number; y: number }) {
   return (
     <Panel x={x} y={y} w={150} h={34}>
-      <Label x={x + 18} y={y + 18} size={16} weight={700} tone="muted" anchor="middle">
+      <Label x={x + 20} y={y + 18} size={13} weight={700} tone="muted" anchor="middle">
         −
       </Label>
       <line
-        x1={x + 34}
+        x1={x + 38}
         y1={y + 7}
-        x2={x + 34}
+        x2={x + 38}
         y2={y + 27}
         className="stroke-slate-200"
         strokeWidth={1.5}
       />
-      <Label x={x + 58} y={y + 18} size={11} weight={600} tone="body" anchor="middle">
+      <Label x={x + 62} y={y + 18} size={11} weight={600} tone="body" anchor="middle">
         100%
       </Label>
       <line
-        x1={x + 82}
+        x1={x + 86}
         y1={y + 7}
-        x2={x + 82}
+        x2={x + 86}
         y2={y + 27}
         className="stroke-slate-200"
         strokeWidth={1.5}
       />
-      <Label x={x + 98} y={y + 18} size={16} weight={700} tone="muted" anchor="middle">
+      <Label x={x + 104} y={y + 18} size={13} weight={700} tone="muted" anchor="middle">
         +
       </Label>
       <line
-        x1={x + 114}
+        x1={x + 120}
         y1={y + 7}
-        x2={x + 114}
+        x2={x + 120}
         y2={y + 27}
         className="stroke-slate-200"
         strokeWidth={1.5}
       />
       {/* Fit-to-screen: a frame with inset corners */}
-      <g transform={`translate(${x + 132} ${y + 17})`}>
+      <g transform={`translate(${x + 135} ${y + 17})`}>
         <path
           d="M-6 -4 v-3 h3 M6 -4 v-3 h-3 M-6 4 v3 h3 M6 4 v3 h-3"
           className="stroke-slate-500"
@@ -119,8 +119,8 @@ export function PanelLayout() {
       <Arrow from={[136, 93]} to={[176, 121]} />
 
       {/* Palette, top-right */}
-      <Panel x={300} y={20} w={102} h={92} title="PALETTE">
-        <Tile x={310} y={48} active>
+      <Panel x={300} y={20} w={102} h={100} title="PALETTE">
+        <Tile x={306} y={50} active>
           <rect
             x={-7}
             y={-7}
@@ -132,10 +132,10 @@ export function PanelLayout() {
             fill="none"
           />
         </Tile>
-        <Tile x={342} y={48}>
+        <Tile x={338} y={50}>
           <circle r={7} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
-        <Tile x={374} y={48}>
+        <Tile x={370} y={50}>
           <path
             d="M0 -8 L8 0 L0 8 L-8 0 Z"
             className="stroke-brand-500"
@@ -143,7 +143,7 @@ export function PanelLayout() {
             fill="none"
           />
         </Tile>
-        <Tile x={310} y={80}>
+        <Tile x={306} y={82}>
           <path
             d="M-8 -6 h16 v12 h-16 Z"
             className="stroke-brand-500"
@@ -151,10 +151,10 @@ export function PanelLayout() {
             fill="none"
           />
         </Tile>
-        <Tile x={342} y={80}>
+        <Tile x={338} y={82}>
           <path d="M-7 0 h14 M0 -7 v14" className="stroke-brand-500" strokeWidth={2} />
         </Tile>
-        <Tile x={374} y={80}>
+        <Tile x={370} y={82}>
           <ellipse rx={8} ry={6} className="stroke-brand-500" strokeWidth={2} fill="none" />
         </Tile>
       </Panel>
@@ -197,20 +197,20 @@ export function PanelLayout() {
         <Label x={176} y={224} anchor="middle" size={10} weight={500} tone="muted">
           Data
         </Label>
-        <Label x={244} y={224} anchor="middle" size={16} weight={700} tone="muted">
+        <Label x={244} y={224} anchor="middle" size={13} weight={700} tone="muted">
           +
         </Label>
       </Panel>
 
       {/* Zoom controls, bottom-right */}
       <Panel x={290} y={208} w={112} h={30}>
-        <Label x={306} y={224} size={14} weight={700} tone="muted" anchor="middle">
+        <Label x={306} y={224} size={12} weight={700} tone="muted" anchor="middle">
           −
         </Label>
         <Label x={346} y={224} size={10} weight={600} tone="body" anchor="middle">
           100%
         </Label>
-        <Label x={388} y={224} size={14} weight={700} tone="muted" anchor="middle">
+        <Label x={388} y={224} size={12} weight={700} tone="muted" anchor="middle">
           +
         </Label>
       </Panel>
@@ -509,7 +509,7 @@ export function TabBar() {
           className="fill-white stroke-slate-300"
           strokeWidth={1.5}
         />
-        <Label x={376} y={120} anchor="middle" size={15} weight={700} tone="muted">
+        <Label x={376} y={120} anchor="middle" size={13} weight={700} tone="muted">
           +
         </Label>
       </Panel>
