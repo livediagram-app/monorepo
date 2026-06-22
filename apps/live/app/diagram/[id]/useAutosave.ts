@@ -11,6 +11,7 @@ import {
   apiSaveDiagramMeta,
   apiSaveTab,
   connectRoom,
+  flushDiagramSavesBeacon,
   type DiagramListItem,
 } from '@/lib/api-client';
 import type { SaveStatus } from '@/components/EditorHeader';
@@ -71,53 +72,20 @@ export function useAutosave(opts: {
         loadedTabIdsRef.current,
       );
       if (!hasChanges) return;
-      const apiBase = '/api';
-      const headers: Record<string, string> = {
-        'X-Owner-Id': selfId,
-        'Content-Type': 'application/json',
-      };
-      if (sessionShareCode) headers['X-Share-Code'] = sessionShareCode;
-      for (const t of changedTabs) {
-        // Strip UI-only / link-only fields (`templateChosen`, `folder`)
-        // before persisting the body, mirroring apiSaveTab's
-        // stripUiTabFields. `folder` is per-diagram link metadata
-        // (spec/30) and rides the meta PUT below, never the body.
-        const { templateChosen: _tc, folder: _f, ...persistable } = t;
-        void _tc;
-        void _f;
-        // Authorise an empty-body overwrite only for a loaded tab (a real
-        // reset / delete-all) — mirrors the debounced path so the server
-        // data-loss backstop (spec/13) can't be tripped by a placeholder.
-        const tabHeaders = loadedTabIdsRef.current.has(t.id)
-          ? { ...headers, 'X-Allow-Empty': '1' }
-          : headers;
-        fetch(`${apiBase}/diagrams/${diagramId}/tabs/${t.id}`, {
-          method: 'PUT',
-          headers: tabHeaders,
-          body: JSON.stringify(persistable),
-          keepalive: true,
-        }).catch(() => {});
-      }
-      for (const tabId of deletedIds) {
-        const getHeaders: Record<string, string> = { 'X-Owner-Id': selfId };
-        if (sessionShareCode) getHeaders['X-Share-Code'] = sessionShareCode;
-        fetch(`${apiBase}/diagrams/${diagramId}/tabs/${tabId}`, {
-          method: 'DELETE',
-          headers: getHeaders,
-          keepalive: true,
-        }).catch(() => {});
-      }
-      if (orderChanged || nameChanged) {
-        fetch(`${apiBase}/diagrams/${diagramId}`, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({
-            name: diagramName,
-            tabs: tabs.map((t) => ({ id: t.id, folder: t.folder })),
-          }),
-          keepalive: true,
-        }).catch(() => {});
-      }
+      // The raw keepalive writes live behind the api-client boundary now
+      // (flushDiagramSavesBeacon) so this hook holds no fetch of its own.
+      flushDiagramSavesBeacon({
+        ownerId: selfId,
+        diagramId,
+        shareCode: sessionShareCode,
+        changedTabs,
+        deletedIds,
+        loadedTabIds: loadedTabIdsRef.current,
+        orderChanged,
+        nameChanged,
+        name: diagramName,
+        tabs,
+      });
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);

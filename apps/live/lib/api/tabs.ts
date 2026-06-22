@@ -76,6 +76,71 @@ export async function apiSaveTab(
   await expectOkVoid(res, 'save tab');
 }
 
+// Last-ditch `beforeunload` flush of pending tab/meta writes (spec/13),
+// so a fast edit -> reload doesn't lose changes. Lives here at the
+// persistence boundary rather than inline in useAutosave so the editor
+// hook holds no raw fetch — the debounced save already goes through
+// apiSaveTab/apiDeleteTab/apiSaveDiagramMeta; this is the same set of
+// writes for the unload moment.
+//
+// Why it can't reuse those async helpers: a `beforeunload` handler can't
+// await, and the Clerk token provider (apiHeaders) is async — so this
+// path builds headers synchronously and uses `keepalive: true` to let
+// each request outlive the teardown. The synchronous header is
+// `X-Owner-Id` (the guest identity); the Bearer token isn't retrievable
+// without awaiting, exactly as the previous inline version did it. The
+// debounced save carries the correct hybrid identity for the common
+// (non-unload) case. Callers pass an already-diffed change set
+// (computeTabSaveDiff); empty sets fire nothing.
+export function flushDiagramSavesBeacon(args: {
+  ownerId: string;
+  diagramId: string;
+  shareCode: string | null;
+  changedTabs: Tab[];
+  deletedIds: string[];
+  // Tabs whose content is authoritative in memory — only these may
+  // authorise an empty-body overwrite (X-Allow-Empty), mirroring the
+  // debounced path's spec/13 data-loss backstop.
+  loadedTabIds: Set<string>;
+  orderChanged: boolean;
+  nameChanged: boolean;
+  name: string;
+  tabs: Tab[];
+}): void {
+  const base: Record<string, string> = { 'X-Owner-Id': args.ownerId };
+  if (args.shareCode) base['X-Share-Code'] = args.shareCode;
+  const jsonHeaders = { ...base, 'Content-Type': 'application/json' };
+  for (const t of args.changedTabs) {
+    const headers = args.loadedTabIds.has(t.id)
+      ? { ...jsonHeaders, 'X-Allow-Empty': '1' }
+      : jsonHeaders;
+    void fetch(`${API_BASE}/diagrams/${args.diagramId}/tabs/${t.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(stripUiTabFields(t)),
+      keepalive: true,
+    }).catch(() => {});
+  }
+  for (const tabId of args.deletedIds) {
+    void fetch(`${API_BASE}/diagrams/${args.diagramId}/tabs/${tabId}`, {
+      method: 'DELETE',
+      headers: base,
+      keepalive: true,
+    }).catch(() => {});
+  }
+  if (args.orderChanged || args.nameChanged) {
+    void fetch(`${API_BASE}/diagrams/${args.diagramId}`, {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        name: args.name,
+        tabs: args.tabs.map((t) => ({ id: t.id, folder: t.folder })),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
 // Append a comment to one element's thread on a specific tab.
 // View-role visitors can call this (the only write path open to
 // them): owner / edit-role visitors also could but already get
