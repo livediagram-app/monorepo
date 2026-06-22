@@ -679,6 +679,7 @@ export * from './colors';
 export * from './rich-text';
 
 export * from './factories';
+export * from './component-factories';
 export * from './table';
 
 // Deterministic auto-layout for AI-generated diagrams (spec/25).
