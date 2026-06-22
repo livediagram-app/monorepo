@@ -385,3 +385,54 @@ describe('buildSearchResults — create-tab action', () => {
     expect(keys.indexOf('tabs')).toBeLessThan(keys.indexOf('actions'));
   });
 });
+
+describe('buildSearchResults — help articles (spec/55 + spec/56)', () => {
+  const helpItems = [
+    {
+      id: 'help:keyboardShortcuts',
+      title: 'Keyboard shortcuts',
+      keywords: 'hotkey keys bindings',
+      href: '/help/tips-and-tricks/keyboard-shortcuts/',
+      leaf: 'keyboard-shortcuts',
+    },
+    {
+      id: 'help:sharing',
+      title: 'Sharing and embeds',
+      keywords: 'share link invite',
+      href: '/help/collaboration/sharing/',
+      leaf: 'sharing',
+    },
+  ];
+
+  it('surfaces help articles as a "Help" group, matched on title', () => {
+    const out = buildSearchResults({ query: 'keyboard', diagrams: [], folders: [], helpItems });
+    const help = out.find((g) => g.key === 'help')!;
+    expect(help.items.map((i) => (i.kind === 'help' ? i.href : null))).toEqual([
+      '/help/tips-and-tricks/keyboard-shortcuts/',
+    ]);
+  });
+
+  it('matches on keyword synonyms beyond the title', () => {
+    const out = buildSearchResults({ query: 'hotkey', diagrams: [], folders: [], helpItems });
+    const help = out.find((g) => g.key === 'help')!;
+    expect(help.items).toHaveLength(1);
+    expect(help.items[0]!.kind === 'help' && help.items[0]!.leaf).toBe('keyboard-shortcuts');
+  });
+
+  it('does not surface help on an empty query (no catalogue dump)', () => {
+    const out = buildSearchResults({ query: '', diagrams: [], folders: [], helpItems });
+    expect(out.find((g) => g.key === 'help')).toBeUndefined();
+  });
+
+  it('ranks the help group last so navigation + edit results keep the default Enter', () => {
+    const out = buildSearchResults({
+      query: 'share',
+      diagrams: [{ id: 'd1', name: 'Share plan' }],
+      folders: [],
+      helpItems,
+    });
+    const keys = out.map((g) => g.key);
+    expect(keys.indexOf('help')).toBe(keys.length - 1);
+    expect(keys.indexOf('diagrams')).toBeLessThan(keys.indexOf('help'));
+  });
+});

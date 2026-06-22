@@ -19,6 +19,7 @@ const TEAM_LIMIT = 8;
 const TAB_LIMIT = 8;
 const ELEMENT_LIMIT = 12;
 const PALETTE_LIMIT = 10;
+const HELP_LIMIT = 6;
 
 // Internal-only input shapes for the by-name match inputs. Several
 // share the same {id, name} shape but stay distinct so a future
@@ -92,6 +93,9 @@ type PaletteItem = { kind: 'palette'; id: string; name: string; add: PaletteAdd 
 // the query looks like "tab" / "new"; the union + `action` discriminator
 // leave room for more without reshaping callers.
 type ActionItem = { kind: 'action'; id: string; name: string; action: 'create-tab' };
+// A help-centre article result. Picking it opens the article (in a new tab);
+// `href` is the absolute /help path and `leaf` the telemetry-safe slug tail.
+type HelpItem = { kind: 'help'; id: string; name: string; href: string; leaf: string };
 
 export type SearchResultItem =
   | DiagramItem
@@ -101,10 +105,20 @@ export type SearchResultItem =
   | TabItem
   | ElementItem
   | PaletteItem
-  | ActionItem;
+  | ActionItem
+  | HelpItem;
 
 export type SearchGroup = {
-  key: 'diagrams' | 'shared' | 'folders' | 'teams' | 'tabs' | 'elements' | 'palette' | 'actions';
+  key:
+    | 'diagrams'
+    | 'shared'
+    | 'folders'
+    | 'teams'
+    | 'tabs'
+    | 'elements'
+    | 'palette'
+    | 'actions'
+    | 'help';
   label: string;
   items: SearchResultItem[];
 };
@@ -120,6 +134,18 @@ const CREATE_TAB_KEYWORDS = 'new tab create add page sheet board';
 // finds the cylinder / RDS). Kept catalogue-agnostic so this lib stays free
 // of the icon data + the Explorer (which omits it) pays nothing.
 export type PaletteSearchItem = { id: string; name: string; keywords: string; add: PaletteAdd };
+
+// A searchable help-centre article the editor offers as "Help" results.
+// `keywords` widens matching beyond the title (so "shortcut" finds the
+// keyboard-shortcuts article). Catalogue lives in lib/help-search.ts so this
+// lib stays free of the help data; surfaces without help omit it.
+export type HelpSearchItem = {
+  id: string;
+  title: string;
+  keywords: string;
+  href: string;
+  leaf: string;
+};
 
 // `buildSearchResults`' parameter type. Local because callers (the
 // SearchPanel) pass an object literal; TypeScript infers the shape
@@ -150,6 +176,10 @@ type SearchInput = {
   // "Add to canvas" results. Only the editor passes it; matched only when
   // the query is non-empty (you don't browse the whole palette via search).
   paletteItems?: PaletteSearchItem[];
+  // Help-centre catalogue surfaced as "Help" results. Matched only on a
+  // non-empty query (an empty one would dump the whole catalogue). Both the
+  // editor and the Explorer pass it, since help is global.
+  helpItems?: HelpSearchItem[];
 };
 
 // Case-insensitive substring match. Empty query matches everything,
@@ -327,6 +357,24 @@ export function buildSearchResults(input: SearchInput): SearchGroup[] {
         key: 'palette',
         label: 'Add to canvas',
         items: paletteMatches.map((p) => ({ kind: 'palette', id: p.id, name: p.name, add: p.add })),
+      });
+    }
+  }
+
+  // Help: matching help-centre articles, last so navigation/edit results
+  // always win the default Enter. Non-empty query only (an empty one would
+  // list the whole catalogue), matched on title + keywords.
+  if (q && input.helpItems && input.helpItems.length > 0) {
+    const helpMatches = input.helpItems
+      .filter((h) => matches(q, h.title) || matches(q, h.keywords))
+      .slice(0, HELP_LIMIT);
+    if (helpMatches.length > 0) {
+      groups.push({
+        key: 'help',
+        label: 'Help',
+        items: helpMatches.map(
+          (h): HelpItem => ({ kind: 'help', id: h.id, name: h.title, href: h.href, leaf: h.leaf }),
+        ),
       });
     }
   }

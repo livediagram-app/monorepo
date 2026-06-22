@@ -98,6 +98,19 @@ the same surface recurs rather than redrawn.
 
 The editor's `TabBar` gains a **Help** link on its right edge, beside the existing GitHub link — a plain `<a href="/help/" target="_blank">` (same convention as the GitHub link, no editor-page wiring). It fires `track('UI', 'Opened', 'Help')` (see [spec/22](22-telemetry.md); reuses existing `UI`/`Opened` enum pair). A "Help" link also lives in the help app's own header/footer.
 
+### Help in global search
+
+The editor's global search panel (spec/09) surfaces matching help articles as a
+**Help** group, so "how do I…" is answerable without leaving the canvas. Since
+the editor and help centre are separate builds, the searchable catalogue is a
+curated view in `apps/live/lib/help-search.ts` (title + keyword synonyms per
+article, resolved to a `/help` href via the `help-articles.ts` deep-link map);
+keep it in sync with that map. `buildSearchResults` stays catalogue-agnostic
+(the surface passes `helpItems`, the same pattern as palette results), matches
+title + keywords on a non-empty query only, ranks the group last (navigation and
+edit results keep the default Enter), and picking one opens the article in a new
+tab. Both the editor and the Explorer pass the catalogue, since help is global.
+
 ## Analytics
 
 The help app is a static site outside the editor, so it does not use the editor's first-party telemetry pipeline. It emits nothing by default (no third-party scripts), keeping it self-host-clean. The in-editor Help link is the only telemetry touchpoint, via the existing pipeline.
@@ -108,5 +121,7 @@ A `deploy-help` job in `.github/workflows/deploy.yml` mirrors `deploy-telemetry`
 
 ## Out of scope (for now)
 
-- Contextual deep-links from specific editor dialogs to specific articles (MT's modal `?` buttons). The single editor Help link covers the entry point; per-dialog links can come later.
-- Help results inside the editor's palette / search.
+- Surfacing the full ~140-article catalogue in editor search. The in-editor
+  catalogue (`help-search.ts`) is a curated subset of the articles the editor
+  deep-links; a shared package exposing the whole registry to both builds can
+  come later if broader coverage is wanted.

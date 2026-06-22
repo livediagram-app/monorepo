@@ -21,6 +21,7 @@ import {
   type ThemeId,
 } from '@/lib/themes';
 import { PALETTE_SEARCH_ITEMS } from '@/lib/palette-search';
+import { HELP_SEARCH_ITEMS } from '@/lib/help-search';
 import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/Canvas';
@@ -1131,6 +1132,7 @@ export function EditorView() {
                 }
           }
           onCreateTab={isReadOnly ? undefined : addTab}
+          helpItems={HELP_SEARCH_ITEMS}
           onClose={() => setSearchOpen(false)}
         />
       ) : null}

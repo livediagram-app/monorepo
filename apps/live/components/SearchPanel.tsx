@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tab } from '@livediagram/diagram';
 import {
   buildSearchResults,
+  type HelpSearchItem,
   type PaletteAdd,
   type PaletteSearchItem,
   type SearchGroup,
@@ -72,6 +73,10 @@ type SearchPanelProps = {
   // placement gesture the palette uses, then the panel closes).
   paletteItems?: PaletteSearchItem[];
   onAddPaletteItem?: (add: PaletteAdd) => void;
+  // The help-centre catalogue surfaced as "Help" results. Passed by both the
+  // editor and the Explorer (help is global); picking one opens the article
+  // in a new tab.
+  helpItems?: HelpSearchItem[];
   // Editor-only: create a new tab in the current diagram. Surfaced as a
   // "Create new tab" action result when the query looks like "tab" /
   // "new" (search.ts gates it on the in-diagram `tabs` scope).
@@ -100,6 +105,7 @@ export function SearchPanel({
   onSelectElement,
   paletteItems,
   onAddPaletteItem,
+  helpItems,
   onCreateTab,
   onClose,
 }: SearchPanelProps) {
@@ -135,6 +141,7 @@ export function SearchPanel({
         tabs,
         currentTabId,
         paletteItems,
+        helpItems,
       }),
     [
       query,
@@ -147,6 +154,7 @@ export function SearchPanel({
       tabs,
       currentTabId,
       paletteItems,
+      helpItems,
     ],
   );
 
@@ -170,6 +178,7 @@ export function SearchPanel({
       onSelectElement(item.tabId, item.elementId);
     else if (item.kind === 'palette' && onAddPaletteItem) onAddPaletteItem(item.add);
     else if (item.kind === 'action' && item.action === 'create-tab' && onCreateTab) onCreateTab();
+    else if (item.kind === 'help') window.open(item.href, '_blank', 'noopener,noreferrer');
     track('Search', 'Selected', titleCaseType(item.kind));
     onClose();
   };
@@ -218,8 +227,8 @@ export function SearchPanel({
             onKeyDown={handleInputKey}
             placeholder={
               tabs
-                ? 'Search diagrams, folders, teams, tabs, elements...'
-                : 'Search diagrams, folders, teams...'
+                ? 'Search diagrams, folders, teams, tabs, elements, help...'
+                : 'Search diagrams, folders, teams, help...'
             }
             className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
@@ -415,6 +424,26 @@ function SearchResultIcon({ item }: { item: SearchResultItem }) {
       >
         <path d="M2.5 6.5h4l1-2h6v9h-11z" />
         <path d="M9 9h3M10.5 7.5v3" />
+      </svg>
+    );
+  }
+  if (item.kind === 'help') {
+    // A "?" in a circle: a help-centre article (opens in a new tab).
+    return (
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <circle cx="8" cy="8" r="6" />
+        <path d="M6.3 6.2a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.5-.7 1v.3" />
+        <path d="M8 11.4h.01" />
       </svg>
     );
   }

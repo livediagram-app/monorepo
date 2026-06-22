@@ -133,23 +133,23 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               ⌘ = Cmd on Mac, Ctrl on Windows / Linux
             </p>
-            <div className="mt-1.5">
-              <HelpArticleLink
-                article="keyboardShortcuts"
-                variant="text"
-                title="Keyboard shortcuts"
-                description="The full shortcut reference and tips for faster editing."
-              />
-            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <CloseIcon />
-          </button>
+          <div className="-mr-2 -mt-1 flex shrink-0 items-center gap-0.5">
+            <HelpArticleLink
+              article="keyboardShortcuts"
+              title="Keyboard shortcuts"
+              description="The full shortcut reference and tips for faster editing."
+              className="!h-7 !w-7 !rounded !border-0 !text-sm !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700 dark:!text-slate-400 dark:hover:!bg-slate-800 dark:hover:!text-slate-200"
+            />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              <CloseIcon />
+            </button>
+          </div>
         </div>
         <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto px-5 py-1 dark:divide-slate-800">
           {SECTIONS.map((section) => (
