@@ -30,7 +30,10 @@
   },
   "pnpm": {
     "overrides": {
-      "postcss": "^8.5.10"
+      "postcss": "^8.5.10",
+      "undici": "^7.28.0",
+      "js-yaml": "^4.2.0",
+      "esbuild": "^0.28.1"
     }
   }
 }
