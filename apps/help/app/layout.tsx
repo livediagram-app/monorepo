@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { BackToTop } from '@/components/BackToTop';
+import { JsonLd } from '@/components/JsonLd';
+import { webSiteJsonLd } from '@/lib/structured-data';
 import './globals.css';
 
 // The livediagram help centre (spec/55). Indexable static site served
@@ -43,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB">
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-800 antialiased">
+        <JsonLd data={webSiteJsonLd()} />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

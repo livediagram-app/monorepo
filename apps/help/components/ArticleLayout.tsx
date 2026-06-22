@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Breadcrumb } from './Breadcrumb';
+import { JsonLd } from './JsonLd';
 import { SectionedContent } from './SectionedContent';
 import { TableOfContents } from './TableOfContents';
-import { articleHref, categoryHref, type Article } from '@/lib/articles';
+import { articleHref, articles, categoryHref, type Article } from '@/lib/articles';
+import { articleJsonLd } from '@/lib/structured-data';
 
 /** Sidebar card: shows the TOC and/or a "Learn more" list of related
  *  guides. Renders nothing visible if both are empty (CSS hides it). */
@@ -92,8 +94,16 @@ export function ArticleLayout({
       ? [{ label: categoryTitle, href: categoryHref(categorySlug) }, { label: title }]
       : [{ label: title }];
 
+  // Article structured data (spec/55). The Breadcrumb component already emits
+  // the BreadcrumbList, so this only adds the TechArticle node. Resolve this
+  // page's own URL from the registry ((categorySlug, title) is unique) so the
+  // node ships on every guide without each page.mdx passing its slug.
+  const entry = articles.find((a) => a.categorySlug === categorySlug && a.title === title);
+  const selfHref = entry ? articleHref(entry) : categoryHref(categorySlug);
+
   return (
     <div>
+      <JsonLd data={articleJsonLd({ title, description: description ?? '', appPath: selfHref })} />
       <Breadcrumb items={breadcrumbItems} />
 
       <section className="relative border-b border-slate-200 bg-brand-50/40 py-12 md:py-16">
