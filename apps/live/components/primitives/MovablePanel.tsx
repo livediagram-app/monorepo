@@ -651,9 +651,17 @@ export function MovablePanel({
       >
         <div
           style={!growBody && bodyMaxH !== null ? { maxHeight: bodyMaxH } : undefined}
+          // `overflow-hidden` is required for the grid-rows-[0fr] collapse to
+          // actually clip the body: without an overflow set, the grid item's
+          // min-content height keeps the `0fr` track from shrinking, so a
+          // collapsible growBody panel (the Palette) toggled `collapsed` but
+          // never visually collapsed. The scrolling (non-growBody) panels get
+          // their clip from `overflow-y-auto`; growBody panels size to their
+          // content, so plain `overflow-hidden` clips on collapse without
+          // adding a scrollbar when expanded.
           className={
             growBody
-              ? ''
+              ? 'overflow-hidden'
               : 'overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700'
           }
         >
