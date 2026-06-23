@@ -68,6 +68,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 58  | [Palette drag ghost](58-palette-drag-ghost.md)                     | Drag-to-add shows a live translucent footprint of the shape at the cursor, replacing the browser drag image |
 | 59  | [Minimap](59-minimap.md)                                           | Bottom-left zoomed-out overview + viewport rect; tap/drag to navigate. Desktop, when Activity panel closed  |
 | 60  | [Snap override](60-snap-override.md)                               | Hold Cmd/Ctrl while dragging to disable alignment snapping + guides for a free, off-grid placement          |
+| 61  | [Public API and API tokens](61-public-api-and-tokens.md)           | Proposed: open the REST API to external callers via revocable API tokens; input-validation hardening shipped |
 
 ## Workflow
 
