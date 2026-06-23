@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { CloseIcon } from '@/components/primitives/CloseIcon';
+import { Dialog } from '@/components/dialogs/Dialog';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
-import { useEscape } from '@/hooks/ui/useEscape';
-import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import type { ImportOutcome } from '@/lib/import-tab';
 
 type Format = 'json' | 'markdown';
@@ -25,9 +24,6 @@ type ImportTabDialogProps = {
 export function ImportTabDialog({ tabName, onImport, onClose }: ImportTabDialogProps) {
   const [busyFormat, setBusyFormat] = useState<Format | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(dialogRef);
-  useEscape(onClose);
 
   const handle = async (format: Format) => {
     if (busyFormat) return;
@@ -46,93 +42,78 @@ export function ImportTabDialog({ tabName, onImport, onClose }: ImportTabDialogP
   };
 
   return (
-    <div
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-6 backdrop-blur-sm dark:bg-slate-950/60"
-    >
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Import into tab"
-        className="pointer-events-auto flex max-h-[90vh] w-[36rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900"
-      >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Import to tab
-            </h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Pick a format to import a file into the current tab.
-            </p>
-            <div className="mt-1.5">
-              <HelpArticleLink
-                article="importTabs"
-                variant="text"
-                title="Importing tabs"
-                description="What you can import and how it replaces the tab."
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* Destructive-action warning — this overwrites the tab. */}
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-            <span className="mt-0.5 shrink-0">
-              <WarningIcon />
-            </span>
-            <span>
-              This replaces everything on{' '}
-              <strong className="font-semibold">{tabName || 'this tab'}</strong> with the imported
-              content. Undo (⌘Z / Ctrl&#8209;Z) brings it back.
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <ImportCard
-              kind="json"
-              title="livediagram file"
-              description="A .json tab exported from livediagram. Restores its elements exactly."
-              busy={busyFormat === 'json'}
-              onClick={() => void handle('json')}
-            />
-            <ImportCard
-              kind="markdown"
-              title="Markdown"
-              description="A .md outline (headings + lists), e.g. exported from XMind. Becomes a themed tree."
-              busy={busyFormat === 'markdown'}
-              onClick={() => void handle('markdown')}
-            />
-          </div>
-          <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
-            Importing a Markdown outline?{' '}
-            <HelpArticleLink
-              article="markdownImport"
-              variant="text"
-              label="See how it maps to a tree"
-              title="Markdown import"
-              description="How headings and lists become a themed tree diagram."
-            />
+    <Dialog open onClose={onClose} ariaLabel="Import into tab" size="xl" className="max-h-[90vh]">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Import to tab
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Pick a format to import a file into the current tab.
           </p>
-          {error ? (
-            <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
-              {error}
-            </p>
-          ) : null}
+          <div className="mt-1.5">
+            <HelpArticleLink
+              article="importTabs"
+              variant="text"
+              title="Importing tabs"
+              description="What you can import and how it replaces the tab."
+            />
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <CloseIcon />
+        </button>
       </div>
-    </div>
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        {/* Destructive-action warning — this overwrites the tab. */}
+        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <span className="mt-0.5 shrink-0">
+            <WarningIcon />
+          </span>
+          <span>
+            This replaces everything on{' '}
+            <strong className="font-semibold">{tabName || 'this tab'}</strong> with the imported
+            content. Undo (⌘Z / Ctrl&#8209;Z) brings it back.
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <ImportCard
+            kind="json"
+            title="livediagram file"
+            description="A .json tab exported from livediagram. Restores its elements exactly."
+            busy={busyFormat === 'json'}
+            onClick={() => void handle('json')}
+          />
+          <ImportCard
+            kind="markdown"
+            title="Markdown"
+            description="A .md outline (headings + lists), e.g. exported from XMind. Becomes a themed tree."
+            busy={busyFormat === 'markdown'}
+            onClick={() => void handle('markdown')}
+          />
+        </div>
+        <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+          Importing a Markdown outline?{' '}
+          <HelpArticleLink
+            article="markdownImport"
+            variant="text"
+            label="See how it maps to a tree"
+            title="Markdown import"
+            description="How headings and lists become a themed tree diagram."
+          />
+        </p>
+        {error ? (
+          <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    </Dialog>
   );
 }
 

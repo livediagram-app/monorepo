@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useEscape } from '@/hooks/ui/useEscape';
-import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
+import { Dialog } from '@/components/dialogs/Dialog';
 import { ChevronIcon } from '@/components/primitives/ChevronIcon';
 import { CloseIcon } from '@/components/primitives/CloseIcon';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
@@ -105,100 +105,85 @@ export function ShortcutsDialog({ enabled, onToggleEnabled, onClose }: Shortcuts
   // on the first section so the dialog lands with one group showing.
   const [openHeading, setOpenHeading] = useState<string | null>(SECTIONS[0]?.heading ?? null);
 
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(dialogRef);
-
   return (
-    <div
-      onClick={(e) => {
-        // Click-to-close on the backdrop, matching the Search + Settings
-        // dialogs (only when the click lands on the backdrop itself).
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
+    <Dialog
+      open
+      onClose={onClose}
+      ariaLabel="Keyboard shortcuts"
+      size="md"
+      closeOnEscape={false}
+      className="max-h-[90vh] dark:text-slate-100"
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Keyboard shortcuts"
-        tabIndex={-1}
-        className="pointer-events-auto flex w-[30rem] max-w-[92%] max-h-[90vh] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 pt-5 pb-3 dark:border-slate-800">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              Keyboard shortcuts
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              ⌘ = Cmd on Mac, Ctrl on Windows / Linux
-            </p>
-          </div>
-          <div className="-mr-2 -mt-1 flex shrink-0 items-center gap-0.5">
-            <HelpArticleLink
-              article="keyboardShortcuts"
-              title="Keyboard shortcuts"
-              description="The full shortcut reference and tips for faster editing."
-              className="!h-7 !w-7 !rounded !border-0 !text-sm !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700 dark:!text-slate-400 dark:hover:!bg-slate-800 dark:hover:!text-slate-200"
-            />
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            >
-              <CloseIcon />
-            </button>
-          </div>
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 pt-5 pb-3 dark:border-slate-800">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Keyboard shortcuts
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            ⌘ = Cmd on Mac, Ctrl on Windows / Linux
+          </p>
         </div>
-        <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto px-5 py-1 dark:divide-slate-800">
-          {SECTIONS.map((section) => (
-            // Each section is a collapsible accordion. One open at a time:
-            // opening a group collapses whichever was open, so the (long)
-            // list stays compact.
-            <ShortcutSection
-              key={section.heading}
-              section={section}
-              open={openHeading === section.heading}
-              onToggle={() =>
-                setOpenHeading((h) => (h === section.heading ? null : section.heading))
-              }
-            />
-          ))}
-        </div>
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/50">
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-              Keyboard shortcuts
-            </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">
-              Enabled on this device. Disable to use system shortcuts only.
-            </span>
-          </div>
+        <div className="-mr-2 -mt-1 flex shrink-0 items-center gap-0.5">
+          <HelpArticleLink
+            article="keyboardShortcuts"
+            title="Keyboard shortcuts"
+            description="The full shortcut reference and tips for faster editing."
+            className="!h-7 !w-7 !rounded !border-0 !text-sm !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700 dark:!text-slate-400 dark:hover:!bg-slate-800 dark:hover:!text-slate-200"
+          />
           <button
             type="button"
-            role="switch"
-            aria-checked={enabled}
-            onClick={() => onToggleEnabled(!enabled)}
-            className={
-              enabled
-                ? 'relative h-5 w-9 shrink-0 rounded-full bg-brand-500 transition'
-                : 'relative h-5 w-9 shrink-0 rounded-full bg-slate-300 transition dark:bg-slate-700'
-            }
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
-            <span
-              aria-hidden
-              className={
-                enabled
-                  ? 'absolute left-[18px] top-[2px] h-4 w-4 rounded-full bg-white shadow transition'
-                  : 'absolute left-[2px] top-[2px] h-4 w-4 rounded-full bg-white shadow transition'
-              }
-            />
+            <CloseIcon />
           </button>
         </div>
       </div>
-    </div>
+      <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto px-5 py-1 dark:divide-slate-800">
+        {SECTIONS.map((section) => (
+          // Each section is a collapsible accordion. One open at a time:
+          // opening a group collapses whichever was open, so the (long)
+          // list stays compact.
+          <ShortcutSection
+            key={section.heading}
+            section={section}
+            open={openHeading === section.heading}
+            onToggle={() => setOpenHeading((h) => (h === section.heading ? null : section.heading))}
+          />
+        ))}
+      </div>
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/50">
+        <div className="flex flex-col">
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+            Keyboard shortcuts
+          </span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">
+            Enabled on this device. Disable to use system shortcuts only.
+          </span>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => onToggleEnabled(!enabled)}
+          className={
+            enabled
+              ? 'relative h-5 w-9 shrink-0 rounded-full bg-brand-500 transition'
+              : 'relative h-5 w-9 shrink-0 rounded-full bg-slate-300 transition dark:bg-slate-700'
+          }
+        >
+          <span
+            aria-hidden
+            className={
+              enabled
+                ? 'absolute left-[18px] top-[2px] h-4 w-4 rounded-full bg-white shadow transition'
+                : 'absolute left-[2px] top-[2px] h-4 w-4 rounded-full bg-white shadow transition'
+            }
+          />
+        </button>
+      </div>
+    </Dialog>
   );
 }
 

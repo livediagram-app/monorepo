@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { CloseIcon } from '@/components/primitives/CloseIcon';
+import { Dialog } from '@/components/dialogs/Dialog';
 import { ToggleSwitch } from '@/components/palette/palette-controls';
-import { useEscape } from '@/hooks/ui/useEscape';
-import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import type { Tab } from '@livediagram/diagram';
 import {
   downloadBlob,
@@ -59,9 +58,6 @@ export function ExportTabDialog({
   // Backdrop pattern (spec/48): paint the tab's grid / dots / … pattern. On by
   // default so the export matches the canvas; switch off for a clean backdrop.
   const [pattern, setPattern] = useState(true);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(dialogRef);
-  useEscape(onClose);
 
   const isSelection = scope === 'selection';
   const suffix = isSelection ? ' - selection' : '';
@@ -92,145 +88,136 @@ export function ExportTabDialog({
   };
 
   return (
-    <div
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-6 backdrop-blur-sm dark:bg-slate-950/60"
+    <Dialog
+      open
+      onClose={onClose}
+      ariaLabel={isSelection ? 'Export selection' : 'Export tab'}
+      size="xl"
+      className="max-h-[90vh]"
     >
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isSelection ? 'Export selection' : 'Export tab'}
-        className="pointer-events-auto flex max-h-[90vh] w-[36rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900"
-      >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {isSelection ? 'Export selection' : 'Export tab'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              {isSelection
-                ? 'Pick a format to download the selected elements.'
-                : 'Pick a format to download the current tab.'}
-            </p>
-            <div className="mt-1.5">
-              <HelpArticleLink
-                article="exportingDiagrams"
-                variant="text"
-                title="Exporting diagrams"
-                description="What each export format is for and how to use it."
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-2 gap-3">
-            <ExportCard
-              kind="markdown"
-              title="Markdown"
-              description="A text outline of this tab's elements and connections, ready to paste into a doc."
-              busy={busyFormat === 'markdown'}
-              onClick={() => void handle('markdown')}
-            />
-            <ExportCard
-              kind="pdf"
-              title="PDF"
-              description="A single-page PDF of this tab, ready to print or share."
-              busy={busyFormat === 'pdf'}
-              onClick={() => void handle('pdf')}
-            />
-            <ExportCard
-              kind="png"
-              title="PNG"
-              description="A high-resolution image of this tab, for slides or screenshots."
-              busy={busyFormat === 'png'}
-              onClick={() => void handle('png')}
-            />
-            <ExportCard
-              kind="svg"
-              title="SVG"
-              description="A scalable vector image of this tab, crisp at any size and editable in design tools."
-              busy={busyFormat === 'svg'}
-              onClick={() => void handle('svg')}
-            />
-            <ExportCard
-              kind="file"
-              title="File"
-              description="A livediagram file. Drop it back into any diagram via Import to recreate this tab."
-              busy={busyFormat === 'file'}
-              onClick={() => void handle('file')}
-            />
-          </div>
-          {/* Image-format option: an iOS-style toggle to tilt PNG / SVG / PDF
-              into the isometric projection (spec/45 / 48). Off by default. */}
-          <div className="mt-3 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                // Fire before the flip so an opt-out still reaches the wire.
-                track('UI', 'Toggled', 'IsometricExport');
-                setIsometric((v) => !v);
-              }}
-              aria-pressed={isometric}
-              className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
-            >
-              <span className="flex flex-col">
-                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                  Isometric view
-                </span>
-                <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                  Tilt the PNG / SVG / PDF into the isometric projection.
-                </span>
-              </span>
-              <ToggleSwitch presentational checked={isometric} label="Export isometric view" />
-            </button>
+      <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 pt-6 pb-4 dark:border-slate-800">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            {isSelection ? 'Export selection' : 'Export tab'}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {isSelection
+              ? 'Pick a format to download the selected elements.'
+              : 'Pick a format to download the current tab.'}
+          </p>
+          <div className="mt-1.5">
             <HelpArticleLink
-              article="isometricMode"
-              title="Isometric view"
-              description="How the isometric projection works."
+              article="exportingDiagrams"
+              variant="text"
+              title="Exporting diagrams"
+              description="What each export format is for and how to use it."
             />
           </div>
-          {/* Image-format option: paint the tab's backdrop pattern (grid / dots
-              / …). On by default so the export matches the canvas. */}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="grid grid-cols-2 gap-3">
+          <ExportCard
+            kind="markdown"
+            title="Markdown"
+            description="A text outline of this tab's elements and connections, ready to paste into a doc."
+            busy={busyFormat === 'markdown'}
+            onClick={() => void handle('markdown')}
+          />
+          <ExportCard
+            kind="pdf"
+            title="PDF"
+            description="A single-page PDF of this tab, ready to print or share."
+            busy={busyFormat === 'pdf'}
+            onClick={() => void handle('pdf')}
+          />
+          <ExportCard
+            kind="png"
+            title="PNG"
+            description="A high-resolution image of this tab, for slides or screenshots."
+            busy={busyFormat === 'png'}
+            onClick={() => void handle('png')}
+          />
+          <ExportCard
+            kind="svg"
+            title="SVG"
+            description="A scalable vector image of this tab, crisp at any size and editable in design tools."
+            busy={busyFormat === 'svg'}
+            onClick={() => void handle('svg')}
+          />
+          <ExportCard
+            kind="file"
+            title="File"
+            description="A livediagram file. Drop it back into any diagram via Import to recreate this tab."
+            busy={busyFormat === 'file'}
+            onClick={() => void handle('file')}
+          />
+        </div>
+        {/* Image-format option: an iOS-style toggle to tilt PNG / SVG / PDF
+              into the isometric projection (spec/45 / 48). Off by default. */}
+        <div className="mt-3 flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => {
-              track('UI', 'Toggled', 'PatternExport');
-              setPattern((v) => !v);
+              // Fire before the flip so an opt-out still reaches the wire.
+              track('UI', 'Toggled', 'IsometricExport');
+              setIsometric((v) => !v);
             }}
-            aria-pressed={pattern}
-            className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
+            aria-pressed={isometric}
+            className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
           >
             <span className="flex flex-col">
               <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                Background pattern
+                Isometric view
               </span>
               <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                Paint the tab's grid / dots / texture behind the diagram.
+                Tilt the PNG / SVG / PDF into the isometric projection.
               </span>
             </span>
-            <ToggleSwitch presentational checked={pattern} label="Export background pattern" />
+            <ToggleSwitch presentational checked={isometric} label="Export isometric view" />
           </button>
-          {error ? (
-            <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
-              {error}
-            </p>
-          ) : null}
+          <HelpArticleLink
+            article="isometricMode"
+            title="Isometric view"
+            description="How the isometric projection works."
+          />
         </div>
+        {/* Image-format option: paint the tab's backdrop pattern (grid / dots
+              / …). On by default so the export matches the canvas. */}
+        <button
+          type="button"
+          onClick={() => {
+            track('UI', 'Toggled', 'PatternExport');
+            setPattern((v) => !v);
+          }}
+          aria-pressed={pattern}
+          className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/60 dark:hover:bg-brand-500/10"
+        >
+          <span className="flex flex-col">
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+              Background pattern
+            </span>
+            <span className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+              Paint the tab's grid / dots / texture behind the diagram.
+            </span>
+          </span>
+          <ToggleSwitch presentational checked={pattern} label="Export background pattern" />
+        </button>
+        {error ? (
+          <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+            {error}
+          </p>
+        ) : null}
       </div>
-    </div>
+    </Dialog>
   );
 }
 
