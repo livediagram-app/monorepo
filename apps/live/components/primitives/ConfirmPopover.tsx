@@ -11,7 +11,9 @@ import { VIEWPORT_EDGE_MARGIN as EDGE } from '@/lib/clamp-to-viewport';
 // Portal-rendered (so its `position: fixed` is relative to the viewport,
 // not a transformed ancestor like the tab menu) and tagged with
 // `data-confirm-popover` so a host menu's outside-click handler can
-// exclude it. Esc cancels, Enter confirms.
+// exclude it. Esc cancels, Enter confirms. Sits at `--z-modal` (above the
+// `--z-overlay` context menus that spawn it) so the "are you sure?" prompt
+// is never hidden behind the menu it was opened from.
 
 const WIDTH = 224;
 const GAP = 10; // space between the anchor and the popover
@@ -92,7 +94,7 @@ export function ConfirmPopover({
         role="dialog"
         data-confirm-popover
         onPointerDown={(e) => e.stopPropagation()}
-        className="fixed z-[var(--z-overlay)] flex animate-fade-in flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+        className="fixed z-[var(--z-modal)] flex animate-fade-in flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
         style={{ left: layout?.left ?? -9999, top: layout?.top ?? -9999, width: WIDTH }}
       >
         {/* Arrow: a rotated square poking out of the side facing the anchor. */}
