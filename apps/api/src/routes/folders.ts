@@ -17,6 +17,7 @@ import {
 import type { FolderDTO } from '../types';
 import { badRequest, conflict, forbidden, json, noContent, notFound } from '../responses';
 import { requireOwner, type RouteContext } from './context';
+import { MAX_NAME_LEN } from '../limits';
 
 // Joined-member check for team-scoped folder verbs. Membership is
 // keyed by Clerk user id, so the guest path can never manage team
@@ -56,6 +57,7 @@ export async function handleFolders(ctx: RouteContext): Promise<Response> {
         teamId?: string | null;
       };
       if (!body.id || !body.name) return badRequest('missing id/name');
+      if (body.name.length > MAX_NAME_LEN) return badRequest('name too long');
       const parentId = body.parentId ?? null;
       const teamId = body.teamId ?? null;
       if (teamId && !(await canManageTeamFolder(ctx, teamId))) return forbidden();
@@ -90,6 +92,9 @@ export async function handleFolders(ctx: RouteContext): Promise<Response> {
         name?: string;
         parentId?: string | null;
       };
+      if (typeof body.name === 'string' && body.name.length > MAX_NAME_LEN) {
+        return badRequest('name too long');
+      }
       // Cycle check on reparent: refusing here keeps the tree
       // walk in the list consumers bounded. The new parent must
       // stay inside the folder's own scope.

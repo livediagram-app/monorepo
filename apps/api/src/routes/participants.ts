@@ -4,6 +4,7 @@ import { getParticipant, upsertParticipant } from '../db';
 import { badRequest, forbidden, json, notFound } from '../responses';
 import type { ParticipantDTO } from '../types';
 import { requireOwner, type RouteContext } from './context';
+import { MAX_PARTICIPANT_NAME_LEN, MAX_COLOR_LEN } from '../limits';
 
 // GET stays open — participant ids are already broadcast through
 // the WS room and embedded in change-log rows, so anyone in a
@@ -33,6 +34,10 @@ export async function handleParticipants(ctx: RouteContext): Promise<Response> {
     if (owner !== id) return forbidden();
     const body = (await request.json()) as Partial<ParticipantDTO>;
     if (!body.name || !body.color) return badRequest('missing name/color');
+    // Cap the presence identity: it's broadcast to every peer in the room.
+    if (body.name.length > MAX_PARTICIPANT_NAME_LEN || body.color.length > MAX_COLOR_LEN) {
+      return badRequest('name/color too long');
+    }
     const existing = await getParticipant(env, id);
     const now = Date.now();
     const p: ParticipantDTO = {

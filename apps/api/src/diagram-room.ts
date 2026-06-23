@@ -16,6 +16,11 @@ import type { ClientMessage, ParticipantPresence, ServerMessage } from './types'
 // per second), so this only ever bites a flood.
 const OP_RATE_CAP = 240;
 
+// Max size (chars) of a single inbound WebSocket frame. A cursor / select /
+// op frame is well under this; the cap stops a socket from broadcasting a
+// huge payload to every peer in the room.
+const MAX_MESSAGE_CHARS = 256 * 1024;
+
 export class DiagramRoom implements DurableObject {
   state: DurableObjectState;
   // `sessions` is keyed by WebSocket; the value is the most recent
@@ -111,9 +116,15 @@ export class DiagramRoom implements DurableObject {
     this.sessions.set(ws, null);
 
     ws.addEventListener('message', (event) => {
+      // Drop an oversized frame before parsing / broadcasting it: ops are
+      // re-broadcast opaquely to every peer, so without a cap one socket
+      // could fan a multi-MB payload out to the whole room. Far above any
+      // real cursor / select / op frame.
+      const raw = typeof event.data === 'string' ? event.data : '';
+      if (raw.length > MAX_MESSAGE_CHARS) return;
       let msg: ClientMessage;
       try {
-        msg = JSON.parse(typeof event.data === 'string' ? event.data : '') as ClientMessage;
+        msg = JSON.parse(raw) as ClientMessage;
       } catch {
         return;
       }
