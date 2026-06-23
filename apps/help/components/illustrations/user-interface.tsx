@@ -527,3 +527,71 @@ export function QuickControls() {
     </Scene>
   );
 }
+
+/** The bottom-left Map panel: a zoomed-out wireframe of the canvas with a
+ *  brand-outlined rectangle marking the part you're currently viewing. */
+export function Minimap() {
+  return (
+    <Scene w={420} h={210}>
+      {/* The canvas the map mirrors. */}
+      <Shape x={172} y={26} w={68} h={38} label="A" />
+      <Shape x={128} y={116} w={62} h={36} accent label="B" />
+      <Shape x={258} y={116} w={62} h={36} label="C" />
+      <Arrow from={[206, 64]} to={[159, 116]} kind="elbow" />
+      <Arrow from={[206, 64]} to={[289, 116]} kind="elbow" />
+      {/* The Map panel, bottom-left, with the current-view box. */}
+      <Panel x={26} y={120} w={128} h={78} title="MAP">
+        <rect
+          x={78}
+          y={152}
+          width={20}
+          height={10}
+          rx={2}
+          className="fill-slate-300 dark:fill-slate-600"
+        />
+        <rect
+          x={62}
+          y={176}
+          width={17}
+          height={9}
+          rx={2}
+          className="fill-slate-300 dark:fill-slate-600"
+        />
+        <rect
+          x={100}
+          y={176}
+          width={17}
+          height={9}
+          rx={2}
+          className="fill-slate-300 dark:fill-slate-600"
+        />
+        <line
+          x1={88}
+          y1={162}
+          x2={70}
+          y2={176}
+          className="stroke-slate-300 dark:stroke-slate-600"
+          strokeWidth={1.2}
+        />
+        <line
+          x1={88}
+          y1={162}
+          x2={108}
+          y2={176}
+          className="stroke-slate-300 dark:stroke-slate-600"
+          strokeWidth={1.2}
+        />
+        <rect
+          x={52}
+          y={150}
+          width={64}
+          height={40}
+          rx={3}
+          fill="none"
+          className="stroke-brand-500"
+          strokeWidth={1.6}
+        />
+      </Panel>
+    </Scene>
+  );
+}

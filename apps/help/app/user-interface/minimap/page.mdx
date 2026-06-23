@@ -1,0 +1,45 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+import { Minimap } from '@/components/illustrations/user-interface';
+
+export const metadata = helpMetadata({
+  title: 'Minimap',
+  description:
+    'The bottom-left Map gives a zoomed-out overview of the whole canvas with a box marking your current view. Tap or drag it to jump around, and scroll on it to zoom.',
+  path: '/help/user-interface/minimap/',
+});
+
+<ArticleLayout
+  title="Minimap"
+  description="A zoomed-out overview of the whole canvas in the corner, with a box marking where you are — tap or drag to navigate."
+  categoryTitle="User Interface"
+  categorySlug="user-interface"
+>
+
+When a diagram grows past one screenful, the **Map** in the bottom-left corner keeps the whole thing in view. It draws a zoomed-out wireframe of every shape and connector, with a coloured rectangle marking the part of the canvas you're currently looking at — so you always know where you are and what's off-screen.
+
+<Figure caption="The Map mirrors the canvas; the outlined box is your current view. Tap or drag it to move there.">
+  <Minimap />
+</Figure>
+
+## Navigating with it
+
+- **Tap** anywhere on the Map to re-centre the canvas on that spot.
+- **Drag** across it to pan continuously — the view box follows your finger.
+- **Scroll** on the Map to zoom the canvas in or out, centred where you scroll.
+
+The view box updates live as you pan and zoom by any means, so the Map doubles as a constant "you are here" indicator. The shapes use their real outlines (a circle reads as a circle), and arrows show as connecting lines, so the overview is a faithful miniature rather than a grid of blocks.
+
+## When it shows, and turning it off
+
+The Map appears once a tab has a **few elements** to map and the [Activity panel](/help/activity-panel/) is closed (they share the corner). It's a desktop convenience, so it stays hidden on phones where the canvas is already edge-to-edge.
+
+- The **×** in the Map's header hides it for now.
+- To bring it back — or turn it off for good — use **Show minimap** in [Settings](/help/tools/).
+
+<Tip>
+  On a big board, scroll on the Map to zoom straight into a far corner, instead of panning all the
+  way there and zooming separately.
+</Tip>
+
+</ArticleLayout>

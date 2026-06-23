@@ -117,8 +117,8 @@ export const categories: Category[] = [
     slug: 'user-interface',
     title: 'User Interface',
     description:
-      'Get your bearings in the editor: the panels, toolbar, context menus, zoom and tab bars, and quick controls.',
-    articleCount: 6,
+      'Get your bearings in the editor: the panels, toolbar, context menus, minimap, zoom and tab bars, and quick controls.',
+    articleCount: 7,
     kind: 'feature',
   },
   {
@@ -223,6 +223,14 @@ export const articles: Article[] = [
     slug: 'zoom-controls',
     title: 'Zoom Controls',
     description: 'Move in and out of the canvas, fit the diagram to the screen, and reset to 100%.',
+    category: 'User Interface',
+    categorySlug: 'user-interface',
+  },
+  {
+    slug: 'minimap',
+    title: 'Minimap',
+    description:
+      'The bottom-left Map: a zoomed-out overview with a box for your view. Tap or drag to navigate.',
     category: 'User Interface',
     categorySlug: 'user-interface',
   },
