@@ -7,7 +7,7 @@ import { MovablePanel } from '@/components/primitives/MovablePanel';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 import { MoveToFolderDialog } from '@/components/dialogs/MoveToFolderDialog';
 import { SignInPrompt } from '@/components/chrome/SignInPrompt';
-import { ConfirmPopover } from '@/components/dialogs/ConfirmPopover';
+import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { ExpandIcon, PlusIcon } from '@/components/panels/explorer-icons';
 import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';

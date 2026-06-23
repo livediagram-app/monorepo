@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { NameEditor } from '@/components/primitives/NameEditor';
 import { useReposition } from '@/hooks/canvas/useReposition';
 import { Portal } from '@/components/primitives/Portal';
-import { ConfirmPopover } from '@/components/dialogs/ConfirmPopover';
+import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
 import {
   folderNamesInDiagram,
   groupTabsIntoRuns,
