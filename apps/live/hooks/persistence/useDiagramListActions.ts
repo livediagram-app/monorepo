@@ -94,9 +94,16 @@ export function useDiagramListActions(deps: DiagramListActionsDeps) {
     if (!ownerId) return;
     const trimmed = name.trim();
     if (!trimmed) return;
-    const prevName = diagramList.find((d) => d.id === id)?.name?.trim() ?? '';
-    setDiagramList((prev) => prev.map((d) => (d.id === id ? { ...d, name: trimmed } : d)));
-    void apiSaveDiagramMeta(ownerId, { id, name: trimmed }).catch(() => {});
+    const prev = diagramList.find((d) => d.id === id);
+    const prevName = prev?.name?.trim() ?? '';
+    setDiagramList((p) => p.map((d) => (d.id === id ? { ...d, name: trimmed } : d)));
+    void apiSaveDiagramMeta(ownerId, { id, name: trimmed }).catch(() => {
+      // Roll the optimistic rename back and surface the failure, matching
+      // the other consequential list actions (delete / move / duplicate)
+      // — a silent swallow left the row showing a name the server rejected.
+      if (prev) setDiagramList((p) => p.map((d) => (d.id === id ? { ...d, name: prev.name } : d)));
+      toast.error('Could not rename the diagram. Please try again.');
+    });
     if (trimmed !== prevName) track('Diagram', 'Renamed');
   };
 
@@ -167,12 +174,24 @@ export function useDiagramListActions(deps: DiagramListActionsDeps) {
 
   const moveDiagramToFolder = (id: string, folderId: string | null) => {
     if (!ownerId) return;
+    const prevFolderId = diagramList.find((d) => d.id === id)?.folderId ?? null;
     setDiagramList((prev) => prev.map((d) => (d.id === id ? { ...d, folderId } : d)));
-    void apiSetDiagramFolder(ownerId, id, folderId).catch(() => {});
+    void apiSetDiagramFolder(ownerId, id, folderId)
+      .then(() => {
+        // The row leaves the current view (it's now under the target
+        // folder / Unsorted), so confirm where it went — only once the
+        // server actually accepted the move.
+        toast.success(folderId ? 'Moved to folder' : 'Moved to Unsorted');
+      })
+      .catch(() => {
+        // Roll the row back to its old folder and tell the user, instead
+        // of swallowing the error after already claiming success.
+        setDiagramList((prev) =>
+          prev.map((d) => (d.id === id ? { ...d, folderId: prevFolderId } : d)),
+        );
+        toast.error('Could not move the diagram. Please try again.');
+      });
     track('Diagram', 'Moved');
-    // The row leaves the current view (it's now under the target
-    // folder / Unsorted), so confirm where it went.
-    toast.success(folderId ? 'Moved to folder' : 'Moved to Unsorted');
   };
 
   // Duplicate a diagram into a brand-new one (new tab ids, preserved

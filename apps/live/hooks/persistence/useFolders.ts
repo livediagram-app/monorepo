@@ -117,9 +117,15 @@ export function useFolders(
       // updater, where React strict mode in dev would double-fire
       // the telemetry emit. There's no rapid-race risk: rename is a
       // user blur / Enter on a text input.
-      const prevName = folders.find((f) => f.id === id)?.name.trim() ?? '';
-      setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
-      void apiUpdateFolder(ownerId, id, { name: trimmed }).catch(() => {});
+      const prev = folders.find((f) => f.id === id);
+      const prevName = prev?.name.trim() ?? '';
+      setFolders((fs) => fs.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
+      void apiUpdateFolder(ownerId, id, { name: trimmed }).catch(() => {
+        // Roll the optimistic rename back to the stored name so the tree
+        // doesn't drift from the server on a failed write (this hook has no
+        // toast in scope; rollback keeps the UI truthful).
+        if (prev) setFolders((fs) => fs.map((f) => (f.id === id ? { ...f, name: prev.name } : f)));
+      });
       if (prevName !== trimmed) track('Folder', 'Renamed');
     },
     [folders, ownerId],
