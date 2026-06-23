@@ -9,9 +9,11 @@ lets you jump the viewport anywhere with a tap or drag.
   is minimised** (it owns the same corner — `activityMinimized` is the gate),
   and **only on desktop** (hidden on mobile, where the canvas is already
   edge-to-edge and the corner is used by the mobile dock).
-- **What it shows.** A wireframe of every boxed element in the tab (neutral
-  rounded rects), plus a brand-outlined rectangle marking the current
-  viewport. Hidden entirely on an empty tab (nothing to map).
+- **What it shows.** A labelled **"Overview"** card (header with a
+  frame-and-highlight glyph so it's unmistakable) over a wireframe of every
+  boxed element. The area **outside the current view is dimmed**, leaving a
+  brand-outlined lit window that reads at a glance as where you are. Hidden
+  entirely on an empty tab (nothing to map).
 - **Navigation.** Tap a point to re-centre the canvas there; press-and-drag to
   pan continuously. The viewport rectangle tracks live as you move.
 
