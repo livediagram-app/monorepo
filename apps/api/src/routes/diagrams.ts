@@ -4,6 +4,8 @@
 // under a diagram id lives here.
 
 import type { Tab } from '@livediagram/diagram';
+import { isValidTab } from '@livediagram/diagram';
+import { MAX_NAME_LEN, MAX_TAB_BYTES, MAX_PASSWORD_LEN, byteLength } from '../limits';
 import { parseChangeLogEntryBody } from '../change-log-body';
 import { timingSafeEqual } from '../auth/timing-safe';
 import { verifyOwnerId } from '../auth/owner-signature';
@@ -76,6 +78,19 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       if (!body.id || !body.name) {
         return badRequest('missing id/name');
       }
+      if (body.name.length > MAX_NAME_LEN) {
+        return badRequest('name too long');
+      }
+      // Validate any seeded tabs up front (structure + per-tab byte cap) so a
+      // create can't smuggle a malformed / oversized tab past the tab gate.
+      if (Array.isArray(body.tabs)) {
+        for (const tab of body.tabs) {
+          if (!isValidTab(tab)) return badRequest('invalid tab');
+          if (byteLength(JSON.stringify(tab)) > MAX_TAB_BYTES) {
+            return json({ error: 'payload_too_large' }, { status: 413 });
+          }
+        }
+      }
       // Ownership guard (security): upsertDiagramMeta is INSERT ... ON
       // CONFLICT(id) DO UPDATE owner_id = excluded.owner_id, so a POST with an
       // id that already exists under a DIFFERENT owner would silently transfer
@@ -140,6 +155,9 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       };
       const owner = requireOwner(ctx);
       if (owner instanceof Response) return owner;
+      if (typeof body.name === 'string' && body.name.length > MAX_NAME_LEN) {
+        return badRequest('name too long');
+      }
       const existing = await getDiagram(env, id);
       const now = Date.now();
       const ownerId = existing?.ownerId ?? owner;
@@ -353,8 +371,15 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     if (!allowed) return forbidden();
     if (request.method === 'PUT') {
       const body = (await request.json()) as Tab;
-      if (!body.id || !body.name || !Array.isArray(body.elements)) {
-        return badRequest('missing tab id/name/elements');
+      // Structural schema gate (shared with the app, @livediagram/diagram):
+      // discriminant, required fields, endpoints, array bounds + unique ids.
+      if (!isValidTab(body)) {
+        return badRequest('invalid tab');
+      }
+      // Byte cap on the single tab (the body cap bounds the whole request;
+      // this bounds one tab's element + comment tree specifically).
+      if (byteLength(JSON.stringify(body)) > MAX_TAB_BYTES) {
+        return json({ error: 'payload_too_large' }, { status: 413 });
       }
       // Find the existing order index; append if new.
       const existingTab = await getTab(env, id, tabId);
@@ -573,6 +598,12 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
         role?: ShareRole;
         expiry?: ShareLinkExpiry;
       };
+      // Reject a garbage role rather than silently granting edit (the prior
+      // `=== 'view' ? 'view' : 'edit'` turned any typo into an edit link).
+      // An OMITTED role still defaults to 'edit', the documented behaviour.
+      if (body.role !== undefined && body.role !== 'view' && body.role !== 'edit') {
+        return badRequest('invalid role');
+      }
       const role: ShareRole = body.role === 'view' ? 'view' : 'edit';
       // Expiry (spec/34): unknown / missing value falls back to the
       // pre-expiry behaviour, a link that works until revoked.
@@ -605,6 +636,9 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
     if (request.method === 'PUT') {
       const body = (await request.json().catch(() => ({}))) as { password?: string | null };
       const password = typeof body.password === 'string' ? body.password : null;
+      if (password !== null && password.length > MAX_PASSWORD_LEN) {
+        return badRequest('password too long');
+      }
       await setDiagramSharePassword(env, id, password);
       // Echo back the stored value (normalised: whitespace-only ->
       // null) so the dialog reflects exactly what gates access.

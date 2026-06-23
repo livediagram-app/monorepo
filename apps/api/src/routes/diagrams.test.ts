@@ -275,7 +275,23 @@ describe('handleDiagrams share-link expiry (spec/34)', () => {
 });
 
 describe('handleDiagrams tab-content data-loss backstop (PUT /diagrams/:id/tabs/:tabId)', () => {
-  const tabBody = (elements: unknown[]) => ({ id: 't1', name: 'Tab', elements });
+  // Build a valid tab body from id stubs — these tests exercise the
+  // data-loss backstop (empty vs non-empty), so the element CONTENT only has
+  // to pass the structural gate (isValidTab); a real square per id does.
+  const el = (id: string) => ({
+    id,
+    type: 'shape',
+    shape: 'square',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 60,
+  });
+  const tabBody = (elements: { id: string }[]) => ({
+    id: 't1',
+    name: 'Tab',
+    elements: elements.map((e) => el(e.id)),
+  });
 
   beforeEach(() => {
     db.getDiagram.mockResolvedValue(fakeDiagram('owner-1'));

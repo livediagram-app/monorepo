@@ -1,0 +1,33 @@
+// Central input limits for the API — the byte/length bounds that harden the
+// worker against hostile or accidental oversized payloads (important ahead of
+// opening the API to external token callers). One place so the caps stay
+// consistent and tunable. Structural validity of tabs/elements lives in
+// @livediagram/diagram (isValidTab); these are the SIZE bounds a structurally
+// valid payload must also respect.
+
+// Outer bound on any request body, gated on Content-Length before dispatch so
+// a hostile payload never reaches a route's req.json().
+export const MAX_BODY_BYTES = 8 * 1024 * 1024; // 8 MB
+
+// A single tab's serialized JSON (the element + comment tree). The body cap
+// above bounds one request; this bounds one tab specifically.
+export const MAX_TAB_BYTES = 4 * 1024 * 1024;
+
+// Human-facing names: diagram / folder / theme / tab.
+export const MAX_NAME_LEN = 500;
+
+// A custom theme's JSON definition (palette + per-shape colours).
+export const MAX_THEME_DEF_BYTES = 256 * 1024;
+
+// Realtime presence identity, broadcast to every connected peer.
+export const MAX_PARTICIPANT_NAME_LEN = 120;
+export const MAX_COLOR_LEN = 64;
+
+// Share-link password.
+export const MAX_PASSWORD_LEN = 256;
+
+// UTF-8 byte length of a string, for size-gating JSON payloads (a char count
+// would under-count multi-byte content).
+export function byteLength(s: string): number {
+  return new TextEncoder().encode(s).length;
+}

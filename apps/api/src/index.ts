@@ -3,6 +3,7 @@ import { deleteOldChangeLogEntries, deleteOldEvents, deleteOldUnusedImages } fro
 import { DiagramRoom } from './diagram-room';
 import { CORS_HEADERS, json, notFound, rateLimited } from './responses';
 import { clientIp } from './client-ip';
+import { MAX_BODY_BYTES } from './limits';
 import { handleAccount } from './routes/account';
 import { handleAi } from './routes/ai';
 import { handleCapabilities } from './routes/capabilities';
@@ -81,6 +82,15 @@ export default {
     // its volume low instead.
     const isWrite =
       request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE';
+    // Reject oversized bodies up front (cheap Content-Length gate) so a hostile
+    // payload never reaches a route's req.json(). The per-field / per-tab caps
+    // in the routes catch the rest; this is the blunt outer bound.
+    if (isWrite) {
+      const len = Number(request.headers.get('content-length'));
+      if (Number.isFinite(len) && len > MAX_BODY_BYTES) {
+        return json({ error: 'payload_too_large' }, { status: 413 });
+      }
+    }
     if (isWrite && url.pathname !== '/api/events') {
       const key = resolveOwner() ?? 'anonymous';
       if (await isWriteRateLimited(env, key)) return rateLimited();
