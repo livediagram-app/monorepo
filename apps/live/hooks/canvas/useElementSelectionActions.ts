@@ -10,13 +10,11 @@
 // behaviour change.
 
 import {
-  createPinnedArrow,
   createText,
   duplicateGroupedElements,
   isBoxed,
   ungroup,
   unionBoxedBounds,
-  type Anchor,
   type ArrowElement,
   type BoxedElement,
   type Element,
@@ -27,7 +25,6 @@ import {
   type QuickConnectDirection,
   type QuickConnectKind,
 } from '@/lib/canvas';
-import { getTheme } from '@/lib/themes';
 import { track, titleCaseType } from '@/lib/telemetry';
 
 type EditorSelectionActionsDeps = {
@@ -298,10 +295,10 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
     }
   };
 
-  // Quick add + connect (spec/09): from the selected element, add a new
-  // element to `direction` and link it with a pinned arrow. `kind` decides
-  // what's added — 'duplicate' clones the source (group-aware), the shape
-  // kinds spawn a fresh shape matching the source's size + styling.
+  // Quick add (spec/09): from the selected element, add a new element to
+  // `direction`. `kind` decides what's added — 'duplicate' clones the source
+  // (group-aware), 'text' drops a caption to the side. Neither draws a
+  // connector arrow; the + menu's Arrow action is how you connect them.
   const spawnConnectSelected = (direction: QuickConnectDirection, kind: QuickConnectKind) => {
     if (!selectedId) return;
     const source = activeTab.elements.find((el) => el.id === selectedId);
@@ -381,30 +378,14 @@ export function useElementSelectionActions(deps: EditorSelectionActionsDeps) {
       dx += step.x;
       dy += step.y;
     }
-    // Connector arrow runs between the adjacent edges of source and target.
-    const anchors: Record<QuickConnectDirection, [Anchor, Anchor]> = {
-      right: ['e', 'w'],
-      left: ['w', 'e'],
-      below: ['s', 'n'],
-      above: ['n', 's'],
-    };
-    const [fromAnchor, toAnchor] = anchors[direction];
-    // Connector inherits the source's stroke (else the tab theme's element
-    // stroke) so it belongs with the chain instead of rendering as the
-    // built-in default (which read as black on a themed canvas).
-    const connectorStroke =
-      source.strokeColor ?? getTheme(activeTab.theme).elementStroke ?? undefined;
-    const connectorWith = (toId: string) => {
-      const arrow = createPinnedArrow(source.id, fromAnchor, toId, toAnchor);
-      return connectorStroke ? { ...arrow, strokeColor: connectorStroke } : arrow;
-    };
-
     if (kind === 'duplicate') {
+      // Clone only, no connector arrow. Most duplicates don't need an arrow,
+      // so adding one was usually noise to delete; draw one with the + menu's
+      // Arrow action on the occasions you do want it.
       const { newElements, idMap } = duplicateGroupedElements(activeTab.elements, ids, dx, dy);
       const sourceCopyId = idMap.get(source.id);
       if (!sourceCopyId) return;
-      const connector = connectorWith(sourceCopyId);
-      commit((els) => [...els, ...newElements, connector]);
+      commit((els) => [...els, ...newElements]);
       setSelectedId(sourceCopyId);
       track(
         'Element',

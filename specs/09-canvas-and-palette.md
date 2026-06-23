@@ -780,7 +780,7 @@ A ring open on the **same side as the selection toolbar** would collide with it 
 
 All four options act on the **clicked side** (the side's anchor is `e` / `s` / `w` / `n`):
 
-1. **Duplicate** — clones the selected element to that side (same size, content, style, locked state; fresh id) and connects the two with a pinned arrow between the adjacent anchors (`e ↔ w`, `s ↔ n`). This is the former one-click behaviour, now the first ring option.
+1. **Duplicate** — clones the selected element to that side (same size, content, style, locked state; fresh id). It does **not** draw a connector arrow: most duplicates don't need one, so auto-connecting was usually just noise to delete. Use the ring's Arrow action to connect them on the occasions you do want an edge. (This used to auto-connect with a pinned arrow between the adjacent anchors; that was removed.)
 2. **Arrow** — starts a new arrow pinned at that side's anchor. It begins on **pointer-down** so it's a single press-drag gesture. **Desktop:** press-and-drag the free endpoint to its target (snaps to an element anchor, or drops free on empty canvas) — the existing anchor-drag flow. **Mobile:** the press arms a "pick target" mode; the next tap on an element (or empty canvas) sets the endpoint, and a tap elsewhere cancels.
 3. **Pencil** — enters freehand (pencil) draw mode (spec/09 "Pencil"); not a connected element.
 4. **Text** — drops a text element to that side and opens it for editing. **No connector arrow** — a caption next to a node isn't a flow edge, so an arrow would be noise.
