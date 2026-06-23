@@ -6,6 +6,7 @@ import {
   FIT_TO_SCREEN_PADDING,
   computeFitToScreen,
   computeViewportCenter,
+  isContentOffScreen,
 } from './viewport';
 
 describe('computeFitToScreen', () => {
@@ -103,5 +104,39 @@ describe('computeViewportCenter', () => {
       x: 250,
       y: 125,
     });
+  });
+});
+
+describe('isContentOffScreen', () => {
+  const viewport = { width: 1000, height: 600 };
+  const bbox = { x: 0, y: 0, width: 200, height: 100 };
+
+  it('is false when the bbox is centred in the viewport', () => {
+    // Offset that centres the bbox (the computeFitToScreen offset).
+    const offset = { x: viewport.width / 2 - 100, y: viewport.height / 2 - 50 };
+    expect(isContentOffScreen(viewport, bbox, offset, 1)).toBe(false);
+  });
+
+  it('is false when the bbox only partly overlaps an edge', () => {
+    // Push the bbox left until its right edge sits just inside x=0..width.
+    const offset = { x: -190, y: viewport.height / 2 - 50 };
+    expect(isContentOffScreen(viewport, bbox, offset, 1)).toBe(false);
+  });
+
+  it('is true when the bbox is entirely off the left edge', () => {
+    // Right edge of the bbox projects to <= 0.
+    const offset = { x: -600, y: viewport.height / 2 - 50 };
+    expect(isContentOffScreen(viewport, bbox, offset, 1)).toBe(true);
+  });
+
+  it('is true when the bbox is entirely below the viewport', () => {
+    const offset = { x: viewport.width / 2 - 100, y: 800 };
+    expect(isContentOffScreen(viewport, bbox, offset, 1)).toBe(true);
+  });
+
+  it('accounts for zoom when projecting (zoomed-in content scrolls off faster)', () => {
+    // Centred bbox, but zoomed 4x and panned so it clears the right edge.
+    const offset = { x: 1200, y: viewport.height / 2 - 50 };
+    expect(isContentOffScreen(viewport, bbox, offset, 4)).toBe(true);
   });
 });

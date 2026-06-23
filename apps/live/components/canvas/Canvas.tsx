@@ -56,6 +56,7 @@ import { IsometricDepthLayer } from '@/components/canvas/IsometricDepthLayer';
 import { useIsometricCamera } from '@/hooks/canvas/useIsometricCamera';
 import { SpotlightOverlay } from '@/components/canvas/SpotlightOverlay';
 import { useSpotlight } from '@/hooks/canvas/useSpotlight';
+import { useOffscreenContent } from '@/hooks/canvas/useOffscreenContent';
 import { Portal } from '@/components/primitives/Portal';
 import { TabLoadOverlay } from '@/components/canvas/TabLoadOverlay';
 import { PaletteDragGhost } from '@/components/canvas/PaletteDragGhost';
@@ -118,6 +119,8 @@ export function Canvas(props: CanvasProps) {
 
   const isPaintMode = formatSourceId !== null;
   const isGroupMode = groupSourceId !== null;
+  // Nudge above the Fit button when the whole diagram has scrolled out of view.
+  const offscreenContent = useOffscreenContent(elements, viewportOffset, viewportZoom, mainRef);
 
   // Pan tracking. viewportOffset is owned by the page (so element placement
   // can reason about the visible viewport); we just read/write through props.
@@ -1151,6 +1154,7 @@ export function Canvas(props: CanvasProps) {
         {...props}
         isPaintMode={isPaintMode}
         isGroupMode={isGroupMode}
+        offscreenContent={offscreenContent}
         marquee={marquee}
         drawDrag={drawDrag}
         drawHover={drawHover}

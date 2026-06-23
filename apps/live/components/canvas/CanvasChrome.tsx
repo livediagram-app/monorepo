@@ -42,6 +42,7 @@ const TemplatePicker = dynamic(() =>
 
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { ZoomControls } from '@/components/chrome/ZoomControls';
+import { OffscreenContentHint } from '@/components/canvas/OffscreenContentHint';
 import { CanvasMobileDock } from '@/components/canvas/CanvasMobileDock';
 import type { CanvasProps } from '@/components/canvas/Canvas.types';
 import {
@@ -60,6 +61,9 @@ import type { DockAnchor, MobilePanel } from '@/hooks/canvas/useCanvasMobileDock
 type ChromeExtras = {
   isPaintMode: boolean;
   isGroupMode: boolean;
+  // True when every element has scrolled out of view: show the nudge above
+  // the Fit button (useOffscreenContent in Canvas).
+  offscreenContent: boolean;
   marquee: { startX: number; startY: number; currentX: number; currentY: number } | null;
   drawDrag: { startX: number; startY: number; currentX: number; currentY: number } | null;
   // Snapped pointer position while a draw is armed but not yet started
@@ -180,6 +184,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     onCreateFolder,
     onDeleteDiagram,
     onDeleteFolder,
+    offscreenContent,
     onDismissShared,
     onDuplicateDiagram,
     onFitToScreen,
@@ -918,6 +923,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
       <div className="pointer-events-none absolute bottom-4 right-4 z-[var(--z-panel)] flex items-center gap-2">
         {welcomeOpen ? null : (
           <>
+            {offscreenContent ? <OffscreenContentHint onBringBack={onFitToScreen} /> : null}
             {!zenMode && activityMinimized && !readOnly ? (
               // Collapsed Activity dock (editor sessions only): a strip
               // with inline Undo / Redo so the most common history

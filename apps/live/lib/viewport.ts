@@ -57,3 +57,19 @@ export function computeViewportCenter(rect: Rect, offset: Offset): { x: number; 
     y: rect.height / 2 - offset.y,
   };
 }
+
+// True when the elements' bounding box is entirely outside the viewport at
+// the current pan / zoom — i.e. nothing on the tab is in view. Projects the
+// canvas-coord bbox to screen pixels through the same centred-scale transform
+// as computeViewportCenter (canvas point `cx` lands at `rect.w/2 + zoom *
+// (cx - viewportCentreCanvasX)`), then reports a gap on any side. Callers
+// must first confirm there is at least one element to bound: an empty tab is
+// not "off-screen". Used to nudge the user toward Fit to screen.
+export function isContentOffScreen(rect: Rect, bbox: BBox, offset: Offset, zoom: number): boolean {
+  const centre = computeViewportCenter(rect, offset);
+  const left = rect.width / 2 + zoom * (bbox.x - centre.x);
+  const right = rect.width / 2 + zoom * (bbox.x + bbox.width - centre.x);
+  const top = rect.height / 2 + zoom * (bbox.y - centre.y);
+  const bottom = rect.height / 2 + zoom * (bbox.y + bbox.height - centre.y);
+  return right <= 0 || left >= rect.width || bottom <= 0 || top >= rect.height;
+}
