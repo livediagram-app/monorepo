@@ -23,11 +23,10 @@
 // `{ teamId, folderId }` destination — via `onPick`; this component
 // only renders, filters, and collapses.
 
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { CloseIcon } from '@/components/primitives/CloseIcon';
-import { Portal } from '@/components/primitives/Portal';
+import { Dialog } from '@/components/dialogs/Dialog';
 import { useEscape } from '@/hooks/ui/useEscape';
-import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import { matches } from '@/lib/search';
 
 // One folder in a tree. The caller passes a flat list; this component
@@ -91,8 +90,8 @@ export function MoveToFolderDialog({
   // drills in as needed. A live filter force-opens everything so
   // matches always surface.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['personal']));
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(dialogRef);
+  // Capture-phase Esc so this wins over the editor's global shortcuts; the
+  // Dialog shell's own (bubble-phase) Esc is suppressed via closeOnEscape.
   useEscape(onClose, { capture: true, stopPropagation: true });
 
   const filtering = query.trim().length > 0;
@@ -182,104 +181,94 @@ export function MoveToFolderDialog({
   const empty = !personalGroupVisible && teamGroups.every((g) => !g.groupVisible);
 
   return (
-    <Portal>
-      <div
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-6 backdrop-blur-sm dark:bg-slate-950/60"
-      >
-        <div
-          ref={dialogRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Move to folder"
-          className="pointer-events-auto flex max-h-[80vh] w-[28rem] max-w-[92%] animate-fly-up-in flex-col rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 outline-none dark:border-slate-800 dark:bg-slate-900"
-        >
-          <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 pb-3 pt-5 dark:border-slate-800">
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                Move &ldquo;{subjectName}&rdquo;
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                {subjectKind === 'folder'
-                  ? 'Pick the folder it should live inside.'
-                  : 'Pick a destination folder or team.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-
-          <div className="border-b border-slate-100 px-5 py-2.5 dark:border-slate-800">
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter destinations…"
-              aria-label="Filter destinations"
-              className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-            />
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-2 py-2">
-            {empty ? (
-              <p className="px-1 py-8 text-center text-xs text-slate-400 dark:text-slate-400">
-                No destination matches.
-              </p>
-            ) : (
-              <>
-                {personalGroupVisible ? (
-                  <>
-                    <DestinationRow
-                      depth={0}
-                      icon={<RootIcon />}
-                      label={personalRootLabel}
-                      isCurrent={currentTeamId === null && currentFolderId === null}
-                      hasChildren={personalFolders.length > 0}
-                      open={personalOpen}
-                      onToggle={() => toggle('personal')}
-                      onClick={() => pick({ teamId: null, folderId: null })}
-                    />
-                    {personalOpen
-                      ? renderBranch(personalFolders, personalVisible, null, null, 1)
-                      : null}
-                  </>
-                ) : null}
-
-                {teamGroups.map(({ team, visible, groupVisible }) => {
-                  if (!groupVisible) return null;
-                  const open = filtering || expanded.has(team.id);
-                  return (
-                    <Fragment key={team.id}>
-                      <DestinationRow
-                        depth={0}
-                        icon={<TeamIcon />}
-                        label={team.name}
-                        isCurrent={currentTeamId === team.id && currentFolderId === null}
-                        hasChildren={team.folders.length > 0}
-                        open={open}
-                        onToggle={() => toggle(team.id)}
-                        onClick={() => pick({ teamId: team.id, folderId: null })}
-                      />
-                      {open ? renderBranch(team.folders, visible, team.id, null, 1) : null}
-                    </Fragment>
-                  );
-                })}
-              </>
-            )}
-          </div>
+    <Dialog
+      open
+      onClose={onClose}
+      ariaLabel="Move to folder"
+      size="md"
+      closeOnEscape={false}
+      className="max-h-[80vh]"
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 pb-3 pt-5 dark:border-slate-800">
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+            Move &ldquo;{subjectName}&rdquo;
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {subjectKind === 'folder'
+              ? 'Pick the folder it should live inside.'
+              : 'Pick a destination folder or team.'}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <CloseIcon />
+        </button>
       </div>
-    </Portal>
+
+      <div className="border-b border-slate-100 px-5 py-2.5 dark:border-slate-800">
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Filter destinations…"
+          aria-label="Filter destinations"
+          className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 py-2">
+        {empty ? (
+          <p className="px-1 py-8 text-center text-xs text-slate-400 dark:text-slate-400">
+            No destination matches.
+          </p>
+        ) : (
+          <>
+            {personalGroupVisible ? (
+              <>
+                <DestinationRow
+                  depth={0}
+                  icon={<RootIcon />}
+                  label={personalRootLabel}
+                  isCurrent={currentTeamId === null && currentFolderId === null}
+                  hasChildren={personalFolders.length > 0}
+                  open={personalOpen}
+                  onToggle={() => toggle('personal')}
+                  onClick={() => pick({ teamId: null, folderId: null })}
+                />
+                {personalOpen
+                  ? renderBranch(personalFolders, personalVisible, null, null, 1)
+                  : null}
+              </>
+            ) : null}
+
+            {teamGroups.map(({ team, visible, groupVisible }) => {
+              if (!groupVisible) return null;
+              const open = filtering || expanded.has(team.id);
+              return (
+                <Fragment key={team.id}>
+                  <DestinationRow
+                    depth={0}
+                    icon={<TeamIcon />}
+                    label={team.name}
+                    isCurrent={currentTeamId === team.id && currentFolderId === null}
+                    hasChildren={team.folders.length > 0}
+                    open={open}
+                    onToggle={() => toggle(team.id)}
+                    onClick={() => pick({ teamId: team.id, folderId: null })}
+                  />
+                  {open ? renderBranch(team.folders, visible, team.id, null, 1) : null}
+                </Fragment>
+              );
+            })}
+          </>
+        )}
+      </div>
+    </Dialog>
   );
 }
 
