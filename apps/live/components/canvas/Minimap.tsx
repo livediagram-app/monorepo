@@ -39,6 +39,10 @@ type MinimapProps = {
 // never touch the minimap's edge.
 const PAD_FRACTION = 0.12;
 const PAD_MIN = 48;
+// The map's on-screen size in px (the w-48 card, h-28 svg). The viewBox is
+// expanded to this aspect ratio so the wireframe fills the panel edge-to-edge
+// rather than letterboxing into white bars under preserveAspectRatio="meet".
+const MAP_RATIO = 192 / 112;
 
 export function Minimap({
   elements,
@@ -149,10 +153,21 @@ export function Minimap({
 
   const padX = bounds.width * PAD_FRACTION + PAD_MIN;
   const padY = bounds.height * PAD_FRACTION + PAD_MIN;
-  const x0 = bounds.x - padX;
-  const y0 = bounds.y - padY;
-  const x1 = bounds.x + bounds.width + padX;
-  const y1 = bounds.y + bounds.height + padY;
+  // Padded content box, then grown on the short axis to the panel's aspect
+  // ratio so the map fills it with no white letterbox bars.
+  let x0 = bounds.x - padX;
+  let y0 = bounds.y - padY;
+  let x1 = bounds.x + bounds.width + padX;
+  let y1 = bounds.y + bounds.height + padY;
+  if ((x1 - x0) / (y1 - y0) < MAP_RATIO) {
+    const grow = ((y1 - y0) * MAP_RATIO - (x1 - x0)) / 2;
+    x0 -= grow;
+    x1 += grow;
+  } else {
+    const grow = ((x1 - x0) / MAP_RATIO - (y1 - y0)) / 2;
+    y0 -= grow;
+    y1 += grow;
+  }
   const vb = `${x0} ${y0} ${x1 - x0} ${y1 - y0}`;
 
   const rect = getMain()?.getBoundingClientRect();
