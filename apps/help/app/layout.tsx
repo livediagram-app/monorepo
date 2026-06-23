@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/help' },
   openGraph: {
     type: 'website',
-    siteName: 'livediagram Help Centre',
+    siteName: 'livediagram Help',
     locale: 'en_GB',
   },
   twitter: {

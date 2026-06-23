@@ -16,7 +16,7 @@ export function Header() {
                 free up header room. */}
             <a
               href="/help/"
-              aria-label="Help centre"
+              aria-label="Help"
               className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
             >
               <HelpNavIcon />

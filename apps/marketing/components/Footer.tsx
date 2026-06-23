@@ -7,7 +7,7 @@ export function Footer() {
         <div>
           <Brand size="sm" />
           <p className="mt-1 text-sm text-slate-500">
-            Diagrams and mindmaps for teams who think together.
+            Free diagrams and mindmaps for teams who think together.
           </p>
         </div>
         <nav

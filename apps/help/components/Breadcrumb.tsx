@@ -26,7 +26,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
             className="flex shrink-0 items-center gap-1.5 transition-colors hover:text-slate-900"
           >
             {HomeIcon}
-            Help Centre
+            Help
           </Link>
           {items.map((item, i) => (
             <span key={i} className="flex min-w-0 items-center gap-2">
@@ -65,7 +65,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
               {
                 '@type': 'ListItem',
                 position: 1,
-                name: 'Help Centre',
+                name: 'Help',
                 item: 'https://livediagram.app/help/',
               },
               ...items.map((item, i) => ({

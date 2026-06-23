@@ -9,7 +9,7 @@ export function Footer() {
         <div>
           <Brand size="sm" />
           <p className="mt-1 text-sm text-slate-500">
-            Diagrams and mindmaps for teams who think together.
+            Free diagrams and mindmaps for teams who think together.
           </p>
         </div>
         <nav
@@ -17,7 +17,7 @@ export function Footer() {
           className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500"
         >
           <a href="/help/" className="hover:text-slate-900">
-            Help Centre
+            Help
           </a>
           <a href="/help/getting-started/" className="hover:text-slate-900">
             Getting Started

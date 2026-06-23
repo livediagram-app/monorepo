@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 const SITE_URL = 'https://livediagram.app';
-const SITE_NAME = 'livediagram Help Centre';
+const SITE_NAME = 'livediagram Help';
 const LOCALE = 'en_GB';
 
 interface SeoInput {

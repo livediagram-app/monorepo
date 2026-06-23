@@ -45,7 +45,7 @@ export function webSiteJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'livediagram Help Centre',
+    name: 'livediagram Help',
     url: `${HELP}/`,
     publisher: PUBLISHER,
     inLanguage: 'en-GB',
