@@ -61,23 +61,22 @@ export function LineDataDialog({
             A row per category, a column per series. Or import a CSV (header = series names, first
             column = categories).
           </p>
-          <div className="mt-1.5">
-            <HelpArticleLink
-              article="dataElements"
-              variant="text"
-              title="Data elements"
-              description="Charts and data-driven elements, and how to edit their data."
-            />
-          </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        >
-          <CloseIcon size={18} />
-        </button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <HelpArticleLink
+            article="dataElements"
+            title="Data elements"
+            description="Charts and data-driven elements, and how to edit their data."
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <CloseIcon size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 px-6 pt-4">

@@ -89,27 +89,26 @@ export function LinkPickerDialog({
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Jump to a tab, open another diagram, or go to a web address.
           </p>
-          <div className="mt-1.5">
-            <HelpArticleLink
-              article={mode === 'tab' ? 'linkingTabs' : 'links'}
-              variant="text"
-              title={mode === 'tab' ? 'Linking tabs' : 'Links'}
-              description={
-                mode === 'tab'
-                  ? 'How linking to another tab works.'
-                  : 'Linking elements to tabs, diagrams, and web addresses.'
-              }
-            />
-          </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        >
-          <CloseIcon />
-        </button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <HelpArticleLink
+            article={mode === 'tab' ? 'linkingTabs' : 'links'}
+            title={mode === 'tab' ? 'Linking tabs' : 'Links'}
+            description={
+              mode === 'tab'
+                ? 'How linking to another tab works.'
+                : 'Linking elements to tabs, diagrams, and web addresses.'
+            }
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
 
       {/* Mode switcher */}

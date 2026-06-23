@@ -205,23 +205,22 @@ export function ShareDialog({
             Anyone with an editor link joins in real time; a view-only link lets people watch
             without changing anything.
           </p>
-          <div className="mt-1.5">
-            <HelpArticleLink
-              article="sharing"
-              variant="text"
-              title="Sharing"
-              description="Roles, real-time collaboration, and how share links work."
-            />
-          </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        >
-          <CloseIcon />
-        </button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <HelpArticleLink
+            article="sharing"
+            title="Sharing"
+            description="Roles, real-time collaboration, and how share links work."
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-2 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
