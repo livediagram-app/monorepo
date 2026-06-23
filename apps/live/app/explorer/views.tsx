@@ -168,7 +168,8 @@ export function PaneHeader({
             {helpArticle ? (
               <HelpArticleLink
                 article={helpArticle}
-                title={helpTitle ?? 'Learn more'}
+                variant="button"
+                title={helpTitle ?? 'Help'}
                 description={helpDescription}
               />
             ) : null}

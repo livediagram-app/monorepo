@@ -27,6 +27,11 @@ const SECTION_HELP: Partial<
     title: 'Image gallery',
     description: 'How uploaded images are stored and reused across diagrams.',
   },
+  themes: {
+    article: 'customThemes',
+    title: 'Custom themes',
+    description: 'Build your own palette and reuse it across diagrams.',
+  },
   unsorted: {
     article: 'unsorted',
     title: 'The Unsorted folder',

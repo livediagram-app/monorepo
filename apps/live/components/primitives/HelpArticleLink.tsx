@@ -16,8 +16,11 @@ type HelpArticleLinkProps = {
    * `text`: a "Learn more" inline link for dialog headers / empty states.
    * `chrome`: a `?` ghost icon button sized to match a floating panel's
    *   header chrome (reset / minimise), for use in `MovablePanel` headers.
+   * `button`: a full button (help glyph + "Help" label) that matches a
+   *   neighbouring primary button's shape but stays neutral, not brand —
+   *   for header action rows (e.g. beside the explorer "+ Create" button).
    */
-  variant?: 'icon' | 'text' | 'chrome';
+  variant?: 'icon' | 'text' | 'chrome' | 'button';
   /** Override the visible text for the `text` variant. */
   label?: string;
   /** Extra classes merged onto the anchor. */
@@ -79,6 +82,26 @@ export function HelpArticleLink({
     );
   }
 
+  if (variant === 'button') {
+    // A real button (help glyph + "Help" label) that matches a neighbouring
+    // primary button's shape (e.g. the explorer "+ Create") but stays neutral
+    // slate/white rather than brand, so it reads as a secondary action.
+    return (
+      <Tooltip title={title} description={description}>
+        <a
+          {...common}
+          aria-label={title}
+          className={`inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white${
+            className ? ` ${className}` : ''
+          }`}
+        >
+          <HelpMarkIcon />
+          Help
+        </a>
+      </Tooltip>
+    );
+  }
+
   return (
     <Tooltip title={title} description={description}>
       <a
@@ -91,6 +114,30 @@ export function HelpArticleLink({
         ?
       </a>
     </Tooltip>
+  );
+}
+
+// A circled question mark for the `button` variant's leading icon (sized to
+// sit beside a 12px label like the + on the Create button).
+function HelpMarkIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="6.25" />
+      <path
+        d="M6.3 6.2a1.8 1.8 0 1 1 2.5 1.7c-.5.25-.9.65-.9 1.25v.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="11.6" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
