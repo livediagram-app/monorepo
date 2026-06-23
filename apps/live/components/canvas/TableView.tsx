@@ -632,7 +632,7 @@ export function TableView({
                           if (cs.link) onFollowLink?.(cs.link);
                         }}
                         aria-label="Follow cell link"
-                        className="pointer-events-auto absolute right-0.5 top-0.5 z-10 flex h-4 w-4 items-center justify-center rounded text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-500/15"
+                        className="pointer-events-auto absolute right-0.5 top-0.5 z-[var(--z-panel)] flex h-4 w-4 items-center justify-center rounded text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-500/15"
                       >
                         <CellLinkIcon />
                       </button>
@@ -650,10 +650,10 @@ export function TableView({
           dividers ride a grid that mirrors the table's column template so
           they sit exactly on each column boundary. */}
       {showControls ? (
-        // z-20 keeps the row / column header controls (and their menus) ABOVE
-        // the per-cell toolbar layer (z-10 below), so an open insert/delete
+        // z-[var(--z-toolbar)] keeps the row / column header controls (and their menus) ABOVE
+        // the per-cell toolbar layer (z-[var(--z-panel)] below), so an open insert/delete
         // menu isn't hidden behind the cell toolbar.
-        <div className="pointer-events-none absolute inset-0 z-20">
+        <div className="pointer-events-none absolute inset-0 z-[var(--z-toolbar)]">
           {/* Column-resize dividers (between columns). */}
           <div
             className="pointer-events-none absolute inset-0 grid"
@@ -676,7 +676,7 @@ export function TableView({
                           ),
                         });
                       }}
-                      className="group pointer-events-auto absolute -right-1 bottom-0 top-0 z-20 w-2 cursor-col-resize"
+                      className="group pointer-events-auto absolute -right-1 bottom-0 top-0 z-[var(--z-toolbar)] w-2 cursor-col-resize"
                     >
                       <div className="mx-auto h-full w-0.5 bg-brand-400/0 transition group-hover:bg-brand-400" />
                     </div>
@@ -708,7 +708,7 @@ export function TableView({
                           ),
                         });
                       }}
-                      className="group pointer-events-auto absolute -bottom-1 left-0 right-0 z-20 h-2 cursor-row-resize"
+                      className="group pointer-events-auto absolute -bottom-1 left-0 right-0 z-[var(--z-toolbar)] h-2 cursor-row-resize"
                     >
                       <div className="my-auto h-0.5 w-full bg-brand-400/0 transition group-hover:bg-brand-400" />
                     </div>
@@ -744,7 +744,7 @@ export function TableView({
                       {menu?.axis === 'col' && menu.index === c ? (
                         <div
                           data-table-ui
-                          className="pointer-events-auto absolute left-1/2 top-7 z-30 w-36 -translate-x-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
+                          className="pointer-events-auto absolute left-1/2 top-7 z-[var(--z-chrome)] w-36 -translate-x-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
                         >
                           <MenuButton
                             label="Insert left"
@@ -814,7 +814,7 @@ export function TableView({
                 {menu?.axis === 'row' && menu.index === r ? (
                   <div
                     data-table-ui
-                    className="pointer-events-auto absolute left-7 top-1/2 z-30 w-36 -translate-y-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
+                    className="pointer-events-auto absolute left-7 top-1/2 z-[var(--z-chrome)] w-36 -translate-y-1/2 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
                   >
                     <MenuButton label="Insert above" onClick={() => apply(addTableRow(element, r))}>
                       <ArrowIcon dir="up" />
@@ -856,7 +856,7 @@ export function TableView({
       ) : null}
       {showControls && selectedCell && !editing ? (
         <div
-          className="pointer-events-none absolute inset-0 z-10 grid"
+          className="pointer-events-none absolute inset-0 z-[var(--z-panel)] grid"
           style={{ gridTemplateColumns: colTemplate, gridTemplateRows: rowTemplate }}
         >
           <div
@@ -866,7 +866,7 @@ export function TableView({
             <div
               data-table-ui
               onPointerDown={(e) => e.stopPropagation()}
-              className="pointer-events-auto absolute bottom-0 left-1/2 z-40 flex items-center animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-0.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
+              className="pointer-events-auto absolute bottom-0 left-1/2 z-[var(--z-overlay)] flex items-center animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-0.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
               style={{
                 transform: `translate(-50%, calc(100% + 4px)) scale(${invScale})`,
                 transformOrigin: 'top center',
@@ -899,7 +899,7 @@ export function TableView({
                       : 'text-slate-600 hover:bg-brand-50 dark:text-slate-200 dark:hover:bg-slate-700'
                   }`;
                 const panel =
-                  'absolute left-0 top-full z-50 mt-1 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90';
+                  'absolute left-0 top-full z-[var(--z-modal)] mt-1 animate-pop-in rounded-lg border border-slate-200 bg-white/90 backdrop-blur-sm p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800/90';
                 return (
                   <>
                     {/* Text */}

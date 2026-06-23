@@ -94,7 +94,7 @@ export function EmbedChrome({ tabs, activeId, onSelectTab, shareCode }: EmbedChr
 
   return (
     <div
-      className="pointer-events-none fixed bottom-3 left-3 z-30 flex items-center gap-2"
+      className="pointer-events-none fixed bottom-3 left-3 z-[var(--z-chrome)] flex items-center gap-2"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <a

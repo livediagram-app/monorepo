@@ -84,7 +84,7 @@ export function SignInReasonsModal({
   return (
     <Portal>
       <div
-        className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center dark:bg-slate-950/60"
+        className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center dark:bg-slate-950/60"
         onClick={onClose}
         role="presentation"
       >

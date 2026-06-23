@@ -416,7 +416,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const theme = getTheme(tabThemeId);
             const color = theme.elementStroke ?? deriveTextColorForBg(theme.backgroundColor);
             return (
-              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+              <svg
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
+              >
                 {alignGuides.map((g, i) => {
                   // Convert the guide's canvas-space line into the two
                   // screen-space endpoints. A vertical guide (axis 'x')
@@ -455,7 +458,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const rect = wrapperRef.current?.getBoundingClientRect();
             if (!rect) return null;
             return (
-              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+              <svg
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
+              >
                 {allSnapTargets.map((t, i) => {
                   const x = rect.left + t.x * viewportZoom;
                   const y = rect.top + t.y * viewportZoom;
@@ -487,7 +493,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const x = rect.left + drawHover.x * viewportZoom;
             const y = rect.top + drawHover.y * viewportZoom;
             return (
-              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+              <svg
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
+              >
                 <circle
                   cx={x}
                   cy={y}
@@ -513,7 +522,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
             const cy = (v: number) => rect.top + v * viewportZoom;
             const color = 'rgb(236, 72, 153)'; // pink-500, distinct from alignment
             return (
-              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+              <svg
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
+              >
                 {distGuides.flatMap((g, gi) =>
                   g.spans.map((s, si) => {
                     const key = `${gi}:${si}`;
@@ -552,7 +564,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           // Border + faint fill take the active tab theme's accent (elementStroke,
           // else the brand sky) so the marquee suits the tab. color-mix keeps the
           // 12% fill working whatever colour format the theme uses.
-          className="pointer-events-none fixed z-30 rounded-sm border"
+          className="pointer-events-none fixed z-[var(--z-chrome)] rounded-sm border"
           style={{
             left: Math.min(marquee.startX, marquee.currentX),
             top: Math.min(marquee.startY, marquee.currentY),
@@ -576,7 +588,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           how BoxedElementView renders them at rest. */}
       {/* Pen-gesture live preview. While the user is drawing freehand,
           paint the in-progress polyline as a brand-tinted stroke so
-          they can see what they're sketching. Sits on the same z-30
+          they can see what they're sketching. Sits on the same z-[var(--z-chrome)]
           overlay layer as the draw-to-size box preview. Switches to
           the committed FreehandSvg after release (the next render
           tick once the new element lands in `elements`). */}
@@ -597,7 +609,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
               )
               .join(' ');
             return (
-              <svg aria-hidden className="pointer-events-none fixed inset-0 z-30 h-screen w-screen">
+              <svg
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
+              >
                 <path
                   d={d}
                   fill="none"
@@ -628,7 +643,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
               return (
                 <svg
                   aria-hidden
-                  className="pointer-events-none fixed inset-0 z-30 h-screen w-screen"
+                  className="pointer-events-none fixed inset-0 z-[var(--z-chrome)] h-screen w-screen"
                 >
                   <line
                     x1={x1}
@@ -674,7 +689,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
             return (
               <div
                 aria-hidden
-                className="pointer-events-none fixed z-30"
+                className="pointer-events-none fixed z-[var(--z-chrome)]"
                 style={{
                   left: rect.left + canvasMinX * viewportZoom,
                   top: rect.top + canvasMinY * viewportZoom,
@@ -900,7 +915,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           so it's not in the dock cluster; the Explorer is hidden
           on mobile entirely (spec/07) and uses banner-collapse on
           desktop, so it's also not in the dock cluster. */}
-      <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2">
+      <div className="pointer-events-none absolute bottom-4 right-4 z-[var(--z-panel)] flex items-center gap-2">
         {welcomeOpen ? null : (
           <>
             {!zenMode && activityMinimized && !readOnly ? (

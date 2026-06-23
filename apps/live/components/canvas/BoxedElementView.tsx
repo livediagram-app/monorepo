@@ -818,7 +818,7 @@ function BoxedElementViewImpl({
           land. Cleared on drop / drag-leave. */}
       {dropSide ? (
         <div
-          className="pointer-events-none absolute inset-0 z-20 ring-2 ring-brand-400"
+          className="pointer-events-none absolute inset-0 z-[var(--z-toolbar)] ring-2 ring-brand-400"
           style={{ borderRadius: 'inherit' }}
         >
           <div className={`absolute bg-brand-400/25 ${DROP_BAND[dropSide]}`} />

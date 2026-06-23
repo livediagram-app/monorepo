@@ -220,7 +220,7 @@ export function SearchPanel({
         // inside the panel itself).
         if (e.target === e.currentTarget) onClose();
       }}
-      className="absolute inset-0 z-50 flex items-start justify-center bg-slate-900/30 px-4 pt-[12vh] backdrop-blur-sm dark:bg-slate-950/50"
+      className="absolute inset-0 z-[var(--z-modal)] flex items-start justify-center bg-slate-900/30 px-4 pt-[12vh] backdrop-blur-sm dark:bg-slate-950/50"
     >
       <div className="flex w-[34rem] max-w-full animate-fly-up-in flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2 dark:border-slate-800">

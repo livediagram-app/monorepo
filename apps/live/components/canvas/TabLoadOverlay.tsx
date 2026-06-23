@@ -29,7 +29,7 @@ export function TabLoadOverlay({
     // clicks can't reach the palette / canvas. ApiErrorPage supplies the
     // card + Retry on top.
     return (
-      <div className="absolute inset-0 z-50 bg-slate-50 dark:bg-slate-950">
+      <div className="absolute inset-0 z-[var(--z-modal)] bg-slate-50 dark:bg-slate-950">
         <ApiErrorPage
           onRetry={onRetry}
           title="Couldn’t load this tab"
@@ -40,7 +40,7 @@ export function TabLoadOverlay({
     );
   }
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+    <div className="absolute inset-0 z-[var(--z-modal)] flex items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-col items-center gap-3">
         <svg
           width="32"

@@ -19,7 +19,7 @@ export function ChartTooltip({
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-slate-900/95 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-lg dark:bg-slate-700"
+      className="pointer-events-none absolute z-[var(--z-panel)] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-slate-900/95 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-lg dark:bg-slate-700"
       style={{ left: `${leftPct}%`, top: `${topPct}%` }}
     >
       {label || '—'}: {value}

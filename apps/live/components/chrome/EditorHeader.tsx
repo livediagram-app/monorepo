@@ -78,13 +78,13 @@ export function EditorHeader({
   }, [renameNonce, readOnly, hideTitle]);
 
   return (
-    // `relative z-50` puts the entire header into its own stacking
+    // `relative z-[var(--z-modal)]` puts the entire header into its own stacking
     // context above the canvas sibling that follows it. Without it,
     // AuthControls's absolute-positioned dropdown menu (which
     // overflows the header bounds downward) was getting hidden
     // behind the canvas — siblings without explicit z-index stack in
     // document order and the canvas wins.
-    <header className="relative z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 sm:gap-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+    <header className="relative z-[var(--z-modal)] flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 sm:gap-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
       <div className="flex w-auto items-center sm:w-48">
         <Brand href="/" size="md" accentColor={brandAccent} wordmarkClassName="hidden sm:inline" />
       </div>

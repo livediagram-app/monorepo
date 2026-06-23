@@ -190,7 +190,7 @@ export function QuickConnectRing({
   return (
     <div
       data-quick-ring=""
-      className="pointer-events-none absolute z-20"
+      className="pointer-events-none absolute z-[var(--z-toolbar)]"
       style={{ left: cx, top: cy, transform: `translate(-50%, -50%) scale(${1 / zoom})` }}
     >
       {/* The plus trigger, centred at (cx, cy). Click toggles the ring.

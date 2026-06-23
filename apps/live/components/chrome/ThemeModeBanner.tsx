@@ -38,7 +38,7 @@ export function ThemeModeBanner({ themeId }: { themeId: string | undefined }) {
     : 'Switch the editor to light mode to match.';
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-16">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex justify-center px-4 pb-16">
       <div className="pointer-events-auto flex w-full max-w-md animate-fly-up-in items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/40">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>

@@ -518,7 +518,7 @@ export function EditorView() {
           gives a click target to cancel (clicking empty canvas also
           cancels). */}
       {connectSourceId !== null ? (
-        <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
+        <div className="pointer-events-none fixed inset-x-0 top-16 z-[var(--z-modal)] flex justify-center">
           <button
             type="button"
             onClick={cancelConnect}
@@ -1498,9 +1498,12 @@ export function EditorView() {
       ) : null}
 
       {/* Guest sign-in nudge (spec/36), delayed ~5 min. Lifted above
-          the 48px tab bar (pb-16) and over the canvas chrome (z-40). */}
+          the 48px tab bar (pb-16) and over the canvas chrome (z-[var(--z-overlay)]). */}
       {showSignInBanner ? (
-        <SignInBanner onDismiss={dismissSignIn} placementClassName="bottom-0 z-40 pb-16" />
+        <SignInBanner
+          onDismiss={dismissSignIn}
+          placementClassName="bottom-0 z-[var(--z-overlay)] pb-16"
+        />
       ) : null}
       {/* Empty-canvas hint (spec/14) — replaces the old centre-of-canvas card
           with a subdued, dismissible bottom banner so a blank diagram reads as

@@ -106,7 +106,7 @@ export function ContextMenu({
         onContextMenu={(e) => e.preventDefault()}
         // lvd-menu-stagger cascades the direct children (categories / items)
         // in one at a time for a falling-stack entrance (see globals.css).
-        className={`lvd-menu-stagger fixed z-50 flex w-56 animate-fade-in flex-col rounded-md border border-slate-200 bg-white/90 text-sm shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-950/40 ${
+        className={`lvd-menu-stagger fixed z-[var(--z-overlay)] flex w-56 animate-fade-in flex-col rounded-md border border-slate-200 bg-white/90 text-sm shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-slate-950/40 ${
           flush ? 'overflow-hidden' : 'py-1'
         }`}
         style={{

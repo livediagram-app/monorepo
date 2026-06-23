@@ -127,7 +127,7 @@ export function NotePopover({ elementId, initial, onCommit, onClose, readOnly }:
       <div
         ref={ref}
         onPointerDown={(e) => e.stopPropagation()}
-        className="fixed z-50 flex w-72 flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
+        className="fixed z-[var(--z-modal)] flex w-72 flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
         style={{
           left: pos.left,
           top: pos.top,

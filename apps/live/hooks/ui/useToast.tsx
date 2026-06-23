@@ -31,7 +31,7 @@ import { readUserPreferences } from '@/lib/user-preferences';
 //
 // Provider renders a stack of toasts at the bottom-centre via a
 // portal so the toasts float above every other modal / dialog
-// (z-index above ConfirmDialog's z-50, see globals.css). The hook
+// (z-index above ConfirmDialog's z-[var(--z-modal)], see globals.css). The hook
 // returns an imperative `toast.error(msg) / toast.success(msg) /
 // toast.info(msg)` so call sites stay terse:
 //

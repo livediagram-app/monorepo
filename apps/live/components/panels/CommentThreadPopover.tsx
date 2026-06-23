@@ -117,7 +117,7 @@ export function CommentThreadPopover({
         ref={ref}
         role="dialog"
         onPointerDown={(e) => e.stopPropagation()}
-        className="fixed z-50 flex animate-fade-in flex-col rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40"
+        className="fixed z-[var(--z-overlay)] flex animate-fade-in flex-col rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40"
         style={{ left: pos.left, top: pos.top, width: WIDTH }}
       >
         <header className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-slate-800">

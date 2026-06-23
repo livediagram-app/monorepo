@@ -28,7 +28,7 @@ export function CanvasMobileDock({
   return (
     <div
       data-mobile-dock
-      className={`pointer-events-auto absolute top-3 right-3 z-20 flex items-stretch rounded-lg border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900${minimalPanels ? '' : ' sm:hidden'}`}
+      className={`pointer-events-auto absolute top-3 right-3 z-[var(--z-toolbar)] flex items-stretch rounded-lg border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900${minimalPanels ? '' : ' sm:hidden'}`}
       onPointerDown={(e) => e.stopPropagation()}
     >
       {(

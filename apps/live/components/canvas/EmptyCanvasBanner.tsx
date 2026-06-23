@@ -16,7 +16,7 @@ export function EmptyCanvasBanner({
   tabName,
   readOnly,
   onQuickStart,
-  placementClassName = 'bottom-0 z-40 pb-16',
+  placementClassName = 'bottom-0 z-[var(--z-overlay)] pb-16',
 }: {
   tabName: string;
   readOnly: boolean;

@@ -449,7 +449,7 @@ export function MovablePanel({
           e.stopPropagation();
         }}
         style={anchor ? { top: anchor.top + 12, left: anchor.left } : { top: 56, right: 12 }}
-        className="pointer-events-auto absolute z-20 flex w-64 max-w-[calc(100vw-2rem)] cursor-default flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 transition-opacity duration-150 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40"
+        className="pointer-events-auto absolute z-[var(--z-toolbar)] flex w-64 max-w-[calc(100vw-2rem)] cursor-default flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 transition-opacity duration-150 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40"
       >
         {anchor ? (
           <div
@@ -486,7 +486,7 @@ export function MovablePanel({
       // grab cursor (the panel is a DOM descendant of the pannable
       // canvas surface); the header re-asserts cursor-grab since that's
       // the only part you can drag.
-      className={`pointer-events-auto absolute z-10 flex animate-pop-in cursor-default ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40 ${cornerClass}`}
+      className={`pointer-events-auto absolute z-[var(--z-panel)] flex animate-pop-in cursor-default ${width} flex-col rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:shadow-slate-950/40 ${cornerClass}`}
     >
       <div
         ref={headerRef}

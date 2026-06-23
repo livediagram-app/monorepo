@@ -207,7 +207,7 @@ export function PaletteDropdown({
             ref={menuRef}
             role="listbox"
             data-palette-dropdown-menu
-            className={`fixed z-50 w-max border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+            className={`fixed z-[var(--z-overlay)] w-max border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
               autoHeight ? '' : 'max-h-56 overflow-y-auto'
             } ${
               // Connected pickers drop the corner that meets the trigger so the

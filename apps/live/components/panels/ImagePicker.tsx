@@ -143,7 +143,7 @@ export function ImagePicker({
           e.preventDefault();
           e.stopPropagation();
         }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
+        className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
       >
         <div
           ref={dialogRef}

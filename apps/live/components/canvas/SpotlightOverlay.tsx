@@ -45,7 +45,7 @@ export function SpotlightOverlay({
       aria-hidden
       // No explicit z-index: as a later DOM sibling than the (z-auto) element
       // wrapper it paints ABOVE the diagram, while the floating chrome
-      // (palette / Explorer at z-10/z-20, popovers at z-40) stays on top — so
+      // (palette / Explorer at z-[var(--z-panel)]/z-[var(--z-toolbar)], popovers at z-[var(--z-overlay)]) stays on top — so
       // the shroud dims the diagram but not the UI, and the presenter can
       // still reach the tool picker to switch back.
       className="pointer-events-none absolute inset-0"

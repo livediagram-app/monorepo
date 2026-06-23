@@ -129,7 +129,7 @@ export function PaletteSettingsPopover({
             role="dialog"
             aria-label="Palette settings"
             onPointerDown={(e) => e.stopPropagation()}
-            className="fixed z-50 flex animate-fade-in flex-col gap-0.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+            className="fixed z-[var(--z-overlay)] flex animate-fade-in flex-col gap-0.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
             style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width: WIDTH }}
           >
             <SettingRow

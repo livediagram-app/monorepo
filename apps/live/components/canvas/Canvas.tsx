@@ -1032,12 +1032,12 @@ export function Canvas(props: CanvasProps) {
 
       {/* SelectionPopover rides on a sibling wrapper that mirrors
           the canvas transform but lives AFTER the floating panels in
-          DOM order. z-40 on every viewport: lifts the toolbar
+          DOM order. z-[var(--z-overlay)] on every viewport: lifts the toolbar
           above panels (Palette, Explorer, Activity, Zoom /
           ZoomControls, the TabBar footer) so it
           stays visible whether the selected element sits near a
           panel-pinned corner on desktop OR overlaps the bottom
-          dock on mobile. The previous mobile-only z-0 was an
+          dock on mobile. The previous mobile-only z-[var(--z-canvas)] was an
           older design choice that hid the toolbar behind chrome,
           which made multi-select edit ops awkward on a phone.
           Diagram elements stay in the original wrapper at z-auto
@@ -1049,7 +1049,7 @@ export function Canvas(props: CanvasProps) {
           it animates away as the ring opens and back in when it closes. */}
       {showPopover && selectionBounds && canvasTool !== 'spotlight' ? (
         <div
-          className="pointer-events-none absolute inset-0 z-40 origin-center"
+          className="pointer-events-none absolute inset-0 z-[var(--z-overlay)] origin-center"
           style={{
             transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
             opacity: quickRingOpen ? 0 : 1,
@@ -1119,7 +1119,7 @@ export function Canvas(props: CanvasProps) {
           Gated on a true marquee multi-selection (2+), never in view-only. */}
       {showMultiToolbar && multiToolbarBounds && canvasTool !== 'spotlight' ? (
         <div
-          className="pointer-events-none absolute inset-0 z-40 origin-center"
+          className="pointer-events-none absolute inset-0 z-[var(--z-overlay)] origin-center"
           style={{
             transform: `scale(${viewportZoom}) translate(${viewportOffset.x}px, ${viewportOffset.y}px)`,
           }}
@@ -1171,7 +1171,7 @@ export function Canvas(props: CanvasProps) {
         onIsoOrbit={isoCamera.startOrbit}
         onIsoReset={isoCamera.reset}
       />
-      {/* Lazy per-tab load (spec/13). Last child + z-50 so it covers the
+      {/* Lazy per-tab load (spec/13). Last child + z-[var(--z-modal)] so it covers the
           canvas AND the floating palette, blocking any edit that would
           otherwise overwrite an unfetched tab's real content. */}
       {tabLoadState && tabLoadState !== 'ready' ? (

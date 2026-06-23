@@ -86,7 +86,7 @@ export function CanvasThemeDialog({
         // dialog as they click (spec/42). The full-screen layer stays as a
         // transparent click-catcher (click-outside / right-click guard) so an
         // accidental edit doesn't leak to the canvas while it's open.
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center"
       >
         <div
           ref={dialogRef}

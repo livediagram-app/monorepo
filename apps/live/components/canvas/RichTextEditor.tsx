@@ -569,7 +569,7 @@ export function RichTextEditor({
           pointerInToolbarRef.current = true;
           e.stopPropagation();
         }}
-        className={`pointer-events-auto absolute left-1/2 z-50 ${
+        className={`pointer-events-auto absolute left-1/2 z-[var(--z-modal)] ${
           placeBelow ? 'top-full mt-2.5' : 'bottom-full mb-2.5'
         }`}
         style={{

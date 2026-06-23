@@ -92,7 +92,7 @@ export function ConfirmPopover({
         role="dialog"
         data-confirm-popover
         onPointerDown={(e) => e.stopPropagation()}
-        className="fixed z-50 flex animate-fade-in flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+        className="fixed z-[var(--z-overlay)] flex animate-fade-in flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
         style={{ left: layout?.left ?? -9999, top: layout?.top ?? -9999, width: WIDTH }}
       >
         {/* Arrow: a rotated square poking out of the side facing the anchor. */}

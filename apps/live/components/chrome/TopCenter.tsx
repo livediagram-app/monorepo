@@ -37,7 +37,7 @@ const TONE_CLASS: Record<BannerTone, string> = {
 // events for itself.
 export function TopCenterStack({ children }: { children: ReactNode }) {
   return (
-    <div className="pointer-events-none absolute left-3 top-3 z-30 flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 sm:left-1/2 sm:-translate-x-1/2 sm:items-center">
+    <div className="pointer-events-none absolute left-3 top-3 z-[var(--z-chrome)] flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 sm:left-1/2 sm:-translate-x-1/2 sm:items-center">
       {children}
     </div>
   );

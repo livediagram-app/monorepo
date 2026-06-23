@@ -252,7 +252,7 @@ function OverflowMenu({
         </button>
       </Tooltip>
       {open ? (
-        <div className="lvd-menu-stagger animate-fade-in absolute left-0 top-full z-10 mt-1 w-44 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+        <div className="lvd-menu-stagger animate-fade-in absolute left-0 top-full z-[var(--z-panel)] mt-1 w-44 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
           <MenuAccordionSection title="Format" icon={<StrikethroughIcon />} {...catProps('format')}>
             <MenuTileGrid cols={2}>
               <MenuTile
@@ -418,7 +418,7 @@ function ToolbarDropdown({
           // An option click bubbles here and closes the menu after its own
           // handler runs.
           onClick={() => setOpen(false)}
-          className={`absolute left-0 top-full z-10 mt-1 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${menuClassName}`}
+          className={`absolute left-0 top-full z-[var(--z-panel)] mt-1 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${menuClassName}`}
         >
           {children}
         </div>

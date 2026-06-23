@@ -89,7 +89,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-slate-50">
-      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 px-4 backdrop-blur">
+      <header className="sticky top-0 z-[var(--z-chrome)] flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 px-4 backdrop-blur">
         <div className="flex items-center gap-3">
           <Brand href="/" size="md" />
           <span className="text-sm font-medium text-slate-500">Explorer</span>
@@ -121,7 +121,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
         {/* The sidebar is hidden below `sm`; this slides the same tree in
             from the left, opened by the hamburger in the pane header. */}
         {mobileNavOpen ? (
-          <div className="fixed inset-0 z-40 sm:hidden">
+          <div className="fixed inset-0 z-[var(--z-overlay)] sm:hidden">
             <div
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
               onClick={() => setMobileNavOpen(false)}
