@@ -7,7 +7,7 @@ import { track } from '@/lib/telemetry';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 
-type Props = {
+type AiPanelProps = {
   contextElements: Element[]; // all tab elements
   focusIds: string[]; // selected element IDs (empty = whole tab)
   tabName: string;
@@ -87,7 +87,7 @@ export function AiPanelContent({
   tabName,
   ownerId,
   onApplyElements,
-}: Props) {
+}: AiPanelProps) {
   const [mode, setMode] = useState<AiMode>('generate');
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<Status>('idle');

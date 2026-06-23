@@ -17,7 +17,7 @@ import { FLOATING_CONTROL_GAP, FLOATING_CONTROL_SIZE } from '@/components/chrome
 // state is owned by the parent (Canvas) so only one ring opens at a time
 // and the selection toolbar can hide while it's open.
 
-type Props = {
+type QuickConnectRingProps = {
   // Edge midpoint in canvas coords (same anchor the resize handles use).
   x: number;
   y: number;
@@ -156,7 +156,7 @@ export function QuickConnectRing({
   onArrowPointerDown,
   onPencil,
   onAddRailPoint,
-}: Props) {
+}: QuickConnectRingProps) {
   // The rail "Add point" action only appears when the selected element is a
   // timeline rail (onAddRailPoint set), appended after the standard actions.
   const options = onAddRailPoint ? [...OPTIONS, ADD_POINT_OPTION] : OPTIONS;

@@ -55,7 +55,7 @@ import {
 import { RichTextToolbar, type ActiveFormat } from '@/components/canvas/RichTextToolbar';
 import { track } from '@/lib/telemetry';
 
-type Props = {
+type RichTextEditorProps = {
   // The element being edited — its whole-element text* fields are the
   // defaults each run's unset attrs inherit (for effective styling +
   // toggle computation).
@@ -200,7 +200,7 @@ export function RichTextEditor({
   onSetTextSize,
   currentFont = null,
   inline = false,
-}: Props) {
+}: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarWrapRef = useRef<HTMLDivElement>(null);
   const runsRef = useRef<TextRun[]>(

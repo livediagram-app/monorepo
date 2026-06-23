@@ -24,7 +24,7 @@
 import { shade, tint, type AnimatedBackgroundPattern } from '@livediagram/diagram';
 import type { CSSProperties } from 'react';
 
-type Props = {
+type AnimatedCanvasBackgroundProps = {
   variant: AnimatedBackgroundPattern;
   // The tab's pattern colour; every glyph paints in it.
   color: string;
@@ -38,7 +38,12 @@ type Props = {
 // (duration / delay / drift vectors) without a style tag per element.
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
 
-export function AnimatedCanvasBackground({ variant, color, scale, opacity }: Props) {
+export function AnimatedCanvasBackground({
+  variant,
+  color,
+  scale,
+  opacity,
+}: AnimatedCanvasBackgroundProps) {
   return (
     <div
       aria-hidden
