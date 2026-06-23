@@ -29,6 +29,7 @@ import {
   resolveOAuthCompleteUrl,
   resolvePostAuthDestination,
 } from '@/components/chrome/auth-shared';
+import { TextInput } from '@livediagram/ui';
 import { clerkEnabled, googleOAuthEnabled } from '@/lib/clerk-config';
 import { track } from '@/lib/telemetry';
 
@@ -255,12 +256,11 @@ function GetStartedContent() {
               <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-slate-700">
                 First name
               </label>
-              <input
+              <TextInput
                 id="firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 placeholder="Jane"
                 autoComplete="given-name"
               />
@@ -269,12 +269,11 @@ function GetStartedContent() {
               <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-slate-700">
                 Last name
               </label>
-              <input
+              <TextInput
                 id="lastName"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 placeholder="Doe"
                 autoComplete="family-name"
               />
@@ -284,12 +283,11 @@ function GetStartedContent() {
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
               Email
             </label>
-            <input
+            <TextInput
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
               placeholder="you@example.com"
               autoComplete="email"
             />
