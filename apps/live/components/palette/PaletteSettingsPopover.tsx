@@ -188,33 +188,41 @@ export function PaletteSettingsPopover({
               }
             />
             {!minimalPanels ? (
-              <PanelOpacityRow
-                value={panelOpacity}
-                onCommit={commitOpacity}
-                help={
-                  <HelpArticleLink
-                    article="panelOpacity"
-                    title="Panel opacity"
-                    description="Make the floating panels translucent so the canvas shows through."
-                  />
-                }
-              />
+              <>
+                {/* Separator: set the panel-opacity control apart. */}
+                <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
+                <PanelOpacityRow
+                  value={panelOpacity}
+                  onCommit={commitOpacity}
+                  help={
+                    <HelpArticleLink
+                      article="panelOpacity"
+                      title="Panel opacity"
+                      description="Make the floating panels translucent so the canvas shows through."
+                    />
+                  }
+                />
+              </>
             ) : null}
             {onToggleMinimalPanels ? (
-              <SettingRow
-                label="Minimal panels"
-                hint="Swap floating panels for a compact button bar."
-                checked={!!minimalPanels}
-                // Telemetry + persistence live in the caller's handler.
-                onToggle={onToggleMinimalPanels}
-                help={
-                  <HelpArticleLink
-                    article="minimalPanels"
-                    title="Minimal panels"
-                    description="The compact button bar that replaces floating panels."
-                  />
-                }
-              />
+              <>
+                {/* Separator: set the minimal-panels toggle apart. */}
+                <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
+                <SettingRow
+                  label="Minimal panels"
+                  hint="Swap floating panels for a compact button bar."
+                  checked={!!minimalPanels}
+                  // Telemetry + persistence live in the caller's handler.
+                  onToggle={onToggleMinimalPanels}
+                  help={
+                    <HelpArticleLink
+                      article="minimalPanels"
+                      title="Minimal panels"
+                      description="The compact button bar that replaces floating panels."
+                    />
+                  }
+                />
+              </>
             ) : null}
             {onResetPosition ? (
               <>
