@@ -16,6 +16,7 @@ export * from './change-log';
 export * from './folders';
 export * from './custom-themes';
 export * from './teams';
+export * from './api-tokens';
 export * from './account';
 export * from './images';
 export * from './telemetry';

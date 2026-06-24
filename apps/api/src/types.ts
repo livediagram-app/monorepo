@@ -14,6 +14,7 @@ export type {
   Folder as FolderDTO,
   CustomTheme as CustomThemeDTO,
   CustomThemeDefinition,
+  ApiToken as ApiTokenDTO,
   ImageSummary,
   ParticipantRecord as ParticipantDTO,
   ParticipantPresence,

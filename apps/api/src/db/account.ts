@@ -56,6 +56,8 @@ export async function deleteAccount(
   await env.DB.prepare('DELETE FROM user_preferences WHERE owner_id = ?').bind(ownerId).run();
   // custom_themes (spec/44): this owner's saved themes go too.
   await env.DB.prepare('DELETE FROM custom_themes WHERE owner_id = ?').bind(ownerId).run();
+  // api_tokens (spec/61): no API credential outlives the account.
+  await env.DB.prepare('DELETE FROM api_tokens WHERE owner_id = ?').bind(ownerId).run();
   return {
     diagrams: diagramsRes.meta.changes ?? 0,
     folders: foldersRes.meta.changes ?? 0,

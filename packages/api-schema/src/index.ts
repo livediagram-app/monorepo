@@ -187,6 +187,24 @@ export type CustomTheme = {
 };
 
 // ---------------------------------------------------------------------
+// API tokens (spec/61)
+// ---------------------------------------------------------------------
+
+// An external API credential, owner-scoped to a Clerk account. The wire
+// shape NEVER carries the secret or its hash — only the public id +
+// metadata shown in the management list. The plaintext is returned once,
+// at creation, on a separate response field (see the /api/tokens route).
+export type ApiToken = {
+  id: string;
+  name: string | null;
+  createdAt: number;
+  // Null until the token is first used to authenticate a request.
+  lastUsedAt: number | null;
+  // Fixed at createdAt + 6 months (spec/61).
+  expiresAt: number;
+};
+
+// ---------------------------------------------------------------------
 // Teams (spec/32)
 // ---------------------------------------------------------------------
 
