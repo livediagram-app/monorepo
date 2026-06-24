@@ -269,10 +269,12 @@ export function ExplorerSidebar() {
         onClick={() => go({ kind: 'themes' })}
         depth={0}
       />
-      {/* API tokens (spec/61): signed-in only, so the row is shown only when
-          auth is enabled — same `clerkEnabled` gate the teams / sign-in
-          sections use, so a no-auth self-host never sees it. */}
-      {clerkEnabled ? (
+      {/* API tokens (spec/61): signed-in only. Gated on `teamsEnabled` (the
+          sidebar's signed-in flag — `isSignedIn && clerkUserId`), NOT just
+          `clerkEnabled`, so a signed-OUT user on a Clerk deployment doesn't
+          see a row that would only 403; it appears once they sign in. A
+          no-auth self-host never has it either. */}
+      {teamsEnabled ? (
         <SidebarRow
           icon={<KeyIcon />}
           label="API tokens"

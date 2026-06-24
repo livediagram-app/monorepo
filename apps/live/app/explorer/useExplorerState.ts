@@ -12,7 +12,7 @@ import {
   type Folder,
   type SharedWithItem,
 } from '@/lib/api-client';
-import { ensureGuestSelfId } from '@/lib/local-identity';
+import { ensureSignedGuestIdentity } from '@/lib/guest-identity';
 import { track } from '@/lib/telemetry';
 import { useFolders } from '@/hooks/persistence/useFolders';
 import { useTeamLibrariesSweep } from '@/hooks/persistence/useTeamLibrariesSweep';
@@ -54,10 +54,26 @@ export function useExplorerState() {
   // signed-in user is keyed by Clerk userId, a guest is keyed by the
   // localStorage UUID (minted on first visit). Null until Clerk has
   // settled so a signed-in user never momentarily reads a guest id.
-  const ownerId: string | null = useMemo(() => {
-    if (!authLoaded) return null;
-    return clerkUserId ?? ensureGuestSelfId();
+  // For a guest, resolve a SIGNED id (ensureSignedGuestIdentity, like the
+  // editor's useIdentityBootstrap) rather than a bare ensureGuestSelfId, so the
+  // `X-Owner-Sig` the §4 REST gate may require (spec/61) is minted even for a
+  // guest who opens the Explorer before ever touching the editor — otherwise
+  // their diagram / folder list calls would 401 once enforcement is on. Async,
+  // so ownerId stays null until it resolves (the lists are autoLoad:false off
+  // ownerId, and the common case — an existing signed id — resolves with no
+  // network).
+  const [guestId, setGuestId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!authLoaded || clerkUserId) return;
+    let cancelled = false;
+    void ensureSignedGuestIdentity().then((r) => {
+      if (!cancelled) setGuestId(r.id);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [authLoaded, clerkUserId]);
+  const ownerId: string | null = !authLoaded ? null : (clerkUserId ?? guestId);
   const [diagrams, setDiagrams] = useState<DiagramListItem[]>([]);
   const {
     folders,

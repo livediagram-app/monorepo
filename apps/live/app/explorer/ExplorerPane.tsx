@@ -187,9 +187,27 @@ export function ExplorerPane() {
       ) : selected.kind === 'themes' ? (
         <ThemesPane />
       ) : selected.kind === 'tokens' ? (
-        ownerId ? (
-          <TokensPane ownerId={ownerId} />
-        ) : null
+        // Signed-in only (spec/61). Reached via the sidebar only when signed
+        // in, but a guest could deep-link /explorer/tokens — show a sign-in
+        // prompt rather than a TokensPane that would just 403.
+        clerkUserId ? (
+          <TokensPane ownerId={clerkUserId} />
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-300 px-6 py-10 text-center dark:border-slate-700">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Sign in to use API tokens
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              API tokens are an account feature for calling the API from your own scripts.
+            </p>
+            <a
+              href="/sign-in/"
+              className="mt-3 inline-block rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-500"
+            >
+              Sign in
+            </a>
+          </div>
+        )
       ) : selected.kind === 'shared' ? (
         <SharedList shared={shared} onDismiss={dismissShared} />
       ) : paneContent.folders.length === 0 &&
