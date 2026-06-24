@@ -50,11 +50,17 @@ export async function createApiToken(
     .run();
 }
 
-// Resolve a presented token to its owner id — the auth hot path. Hashes the
-// token, looks up a LIVE (non-revoked, unexpired) row, and stamps
-// `last_used_at`. Returns the owner id, or null when no live token matches
-// (revoked / expired / unknown all collapse to "not authenticated").
-export async function resolveApiToken(env: Env, token: string): Promise<string | null> {
+// Resolve a presented token to its owner + token id — the auth hot path.
+// Hashes the token, looks up a LIVE (non-revoked, unexpired) row, and stamps
+// `last_used_at`. Returns `{ ownerId, tokenId }`, or null when no live token
+// matches (revoked / expired / unknown all collapse to "not authenticated").
+// The tokenId lets the request rate-limit on the specific token (spec/61 §3.5)
+// rather than the owner, so one runaway integration can't burn the owner's
+// interactive-app budget.
+export async function resolveApiToken(
+  env: Env,
+  token: string,
+): Promise<{ ownerId: string; tokenId: string } | null> {
   const hash = await hashApiToken(token);
   const now = Date.now();
   const row = await env.DB.prepare(
@@ -66,7 +72,7 @@ export async function resolveApiToken(env: Env, token: string): Promise<string |
   await env.DB.prepare('UPDATE api_tokens SET last_used_at = ? WHERE id = ?')
     .bind(now, row.id)
     .run();
-  return row.owner_id;
+  return { ownerId: row.owner_id, tokenId: row.id };
 }
 
 // Revoke one of the owner's own tokens. Scoped by owner_id so a caller can

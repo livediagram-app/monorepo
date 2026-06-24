@@ -103,6 +103,13 @@ export type Env = {
   // per IP so a single client can't exhaust the OpenAI budget.
   // Optional: absent (self-host) falls through to "allow".
   AI_RATE_LIMITER?: { limit: (input: { key: string }) => Promise<{ success: boolean }> };
+  // Per-token read limiter for token-authed GETs (spec/61 §3.5), keyed on the
+  // token id. Token writes ride the WRITE_RATE_LIMITER (also keyed on the
+  // token id); this covers reads, which that one doesn't. Optional: absent
+  // (self-host) falls through to "allow".
+  API_TOKEN_READ_RATE_LIMITER?: {
+    limit: (input: { key: string }) => Promise<{ success: boolean }>;
+  };
   // Comma-separated Origin allow-list for POST /api/ai (spec/25).
   // When set, the worker rejects 403 unless the request's Origin
   // header exactly matches one of the entries (trimmed for

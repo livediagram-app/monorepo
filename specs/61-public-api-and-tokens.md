@@ -1,9 +1,11 @@
 # 61 — Public API and API tokens
 
-**Status: proposed (design only — not yet implemented).** This spec sequences
-opening the REST API to external, programmatic callers. The input-validation
-hardening it depends on has shipped (see [§5](#5-input-validation-prerequisite-shipped)); the
-token auth model below is the part awaiting sign-off before any code.
+**Status: implemented** on branch `external-connections` (PR #20); awaiting
+merge + the operator rollout in [§6](#6-rollout). This spec sequences opening
+the REST API to external, programmatic callers. The input-validation hardening
+(see [§5](#5-input-validation-prerequisite-shipped)) shipped to `main` first;
+the token model + the §4 `X-Owner-Id` hardening are built on the branch and
+verified (api typecheck + lint + tests green).
 
 ## 1. Goal
 
@@ -69,11 +71,14 @@ escalation above. The fix is [§4](#4-x-owner-id-trust-change).
 ### 3.1 Token format
 
 - An opaque secret with a visible prefix for greppability + leak-scanning:
-  `lvd_<base62 random ≥ 32 bytes>`. The prefix also disambiguates it from a
+  `lvd_<base64url(32 random bytes)>`. The prefix also disambiguates it from a
   Clerk JWT in the same `Authorization: Bearer` header.
 - Shown **once** at creation; never retrievable again.
-- Stored **hashed** (SHA-256), never in plaintext. Lookup hashes the presented
-  token and compares (constant-time, reusing `auth/timing-safe.ts`).
+- Stored **hashed** (SHA-256), never in plaintext. Auth hashes the presented
+  token and looks the hash up by its UNIQUE-indexed column — an indexed
+  equality lookup, not a per-row compare: the hash derives from 256 bits of
+  randomness, so there's no low-entropy value to time-attack (unlike a
+  password) and the lookup leaks nothing useful.
 
 ### 3.2 Storage (D1)
 

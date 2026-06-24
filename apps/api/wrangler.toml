@@ -122,6 +122,16 @@ type = "ratelimit"
 namespace_id = "1005"
 simple = { limit = 60, period = 60 }
 
+# Per-token read throttle for token-authed GETs (spec/61 §3.5): an external
+# integration's reads, keyed on the token id, so one runaway script can't hammer
+# reads independently of the owner's app use. Token WRITES ride
+# WRITE_RATE_LIMITER (also keyed on the token id). Absent binding → allow.
+[[unsafe.bindings]]
+name = "API_TOKEN_READ_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1006"
+simple = { limit = 120, period = 60 }
+
 # OPENAI_API_KEY and OPENAI_MODEL are provisioned out-of-band (spec/25):
 #
 #   - Local dev: drop `OPENAI_API_KEY=sk-...` into `apps/api/.dev.vars`

@@ -80,14 +80,14 @@ export default {
     // JWT verified (a token and a JWT can't both be the bearer). The resolved
     // owner is the token's Clerk userId, so a token request flows through the
     // exact same ownership / gate checks as a signed-in one.
-    let tokenOwnerId: string | null = null;
+    let tokenAuth: { ownerId: string; tokenId: string } | null = null;
     if (!clerkUserId) {
       const authz = request.headers.get('Authorization');
       const bearer = authz?.startsWith('Bearer ') ? authz.slice(7) : null;
-      if (bearer && isApiTokenFormat(bearer)) tokenOwnerId = await resolveApiToken(env, bearer);
+      if (bearer && isApiTokenFormat(bearer)) tokenAuth = await resolveApiToken(env, bearer);
     }
     const resolveOwner = (): string | null =>
-      clerkUserId ?? tokenOwnerId ?? request.headers.get('X-Owner-Id');
+      clerkUserId ?? tokenAuth?.ownerId ?? request.headers.get('X-Owner-Id');
 
     // Guest REST signature gate (spec/61 §4). On owner-scoped routes, a
     // presented `X-Owner-Id` must carry a valid HMAC signature once
@@ -98,7 +98,7 @@ export default {
     // untouched (it just resolves to no owner), so public reads still work.
     if (
       !clerkUserId &&
-      !tokenOwnerId &&
+      !tokenAuth &&
       OWNER_SCOPED_SEGMENTS.has(segments[1] ?? '') &&
       guestSignatureEnforced(env, Date.now())
     ) {
@@ -139,8 +139,18 @@ export default {
       }
     }
     if (isWrite && url.pathname !== '/api/events') {
-      const key = resolveOwner() ?? 'anonymous';
+      // A token request rate-limits on the TOKEN id (spec/61 §3.5), so a
+      // runaway integration is throttled independently of the owner's
+      // interactive app use; everything else keys on the resolved owner.
+      const key = tokenAuth ? `token:${tokenAuth.tokenId}` : (resolveOwner() ?? 'anonymous');
       if (await isWriteRateLimited(env, key)) return rateLimited();
+    }
+    // Token-authed READS (spec/61 §3.5): GETs under a token aren't covered by
+    // the write limiter, so an external integration's reads get their own
+    // per-token throttle. Optional binding → allow when absent (self-host).
+    if (tokenAuth && request.method === 'GET' && env.API_TOKEN_READ_RATE_LIMITER) {
+      const ok = await env.API_TOKEN_READ_RATE_LIMITER.limit({ key: `token:${tokenAuth.tokenId}` });
+      if (!ok.success) return rateLimited();
     }
 
     // Throttle blind share-code / password guessing on the share-resolve
