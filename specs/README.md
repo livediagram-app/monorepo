@@ -69,6 +69,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 59  | [Minimap](59-minimap.md)                                           | Bottom-left zoomed-out overview + viewport rect; tap/drag to navigate. Desktop, when Activity panel closed                                                                                 |
 | 60  | [Snap override](60-snap-override.md)                               | Hold Cmd/Ctrl while dragging to disable alignment snapping + guides for a free, off-grid placement                                                                                         |
 | 61  | [Public API and API tokens](61-public-api-and-tokens.md)           | Proposed: signed-in-only API tokens (gated like teams) for external callers + an HMAC requirement on X-Owner-Id to close a current owner-impersonation escalation; input hardening shipped |
+| 62  | [MCP server](62-mcp-server.md)                                     | Proposed: standalone Cloudflare Worker exposing find/read/create/update diagram tools to the user's own AI tool via MCP; OAuth 2.1 minting an lvd_ token; inline PNG render + server-side auto-layout; the calling LLM does the thinking, not /api/ai                |
 
 ## Workflow
 
