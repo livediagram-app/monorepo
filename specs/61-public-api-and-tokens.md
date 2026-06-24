@@ -160,12 +160,28 @@ so rotation isn't a surprise.
 
 ### 3.7 Self-hosting
 
-API tokens are the one API surface gated on an account, exactly as teams are
-([spec/32](32-teams.md)). A self-host **with** Clerk configured gets them; a
-self-host **without** Clerk has no accounts, so it has no API tokens — and that
-takes nothing away, because everything the canvas / guest model offers stays
-fully available without an account ([spec/04](04-auth-and-guest-access.md)).
-No new SaaS dependency beyond the optional Clerk that teams already need.
+API tokens are gated on **auth being enabled**, exactly as teams and sign-in
+are ([spec/32](32-teams.md), [spec/04](04-auth-and-guest-access.md)). A
+self-host that hasn't configured Clerk runs in pure-guest mode, and in that
+mode the feature is **absent end to end** — there is no tokens page to open and
+no way to mint one:
+
+- **Frontend** — the Explorer "API tokens" section (and any token UI) renders
+  only when `clerkEnabled` (`apps/live/lib/clerk-config.ts`, derived from the
+  presence of `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`). This is the **same flag**
+  that already hides the teams / sign-in sections of the sidebar, so when auth
+  is off the section simply isn't in the nav.
+- **Backend** — the `/api/tokens` routes require a verified Clerk identity, and
+  with `CLERK_JWKS_URL` unset the worker resolves no Clerk identity at all
+  ([`auth/clerk.ts`](../apps/api/src/auth/clerk.ts) returns null), so the
+  routes reject every caller. Belt and suspenders: even if the UI were somehow
+  reached, token creation / use is impossible without auth configured.
+
+So enabling tokens is opt-in with auth, and disabling auth removes them
+cleanly — no orphaned page, no half-working endpoint. This takes nothing away
+from a guest-only self-host, because the whole canvas / guest model stays fully
+available without an account ([spec/04](04-auth-and-guest-access.md)). No new
+SaaS dependency beyond the optional Clerk that teams already need.
 
 ## 4. `X-Owner-Id` trust change
 
@@ -233,7 +249,9 @@ hardening landed first:
    mint/verify (`auth/`), Clerk-gated `/api/tokens` routes (the team-route
    gate, [spec/32](32-teams.md)).
 4. The **Explorer "API tokens" section** under Themes (`TokensPane`, mirroring
-   `ThemesPane`) — the management UI ([§3.6](#36-management--a-new-explorer-library-page)).
+   `ThemesPane`) — the management UI ([§3.6](#36-management--a-new-explorer-library-page)),
+   rendered only when `clerkEnabled` so it's absent on a no-auth self-host
+   ([§3.7](#37-self-hosting)).
 5. Wire token resolution into `resolveOwner`; enforce scopes.
 6. **Docs + help, shipped WITH the feature** (help articles describe live
    features and must be registered — see the help-centre rule in `CLAUDE.md`,
