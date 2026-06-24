@@ -7,10 +7,10 @@ import {
   downloadBlob,
   exportTabAsJson,
   exportTabAsMarkdown,
-  exportTabAsPdf,
   exportTabAsPng,
   exportTabAsSvg,
 } from '@/lib/export-tab';
+import { exportTabAsPdf } from '@/lib/export-tab-pdf';
 import { track } from '@/lib/telemetry';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 
