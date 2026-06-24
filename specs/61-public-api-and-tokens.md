@@ -7,10 +7,19 @@ token auth model below is the part awaiting sign-off before any code.
 
 ## 1. Goal
 
-Let people call the livediagram API from their own scripts / integrations with
-a long-lived **API token**, not just from the first-party web app. Read their
-diagrams, create/update them, manage folders — the same surface the app uses,
-under an explicit, revocable credential.
+Let **signed-in** people call the livediagram API from their own scripts /
+integrations with a long-lived **API token**, not just from the first-party web
+app. Read their diagrams, create/update them, manage folders — the same surface
+the app uses, under an explicit, revocable credential.
+
+**Signed-in only (gated like teams, [spec/32](32-teams.md)).** API tokens are an
+advanced, opt-in feature for users with an account; the canvas, guests, and the
+share/realtime flows are unaffected and stay account-free ([spec/04](04-auth-and-guest-access.md)).
+A token always acts as a Clerk user; there are **no guest-owned tokens**. This
+is a deliberate constraint, not a limitation to apologise for: programmatic API
+use is a power-user need, requiring an account for it is reasonable, and it
+keeps tokens off the spoofable guest-identity path entirely (the guest REST
+hardening in [§4](#4-x-owner-id-trust-change) is a separate track).
 
 This must not weaken the friction-free guest model ([spec/04](04-auth-and-guest-access.md))
 or self-hosting ([spec/03](03-open-source-and-business-model.md)).
@@ -73,7 +82,7 @@ A new owner-scoped table, migration with the worker that owns the binding:
 ```
 api_tokens(
   id            TEXT PRIMARY KEY,     -- public token id (for listing / revoke)
-  owner_id      TEXT NOT NULL,        -- the Clerk userId OR guest id this token acts as
+  owner_id      TEXT NOT NULL,        -- the Clerk userId this token acts as (never a guest id)
   token_hash    TEXT NOT NULL UNIQUE, -- SHA-256 of the secret
   name          TEXT,                 -- user label ("CI bot")
   scopes        TEXT NOT NULL,        -- 'read' | 'read,write' (see 3.4)
@@ -94,8 +103,9 @@ alongside Clerk + the guest header:
 1. `Authorization: Bearer lvd_…` → hash → look up a non-revoked, non-expired
    row → the request's owner id is the row's `owner_id`; stamp `last_used_at`.
 2. Else the existing Clerk JWT path.
-3. Else the guest `X-Owner-Id` path — **only for first-party requests** (see
-   [§4](#4-x-owner-id-trust-change)).
+3. Else the guest `X-Owner-Id` path — now requiring a valid HMAC signature on
+   the header (see [§4](#4-x-owner-id-trust-change)). Tokens never resolve to a
+   guest id, so this path is for the first-party app only; it grants no token.
 
 The resolved owner id flows through the **same** `gateRead` / `gateEdit` /
 ownership checks every route already enforces — so a token can only touch what
@@ -118,16 +128,22 @@ backstop.
 
 ### 3.6 Management
 
-Users create / name / revoke tokens in account settings (signed-in users) — a
-new `GET/POST/DELETE /api/tokens` surface, Clerk-gated (you can't mint a token
-with a bare guest header). Creation returns the secret once. Revoke is
-immediate (the lookup filters `revoked = 0`).
+Users create / name / revoke tokens in account settings — a new
+`GET/POST/DELETE /api/tokens` surface, **gated exactly like the team routes**
+([spec/32](32-teams.md)): it requires a verified Clerk identity and rejects a
+guest (`X-Owner-Id`-only) caller outright (`401`/`403`, mirroring
+`routes/teams.ts`). So a token can only ever be minted by — and act as — a
+signed-in account. Creation returns the secret once. Revoke is immediate (the
+lookup filters `revoked = 0`).
 
 ### 3.7 Self-hosting
 
-Tokens are owner-scoped and work whether the owner id is a Clerk `sub` or a
-guest id, so a self-host without Clerk can still issue tokens against guest
-identities. No SaaS dependency.
+API tokens are the one API surface gated on an account, exactly as teams are
+([spec/32](32-teams.md)). A self-host **with** Clerk configured gets them; a
+self-host **without** Clerk has no accounts, so it has no API tokens — and that
+takes nothing away, because everything the canvas / guest model offers stays
+fully available without an account ([spec/04](04-auth-and-guest-access.md)).
+No new SaaS dependency beyond the optional Clerk that teams already need.
 
 ## 4. `X-Owner-Id` trust change
 
@@ -192,9 +208,21 @@ hardening landed first:
    non-owners, and consider a room-scoped presence id — so a leaked id is
    harder to obtain even before the signature check rejects its use.
 3. `api_tokens` table + migration + token mint/verify (`auth/`), Clerk-gated
-   management routes.
+   management routes (the team-route gate, [spec/32](32-teams.md)).
 4. Wire token resolution into `resolveOwner`; enforce scopes.
-5. Public API docs (the surface is the existing routes; document them).
+5. **Docs + help, shipped WITH the feature** (help articles describe live
+   features and must be registered — see the help-centre rule in `CLAUDE.md`,
+   so this copy lands when the feature does, not before):
+   - A new help article (e.g. `account-and-data/api-tokens`) covering what
+     tokens are, how to create/revoke them, and the **signed-in-only**
+     limitation — registered in `apps/help/lib/articles.ts`.
+   - Add API tokens to the "what signing in unlocks" list in the
+     `account-and-data/signing-in` article (next to teams + cross-device sync).
+   - `docs/` updates: note the new `/api/tokens` surface + its account
+     requirement in `docs/architecture.md`, and the Clerk-gated nature in
+     `docs/self-hosting.md` (tokens need Clerk, like teams).
+   - Public API reference for the existing routes (ties in with
+     [spec/37](37-api-documentation.md)).
 
 ## 7. Out of scope (for now)
 
