@@ -88,12 +88,23 @@ api_tokens(
   scopes        TEXT NOT NULL,        -- 'read' | 'read,write' (see 3.4)
   created_at    INTEGER NOT NULL,
   last_used_at  INTEGER,
-  expires_at    INTEGER,              -- NULL = no expiry
+  expires_at    INTEGER NOT NULL,     -- created_at + 6 months; never null, never "forever"
   revoked       INTEGER NOT NULL DEFAULT 0
 )
 ```
 
 Indexed on `token_hash` (lookup) and `owner_id` (listing).
+
+**Lifetime — fixed 6 months.** Every token expires at `created_at + 6 months`.
+This is a hard maximum AND the only option: `expires_at` is **never null** (no
+never-expires tokens) and there is no shorter / user-chosen value for now — a
+long-lived credential that never lapses is the thing we don't want sitting in
+someone's CI config forever. `expires_at` is therefore always set and always in
+the future at creation; the lookup filters on it (`expires_at > now`) so an
+expired token is rejected exactly like a revoked one. **Rotation is manual**:
+mint a fresh token before the old one lapses. A configurable or shorter
+lifetime can be added later if there's demand; six months is the ceiling
+regardless.
 
 ### 3.3 Resolution
 
@@ -126,15 +137,26 @@ runaway integration is throttled independently of the owner's interactive app
 use, and add a read limiter for token reads. Per-IP limits stay as the outer
 backstop.
 
-### 3.6 Management
+### 3.6 Management — a new Explorer library page
 
-Users create / name / revoke tokens in account settings — a new
-`GET/POST/DELETE /api/tokens` surface, **gated exactly like the team routes**
-([spec/32](32-teams.md)): it requires a verified Clerk identity and rejects a
-guest (`X-Owner-Id`-only) caller outright (`401`/`403`, mirroring
-`routes/teams.ts`). So a token can only ever be minted by — and act as — a
-signed-in account. Creation returns the secret once. Revoke is immediate (the
-lookup filters `revoked = 0`).
+Tokens are created / named / revoked from a **new Explorer library section**,
+listed in the sidebar nav (`apps/live/app/explorer/ExplorerSidebar.tsx`)
+**directly under "Themes"** as its own entry (e.g. "API tokens",
+`go({ kind: 'tokens' })`). It renders a `TokensPane` that mirrors `ThemesPane`:
+a list of the user's tokens (name, created, expires, last-used) with a
+create-token action and a revoke per row. Same pattern, same place users
+already manage their other account-scoped library items.
+
+Behind it, a new `GET/POST/DELETE /api/tokens` surface, **gated exactly like
+the team routes** ([spec/32](32-teams.md)): it requires a verified Clerk
+identity and rejects a guest (`X-Owner-Id`-only) caller outright (`401`/`403`,
+mirroring `routes/teams.ts`) — so the section is hidden / inert for guests, the
+same way the rest of the signed-in surface is. A token can only ever be minted
+by, and act as, a signed-in account. Creation returns the secret **once**
+(shown in the pane to copy, never retrievable again); the row then shows only
+the public id + metadata. Revoke is immediate (the lookup filters
+`revoked = 0`). The pane states the fixed 6-month expiry ([§3.2](#32-storage-d1))
+so rotation isn't a surprise.
 
 ### 3.7 Self-hosting
 
@@ -207,15 +229,19 @@ hardening landed first:
    collaborator can read it — redact `participantId` in the change-log read for
    non-owners, and consider a room-scoped presence id — so a leaked id is
    harder to obtain even before the signature check rejects its use.
-3. `api_tokens` table + migration + token mint/verify (`auth/`), Clerk-gated
-   management routes (the team-route gate, [spec/32](32-teams.md)).
-4. Wire token resolution into `resolveOwner`; enforce scopes.
-5. **Docs + help, shipped WITH the feature** (help articles describe live
+3. `api_tokens` table + migration (`expires_at` fixed to +6 months) + token
+   mint/verify (`auth/`), Clerk-gated `/api/tokens` routes (the team-route
+   gate, [spec/32](32-teams.md)).
+4. The **Explorer "API tokens" section** under Themes (`TokensPane`, mirroring
+   `ThemesPane`) — the management UI ([§3.6](#36-management--a-new-explorer-library-page)).
+5. Wire token resolution into `resolveOwner`; enforce scopes.
+6. **Docs + help, shipped WITH the feature** (help articles describe live
    features and must be registered — see the help-centre rule in `CLAUDE.md`,
    so this copy lands when the feature does, not before):
    - A new help article (e.g. `account-and-data/api-tokens`) covering what
-     tokens are, how to create/revoke them, and the **signed-in-only**
-     limitation — registered in `apps/help/lib/articles.ts`.
+     tokens are, creating/revoking them **from the Explorer**, the **6-month
+     expiry + manual rotation**, and the **signed-in-only** limitation —
+     registered in `apps/help/lib/articles.ts`.
    - Add API tokens to the "what signing in unlocks" list in the
      `account-and-data/signing-in` article (next to teams + cross-device sync).
    - `docs/` updates: note the new `/api/tokens` surface + its account
