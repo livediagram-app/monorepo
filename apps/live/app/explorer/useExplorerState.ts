@@ -535,7 +535,7 @@ export function useExplorerState() {
   );
 
   const paneTitle = useMemo(() => {
-    if (selected.kind === 'recent') return 'Recent diagrams';
+    if (selected.kind === 'recent') return 'Recent';
     if (selected.kind === 'shared') return 'Shared with you';
     if (selected.kind === 'gallery') return 'Image gallery';
     if (selected.kind === 'themes') return 'Themes';
@@ -555,7 +555,7 @@ export function useExplorerState() {
   type Crumb = { name: string; onClick?: () => void };
   const paneCrumbs = useMemo<Crumb[]>(() => {
     const all: Crumb = { name: 'My Work', onClick: () => go({ kind: 'all' }) };
-    if (selected.kind === 'recent') return [{ name: 'Recent diagrams' }];
+    if (selected.kind === 'recent') return [{ name: 'Recent' }];
     if (selected.kind === 'shared') return [{ name: 'Shared with you' }];
     if (selected.kind === 'gallery') return [{ name: 'Image gallery' }];
     if (selected.kind === 'themes') return [{ name: 'Themes' }];

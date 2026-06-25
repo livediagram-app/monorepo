@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { useExplorer } from './ExplorerContext';
 import { NewTokenButton } from '@/components/panels/NewTokenButton';
 import type { HelpArticleKey } from '@/lib/help-articles';
-import { EmptyPane, ListView, PaneHeader, SharedList, SkeletonRows } from './views';
+import { ListView, PaneHeader, SharedList, SkeletonRows } from './views';
+import { EmptyPane } from './ExplorerEmptyState';
 
 // Each Explorer section deep-links its matching help-centre article from a
 // "?" button in the pane header (spec/56). Sections without a guide (team,
@@ -15,7 +16,7 @@ const SECTION_HELP: Partial<
 > = {
   recent: {
     article: 'recentDiagrams',
-    title: 'Recent diagrams',
+    title: 'Recent',
     description: 'Your most recently opened diagrams, personal and team, in one list.',
   },
   shared: {

@@ -13,6 +13,7 @@ import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import { relativeSince, useRelativeTimeTick } from '@/lib/relative-time';
 import { InlineRenameInput } from '@/components/primitives/InlineRenameInput';
 import { MenuItem, PortalMenu } from '@/components/primitives/PortalMenu';
+import { EmptyPane } from './ExplorerEmptyState';
 import {
   CloseIcon,
   DiagramIcon,
@@ -694,28 +695,6 @@ export function SharedList({
 }
 
 // ---------- States: empty / loading / unauthenticated -------------
-
-export function EmptyPane({ selected }: { selected: SelectedNode }) {
-  const inFolder = selected.kind === 'folder';
-  const isRecent = selected.kind === 'recent';
-  const isShared = selected.kind === 'shared';
-  // CTAs now live in the PaneHeader's right edge ("New diagram" /
-  // "New folder"), so this empty state is just the explainer copy.
-  // Adding buttons here would be a second copy of the same actions.
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-      <p className="max-w-md text-sm text-slate-500">
-        {isRecent
-          ? "Nothing here yet. Diagrams you've opened will show up here."
-          : isShared
-            ? 'Nothing shared with you yet. Open a share link someone sent you, and the diagram will land here.'
-            : inFolder
-              ? 'This folder is empty.'
-              : 'No diagrams yet.'}
-      </p>
-    </div>
-  );
-}
 
 export function SkeletonRows() {
   return (

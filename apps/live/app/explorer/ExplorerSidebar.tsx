@@ -93,7 +93,7 @@ export function ExplorerSidebar() {
       <SidebarSectionLabel>Quick find</SidebarSectionLabel>
       <SidebarRow
         icon={<ClockIcon />}
-        label="Recent diagrams"
+        label="Recent"
         selected={selected.kind === 'recent'}
         onClick={() => go({ kind: 'recent' })}
         depth={0}
