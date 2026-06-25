@@ -158,100 +158,83 @@ export function ExplorerSidebar() {
         />
       ))}
 
-      {/* Teams (spec/32): signed-in only. Guests see a sign-in nudge
-          instead of rows; when Clerk isn't part of the deployment the
-          section disappears entirely (teams can't exist without it). */}
-      {clerkEnabled ? (
+      {/* Teams (spec/32): signed-in only. Signed-out users see neither this
+          nor External connections inline; they get one bottom-of-sidebar
+          sign-in banner instead. A no-auth self-host never has teams. */}
+      {teamsEnabled ? (
         <>
-          {/* New-team lives as a plus on the section label (not a row
-              of its own) with a desktop tooltip. */}
+          {/* New-team lives as a plus on the section label, with a tooltip. */}
           <SidebarSectionLabel
             action={
-              teamsEnabled ? (
-                <Tooltip title="New team" description="Create a team and invite people by email.">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTeamModalOpen(true);
-                      setMobileNavOpen(false);
-                    }}
-                    aria-label="New team"
-                    className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700"
-                  >
-                    <PlusIcon />
-                  </button>
-                </Tooltip>
-              ) : undefined
+              <Tooltip title="New team" description="Create a team and invite people by email.">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTeamModalOpen(true);
+                    setMobileNavOpen(false);
+                  }}
+                  aria-label="New team"
+                  className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700"
+                >
+                  <PlusIcon />
+                </button>
+              </Tooltip>
             }
           >
             Teams
           </SidebarSectionLabel>
-          {teamsEnabled ? (
-            <>
-              {teams.map((t) => {
-                const byParent = teamTree.get(t.id);
-                const rootFoldersOfTeam = byParent?.get(null) ?? [];
-                const hasFolders = rootFoldersOfTeam.length > 0;
-                const isOpen = expanded.has(t.id);
-                // Team folder click opens the team page AT that folder
-                // (full load: the team page reads the &folder param at
-                // mount, spec/35) — same as the search panel does.
-                const openTeamFolder = (folderId: string) =>
-                  window.location.assign(
-                    `/explorer/team?id=${encodeURIComponent(t.id)}&folder=${encodeURIComponent(folderId)}`,
-                  );
-                return (
-                  <div key={t.id}>
-                    <SidebarRow
-                      icon={<TeamIcon />}
-                      label={t.name}
-                      selected={selected.kind === 'team' && selected.id === t.id}
-                      onClick={() => go({ kind: 'team', id: t.id })}
-                      depth={0}
-                      badge={t.memberCount > 1 ? t.memberCount : undefined}
-                      hasChildren={hasFolders}
-                      expanded={isOpen}
-                      onToggleExpand={hasFolders ? () => toggleExpand(t.id) : undefined}
-                    />
-                    {isOpen
-                      ? rootFoldersOfTeam.map((f) => (
-                          <TeamFolderSubtree
-                            key={f.id}
-                            folder={f}
-                            depth={1}
-                            childrenByParent={byParent ?? new Map()}
-                            expanded={expanded}
-                            onToggleExpand={toggleExpand}
-                            onOpenFolder={openTeamFolder}
-                          />
-                        ))
-                      : null}
-                  </div>
-                );
-              })}
-              {/* Badge always rendered, zero included — the user gets a
+          {teams.map((t) => {
+            const byParent = teamTree.get(t.id);
+            const rootFoldersOfTeam = byParent?.get(null) ?? [];
+            const hasFolders = rootFoldersOfTeam.length > 0;
+            const isOpen = expanded.has(t.id);
+            // Team folder click opens the team page AT that folder
+            // (full load: the team page reads the &folder param at
+            // mount, spec/35) — same as the search panel does.
+            const openTeamFolder = (folderId: string) =>
+              window.location.assign(
+                `/explorer/team?id=${encodeURIComponent(t.id)}&folder=${encodeURIComponent(folderId)}`,
+              );
+            return (
+              <div key={t.id}>
+                <SidebarRow
+                  icon={<TeamIcon />}
+                  label={t.name}
+                  selected={selected.kind === 'team' && selected.id === t.id}
+                  onClick={() => go({ kind: 'team', id: t.id })}
+                  depth={0}
+                  badge={t.memberCount > 1 ? t.memberCount : undefined}
+                  hasChildren={hasFolders}
+                  expanded={isOpen}
+                  onToggleExpand={hasFolders ? () => toggleExpand(t.id) : undefined}
+                />
+                {isOpen
+                  ? rootFoldersOfTeam.map((f) => (
+                      <TeamFolderSubtree
+                        key={f.id}
+                        folder={f}
+                        depth={1}
+                        childrenByParent={byParent ?? new Map()}
+                        expanded={expanded}
+                        onToggleExpand={toggleExpand}
+                        onOpenFolder={openTeamFolder}
+                      />
+                    ))
+                  : null}
+              </div>
+            );
+          })}
+          {/* Badge always rendered, zero included — the user gets a
                   stable "is there anything waiting?" answer at a glance
                   rather than having to notice an absence. */}
-              <SidebarRow
-                icon={<InviteIcon />}
-                label="Invites"
-                selected={selected.kind === 'invites'}
-                onClick={() => go({ kind: 'invites' })}
-                depth={0}
-                badge={invites.length}
-              />
-            </>
-          ) : (
-            <Link
-              href="/sign-in/"
-              className="flex w-full items-center gap-1.5 rounded-md py-1 pl-7 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
-            >
-              <span className="shrink-0 text-slate-400">
-                <SignInIcon />
-              </span>
-              Sign in to use teams
-            </Link>
-          )}
+          <SidebarRow
+            icon={<InviteIcon />}
+            label="Invites"
+            selected={selected.kind === 'invites'}
+            onClick={() => go({ kind: 'invites' })}
+            depth={0}
+            badge={invites.length}
+          />
         </>
       ) : null}
 
@@ -270,35 +253,41 @@ export function ExplorerSidebar() {
         onClick={() => go({ kind: 'themes' })}
         depth={0}
       />
-      {/* External connections (spec/61): its own section for API tokens,
-          signed-in only. Surfaced exactly like Teams — the whole section is
-          visible whenever auth is configured (`clerkEnabled`), shows a real
-          row once signed in, and the same "Sign in to use…" nudge for a
-          signed-out guest. A no-auth self-host never sees the section. */}
-      {clerkEnabled ? (
+      {/* External connections (spec/61): API tokens, signed-in only. Hidden
+          for signed-out users (they get the bottom banner below instead). */}
+      {teamsEnabled ? (
         <>
           <SidebarSectionLabel>External connections</SidebarSectionLabel>
-          {teamsEnabled ? (
-            <SidebarRow
-              icon={<KeyIcon />}
-              label="API tokens"
-              selected={selected.kind === 'tokens'}
-              onClick={() => go({ kind: 'tokens' })}
-              depth={0}
-              badge={tokens.count > 0 ? tokens.count : undefined}
-            />
-          ) : (
-            <Link
-              href="/sign-in/"
-              className="flex w-full items-center gap-1.5 rounded-md py-1 pl-7 pr-1 text-left text-xs text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
-            >
-              <span className="shrink-0 text-slate-400">
-                <SignInIcon />
-              </span>
-              Sign in to use API tokens
-            </Link>
-          )}
+          <SidebarRow
+            icon={<KeyIcon />}
+            label="API tokens"
+            selected={selected.kind === 'tokens'}
+            onClick={() => go({ kind: 'tokens' })}
+            depth={0}
+            badge={tokens.count > 0 ? tokens.count : undefined}
+          />
         </>
+      ) : null}
+
+      {/* One sign-in banner at the bottom, in place of per-section nudges, when
+          auth is configured but the visitor is signed out. */}
+      {clerkEnabled && !teamsEnabled ? (
+        <Link
+          href="/sign-in/"
+          className="mt-5 flex items-start gap-2 rounded-lg border border-slate-200 bg-gradient-to-br from-brand-50 to-white p-3 text-left transition hover:border-brand-300 hover:from-brand-100 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/40 dark:hover:border-brand-500/50"
+        >
+          <span className="mt-0.5 shrink-0 text-brand-600 dark:text-brand-400">
+            <SignInIcon />
+          </span>
+          <span>
+            <span className="block text-xs font-semibold text-slate-700 dark:text-slate-100">
+              Sign in to access Teams and External connections
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+              Free, and your guest diagrams come with you.
+            </span>
+          </span>
+        </Link>
       ) : null}
     </>
   );
