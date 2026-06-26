@@ -52,6 +52,7 @@ Every Explorer section is its own page under `/explorer` (the chrome — header,
 | Shared with you   | `/explorer/shared`                                          |
 | All diagrams      | `/explorer/all` (route kept for deep links; no sidebar row) |
 | Unsorted          | `/explorer/unsorted`                                        |
+| Generated         | `/explorer/generated`                                       |
 | A folder          | `/explorer/folder?id=<id>`                                  |
 | A team (spec/32)  | `/explorer/team?id=<id>`                                    |
 | Invites (spec/32) | `/explorer/invites`                                         |
@@ -82,11 +83,33 @@ folders
 diagrams
   ...
   folder_id   TEXT NULL REFERENCES folders(id) ON DELETE SET NULL
+  source      TEXT NULL   -- provenance: NULL = user-made; 'ai' / 'mcp' = generated
 ```
 
 - `folder_id IS NULL` means the diagram is in Unsorted. Unsorted has
   no row in the folders table — it's a virtual bucket so users can't
   accidentally delete it.
+- `source` records how the diagram came to exist (migration 0028): NULL
+  for one a person made in the editor; `'mcp'` for one an external AI tool
+  created through the MCP server (spec/62); `'ai'` reserved for the
+  in-editor AI assistant (no producer today). Set once on create and never
+  rewritten by the metadata upsert (rename / autosave / move can't clear
+  it).
+
+### Dynamic (synthetic) folders
+
+Two folders in **My Work** aren't rows in the `folders` table — they're
+live views the Explorer always shows (badge hidden at zero), each with an
+info block under its breadcrumb explaining why it exists:
+
+- **Unsorted** — `folder_id IS NULL AND source IS NULL`. Diagrams not filed
+  into a folder and not generated.
+- **Generated** — `source IS NOT NULL`. Everything the AI assistant / MCP
+  server created, regardless of folder. The two buckets are mutually
+  exclusive (Unsorted excludes generated rows), so a generated diagram
+  shows in Generated, not Unsorted, until the user files it into a real
+  folder of their own. Route: `/explorer/generated`. Neither dynamic folder
+  offers New folder / New diagram affordances (you don't author into them).
 - `parent_id IS NULL` means the folder is at the tree root.
 - `ON DELETE SET NULL` on both `parent_id` and `folder_id`: deleting
   a folder doesn't delete its contents. Direct subfolders become

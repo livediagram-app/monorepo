@@ -111,6 +111,9 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
         // Diagrams are always created personal; they move into a
         // team library via PUT /folder afterwards (spec/35).
         teamId: null,
+        // Provenance (spec/15): only the closed set of generated sources
+        // is accepted; anything else (or absent) is a user-made diagram.
+        source: body.source === 'ai' || body.source === 'mcp' ? body.source : null,
         savedAt: now,
         createdAt: body.createdAt ?? now,
       });
@@ -173,6 +176,9 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
         shareCode: existing?.shareCode ?? null,
         folderId: existing?.folderId ?? null,
         teamId: existing?.teamId ?? null,
+        // Preserve provenance (the upsert never rewrites it anyway, but
+        // pass the existing value so the DTO is complete).
+        source: existing?.source ?? null,
         savedAt: now,
         createdAt: existing?.createdAt ?? now,
       });

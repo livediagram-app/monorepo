@@ -23,7 +23,12 @@ import {
 export type DiagramListItem = Pick<
   DiagramSummary,
   'id' | 'name' | 'folderId' | 'savedAt' | 'shareCode' | 'ownerId'
->;
+> & {
+  // Provenance (spec/15). Present on real list rows from the API; optional
+  // so synthetic rows (shared / team placeholders) can omit it. Absent or
+  // null means user-made (not in the Generated folder).
+  source?: DiagramSummary['source'];
+};
 
 // Deduped on `${ownerId}|${id}`: the editor mounts and React Strict
 // Mode in dev double-invokes its hydration effect, so this fires

@@ -53,6 +53,7 @@ export type SelectedNode =
   | { kind: 'recent' }
   | { kind: 'all' }
   | { kind: 'unsorted' }
+  | { kind: 'generated' }
   | { kind: 'shared' }
   | { kind: 'gallery' }
   | { kind: 'themes' }

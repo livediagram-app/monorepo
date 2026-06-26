@@ -22,6 +22,13 @@ import type { BackgroundPattern, ShapeKind, Tab } from '@livediagram/diagram';
 
 // Full diagram payload returned by `GET /api/diagrams/:id`. After
 // per-tab storage (spec/13), `tabs` is a list of `TabSummary`
+// How a diagram came to exist (spec/15 "Generated" folder, spec/62).
+// null = authored by a person in the editor; 'mcp' = created by an
+// external AI tool via the MCP server; 'ai' = created by the in-editor
+// AI assistant (reserved — no producer today). Drives the synthetic
+// "Generated" Explorer folder (source != null).
+export type DiagramSource = 'ai' | 'mcp';
+
 // (metadata only) — element content is fetched separately via
 // `GET /api/diagrams/:id/tabs/:tabId`.
 export type Diagram = {
@@ -43,6 +50,9 @@ export type Diagram = {
   // refers to one of THAT team's folders, or null for the team's
   // Unsorted). Joined members of the team get edit access.
   teamId: string | null;
+  // Provenance (spec/15). null = made by a person; non-null = generated
+  // (see DiagramSource). Set on create, never rewritten by meta updates.
+  source: DiagramSource | null;
   savedAt: number;
   createdAt: number;
   // Owner's display name + avatar colour, joined server-side from the
@@ -66,6 +76,8 @@ export type DiagramSummary = {
   folderId: string | null;
   // Team library placement (spec/35) — see Diagram.teamId.
   teamId: string | null;
+  // Provenance (spec/15) — see Diagram.source.
+  source: DiagramSource | null;
   savedAt: number;
   createdAt: number;
 };

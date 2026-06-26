@@ -171,13 +171,15 @@ optional `layout`. The MCP:
    Layout only ever arranges the **connected graph** — edgeless content (titles,
    per-node descriptions, captions) passes through at its given position rather
    than being raked into a disconnected-component column.
-3. **Files it under "Generated".** MCP-created diagrams land in a
-   dedicated personal folder (find-or-create by name via `GET`/`POST /api/folders`)
-   rather than Unsorted, so a user's own work and AI-generated diagrams stay
-   separate (the user can move them after). Best-effort: if the folder
-   list/create fails, fall back to Unsorted rather than failing the create.
+3. **Tags it as generated.** The create sends `source: 'mcp'`, which the
+   Explorer surfaces in a synthetic **Generated** folder (`source != null`,
+   spec/15) so a user's own work and AI-generated diagrams stay separate
+   without a real, deletable folder. The user can file one into a folder of
+   their own afterwards (which moves it out of Generated). (Earlier this
+   find-or-created a real "Generated" folder; the provenance tag replaces
+   that so the folder is dynamic, like Unsorted.)
 4. **Persists** all tabs via `POST /api/diagrams` (which seeds a `tabs[]` array
-   and takes the `folderId` directly).
+   and accepts `source`).
 5. **Returns** the new `id`, tab count + ids, the folder, the deep-link `url`,
    **and the rendered PNG of the first tab** so the user sees the result inline.
 

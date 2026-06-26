@@ -456,7 +456,19 @@ export function useExplorerState() {
   // sidebar + the "All diagrams" list row both reference the same
   // count without re-filtering.
   const unsortedDiagrams = useMemo(
-    () => diagrams.filter((d) => d.folderId === null).sort((a, b) => b.savedAt - a.savedAt),
+    () =>
+      diagrams
+        // Generated diagrams (source != null) live in their own synthetic
+        // "Generated" folder, not Unsorted, so the two buckets don't overlap.
+        .filter((d) => d.folderId === null && !d.source)
+        .sort((a, b) => b.savedAt - a.savedAt),
+    [diagrams],
+  );
+
+  // Generated diagrams (spec/15): a synthetic folder over everything the AI
+  // assistant / MCP server created (source != null), regardless of folder.
+  const generatedDiagrams = useMemo(
+    () => diagrams.filter((d) => d.source != null).sort((a, b) => b.savedAt - a.savedAt),
     [diagrams],
   );
 
@@ -505,6 +517,9 @@ export function useExplorerState() {
     if (selected.kind === 'unsorted') {
       return { showUnsortedRow: false, folders: [], diagrams: unsortedDiagrams };
     }
+    if (selected.kind === 'generated') {
+      return { showUnsortedRow: false, folders: [], diagrams: generatedDiagrams };
+    }
     if (selected.kind === 'all') {
       return {
         showUnsortedRow: true,
@@ -525,6 +540,7 @@ export function useExplorerState() {
     childrenByParent,
     diagramsByFolder,
     unsortedDiagrams,
+    generatedDiagrams,
   ]);
 
   // Count for the sidebar "Recent diagrams" badge (spec/35), mirroring
@@ -546,6 +562,7 @@ export function useExplorerState() {
     if (selected.kind === 'invites') return 'Invites';
     if (selected.kind === 'all') return 'My Work';
     if (selected.kind === 'unsorted') return 'Unsorted';
+    if (selected.kind === 'generated') return 'Generated';
     return folderById.get(selected.id)?.name ?? 'Folder';
   }, [selected, folderById, teams]);
 
@@ -564,6 +581,7 @@ export function useExplorerState() {
     if (selected.kind === 'invites') return [{ name: 'Invites' }];
     if (selected.kind === 'all') return [{ name: 'My Work' }];
     if (selected.kind === 'unsorted') return [all, { name: 'Unsorted' }];
+    if (selected.kind === 'generated') return [all, { name: 'Generated' }];
     const chain = breadcrumb(selected.id);
     return [
       all,
@@ -628,6 +646,7 @@ export function useExplorerState() {
     rootFolders,
     diagramsByFolder,
     unsortedDiagrams,
+    generatedDiagrams,
     paneContent,
     recentCount,
     paneTitle,

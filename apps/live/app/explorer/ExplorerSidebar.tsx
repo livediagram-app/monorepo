@@ -15,6 +15,7 @@ import {
   PaletteIcon,
   PlusIcon,
   ShareIcon,
+  SparkleIcon,
   TeamIcon,
 } from './icons';
 import {
@@ -48,6 +49,7 @@ export function ExplorerSidebar() {
     setRenamingFolderId,
     folderActions,
     unsortedDiagrams,
+    generatedDiagrams,
     shared,
     teams,
     teamFolders,
@@ -138,6 +140,17 @@ export function ExplorerSidebar() {
         onClick={() => go({ kind: 'unsorted' })}
         depth={0}
         badge={unsortedDiagrams.length || undefined}
+      />
+      {/* Generated is a second synthetic folder (spec/15): diagrams the AI
+          assistant / MCP server created (source != null). Always shown so
+          it's discoverable; badge hides at zero. */}
+      <SidebarRow
+        icon={<SparkleIcon />}
+        label="Generated"
+        selected={selected.kind === 'generated'}
+        onClick={() => go({ kind: 'generated' })}
+        depth={0}
+        badge={generatedDiagrams.length || undefined}
       />
       {rootFolders.map((f) => (
         <SidebarFolderSubtree

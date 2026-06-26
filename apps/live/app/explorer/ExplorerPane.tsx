@@ -142,7 +142,10 @@ export function ExplorerPane() {
           selected.kind === 'themes' ||
           selected.kind === 'tokens' ||
           selected.kind === 'team' ||
-          selected.kind === 'invites'
+          selected.kind === 'invites' ||
+          // Generated is a read-through view of AI output, not a place you
+          // hand-author into.
+          selected.kind === 'generated'
             ? undefined
             : () =>
                 window.location.assign(
@@ -156,7 +159,8 @@ export function ExplorerPane() {
           selected.kind === 'tokens' ||
           selected.kind === 'team' ||
           selected.kind === 'invites' ||
-          selected.kind === 'recent'
+          selected.kind === 'recent' ||
+          selected.kind === 'generated'
             ? undefined
             : () => createFolder(selected.kind === 'folder' ? selected.id : null)
         }

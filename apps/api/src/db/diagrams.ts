@@ -13,6 +13,8 @@ type DiagramRow = {
   shareable: number;
   folder_id: string | null;
   team_id: string | null;
+  // Provenance (spec/15): null = user-made; 'ai' / 'mcp' = generated.
+  source: string | null;
   saved_at: number;
   created_at: number;
   // Derived via subquery in the SELECT; first (oldest) share_links
@@ -66,6 +68,7 @@ async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
     shareCode: row.share_code,
     folderId: row.folder_id,
     teamId: row.team_id ?? null,
+    source: (row.source as DiagramDTO['source']) ?? null,
     savedAt: row.saved_at,
     createdAt: row.created_at,
     ownerName: ownerParticipant?.name ?? null,
@@ -79,7 +82,7 @@ async function rowToDiagram(env: Env, row: DiagramRow): Promise<DiagramDTO> {
 // minted for the diagram.
 const SHARE_CODE_EXPR =
   '(SELECT code FROM share_links WHERE share_links.diagram_id = diagrams.id ORDER BY created_at ASC LIMIT 1) AS share_code';
-const DIAGRAM_COLS = `id, owner_id, name, shareable, folder_id, team_id, saved_at, created_at, ${SHARE_CODE_EXPR}`;
+const DIAGRAM_COLS = `id, owner_id, name, shareable, folder_id, team_id, source, saved_at, created_at, ${SHARE_CODE_EXPR}`;
 const DIAGRAM_SUMMARY_COLS = DIAGRAM_COLS;
 
 export async function getDiagram(env: Env, id: string): Promise<DiagramDTO | null> {
@@ -98,6 +101,7 @@ function rowToSummary(row: SummaryRow): DiagramSummary {
     shareCode: row.share_code,
     folderId: row.folder_id,
     teamId: row.team_id ?? null,
+    source: (row.source as DiagramSummary['source']) ?? null,
     savedAt: row.saved_at,
     createdAt: row.created_at,
   };
@@ -140,15 +144,27 @@ export async function upsertDiagramMeta(
   // `shareCode` is intentionally absent from the INSERT — it now
   // lives only in share_links. The DTO field is read-only (derived
   // via subquery on selects).
+  // `source` (provenance, spec/15) is written on INSERT but deliberately
+  // absent from the DO UPDATE SET, so it's set once at create time and
+  // never rewritten by a later metadata upsert (rename / autosave / move).
   await env.DB.prepare(
-    `INSERT INTO diagrams (id, owner_id, name, shareable, folder_id, saved_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO diagrams (id, owner_id, name, shareable, folder_id, source, saved_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        owner_id = excluded.owner_id,
        name = excluded.name,
        saved_at = excluded.saved_at`,
   )
-    .bind(d.id, d.ownerId, d.name, d.shareable ? 1 : 0, d.folderId, d.savedAt, d.createdAt)
+    .bind(
+      d.id,
+      d.ownerId,
+      d.name,
+      d.shareable ? 1 : 0,
+      d.folderId,
+      d.source ?? null,
+      d.savedAt,
+      d.createdAt,
+    )
     .run();
 }
 

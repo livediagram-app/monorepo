@@ -26,6 +26,8 @@ export function explorerPathFor(node: SelectedNode): string {
       return '/explorer/all';
     case 'unsorted':
       return '/explorer/unsorted';
+    case 'generated':
+      return '/explorer/generated';
     case 'shared':
       return '/explorer/shared';
     case 'gallery':
@@ -55,6 +57,8 @@ export function selectedFromRoute(pathname: string, search: URLSearchParams): Se
       return { kind: 'all' };
     case '/explorer/unsorted':
       return { kind: 'unsorted' };
+    case '/explorer/generated':
+      return { kind: 'generated' };
     case '/explorer/shared':
       return { kind: 'shared' };
     case '/explorer/images':

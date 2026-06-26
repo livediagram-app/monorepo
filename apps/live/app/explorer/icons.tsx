@@ -111,6 +111,26 @@ export function ClockIcon() {
   );
 }
 
+// Sparkle for the synthetic "Generated" folder (AI / MCP-created diagrams).
+export function SparkleIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 2.5c.4 2.2 1.3 3.1 3.5 3.5C9.3 6.4 8.4 7.3 8 9.5 7.6 7.3 6.7 6.4 4.5 6 6.7 5.6 7.6 4.7 8 2.5Z" />
+      <path d="M12.5 9.5c.2 1 .6 1.4 1.5 1.5-.9.2-1.3.6-1.5 1.5-.2-.9-.6-1.3-1.5-1.5.9-.1 1.3-.5 1.5-1.5Z" />
+    </svg>
+  );
+}
+
 export function ShareIcon() {
   return (
     <svg

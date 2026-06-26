@@ -4,7 +4,7 @@
 // the elements; these tools validate, lay out, persist, and render.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import type { Diagram, DiagramSummary, Folder, TabRecord } from '@livediagram/api-schema';
+import type { Diagram, DiagramSummary, TabRecord } from '@livediagram/api-schema';
 import {
   autoLayoutElements,
   coerceShapeKind,
@@ -103,30 +103,6 @@ function buildTab(
   };
 }
 
-// MCP-created diagrams land in a dedicated "Generated" folder rather
-// than Unsorted (spec/62). Find the owner's folder by name or create it; the
-// diagram POST takes the folderId directly. Best-effort: if folder
-// listing/creation fails, fall back to Unsorted rather than failing the create.
-const GENERATED_FOLDER_NAME = 'Generated';
-
-async function ensureGeneratedFolder(env: Env, token: string): Promise<string | null> {
-  try {
-    const { folders } = await apiJson<{ folders: Folder[] }>(env, token, '/folders');
-    const existing = folders.find(
-      (f) => f.name === GENERATED_FOLDER_NAME && !f.parentId && !f.teamId,
-    );
-    if (existing) return existing.id;
-    const id = crypto.randomUUID();
-    await apiJson(env, token, '/folders', {
-      method: 'POST',
-      body: JSON.stringify({ id, name: GENERATED_FOLDER_NAME }),
-    });
-    return id;
-  } catch {
-    return null;
-  }
-}
-
 export function registerTools(server: McpServer, env: Env): void {
   server.registerTool(
     'find_diagrams',
@@ -219,10 +195,12 @@ export function registerTools(server: McpServer, env: Env): void {
         tabs.push(buildTab(tabId, t.name, candidate.elements, args.layout, args.theme));
       }
       const id = crypto.randomUUID();
-      const folderId = await ensureGeneratedFolder(env, token);
+      // Tag the diagram as MCP-generated (spec/15). The Explorer surfaces a
+      // synthetic "Generated" folder over source != null, so there's no
+      // real folder to create / place it in.
       await apiJson(env, token, '/diagrams', {
         method: 'POST',
-        body: JSON.stringify({ id, name: args.name, tabs, ...(folderId ? { folderId } : {}) }),
+        body: JSON.stringify({ id, name: args.name, tabs, source: 'mcp' }),
       });
       return imageResult(
         {
@@ -230,7 +208,7 @@ export function registerTools(server: McpServer, env: Env): void {
           name: args.name,
           tabCount: tabs.length,
           tabIds: tabs.map((t) => t.id),
-          folder: folderId ? GENERATED_FOLDER_NAME : 'Unsorted',
+          folder: 'Generated',
           url: deepLink(id),
         },
         tabs[0]!,
