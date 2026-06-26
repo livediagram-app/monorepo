@@ -92,7 +92,7 @@ export type LandingSection = {
  */
 export const LANDING_SECTIONS: LandingSection[] = [
   {
-    id: 'why',
+    id: 'simple',
     cta: 'Explore how we keep it simple',
     title: 'Simple by design, powerfully deep',
     description:

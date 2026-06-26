@@ -48,15 +48,10 @@ export default async function FeatureCategoryPage({
 
   return (
     <>
-      <BreadcrumbJsonLd
-        trail={[
-          { name: 'Features', path: '/features' },
-          { name: section.title, path: `/features/${slug}` },
-        ]}
-      />
+      <BreadcrumbJsonLd name={section.title} path={`/features/${slug}`} />
       <Header />
       <main>
-        <Breadcrumb items={[{ label: 'Features', href: '/features' }, { label: section.title }]} />
+        <Breadcrumb items={[{ label: section.title }]} />
         <FeatureCategoryHero section={section} />
         <Section id={section.id} title="Everything in this category">
           <FeatureGrid items={section.items} />

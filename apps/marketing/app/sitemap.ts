@@ -54,16 +54,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
-    // Feature index + one page per category (spec/16 "Feature category
-    // pages"). Derived from LANDING_SECTION_IDS so adding a section to
-    // LANDING_SECTIONS sitemaps its page automatically. Build-time `now`:
-    // the feature copy moves with product releases, like the landing page.
-    {
-      url: `${base}/features`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
+    // One page per feature category (spec/16 "Feature category pages").
+    // Derived from LANDING_SECTION_IDS so adding a section to LANDING_SECTIONS
+    // sitemaps its page automatically. Build-time `now`: the feature copy
+    // moves with product releases, like the landing page. (There is no
+    // /features hub index page; the landing page is the feature overview.)
     ...LANDING_SECTION_IDS.map((id) => ({
       url: `${base}/features/${id}`,
       lastModified: now,
