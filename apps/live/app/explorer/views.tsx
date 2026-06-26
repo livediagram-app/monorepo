@@ -8,7 +8,7 @@
 // level state, no api calls. The page wires them together.
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { DiagramListItem, Folder, SharedWithItem } from '@/lib/api-client';
 import { relativeSince, useRelativeTimeTick } from '@/lib/relative-time';
 import { InlineRenameInput } from '@/components/primitives/InlineRenameInput';
@@ -24,6 +24,7 @@ import {
   MenuPencilIcon,
   MenuTrashIcon,
   PlusIcon,
+  SparkleIcon,
   TeamIcon,
 } from './icons';
 
@@ -70,6 +71,9 @@ export function ListView({
   showUnsortedRow,
   unsortedCount,
   onOpenUnsorted,
+  showGeneratedRow = false,
+  generatedCount = 0,
+  onOpenGenerated,
   onOpenFolder,
   onCommitRenameFolder,
   onCancelRenameFolder,
@@ -99,6 +103,11 @@ export function ListView({
   showUnsortedRow: boolean;
   unsortedCount: number;
   onOpenUnsorted: () => void;
+  // The Generated synthetic folder row, shown on the My Work (/all) list
+  // beside Unsorted (spec/15). Optional: defaults to hidden.
+  showGeneratedRow?: boolean;
+  generatedCount?: number;
+  onOpenGenerated?: () => void;
   onOpenFolder: (id: string) => void;
   onCommitRenameFolder: (id: string, name: string) => void;
   onCancelRenameFolder: () => void;
@@ -142,6 +151,9 @@ export function ListView({
       </div>
       <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
         {showUnsortedRow ? <UnsortedRow count={unsortedCount} onOpen={onOpenUnsorted} /> : null}
+        {showGeneratedRow && onOpenGenerated ? (
+          <GeneratedRow count={generatedCount} onOpen={onOpenGenerated} />
+        ) : null}
         {folders.map((f) => (
           <FolderRow
             key={f.id}
@@ -174,13 +186,22 @@ export function ListView({
   );
 }
 
-// Synthetic "Unsorted" folder row for the All-diagrams list view.
-// Looks like a regular folder row (folder glyph + name + child
-// count) but has no rename / move / new-subfolder / delete actions
-// because the row isn't backed by a folders table entry: Unsorted
-// is the absence of a parent. Clicking drills into the Unsorted
-// pseudo-folder which lists every diagram with folder_id IS NULL.
-export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+// A synthetic ("dynamic") folder row in the list view — looks like a real
+// folder row (glyph + name + count) but has no rename/move/delete actions
+// because it isn't backed by a folders table entry: it's a live view
+// (Unsorted = no parent; Generated = AI-made). Shared by both so they
+// can't drift.
+function SyntheticFolderRow({
+  icon,
+  label,
+  count,
+  onOpen,
+}: {
+  icon: ReactNode;
+  label: string;
+  count: number;
+  onOpen: () => void;
+}) {
   return (
     <li className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800">
       <button
@@ -189,11 +210,9 @@ export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => vo
         onClick={onOpen}
         className="flex min-w-0 items-center gap-2 text-left"
       >
-        <span className="shrink-0 text-slate-400 dark:text-slate-500">
-          <FolderIcon open={false} />
-        </span>
+        <span className="shrink-0 text-slate-400 dark:text-slate-500">{icon}</span>
         <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700 dark:text-slate-100 dark:group-hover:text-brand-300">
-          Unsorted
+          {label}
         </span>
         {count > 0 ? (
           <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
@@ -207,6 +226,23 @@ export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => vo
       <span aria-hidden />
       <span aria-hidden />
     </li>
+  );
+}
+
+export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <SyntheticFolderRow
+      icon={<FolderIcon open={false} />}
+      label="Unsorted"
+      count={count}
+      onOpen={onOpen}
+    />
+  );
+}
+
+export function GeneratedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <SyntheticFolderRow icon={<SparkleIcon />} label="Generated" count={count} onOpen={onOpen} />
   );
 }
 

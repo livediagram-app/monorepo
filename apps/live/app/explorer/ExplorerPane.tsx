@@ -91,6 +91,7 @@ export function ExplorerPane() {
     paneCrumbs,
     paneContent,
     unsortedDiagrams,
+    generatedDiagrams,
     childrenByParent,
     diagramsByFolder,
     setMobileNavOpen,
@@ -235,6 +236,10 @@ export function ExplorerPane() {
           showUnsortedRow={paneContent.showUnsortedRow}
           unsortedCount={unsortedDiagrams.length}
           onOpenUnsorted={() => go({ kind: 'unsorted' })}
+          // Generated sits beside Unsorted on the My Work (/all) list.
+          showGeneratedRow={selected.kind === 'all'}
+          generatedCount={generatedDiagrams.length}
+          onOpenGenerated={() => go({ kind: 'generated' })}
           onOpenFolder={(id) => go({ kind: 'folder', id })}
           onCommitRenameFolder={commitRenameFolder}
           onCancelRenameFolder={() => setRenamingFolderId(null)}
