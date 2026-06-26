@@ -15,7 +15,7 @@
 // the byte-size caps at the API layer (a structurally valid tab can still be
 // too big).
 
-import type { Element, Tab } from './index';
+import type { Element, ShapeKind, Tab } from './index';
 
 // Bounds. Generous vs any real diagram, tight vs an abuse payload.
 export const MAX_ELEMENTS_PER_TAB = 10_000;
@@ -39,6 +39,50 @@ export const ELEMENT_TYPES = new Set([
   'arrow',
 ]);
 export const ANCHORS = new Set(['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']);
+
+// Every valid ShapeKind, as a runtime set. The editor renders only these; an
+// off-vocabulary kind (e.g. a model emitting "rectangle", which is NOT a kind —
+// the rectangular box is "square") draws no box, so callers crossing a trust
+// boundary (the MCP, AI ingest) coerce through `coerceShapeKind`. Keep in sync
+// with the ShapeKind union in index.ts.
+export const SHAPE_KINDS = new Set<string>([
+  'square',
+  'circle',
+  'diamond',
+  'cylinder',
+  'parallelogram',
+  'hexagon',
+  'document',
+  'stadium',
+  'actor',
+  'cloud',
+  'triangle',
+  'trapezoid',
+  'star',
+  'speech-bubble',
+  'frame',
+  'browser',
+  'monitor',
+  'laptop',
+  'phone',
+  'tablet',
+  'smartwatch',
+  'progress-bar',
+  'progress-ring',
+  'timeline-rail',
+  'rating',
+  'pie-chart',
+  'bar-chart',
+  'line-chart',
+  'icon',
+]);
+
+// Map an arbitrary shape value to a real ShapeKind, defaulting an unknown /
+// synonym kind ("rectangle", "box", "oval", …) to "square" so the node always
+// renders a box instead of falling through to a bare label.
+export function coerceShapeKind(shape: unknown): ShapeKind {
+  return typeof shape === 'string' && SHAPE_KINDS.has(shape) ? (shape as ShapeKind) : 'square';
+}
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);

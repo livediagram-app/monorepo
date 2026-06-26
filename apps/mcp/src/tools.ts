@@ -7,6 +7,7 @@ import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/proto
 import type { Diagram, DiagramSummary, Folder, TabRecord } from '@livediagram/api-schema';
 import {
   autoLayoutElements,
+  coerceShapeKind,
   getBuiltInTheme,
   isLayoutCandidate,
   isValidTab,
@@ -84,7 +85,12 @@ function buildTab(
   themeId: string | undefined,
 ): Tab {
   const theme = getBuiltInTheme(themeId);
-  const laidOut = applyLayout(layout, elements);
+  // Coerce off-vocabulary shape kinds (e.g. a model emitting "rectangle", which
+  // isn't a kind — the box is "square") so every node actually renders a box.
+  const coerced = elements.map((el) =>
+    el.type === 'shape' ? { ...el, shape: coerceShapeKind(el.shape) } : el,
+  );
+  const laidOut = applyLayout(layout, coerced);
   return {
     id: tabId,
     name,

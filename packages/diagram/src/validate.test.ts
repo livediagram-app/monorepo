@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { isValidElement, isValidTab, MAX_ELEMENTS_PER_TAB, MAX_FREEHAND_POINTS } from './validate';
+import {
+  coerceShapeKind,
+  isValidElement,
+  isValidTab,
+  MAX_ELEMENTS_PER_TAB,
+  MAX_FREEHAND_POINTS,
+} from './validate';
 
 const box = { x: 0, y: 0, width: 100, height: 60 };
 
@@ -129,5 +135,20 @@ describe('isValidTab', () => {
       ...box,
     }));
     expect(isValidTab({ id: 't', name: 'x', elements: els })).toBe(false);
+  });
+});
+
+describe('coerceShapeKind', () => {
+  it('keeps a real kind', () => {
+    expect(coerceShapeKind('square')).toBe('square');
+    expect(coerceShapeKind('diamond')).toBe('diamond');
+    expect(coerceShapeKind('cylinder')).toBe('cylinder');
+  });
+  it('coerces an off-vocabulary or junk kind to square', () => {
+    expect(coerceShapeKind('rectangle')).toBe('square'); // the bug: not a real kind
+    expect(coerceShapeKind('box')).toBe('square');
+    expect(coerceShapeKind('oval')).toBe('square');
+    expect(coerceShapeKind(undefined)).toBe('square');
+    expect(coerceShapeKind(42)).toBe('square');
   });
 });

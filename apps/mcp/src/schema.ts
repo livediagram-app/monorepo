@@ -4,13 +4,14 @@
 // here — the real structural check is the diagram package's isValidTab at the
 // tool boundary, so the schema lives in one place.
 import { z } from 'zod';
-import { ANCHORS, ELEMENT_TYPES, THEMES } from '@livediagram/diagram';
+import { ANCHORS, ELEMENT_TYPES, SHAPE_KINDS, THEMES } from '@livediagram/diagram';
 
 export const SCHEMA_RESOURCE_URI = 'livediagram://schema/elements';
 
 export function elementSchemaDoc(): string {
   const types = [...ELEMENT_TYPES].join(', ');
   const anchors = [...ANCHORS].join(', ');
+  const shapeKinds = [...SHAPE_KINDS].join(', ');
   const themeIds = THEMES.map((t) => t.id).join(', ');
   return `# livediagram element schema
 
@@ -25,14 +26,15 @@ ${types}
 Boxed elements (shape, text, sticky, table, image, annotation) carry:
   id, type, x, y, width, height, and an optional "label" (string).
   - "shape" is the element for a NODE — a labelled box, the default building
-    block of almost every diagram. It also needs "shape": "rectangle" (the
-    default box / process step), "diamond" (a decision), "cylinder" (a
-    datastore / database), "circle", "ellipse", "square", "cloud", "hexagon",
-    "parallelogram" (I/O), "star", and more, plus "frame" (a section container
-    drawn behind its contents). Unknown shape kinds fall back to a rounded box.
+    block of almost every diagram. It also needs "shape": one of
+    ${shapeKinds}. The default box / process step is "square" (a rounded
+    rectangle that fills its width × height) — there is NO "rectangle" kind.
+    Use "diamond" for a decision, "cylinder" for a datastore, "stadium" for a
+    start/end, "circle", "hexagon", "parallelogram" for I/O, and "frame" for a
+    section container. An unknown kind is coerced to "square".
   - "text" is BARE text with no box, fill, or border. Use it ONLY for a
     free-standing title, caption, legend, or note — NEVER for a node. A node
-    that has a label is a "shape" with a "label" (use shape: "rectangle"), not a
+    that has a label is a "shape" with a "label" (use shape: "square"), not a
     "text". Defaulting to "text" for nodes makes a diagram of floating words
     with no boxes; reach for "shape" unless you specifically want loose text.
 
@@ -70,7 +72,7 @@ autumn / jewel; uml = standard UML notation colours. Pick one that fits the
 subject; one theme applies to all tabs in a create_diagram call.
 
 ## Design rules (diagrams that read well)
-- Nodes are SHAPES, not text. Use type "shape" (shape: "rectangle" by default,
+- Nodes are SHAPES, not text. Use type "shape" (shape: "square" by default,
   "diamond" for a decision, "cylinder" for a datastore) for every box in the
   diagram. Reserve type "text" for stand-alone titles / captions.
 - Do NOT set colours. The theme owns fill / stroke / text colour; omit them and
