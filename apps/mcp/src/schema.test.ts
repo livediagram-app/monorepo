@@ -26,18 +26,19 @@ describe('tool input shapes', () => {
     expect(() => s.parse({ limit: 100 })).toThrow();
   });
 
-  it('create: requires name + at least one tab', () => {
+  it('create: accepts a tabs[] array or a single tab alias', () => {
     const s = z.object(createDiagramShape);
-    expect(() => s.parse({ name: 'x' })).toThrow(); // tabs required
-    expect(() => s.parse({ name: 'x', tabs: [] })).toThrow(); // min 1
-    const ok = s.parse({
+    expect(() => s.parse({ name: 'x', tabs: [] })).toThrow(); // min 1 when tabs is given
+    const multi = s.parse({
       name: 'x',
       tabs: [
         { name: 'Overview', elements: [{ id: 'a', type: 'shape' }] },
         { name: 'Detail', elements: [] },
       ],
     });
-    expect(ok.tabs).toHaveLength(2);
+    expect(multi.tabs).toHaveLength(2);
+    // The `tab` alias (stale-cache compatibility) parses too.
+    expect(s.parse({ name: 'x', tab: { name: 'a', elements: [] } }).tab).toBeTruthy();
   });
 
   it('add_tab: requires diagramId + name + elements', () => {

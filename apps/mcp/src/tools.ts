@@ -167,8 +167,13 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      // Accept either `tabs` (preferred) or a single `tab` alias.
+      const inputTabs = args.tabs ?? (args.tab ? [args.tab] : undefined);
+      if (!inputTabs || inputTabs.length === 0) {
+        return errorResult('Provide "tabs": an array of { name, elements } (or a single "tab").');
+      }
       const tabs: Tab[] = [];
-      for (const t of args.tabs) {
+      for (const t of inputTabs) {
         const tabId = crypto.randomUUID();
         const candidate: unknown = { id: tabId, name: t.name, elements: t.elements };
         if (!isValidTab(candidate)) {

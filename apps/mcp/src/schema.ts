@@ -99,14 +99,19 @@ const tabShape = z.object({
 
 export const createDiagramShape = {
   name: z.string().describe('Name for the new diagram.'),
+  // `tabs` is preferred; `tab` is accepted as an alias for a single tab so a
+  // client with a stale cached schema (or one that just sends `tab`) still works
+  // — provide one or the other.
   tabs: z
     .array(tabShape)
     .min(1)
     .max(20)
+    .optional()
     .describe(
-      'One or more tabs, each its own canvas. Pass several to create a multi-tab diagram in ' +
-        'one call (e.g. an overview tab plus a detail tab per subsystem).',
+      'One or more tabs, each its own canvas. Preferred — pass several to create a multi-tab ' +
+        'diagram in one call (e.g. an overview tab plus a detail tab per subsystem).',
     ),
+  tab: tabShape.optional().describe('A single tab — accepted as an alias for tabs: [tab].'),
   layout: layoutField,
 };
 
