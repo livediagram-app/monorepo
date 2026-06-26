@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-import type { ShapeKind } from '@livediagram/diagram';
+import { SHAPE_KINDS, type ShapeKind } from '@livediagram/diagram';
 
 // Shape-shape SVG primitives, used by both BoxedElementView (the
 // canvas-rendered element) and Canvas (the in-progress draw
@@ -23,6 +23,11 @@ import type { ShapeKind } from '@livediagram/diagram';
 //     0..100 viewBox warps into big asymmetric arcs on a wide box,
 //     and the user's border-radius control would do nothing.
 export function isSvgRenderedShape(kind: ShapeKind): boolean {
+  // An unknown / off-vocabulary kind (e.g. a stray "rectangle" from an external
+  // source — the ShapeSvgOverlay has no case for it and would draw nothing) is
+  // routed to the plain HTML box path instead, so it renders a square box rather
+  // than an invisible node. Valid kinds keep their existing routing.
+  if (!SHAPE_KINDS.has(kind)) return false;
   return kind !== 'square' && kind !== 'circle' && kind !== 'stadium' && kind !== 'browser';
 }
 
