@@ -1,11 +1,11 @@
 import { Fragment, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { FeatureCategoryBlock } from '@/components/FeatureCategoryBlock';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { PrivacySection } from '@/components/PrivacySection';
-import { FeatureGrid, Section } from '@/components/Section';
-import { StartDrawingArt } from '@/components/StartDrawingArt';
+import { StartDrawingCta } from '@/components/StartDrawingCta';
 import { LANDING_SECTIONS } from '@/lib/landing-content';
 // Lazy-load UseCaseCarousel: the 470-line `'use client'` rotator
 // sits below several feature sections (well below the fold) and
@@ -32,42 +32,18 @@ export default function LandingPage() {
       <main>
         <Hero />
 
+        {/* Each feature category is pitched as a compact advertising block that
+            links into its own /features/<id> page, rather than enumerating
+            every feature card inline (spec/16). The block alternates its art
+            side + tinted background by index for rhythm. */}
         {LANDING_SECTIONS.map((section, index) => (
           <Fragment key={section.id}>
-            <Section
-              id={section.id}
-              title={section.title}
-              description={section.description}
-              // Alternate plain / tinted backgrounds by position so the rhythm
-              // stays correct automatically when sections move or are added.
-              variant={index % 2 === 1 ? 'tinted' : 'default'}
-            >
-              <FeatureGrid items={section.items} />
-            </Section>
+            <FeatureCategoryBlock section={section} index={index} />
             {INTERLUDES[section.id]}
           </Fragment>
         ))}
 
-        <section id="get-started" className="border-t border-slate-200/70 bg-brand-500">
-          <div className="mx-auto max-w-6xl px-6 py-20 text-center sm:py-24">
-            <StartDrawingArt />
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Time to start
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-brand-50">
-              No sign-up wall. No credit card. The editor opens in your browser and remembers the
-              diagram next time you visit.
-            </p>
-            <div className="mt-8">
-              <a
-                href="/new"
-                className="inline-flex items-center justify-center rounded-md bg-white px-6 py-3 text-base font-medium text-brand-700 shadow-sm transition hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                Start drawing
-              </a>
-            </div>
-          </div>
-        </section>
+        <StartDrawingCta />
       </main>
       <Footer />
     </>

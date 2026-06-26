@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { ALTERNATIVE_SLUGS, ALTERNATIVES_LAST_UPDATED } from '@/lib/alternatives';
+import { LANDING_SECTION_IDS } from '@/lib/landing-content';
 import { LEGAL_LAST_UPDATED } from '@/lib/legal-revisions';
 import { SITE_URL } from '@/lib/site';
 
@@ -53,6 +54,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    // Feature index + one page per category (spec/16 "Feature category
+    // pages"). Derived from LANDING_SECTION_IDS so adding a section to
+    // LANDING_SECTIONS sitemaps its page automatically. Build-time `now`:
+    // the feature copy moves with product releases, like the landing page.
+    {
+      url: `${base}/features`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    ...LANDING_SECTION_IDS.map((id) => ({
+      url: `${base}/features/${id}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
     {
       url: `${base}/terms`,
       lastModified: LEGAL_LAST_UPDATED,

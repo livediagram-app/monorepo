@@ -14,6 +14,9 @@ export function Footer() {
           aria-label="Footer"
           className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500"
         >
+          <a href="/features" className="hover:text-slate-900">
+            Features
+          </a>
           <a href="/alternatives" className="hover:text-slate-900">
             Compare
           </a>
