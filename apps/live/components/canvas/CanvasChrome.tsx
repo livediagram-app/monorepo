@@ -645,19 +645,19 @@ export function CanvasChrome(props: CanvasChromeProps) {
     ai: aiEl,
     activity: activityEl,
   };
-  const draggingId = dock.drag?.panelId ?? null;
-  // A panel renders in the free layer when it's parked free OR is the
-  // one currently being dragged (lifted out of its corner stack to
-  // follow the pointer); otherwise it sits in its corner's flex column.
+  // Bucketing keys off the persisted placement ONLY (not which panel is
+  // mid-drag): a dragged panel must stay in the same DOM parent for the
+  // whole gesture — reparenting it would remount the component and drop
+  // the in-flight drag. While lifted it just renders `position: absolute`
+  // in place (MovablePanel), and its corner siblings reflow into the gap.
+  // The persisted corner/free placement only changes on pointer-up.
   const freePanelIds = PANEL_IDS.filter(
-    (id) => panelEls[id] != null && (id === draggingId || dock.placementOf(id).mode === 'free'),
+    (id) => panelEls[id] != null && dock.placementOf(id).mode === 'free',
   );
   const dockedLayer = dockingActive ? (
     <div ref={dockLayerRef} className="pointer-events-none absolute inset-0 z-[var(--z-panel)]">
       {PANEL_CORNERS.map((corner) => {
-        const children = dock.cornerStacks[corner].filter(
-          (id) => id !== draggingId && panelEls[id] != null,
-        );
+        const children = dock.cornerStacks[corner].filter((id) => panelEls[id] != null);
         if (children.length === 0) return null;
         return (
           <div

@@ -13,6 +13,11 @@ import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import type { PanelDragGeometry } from '@/lib/panel-layout';
 
+// Pointer travel (px) before a header press on the docking path counts
+// as a drag rather than a click. Keeps a plain click from pulling the
+// panel out of its corner stack (which would reflow + re-dock it).
+const DOCK_DRAG_THRESHOLD_PX = 4;
+
 // The corner-docking props bundle (spec/63). CanvasChrome builds one of
 // these per panel when docking is active and panel wrappers spread it
 // straight onto their inner MovablePanel, so each wrapper only grows by
@@ -219,29 +224,38 @@ export function MovablePanel({
   // Last drag geometry, so pointerup can hand the final spot to
   // onDockDragEnd (which decides snap-to-corner vs free drop).
   const dragGeomRef = useRef<PanelDragGeometry | null>(null);
-  // Live position while dragging on the docking path, in <main>
-  // coordinates. Rendered locally (not round-tripped through the
-  // parent) so the panel tracks the pointer smoothly; the parent only
-  // hears the snap candidate (onDockDrag) and the final drop
-  // (onDockDragEnd). Null when not docking-dragging.
+  // Live position while dragging on the docking path, in the panel's
+  // offsetParent coordinates (the corner stack container or the dock
+  // layer — wherever the panel already lives). Rendered locally so the
+  // panel follows the pointer smoothly; crucially the panel is NOT
+  // reparented during the drag (that would remount it and kill the
+  // gesture), it just lifts to `position: absolute` in place. Null when
+  // not lifted.
   const [dockDragPos, setDockDragPos] = useState<{ x: number; y: number } | null>(null);
-  const computeDragGeom = useCallback(
-    (x: number, y: number): PanelDragGeometry => {
-      const node = ref.current;
-      const bounds = getDockBounds?.() ?? null;
-      const fallbackW = typeof window !== 'undefined' ? window.innerWidth : 0;
-      const fallbackH = typeof window !== 'undefined' ? window.innerHeight : 0;
-      return {
-        x,
-        y,
-        width: node?.offsetWidth ?? 0,
-        height: node?.offsetHeight ?? 0,
-        parentWidth: bounds?.width ?? fallbackW,
-        parentHeight: bounds?.height ?? fallbackH,
-      };
-    },
-    [getDockBounds],
-  );
+  // "Lifted" = the pointer has moved past the drag threshold, so this
+  // is a real drag (not a click). A bare click never lifts, so it never
+  // pulls the panel out of the flex flow and never re-docks it. A ref
+  // mirrors the state for the window pointermove handler, which needs a
+  // synchronous read between renders.
+  const dockLiftedRef = useRef(false);
+  const [dockLifted, setDockLifted] = useState(false);
+  // Drag geometry in dock-layer (<main>) coordinates, read straight from
+  // the live DOM rect so it's correct no matter which container the
+  // panel currently sits in. Drives the snap-candidate detection.
+  const computeDragGeom = useCallback((): PanelDragGeometry | null => {
+    const node = ref.current;
+    const bounds = getDockBounds?.() ?? null;
+    if (!node || !bounds) return null;
+    const rect = node.getBoundingClientRect();
+    return {
+      x: rect.left - bounds.left,
+      y: rect.top - bounds.top,
+      width: rect.width,
+      height: rect.height,
+      parentWidth: bounds.width,
+      parentHeight: bounds.height,
+    };
+  }, [getDockBounds]);
   // Max height for the panel body so it never extends below the viewport.
   // Recomputed on mount, on resize, and whenever the panel's position
   // changes (drag end updates `position`; stackBelowY changes move it too).
@@ -368,20 +382,36 @@ export function MovablePanel({
   useEffect(() => {
     if (!drag) return;
     const onMove = (e: PointerEvent) => {
-      const x = drag.startX + (e.clientX - drag.startClientX);
-      const y = drag.startY + (e.clientY - drag.startClientY);
+      const dx = e.clientX - drag.startClientX;
+      const dy = e.clientY - drag.startClientY;
       if (docking) {
-        setDockDragPos({ x, y });
-        const geom = computeDragGeom(x, y);
-        dragGeomRef.current = geom;
-        onDockDrag?.(geom);
+        // Don't lift the panel out of the flex flow (or tell the parent a
+        // drag started) until the pointer clears the threshold — a bare
+        // click must leave the layout untouched and never re-dock.
+        if (!dockLiftedRef.current) {
+          if (Math.hypot(dx, dy) < DOCK_DRAG_THRESHOLD_PX) return;
+          dockLiftedRef.current = true;
+          setDockLifted(true);
+          onDockDragStart?.();
+        }
+        setDockDragPos({ x: drag.startX + dx, y: drag.startY + dy });
+        const geom = computeDragGeom();
+        if (geom) {
+          dragGeomRef.current = geom;
+          onDockDrag?.(geom);
+        }
       } else {
-        onMoveTo(x, y);
+        onMoveTo(drag.startX + dx, drag.startY + dy);
       }
     };
     const onUp = () => {
-      if (docking && dragGeomRef.current) onDockDragEnd?.(dragGeomRef.current);
-      if (docking) setDockDragPos(null);
+      if (docking) {
+        if (dockLiftedRef.current && dragGeomRef.current) onDockDragEnd?.(dragGeomRef.current);
+        dockLiftedRef.current = false;
+        setDockLifted(false);
+        setDockDragPos(null);
+        dragGeomRef.current = null;
+      }
       setDrag(null);
     };
     window.addEventListener('pointermove', onMove);
@@ -390,7 +420,7 @@ export function MovablePanel({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [drag, onMoveTo, docking, computeDragGeom, onDockDrag, onDockDragEnd]);
+  }, [drag, onMoveTo, docking, computeDragGeom, onDockDrag, onDockDragEnd, onDockDragStart]);
 
   const beginDrag = (e: ReactPointerEvent) => {
     // Collapsible panels in their collapsed (banner) state treat the
@@ -420,21 +450,19 @@ export function MovablePanel({
     const node = ref.current;
     if (!node) return;
     if (docking) {
-      // Docking path: express the start in <main> coordinates (the panel
-      // may currently be a flex child of a corner container, so offsetLeft
-      // would be container-relative). The parent lifts it to a free
-      // absolute child of <main> in the same commit, so left/top = these
-      // coords land it at the same visual spot with no jump.
-      const bounds = getDockBounds?.() ?? null;
-      const rect = node.getBoundingClientRect();
-      const startX = bounds ? rect.left - bounds.left : node.offsetLeft;
-      const startY = bounds ? rect.top - bounds.top : node.offsetTop;
-      onDockDragStart?.();
-      setDockDragPos({ x: startX, y: startY });
-      const geom = computeDragGeom(startX, startY);
-      dragGeomRef.current = geom;
-      onDockDrag?.(geom);
-      setDrag({ startClientX: e.clientX, startClientY: e.clientY, startX, startY });
+      // Record the grab WITHOUT lifting: a bare click must not pull the
+      // panel out of the flex flow or re-dock it (the move handler's
+      // threshold decides when it becomes a real drag). startX/startY are
+      // offsetParent-relative (the panel's corner stack container, or the
+      // dock layer for a free panel) — the same coordinate space the
+      // lifted `position: absolute` renders into, so lifting in place
+      // never jumps, and the panel is never reparented mid-drag.
+      setDrag({
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startX: node.offsetLeft,
+        startY: node.offsetTop,
+      });
       return;
     }
     const startX = node.offsetLeft;
@@ -534,18 +562,22 @@ export function MovablePanel({
 
   // Docked rest (spec/63): the panel sits in a corner stack container
   // and lets that flex column own its position + reflow — no absolute
-  // positioning, no corner class, no inline left/top. Only when docking
-  // is active, the panel is assigned to a corner, and it's not currently
-  // being dragged (a drag lifts it back to absolute to follow the pointer).
-  const isDockedRest = docking && docked && !drag;
-  // While dragging on the docking path the panel is an absolute child of
-  // the dock layer (<main> coords), following the pointer via the local
-  // dockDragPos — never the corner class (which would re-pin it).
-  const isDockDragging = docking && !!drag;
+  // positioning, no corner class, no inline left/top. A pointer-down that
+  // hasn't yet crossed the drag threshold (drag set, not lifted) still
+  // counts as rest, so a bare click never disturbs the layout.
+  const isDockedRest = docking && docked && !dockLifted;
+  // While LIFTED the panel is absolute IN PLACE (same offsetParent — its
+  // corner container or the dock layer), following the pointer via the
+  // local dockDragPos. It is never reparented mid-drag (that would remount
+  // it and drop the gesture), so the only visual change is its siblings
+  // reflowing into the gap it left.
+  const isDockDragging = docking && dockLifted;
   const finalStyle: React.CSSProperties | undefined = isDockedRest
     ? undefined
     : isDockDragging
-      ? { left: dockDragPos?.x ?? 0, top: dockDragPos?.y ?? 0 }
+      ? // Lift just above the resting panels so a dragged panel passes
+        // over the others (but stays below toolbars / modals).
+        { left: dockDragPos?.x ?? 0, top: dockDragPos?.y ?? 0, zIndex: 'calc(var(--z-panel) + 1)' }
       : style;
   const positionClass = isDockedRest ? 'relative' : 'absolute';
   const finalCornerClass = isDockedRest || isDockDragging ? '' : cornerClass;
