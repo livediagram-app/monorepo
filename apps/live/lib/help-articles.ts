@@ -24,6 +24,7 @@ export const HELP_ARTICLES = {
   isometricMode: 'palette/isometric-mode',
   // AI
   aiTools: 'tools/ai/ai-tools',
+  connectAiTool: 'account-and-data/connect-ai-mcp',
   // Tabs / import-export
   exportingDiagrams: 'account-and-data/exporting-diagrams',
   apiTokens: 'account-and-data/api-tokens',

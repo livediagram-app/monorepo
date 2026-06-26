@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { helpArticleHref, helpArticleLeaf, type HelpArticleKey } from '@/lib/help-articles';
 import { track } from '@/lib/telemetry';
@@ -21,8 +22,10 @@ type HelpArticleLinkProps = {
    *   for header action rows (e.g. beside the explorer "+ Create" button).
    */
   variant?: 'icon' | 'text' | 'chrome' | 'button';
-  /** Override the visible text for the `text` variant. */
+  /** Override the visible text for the `text` and `button` variants. */
   label?: string;
+  /** Leading icon for the `button` variant (defaults to the help glyph). */
+  icon?: ReactNode;
   /** Extra classes merged onto the anchor. */
   className?: string;
 };
@@ -37,6 +40,7 @@ export function HelpArticleLink({
   description,
   variant = 'icon',
   label = 'Learn more',
+  icon,
   className,
 }: HelpArticleLinkProps) {
   const href = helpArticleHref(article);
@@ -95,8 +99,8 @@ export function HelpArticleLink({
             className ? ` ${className}` : ''
           }`}
         >
-          <HelpMarkIcon />
-          Help
+          {icon ?? <HelpMarkIcon />}
+          {label === 'Learn more' ? 'Help' : label}
         </a>
       </Tooltip>
     );

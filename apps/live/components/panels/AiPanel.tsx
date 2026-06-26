@@ -5,6 +5,7 @@ import type { Element } from '@livediagram/diagram';
 import { apiAiStream, type AiMode, type AiConversationTurn } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 import { Tooltip } from '@/components/primitives/Tooltip';
+import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 
 type AiPanelProps = {
   contextElements: Element[]; // all tab elements
@@ -12,6 +13,9 @@ type AiPanelProps = {
   tabName: string;
   ownerId: string;
   onApplyElements: (elements: Element[], mode: 'clean') => void;
+  // Show the quick suggested-prompt chips (spec/25). Toggled from the AI
+  // panel's settings popover; takes vertical space so it can be hidden.
+  showSuggestions: boolean;
 };
 
 type ModeConfig = {
@@ -59,6 +63,7 @@ export function AiPanelContent({
   tabName,
   ownerId,
   onApplyElements,
+  showSuggestions,
 }: AiPanelProps) {
   const [mode, setMode] = useState<AiMode>('ask');
   const [prompt, setPrompt] = useState('');
@@ -199,10 +204,20 @@ export function AiPanelContent({
             </Tooltip>
           ))}
         </div>
+        {/* Connect an external AI tool (MCP) — opens the help guide. */}
+        <HelpArticleLink
+          article="connectAiTool"
+          variant="button"
+          label="Connect agent"
+          title="Connect an AI tool"
+          description="Drive your diagrams from Claude, Cursor, and other AI tools over MCP."
+          icon={<PlugIcon />}
+          className="!gap-1 !px-2 !py-1 !text-[11px]"
+        />
       </div>
 
       {/* Quick-action suggestion chips for the active mode */}
-      {currentMode.suggestions.length > 0 && (
+      {showSuggestions && currentMode.suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1 px-2 pt-1.5 pb-1">
           {currentMode.suggestions.map((s) => (
             <button
@@ -424,6 +439,28 @@ function AskIcon() {
       <circle cx="8" cy="8" r="6" />
       <path d="M6 6.5a2 2 0 0 1 4 0c0 1.5-2 1.5-2 3" />
       <circle cx="8" cy="12" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+// A small plug glyph for the "Connect agent" button (connecting an
+// external AI tool over MCP).
+function PlugIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 2v3M11 2v3" />
+      <path d="M3.5 5h9v2a4.5 4.5 0 0 1-9 0V5Z" />
+      <path d="M8 11.5V14" />
     </svg>
   );
 }

@@ -24,6 +24,7 @@ import { Explorer } from '@/components/panels/Explorer';
 import { isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel } from '@/components/primitives/MovablePanel';
 import { AiPanelContent } from '@/components/panels/AiPanel';
+import { AiSettingsPopover } from '@/components/panels/AiSettingsPopover';
 import { TopCenterChrome } from '@/components/chrome/TopCenterChrome';
 // Lazy-load TemplatePicker (1163 lines + its theme / share helpers)
 // the same way ExportTabDialog + ShareDialog already are. The picker
@@ -585,6 +586,19 @@ export function CanvasChrome(props: CanvasChromeProps) {
         onReset={aiWiring.onReset}
         onMoveTo={aiPanel.onMove}
         {...aiWiring.dock}
+        headerActions={
+          <AiSettingsPopover
+            enabled={settings.aiAssistanceEnabled === true}
+            onSetEnabled={(v) => {
+              track('AI', 'Toggled', v ? 'AiOn' : 'AiOff');
+              onChangeSettings({ ...settings, aiAssistanceEnabled: v });
+            }}
+            showSuggestions={settings.aiSuggestedPrompts !== false}
+            onSetShowSuggestions={(v) => onChangeSettings({ ...settings, aiSuggestedPrompts: v })}
+            onResetPosition={aiWiring.onReset}
+            resettable={aiWiring.position !== null || aiWiring.dock !== undefined}
+          />
+        }
         mobileOpenOverride={activeMobilePanel === 'ai'}
         mobileDockAnchor={activeDockAnchor ?? undefined}
         forceDockMode={!!minimalPanels}
@@ -599,6 +613,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
           tabName={tabName}
           ownerId={aiPanel.ownerId}
           onApplyElements={aiPanel.onApplyElements}
+          showSuggestions={settings.aiSuggestedPrompts !== false}
         />
       </MovablePanel>
     ) : null;

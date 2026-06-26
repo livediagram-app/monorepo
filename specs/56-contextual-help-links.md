@@ -76,6 +76,9 @@ Grouped by priority; each links the keyed article.
 - Palette settings - auto-attach arrows -> `auto-attach-arrows`
 - Palette settings - alignment guides -> `alignment-guides`
 - Settings - AI assistant toggle -> `ai-tools`
+- AI panel - **Connect agent** button (on the Ask / Clean row) -> `connect-ai-mcp`. Uses the
+  `button` variant with a custom `label` + plug `icon` (the variant now accepts both; absent
+  a custom label it still reads "Help").
 - Export dialog header -> `exporting-diagrams` (isometric toggle -> `isometric-mode`)
 - Import dialog header -> `import-tabs` (Markdown note -> `markdown-import`)
 - Team form / invite -> `team-roles-and-invites`

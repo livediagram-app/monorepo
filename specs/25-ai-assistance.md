@@ -160,7 +160,17 @@ view-role sessions (AI mutates the diagram; guests can't persist changes they do
 
 Contains:
 
-- Mode selector (Ask / Clean tabs)
+- Mode selector (Ask / Clean tabs), with a **Connect agent** button on the right of that
+  row that opens the "Connect an AI tool (MCP)" help article (spec/62) in a new tab — the
+  calling model in an external tool generates far better than `/api/ai`, so the panel
+  points power users there.
+- **Settings gear** in the panel header (a popover mirroring the Palette / Map ones,
+  `AiSettingsPopover`): **turn the AI Assistant off** (sets `aiAssistanceEnabled = false`,
+  hiding the panel; the Settings dialog flips it back on), **reset position** (snap back to
+  the default corner, spec/63), and a **Suggested prompts** toggle (`aiSuggestedPrompts`,
+  spec/20).
+- Quick suggested-prompt chips under the mode tabs, shown only when `aiSuggestedPrompts`
+  is on (they're handy but take vertical space, so the gear can hide them).
 - Scrollable response / status area
 - Prompt textarea + Send button (disabled while a request is in flight)
 - Close button (hides for the session without touching the preference)

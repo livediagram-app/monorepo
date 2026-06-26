@@ -46,6 +46,11 @@ export type UserPreferences = {
   // (i.e. OPENAI_API_KEY is configured). Missing / undefined / false
   // === panel hidden.
   aiAssistanceEnabled?: boolean;
+  // Show the quick suggested-prompt chips in the AI panel (spec/25).
+  // Handy but they take vertical space, so the AI panel's settings
+  // popover can hide them. Missing / undefined / true === shown (the
+  // default); an explicit false hides them.
+  aiSuggestedPrompts?: boolean;
   // Minimal panel layout (spec/09). When `true`, the floating panels
   // (Explorer, Palette, Editor, AI) are replaced by a compact button
   // row that opens each panel as a popover on click. Always active on

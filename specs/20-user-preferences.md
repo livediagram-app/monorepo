@@ -127,6 +127,11 @@ type UserPreferences = {
   // OPENAI_API_KEY is configured). See spec/25.
   aiAssistanceEnabled?: boolean;
 
+  // Show the AI panel's quick suggested-prompt chips (spec/25).
+  // Toggled from the AI panel's settings popover; they take vertical
+  // space, so it can hide them. Undefined / true === shown.
+  aiSuggestedPrompts?: boolean;
+
   // When true, the floating Explorer / Palette / AI panels
   // are replaced by a compact dock of buttons that open each panel
   // as a popover on click — the "minimal panel layout". Defaults to
