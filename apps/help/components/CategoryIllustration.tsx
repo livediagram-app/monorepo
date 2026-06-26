@@ -95,6 +95,53 @@ const SCENES: Record<string, React.ReactNode> = {
     </>
   ),
 
+  // Developers: a terminal making an API request, an arrow to the diagram it returns.
+  developers: (
+    <>
+      <defs>
+        <marker id="cat-ar-dev" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto">
+          <path d="M0 0 L6 3 L0 6 Z" className="fill-brand-400" />
+        </marker>
+      </defs>
+      {/* Terminal / request window */}
+      <rect
+        x={26}
+        y={30}
+        width={150}
+        height={62}
+        rx={8}
+        className="fill-white stroke-brand-300"
+        strokeWidth={2}
+      />
+      <path d="M26 44 H176" className="stroke-brand-200" strokeWidth={2} />
+      <circle cx="38" cy="37" r="2.5" className="fill-brand-300" />
+      <circle cx="47" cy="37" r="2.5" className="fill-brand-300" />
+      <circle cx="56" cy="37" r="2.5" className="fill-brand-300" />
+      {/* prompt chevron + request lines */}
+      <path
+        d="M38 56 l5 4 -5 4"
+        className="stroke-brand-500"
+        strokeWidth={2}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x={50} y={55} width={72} height={5} rx={2.5} className="fill-brand-400" />
+      <rect x={38} y={68} width={98} height={5} rx={2.5} className="fill-brand-200" />
+      <rect x={38} y={78} width={62} height={5} rx={2.5} className="fill-brand-200" />
+      {/* arrow to the returned diagram node */}
+      <path
+        d="M176 61 H214"
+        className="stroke-brand-400"
+        strokeWidth={3}
+        fill="none"
+        strokeLinecap="round"
+        markerEnd="url(#cat-ar-dev)"
+      />
+      <Node x={222} y={44} w={68} h={34} accent />
+    </>
+  ),
+
   // Getting started: a square being drawn with a draw cursor + the "+" affordance.
   'getting-started': (
     <>

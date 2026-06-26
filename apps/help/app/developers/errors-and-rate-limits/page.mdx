@@ -1,0 +1,71 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Errors and Rate Limits',
+  description:
+    'How the livediagram API reports errors: the status codes, the error response shape, request rate limits, payload size caps, and API token expiry.',
+  path: '/help/developers/errors-and-rate-limits/',
+});
+
+<ArticleLayout
+  title="Errors and Rate Limits"
+  description="Status codes, the error response shape, rate limits, and token expiry."
+  categoryTitle="Developers"
+  categorySlug="developers"
+>
+
+## The error shape
+
+When a request fails, the API replies with the matching HTTP status and a small JSON body. The `error` field is a stable, machine-readable token; an optional `message` adds human-readable detail:
+
+```json
+{ "error": "forbidden" }
+```
+
+```json
+{ "error": "bad_request", "message": "tab exceeds the maximum size" }
+```
+
+Branch on the status code and the `error` token, not on `message`.
+
+## Status codes
+
+| Code          | Meaning                                                            |
+| ------------- | ------------------------------------------------------------------ |
+| `200` / `201` | Success. `201` is returned when a resource was created.            |
+| `204`         | Success with no body (for example a delete, or a folder move).     |
+| `400`         | The request was malformed or failed validation.                    |
+| `401`         | Missing, malformed, expired, or revoked credential.                |
+| `403`         | Authenticated, but not allowed to touch this resource.             |
+| `404`         | No such resource (or it is hidden from you, which reads the same). |
+| `409`         | A conflict, such as creating an 11th token, or a folder cycle.     |
+| `413`         | The request body is over the size cap.                             |
+| `429`         | Rate limited. Slow down and retry.                                 |
+| `5xx`         | A server-side error. Safe to retry idempotent reads after a pause. |
+
+## Rate limits
+
+The API is rate limited to keep one client from starving others. Writes (`POST` / `PUT` / `DELETE`) and reads under a token each have their own budget, keyed on the **token**, so a runaway integration is throttled independently of your interactive use of the editor. Over the budget, a request returns `429`; back off and retry.
+
+<Tip>
+  Treat `429` as routine for bulk work: pause and retry rather than hammering. Spread large imports
+  or backups out instead of firing every request at once.
+</Tip>
+
+## Payload size
+
+Request bodies are capped, and individual tabs have their own byte limit. An oversized body is rejected with `413` before it is processed. If you hit this, split the work across more, smaller tabs or diagrams.
+
+## Token expiry and revocation
+
+Every [API token](/help/account-and-data/api-tokens/) lasts **six months**, then expires. After that, requests with it fail with `401`, the same as a [revoked](/help/account-and-data/api-tokens/) token. There is no never-expires option, so build rotation in: create a fresh token before the old one lapses, update your integration, then revoke the old one.
+
+You can hold up to **10** live tokens at once. Asking for an 11th returns `409` until you revoke one or let it expire.
+
+<Note>
+  Revocation takes effect immediately. The next request a revoked token makes is rejected, so revoke
+  any token you suspect has leaked and replace it.
+</Note>
+
+</ArticleLayout>

@@ -61,6 +61,7 @@ What's running:
 - **AI assistance** (optional): the api worker proxies the OpenAI chat-completions API at `POST /api/ai` (modes generate / clean / review / ask), with `GET /api/capabilities` reporting whether `OPENAI_API_KEY` is configured. Hidden entirely when the key is absent so OSS forks ship without AI surface (see [spec/25](../specs/25-ai-assistance.md)).
 - **Auth** (optional): Clerk for sign-in; the api worker verifies JWTs against `CLERK_JWKS_URL` and silently degrades to pure-guest mode when the env var is unset.
 - **API tokens** (optional, spec/61): signed-in users mint revocable `lvd_…` tokens (Explorer → API tokens) to call the REST API from their own scripts; `Authorization: Bearer lvd_…` resolves to the owning Clerk account via a hashed-token lookup. Signed-in only (Clerk-gated, like teams), six-month expiry, stored hashed. Absent in pure-guest mode.
+- **API description** (spec/37): `GET /api/openapi.json` serves a public OpenAPI 3.1 document of the whole `/api/*` surface, assembled (`apps/api/src/openapi/`) from a declarative route manifest plus component schemas generated from `@livediagram/api-schema` (`pnpm --filter @livediagram/api gen:openapi`). A drift test pins the manifest to the real dispatch and the committed schemas to the types. The human-facing companion is the help centre's **Developers** category (`apps/help`).
 - **Routing edge**: a Cloudflare Worker stitching the apps under one hostname via service bindings.
 
 ## Hard constraints

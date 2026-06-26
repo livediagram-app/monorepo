@@ -90,6 +90,13 @@ export const categories: Category[] = [
     articleCount: 3,
   },
   {
+    slug: 'developers',
+    title: 'Developers',
+    description:
+      'Call the livediagram REST API from your own scripts: authentication, worked examples, errors and limits, and the OpenAPI reference.',
+    articleCount: 4,
+  },
+  {
     slug: 'troubleshooting',
     title: 'Troubleshooting',
     description:
@@ -407,6 +414,36 @@ export const articles: Article[] = [
     description: 'Connect Claude or any MCP client to find, view, create, and edit your diagrams.',
     category: 'Account and Data',
     categorySlug: 'account-and-data',
+  },
+
+  // ---- Developers ----
+  {
+    slug: 'api-overview',
+    title: 'The livediagram API',
+    description: 'What the REST API is, the base URL, and how to start calling it with a token.',
+    category: 'Developers',
+    categorySlug: 'developers',
+  },
+  {
+    slug: 'authentication',
+    title: 'Authentication',
+    description: 'Authenticate API requests with a bearer token, and how that differs from guests.',
+    category: 'Developers',
+    categorySlug: 'developers',
+  },
+  {
+    slug: 'working-with-diagrams',
+    title: 'Working with Diagrams',
+    description: 'Worked examples: list, read, create, and update diagrams, tabs, and folders.',
+    category: 'Developers',
+    categorySlug: 'developers',
+  },
+  {
+    slug: 'errors-and-rate-limits',
+    title: 'Errors and Rate Limits',
+    description: 'Status codes, the error response shape, rate limits, and token expiry.',
+    category: 'Developers',
+    categorySlug: 'developers',
   },
 
   // ---- Privacy and Security ----

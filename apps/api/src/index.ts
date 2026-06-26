@@ -17,6 +17,7 @@ import { MAX_BODY_BYTES } from './limits';
 import { handleAccount } from './routes/account';
 import { handleAi } from './routes/ai';
 import { handleCapabilities } from './routes/capabilities';
+import { handleOpenapi } from './routes/openapi';
 import { handleCustomThemes } from './routes/custom-themes';
 import { handleUnfurl } from './routes/unfurl';
 import type { RouteContext } from './routes/context';
@@ -181,6 +182,8 @@ export default {
       switch (segments[1]) {
         case 'capabilities':
           return handleCapabilities(ctx);
+        case 'openapi.json':
+          return handleOpenapi(ctx);
         case 'unfurl':
           return await handleUnfurl(ctx);
         case 'ai':

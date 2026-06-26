@@ -1,0 +1,57 @@
+import { ArticleLayout } from '@/components/ArticleLayout';
+import { helpMetadata } from '@/lib/seo';
+
+export const metadata = helpMetadata({
+  title: 'Authentication',
+  description:
+    'Authenticate livediagram API requests with a bearer API token. How to create one, how to send it, and how token access differs from the guest path.',
+  path: '/help/developers/authentication/',
+});
+
+<ArticleLayout
+  title="Authentication"
+  description="Authenticate API requests with a bearer token, and how that differs from the in-app guest path."
+  categoryTitle="Developers"
+  categorySlug="developers"
+>
+
+External API calls authenticate with an **API token**: a long-lived, revocable credential that acts as your account.
+
+## Get a token
+
+Tokens are created from the editor, not the API. Open the **Explorer**, and in the **Library** section choose **API tokens** (just under Themes), then create one. The secret is shown **once** at creation; copy it then, because it is never displayed again. See [API Tokens](/help/account-and-data/api-tokens/) for the full walkthrough, including the six-month lifetime and the ten-token limit.
+
+Tokens have the form `lvd_` followed by a random string, so they are easy to spot in logs and secret scanners.
+
+## Send the token
+
+Pass the token in the `Authorization` header as a bearer credential on **every** request. There is no separate login or session step.
+
+```bash
+curl https://livediagram.app/api/diagrams \
+  -H "Authorization: Bearer lvd_your_token_here"
+```
+
+Every request authenticated this way acts as your account, with the same read and write access you have in the editor.
+
+## You need an account
+
+API tokens are a **signed-in-only** feature. The canvas, sharing, and real-time collaboration all stay account-free for guests, but programmatic API access requires [signing in](/help/account-and-data/signing-in/), the same as [teams](/help/collaboration/teams/). On a self-hosted instance that has not enabled accounts, tokens are not available at all.
+
+## Tokens versus the guest path
+
+The editor itself does not use a token. When you are not signed in, the app identifies you with a per-browser [guest id](/help/account-and-data/guest-identity/) sent in an `X-Owner-Id` header. That path is for the first-party app only: it is not a credential you should build integrations on, and it cannot be minted or used like a token. For anything outside the editor, use a bearer token.
+
+## Keep tokens safe
+
+<Note>
+  A token has your account's full read and write access. Treat it like a password: keep it out of
+  source control and shared logs, and never put it in client-side code that ships to a browser. If a
+  token might have leaked, revoke it from the **API tokens** section and create a replacement.
+</Note>
+
+## Errors
+
+A request with a missing, malformed, expired, or revoked token is rejected. See [Errors and Rate Limits](/help/developers/errors-and-rate-limits/) for the status codes and the error response shape.
+
+</ArticleLayout>

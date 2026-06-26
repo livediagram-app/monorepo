@@ -28,6 +28,8 @@ livediagram is free and MIT-licensed with no plan for a paid tier (see [spec/03]
 
 Categories fall into two kinds. The **support** categories carry standalone articles; the **feature** categories (`kind: 'feature'`) carry the in-depth feature guides and are grouped under a separate "Feature Guides" heading on the home page and the `/features` index. Each feature category has a card-grid index page at `/help/<slug>/` (shared `FeatureCategoryIndex` component), and within it each feature has its own landing page plus optional sub-articles.
 
+**Developers.** A support category for the public REST API ([spec/61](61-public-api-and-tokens.md)). Standalone articles — _The livediagram API_ (overview + base URL), _Authentication_ (bearer API tokens vs the guest path), _Working with Diagrams_ (worked `curl` examples), and _Errors and Rate Limits_ — that tell an integrator how to call the API a token unlocks. The human-facing companion to the machine-readable `GET /api/openapi.json` ([spec/37](37-api-documentation.md)), which the articles link out to rather than duplicate.
+
 | slug                   | title                | icon      | kind    |
 | ---------------------- | -------------------- | --------- | ------- |
 | `about`                | About livediagram    | info      | support |
@@ -36,6 +38,7 @@ Categories fall into two kinds. The **support** categories carry standalone arti
 | `account-and-data`     | Account and Data     | user      | support |
 | `privacy-and-security` | Privacy and Security | shield    | support |
 | `self-hosting`         | Self-Hosting         | server    | support |
+| `developers`           | Developers           | code      | support |
 | `troubleshooting`      | Troubleshooting      | wrench    | support |
 | `supported-devices`    | Supported Devices    | devices   | support |
 | `contact`              | Contact              | mail      | support |

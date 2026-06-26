@@ -322,8 +322,12 @@ hardening landed first:
    - `docs/` updates: note the new `/api/tokens` surface + its account
      requirement in `docs/architecture.md`, and the Clerk-gated nature in
      `docs/self-hosting.md` (tokens need Clerk, like teams).
-   - Public API reference for the existing routes (ties in with
-     [spec/37](37-api-documentation.md)).
+   - ✅ Public API reference for the existing routes. Two layers, both
+     shipped: the machine-readable `GET /api/openapi.json`
+     ([spec/37](37-api-documentation.md)), and a human-facing **Developers**
+     category in the help centre ([spec/55](55-help-app.md)) whose API
+     reference links out to it. The `account-and-data/api-tokens` article
+     cross-links the reference as the next step after minting a token.
 
 ## 7. Out of scope (for now)
 
