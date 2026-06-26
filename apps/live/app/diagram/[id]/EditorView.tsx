@@ -34,6 +34,7 @@ import { ThemeModeBanner } from '@/components/chrome/ThemeModeBanner';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useDismissibleBanner } from '@/hooks/ui/useDismissibleBanner';
 import { useDelayedReveal } from '@/hooks/ui/useDelayedReveal';
+import { useEditorAccent } from '@/hooks/ui/useEditorAccent';
 import { useEditorCommands } from '@/hooks/canvas/useEditorCommands';
 import { useEditorContext } from './EditorContext';
 
@@ -444,6 +445,9 @@ export function EditorView() {
   // selection-aware command list + dispatcher, built off the same editor
   // actions the menus use. Empty (undefined items) for view-only sessions.
   const { commandItems, runCommand } = useEditorCommands();
+  // Retarget the brand-* accent (buttons, rings, focus) to the active tab's
+  // theme so the editor chrome matches the diagram (spec/42).
+  useEditorAccent(activeTab.theme);
   // Selection-context-menu wiring (right-click a multi-selection or group):
   // resolve the member set, whether it's a group vs a marquee multi, count,
   // and lock state, then route the actions to the multi- or group-aware

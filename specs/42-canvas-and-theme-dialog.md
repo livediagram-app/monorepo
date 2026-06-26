@@ -49,6 +49,14 @@ Most themes paint every shape the same fill / stroke / text. A **Formal** theme 
 - Mechanically, a theme may define `shapeColors?: Partial<Record<ShapeKind, { fill?; stroke?; text? }>>`. These win over the single `elementFill` / `-Stroke` / `-Text` for that kind; unset fields fall through. Resolution flows through the same `elementThemeView` synthetic-theme path the multi-colour ([spec/29](29-multicolour-themes.md)) branch colours use, so every theme transform (apply to new shapes, recolour a scaffold, switch themes, reset to theme) is shape-aware through one code path. A theme can in principle combine `shapeColors` with a `palette`, but in practice per-shape (UML) and per-branch (rainbow) themes are distinct.
 - The theme card preview (`ThemeSwatch`) stripes a per-shape theme's kind colours, like it does a multi-colour palette, so the card reads as colourful rather than as one neutral dot.
 
+## Editor chrome follows the active theme
+
+The editor's own UI accent (buttons, rings, focus outlines — everything on the `brand-*` utilities, light blue by default) **follows the active tab's theme** so the chrome matches the diagram you're editing. The brand palette is a set of Tailwind v4 CSS variables (`--color-brand-50..950`), so `useEditorAccent` retargets those variables for the editor session:
+
+- It spins the active theme's accent (its `elementStroke`) into an 11-stop ramp anchored at `600` (a pale dark-theme stroke is darkened first so white-on-`600` keeps contrast), and sets the variables on `document.documentElement` — not the editor root — so body-portaled UI (context menus, dialogs, popovers, toasts) inherits the accent too.
+- The default **Basic** (`brand`) theme and an unthemed tab have no `elementStroke`, so the accent is left untouched: the built-in light-blue brand stands. Switching tabs re-resolves the accent; leaving the editor reverts the variables so the rest of the app (Explorer, marketing) keeps the default brand.
+- Only the chrome retargets — element colours come from the theme applied to the elements themselves ([spec/29](29-multicolour-themes.md)), unaffected.
+
 ## Telemetry
 
 Opening the dialog fires `track('UI', 'Opened', 'CanvasStyle')` (Change Canvas) or `track('UI', 'Opened', 'ThemePicker')` (Change Theme). The underlying changes keep the existing `Canvas`/`Theme` events emitted by the tab-canvas setters ([spec/22](22-telemetry.md)); no new category/action is introduced.
