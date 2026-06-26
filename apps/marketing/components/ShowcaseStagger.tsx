@@ -2,6 +2,8 @@
 
 import { Children, useEffect, useState, type ReactNode } from 'react';
 
+import styles from './ShowcaseStagger.module.css';
+
 // Client cycler for the SectionShowcase montage. The feature mocks each loop a
 // continuous CSS animation; playing them all at once is busy, so this plays
 // them in turn: one scene is "active" (animating, full opacity) at a time while
@@ -43,8 +45,7 @@ export function ShowcaseStagger({ children }: { children: ReactNode }) {
           <li
             key={i}
             className={
-              'transition-opacity duration-500 ' +
-              (isActive ? '' : '[&_*]:[animation-play-state:paused] opacity-60')
+              'transition-opacity duration-500 ' + (isActive ? '' : `${styles.frozen} opacity-60`)
             }
           >
             {scene}
