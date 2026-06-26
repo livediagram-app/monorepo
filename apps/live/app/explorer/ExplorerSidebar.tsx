@@ -129,18 +129,16 @@ export function ExplorerSidebar() {
         My Work
       </SidebarSectionLabel>
       {/* Unsorted is a synthetic folder backed by folder_id IS NULL.
-          Shown only when it actually holds loose diagrams — an empty
-          Unsorted row is just noise. */}
-      {unsortedDiagrams.length > 0 ? (
-        <SidebarRow
-          icon={<FolderIcon open={false} />}
-          label="Unsorted"
-          selected={selected.kind === 'unsorted'}
-          onClick={() => go({ kind: 'unsorted' })}
-          depth={0}
-          badge={unsortedDiagrams.length}
-        />
-      ) : null}
+          Always shown (even when empty) so "My Work" never looks bare
+          before the user has filed anything; the badge hides at zero. */}
+      <SidebarRow
+        icon={<FolderIcon open={false} />}
+        label="Unsorted"
+        selected={selected.kind === 'unsorted'}
+        onClick={() => go({ kind: 'unsorted' })}
+        depth={0}
+        badge={unsortedDiagrams.length || undefined}
+      />
       {rootFolders.map((f) => (
         <SidebarFolderSubtree
           key={f.id}

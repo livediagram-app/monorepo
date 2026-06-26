@@ -7,6 +7,7 @@ import { NewTokenButton } from '@/components/panels/NewTokenButton';
 import type { HelpArticleKey } from '@/lib/help-articles';
 import { ListView, PaneHeader, SharedList, SkeletonRows } from './views';
 import { EmptyPane } from './ExplorerEmptyState';
+import { DynamicFolderInfo } from './DynamicFolderInfo';
 
 // Each Explorer section deep-links its matching help-centre article from a
 // "?" button in the pane header (spec/56). Sections without a guide (team,
@@ -161,6 +162,9 @@ export function ExplorerPane() {
         }
         folderLabel={selected.kind === 'folder' ? 'New subfolder' : 'New folder'}
       />
+
+      {/* Dynamic (synthetic) folders explain themselves under the breadcrumb. */}
+      <DynamicFolderInfo selected={selected} />
 
       {loading ? (
         <SkeletonRows />
