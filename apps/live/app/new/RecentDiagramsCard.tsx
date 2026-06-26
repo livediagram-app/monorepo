@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiListDiagrams } from '@/lib/api-client';
-import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
+import { relativeSince, useRelativeTimeTick } from '@/lib/relative-time';
 
 type RecentItem = { id: string; name: string; savedAt: number | null };
 
@@ -41,11 +41,11 @@ export function RecentDiagramsCard({ ownerId }: { ownerId: string | null }) {
   return (
     // Pinned to the right gutter beside the centred wizard, vertically
     // centred, not full height. Desktop-only (xl+) — below that the wizard
-    // owns the width and a side card would crowd it. A slight tilt + the
-    // notched left edge make it read as a distinct "drawer" pulled out from
-    // behind the modal, not part of the create form.
+    // owns the width and a side card would crowd it. A gentle hover lift
+    // gives it life without tilting the text (a sub-pixel rotation made the
+    // resting card render blurry).
     <div className="pointer-events-none absolute inset-y-0 right-4 z-10 hidden items-center xl:flex 2xl:right-10">
-      <div className="pointer-events-auto w-64 -rotate-1 rounded-2xl border border-slate-200 bg-white/95 shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 backdrop-blur transition hover:rotate-0 dark:border-slate-700 dark:bg-slate-900/95 dark:shadow-slate-950/40">
+      <div className="pointer-events-auto w-64 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5 transition duration-200 hover:-translate-y-0.5 hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/40">
         <div className="flex items-center gap-2 rounded-t-2xl border-b border-slate-100 bg-gradient-to-r from-brand-50 to-transparent px-4 py-3 dark:border-slate-800 dark:from-brand-500/10">
           <ClockIcon />
           <div className="flex flex-col">
@@ -53,7 +53,7 @@ export function RecentDiagramsCard({ ownerId }: { ownerId: string | null }) {
               Jump back in
             </span>
             <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              Your latest diagrams
+              Your recent diagrams
             </span>
           </div>
         </div>
@@ -70,7 +70,7 @@ export function RecentDiagramsCard({ ownerId }: { ownerId: string | null }) {
                   </span>
                   {d.savedAt != null ? (
                     <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {formatRelativeTimeShort(d.savedAt)}
+                      {relativeSince(d.savedAt)}
                     </span>
                   ) : null}
                 </span>
