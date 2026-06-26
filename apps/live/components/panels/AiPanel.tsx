@@ -5,7 +5,6 @@ import type { Element } from '@livediagram/diagram';
 import { apiAiStream, type AiMode, type AiConversationTurn } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 import { Tooltip } from '@/components/primitives/Tooltip';
-import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 
 type AiPanelProps = {
   contextElements: Element[]; // all tab elements
@@ -200,11 +199,6 @@ export function AiPanelContent({
             </Tooltip>
           ))}
         </div>
-        <HelpArticleLink
-          article="aiTools"
-          title="AI tools"
-          description="What Ask and Clean each do."
-        />
       </div>
 
       {/* Quick-action suggestion chips for the active mode */}

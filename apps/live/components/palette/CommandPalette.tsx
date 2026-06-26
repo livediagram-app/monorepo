@@ -10,7 +10,6 @@ import type { PendingDraw } from '@/lib/draw-mode';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { MovablePanel, type MovablePanelDockProps } from '@/components/primitives/MovablePanel';
 import { PaletteSettingsPopover } from '@/components/palette/PaletteSettingsPopover';
-import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 import { PaletteTabBar } from '@/components/palette/PaletteTabBar';
 import { PaletteDropdown } from '@/components/palette/PaletteDropdown';
 import {
@@ -348,25 +347,17 @@ export function CommandPalette({
       // minimise: it now hosts the panel-layout toggle and the reset-position
       // action that each used to be their own header button.
       headerActions={
-        <>
-          <HelpArticleLink
-            article="palette"
-            variant="chrome"
-            title="Palette"
-            description="Every selection mode, element, and palette setting explained."
-          />
-          <PaletteSettingsPopover
-            settings={settings}
-            onChange={onChangeSettings}
-            minimalPanels={minimalPanels}
-            onToggleMinimalPanels={onToggleMinimalPanels}
-            onResetPosition={onReset}
-            // When docking is active (spec/63) the panel can always be
-            // snapped back to its default corner, even sitting in a
-            // (non-default) corner where `position` is null.
-            resettable={position !== null || dock !== undefined}
-          />
-        </>
+        <PaletteSettingsPopover
+          settings={settings}
+          onChange={onChangeSettings}
+          minimalPanels={minimalPanels}
+          onToggleMinimalPanels={onToggleMinimalPanels}
+          onResetPosition={onReset}
+          // When docking is active (spec/63) the panel can always be
+          // snapped back to its default corner, even sitting in a
+          // (non-default) corner where `position` is null.
+          resettable={position !== null || dock !== undefined}
+        />
       }
       collapsible
       // The category / canvas-tool dropdowns portal their menus to

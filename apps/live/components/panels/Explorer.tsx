@@ -4,7 +4,6 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useRelativeTimeTick } from '@/lib/relative-time';
 import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { MovablePanel, type MovablePanelDockProps } from '@/components/primitives/MovablePanel';
-import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 import { MoveToFolderDialog } from '@/components/dialogs/MoveToFolderDialog';
 import { SignInPrompt } from '@/components/chrome/SignInPrompt';
 import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
@@ -447,14 +446,6 @@ function ExplorerImpl({
       onReset={onReset}
       onMoveTo={onMoveTo}
       {...dock}
-      headerActions={
-        <HelpArticleLink
-          article="explorerPanel"
-          variant="chrome"
-          title="Explorer panel"
-          description="Switch diagrams, folders, and teams without leaving the canvas."
-        />
-      }
       onSize={onSize}
       mobileOpenOverride={mobileOpenOverride}
       mobileTopOverridePx={mobileTopOverridePx}

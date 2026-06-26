@@ -5,7 +5,6 @@ import type { ChangeLogEntry } from '@/lib/api-client';
 import { formatRelativeTimeShort, useRelativeTimeTick } from '@/lib/relative-time';
 import type { SaveStatus } from '@/components/chrome/EditorHeader';
 import { TrashIcon } from '@/components/panels/explorer-icons';
-import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 import { MovablePanel, type MovablePanelDockProps } from '@/components/primitives/MovablePanel';
 import { Tooltip } from '@/components/primitives/Tooltip';
 
@@ -87,14 +86,6 @@ function ActivityPanelImpl({
       {...dock}
       onMinimize={onToggleMinimized}
       headerExtra={<SaveStatusBadge status={saveStatus} savedAt={savedAt} />}
-      headerActions={
-        <HelpArticleLink
-          article="revertingChanges"
-          variant="chrome"
-          title="Activity & revert"
-          description="How the change log works and how to revert an edit."
-        />
-      }
     >
       <div className="flex flex-1 flex-col gap-2 px-3 pb-3 pt-1">
         {/* Undo / Redo bar lives at the top so the most common actions

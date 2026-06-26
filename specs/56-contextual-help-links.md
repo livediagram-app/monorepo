@@ -58,6 +58,16 @@ article is.
 
 Grouped by priority; each links the keyed article.
 
+> **Floating-panel headers carry no help icon.** The Explorer, Palette,
+> Activity, Comments, and AI panels previously each had a `variant="chrome"`
+> `HelpArticleLink` in their header. These were removed: the editor header
+> already has a prominent global Help icon, and a `?` on every panel made the
+> canvas chrome noisy. Contextual links now live only in dialogs, in-panel
+> settings (the Palette settings popover), and **empty-state messages** (the
+> empty-canvas Quick Start banner keeps its link). The articles themselves
+> (`explorerPanel`, `palette`, `reverting-changes`, `comments`, `ai-tools`)
+> stay in the registry, reachable from the help centre and the header.
+
 **High priority**
 
 - Share dialog - expiry dropdown -> `share-link-expiry`
@@ -66,7 +76,6 @@ Grouped by priority; each links the keyed article.
 - Palette settings - auto-attach arrows -> `auto-attach-arrows`
 - Palette settings - alignment guides -> `alignment-guides`
 - Settings - AI assistant toggle -> `ai-tools`
-- AI panel header -> `ai-tools`
 - Export dialog header -> `exporting-diagrams` (isometric toggle -> `isometric-mode`)
 - Import dialog header -> `import-tabs` (Markdown note -> `markdown-import`)
 - Team form / invite -> `team-roles-and-invites`
@@ -75,8 +84,6 @@ Grouped by priority; each links the keyed article.
 
 - Canvas/Theme dialog -> `changing-the-background` / `changing-theme`
 - Link picker -> `links` (tab links -> `linking-tabs`)
-- Activity panel -> `reverting-changes`
-- Comments panel -> `comments`
 - Themes pane empty state -> `custom-themes`
 - Image gallery pane -> `image-gallery`
 - Line/chart data editor -> `data-elements`
