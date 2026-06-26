@@ -51,10 +51,11 @@ Most themes paint every shape the same fill / stroke / text. A **Formal** theme 
 
 ## Editor chrome follows the active theme
 
-The editor's own UI accent (buttons, rings, focus outlines — everything on the `brand-*` utilities, light blue by default) **follows the active tab's theme** so the chrome matches the diagram you're editing. The brand palette is a set of Tailwind v4 CSS variables (`--color-brand-50..950`), so `useEditorAccent` retargets those variables for the editor session:
+The editor chrome **follows the active tab's theme** so it matches the diagram you're editing, in two ways. Both the brand accent and the neutral slate surfaces are Tailwind v4 CSS variables (`--color-brand-50..950`, `--color-slate-*`), so `useEditorAccent` retargets those variables for the editor session by injecting one `<style>` element:
 
-- It spins the active theme's accent (its `elementStroke`) into an 11-stop ramp anchored at `600` (a pale dark-theme stroke is darkened first so white-on-`600` keeps contrast), and sets the variables on `document.documentElement` — not the editor root — so body-portaled UI (context menus, dialogs, popovers, toasts) inherits the accent too.
-- The default **Basic** (`brand`) theme and an unthemed tab have no `elementStroke`, so the accent is left untouched: the built-in light-blue brand stands. Switching tabs re-resolves the accent; leaving the editor reverts the variables so the rest of the app (Explorer, marketing) keeps the default brand.
+- **Accent (both modes).** The active theme's accent (its `elementStroke`) is spun into an 11-stop ramp anchored at `600` (a pale dark-theme stroke is darkened first so white-on-`600` keeps contrast) and emitted as `:root { --color-brand-* }`, so every `brand-*` utility — buttons, rings, focus outlines — takes the theme colour.
+- **Dark mode (a darker version of the theme).** Plain dark mode was cold slate / near-black. The hook also emits `.dark { --color-slate-600..950 }`, a muted-then-shaded ramp of the theme hue (the accent pulled toward neutral slate so it's a tint, not a garish saturated dark), so dark-mode panels / borders / deep backgrounds read as a dark version of the chosen theme. Only the surface stops (600–950) are retargeted; the lighter stops stay neutral so dark-mode text keeps its readable greys. The override is `.dark`-scoped, so CSS handles the mode switch with no JS detection.
+- The `<style>` lives in `<head>` so body-portaled UI (context menus, dialogs, popovers, toasts) inherits both. The default **Basic** (`brand`) theme and an unthemed tab have no `elementStroke`, so nothing is injected: the built-in light-blue brand + cold-slate dark stand. Switching tabs re-resolves it; leaving the editor removes the `<style>` so the rest of the app (Explorer, marketing) keeps the defaults.
 - Only the chrome retargets — element colours come from the theme applied to the elements themselves ([spec/29](29-multicolour-themes.md)), unaffected.
 
 ## Telemetry
