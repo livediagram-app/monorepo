@@ -28,6 +28,7 @@ const LIVE_ROUTE_SEGMENTS = new Set([
   'get-started',
   'join',
   'new',
+  'oauth',
   'sign-in',
   'sso-callback',
 ]);
