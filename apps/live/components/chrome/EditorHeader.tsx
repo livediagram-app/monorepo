@@ -177,20 +177,24 @@ export function EditorHeader({
         </Tooltip>
         {/* Help-centre link (spec/55), moved here from the tab bar so it sits
             with the other top-right actions. Plain external <a> opening /help
-            in a new tab; fires a telemetry event like the old tab-bar link. */}
-        <Tooltip title="Help" description="Guides, tutorials, and answers in Help.">
-          <a
-            href="/help/"
-            target="_blank"
-            rel="noreferrer noopener"
-            onClick={() => track('UI', 'Opened', 'Help')}
-            aria-label="Help"
-            className={`${HEADER_ACTION_BTN} text-slate-600 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800`}
-          >
-            <HelpIcon />
-            <span>Help</span>
-          </a>
-        </Tooltip>
+            in a new tab; fires a telemetry event like the old tab-bar link.
+            Hidden on phones (< sm) to save the cramped header room; Help is
+            still reachable from the in-app surfaces. */}
+        <div className="hidden h-full sm:flex">
+          <Tooltip title="Help" description="Guides, tutorials, and answers in Help.">
+            <a
+              href="/help/"
+              target="_blank"
+              rel="noreferrer noopener"
+              onClick={() => track('UI', 'Opened', 'Help')}
+              aria-label="Help"
+              className={`${HEADER_ACTION_BTN} text-slate-600 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800`}
+            >
+              <HelpIcon />
+              <span>Help</span>
+            </a>
+          </Tooltip>
+        </div>
         <AuthControls />
       </div>
     </header>
