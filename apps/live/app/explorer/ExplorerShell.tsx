@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Brand } from '@livediagram/ui';
+import { Brand, ProductNav } from '@livediagram/ui';
 import { AuthControls } from '@/components/chrome/AuthControls';
 import { ChromeControls } from '@/components/chrome/ChromeControls';
 import { TeamFormModal } from '@/components/dialogs/TeamFormModal';
@@ -120,7 +120,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-[var(--z-chrome)] flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 pl-4 pr-0 backdrop-blur dark:border-slate-700 dark:bg-slate-900/85">
         <div className="flex items-center gap-3">
           <Brand href="/" size="md" />
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Explorer</span>
+          <ProductNav current="explorer" />
         </div>
         <AuthControls />
       </header>

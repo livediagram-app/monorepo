@@ -1,4 +1,4 @@
-import { Brand } from '@livediagram/ui';
+import { Brand, ProductNav } from '@livediagram/ui';
 import { SearchInput } from '@/components/SearchInput';
 
 // Help-centre header. Brand links back to the marketing home; the editor
@@ -12,7 +12,7 @@ export function Header() {
       <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 md:px-8">
         <div className="flex shrink-0 items-center gap-2.5">
           <Brand href="/" size="md" />
-          <span className="hidden text-sm font-medium text-slate-400 sm:inline">Help</span>
+          <ProductNav current="help" />
         </div>
         <div className="hidden min-w-0 flex-1 justify-center sm:flex">
           <div className="w-full max-w-sm">
