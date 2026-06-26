@@ -7,7 +7,7 @@
 // live here; the Progress picker stays in EditorContextMenu (it pairs with the
 // local MenuToggleRow) but reuses TileLabel + SpeedTiles from this module.
 
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   ANIMATION_SPEEDS,
   ARROW_FLOWS,
@@ -30,6 +30,22 @@ import { onMouseHover, useRevertOnUnmount } from '@/components/primitives/hover-
 // Stable no-op so a tile grid without preview handlers (e.g. a future caller)
 // still calls useRevertOnUnmount unconditionally (hook-rule safe).
 const NOOP = () => {};
+
+// Gate the Speed row on the COMMITTED motion, not the live hover-preview value.
+// The menu derives the selection from the live tab, which the hover preview
+// mutates, so without this, hovering a tile would flip the Speed row on/off and
+// reflow the menu — and a bottom-anchored menu growing upward slides a different
+// tile under the cursor before the click lands, committing the wrong one (the
+// reported race). The ref captures the committed value at open (useRef ignores
+// later args) and only changes on a real pick, so hovering never reflows.
+function useSpeedRowGate<T>(committed: T | null, onSet: (v: T | null) => void) {
+  const ref = useRef(committed);
+  const handleSet = (v: T | null) => {
+    ref.current = v;
+    onSet(v);
+  };
+  return { showSpeed: ref.current !== null, handleSet };
+}
 
 // Prepend the "None" option to a kinds list for the picker tile grids. The
 // generic return type ((T | null)[]) lets each `.map` infer its element type,
@@ -89,6 +105,7 @@ export function AnimationTiles({
   onPreviewEnd?: () => void;
 }) {
   useRevertOnUnmount(onPreviewEnd ?? NOOP);
+  const { showSpeed, handleSet } = useSpeedRowGate(animation, onSet);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
@@ -96,7 +113,7 @@ export function AnimationTiles({
           <SizeButton
             key={v ?? 'none'}
             active={animation === v}
-            onClick={() => onSet(v)}
+            onClick={() => handleSet(v)}
             onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
             onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
           >
@@ -104,7 +121,7 @@ export function AnimationTiles({
           </SizeButton>
         ))}
       </div>
-      {animation ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
+      {showSpeed ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
     </>
   );
 }
@@ -128,6 +145,7 @@ export function FlowTiles({
   onPreviewEnd?: () => void;
 }) {
   useRevertOnUnmount(onPreviewEnd ?? NOOP);
+  const { showSpeed, handleSet } = useSpeedRowGate(flow, onSet);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
@@ -135,7 +153,7 @@ export function FlowTiles({
           <SizeButton
             key={v ?? 'none'}
             active={flow === v}
-            onClick={() => onSet(v)}
+            onClick={() => handleSet(v)}
             onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
             onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
           >
@@ -143,7 +161,7 @@ export function FlowTiles({
           </SizeButton>
         ))}
       </div>
-      {flow ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
+      {showSpeed ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
     </>
   );
 }
@@ -169,6 +187,7 @@ export function IconAnimationTiles({
   onPreviewEnd?: () => void;
 }) {
   useRevertOnUnmount(onPreviewEnd ?? NOOP);
+  const { showSpeed, handleSet } = useSpeedRowGate(animation, onSet);
   return (
     <>
       <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
@@ -176,7 +195,7 @@ export function IconAnimationTiles({
           <SizeButton
             key={v ?? 'none'}
             active={animation === v}
-            onClick={() => onSet(v)}
+            onClick={() => handleSet(v)}
             onPointerEnter={onPreview ? onMouseHover(() => onPreview(v)) : undefined}
             onPointerLeave={onPreview ? onMouseHover(() => onPreviewEnd?.()) : undefined}
           >
@@ -184,7 +203,7 @@ export function IconAnimationTiles({
           </SizeButton>
         ))}
       </div>
-      {animation ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
+      {showSpeed ? <SpeedTiles value={speed} onSet={onSetSpeed} /> : null}
     </>
   );
 }
