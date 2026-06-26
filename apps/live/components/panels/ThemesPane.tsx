@@ -15,6 +15,7 @@ import { materialiseCustomTheme } from '@/lib/custom-theme-registry';
 import { useCustomThemes } from '@/components/primitives/CustomThemeProvider';
 import { CustomThemeBuilder, type CustomThemeDraft } from '@/components/palette/CustomThemeBuilder';
 import { CloseIcon } from '@/components/primitives/CloseIcon';
+import { EmptyState } from '@/components/panels/EmptyState';
 import { Portal } from '@/components/primitives/Portal';
 import { ThemeSwatch } from '@/components/primitives/ThemeSwatch';
 import { Tooltip } from '@/components/primitives/Tooltip';
@@ -61,19 +62,19 @@ export function ThemesPane() {
   return (
     <div>
       {themes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 px-6 py-10 text-center">
-          <p className="text-sm font-medium text-slate-600">No custom themes yet.</p>
-          <p className="mt-1 text-xs text-slate-400">
-            Build your own palette and reuse it across diagrams.
-          </p>
+        <EmptyState
+          icon={<PaletteIcon />}
+          title="No custom themes yet"
+          description="Build your own colour palette and reuse it across every diagram, just like a built-in theme."
+        >
           <button
             type="button"
             onClick={() => setBuilding('new')}
-            className="mt-4 rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-500"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500"
           >
             New theme
           </button>
-        </div>
+        </EmptyState>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {themes.map((t) => (
@@ -276,6 +277,26 @@ function TrashIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+// Artist's palette — the empty-state badge glyph for custom themes.
+function PaletteIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3a9 9 0 1 0 0 18 1.8 1.8 0 0 0 1.8-1.8 1.8 1.8 0 0 1 1.8-1.8H17a3.5 3.5 0 0 0 3.5-3.5A8.6 8.6 0 0 0 12 3Z" />
+      <circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16.3" cy="11" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

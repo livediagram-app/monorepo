@@ -5,6 +5,7 @@ import { apiDeleteImage, apiImageUsage, apiListImages, type ImageSummary } from 
 import { ImageUploadError, uploadImageFile } from '@/lib/upload-image';
 import { useConfirm } from '@/hooks/ui/useConfirm';
 import { TrashIcon } from '@/components/panels/explorer-icons';
+import { EmptyState } from '@/components/panels/EmptyState';
 import { GalleryImageButton } from '@/components/panels/GalleryImageButton';
 import { ImageDropZone } from '@/components/canvas/ImageDropZone';
 
@@ -122,9 +123,11 @@ export function GalleryPane({ ownerId }: GalleryPaneProps) {
             ))}
           </ul>
         ) : gallery.length === 0 ? (
-          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
-            No images yet. Drop one above and it&apos;ll show up here.
-          </p>
+          <EmptyState
+            icon={<ImageIcon />}
+            title="No images yet"
+            description="Drop an image onto the canvas (or the area above) and every image you add collects here, ready to reuse in any diagram."
+          />
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {gallery.map((image) => (
@@ -222,4 +225,23 @@ function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Picture frame with a sun + hill — the empty-state badge glyph for the gallery.
+function ImageIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M21 16l-5-5L5 20" />
+    </svg>
+  );
 }

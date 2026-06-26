@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import type { ApiToken } from '@livediagram/api-schema';
 import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
+import { EmptyState } from '@/components/panels/EmptyState';
 
 const DAY = 86_400_000;
 const EXPIRES_SOON = 14 * DAY;
@@ -83,14 +84,11 @@ export function TokensPane({
       {tokens === null ? (
         <p className="text-sm text-slate-400">Loading…</p>
       ) : tokens.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 px-6 py-10 text-center dark:border-slate-700">
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-            No API tokens yet.
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Use the New token button above to create one.
-          </p>
-        </div>
+        <EmptyState
+          icon={<KeyIcon />}
+          title="No API tokens yet"
+          description="Create one with the New token button above to call the livediagram API from your own scripts or AI tools."
+        />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {tokens.map((t) => {

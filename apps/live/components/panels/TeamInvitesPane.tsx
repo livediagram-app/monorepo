@@ -2,6 +2,7 @@
 
 import type { TeamInvite } from '@/lib/api-client';
 import { colorForKey, initialsOf } from '@/lib/identity';
+import { EmptyState } from '@/components/panels/EmptyState';
 
 // Right-pane Invites view for the Explorer (spec/32 accept/decline):
 // one card per pending invite — team monogram, name, organisation,
@@ -20,12 +21,11 @@ export function TeamInvitesPane({
 }) {
   if (invites.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <p className="max-w-md text-sm text-slate-500">
-          No pending invites. When someone adds you to a team, it shows up here for you to accept or
-          decline.
-        </p>
-      </div>
+      <EmptyState
+        icon={<MailIcon />}
+        title="No pending invites"
+        description="When someone adds you to a team, the invitation shows up here for you to accept or decline."
+      />
     );
   }
 
@@ -74,5 +74,23 @@ export function TeamInvitesPane({
         );
       })}
     </ul>
+  );
+}
+
+// Envelope — the empty-state badge glyph for pending invites.
+function MailIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path d="M4 7l8 6 8-6" />
+    </svg>
   );
 }
