@@ -204,7 +204,11 @@ Image Gallery their per-browser id owns. AuthControls in the page header
 surfaces a "Sign in" CTA for guests who want to upgrade. The page is
 modelled on Windows Explorer: a sidebar tree drives navigation, a
 breadcrumb + list view on the right shows the focused folder's
-contents.
+contents. A **bottom bar** mirrors the editor's tab-bar strip (minus the
+tabs): the shared right-hand control cluster (`ChromeControls` — search,
+the open-source GitHub link, Settings, dark-mode toggle). It's sticky so
+it stays in view as the dashboard scrolls; Settings opens the same synced
+`UserPreferences` dialog the editor uses (spec/20).
 
 - **Sidebar (left, fixed width):**
   - "Recent" — virtual entry, last N most-recently-saved diagrams

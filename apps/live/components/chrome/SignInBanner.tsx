@@ -28,11 +28,11 @@ const SignInReasonsModal = dynamic(() =>
 // hides it in both.
 export const SIGNIN_BANNER_DISMISS_KEY = 'livediagram:signin-banner-dismissed:v1';
 
-// Positioning of the fixed wrapper, swapped per host. The Explorer
-// docks it at the very bottom (z-[var(--z-chrome)], below the mobile-nav overlay);
-// the editor lifts it above the 48px tab bar (pb-16) and over the
-// canvas chrome (z-[var(--z-overlay)]).
-const EXPLORER_PLACEMENT = 'bottom-0 z-[var(--z-chrome)] pb-4';
+// Positioning of the fixed wrapper, swapped per host. The Explorer lifts
+// it above its 48px bottom bar (pb-16, like the editor's tab bar) and below
+// the mobile-nav overlay (z-[var(--z-chrome)]); the editor lifts it above
+// the 48px tab bar (pb-16) and over the canvas chrome (z-[var(--z-overlay)]).
+const EXPLORER_PLACEMENT = 'bottom-0 z-[var(--z-chrome)] pb-16';
 
 export function SignInBanner({
   onDismiss,

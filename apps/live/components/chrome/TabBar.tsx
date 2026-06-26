@@ -27,11 +27,7 @@ import {
   DiagramIcon,
   FolderMenuIcon,
   FolderRemoveIcon,
-  GearIcon,
-  GithubIcon,
-  KeyboardIcon,
   MoveIcon,
-  SearchGlyph,
   TabLockIcon,
   TabsLabelIcon,
 } from '@/components/chrome/tab-bar-icons';
@@ -61,8 +57,7 @@ import { DotsIcon, ScaleIcon } from '@/components/palette/palette-icons';
 import { SessionTimerSection, SessionVoteSection } from '@/components/panels/SessionToolsSection';
 import { TabFolderChip } from '@/components/chrome/TabFolderChip';
 import { TabPresenceStack } from '@/components/chrome/TabPresenceStack';
-import { Tooltip } from '@/components/primitives/Tooltip';
-import { UiModeToggle } from '@/components/chrome/UiModeToggle';
+import { ChromeControls } from '@/components/chrome/ChromeControls';
 
 // Canvas-scoped actions folded into the unified tab / canvas menu: change
 // theme / background, and tidy the layout. (Add-element actions used to live
@@ -462,71 +457,15 @@ export function TabBar({
             </button>
           )}
         </div>
-        {onOpenSearch ? (
-          <Tooltip title="Search" description="Find diagrams, folders, tabs and elements.">
-            <button
-              type="button"
-              onClick={onOpenSearch}
-              aria-label="Search"
-              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <SearchGlyph />
-            </button>
-          </Tooltip>
-        ) : null}
-        {onOpenShortcuts ? (
-          <span className="hidden sm:contents">
-            <Tooltip
-              title="Keyboard shortcuts"
-              description="See every shortcut. Toggle them off if they get in the way."
-            >
-              <button
-                type="button"
-                onClick={onOpenShortcuts}
-                aria-label="Keyboard shortcuts"
-                className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-              >
-                <KeyboardIcon />
-              </button>
-            </Tooltip>
-          </span>
-        ) : null}
-        {/* Open-source repo link (the codebase is public + MIT, spec/03).
-            Sits just left of Settings; an external <a>, not a callback, so it
-            needs no wiring from the editor page. */}
-        <Tooltip
-          title="Source on GitHub"
-          description="View livediagram's open-source code on GitHub."
-        >
-          <a
-            href="https://github.com/livediagram-app/monorepo"
-            target="_blank"
-            rel="noreferrer noopener"
-            aria-label="Source on GitHub"
-            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            <GithubIcon />
-          </a>
-        </Tooltip>
-        {onOpenSettings ? (
-          // Settings stays visible on mobile too: it's where users go
-          // to flip drawToAdd / arrow-auto-rebind / telemetry opt-out,
-          // and there's no other surface for those toggles. Keyboard
-          // shortcuts above stay hidden on mobile because they're moot
-          // on a touch device, but Settings is a real entry point on
-          // every viewport.
-          <Tooltip title="Settings" description="Configure per-diagram editor behaviour.">
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              aria-label="Diagram settings"
-              className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:ml-1 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <GearIcon />
-            </button>
-          </Tooltip>
-        ) : null}
-        <UiModeToggle />
+        {/* Shared right-hand cluster (search / shortcuts / GitHub / settings
+            / dark-mode), reused by the Explorer's bottom bar (spec/07). */}
+        <ChromeControls
+          onOpenSearch={onOpenSearch}
+          onOpenShortcuts={onOpenShortcuts}
+          onOpenSettings={onOpenSettings}
+          settingsLabel="Diagram settings"
+          settingsDescription="Configure per-diagram editor behaviour."
+        />
       </div>
       {canvasMenu && !readOnly && activeTab && onCloseCanvasMenu && canvasActions ? (
         <PortalMenu
