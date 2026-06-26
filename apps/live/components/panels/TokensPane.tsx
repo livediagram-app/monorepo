@@ -7,12 +7,56 @@ import { useState } from 'react';
 import type { ApiToken } from '@livediagram/api-schema';
 import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
 
+const DAY = 86_400_000;
+const EXPIRES_SOON = 14 * DAY;
+
 function fmtDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, {
-    year: 'numeric',
     month: 'short',
     day: 'numeric',
+    year: 'numeric',
   });
+}
+
+// Compact relative time: "2 days ago" (past) / "in 5 months" (future).
+function relative(ms: number): string {
+  const diff = ms - Date.now();
+  const abs = Math.abs(diff);
+  const units: [number, string][] = [
+    [365 * DAY, 'year'],
+    [30 * DAY, 'month'],
+    [7 * DAY, 'week'],
+    [DAY, 'day'],
+    [3_600_000, 'hour'],
+    [60_000, 'minute'],
+  ];
+  for (const [size, name] of units) {
+    if (abs >= size) {
+      const n = Math.round(abs / size);
+      const label = `${n} ${name}${n !== 1 ? 's' : ''}`;
+      return diff < 0 ? `${label} ago` : `in ${label}`;
+    }
+  }
+  return diff < 0 ? 'just now' : 'in a moment';
+}
+
+type Status = { label: string; className: string };
+function tokenStatus(t: ApiToken): Status {
+  const left = t.expiresAt - Date.now();
+  if (left <= 0)
+    return {
+      label: 'Expired',
+      className: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400',
+    };
+  if (left < EXPIRES_SOON)
+    return {
+      label: 'Expires soon',
+      className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
+    };
+  return {
+    label: 'Active',
+    className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
+  };
 }
 
 export function TokensPane({
@@ -49,29 +93,47 @@ export function TokensPane({
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
-          {tokens.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {t.name || 'Untitled token'}
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  Created {fmtDate(t.createdAt)} · Expires {fmtDate(t.expiresAt)} ·{' '}
-                  {t.lastUsedAt ? `Last used ${fmtDate(t.lastUsedAt)}` : 'Never used'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={(e) => setConfirm({ id: t.id, anchor: e.currentTarget })}
-                className="shrink-0 rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+          {tokens.map((t) => {
+            const status = tokenStatus(t);
+            const expired = t.expiresAt - Date.now() <= 0;
+            const meta = [
+              `Created ${fmtDate(t.createdAt)}`,
+              t.lastUsedAt ? `last used ${relative(t.lastUsedAt)}` : 'never used',
+              ...(expired ? [] : [`expires ${relative(t.expiresAt)}`]),
+            ];
+            return (
+              <li
+                key={t.id}
+                className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-slate-600"
               >
-                Revoke
-              </button>
-            </li>
-          ))}
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                  <KeyIcon />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {t.name || 'Untitled token'}
+                    </p>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.className}`}
+                    >
+                      {status.label}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    {meta.join(' · ')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => setConfirm({ id: t.id, anchor: e.currentTarget })}
+                  className="shrink-0 rounded-md border border-transparent px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-500 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                >
+                  Revoke
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -88,5 +150,24 @@ export function TokensPane({
         />
       ) : null}
     </div>
+  );
+}
+
+function KeyIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="5.5" cy="5.5" r="3" />
+      <path d="M7.6 7.6 L13 13 M11 11l1.5-1.5M10 13l1.5-1.5" />
+    </svg>
   );
 }
