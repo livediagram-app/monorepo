@@ -49,6 +49,13 @@ export type SubpageMetadataInput = {
   // sitemap + this meta stay synchronised on one constant
   // (spec/21).
   modifiedTime?: Date;
+  // Set when the page ships its OWN route-level opengraph-image /
+  // twitter-image (e.g. the per-category /features/<id> cards). Then this
+  // factory omits the shared brand-card images so it doesn't override the
+  // page's own file-convention image. Default (false) pins the shared brand
+  // card, which is what FAQ / Terms / alternatives want since they have no
+  // route-level image of their own.
+  ownOgImage?: boolean;
 };
 
 export function subpageMetadata({
@@ -56,6 +63,7 @@ export function subpageMetadata({
   description,
   path,
   modifiedTime,
+  ownOgImage = false,
 }: SubpageMetadataInput): Metadata {
   return {
     title,
@@ -68,7 +76,9 @@ export function subpageMetadata({
       title,
       description,
       locale: SUBPAGE_LOCALE,
-      images: [OG_IMAGE],
+      // Omitted when the page has its own route-level image, so Next attaches
+      // that one instead of this shared brand card.
+      ...(ownOgImage ? {} : { images: [OG_IMAGE] }),
       // Only set when supplied: Next will simply omit the
       // article:modified_time meta tag if `modifiedTime` is
       // undefined, which is what FAQ / Terms / Privacy expect.
@@ -78,7 +88,7 @@ export function subpageMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: [TWITTER_IMAGE],
+      ...(ownOgImage ? {} : { images: [TWITTER_IMAGE] }),
     },
   };
 }

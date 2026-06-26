@@ -6,6 +6,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { FeatureCategoryHero } from '@/components/FeatureCategoryHero';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
+import { OtherCategories } from '@/components/OtherCategories';
 import { FeatureGrid, Section } from '@/components/Section';
 import { StartDrawingCta } from '@/components/StartDrawingCta';
 import {
@@ -38,6 +39,8 @@ export async function generateMetadata({
     title: `${section.title} | livediagram`,
     description: section.description,
     path: `/features/${slug}`,
+    // This route ships its own per-category opengraph-image / twitter-image.
+    ownOgImage: true,
   });
 }
 
@@ -77,6 +80,7 @@ export default async function FeatureCategoryPage({
             <FeatureGrid items={section.items} />
           )}
         </Section>
+        <OtherCategories currentId={section.id} />
         <StartDrawingCta />
       </main>
       <Footer />

@@ -85,6 +85,22 @@ describe('subpageMetadata', () => {
     expect(tw?.images).toEqual(['/twitter-image']);
   });
 
+  it('omits the shared card image when the page has its own route-level image (ownOgImage)', () => {
+    // The /features/<id> pages ship their own opengraph-image / twitter-image,
+    // so the factory must NOT set images (that would override the per-category
+    // file-convention card with the generic brand one).
+    const md = subpageMetadata({
+      title: 't',
+      description: 'd',
+      path: '/features/simple',
+      ownOgImage: true,
+    });
+    const og = md.openGraph as Record<string, unknown> | undefined;
+    expect(og?.images).toBeUndefined();
+    const tw = md.twitter as Record<string, unknown> | undefined;
+    expect(tw?.images).toBeUndefined();
+  });
+
   it('returns a fresh object on each call (call sites compose into Next metadata at module load)', () => {
     // Each page's `export const metadata` evaluates the factory
     // once at build time; a shared mutable reference would mean a

@@ -25,8 +25,11 @@ export default async function OpenGraphImage() {
 }
 
 // Shared JSX for the OG + Twitter cards. Kept here so the two
-// route handlers can't drift.
-export function renderSocialCard() {
+// route handlers can't drift. Called with no args for the homepage
+// (the default headline + sub); the per-category `/features/<id>`
+// cards pass `{ kicker, title, subtitle }` to render the category's
+// own headline on the same branded shell.
+export function renderSocialCard(opts?: { kicker?: string; title?: string; subtitle?: string }) {
   return (
     <div
       style={{
@@ -90,11 +93,25 @@ export function renderSocialCard() {
           livediagram
         </div>
 
-        {/* Headline + sub. Same copy spine as the hero. */}
+        {/* Headline + sub. Default = the hero copy spine; per-category cards
+            pass their own kicker/title/subtitle. */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {opts?.kicker ? (
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 600,
+                color: '#0284c7',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {opts.kicker}
+            </div>
+          ) : null}
           <div
             style={{
-              fontSize: 80,
+              fontSize: opts?.title ? 72 : 80,
               fontWeight: 600,
               color: '#0f172a',
               letterSpacing: '-0.03em',
@@ -104,8 +121,14 @@ export function renderSocialCard() {
               flexWrap: 'wrap',
             }}
           >
-            <span>A picture tells a thousand words,&nbsp;</span>
-            <span style={{ color: '#0284c7' }}>tell your story.</span>
+            {opts?.title ? (
+              <span>{opts.title}</span>
+            ) : (
+              <>
+                <span>A picture tells a thousand words,&nbsp;</span>
+                <span style={{ color: '#0284c7' }}>tell your story.</span>
+              </>
+            )}
           </div>
           <div
             style={{
@@ -115,7 +138,7 @@ export function renderSocialCard() {
               maxWidth: 880,
             }}
           >
-            A real-time multiplayer canvas for diagrams and mindmaps.
+            {opts?.subtitle ?? 'A real-time multiplayer canvas for diagrams and mindmaps.'}
           </div>
         </div>
 
