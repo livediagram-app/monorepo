@@ -12,7 +12,7 @@ type AiPanelProps = {
   focusIds: string[]; // selected element IDs (empty = whole tab)
   tabName: string;
   ownerId: string;
-  onApplyElements: (elements: Element[], mode: 'generate' | 'clean') => void;
+  onApplyElements: (elements: Element[], mode: 'clean') => void;
 };
 
 type ModeConfig = {
@@ -25,40 +25,15 @@ type ModeConfig = {
 
 const MODES: ModeConfig[] = [
   {
-    id: 'generate',
-    label: 'Build',
-    tooltip: 'Add or change diagram elements based on your prompt.',
-    icon: <GenerateIcon />,
-    suggestions: [
-      'Login flow',
-      'Approval process',
-      'System architecture',
-      'Org chart',
-      'User journey',
-    ],
-  },
-  {
     id: 'ask',
     label: 'Ask',
-    tooltip: 'Ask a question about the selected elements or whole tab.',
+    tooltip: 'Ask a question about the selected elements or whole tab. Read-only.',
     icon: <AskIcon />,
     suggestions: [
       'How many steps are there?',
       'What are the decision points?',
       'Summarise this diagram',
       'What could go wrong?',
-    ],
-  },
-  {
-    id: 'review',
-    label: 'Review',
-    tooltip: "Get written feedback on the diagram's structure and content.",
-    icon: <ReviewIcon />,
-    suggestions: [
-      'Is this clear?',
-      "What's missing?",
-      'Check the flow logic',
-      'How can I improve this?',
     ],
   },
   {
@@ -71,9 +46,7 @@ const MODES: ModeConfig[] = [
 ];
 
 const PLACEHOLDERS: Record<AiMode, string> = {
-  generate: 'Describe what to add or change… (⌘↵ to send)',
   clean: 'Any specific instructions, or leave blank…',
-  review: 'Any specific focus, or leave blank…',
   ask: 'Ask a question about the diagram…',
 };
 
@@ -88,7 +61,7 @@ export function AiPanelContent({
   ownerId,
   onApplyElements,
 }: AiPanelProps) {
-  const [mode, setMode] = useState<AiMode>('generate');
+  const [mode, setMode] = useState<AiMode>('ask');
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [reviewText, setReviewText] = useState('');
@@ -138,7 +111,7 @@ export function AiPanelContent({
 
     const userTurn: AiConversationTurn = { role: 'user', content: finalPrompt || `(${mode})` };
 
-    const isTextMode = mode === 'review' || mode === 'ask';
+    const isTextMode = mode === 'ask';
 
     try {
       await apiAiStream(
@@ -161,15 +134,15 @@ export function AiPanelContent({
                 userTurn,
                 { role: 'assistant', content: rt },
               ]);
-              track('AI', 'Used', mode === 'ask' ? 'Ask' : 'Review');
+              track('AI', 'Used', 'Ask');
             } else {
               setHistory((h) => [
                 ...h.slice(-(MAX_HISTORY - 2)),
                 userTurn,
                 { role: 'assistant', content: `Applied changes (${elements.length} elements)` },
               ]);
-              track('AI', 'Used', mode === 'generate' ? 'Generate' : 'Clean');
-              onApplyElements(elements, mode as 'generate' | 'clean');
+              track('AI', 'Used', 'Clean');
+              onApplyElements(elements, 'clean');
               setSummary(s);
               setPrompt('');
             }
@@ -230,12 +203,12 @@ export function AiPanelContent({
         <HelpArticleLink
           article="aiTools"
           title="AI tools"
-          description="What Build, Ask, Review, and Clean each do."
+          description="What Ask and Clean each do."
         />
       </div>
 
-      {/* Suggestions — only for modes where quick-action shortcuts make sense */}
-      {mode !== 'generate' && currentMode.suggestions.length > 0 && (
+      {/* Quick-action suggestion chips for the active mode */}
+      {currentMode.suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1 px-2 pt-1.5 pb-1">
           {currentMode.suggestions.map((s) => (
             <button
@@ -260,7 +233,7 @@ export function AiPanelContent({
           ref={responseRef}
           className="max-h-64 min-h-[4rem] overflow-y-auto px-3 py-2 text-[12px] leading-relaxed"
         >
-          {mode === 'review' || mode === 'ask' ? (
+          {mode === 'ask' ? (
             <div className="text-slate-700 dark:text-slate-300">
               <MarkdownText text={reviewText} />
               {status === 'loading' && <BlinkCursor />}
@@ -422,14 +395,6 @@ function MarkdownText({ text }: { text: string }) {
 
 // ── Icons ────────────────────────────────────────────────────────────
 
-function GenerateIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <path d="M8 1l1.8 5H15l-4.2 3.1 1.6 5L8 11.2 3.6 14.1l1.6-5L1 6h5.2z" />
-    </svg>
-  );
-}
-
 function CleanIcon() {
   return (
     <svg
@@ -445,24 +410,6 @@ function CleanIcon() {
     >
       <path d="M3 13l4-4m0 0l6-6-3-3-6 6m3 3l-3 3" />
       <path d="M13 13h.01" strokeWidth="2" />
-    </svg>
-  );
-}
-
-function ReviewIcon() {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <circle cx="7" cy="7" r="5" />
-      <path d="M11 11l3 3" />
     </svg>
   );
 }

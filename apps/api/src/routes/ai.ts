@@ -163,25 +163,7 @@ function diagramTypeHint(prompt: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Bounding box — used to position Generate output in free canvas space.
-// ---------------------------------------------------------------------------
-function computeBoundingBox(elements: unknown[]): { x2: number; y2: number } | null {
-  const boxed = (elements as Record<string, unknown>[]).filter(
-    (el) =>
-      typeof el.x === 'number' &&
-      typeof el.y === 'number' &&
-      typeof el.width === 'number' &&
-      typeof el.height === 'number',
-  );
-  if (boxed.length === 0) return null;
-  return {
-    x2: Math.max(...boxed.map((e) => Number(e.x) + Number(e.width))),
-    y2: Math.max(...boxed.map((e) => Number(e.y) + Number(e.height))),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Existing style — samples the canvas to tell Generate/Amend to match it.
+// Existing style — samples the canvas so Clean matches it.
 // ---------------------------------------------------------------------------
 function extractExistingStyle(elements: unknown[]): string {
   const boxed = (elements as Record<string, unknown>[]).filter(
@@ -285,7 +267,6 @@ function buildSystemPrompt(
   mode: AiMode,
   tabName: string,
   focusIds: string[],
-  bbox: { x2: number; y2: number } | null,
   prompt: string,
 ): string {
   const tab = tabName.replace(/"/g, '');
@@ -297,23 +278,6 @@ function buildSystemPrompt(
   const base = `${SECURITY_GUARD}\n\nDiagram tab: "${tab}"\n\n${SCHEMA}${focusClause}\n\n`;
 
   switch (mode) {
-    case 'generate': {
-      const placementRule = bbox
-        ? `PLACEMENT: Existing content occupies up to x≈${bbox.x2}, y≈${bbox.y2}.`
-        : `PLACEMENT: Canvas is empty — start elements at x:100, y:80.`;
-      return (
-        base +
-        placementRule +
-        `\n\nTask: Either add new elements OR modify existing ones — whichever the user's request calls for. You may do both in the same response.
-
-RULES:
-• If the request targets existing elements (rename, reconnect, restructure, change shape, etc.): return those elements with their ORIGINAL IDs and your modifications applied.
-• If the request adds new content: return fresh IDs and position new elements at y≥${bbox ? bbox.y2 + 120 : 80} (below existing) or x≥${bbox ? bbox.x2 + 120 : 100} (to the right).
-• If the request is for a COMPLETE new diagram (mind map, flowchart, org chart, etc.) on a canvas that already has content: generate it as a standalone unit in the placement zone — do not interleave with existing elements.
-• Return ONLY the elements that are new or changed. Do not return unchanged elements.
-• Return: {"elements":[...new and/or changed...],"summary":"..."}`
-      );
-    }
     case 'clean': {
       const task = prompt.trim()
         ? `Task: Apply ONLY what the user asked for — nothing else. Do not change sizes, positions, styles, borderRadius, or anything not mentioned in the request.`
@@ -323,8 +287,6 @@ RULES:
         `${task} Return ALL elements with improvements applied (same IDs). Return: {"elements":[...all...],"summary":"..."}`
       );
     }
-    case 'review':
-      return `${SECURITY_GUARD}\n\nDiagram tab: "${tab}". Give concise, direct feedback in plain text. Cover: clarity, completeness, logical gaps, one or two concrete improvements. Maximum 2 short paragraphs. Do not output JSON.`;
     case 'ask':
       return `${SECURITY_GUARD}\n\nDiagram tab: "${tab}"${focusClause}. Answer the user's question about the diagram directly and concisely. Base your answer only on the provided diagram elements. If the question cannot be answered from the diagram alone, say so briefly. Plain text only, no JSON, no preamble.`;
   }
@@ -386,22 +348,19 @@ export async function handleAi(ctx: RouteContext): Promise<Response> {
 
   const { mode, prompt, elements, tabName, focusIds = [], history = [] } = body;
 
-  if (!mode || !['generate', 'clean', 'review', 'ask'].includes(mode))
-    return badRequest('invalid mode');
+  if (!mode || !['clean', 'ask'].includes(mode)) return badRequest('invalid mode');
   if (typeof prompt !== 'string') return badRequest('prompt must be a string');
   if (prompt.length > MAX_PROMPT_CHARS) return badRequest('prompt too long');
   if (!Array.isArray(elements)) return badRequest('elements must be an array');
   if (elements.length > MAX_ELEMENTS) return badRequest('too many elements');
 
   const model = env.OPENAI_MODEL ?? 'gpt-4o';
-  const isTextMode = mode === 'review' || mode === 'ask';
+  const isTextMode = mode === 'ask';
   const safe = sanitiseElements(elements);
-  const bbox = mode === 'generate' ? computeBoundingBox(safe) : null;
   const systemPrompt = buildSystemPrompt(
     mode,
     typeof tabName === 'string' ? tabName : '',
     focusIds,
-    bbox,
     prompt,
   );
 
@@ -409,7 +368,7 @@ export async function handleAi(ctx: RouteContext): Promise<Response> {
   const existingStyle = !isTextMode ? extractExistingStyle(safe) : '';
 
   const userContent = isTextMode
-    ? `Diagram elements:\n${JSON.stringify(safe)}\n\n${prompt.trim() || (mode === 'review' ? 'Give general feedback.' : 'Answer any questions about this diagram.')}`
+    ? `Diagram elements:\n${JSON.stringify(safe)}\n\n${prompt.trim() || 'Answer any questions about this diagram.'}`
     : [
         `Existing diagram elements:\n${JSON.stringify(safe)}`,
         existingStyle && `Style to match: ${existingStyle}`,

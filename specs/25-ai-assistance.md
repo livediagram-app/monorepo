@@ -16,14 +16,17 @@ the AI panel are never rendered.
 
 ## Modes
 
-| Mode         | What it does                                                                                     | Response                                           |
-| ------------ | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| **Generate** | Adds new elements and/or modifies existing ones per the prompt (labelled **Build** in the panel) | `text/event-stream` SSE; client parses JSON on end |
-| **Clean**    | Fixes label typos, normalises sizes/positions/styles                                             | `text/event-stream` SSE; client parses JSON on end |
-| **Review**   | Gives textual feedback on structure and content                                                  | `text/event-stream` SSE (text deltas)              |
-| **Ask**      | Answers questions about the diagram (read-only Q&A)                                              | `text/event-stream` SSE (text deltas)              |
+Two modes. The old **Generate** (labelled **Build**) and **Review** modes were removed: a
+capable model in an external AI tool generates far better via the MCP server (spec/62), so
+the built-in assistant focuses on the two things it does well against the active tab —
+answering questions and tidying.
 
-Every mode streams: the worker pipes OpenAI's SSE through unchanged so the panel can render progress (text deltas for review / ask, a "thinking" indicator for the JSON modes). The client buffers the JSON-mode stream until completion, parses it, then applies the elements via `commit()` so undo still treats the change as one block.
+| Mode      | What it does                                         | Response                                           |
+| --------- | ---------------------------------------------------- | -------------------------------------------------- |
+| **Ask**   | Answers questions about the diagram (read-only Q&A)  | `text/event-stream` SSE (text deltas)              |
+| **Clean** | Fixes label typos, normalises sizes/positions/styles | `text/event-stream` SSE; client parses JSON on end |
+
+Both modes stream: the worker pipes OpenAI's SSE through unchanged so the panel can render progress (text deltas for Ask, a "thinking" indicator for the JSON Clean mode). The client buffers the Clean stream until completion, parses it, then applies the elements via `commit()` so undo still treats the change as one block.
 
 ## Context
 
@@ -60,10 +63,10 @@ Each AI request optionally includes a `history` array of prior `{ role, content 
   Both prevent runaway token costs and context-window stuffing.
 - System prompt explicitly instructs the model to refuse any request unrelated to diagram
   creation/editing and to return a structured error rather than comply.
-- For mutating modes `response_format: { type: "json_object" }` is set on the OpenAI
-  request so the model can only return parseable JSON, preventing injection of arbitrary
-  text through the diagram data layer.
-- Max-token caps: mutating modes (generate / clean) 8 000, text modes (review / ask) 400.
+- For the mutating mode (Clean) `response_format: { type: "json_object" }` is set on the
+  OpenAI request so the model can only return parseable JSON, preventing injection of
+  arbitrary text through the diagram data layer.
+- Max-token caps: the mutating mode (Clean) 8 000, the text mode (Ask) 400.
 
 ## API
 
@@ -85,7 +88,7 @@ Request body:
 
 ```json
 {
-  "mode": "generate" | "clean" | "review" | "ask",
+  "mode": "clean" | "ask",
   "prompt": "string (max 1 000 chars)",
   "elements": [...],
   "tabName": "string",
@@ -96,23 +99,23 @@ Request body:
 
 `elements` is the full active-tab `Element[]` from `@livediagram/diagram`. `focusIds` is the optional list of selected element IDs; the system prompt steers the model toward editing those while preserving everything else. `history` is the optional prior-turn list (capped server-side at the last 6 turns); both fields default to `[]`.
 
-Response for **every mode**: `Content-Type: text/event-stream`, OpenAI SSE format piped through with CORS headers added. The JSON-mode payload (generate / clean) is collected by the client into a single `{ elements: [...] }` block on stream completion:
+Response for **both modes**: `Content-Type: text/event-stream`, OpenAI SSE format piped through with CORS headers added. The JSON-mode payload (Clean) is collected by the client into a single `{ elements: [...] }` block on stream completion:
 
-- `generate`: a mix of **appended** elements (fresh IDs) and **modified** ones (existing IDs, replaced in place), the prompt decides which. This is the former separate "amend" mode folded in: generate now adds, edits, or does both in one response.
 - `clean`: elements to **replace by ID** (same IDs as input; new IDs = append).
-- `review` / `ask`: SSE text deltas rendered straight into the panel as they arrive.
+- `ask`: SSE text deltas rendered straight into the panel as they arrive.
 
 **Client-side normalisation.** As elements are parsed out of the stream (`extractElementsFromBuffer`, `apps/live/lib/api/ai.ts`), each shape is normalised so the result renders consistently: a shape with no `textSize` (or `"scale"`) is pinned to `"md"`. Without this the canvas default for an unset size is `'scale'` (auto-fit), so a generated node with no explicit size balloons its label to fill the box while sized siblings stay small — the classic "inconsistent font sizes" output. The model's explicit `sm`/`md`/`lg` hierarchy is preserved; only missing / `scale` sizes are rewritten. The system prompt is also strict that every shape must carry an explicit `textSize` (never omit, never `scale`) and that siblings at the same tier share one size, but the normalisation is the safety net regardless of what the model returns.
 
-## Deterministic auto-layout (Generate)
+## Deterministic auto-layout
 
-The model decides diagram **structure** (which nodes, which edges) well but geometry poorly: scattered box sizes, mis-anchored arrows, uneven spacing. So when **Generate** produces a whole new connected diagram, the client re-derives the geometry deterministically rather than trusting the model's coordinates. `autoLayoutElements` (`packages/diagram/src/auto-layout.ts`, pure + unit-tested) does three things:
-
-1. **Uniform per-tier sizing.** Peers — same shape kind at the same text level — are snapped to one size (the tier's max dimension, clamped); circles / diamonds are squared. No more one node twice the size of its siblings.
-2. **Layered (Sugiyama-lite) layout.** The pinned arrows form a graph; nodes are ranked by longest-path from the sources and placed in evenly-spaced, centred ranks. Direction (top-to-bottom vs left-to-right) is auto-detected from the model's rough positioning unless forced. Cycles are broken by ignoring back edges; disconnected sub-diagrams are laid out independently and arranged side by side.
-3. **Re-anchored straight arrows.** Each arrow's faces are chosen from the final relative positions of its endpoints (target below → `s`→`n`, to the right → `e`→`w`, ...) and the style set to `straight`, so connectors point the right way and don't wander.
-
-The pass runs inside `mergeAiElements` (`editor-page-helpers.ts`) and is gated by `isLayoutCandidate`: it only fires for a freshly generated diagram of **≥3 connected nodes**, placed in free space below existing content. Small additive edits ("add a step") and **Clean** keep the model's placement — re-flowing a diagram the user has already arranged would be destructive. This makes generated output visually consistent regardless of the model's geometry; a follow-up could offer the same pass as an explicit "tidy layout" command and route orthogonal arrows around skip-rank edges.
+`Clean` never re-flows: it preserves the layout the user arranged and only tidies sizes,
+labels, and styles in place. With **Generate** removed, the AI assistant no longer produces
+fresh graphs, so it runs no auto-layout pass. The deterministic layout engine itself —
+`autoLayoutElements` (`packages/diagram/src/auto-layout.ts`, pure + unit-tested) — still
+exists and is now driven by the MCP server (spec/62), where the calling model produces the
+graph and the server lays it out on request. (`mergeAiElements` in `editor-page-helpers.ts`
+retains a general clean/replace merge; the Clean path spreads the AI patch over each
+existing element, preserving AI-invisible properties and positions.)
 
 Error responses follow the standard worker envelope:
 `{ "error": "ai_not_configured" | "ai_error" | "ai_parse_error" | "off_topic" | ... }`
@@ -157,7 +160,7 @@ view-role sessions (AI mutates the diagram; guests can't persist changes they do
 
 Contains:
 
-- Mode selector (Build / Ask / Review / Clean tabs; "Build" is the `generate` mode)
+- Mode selector (Ask / Clean tabs)
 - Scrollable response / status area
 - Prompt textarea + Send button (disabled while a request is in flight)
 - Close button (hides for the session without touching the preference)

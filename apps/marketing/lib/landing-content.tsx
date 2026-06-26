@@ -72,6 +72,14 @@ export type LandingSection = {
   id: string;
   title: string;
   description: string;
+  /**
+   * The label for the landing-page advertising block's "Explore" button. Hand
+   * written per section rather than derived from the title: deriving it ("Explore
+   * {title}") duplicated the heading and read awkwardly for the longer titles
+   * (e.g. "Explore simple by design, powerfully deep"). Keep it short, natural,
+   * and verb-led, e.g. "Explore how we keep it simple".
+   */
+  cta: string;
   items: FeatureProps[];
 };
 
@@ -85,6 +93,7 @@ export type LandingSection = {
 export const LANDING_SECTIONS: LandingSection[] = [
   {
     id: 'why',
+    cta: 'Explore how we keep it simple',
     title: 'Simple by design, powerfully deep',
     description:
       'The simple path is the default: open a link and draw. The depth is there the moment you reach for it, and you never trade one for the other.',
@@ -134,6 +143,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'customise',
+    cta: 'Explore customisation',
     title: 'Customise it your way',
     description:
       'Make every diagram yours: start from a template, recolour with a theme, set the type and the backdrop, and shape every border, arrow, and block the way you want it.',
@@ -205,6 +215,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'motion',
+    cta: 'Explore animation',
     title: 'Bring the canvas to life',
     description:
       'A diagram does not have to sit still. Animate a shape to signal status, send the flow marching along an arrow, let the backdrop drift, and reach for a spotlight when you present. Every animation is purely decorative motion: it freezes to a clean still frame when exported and respects reduced-motion.',
@@ -241,6 +252,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'collaboration',
+    cta: 'Explore collaboration',
     title: 'Invite your team to collaborate',
     description:
       'Diagrams stay private until you share. Everyone you invite shows up on the canvas in real time, with live cursors, comments, and presence.',
@@ -326,6 +338,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'refine',
+    cta: 'Explore the organising tools',
     title: 'Keep your work tidy',
     description:
       'Work fast and stay organised: select in bulk, group and lock elements, copy a look from one to the next, and keep your canvas focused.',
@@ -383,6 +396,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'tabs',
+    cta: 'Explore tabs',
     title: 'One diagram, as many tabs as it takes',
     description:
       'Every diagram is a stack of tabs, each its own canvas. Split a big system across them, link between them, copy them between diagrams, and lock the ones that are done.',
@@ -433,6 +447,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'reliability',
+    cta: 'Explore what keeps work safe',
     title: 'Diagrams you can rely on',
     description:
       'Your work saves itself, steps back when you slip, and comes back exactly as you left it. Nothing to remember, nothing to lose.',
@@ -481,6 +496,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'content',
+    cta: 'Explore richer content',
     title: 'More than boxes and arrows',
     description:
       'A diagram is rarely just shapes. Drop in real images, unfurl a link into a card, lay out a table, and reach past boxes for a whole library of icons. The canvas takes whatever you bring it.',
@@ -531,6 +547,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'express',
+    cta: 'Explore drawing and text',
     title: 'Draw, write, and annotate',
     description:
       'Say it your way on the canvas: sketch freehand, format text down to the word, and tuck the extra context into a note that travels with the element.',
@@ -560,6 +577,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'assist',
+    cta: 'Explore the smart assists',
     title: 'The canvas does the fiddly parts',
     description:
       'Lean on the editor for the precise bits: rotation that snaps to clean angles, guides that line everything up, and an optional AI assistant when you want a hand.',
@@ -569,7 +587,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
         href: '/help/tools/ai/',
         title: 'An optional AI assistant',
         description:
-          'Switch it on and describe what you want: Build drafts new elements and edits existing ones, Clean tidies sizes and labels, while Ask and Review answer questions and critique what you have. It works from your selection or the whole tab, and one undo takes it all back. Off by default, and self-hosters bring their own key.',
+          'Switch it on for a hand on the active tab: Ask answers questions about the diagram without changing it, and Clean tidies sizes, labels, and layout. It works from your selection or the whole tab, and one undo takes it all back. Off by default, and self-hosters bring their own key.',
       },
       {
         art: <RotateArt />,
@@ -589,6 +607,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     id: 'foundations',
+    cta: 'Explore the open foundations',
     title: 'Open source. Self-hostable. No lock-in.',
     description:
       'MIT-licensed. Static frontend + Cloudflare Workers backend. Run it on your own account in an afternoon. Or use the hosted version, your call.',

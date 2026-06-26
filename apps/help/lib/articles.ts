@@ -915,7 +915,7 @@ export const articles: Article[] = [
   {
     slug: 'ai',
     title: 'AI Assistance',
-    description: 'Optional Build, Clean, Ask, and Review helpers on the canvas.',
+    description: 'Optional Ask and Clean helpers on the canvas.',
     category: 'Tools',
     categorySlug: 'tools',
   },
@@ -1215,7 +1215,7 @@ export const articles: Article[] = [
   // ---- Sub-articles: AI ----
   {
     slug: 'ai-tools',
-    title: 'Build, Clean, Ask, and Review',
+    title: 'Ask and Clean',
     description: 'What each AI helper does and when to reach for it.',
     category: 'Tools',
     categorySlug: 'tools/ai',

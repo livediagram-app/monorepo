@@ -401,7 +401,7 @@ export type CanvasProps = {
     onReset: () => void;
     contextElements: Element[];
     focusIds: string[];
-    onApplyElements: (elements: Element[], mode: 'generate' | 'clean') => void;
+    onApplyElements: (elements: Element[], mode: 'clean') => void;
     ownerId: string;
   };
   // Recent-images list for the Current Tab "Images" accordion (spec/19).

@@ -194,7 +194,7 @@ export async function apiAiStream(
   let jsonBuf = ''; // accumulated JSON tokens for mutating modes
   let reviewText = '';
   let lastCount = 0;
-  const isReview = payload.mode === 'review' || payload.mode === 'ask';
+  const isText = payload.mode === 'ask';
 
   for (;;) {
     const { done, value } = await reader.read();
@@ -212,7 +212,7 @@ export async function apiAiStream(
         };
         const text = chunk.choices?.[0]?.delta?.content;
         if (!text) continue;
-        if (isReview) {
+        if (isText) {
           reviewText += text;
           callbacks.onTextChunk?.(text);
         } else {
@@ -229,7 +229,7 @@ export async function apiAiStream(
     }
   }
 
-  if (isReview) {
+  if (isText) {
     callbacks.onDone({ elements: [], offTopic: false, reviewText, summary: '' });
     return;
   }

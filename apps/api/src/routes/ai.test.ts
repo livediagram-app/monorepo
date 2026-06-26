@@ -49,7 +49,7 @@ function makeCtx(opts: {
   const request = new Request('https://api.example.com/api/ai', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ mode: 'generate', prompt: 'p', elements: [], tabName: 't' }),
+    body: JSON.stringify({ mode: 'clean', prompt: 'p', elements: [], tabName: 't' }),
   });
   return {
     request,

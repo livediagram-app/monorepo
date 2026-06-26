@@ -661,7 +661,10 @@ export type TelemetryWindow = {
 // AI Assistance (spec/25)
 // ---------------------------------------------------------------------
 
-export type AiMode = 'generate' | 'clean' | 'review' | 'ask';
+// Two modes (spec/25): 'ask' is read-only Q&A; 'clean' tidies the existing tab.
+// The old 'generate' (Build) + 'review' modes were removed — the calling model
+// in an external AI tool (spec/62) does generation far better.
+export type AiMode = 'clean' | 'ask';
 
 export type AiConversationTurn = { role: 'user' | 'assistant'; content: string };
 
