@@ -1,0 +1,47 @@
+import type { LandingSection } from '@/lib/landing-content';
+import { SectionShowcase } from '@/components/SectionShowcase';
+
+// The hero band at the top of a /features/<id> category page. Replaces the
+// bare centred title + description with a two-column pitch: an eyebrow, the
+// title, the positioning line, the feature count, the primary CTAs, and the
+// section's taller animated showcase beside it, so the detail pages look as
+// composed as the landing blocks they came from.
+
+export function FeatureCategoryHero({ section }: { section: LandingSection }) {
+  const count = section.items.length;
+
+  return (
+    <section className="border-b border-slate-200/70 bg-gradient-to-b from-brand-50/70 to-white">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16">
+        <div>
+          <p className="text-sm font-semibold tracking-wide text-brand-600 uppercase">
+            Feature category
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+            {section.title}
+          </h1>
+          <p className="mt-5 text-lg leading-relaxed text-slate-600">{section.description}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <a
+              href="/new"
+              className="inline-flex items-center justify-center rounded-md bg-brand-500 px-5 py-2.5 text-base font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            >
+              Start drawing
+            </a>
+            <a
+              href="/features"
+              className="text-base font-medium text-brand-600 transition hover:text-brand-700"
+            >
+              All features →
+            </a>
+            <span className="text-sm text-slate-400">
+              {count} feature{count === 1 ? '' : 's'}
+            </span>
+          </div>
+        </div>
+
+        <SectionShowcase section={section} />
+      </div>
+    </section>
+  );
+}

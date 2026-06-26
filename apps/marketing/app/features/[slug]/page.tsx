@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { FeatureCategoryHero } from '@/components/FeatureCategoryHero';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { FeatureGrid, Section } from '@/components/Section';
@@ -56,7 +57,8 @@ export default async function FeatureCategoryPage({
       <Header />
       <main>
         <Breadcrumb items={[{ label: 'Features', href: '/features' }, { label: section.title }]} />
-        <Section id={section.id} title={section.title} description={section.description}>
+        <FeatureCategoryHero section={section} />
+        <Section id={section.id} title="Everything in this category">
           <FeatureGrid items={section.items} />
         </Section>
         <StartDrawingCta />

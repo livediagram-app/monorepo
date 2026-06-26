@@ -1,14 +1,16 @@
 import type { LandingSection } from '@/lib/landing-content';
+import { SectionShowcase } from '@/components/SectionShowcase';
 
 // A landing-page advertising block for one feature category. Instead of
 // enumerating every feature card inline (which made the page feel cluttered,
 // see spec/16), each section is pitched as a self-contained band: its
 // headline, one-line positioning, a badge for every feature it covers (so the
-// breadth is scannable at a glance without the heavy cards), a representative
-// illustration from its lead feature, and an "Explore ..." link into the
-// category's own /features/<id> page where the full grid lives.
+// breadth is scannable at a glance without the heavy cards), a taller
+// animated showcase composed from the section's own feature mocks, and an
+// "Explore ..." link into the category's own /features/<id> page where the
+// full grid lives.
 //
-// The illustration side alternates left/right by index and the background
+// The showcase side alternates left/right by index and the background
 // alternates tinted/plain, so a run of these reads as a composed page rather
 // than a stack of identical grids.
 
@@ -21,7 +23,6 @@ export function FeatureCategoryBlock({
 }) {
   const tinted = index % 2 === 1;
   const artFirst = index % 2 === 1;
-  const lead = section.items[0];
 
   return (
     <section
@@ -70,11 +71,9 @@ export function FeatureCategoryBlock({
           </a>
         </div>
 
-        {/* Representative illustration, drawn from the section's lead feature. */}
+        {/* Taller showcase composed from the section's own feature mocks. */}
         <div className={artFirst ? 'lg:order-1' : ''}>
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-            {lead?.art}
-          </div>
+          <SectionShowcase section={section} />
         </div>
       </div>
     </section>
