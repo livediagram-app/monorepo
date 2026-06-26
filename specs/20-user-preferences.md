@@ -278,7 +278,7 @@ modal.
     `UI`/`Changed`/`PanelOpacity`.
   - "Minimal panels" (`minimalPanels`) — the panel-layout toggle that used
     to be its own header button. Turning it on docks the panels (and so
-    hides this popover); the Settings dialog's Interface group remains the
+    hides this popover); the Settings dialog's Editor group remains the
     way back out, since the docked palette has no header to reopen the
     popover from.
   - A "Reset position" action (not a toggle) that snaps the Palette back to
@@ -296,14 +296,14 @@ modal.
   toggle. Visible in every role: view-role visitors can still
   flip their own telemetry preference and (harmlessly) their own
   auto-rebind preference, even though they can't edit elements.
-  Toggles are organised into collapsible groups (Canvas, Interface,
+  Toggles are organised into collapsible groups (Editor,
   Notifications, Accessibility, AI, Privacy) so the growing list stays scannable; only
-  the first group (Canvas) is open by default and the rest start
+  the first group (Editor) is open by default and the rest start
   collapsed, so the dialog opens compact and the user expands what they
   need. (`autoRebindArrows` and `alignmentGuides` have moved out to the
   Palette settings popover described above; element add is a single
   always-on tap-or-drag gesture with no setting — see
-  [spec/09](09-canvas-and-palette.md).) The Interface group holds `minimalPanels`, whose
+  [spec/09](09-canvas-and-palette.md).) The Editor group holds `minimalPanels`, whose
   description notes the dock layout is always on for mobile. The
   Notifications group holds `notificationsEnabled`, whose description
   notes that errors are always shown regardless. The

@@ -23,10 +23,10 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
   const notificationsOn = settings.notificationsEnabled !== false;
 
   // Single-open accordion: the title of the one expanded group (or null).
-  // Opening one collapses the rest. Starts on Interface so the dialog lands
+  // Opening one collapses the rest. Starts on Editor so the dialog lands
   // with a section showing (the Canvas group's toggles moved to the Palette
   // settings popover — see spec/20).
-  const [openGroup, setOpenGroup] = useState<string | null>('Interface');
+  const [openGroup, setOpenGroup] = useState<string | null>('Editor');
   const groupProps = (title: string) => ({
     title,
     open: openGroup === title,
@@ -53,7 +53,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
         </button>
       </header>
       <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
-        <SettingsGroup {...groupProps('Interface')}>
+        <SettingsGroup {...groupProps('Editor')}>
           <ToggleRow
             label="Minimal panel layout"
             description="Replaces the floating Explorer, Palette, Editor, and AI panels with a compact button bar that opens each as a popover. Keeps the canvas uncluttered when you want more room to work. Always active on mobile regardless of this setting."
