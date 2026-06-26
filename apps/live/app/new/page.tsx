@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { EditorHeader } from '@/components/chrome/EditorHeader';
 import { ApiErrorPage } from '@/components/chrome/ApiErrorPage';
 import { TemplatePicker } from '@/components/palette/TemplatePicker';
+import { RecentDiagramsCard } from './RecentDiagramsCard';
 import { CustomThemeProvider } from '@/components/primitives/CustomThemeProvider';
 import { AnimatedLinesBackdrop } from '@/components/canvas/AnimatedLinesBackdrop';
 import { useClerkApiBootstrap } from '@/hooks/persistence/useClerkApiBootstrap';
@@ -222,6 +223,10 @@ export default function NewDiagramPage() {
             onSkip={() => void commitNewDiagram('blank', self.name, 'brand')}
           />
         </CustomThemeProvider>
+        {/* Returning users get a "jump back in" shortcut beside the wizard
+            (spec/14). Hidden when there are no diagrams yet / on narrow
+            viewports. */}
+        <RecentDiagramsCard ownerId={self.id === 'pending' ? null : self.id} />
       </main>
     </div>
   );
