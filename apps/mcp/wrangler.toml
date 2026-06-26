@@ -8,6 +8,13 @@ compatibility_date = "2026-05-29"
 # bundled by wrangler directly.
 compatibility_flags = ["nodejs_compat"]
 
+# Bundle the embedded font (fonts/Inter-Regular.ttf) as raw bytes so render.ts
+# can hand it to resvg as a fontBuffer — Workers have no system fonts, so
+# without this the PNG renders shapes but no text (spec/62 §5).
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+
 [vars]
 # Where the OAuth consent page lives (apps/live). Self-hosters set their own
 # live origin; the authorize endpoint redirects the signed-in user here.

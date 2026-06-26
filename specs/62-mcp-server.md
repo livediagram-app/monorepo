@@ -249,6 +249,12 @@ Worker (no DOM, no React).
   [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) (runs in the Workers
   runtime), return it as base64 MCP image content (`image/png`) — broadest client
   support vs. raw SVG.
+- **Embedded font.** Workers have no system fonts, so the worker bundles one
+  (Inter, OFL — `apps/mcp/fonts/`, wired as a `Data` module + passed to resvg as
+  a `fontBuffer`) and renders every label in it. Without an embedded font resvg
+  draws shapes/arrows/colours but no text, so the calling model gets a text-less
+  preview it can't self-check against. A diagram's own font choice falls back to
+  Inter in the preview; the structured elements still carry the true font.
 - **Known limitation (v1).** Image elements render as placeholder rectangles
   (the SVG export already does this), since embedding R2-hosted bitmaps is extra
   work. Acceptable for code/architecture/flow diagrams, which are shape+arrow+text.

@@ -3,13 +3,16 @@
 // renderElementsToSvg in packages/diagram, so the MCP and the in-app export draw
 // diagrams identically.
 //
-// v1 limitation (spec/62 §5 follow-up): the Workers runtime has no system fonts
-// and we don't yet embed a font buffer, so shape / arrow / colour geometry
-// rasterises but text labels may not appear in the PNG. The structured
-// `elements` returned alongside the image always carry the labels, and
-// embedding a font here is the documented next step.
+// Workers have no system fonts, so we embed one (Inter, OFL — see
+// fonts/Inter-OFL.txt) as a font buffer and render every label in it. Without an
+// embedded font resvg draws shapes / arrows / colours but no TEXT, leaving every
+// label off the PNG. A diagram's own font choice falls back to Inter in the
+// preview; the structured elements returned alongside still carry the true font.
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
+import interFont from '../fonts/Inter-Regular.ttf';
+
+const FONT_BUFFER = new Uint8Array(interFont);
 
 // initWasm must run once per isolate; cache the promise so concurrent renders
 // share a single initialisation.
@@ -22,8 +25,9 @@ function ensureWasm(): Promise<void> {
 export async function svgToPngBase64(svg: string): Promise<string> {
   await ensureWasm();
   const resvg = new Resvg(svg, {
-    // No system fonts in Workers; skip the (failing, slow) load attempt.
-    font: { fontBuffers: [], loadSystemFonts: false, defaultFontFamily: 'sans-serif' },
+    // Embed Inter; skip the (absent, slow) system-font load. Any font-family the
+    // SVG requests that isn't Inter falls back to it via defaultFontFamily.
+    font: { fontBuffers: [FONT_BUFFER], loadSystemFonts: false, defaultFontFamily: 'Inter' },
   });
   const png = resvg.render().asPng();
   let bin = '';
