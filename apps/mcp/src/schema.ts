@@ -23,11 +23,17 @@ ${types}
 
 Boxed elements (shape, text, sticky, table, image, annotation) carry:
   id, type, x, y, width, height, and an optional "label" (string).
-  - "shape" also needs "shape": square, rectangle, circle, ellipse, diamond,
-    triangle, cylinder, cloud, hexagon, parallelogram, star, and more, plus
-    "frame" (a section container drawn behind its contents). Unknown shape kinds
-    fall back to a rounded box rather than being dropped.
-  - "text" is a label-only element (no fill / border).
+  - "shape" is the element for a NODE — a labelled box, the default building
+    block of almost every diagram. It also needs "shape": "rectangle" (the
+    default box / process step), "diamond" (a decision), "cylinder" (a
+    datastore / database), "circle", "ellipse", "square", "cloud", "hexagon",
+    "parallelogram" (I/O), "star", and more, plus "frame" (a section container
+    drawn behind its contents). Unknown shape kinds fall back to a rounded box.
+  - "text" is BARE text with no box, fill, or border. Use it ONLY for a
+    free-standing title, caption, legend, or note — NEVER for a node. A node
+    that has a label is a "shape" with a "label" (use shape: "rectangle"), not a
+    "text". Defaulting to "text" for nodes makes a diagram of floating words
+    with no boxes; reach for "shape" unless you specifically want loose text.
 
 ## Arrows
 type "arrow" with "from" and "to" endpoints. PREFER pinned endpoints so arrows
@@ -52,6 +58,9 @@ YOU decide the layout; the server does not override a real arrangement.
   describes, not in a loose pile.
 
 ## Design rules (diagrams that read well)
+- Nodes are SHAPES, not text. Use type "shape" (shape: "rectangle" by default,
+  "diamond" for a decision, "cylinder" for a datastore) for every box in the
+  diagram. Reserve type "text" for stand-alone titles / captions.
 - Do NOT set colours. The theme owns fill / stroke / text colour; omit them and
   the diagram inherits a coherent palette.
 - Size sibling nodes consistently (e.g. every box 160x64).
@@ -66,9 +75,11 @@ export const SERVER_INSTRUCTIONS = `Tools to find, view, create, add tabs to, an
 The calling model produces the diagram elements AND decides their layout; this
 server validates, persists, and renders them, and only auto-arranges the graph
 when you ask it to (or leave nodes unplaced). Read the ${SCHEMA_RESOURCE_URI}
-resource before creating or updating: use a unique "id" per element, position
-elements yourself for a deliberate shape (a cycle as a ring, a tree, a grid),
-prefer pinned arrows (node -> node), and do NOT set colours — the theme owns them.`;
+resource before creating or updating: use a unique "id" per element, make nodes
+"shape" elements (a labelled box) NOT "text" (text is only for titles/captions),
+position elements yourself for a deliberate shape (a cycle as a ring, a tree, a
+grid), prefer pinned arrows (node -> node), and do NOT set colours — the theme
+owns them.`;
 
 // --- Tool input shapes (ZodRawShape). Element arrays are permissive; isValidTab
 // is the real guard, so there's no second schema to drift. ---
