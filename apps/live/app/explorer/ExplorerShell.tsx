@@ -1,14 +1,22 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/chrome/AuthControls';
+import { ChromeControls } from '@/components/chrome/ChromeControls';
 import { TeamFormModal } from '@/components/dialogs/TeamFormModal';
 import { MoveToFolderDialog } from '@/components/dialogs/MoveToFolderDialog';
+import { SettingsDialog } from '@/components/dialogs/SettingsDialog';
 import { SignInBanner, SIGNIN_BANNER_DISMISS_KEY } from '@/components/chrome/SignInBanner';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { HELP_SEARCH_ITEMS } from '@/lib/help-search';
+import {
+  fetchUserPreferences,
+  readUserPreferences,
+  writeUserPreferences,
+  type UserPreferences,
+} from '@/lib/user-preferences';
 import { useDismissibleBanner } from '@/hooks/ui/useDismissibleBanner';
 import { CustomThemeProvider } from '@/components/primitives/CustomThemeProvider';
 import { ExplorerProvider, useExplorer } from './ExplorerContext';
@@ -76,7 +84,24 @@ function ShellChrome({ children }: { children: ReactNode }) {
     setTeamModalOpen,
     hookCreateTeam,
     clerkUserId,
+    ownerId,
   } = useExplorer();
+
+  // Settings live in the bottom bar's gear (same synced UserPreferences as
+  // the editor, spec/20). Seed from the localStorage cache for an instant
+  // first paint, then merge the authoritative D1 copy in on mount.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [prefs, setPrefs] = useState<UserPreferences>(() => readUserPreferences());
+  useEffect(() => {
+    if (!ownerId) return;
+    let cancelled = false;
+    void fetchUserPreferences(ownerId).then((merged) => {
+      if (!cancelled && merged) setPrefs(merged);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId]);
 
   // Guest sign-in nudge (spec/36): only when Clerk is actually wired
   // up for this deployment, the visitor isn't signed in (a guest owner
@@ -88,14 +113,14 @@ function ShellChrome({ children }: { children: ReactNode }) {
   const showSignInBanner = clerkEnabled && !clerkUserId && !bannerDismissed;
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-slate-50">
+    <div className="relative flex min-h-dvh flex-col bg-slate-50 dark:bg-slate-900">
       {/* pr-0 so the account control (a full-height, left-bordered toolbar
           button) sits flush to the right edge instead of leaving a 16px gap
           after it; pl-4 keeps the brand padded on the left. */}
-      <header className="sticky top-0 z-[var(--z-chrome)] flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 pl-4 pr-0 backdrop-blur">
+      <header className="sticky top-0 z-[var(--z-chrome)] flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/85 pl-4 pr-0 backdrop-blur dark:border-slate-700 dark:bg-slate-900/85">
         <div className="flex items-center gap-3">
           <Brand href="/" size="md" />
-          <span className="text-sm font-medium text-slate-500">Explorer</span>
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Explorer</span>
         </div>
         <AuthControls />
       </header>
@@ -115,7 +140,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
           style={{ width: SIDEBAR_WIDTH }}
           aria-label="Sections"
         >
-          <div className="sticky top-20 rounded-xl border border-slate-200 bg-white px-3 py-5 shadow-sm">
+          <div className="sticky top-20 rounded-xl border border-slate-200 bg-white px-3 py-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <ExplorerSidebar />
           </div>
         </aside>
@@ -130,14 +155,16 @@ function ShellChrome({ children }: { children: ReactNode }) {
               onClick={() => setMobileNavOpen(false)}
               aria-hidden
             />
-            <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85%] animate-slide-in-left flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 shadow-xl">
+            <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85%] animate-slide-in-left flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 shadow-xl dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-1 flex items-center justify-between pl-1">
-                <span className="text-sm font-semibold text-slate-700">Sections</span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Sections
+                </span>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
                   aria-label="Close"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 >
                   <CloseIcon />
                 </button>
@@ -150,6 +177,17 @@ function ShellChrome({ children }: { children: ReactNode }) {
         {/* ---------- Right pane: the active section route ---------- */}
         <section className="min-w-0 flex-1">{children}</section>
       </main>
+
+      {/* Bottom bar (spec/07): the same strip as the editor's tab bar, minus
+          the tabs — the shared right-hand control cluster (search / GitHub /
+          settings / dark-mode). Sticky so it stays in view while the dashboard
+          scrolls; the sign-in banner is nudged up to clear it. */}
+      <div className="sticky bottom-0 z-[var(--z-chrome)] flex h-12 shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
+        <ChromeControls
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      </div>
 
       {/* Move-destination modal (spec/15 + spec/35): one ownership-
           aware indented tree for every diagram (personal or team) and
@@ -246,6 +284,17 @@ function ShellChrome({ children }: { children: ReactNode }) {
           }}
           helpItems={HELP_SEARCH_ITEMS}
           onClose={() => setSearchOpen(false)}
+        />
+      ) : null}
+
+      {settingsOpen ? (
+        <SettingsDialog
+          settings={prefs}
+          onChange={(next) => {
+            setPrefs(next);
+            writeUserPreferences(next, ownerId);
+          }}
+          onClose={() => setSettingsOpen(false)}
         />
       ) : null}
 

@@ -86,12 +86,12 @@ export function ExplorerSidebar() {
           setSearchOpen(true);
           setMobileNavOpen(false);
         }}
-        className="mt-2 flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-left text-xs text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+        className="mt-2 flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-left text-xs text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/15 dark:hover:text-brand-300"
       >
         <SearchSidebarIcon />
         <span className="flex-1 truncate">Search…</span>
       </button>
-      <div className="my-4 h-px bg-slate-100" aria-hidden />
+      <div className="my-4 h-px bg-slate-100 dark:bg-slate-800" aria-hidden />
       <SidebarSectionLabel>Quick find</SidebarSectionLabel>
       <SidebarRow
         icon={<ClockIcon />}
@@ -121,7 +121,7 @@ export function ExplorerSidebar() {
               type="button"
               onClick={() => void createFolder(null)}
               aria-label="New folder"
-              className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700"
+              className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-300"
             >
               <PlusIcon />
             </button>
@@ -185,7 +185,7 @@ export function ExplorerSidebar() {
                     setMobileNavOpen(false);
                   }}
                   aria-label="New team"
-                  className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700"
+                  className="-my-1 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-brand-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-300"
                 >
                   <PlusIcon />
                 </button>

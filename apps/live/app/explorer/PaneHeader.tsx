@@ -110,13 +110,13 @@ export function PaneHeader({
               type="button"
               onClick={onOpenNav}
               aria-label="Browse sections"
-              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
+              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 sm:hidden"
             >
               <HamburgerIcon />
             </button>
           ) : null}
           {title ? (
-            <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-slate-900">
+            <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               {title}
             </h1>
           ) : null}
@@ -196,14 +196,14 @@ export function PaneHeader({
       {showCrumbs ? (
         <nav
           aria-label="Breadcrumb"
-          className="flex flex-wrap items-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 shadow-sm"
+          className="flex flex-wrap items-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           {crumbs.map((c, i) => {
             const isLast = i === crumbs.length - 1;
             return (
               <span key={`${c.name}-${i}`} className="flex items-center">
                 {i > 0 ? (
-                  <span aria-hidden className="px-1 text-slate-300">
+                  <span aria-hidden className="px-1 text-slate-300 dark:text-slate-600">
                     ›
                   </span>
                 ) : null}
@@ -211,12 +211,14 @@ export function PaneHeader({
                   <button
                     type="button"
                     onClick={c.onClick}
-                    className="rounded px-1.5 py-0.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                    className="rounded px-1.5 py-0.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                   >
                     {c.name}
                   </button>
                 ) : (
-                  <span className="rounded px-1.5 py-0.5 font-medium text-slate-900">{c.name}</span>
+                  <span className="rounded px-1.5 py-0.5 font-medium text-slate-900 dark:text-slate-100">
+                    {c.name}
+                  </span>
                 )}
               </span>
             );

@@ -125,10 +125,10 @@ export function ListView({
   diagramsCount: (id: string) => number;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div
         className={
-          'grid grid-cols-[1fr_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 ' +
+          'grid grid-cols-[1fr_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400 ' +
           (showOwner
             ? 'sm:grid-cols-[1fr_110px_90px_140px_40px]'
             : 'sm:grid-cols-[1fr_90px_140px_40px]')
@@ -140,7 +140,7 @@ export function ListView({
         <span>Updated</span>
         <span aria-hidden></span>
       </div>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
         {showUnsortedRow ? <UnsortedRow count={unsortedCount} onOpen={onOpenUnsorted} /> : null}
         {folders.map((f) => (
           <FolderRow
@@ -182,21 +182,21 @@ export function ListView({
 // pseudo-folder which lists every diagram with folder_id IS NULL.
 export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
   return (
-    <li className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+    <li className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800">
       <button
         type="button"
         onDoubleClick={onOpen}
         onClick={onOpen}
         className="flex min-w-0 items-center gap-2 text-left"
       >
-        <span className="shrink-0 text-slate-400">
+        <span className="shrink-0 text-slate-400 dark:text-slate-500">
           <FolderIcon open={false} />
         </span>
-        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700 dark:text-slate-100 dark:group-hover:text-brand-300">
           Unsorted
         </span>
         {count > 0 ? (
-          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+          <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
             {count}
           </span>
         ) : null}
@@ -248,15 +248,15 @@ export function FolderRow({
           initial={folder.name}
           onCommit={onCommitRename}
           onCancel={onCancelRename}
-          className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+          className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900 dark:border-brand-500/50 dark:bg-slate-900 dark:text-slate-100"
         />
       ) : (
-        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700">
+        <span className="truncate text-sm font-medium text-slate-900 group-hover:text-brand-700 dark:text-slate-100 dark:group-hover:text-brand-300">
           {folder.name}
         </span>
       )}
       {childCount > 0 ? (
-        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600">
+        <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
           {childCount}
         </span>
       ) : null}
@@ -264,7 +264,7 @@ export function FolderRow({
   );
   return (
     <li
-      className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50"
+      className="group grid grid-cols-[1fr_140px_40px] sm:grid-cols-[1fr_90px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800"
       // Right-click anywhere on the row opens the same actions menu as the
       // ellipsis button (anchored to it).
       onContextMenu={
@@ -289,7 +289,7 @@ export function FolderRow({
         </button>
       )}
       <span className="hidden sm:block" />
-      <span className="text-[11px] uppercase tracking-wider text-slate-400">
+      <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
         {relativeSince(folder.updatedAt)}
       </span>
       {renaming ? (
@@ -303,7 +303,7 @@ export function FolderRow({
             setMenuOpen((o) => !o);
           }}
           aria-label={`Menu for ${folder.name}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
         >
           <EllipsisIcon />
         </button>
@@ -363,12 +363,12 @@ function DiagramRow({
       initial={diagram.name}
       onCommit={onCommitRename}
       onCancel={onCancelRename}
-      className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+      className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900 dark:border-brand-500/50 dark:bg-slate-900 dark:text-slate-100"
     />
   ) : (
     <Link
       href={href}
-      className="truncate text-sm font-medium text-slate-900 transition hover:text-brand-700"
+      className="truncate text-sm font-medium text-slate-900 transition hover:text-brand-700 dark:text-slate-100 dark:hover:text-brand-300"
     >
       {diagram.name}
     </Link>
@@ -377,7 +377,7 @@ function DiagramRow({
   return (
     <li
       className={
-        'group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 ' +
+        'group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800 ' +
         (showOwner
           ? 'sm:grid-cols-[1fr_110px_90px_140px_40px]'
           : 'sm:grid-cols-[1fr_90px_140px_40px]')
@@ -394,13 +394,13 @@ function DiagramRow({
       }
     >
       <span className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-slate-400">
+        <span className="shrink-0 text-slate-400 dark:text-slate-500">
           <DiagramIcon />
         </span>
         {titleNode}
       </span>
       {showOwner ? (
-        <span className="hidden truncate text-xs text-slate-500 sm:block">
+        <span className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">
           {diagram.team?.name ??
             diagram.shared?.ownerName ??
             (isSharedRow ? 'Unknown owner' : 'You')}
@@ -486,7 +486,7 @@ function DiagramRow({
           </span>
         )}
       </span>
-      <span className="text-[11px] uppercase tracking-wider text-slate-400">
+      <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
         {relativeSince(diagram.savedAt)}
       </span>
       {renaming ? (
@@ -500,7 +500,7 @@ function DiagramRow({
             setMenuOpen((o) => !o);
           }}
           aria-label={`Menu for ${diagram.name}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
         >
           <EllipsisIcon />
         </button>
@@ -648,43 +648,43 @@ export function SharedList({
     return <EmptyPane selected={{ kind: 'shared' }} />;
   }
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:grid-cols-[1fr_110px_60px_140px_40px]">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400 sm:grid-cols-[1fr_110px_60px_140px_40px]">
         <span>Name</span>
         <span className="hidden sm:block">Owner</span>
         <span>Role</span>
         <span>Updated</span>
         <span aria-hidden></span>
       </div>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
         {shared.map((s) => (
           <li
             key={s.id}
-            className="group grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 sm:grid-cols-[1fr_110px_60px_140px_40px]"
+            className="group grid grid-cols-[1fr_60px_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800 sm:grid-cols-[1fr_110px_60px_140px_40px]"
           >
             <Link
               href={`/diagram/${s.id}?s=${encodeURIComponent(s.shareCode)}`}
-              className="flex min-w-0 items-center gap-2 truncate text-sm font-medium text-slate-900 hover:text-brand-700"
+              className="flex min-w-0 items-center gap-2 truncate text-sm font-medium text-slate-900 hover:text-brand-700 dark:text-slate-100 dark:hover:text-brand-300"
             >
               <span className="shrink-0 text-slate-400">
                 <DiagramIcon />
               </span>
               <span className="truncate">{s.name}</span>
             </Link>
-            <span className="hidden truncate text-xs text-slate-500 sm:block">
+            <span className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">
               {s.ownerName || 'Unknown owner'}
             </span>
-            <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+            <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
               {s.role === 'edit' ? 'Edit' : 'View'}
             </span>
-            <span className="text-[11px] uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {relativeSince(s.savedAt)}
             </span>
             <button
               type="button"
               onClick={() => onDismiss(s.id)}
               aria-label="Dismiss"
-              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
+              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-500 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
             >
               <CloseIcon />
             </button>
@@ -699,13 +699,13 @@ export function SharedList({
 
 export function SkeletonRows() {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <ul className="divide-y divide-slate-100">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
         {Array.from({ length: 6 }).map((_, i) => (
           <li key={i} className="flex items-center gap-3 px-4 py-3">
-            <span className="h-4 w-4 animate-pulse rounded bg-slate-200" />
-            <span className="h-4 flex-1 animate-pulse rounded bg-slate-200" />
-            <span className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+            <span className="h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+            <span className="h-4 flex-1 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+            <span className="h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
           </li>
         ))}
       </ul>
