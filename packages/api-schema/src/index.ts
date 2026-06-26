@@ -553,6 +553,10 @@ export const TELEMETRY_CATEGORIES = [
   // per-article helpful / not-really feedback. The second app (besides
   // the editor) that emits telemetry. `type` is the article slug.
   'Help',
+  // API tokens (spec/61) + MCP connections (spec/62): 'Created'/'Removed'
+  // with `type` 'Manual' (Explorer New-token) or 'MCP' (an AI tool connected
+  // via the consent screen, which mints a token under the hood).
+  'Token',
 ] as const;
 export type TelemetryCategory = (typeof TELEMETRY_CATEGORIES)[number];
 

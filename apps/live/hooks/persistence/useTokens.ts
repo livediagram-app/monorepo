@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ApiToken } from '@livediagram/api-schema';
 import { apiCreateToken, apiListTokens, apiRevokeToken } from '@/lib/api-client';
+import { track } from '@/lib/telemetry';
 
 export const MAX_TOKENS = 10;
 
@@ -48,6 +49,9 @@ export function useTokens(ownerId: string | null, opts: { enabled: boolean }): T
       setError(null);
       try {
         const res = await apiCreateToken(ownerId, name.trim());
+        // Anonymous telemetry (spec/22): a token was minted by hand from the
+        // Explorer. The MCP consent flow tracks its own 'MCP' source separately.
+        track('Token', 'Created', 'Manual');
         load();
         return res.token;
       } catch {
@@ -66,6 +70,7 @@ export function useTokens(ownerId: string | null, opts: { enabled: boolean }): T
       setError(null);
       try {
         await apiRevokeToken(ownerId, id);
+        track('Token', 'Removed'); // spec/22: a token was revoked
         load();
       } catch {
         setError('Could not revoke token.');

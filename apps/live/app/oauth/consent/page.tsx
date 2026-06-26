@@ -13,6 +13,7 @@ import { AnimatedLinesBackdrop } from '@/components/canvas/AnimatedLinesBackdrop
 import { apiExchangeOauthToken } from '@/lib/api-client';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { MCP_ORIGIN } from '@/lib/mcp-config';
+import { track } from '@/lib/telemetry';
 import { useClerkApiBootstrap } from '@/hooks/persistence/useClerkApiBootstrap';
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,34 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </main>
+  );
+}
+
+// Help link to the connect-an-AI-tool article. Opens in a new tab so it never
+// abandons the in-progress OAuth session on this screen.
+function HelpLink() {
+  return (
+    <a
+      href="/help/account-and-data/connect-ai-mcp/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400"
+    >
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
+        <circle cx="8" cy="8" r="6.5" />
+        <path d="M6.2 6.3a1.8 1.8 0 1 1 2.3 1.8c-.5.2-.7.5-.7 1.1" strokeLinecap="round" />
+        <circle cx="8" cy="11.4" r="0.5" fill="currentColor" stroke="none" />
+      </svg>
+      Learn about connecting AI tools
+    </a>
   );
 }
 
@@ -78,6 +107,9 @@ function Consent() {
         >
           Sign in
         </a>
+        <div>
+          <HelpLink />
+        </div>
       </Shell>
     );
   }
@@ -104,6 +136,9 @@ function Consent() {
         body: JSON.stringify({ session, token, expiresAt }),
       });
       if (!res.ok) throw new Error('complete failed');
+      // Anonymous telemetry (spec/22): an AI tool was connected via MCP, which
+      // mints a token. `type` is the fixed source, never the client name.
+      track('Token', 'Created', 'MCP');
       const { redirectTo } = (await res.json()) as { redirectTo: string };
       window.location.href = redirectTo;
     } catch {
@@ -160,6 +195,9 @@ function Consent() {
         >
           Cancel
         </button>
+      </div>
+      <div>
+        <HelpLink />
       </div>
     </Shell>
   );

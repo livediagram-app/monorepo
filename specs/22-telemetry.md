@@ -15,7 +15,7 @@ Every event is three small fields (`packages/api-schema`, shared by emitter + in
 
 ```ts
 type TelemetryEvent = {
-  category: TelemetryCategory; // the "parent": Diagram | Element | Tab | Theme | Canvas | Template | Comment | Note | Search | UI | Folder | Session | AI | Team | Participant
+  category: TelemetryCategory; // the "parent": Diagram | Element | Tab | Theme | Canvas | Template | Comment | Note | Search | UI | Folder | Session | AI | Team | Participant | Help | Token
   action: TelemetryAction; // the "verb": Created | Deleted | Shared | Joined | Added | ...
   type?: string | null; // one app-defined reference value: 'Square', 'Edit', 'PNG', a template id, a theme name
 };
@@ -108,6 +108,7 @@ The aim is to cover every meaningful interaction a person has with a diagram (di
 - **Folder**: Created; Renamed; Deleted; Moved (re-parented under another folder, or promoted to the root when parent=null). Tracked from `useFolders` so both the editor side panel and the standalone explorer page emit identically; rename emits only when the trimmed name actually changes.
 - **Session**: SignedIn (user just completed sign-in via Clerk); SignedUp (just completed sign-up); SignedOut (just signed out) — these only fire when Clerk is configured; pure-guest deploys emit nothing here. Opened `Embed` (a read-only embed view rendered, spec/33; one emit per iframe document).
 - **Participant**: Created (a brand-new browser identity was minted — the daily new-visitors signal). Fires exactly once per browser, at whichever identity mint runs first: the local guest-id mint (`ensureGuestSelfId`, used by `/new` + `/explorer`) or the server-signed mint (`ensureSignedGuestIdentity`, the editor bootstrap); a returning browser hits the stored-id early-returns and never re-emits. First-time visitors who sign up without ever minting a guest id surface via `Session`/SignedUp instead. No type, no identifier — the event is a bare count.
+- **Token**: Created `Manual` (an API token minted by hand from the Explorer New-token popover, via `useTokens.create`) or `Created` `MCP` (an AI tool connected through the OAuth consent screen, spec/62, which mints a token under the hood); Removed (a token revoked, `useTokens.revoke`). The `type` is the fixed source only — never the token, its name, or the client name.
 
 Extend by adding to the `TELEMETRY_CATEGORIES` / `TELEMETRY_ACTIONS` enums (if needed) + a one-line `track()` call at the interaction's handler. Page hits are deliberately not wired; new-visitor counting goes through `Participant`/Created above.
 
