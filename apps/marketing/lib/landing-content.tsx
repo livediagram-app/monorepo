@@ -32,6 +32,7 @@ import {
   LockArt,
   MarkdownImportArt,
   MarqueeArt,
+  McpArt,
   MinimalPanelArt,
   PencilArt,
   MitArt,
@@ -619,6 +620,13 @@ export const LANDING_SECTIONS: LandingSection[] = [
         title: 'Drive it from your own scripts',
         description:
           'Create an API token and call the same REST API the editor uses, under your account, from your own scripts and integrations. Signed in, revocable, six-month tokens, no lock-in.',
+      },
+      {
+        art: <McpArt />,
+        href: '/help/account-and-data/connect-ai-mcp/',
+        title: 'Connect your AI tools',
+        description:
+          'Hook livediagram up to Claude or any MCP client and let it find, read, create, and edit your diagrams for you. Point it at a system and ask for the diagram; it lands in your account. Signed in, and it runs on the same revocable token, so you can disconnect any time.',
       },
     ],
   },

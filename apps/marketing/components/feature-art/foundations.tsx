@@ -53,6 +53,41 @@ export function ApiArt() {
   );
 }
 
+export function McpArt() {
+  // A connected AI tool calling an MCP tool that lands as a diagram — echoing
+  // the "connect your AI tools" card, sibling to the API/curl one above.
+  return (
+    <Frame>
+      <div className="flex h-full flex-col items-center justify-center gap-1.5">
+        <div
+          className="fa-pop w-[152px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm"
+          style={{ animationDelay: '0.3s' }}
+        >
+          <div className="flex items-center gap-1 border-b border-slate-100 bg-slate-50 px-1.5 py-1">
+            <SparkIcon />
+            <span className="text-[8px] font-semibold text-slate-600">AI tool · MCP</span>
+          </div>
+          <div className="px-2 py-1.5 font-mono text-[7px] leading-relaxed">
+            <div className="text-slate-600">
+              ▸ <span className="font-semibold text-brand-600">create_diagram</span>
+            </div>
+            <div className="text-slate-400">&quot;auth flow&quot; → livediagram</div>
+          </div>
+        </div>
+        <span className="text-[7px] text-slate-400">find · read · create · edit</span>
+      </div>
+    </Frame>
+  );
+}
+
+function SparkIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="#7c3aed" aria-hidden="true">
+      <path d="M8 0 L9.6 5.4 L15 7 L9.6 8.6 L8 14 L6.4 8.6 L1 7 L6.4 5.4 Z" />
+    </svg>
+  );
+}
+
 function GitHubIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="#334155">
