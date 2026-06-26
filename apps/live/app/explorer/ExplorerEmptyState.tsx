@@ -9,10 +9,11 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/panels/EmptyState';
-import { ClockIcon, DiagramIcon, FolderIcon, PlusIcon, ShareIcon } from './icons';
+import { helpArticleHref } from '@/lib/help-articles';
+import { ClockIcon, DiagramIcon, FolderIcon, PlusIcon, ShareIcon, SparkleIcon } from './icons';
 import type { SelectedNode } from './views';
 
-type EmptyKind = 'recent' | 'shared' | 'unsorted' | 'folder' | 'default';
+type EmptyKind = 'recent' | 'shared' | 'unsorted' | 'generated' | 'folder' | 'default';
 
 const CONTENT: Record<
   EmptyKind,
@@ -34,6 +35,13 @@ const CONTENT: Record<
     title: 'Nothing unsorted',
     description: 'Diagrams not filed into a folder collect here, ready to organise.',
   },
+  generated: {
+    icon: <SparkleIcon />,
+    title: 'No generated diagrams yet',
+    description:
+      'Connect an AI tool and the diagrams it creates for you will appear here automatically.',
+    cta: 'Set up an AI agent',
+  },
   folder: {
     icon: <FolderIcon open />,
     title: 'This folder is empty',
@@ -52,12 +60,35 @@ function kindFor(selected: SelectedNode): EmptyKind {
   if (selected.kind === 'recent') return 'recent';
   if (selected.kind === 'shared') return 'shared';
   if (selected.kind === 'unsorted') return 'unsorted';
+  if (selected.kind === 'generated') return 'generated';
   if (selected.kind === 'folder') return 'folder';
   return 'default';
 }
 
 export function EmptyPane({ selected }: { selected: SelectedNode }) {
   const c = CONTENT[kindFor(selected)];
+
+  // Generated is a read-through view of AI output, not somewhere you
+  // author into: its CTA points at the "connect an AI tool" help guide
+  // (external /help, new tab) rather than the new-diagram flow.
+  if (selected.kind === 'generated') {
+    return (
+      <EmptyState icon={c.icon} title={c.title} description={c.description}>
+        {c.cta ? (
+          <a
+            href={helpArticleHref('connectAiTool')}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500"
+          >
+            <SparkleIcon />
+            {c.cta}
+          </a>
+        ) : null}
+      </EmptyState>
+    );
+  }
+
   const ctaHref =
     selected.kind === 'folder' ? `/new?folder=${encodeURIComponent(selected.id)}` : '/new';
 
