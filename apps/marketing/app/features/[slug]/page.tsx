@@ -35,7 +35,7 @@ export async function generateMetadata({
   const section = getLandingSection(slug);
   if (!section) return {};
   return subpageMetadata({
-    title: `${section.title} — livediagram features`,
+    title: `${section.title} | livediagram`,
     description: section.description,
     path: `/features/${slug}`,
   });
