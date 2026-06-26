@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
@@ -27,6 +28,7 @@ export default function FeaturesHubPage() {
       <BreadcrumbJsonLd name="Features" path="/features" />
       <Header />
       <main>
+        <Breadcrumb items={[{ label: 'Features' }]} />
         <Section
           title="Everything livediagram can do"
           description="Browse the product by category. Each one opens onto the full set of features it covers."

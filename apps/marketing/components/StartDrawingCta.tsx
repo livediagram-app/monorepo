@@ -14,8 +14,8 @@ export function StartDrawingCta() {
           Time to start
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-brand-50">
-          No sign-up wall. No credit card. The editor opens in your browser and remembers the
-          diagram next time you visit.
+          No sign up required, no subscriptions or payments of any kind, livediagram is completely
+          free and open source.
         </p>
         <div className="mt-8">
           <a

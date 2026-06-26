@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
@@ -54,18 +55,7 @@ export default async function FeatureCategoryPage({
       />
       <Header />
       <main>
-        {/* Slim breadcrumb bar so a visitor who landed here from search can
-            see where they are and step back up to the full feature index. */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mx-auto max-w-6xl px-6 pt-10 text-sm text-slate-500"
-        >
-          <a href="/features" className="font-medium text-brand-600 hover:text-brand-700">
-            Features
-          </a>
-          <span className="px-2 text-slate-300">/</span>
-          <span className="text-slate-700">{section.title}</span>
-        </nav>
+        <Breadcrumb items={[{ label: 'Features', href: '/features' }, { label: section.title }]} />
         <Section id={section.id} title={section.title} description={section.description}>
           <FeatureGrid items={section.items} />
         </Section>

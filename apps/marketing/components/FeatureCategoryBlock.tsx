@@ -39,10 +39,7 @@ export function FeatureCategoryBlock({
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16">
         {/* Pitch */}
         <div className={artFirst ? 'lg:order-2' : ''}>
-          <p className="text-sm font-semibold tracking-wide text-brand-600 uppercase">
-            {count} feature{count === 1 ? '' : 's'}
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             {section.title}
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-slate-600">{section.description}</p>
@@ -68,7 +65,7 @@ export function FeatureCategoryBlock({
             href={`/features/${section.id}`}
             className="group mt-8 inline-flex items-center gap-2 rounded-md bg-brand-500 px-5 py-2.5 text-base font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >
-            Explore {section.title.toLowerCase()}
+            {section.cta}
             <svg
               width="16"
               height="16"
