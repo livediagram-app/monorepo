@@ -110,14 +110,6 @@ function AuthControlsEnabled() {
               ) : null}
             </div>
           ) : null}
-          <Link
-            href="/explorer/recent"
-            role="menuitem"
-            onClick={() => setMenuOpen(false)}
-            className="block w-full rounded px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
-          >
-            Explorer
-          </Link>
           <button
             type="button"
             role="menuitem"
