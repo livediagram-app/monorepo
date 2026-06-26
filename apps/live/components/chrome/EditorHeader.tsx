@@ -3,7 +3,7 @@ import { NameEditor } from '@/components/primitives/NameEditor';
 import { Brand } from '@livediagram/ui';
 import { AuthControls } from '@/components/chrome/AuthControls';
 import { Tooltip } from '@/components/primitives/Tooltip';
-import { HelpIcon } from '@/components/chrome/tab-bar-icons';
+import { ExplorerIcon, HelpIcon } from '@/components/chrome/tab-bar-icons';
 import { track } from '@/lib/telemetry';
 
 // Sync state surfaced as a small pill next to the diagram title. The
@@ -162,6 +162,19 @@ export function EditorHeader({
             </button>
           </Tooltip>
         ) : null}
+        {/* Explorer link — in-app navigation to the diagram library, sat just
+            left of Help. Same tab (it's part of the live app, not external). */}
+        <Tooltip title="Explorer" description="Browse your diagrams, folders, and teams.">
+          <a
+            href="/explorer/recent"
+            onClick={() => track('UI', 'Opened', 'Explorer')}
+            aria-label="Explorer"
+            className={`${HEADER_ACTION_BTN} text-slate-600 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800`}
+          >
+            <ExplorerIcon />
+            <span>Explorer</span>
+          </a>
+        </Tooltip>
         {/* Help-centre link (spec/55), moved here from the tab bar so it sits
             with the other top-right actions. Plain external <a> opening /help
             in a new tab; fires a telemetry event like the old tab-bar link. */}

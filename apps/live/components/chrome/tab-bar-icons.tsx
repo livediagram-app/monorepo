@@ -257,6 +257,28 @@ export function HelpIcon() {
   );
 }
 
+// Explorer (2x2 grid) - the header link to the diagram library.
+export function ExplorerIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="3" width="6" height="6" rx="1.5" />
+      <rect x="11" y="3" width="6" height="6" rx="1.5" />
+      <rect x="3" y="11" width="6" height="6" rx="1.5" />
+      <rect x="11" y="11" width="6" height="6" rx="1.5" />
+    </svg>
+  );
+}
+
 // GitHub mark - the open-source repo link in the footer (spec/03).
 export function GithubIcon() {
   return (
