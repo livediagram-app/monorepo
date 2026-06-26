@@ -130,6 +130,27 @@ describe('panel-layout', () => {
       expect(nearestSnapCorner(geom)).toBeNull();
     });
 
+    it('an occupied corner snaps at the landing position, below the existing stack', () => {
+      const stack = 300; // an existing panel ~300px tall in the top-left
+      // A dragged panel whose top-left sits at the bare corner is NOT a
+      // top-left snap anymore (it would overlap the existing panel)...
+      const atCorner: PanelDragGeometry = {
+        x: CORNER_INSET_PX,
+        y: CORNER_INSET_PX,
+        ...size,
+        ...container,
+      };
+      expect(nearestSnapCorner(atCorner, { 'top-left': stack })).not.toBe('top-left');
+      // ...but one sitting just below the stack (where it would land) IS.
+      const belowStack: PanelDragGeometry = {
+        x: CORNER_INSET_PX,
+        y: CORNER_INSET_PX + stack + 16,
+        ...size,
+        ...container,
+      };
+      expect(nearestSnapCorner(belowStack, { 'top-left': stack })).toBe('top-left');
+    });
+
     it('bottom-right anchor is raised to clear the zoom controls', () => {
       // The bottom-right corner sits higher than the others by the zoom
       // clearance, so a panel docked there clears the zoom bar.

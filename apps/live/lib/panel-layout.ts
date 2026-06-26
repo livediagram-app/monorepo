@@ -215,6 +215,17 @@ export const ZOOM_CLEARANCE_PX = 56;
 // How close (px) the panel's relevant corner must get to a corner
 // anchor before that corner becomes the snap candidate.
 export const SNAP_RADIUS_PX = 96;
+// Gap between stacked panels in a corner (matches the dock containers'
+// `gap-4`). Used to offset the snap anchor past an occupied corner's
+// existing stack so detection lines up with where the panel will land.
+export const STACK_GAP_PX = 16;
+
+// Heights (px) of the EXISTING resting stack in each corner during a
+// drag (the dragged panel excluded). Lets the snap anchor sit at the
+// landing position — below a top corner's stack, above a bottom one's —
+// so you don't have to drag all the way to the bare corner when another
+// panel is already there. Missing / 0 means an empty corner.
+export type CornerStackExtents = Partial<Record<PanelCorner, number>>;
 
 // The total bottom inset for a corner: bottom-right is raised to clear the
 // zoom controls; every other corner uses the plain inset.
@@ -234,18 +245,23 @@ export type PanelDragGeometry = {
   parentHeight: number;
 };
 
-// The anchor point (container coords) each corner's resting panel
-// touches — the inset corner of the container.
+// The anchor point (container coords) the dragged panel's relevant corner
+// should reach to dock here. With an empty corner that's the inset corner;
+// with `extent` of existing stack it's offset to the LANDING position
+// (past the stack + a gap), so the snap fires where the panel will
+// actually sit rather than only at the bare corner.
 function cornerAnchor(
   corner: PanelCorner,
   parentWidth: number,
   parentHeight: number,
+  extent: number,
 ): { x: number; y: number } {
   const left = corner === 'top-left' || corner === 'bottom-left';
   const top = corner === 'top-left' || corner === 'top-right';
+  const stackOffset = extent > 0 ? extent + STACK_GAP_PX : 0;
   return {
     x: left ? CORNER_INSET_PX : parentWidth - CORNER_INSET_PX,
-    y: top ? CORNER_INSET_PX : parentHeight - cornerBottomInset(corner),
+    y: top ? CORNER_INSET_PX + stackOffset : parentHeight - cornerBottomInset(corner) - stackOffset,
   };
 }
 
@@ -264,12 +280,17 @@ function panelCornerPoint(corner: PanelCorner, geom: PanelDragGeometry): { x: nu
 
 // Which corner the panel would snap to if released now, or null if it's
 // outside every corner's snap radius (a free drop). Picks the nearest
-// when more than one is in range.
-export function nearestSnapCorner(geom: PanelDragGeometry): PanelCorner | null {
+// when more than one is in range. `extents` shifts each corner's anchor
+// past any panel already stacked there, so detection matches the landing
+// slot (you don't have to reach the bare corner).
+export function nearestSnapCorner(
+  geom: PanelDragGeometry,
+  extents: CornerStackExtents = {},
+): PanelCorner | null {
   let best: PanelCorner | null = null;
   let bestDist = SNAP_RADIUS_PX;
   for (const corner of PANEL_CORNERS) {
-    const anchor = cornerAnchor(corner, geom.parentWidth, geom.parentHeight);
+    const anchor = cornerAnchor(corner, geom.parentWidth, geom.parentHeight, extents[corner] ?? 0);
     const point = panelCornerPoint(corner, geom);
     const dist = Math.hypot(point.x - anchor.x, point.y - anchor.y);
     if (dist <= bestDist) {

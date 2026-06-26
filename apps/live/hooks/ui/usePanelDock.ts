@@ -12,6 +12,7 @@ import {
   resetPanelPlacement,
   resolvePlacement,
   writePanelLayout,
+  type CornerStackExtents,
   type PanelCorner,
   type PanelDragGeometry,
   type PanelId,
@@ -53,11 +54,15 @@ export type PanelDock = {
   // absolute child of <main>, not inside its corner stack).
   isDragging: (panel: PanelId) => boolean;
   beginDrag: (panel: PanelId) => void;
-  updateDrag: (panel: PanelId, geom: PanelDragGeometry) => void;
+  updateDrag: (panel: PanelId, geom: PanelDragGeometry, extents?: CornerStackExtents) => void;
   // Commit the drag: snap to a corner if within range, else free-drop
   // at the released position. Returns the corner it docked to (or null
   // for a free drop) so the caller can fire telemetry.
-  endDrag: (panel: PanelId, geom: PanelDragGeometry) => PanelCorner | null;
+  endDrag: (
+    panel: PanelId,
+    geom: PanelDragGeometry,
+    extents?: CornerStackExtents,
+  ) => PanelCorner | null;
   resetPanel: (panel: PanelId) => void;
 };
 
@@ -109,20 +114,23 @@ export function usePanelDock(): PanelDock {
     setDrag({ panelId: panel, candidate: null, height: 0 });
   }, []);
 
-  const updateDrag = useCallback((panel: PanelId, geom: PanelDragGeometry) => {
-    const candidate = nearestSnapCorner(geom);
-    setDrag((prev) => {
-      // Only the panel that owns the drag updates the candidate; guard
-      // against stale geometry from a panel that isn't dragging.
-      if (!prev || prev.panelId !== panel) return prev;
-      if (prev.candidate === candidate && prev.height === geom.height) return prev;
-      return { panelId: panel, candidate, height: geom.height };
-    });
-  }, []);
+  const updateDrag = useCallback(
+    (panel: PanelId, geom: PanelDragGeometry, extents?: CornerStackExtents) => {
+      const candidate = nearestSnapCorner(geom, extents);
+      setDrag((prev) => {
+        // Only the panel that owns the drag updates the candidate; guard
+        // against stale geometry from a panel that isn't dragging.
+        if (!prev || prev.panelId !== panel) return prev;
+        if (prev.candidate === candidate && prev.height === geom.height) return prev;
+        return { panelId: panel, candidate, height: geom.height };
+      });
+    },
+    [],
+  );
 
   const endDrag = useCallback(
-    (panel: PanelId, geom: PanelDragGeometry): PanelCorner | null => {
-      const candidate = nearestSnapCorner(geom);
+    (panel: PanelId, geom: PanelDragGeometry, extents?: CornerStackExtents): PanelCorner | null => {
+      const candidate = nearestSnapCorner(geom, extents);
       commit(
         candidate
           ? dockPanel(layout, panel, candidate)

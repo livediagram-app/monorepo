@@ -63,6 +63,7 @@ import { PanelSnapSlot } from '@/components/canvas/PanelSnapSlot';
 import {
   PANEL_CORNERS,
   PANEL_IDS,
+  STACK_GAP_PX,
   cornerBottomInset,
   type PanelCorner,
   type PanelId,
@@ -352,6 +353,37 @@ export function CanvasChrome(props: CanvasChromeProps) {
     () => dockLayerRef.current?.getBoundingClientRect() ?? null,
     [],
   );
+  // Live refs to the four corner stack containers, so snap detection can
+  // measure how tall the EXISTING stack in each corner is and offset the
+  // anchor to the landing position (below a top stack / above a bottom
+  // one) instead of the bare corner.
+  const cornerRefs = useRef<Record<PanelCorner, HTMLDivElement | null>>({
+    'top-left': null,
+    'top-right': null,
+    'bottom-left': null,
+    'bottom-right': null,
+  });
+  const measureCornerExtents = useCallback((): Record<PanelCorner, number> => {
+    const out: Record<PanelCorner, number> = {
+      'top-left': 0,
+      'top-right': 0,
+      'bottom-left': 0,
+      'bottom-right': 0,
+    };
+    // The dragged panel is `position: fixed` (out of flow), so a corner
+    // container's height already excludes it. Subtract the landing slot
+    // (rendered only in the current candidate corner) so we measure just
+    // the RESTING stack and don't feed the slot back into the anchor.
+    const candidate = dock.drag?.candidate ?? null;
+    const slot = Math.max(dock.drag?.height ?? 0, 48) + STACK_GAP_PX;
+    for (const corner of PANEL_CORNERS) {
+      const el = cornerRefs.current[corner];
+      if (!el) continue;
+      const h = el.getBoundingClientRect().height;
+      out[corner] = Math.max(0, corner === candidate ? h - slot : h);
+    }
+    return out;
+  }, [dock.drag]);
   const dockingActive = !isMobile && !minimalPanels && !zenMode;
   // Build the per-panel wiring: in docking mode, position comes from the
   // layout (free pos, or null when corner-docked → rendered as a flex
@@ -379,14 +411,14 @@ export function CanvasChrome(props: CanvasChromeProps) {
           dockedCorner: placement.mode === 'corner' ? placement.corner : undefined,
           getDockBounds,
           onDockDragStart: () => dock.beginDrag(id),
-          onDockDrag: (geom) => dock.updateDrag(id, geom),
+          onDockDrag: (geom) => dock.updateDrag(id, geom, measureCornerExtents()),
           onDockDragEnd: (geom) => {
-            if (dock.endDrag(id, geom)) track('UI', 'Moved', 'PanelDock');
+            if (dock.endDrag(id, geom, measureCornerExtents())) track('UI', 'Moved', 'PanelDock');
           },
         },
       };
     },
-    [dockingActive, dock, getDockBounds],
+    [dockingActive, dock, getDockBounds, measureCornerExtents],
   );
   // Theme tint for the palette tiles, so the palette previews the active
   // tab theme: the boxed-shape tiles render filled in the theme's element
@@ -708,6 +740,9 @@ export function CanvasChrome(props: CanvasChromeProps) {
         return (
           <div
             key={corner}
+            ref={(el) => {
+              cornerRefs.current[corner] = el;
+            }}
             style={corner === 'bottom-right' ? { bottom: cornerBottomInset(corner) } : undefined}
             className={`pointer-events-none absolute flex gap-4 ${DOCK_CORNER_CLASS[corner]}`}
           >
