@@ -107,7 +107,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
           <SettingsGroup {...groupProps('AI')}>
             <ToggleRow
               label="AI Assistant"
-              description="Shows an AI panel in the editor. Use it to generate new elements, amend or clean existing ones, or get a written review of your diagram. Off by default."
+              description="Shows an AI panel in the editor with two modes: Ask questions about the active tab, and Clean to tidy up labels, sizes, and styles. Off by default."
               checked={aiEnabled}
               onChange={(v) => {
                 track('AI', 'Toggled', v ? 'AiOn' : 'AiOff');
@@ -118,7 +118,7 @@ export function SettingsDialog({ settings, onChange, onClose, aiCapable }: Setti
                   article="aiTools"
                   variant="text"
                   title="AI tools"
-                  description="What the Build, Ask, Review, and Clean modes do."
+                  description="What the Ask and Clean modes do."
                 />
               }
             />
