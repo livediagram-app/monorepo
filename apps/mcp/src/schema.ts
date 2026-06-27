@@ -1,18 +1,40 @@
 // The element-schema MCP resource (spec/62 §4.5) + the tools' zod input shapes.
 // Element types + anchors come from packages/diagram (single source of truth);
-// the design rules are curated guidance. Tool element arrays stay permissive
-// here — the real structural check is the diagram package's isValidTab at the
-// tool boundary, so the schema lives in one place.
+// the design rules are curated guidance. The element STRUCTURE is carried inline
+// on every tool argument that takes elements (ELEMENT_SCHEMA_HINT) so a calling
+// model has the whole format from the tool definition itself and never needs to
+// fetch the resource, web-search the open-source repo, or read another diagram
+// to discover it. isValidTab in the diagram package stays the runtime guard, so
+// the structure still lives in one authoritative place (this string is guidance,
+// not a second validator).
 import { z } from 'zod';
 import { ANCHORS, ELEMENT_TYPES, SHAPE_KINDS, THEMES } from '@livediagram/diagram';
 
 export const SCHEMA_RESOURCE_URI = 'livediagram://schema/elements';
 
+const types = [...ELEMENT_TYPES].join(', ');
+const anchors = [...ANCHORS].join(', ');
+const shapeKinds = [...SHAPE_KINDS].join(', ');
+const themeIds = THEMES.map((t) => t.id).join(', ');
+
+// Self-contained element schema, attached to each tool's element argument so the
+// model reads it straight from the tool definition (see the comment above).
+const ELEMENT_SCHEMA_HINT =
+  'An array of element objects. This is the COMPLETE format; you already have ' +
+  'everything you need, so do NOT web-search, open the source repo, or read ' +
+  'another diagram to discover it. Each element: { "id": a unique string, "type", ' +
+  '"x", "y", "width", "height", and optional "label" }. ' +
+  'type "shape" is a NODE (a labelled box) and also needs "shape", one of ' +
+  `${shapeKinds}. The default box is "square" (there is NO "rectangle"); use ` +
+  '"diamond" for a decision, "cylinder" for a datastore, "stadium" for start/end. ' +
+  'type "text" is BARE text with no box; use it only for a title, caption, or ' +
+  'legend, never for a node. type "arrow" needs "from" and "to" endpoints, each ' +
+  'either { "kind": "pinned", "elementId", "anchor" } (anchors: ' +
+  `${anchors}; preferred, so arrows track their shapes) or ` +
+  '{ "kind": "free", "x", "y" }; an arrow may carry a "label". ' +
+  'Do NOT set colours; the theme owns fill, stroke, and text.';
+
 export function elementSchemaDoc(): string {
-  const types = [...ELEMENT_TYPES].join(', ');
-  const anchors = [...ANCHORS].join(', ');
-  const shapeKinds = [...SHAPE_KINDS].join(', ');
-  const themeIds = THEMES.map((t) => t.id).join(', ');
   return `# livediagram element schema
 
 A tab is { name, elements: Element[] }. Every element needs a unique string "id".
@@ -84,21 +106,24 @@ subject; one theme applies to all tabs in a create_diagram call.
 }
 
 // Server-level instructions echo the essentials for clients that don't read
-// resources (spec/62 §4.5).
+// resources (spec/62 §4.5). The element format is carried inline on the tool
+// arguments, so these instructions tell the model NOT to look it up elsewhere.
 export const SERVER_INSTRUCTIONS = `Tools to find, view, create, add tabs to, and edit the user's livediagram diagrams.
 The calling model produces the diagram elements AND decides their layout; this
 server validates, persists, and renders them, and only auto-arranges the graph
-when you ask it to (or leave nodes unplaced). Read the ${SCHEMA_RESOURCE_URI}
-resource before creating or updating: use a unique "id" per element, make nodes
-"shape" elements (a labelled box) NOT "text" (text is only for titles/captions),
-position elements yourself for a deliberate shape (a cycle as a ring, a tree, a
-grid), prefer pinned arrows (node -> node), and do NOT set colours — the theme
-owns them.`;
+when you ask it to (or leave nodes unplaced). The full element format is
+described inline on each tool's element argument, so you already have everything
+you need from the tool definitions: do NOT web-search, open the open-source repo,
+or read another diagram to learn the schema. In short: use a unique "id" per
+element, make nodes "shape" elements (a labelled box) NOT "text" (text is only
+for titles/captions), position elements yourself for a deliberate shape (a cycle
+as a ring, a tree, a grid), prefer pinned arrows (node -> node), and do NOT set
+colours, the theme owns them.`;
 
 // --- Tool input shapes (ZodRawShape). Element arrays are permissive; isValidTab
 // is the real guard, so there's no second schema to drift. ---
 
-const elementArray = z.array(z.record(z.string(), z.unknown()));
+const elementArray = z.array(z.record(z.string(), z.unknown())).describe(ELEMENT_SCHEMA_HINT);
 
 const layoutField = z
   .enum(['auto', 'preserve'])
@@ -111,9 +136,9 @@ const themeField = z
   .string()
   .optional()
   .describe(
-    'Preset theme id that paints the whole diagram + canvas (see the schema ' +
-      'resource for the list, e.g. brand, ocean, forest, sunset, midnight, rainbow). ' +
-      'Omit per-element colours and let the theme own them. Defaults to "brand".',
+    'Preset theme id that paints the whole diagram + canvas. One of: ' +
+      `${themeIds}. Omit per-element colours and let the theme own them. ` +
+      'Defaults to "brand".',
   );
 
 export const findDiagramsShape = {
@@ -128,7 +153,7 @@ export const readDiagramShape = {
 
 const tabShape = z.object({
   name: z.string().describe('Name of the tab.'),
-  elements: elementArray.describe('The elements (see the schema resource).'),
+  elements: elementArray,
 });
 
 export const createDiagramShape = {
@@ -155,7 +180,7 @@ export const addTabShape = {
     .string()
     .describe('The diagram to add a tab to (from find_diagrams / read_diagram).'),
   name: z.string().describe('Name of the new tab.'),
-  elements: elementArray.describe('The elements for the new tab (see the schema resource).'),
+  elements: elementArray,
   layout: layoutField,
   theme: themeField,
 };
@@ -164,7 +189,9 @@ export const updateDiagramShape = {
   diagramId: z.string(),
   tabId: z.string().optional().describe('Which tab to edit; defaults to the first.'),
   mode: z.enum(['replace', 'ops']).describe('"replace" the whole tab, or apply granular "ops".'),
-  elements: elementArray.optional().describe('replace mode: the full new element list.'),
+  elements: elementArray
+    .optional()
+    .describe(`Replace mode: the full new element list. ${ELEMENT_SCHEMA_HINT}`),
   layout: layoutField,
   ops: z
     .array(

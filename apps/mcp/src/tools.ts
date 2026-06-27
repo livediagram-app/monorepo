@@ -167,11 +167,12 @@ export function registerTools(server: McpServer, env: Env): void {
     {
       title: 'Create a diagram',
       description:
-        'Create a new diagram from elements you produce (see the ' +
-        'livediagram://schema/elements resource). Pass one tab, or several to build a ' +
-        'multi-tab diagram in one call (an overview plus detail tabs). The server validates, ' +
-        'lays out each tab per the layout arg, files it under your "Generated" ' +
-        'folder, and returns the link + an inline PNG of the first tab.',
+        'Create a new diagram from elements you produce. The element format is described ' +
+        'on the "tabs" argument below, so you have everything you need here (no need to ' +
+        'look it up). Pass one tab, or several to build a multi-tab diagram in one call (an ' +
+        'overview plus detail tabs). The server validates, lays out each tab per the layout ' +
+        'arg, files it under your "Generated" folder, and returns the link + an inline PNG ' +
+        'of the first tab.',
       inputSchema: createDiagramShape,
     },
     async (args, extra) => {
