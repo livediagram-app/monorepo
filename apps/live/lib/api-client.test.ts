@@ -11,6 +11,7 @@ import {
   apiLoadDiagram,
   apiLoadShared,
   apiSaveDiagramMeta,
+  apiSaveTab,
   setSessionSharePassword,
   setTokenProvider,
 } from './api-client';
@@ -438,5 +439,50 @@ describe('apiCreateDiagram persisted body (spec/30)', () => {
     expect(body.tabs[0]).not.toHaveProperty('folder');
     expect(body.tabs[0]).toMatchObject({ id: 't1', name: 'Tab' });
     expect(out).toEqual({ id: 'd1' });
+  });
+});
+
+describe('apiSaveTab persisted body + allow-empty (spec/30)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const stubOk = () => {
+    const spy = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
+    vi.stubGlobal('fetch', spy);
+    return spy;
+  };
+  const tabWithUi = {
+    id: 't1',
+    name: 'Tab',
+    elements: [],
+    templateChosen: true,
+    folder: 'f1',
+  } as unknown as Tab;
+
+  it('PUTs to the tab path with UI-only fields stripped from the body', async () => {
+    const spy = stubOk();
+    await apiSaveTab('owner', 'd1', tabWithUi);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toMatch(/\/diagrams\/d1\/tabs\/t1$/);
+    expect(init.method).toBe('PUT');
+    const body = JSON.parse(init.body as string) as Record<string, unknown>;
+    expect(body).not.toHaveProperty('templateChosen');
+    expect(body).not.toHaveProperty('folder');
+    expect(body).toMatchObject({ id: 't1', name: 'Tab' });
+  });
+
+  it('omits X-Allow-Empty by default and sets it to "1" when allowEmpty is passed', async () => {
+    const noOpt = stubOk();
+    await apiSaveTab('owner', 'd1', tabWithUi);
+    const h1 = (noOpt.mock.calls[0]![1] as RequestInit).headers as Headers;
+    expect(h1.get('X-Allow-Empty')).toBeNull();
+
+    const withOpt = stubOk();
+    await apiSaveTab('owner', 'd1', tabWithUi, null, { allowEmpty: true });
+    const h2 = (withOpt.mock.calls[0]![1] as RequestInit).headers as Headers;
+    expect(h2.get('X-Allow-Empty')).toBe('1');
   });
 });
