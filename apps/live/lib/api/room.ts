@@ -19,36 +19,48 @@ export type RoomHandlers = {
   onClose?: () => void;
 };
 
+// Auth identifiers the connector rides on the room WebSocket URL.
+export type RoomAuthOptions = {
+  shareCode?: string | null;
+  ownerId?: string | null;
+  signature?: string | null;
+};
+
+// Build the room WebSocket auth query string. Browsers can't set custom
+// headers on a WebSocket upgrade, so these ride on the query string; the
+// api worker reads them, resolves role, and forwards an X-Verified-Role
+// header to the Durable Object before the upgrade reaches it. Empty /
+// missing values are stripped so the URL stays clean.
+//   - `s` share code, `o` owner id (for diagrams the visitor owns)
+//   - `g` guest-id HMAC signature (spec/04): proves the connector
+//     possesses the owner id it claims in `o`, so the room can bind the
+//     broadcast participant id to a verified value instead of trusting
+//     the client's hello id (which would let a joiner impersonate another
+//     participant's presence).
+//   - `p` share password (spec/24) for a protected diagram's room.
+// Pure (sharePassword passed in) so the param mapping is unit-tested.
+export function roomQueryString(options: RoomAuthOptions, sharePassword: string | null): string {
+  const params = new URLSearchParams();
+  if (options.shareCode) params.set('s', options.shareCode);
+  if (options.ownerId) params.set('o', options.ownerId);
+  if (options.signature) params.set('g', options.signature);
+  if (sharePassword) params.set('p', sharePassword);
+  return params.toString();
+}
+
 export function connectRoom(
   diagramId: string,
   participant: { id: string; name: string; color: string },
   handlers: RoomHandlers,
-  options: { shareCode?: string | null; ownerId?: string | null; signature?: string | null } = {},
+  options: RoomAuthOptions = {},
 ): {
   send: (msg: RoomOutgoing) => void;
   close: () => void;
 } {
-  // Browsers can't set custom headers on a WebSocket upgrade, so the
-  // share code (and owner id, for diagrams the visitor owns) ride on
-  // the query string. The api worker reads them, resolves role, and
-  // forwards an X-Verified-Role header to the Durable Object before
-  // the upgrade reaches it. Empty / missing values are stripped so
-  // the URL stays clean.
-  const params = new URLSearchParams();
-  if (options.shareCode) params.set('s', options.shareCode);
-  if (options.ownerId) params.set('o', options.ownerId);
-  // Guest-id HMAC signature (spec/04). Proves the connector actually possesses
-  // the owner id it claims in `o`, so the api worker can bind the broadcast
-  // participant id to a verified value (the room otherwise trusts the client's
-  // hello id, letting any joiner impersonate another participant's presence).
-  if (options.signature) params.set('g', options.signature);
-  // Share password (spec/24) for a protected diagram's room. The api
-  // refuses the upgrade if it's missing / wrong. Read from the same
-  // session state apiHeaders uses, so the editor doesn't have to thread
-  // it through; owners never have it set so their `o` upgrade bypasses.
-  const sharePassword = getSessionSharePassword();
-  if (sharePassword) params.set('p', sharePassword);
-  const qs = params.toString();
+  // Auth identifiers ride on the query string (see roomQueryString). The
+  // share password is read from the same session state apiHeaders uses, so
+  // the editor doesn't have to thread it through; owners never have it set.
+  const qs = roomQueryString(options, getSessionSharePassword());
   const ws = new WebSocket(wsUrl(`/diagrams/${diagramId}/ws${qs ? `?${qs}` : ''}`));
   ws.addEventListener('open', () => {
     ws.send(JSON.stringify({ kind: 'hello', participant } satisfies RoomOutgoing));
