@@ -8,11 +8,13 @@ import {
   apiDeleteTab,
   apiDismissSharedWith,
   apiHeaders,
+  apiListImages,
   apiLoadDiagram,
   apiLoadShared,
   apiLoadTab,
   apiSaveDiagramMeta,
   apiSaveTab,
+  apiUploadImage,
   setSessionSharePassword,
   setTokenProvider,
 } from './api-client';
@@ -525,5 +527,67 @@ describe('apiLoadTab load boundary', () => {
     expect(table.cells.map((r) => r.length)).toEqual([2, 2]); // padded to the widest row
     expect(table.cells[1]).toEqual(['c', '']);
     expect(tab!.elements.find((e) => e.id === 's')).toEqual(shape); // unchanged
+  });
+});
+
+describe('apiListImages (R2 degradation, spec/19)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('returns null on 503 (R2 not provisioned) instead of throwing', async () => {
+    stubFetch(503, {});
+    expect(await apiListImages('o-503')).toBeNull();
+  });
+
+  it('returns the gallery on 200', async () => {
+    stubFetch(200, { images: [{ id: 'img1' }] });
+    expect(await apiListImages('o-ok')).toEqual([{ id: 'img1' }]);
+  });
+});
+
+describe('apiUploadImage request shape (spec/19)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const stubOk = () => {
+    const spy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ image: { id: 'img1' }, deduped: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', spy);
+    return spy;
+  };
+  const file = (over: Record<string, unknown> = {}) => ({
+    bytes: new ArrayBuffer(4),
+    contentType: 'image/png',
+    sha256: 'abc123',
+    width: 10,
+    height: 20,
+    originalName: 'pic.png',
+    ...over,
+  });
+
+  it('POSTs the bytes with the client-computed metadata headers', async () => {
+    const spy = stubOk();
+    const out = await apiUploadImage('owner', file());
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toMatch(/\/images$/);
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeInstanceOf(ArrayBuffer);
+    const h = init.headers as Headers;
+    expect(h.get('Content-Type')).toBe('image/png');
+    expect(h.get('Content-Length')).toBe('4');
+    expect(h.get('X-Image-Sha256')).toBe('abc123');
+    expect(h.get('X-Image-Width')).toBe('10');
+    expect(h.get('X-Image-Height')).toBe('20');
+    expect(h.get('X-Image-Original-Name')).toBe('pic.png');
+    expect(out).toEqual({ image: { id: 'img1' }, deduped: false });
+  });
+
+  it('omits X-Image-Original-Name when no original name is given', async () => {
+    const spy = stubOk();
+    await apiUploadImage('owner', file({ originalName: undefined }));
+    const h = (spy.mock.calls[0]![1] as RequestInit).headers as Headers;
+    expect(h.get('X-Image-Original-Name')).toBeNull();
   });
 });
