@@ -1189,10 +1189,11 @@ export function Canvas(props: CanvasProps) {
       <PaletteDragGhost zoom={viewportZoom} />
       {/* Map (spec/59) now renders inside CanvasChrome's docking layer
           (spec/63) so it snaps + stacks like the other floating panels. */}
-      {/* Touch long-press "hold" ring at the finger (spec/43-style touch
-          affordance). Portaled to escape the canvas's pan/zoom transform so its
-          fixed position is viewport-relative. Reveals only after a deliberate
-          hold and completes as the context menu opens. */}
+      {/* Touch long-press "hold" ring at the finger: the spec/09
+          press-and-hold affordance that opens the context menu on touch.
+          Portaled to escape the canvas's pan/zoom transform so its fixed
+          position is viewport-relative. Reveals only after a deliberate hold
+          and completes as the context menu opens. */}
       {canvasLongPress.pressPoint ? (
         <Portal>
           <div
