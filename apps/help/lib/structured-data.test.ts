@@ -1,0 +1,51 @@
+import { describe, expect, it } from 'vitest';
+import { articleJsonLd, helpUrl, webSiteJsonLd } from './structured-data';
+
+const PUBLISHER = { '@type': 'Organization', name: 'livediagram', url: 'https://livediagram.app' };
+
+describe('helpUrl', () => {
+  it('prefixes app-relative hrefs with the /help base', () => {
+    expect(helpUrl('/canvas/themes/')).toBe('https://livediagram.app/help/canvas/themes/');
+    expect(helpUrl('/')).toBe('https://livediagram.app/help/');
+  });
+});
+
+describe('articleJsonLd', () => {
+  const node = articleJsonLd({
+    title: 'Themes',
+    description: 'How themes work.',
+    appPath: '/canvas/themes/',
+  });
+
+  it('builds a TechArticle node with the resolved absolute URL', () => {
+    const url = 'https://livediagram.app/help/canvas/themes/';
+    expect(node).toMatchObject({
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: 'Themes',
+      description: 'How themes work.',
+      url,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      inLanguage: 'en-GB',
+      author: PUBLISHER,
+      publisher: PUBLISHER,
+    });
+  });
+
+  it('keeps mainEntityOfPage @id in sync with the article url', () => {
+    expect(node.mainEntityOfPage['@id']).toBe(node.url);
+  });
+});
+
+describe('webSiteJsonLd', () => {
+  it('names the help centre WebSite node', () => {
+    expect(webSiteJsonLd()).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'livediagram Help',
+      url: 'https://livediagram.app/help/',
+      publisher: PUBLISHER,
+      inLanguage: 'en-GB',
+    });
+  });
+});
