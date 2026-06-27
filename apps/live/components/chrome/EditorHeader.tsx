@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NameEditor } from '@/components/primitives/NameEditor';
-import { Brand } from '@livediagram/ui';
+import { Brand, ProductNav } from '@livediagram/ui';
 import { AuthControls } from '@/components/chrome/AuthControls';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { ExplorerIcon, HelpIcon } from '@/components/chrome/tab-bar-icons';
@@ -85,8 +85,9 @@ export function EditorHeader({
     // behind the canvas — siblings without explicit z-index stack in
     // document order and the canvas wins.
     <header className="relative z-[var(--z-modal)] flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 sm:gap-4 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-      <div className="flex w-auto items-center sm:w-48">
+      <div className="flex w-auto items-center gap-2.5">
         <Brand href="/" size="md" accentColor={brandAccent} wordmarkClassName="hidden sm:inline" />
+        <ProductNav current="editor" />
       </div>
       <div className="flex flex-1 items-center justify-start sm:justify-center">
         {hideTitle ? null : editing && !readOnly ? (
