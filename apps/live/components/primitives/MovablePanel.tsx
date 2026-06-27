@@ -11,6 +11,7 @@ import {
 import { useClickOutside } from '@/hooks/ui/useClickOutside';
 import { MOBILE_BREAKPOINT_PX, isMobileViewportSync } from '@/lib/responsive';
 import { Tooltip } from '@/components/primitives/Tooltip';
+import { ResetPositionGlyph } from '@/components/primitives/ResetPositionGlyph';
 import type { PanelCorner, PanelDragGeometry } from '@/lib/panel-layout';
 
 // Pointer travel (px) before a header press on the docking path counts
@@ -686,31 +687,9 @@ export function MovablePanel({
                 aria-label={`Reset ${title.toLowerCase()} position`}
                 className="hidden h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 sm:flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               >
-                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden fill="none">
-                  {/* A diagonal arrow tucking back into a corner — a
-                      familiar "snap-back" / restore glyph used in
-                      window-manager toolbars. */}
-                  <path
-                    d="M6.5 3H9v2.5"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M9 3L5 7"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M3 7v2h6"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                {/* className="" so the glyph inherits the button's
+                    currentColor (and its hover), not the fixed slate. */}
+                <ResetPositionGlyph size={12} className="" />
               </button>
             </Tooltip>
           ) : null}
