@@ -35,7 +35,7 @@ It applies every SQL file in `apps/api/migrations/` to the local SQLite file Wra
 pnpm dev
 ```
 
-Turbo spins up all five dev servers in parallel:
+Turbo spins up all six dev servers in parallel:
 
 | App              | Dev URL                                                             |
 | ---------------- | ------------------------------------------------------------------- |
@@ -44,6 +44,7 @@ Turbo spins up all five dev servers in parallel:
 | `apps/telemetry` | `http://localhost:3003/telemetry`                                   |
 | `apps/help`      | `http://localhost:3004/help`                                        |
 | `apps/api`       | `http://localhost:8787/api`                                         |
+| `apps/mcp`       | `http://localhost:8788` (MCP server, spec/62; signed-in only)       |
 
 The `router` app has no dev server: it's a one-file production worker holding service bindings, not application logic. In dev you call each app on its own port.
 

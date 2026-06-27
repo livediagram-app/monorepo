@@ -8,6 +8,12 @@ compatibility_date = "2026-05-29"
 # bundled by wrangler directly.
 compatibility_flags = ["nodejs_compat"]
 
+# Pin a fixed local dev port so `pnpm dev` doesn't race the api worker:
+# both `wrangler dev` invocations otherwise default to 8787. The api keeps
+# 8787; mcp takes 8788. Dev-only, no effect on the deployed worker.
+[dev]
+port = 8788
+
 # Bundle the embedded font (fonts/Inter-Regular.ttf) as raw bytes so render.ts
 # can hand it to resvg as a fontBuffer — Workers have no system fonts, so
 # without this the PNG renders shapes but no text (spec/62 §5).
