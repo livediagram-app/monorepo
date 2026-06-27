@@ -29,7 +29,11 @@ export function FeatureCategoryHero({ section }: { section: LandingSection }) {
           </div>
         </div>
 
-        <SectionShowcase section={section} />
+        {/* Hidden below the two-column breakpoint: on mobile the showcase eats
+            the screen and just restates the pitch above it. */}
+        <div className="hidden lg:block">
+          <SectionShowcase section={section} />
+        </div>
       </div>
     </section>
   );

@@ -37,8 +37,9 @@ export function FeatureCategoryBlock({
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-slate-600">{section.description}</p>
 
-          {/* A badge per feature: the whole category at a glance, no cards. */}
-          <ul className="mt-6 flex flex-wrap gap-2">
+          {/* A badge per feature: the whole category at a glance, no cards.
+              Hidden on mobile, where they only add height and echo the showcase. */}
+          <ul className="mt-6 hidden flex-wrap gap-2 sm:flex">
             {section.items.map((item) => (
               <li
                 key={item.title}
@@ -71,8 +72,10 @@ export function FeatureCategoryBlock({
           </a>
         </div>
 
-        {/* Taller showcase composed from the section's own feature mocks. */}
-        <div className={artFirst ? 'lg:order-1' : ''}>
+        {/* Taller showcase composed from the section's own feature mocks.
+            Hidden below the two-column breakpoint: on mobile it eats the screen
+            and just restates the pitch beside it. */}
+        <div className={`hidden lg:block ${artFirst ? 'lg:order-1' : ''}`}>
           <SectionShowcase section={section} />
         </div>
       </div>
