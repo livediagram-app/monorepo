@@ -10,6 +10,7 @@ import {
   apiHeaders,
   apiLoadDiagram,
   apiLoadShared,
+  apiLoadTab,
   apiSaveDiagramMeta,
   apiSaveTab,
   setSessionSharePassword,
@@ -484,5 +485,45 @@ describe('apiSaveTab persisted body + allow-empty (spec/30)', () => {
     await apiSaveTab('owner', 'd1', tabWithUi, null, { allowEmpty: true });
     const h2 = (withOpt.mock.calls[0]![1] as RequestInit).headers as Headers;
     expect(h2.get('X-Allow-Empty')).toBe('1');
+  });
+});
+
+describe('apiLoadTab load boundary', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('returns null on 404', async () => {
+    stubFetch(404, {});
+    expect(await apiLoadTab('owner', 'd1', 't-404', null)).toBeNull();
+  });
+
+  it('strips server-only fields (diagramId / orderIndex / updatedAt) from the tab', async () => {
+    stubFetch(200, {
+      tab: { id: 't1', name: 'T', elements: [], diagramId: 'd1', orderIndex: 3, updatedAt: 123 },
+    });
+    const tab = await apiLoadTab('owner', 'd1', 't-strip', null);
+    expect(tab).not.toBeNull();
+    expect(tab).not.toHaveProperty('diagramId');
+    expect(tab).not.toHaveProperty('orderIndex');
+    expect(tab).not.toHaveProperty('updatedAt');
+    expect(tab).toMatchObject({ id: 't1', name: 'T' });
+  });
+
+  it('coerces a ragged table to a rectangle and leaves other elements untouched', async () => {
+    const shape = { id: 's', type: 'shape', shape: 'square', x: 0, y: 0, width: 1, height: 1 };
+    const ragged = {
+      id: 'tbl',
+      type: 'table',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      cells: [['a', 'b'], ['c']],
+    };
+    stubFetch(200, { tab: { id: 't1', name: 'T', elements: [shape, ragged] } });
+    const tab = await apiLoadTab('owner', 'd1', 't-table', null);
+    const table = tab!.elements.find((e) => e.type === 'table') as { cells: string[][] };
+    expect(table.cells.map((r) => r.length)).toEqual([2, 2]); // padded to the widest row
+    expect(table.cells[1]).toEqual(['c', '']);
+    expect(tab!.elements.find((e) => e.id === 's')).toEqual(shape); // unchanged
   });
 });
