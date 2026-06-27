@@ -7,6 +7,7 @@ import {
   apiDeleteShareLink,
   apiDeleteTab,
   apiDismissSharedWith,
+  apiFetchImageBlobUrl,
   apiHeaders,
   apiListImages,
   apiLoadDiagram,
@@ -589,5 +590,36 @@ describe('apiUploadImage request shape (spec/19)', () => {
     await apiUploadImage('owner', file({ originalName: undefined }));
     const h = (spy.mock.calls[0]![1] as RequestInit).headers as Headers;
     expect(h.get('X-Image-Original-Name')).toBeNull();
+  });
+});
+
+describe('apiFetchImageBlobUrl request shape (spec/19 + spec/24)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  // Inspect the request the function builds (and confirm the null-on-error
+  // contract) without reaching URL.createObjectURL: a non-ok response
+  // returns null but the fetch was still issued with the built URL/headers.
+  const stub404 = () => {
+    const spy = vi.fn().mockResolvedValue(new Response('', { status: 404 }));
+    vi.stubGlobal('fetch', spy);
+    return spy;
+  };
+
+  it('adds the diagram query param + share code, returns null on a non-ok read', async () => {
+    const spy = stub404();
+    const out = await apiFetchImageBlobUrl('owner', 'img 1', {
+      diagramId: 'd1',
+      shareCode: 'CODE2345',
+    });
+    expect(out).toBeNull();
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toMatch(/\/images\/img%201\?d=d1$/); // imageId encoded
+    expect((init.headers as Headers).get('X-Share-Code')).toBe('CODE2345');
+  });
+
+  it('omits the query string when no diagram id is given', async () => {
+    const spy = stub404();
+    await apiFetchImageBlobUrl('owner', 'img1');
+    expect(String(spy.mock.calls[0]![0])).toMatch(/\/images\/img1$/);
   });
 });
