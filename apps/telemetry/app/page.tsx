@@ -6,17 +6,23 @@ import type { TelemetrySummary, TelemetryWindowKey } from '@livediagram/api-sche
 import {
   ActivityGlyph,
   BrushGlyph,
+  FileGlyph,
+  LinkGlyph,
   ListGlyph,
   PaletteGlyph,
+  PersonAddGlyph,
   SearchGlyph,
   SparkGlyph,
 } from './glyphs';
 import { WindowPanel } from './WindowPanel';
 import { StickyWindowBar } from './StickyWindowBar';
 import { HighlightsView } from './HighlightsView';
+import { AcquisitionView } from './AcquisitionView';
 import { RawView } from './RawView';
 import { LookAndFeelView } from './LookAndFeelView';
 import { PaletteView } from './PaletteView';
+import { HelpView } from './HelpView';
+import { ExternalConnectionsView } from './ExternalConnectionsView';
 import { MetricSearch } from './MetricSearch';
 
 // Same origin as the editor + api under the router (livediagram.app).
@@ -27,11 +33,25 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 // Three ways to read the same summary payload (spec/22). The timeframe
 // window is global (the WindowPanel above the tabs), so it lives here
 // alongside the active tab and is passed into whichever view renders.
-type ViewKey = 'highlights' | 'lookfeel' | 'palette' | 'search' | 'raw';
+// Tab order follows the product funnel: who arrives (Acquisition), what they
+// build (Palette / Look & Feel), how they get unstuck (Help), how machines
+// connect (External Connections), then the power-user lenses (Search / Raw).
+type ViewKey =
+  | 'highlights'
+  | 'acquisition'
+  | 'palette'
+  | 'lookfeel'
+  | 'help'
+  | 'external'
+  | 'search'
+  | 'raw';
 const VIEWS: { key: ViewKey; label: string; icon: ReactNode }[] = [
   { key: 'highlights', label: 'Highlights', icon: <SparkGlyph /> },
-  { key: 'lookfeel', label: 'Look & Feel', icon: <BrushGlyph /> },
+  { key: 'acquisition', label: 'Acquisition', icon: <PersonAddGlyph /> },
   { key: 'palette', label: 'Palette', icon: <PaletteGlyph /> },
+  { key: 'lookfeel', label: 'Look & Feel', icon: <BrushGlyph /> },
+  { key: 'help', label: 'Help', icon: <FileGlyph /> },
+  { key: 'external', label: 'External Connections', icon: <LinkGlyph /> },
   { key: 'search', label: 'Search', icon: <SearchGlyph /> },
   { key: 'raw', label: 'Raw', icon: <ListGlyph /> },
 ];
@@ -148,10 +168,16 @@ export default function TelemetryDashboard() {
 
             {view === 'highlights' ? (
               <HighlightsView summary={summary} active={active} />
-            ) : view === 'lookfeel' ? (
-              <LookAndFeelView summary={summary} active={active} />
+            ) : view === 'acquisition' ? (
+              <AcquisitionView summary={summary} active={active} />
             ) : view === 'palette' ? (
               <PaletteView summary={summary} active={active} />
+            ) : view === 'lookfeel' ? (
+              <LookAndFeelView summary={summary} active={active} />
+            ) : view === 'help' ? (
+              <HelpView summary={summary} active={active} />
+            ) : view === 'external' ? (
+              <ExternalConnectionsView summary={summary} active={active} />
             ) : view === 'raw' ? (
               <RawView summary={summary} active={active} />
             ) : summary.daily ? (

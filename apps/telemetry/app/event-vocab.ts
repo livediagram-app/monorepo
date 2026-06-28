@@ -25,6 +25,9 @@ export const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   UI: 'Editor chrome: light/dark toggle, dialogs (Settings, Shortcuts, Share, Activity), share-link copy, welcome dismiss.',
   Folder: 'Diagram folders: create, rename, delete, re-parent.',
   Session: 'Account-level events when Clerk auth is configured: sign-in, sign-up, sign-out.',
+  Help: 'Help-centre articles: views and per-article helpful / not-really feedback.',
+  Token: 'API tokens: minted by hand or via an AI tool connecting through MCP, and revoked.',
+  Mcp: 'MCP server tool calls made by connected AI assistants.',
 };
 
 // Per-category colour used by every chart so the category-share bar,
@@ -44,6 +47,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   UI: '#0891b2',
   Folder: '#a855f7',
   Session: '#64748b',
+  Help: '#14b8a6',
+  Token: '#d946ef',
+  Mcp: '#f43f5e',
 };
 export const categoryColor = (c: string) => CATEGORY_COLORS[c] ?? '#94a3b8';
 

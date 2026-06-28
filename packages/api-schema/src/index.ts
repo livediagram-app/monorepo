@@ -569,6 +569,11 @@ export const TELEMETRY_CATEGORIES = [
   // with `type` 'Manual' (Explorer New-token) or 'MCP' (an AI tool connected
   // via the consent screen, which mints a token under the hood).
   'Token',
+  // MCP server tool calls (apps/mcp, spec/62): 'Used' with `type` the tool
+  // name (CreateDiagram, ReadDiagram, ...). Emitted by the MCP worker, the
+  // third app that reports telemetry, so usage shows up distinctly from the
+  // in-editor AI panel.
+  'Mcp',
 ] as const;
 export type TelemetryCategory = (typeof TELEMETRY_CATEGORIES)[number];
 

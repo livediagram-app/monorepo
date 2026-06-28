@@ -33,6 +33,21 @@ export async function apiFetch(
   return env.API.fetch(new Request(apiUrl(path), { ...init, headers }));
 }
 
+// Fire-and-forget anonymous telemetry to the api's public /api/events (spec/22).
+// No token: the ingest endpoint is unauthenticated and only stores the closed
+// three-field vocabulary. Never awaited and never throws into the tool; a
+// worker-to-worker call sends no Origin header, so the same-origin guard
+// passes. Off unless the api has TELEMETRY_ENABLED.
+export function postTelemetry(env: Env, category: string, action: string, type: string): void {
+  void env.API.fetch(
+    new Request(apiUrl('/events'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: [{ category, action, type }] }),
+    }),
+  ).catch(() => {});
+}
+
 // Fetch + parse JSON, throwing ApiError on a non-2xx so tools surface a clear,
 // model-correctable message.
 export async function apiJson<T>(

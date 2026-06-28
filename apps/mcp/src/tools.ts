@@ -17,7 +17,7 @@ import {
   type Element,
   type Tab,
 } from '@livediagram/diagram';
-import { apiJson } from './api';
+import { apiJson, postTelemetry } from './api';
 import type { Env } from './env';
 import { svgToPngBase64 } from './render';
 import {
@@ -116,6 +116,7 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      postTelemetry(env, 'Mcp', 'Used', 'FindDiagrams');
       const { diagrams } = await apiJson<{ diagrams: DiagramSummary[] }>(env, token, '/diagrams');
       const q = (args.query ?? '').toLowerCase();
       const limit = args.limit ?? 20;
@@ -138,6 +139,7 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      postTelemetry(env, 'Mcp', 'Used', 'ReadDiagram');
       const { diagram } = await apiJson<{ diagram: Diagram }>(
         env,
         token,
@@ -177,6 +179,7 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      postTelemetry(env, 'Mcp', 'Used', 'CreateDiagram');
       // Accept either `tabs` (preferred) or a single `tab` alias.
       const inputTabs = args.tabs ?? (args.tab ? [args.tab] : undefined);
       if (!inputTabs || inputTabs.length === 0) {
@@ -230,6 +233,7 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      postTelemetry(env, 'Mcp', 'Used', 'AddTab');
       const tabId = crypto.randomUUID();
       const candidate: unknown = { id: tabId, name: args.name, elements: args.elements };
       if (!isValidTab(candidate)) {
@@ -287,6 +291,7 @@ export function registerTools(server: McpServer, env: Env): void {
     },
     async (args, extra) => {
       const token = requireToken(extra as Extra);
+      postTelemetry(env, 'Mcp', 'Used', 'UpdateDiagram');
       const { diagram } = await apiJson<{ diagram: Diagram }>(
         env,
         token,

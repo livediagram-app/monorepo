@@ -3230,7 +3230,8 @@ export const COMPONENT_SCHEMAS: ComponentSchemas = {
       "Team",
       "Participant",
       "Help",
-      "Token"
+      "Token",
+      "Mcp"
     ],
     "type": "string"
   },

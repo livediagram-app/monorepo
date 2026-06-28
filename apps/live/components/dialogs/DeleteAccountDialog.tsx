@@ -22,6 +22,7 @@ import { useReverification, useUser } from '@clerk/react';
 import { Portal } from '@/components/primitives/Portal';
 import { useEffect, useRef, useState } from 'react';
 import { apiDeleteAccount } from '@/lib/api-client';
+import { track } from '@/lib/telemetry';
 import { useEscape } from '@/hooks/ui/useEscape';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import { messageOf } from '@/components/chrome/auth-shared';
@@ -94,6 +95,10 @@ export function DeleteAccountDialog({
       setErrorMsg('Could not delete server-side data. Try again.');
       return;
     }
+    // Anonymous, no identifier: the account-lifecycle counter for the
+    // Acquisition dashboard (spec/22). Fired now, after the server data is
+    // gone but before sign-out, so the opt-out itself still reaches the wire.
+    track('Session', 'Deleted', 'Account');
     try {
       await deleteUserReverified();
     } catch (err) {
