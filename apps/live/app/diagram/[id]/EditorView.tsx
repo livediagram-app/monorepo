@@ -5,7 +5,6 @@ import { useMemo, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_PATTERN_COLOR,
-  isBoxed,
   selectionMembers,
   type Anchor,
 } from '@livediagram/diagram';
@@ -20,7 +19,6 @@ import {
 } from '@/lib/themes';
 import { PALETTE_SEARCH_ITEMS } from '@/lib/palette-search';
 import { HELP_SEARCH_ITEMS } from '@/lib/help-search';
-import { apiAddComment, apiDeleteComment } from '@/lib/api-client';
 import type { UserPreferences } from '@/lib/user-preferences';
 import { Canvas } from '@/components/canvas/Canvas';
 import { EditorHeader } from '@/components/chrome/EditorHeader';
@@ -31,6 +29,7 @@ import { EmptyCanvasBanner } from '@/components/canvas/EmptyCanvasBanner';
 import { EditorModals } from '@/components/dialogs/EditorModals';
 import { EditorTabDialogs } from '@/components/dialogs/EditorTabDialogs';
 import { EditorElementDialogs } from '@/components/dialogs/EditorElementDialogs';
+import { EditorAnchoredPopovers } from '@/components/panels/EditorAnchoredPopovers';
 import { ThemeModeBanner } from '@/components/chrome/ThemeModeBanner';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useDismissibleBanner } from '@/hooks/ui/useDismissibleBanner';
@@ -46,12 +45,6 @@ const SIGNIN_BANNER_DELAY_MS = 5 * 60_000;
 
 const EditorContextMenu = dynamic(() =>
   import('@/components/palette/EditorContextMenu').then((m) => m.EditorContextMenu),
-);
-const CommentThreadPopover = dynamic(() =>
-  import('@/components/panels/CommentThreadPopover').then((m) => m.CommentThreadPopover),
-);
-const NotePopover = dynamic(() =>
-  import('@/components/canvas/NotePopover').then((m) => m.NotePopover),
 );
 const SearchPanel = dynamic(() =>
   import('@/components/panels/SearchPanel').then((m) => m.SearchPanel),
@@ -73,7 +66,6 @@ export function EditorView() {
     activityPosition,
     mapPosition,
     addArrow,
-    addComment,
     addImage,
     addIcon,
     addTechIcon,
@@ -145,12 +137,9 @@ export function EditorView() {
     clearTabContent,
     clerkDisplayName,
     clerkUserId,
-    closeComments,
     closeContextMenu,
-    closeNote,
     commentRows,
     commentsPanelPosition,
-    commentThreadOpenId,
     commitDraw,
     commitFreehand,
     commitLabel,
@@ -158,7 +147,6 @@ export function EditorView() {
     contextMenu,
     copying,
     createFolder,
-    deleteComment,
     deleteDiagram,
     deleteFolder,
     deleteMultiSelected,
@@ -213,7 +201,6 @@ export function EditorView() {
     multiSelectedIds,
     narrowMultiSelection,
     newDiagram,
-    noteOpenId,
     openComments,
     openDiagram,
     openNote,
@@ -232,7 +219,6 @@ export function EditorView() {
     removeTabFromFolder,
     reorderTabs,
     resetColorsSelected,
-    resolveThread,
     retryActiveTabLoad,
     revertChange,
     savedAt,
@@ -330,7 +316,6 @@ export function EditorView() {
     applyElementLink,
     openCellLinkPicker,
     setMultiSelectedIds,
-    setNote,
     setOpacitySelected,
     setPaddingSelected,
     setPalettePosition,
@@ -372,7 +357,6 @@ export function EditorView() {
     toggleTextStyleSelected,
     undo,
     ungroupSelected,
-    unresolveThread,
     userPreferences,
     viewportOffset,
     viewportZoom,
@@ -1085,94 +1069,7 @@ export function EditorView() {
         />
       ) : null}
       <EditorModals />
-      {commentThreadOpenId !== null
-        ? (() => {
-            const target = activeTab.elements.find(
-              (el) => el.id === commentThreadOpenId && isBoxed(el),
-            );
-            if (!target || !isBoxed(target)) return null;
-            return (
-              <CommentThreadPopover
-                elementId={target.id}
-                thread={target.commentThread}
-                onAddComment={(text) => {
-                  addComment(target.id, text);
-                  track('Comment', 'Added');
-                  // View-role visitors don't autosave the tab, so
-                  // their addComment via the local commit alone
-                  // would vanish on refresh. Persist via the
-                  // dedicated POST /tabs/<id>/comments endpoint
-                  // (the only write path open to view-role) so the
-                  // viewer's contribution lives in D1 like an
-                  // owner / editor's would.
-                  if (isReadOnly && diagramId) {
-                    void apiAddComment(
-                      selfParticipant.id,
-                      diagramId,
-                      activeTab.id,
-                      target.id,
-                      text,
-                      sessionShareCode,
-                    ).catch(() => {});
-                  }
-                }}
-                onDeleteComment={(cid) => {
-                  deleteComment(target.id, cid);
-                  track('Comment', 'Deleted');
-                  // View-role visitors don't autosave the tab, so the
-                  // local delete alone would resurrect on refresh.
-                  // Persist via the dedicated DELETE endpoint (the
-                  // server re-checks authorId === caller, so a viewer
-                  // can only land their own deletes). Owners / editors
-                  // persist via the normal tab autosave.
-                  if (isReadOnly && diagramId) {
-                    void apiDeleteComment(
-                      selfParticipant.id,
-                      diagramId,
-                      activeTab.id,
-                      cid,
-                      sessionShareCode,
-                    ).catch(() => {});
-                  }
-                }}
-                onResolve={() => {
-                  resolveThread(target.id);
-                  track('Comment', 'Resolved');
-                }}
-                onUnresolve={() => {
-                  unresolveThread(target.id);
-                  track('Comment', 'Unresolved');
-                }}
-                onClose={closeComments}
-                readOnly={isReadOnly}
-                selfId={selfParticipant.id}
-              />
-            );
-          })()
-        : null}
-      {noteOpenId !== null
-        ? (() => {
-            const target = activeTab.elements.find((el) => el.id === noteOpenId && isBoxed(el));
-            if (!target || !isBoxed(target)) return null;
-            return (
-              <NotePopover
-                elementId={target.id}
-                initial={target.note ?? ''}
-                readOnly={isReadOnly}
-                onCommit={(next) => {
-                  const prev = (target.note ?? '').trim();
-                  const nextTrim = next.trim();
-                  setNote(target.id, next);
-                  if (prev === nextTrim) return;
-                  if (!prev && nextTrim) track('Note', 'Added');
-                  else if (prev && !nextTrim) track('Note', 'Deleted');
-                  else track('Note', 'Changed');
-                }}
-                onClose={closeNote}
-              />
-            );
-          })()
-        : null}
+      <EditorAnchoredPopovers />
       {contextMenu && contextMenu.mode !== 'canvas' && !isReadOnly ? (
         <EditorContextMenu
           menu={contextMenu}
