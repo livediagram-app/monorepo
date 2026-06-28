@@ -20,13 +20,15 @@ export function Header() {
           </div>
         </div>
         {/* Cross-surface navigation lives in the apps menu next to the logo, so
-            the header keeps just the one primary CTA into the editor. */}
-        <nav className="flex shrink-0 items-center gap-1.5">
+            the header keeps just the one primary CTA into the editor. ml-auto
+            pins it to the far right even on mobile, where the centred search
+            box (the flex-1 spacer) is hidden. */}
+        <nav className="ml-auto flex shrink-0 items-center gap-1.5">
           <a
             href="/new"
             className="inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >
-            Open editor
+            Start drawing
           </a>
         </nav>
       </div>

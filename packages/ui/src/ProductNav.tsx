@@ -71,8 +71,21 @@ export function ProductNav({
         aria-expanded={open}
         aria-label={`Switch section, currently ${active.label}`}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm font-medium text-slate-500 outline-none transition hover:bg-slate-100 hover:text-slate-700 focus-visible:bg-slate-100 focus-visible:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 dark:focus-visible:bg-slate-800"
+        className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-medium text-slate-500 outline-none transition hover:bg-slate-100 hover:text-slate-700 focus-visible:bg-slate-100 focus-visible:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 dark:focus-visible:bg-slate-800"
       >
+        {/* Hamburger affordance so the label reads as an openable menu, not a
+            static section name. */}
+        <svg
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          aria-hidden
+          className="h-3.5 w-3.5"
+        >
+          <path d="M2.5 5h11M2.5 8h11M2.5 11h11" />
+        </svg>
         {active.label}
         <svg
           viewBox="0 0 16 16"
