@@ -8,7 +8,8 @@ import { ActivityGlyph } from './glyphs';
 import { MiniSparkline } from './MiniSparkline';
 
 // A ranked usage list: rows sorted most-to-least, each with a share bar and
-// (on desktop) a mini trend line, the top/bottom tagged Most / Least used.
+// (on desktop) a mini trend line, the top row tagged Most used. (No "least
+// used" tag: unused features have no row, so the bottom isn't truly least.)
 // Shared by the Look & Feel and Palette views so both render their rankings
 // identically (the colour follows the row's telemetry category).
 
