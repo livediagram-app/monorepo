@@ -31,6 +31,7 @@ import { TabBar } from '@/components/chrome/TabBar';
 import { SignInBanner, SIGNIN_BANNER_DISMISS_KEY } from '@/components/chrome/SignInBanner';
 import { EmptyCanvasBanner } from '@/components/canvas/EmptyCanvasBanner';
 import { EditorModals } from '@/components/dialogs/EditorModals';
+import { EditorTabDialogs } from '@/components/dialogs/EditorTabDialogs';
 import { ThemeModeBanner } from '@/components/chrome/ThemeModeBanner';
 import { clerkEnabled } from '@/lib/clerk-config';
 import { useDismissibleBanner } from '@/hooks/ui/useDismissibleBanner';
@@ -55,15 +56,6 @@ const LineDataDialog = dynamic(() =>
 );
 const CommentThreadPopover = dynamic(() =>
   import('@/components/panels/CommentThreadPopover').then((m) => m.CommentThreadPopover),
-);
-const ExportTabDialog = dynamic(() =>
-  import('@/components/dialogs/ExportTabDialog').then((m) => m.ExportTabDialog),
-);
-const ImportTabDialog = dynamic(() =>
-  import('@/components/dialogs/ImportTabDialog').then((m) => m.ImportTabDialog),
-);
-const ShareDialog = dynamic(() =>
-  import('@/components/dialogs/ShareDialog').then((m) => m.ShareDialog),
 );
 const NotePopover = dynamic(() =>
   import('@/components/canvas/NotePopover').then((m) => m.NotePopover),
@@ -178,7 +170,6 @@ export function EditorView() {
     contextMenu,
     copying,
     createFolder,
-    createShareLink,
     deleteComment,
     deleteDiagram,
     deleteFolder,
@@ -209,9 +200,6 @@ export function EditorView() {
     exitFormatTool,
     exitGroupMode,
     explorerPosition,
-    exportOpen,
-    exportScope,
-    extendShareLink,
     fitToScreen,
     folders,
     followLink,
@@ -224,8 +212,6 @@ export function EditorView() {
     identityOnlyScreenOpen,
     imageContext,
     imagePickerOpenFor,
-    importIntoActiveTab,
-    importOpen,
     setImportOpen,
     isOwner,
     isPinchingRef,
@@ -240,7 +226,6 @@ export function EditorView() {
     makeCopy,
     moveDiagramToFolder,
     multiSelectedIds,
-    nameConfirmed,
     narrowMultiSelection,
     newDiagram,
     noteOpenId,
@@ -266,7 +251,6 @@ export function EditorView() {
     resolveThread,
     retryActiveTabLoad,
     revertChange,
-    revokeShareLink,
     savedAt,
     saveStatus,
     searchOpen,
@@ -353,7 +337,6 @@ export function EditorView() {
     setCommentsPanelPosition,
     setContextMenu,
     setDiagramName,
-    setDiagramSharePassword,
     setEditingId,
     setExplorerPosition,
     setExportOpen,
@@ -391,10 +374,6 @@ export function EditorView() {
     setViewportOffset,
     setViewportZoom,
     sharedDiagrams,
-    shareDialogOpen,
-    shareLinks,
-    sharePassword,
-    shareUrlFor,
     skipTemplatePicker,
     snapGuides,
     distGuides,
@@ -415,7 +394,6 @@ export function EditorView() {
     undo,
     ungroupSelected,
     unresolveThread,
-    updateParticipantName,
     userPreferences,
     viewportOffset,
     viewportZoom,
@@ -558,47 +536,7 @@ export function EditorView() {
           }}
         />
       )}
-      {exportOpen ? (
-        <ExportTabDialog
-          tab={
-            exportScope === 'selection'
-              ? {
-                  ...activeTab,
-                  elements: activeTab.elements.filter((el) => multiSelectedIds.has(el.id)),
-                }
-              : activeTab
-          }
-          scope={exportScope}
-          diagramName={diagramName}
-          onClose={() => setExportOpen(false)}
-        />
-      ) : null}
-      {importOpen ? (
-        <ImportTabDialog
-          tabName={activeTab.name}
-          onImport={importIntoActiveTab}
-          onClose={() => setImportOpen(false)}
-        />
-      ) : null}
-      {shareDialogOpen ? (
-        <ShareDialog
-          participant={selfParticipant}
-          links={shareLinks}
-          sharePassword={sharePassword}
-          shareUrlFor={shareUrlFor}
-          nameConfirmed={nameConfirmed}
-          // Signed-in via Clerk → name is locked to the account
-          // display name (same rule as the welcome modal, spec/04).
-          // Guests pass undefined so the input + shuffle stay live.
-          lockedName={clerkUserId ? clerkDisplayName : null}
-          onSaveName={updateParticipantName}
-          onCreateLink={createShareLink}
-          onRevokeLink={revokeShareLink}
-          onExtendLink={extendShareLink}
-          onSetPassword={setDiagramSharePassword}
-          onClose={() => setShareDialogOpen(false)}
-        />
-      ) : null}
+      <EditorTabDialogs />
       <Canvas
         tabName={activeTab.name}
         tabSummaries={tabSummaries}
