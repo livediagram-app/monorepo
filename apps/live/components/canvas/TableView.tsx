@@ -355,75 +355,54 @@ export function TableView({
   // Drag the right divider of column c to pin its width; other columns
   // stay auto and reflow. Reads the live track sizes + the rendered-to-
   // element scale (zoom) off the grid so it works at any zoom.
-  const startColResize = (c: number) => (e: React.PointerEvent) => {
+  // Column + row resize share one axis-parameterized factory: the two
+  // gestures differ only by axis (width / clientX / colWidths / MIN_COL_PX
+  // vs height / clientY / rowHeights / MIN_ROW_PX). Keeping them as twin
+  // handlers was a standing duplication; this is the single source.
+  const startAxisResize = (axis: 'col' | 'row') => (index: number) => (e: React.PointerEvent) => {
     if (!showControls) return;
     e.preventDefault();
     e.stopPropagation();
     const grid = gridRef.current;
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
-    const scale = element.width > 0 ? rect.width / element.width : 1;
+    const isCol = axis === 'col';
+    const elemSize = isCol ? element.width : element.height;
+    const rectSize = isCol ? rect.width : rect.height;
+    const scale = elemSize > 0 ? rectSize / elemSize : 1;
+    const count = isCol ? cols : rows;
     const tracks = getComputedStyle(grid)
-      .gridTemplateColumns.split(' ')
+      [isCol ? 'gridTemplateColumns' : 'gridTemplateRows'].split(' ')
       .map((t) => parseFloat(t));
-    const base: (number | null)[] = Array.from(
-      { length: cols },
-      (_, i) => element.colWidths?.[i] ?? null,
-    );
-    const startWidthElem = (tracks[c] ?? rect.width / cols) / scale;
-    const startX = e.clientX;
+    const baseSizes = isCol ? element.colWidths : element.rowHeights;
+    const base: (number | null)[] = Array.from({ length: count }, (_, i) => baseSizes?.[i] ?? null);
+    const startSizeElem = (tracks[index] ?? rectSize / count) / scale;
+    const startPos = isCol ? e.clientX : e.clientY;
+    const minPx = isCol ? MIN_COL_PX : MIN_ROW_PX;
+    const ref = isCol ? dragRef : dragRowRef;
+    const setResize = isCol ? setResizeWidths : setResizeHeights;
     const onMove = (ev: PointerEvent) => {
-      const dx = (ev.clientX - startX) / scale;
+      const delta = ((isCol ? ev.clientX : ev.clientY) - startPos) / scale;
       const next = [...base];
-      next[c] = Math.max(MIN_COL_PX, Math.round(startWidthElem + dx));
-      dragRef.current = next;
-      setResizeWidths(next);
+      next[index] = Math.max(minPx, Math.round(startSizeElem + delta));
+      ref.current = next;
+      setResize(next);
     };
     const onUp = () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
-      if (dragRef.current) onCommitTable(element.id, { colWidths: dragRef.current });
-      dragRef.current = null;
-      setResizeWidths(null);
+      if (ref.current) {
+        if (isCol) onCommitTable(element.id, { colWidths: ref.current });
+        else onCommitTable(element.id, { rowHeights: ref.current });
+      }
+      ref.current = null;
+      setResize(null);
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   };
-
-  const startRowResize = (r: number) => (e: React.PointerEvent) => {
-    if (!showControls) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const grid = gridRef.current;
-    if (!grid) return;
-    const rect = grid.getBoundingClientRect();
-    const scale = element.height > 0 ? rect.height / element.height : 1;
-    const tracks = getComputedStyle(grid)
-      .gridTemplateRows.split(' ')
-      .map((t) => parseFloat(t));
-    const base: (number | null)[] = Array.from(
-      { length: rows },
-      (_, i) => element.rowHeights?.[i] ?? null,
-    );
-    const startHeightElem = (tracks[r] ?? rect.height / rows) / scale;
-    const startY = e.clientY;
-    const onMove = (ev: PointerEvent) => {
-      const dy = (ev.clientY - startY) / scale;
-      const next = [...base];
-      next[r] = Math.max(MIN_ROW_PX, Math.round(startHeightElem + dy));
-      dragRowRef.current = next;
-      setResizeHeights(next);
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      if (dragRowRef.current) onCommitTable(element.id, { rowHeights: dragRowRef.current });
-      dragRowRef.current = null;
-      setResizeHeights(null);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  };
+  const startColResize = startAxisResize('col');
+  const startRowResize = startAxisResize('row');
 
   return (
     <>
