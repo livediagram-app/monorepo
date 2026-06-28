@@ -44,7 +44,6 @@ import {
   snapToAnchor,
   snapToArrowPoint,
   type AlignmentGuide,
-  type DistributionGuide,
   type Anchor,
   type ArrowElement,
   type Element,
@@ -72,16 +71,9 @@ import {
   type ShapeBounds,
 } from '@/lib/canvas';
 import { elementHostsAtPoint } from '@/lib/dom-hit-test';
-import type { SnapTarget } from '@/components/canvas/Canvas.types';
-import {
-  computeSnapTargets,
-  distToSegment,
-  NO_ALIGN_EXCLUDE,
-  sameDistGuides,
-  sameGuides,
-  sameTargets,
-} from '@/lib/drag-geometry';
+import { computeSnapTargets, distToSegment, NO_ALIGN_EXCLUDE } from '@/lib/drag-geometry';
 import type { EditorDragDeps, EditorDragApi } from './useEditorDrag.types';
+import { useSnapGuideState } from './useSnapGuideState';
 
 // Screen-pixel distance the pointer must travel before a body drag
 // actually starts moving the element. Below this a press (even one that
@@ -111,23 +103,10 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // Alignment guides for the active gesture. Set from the move-effect on
   // every boxed move / single-element resize, cleared on pointer-up. The
   // render layer (CanvasChrome) draws them as faint lines.
-  const [snapGuides, setSnapGuides] = useState<AlignmentGuide[]>([]);
-  // Equal-spacing (distribution) guides: the gap segments shown when the
-  // element snaps to even spacing with its neighbours. Rendered alongside
-  // the alignment guides; coalesced through the same rAF below.
-  const [distGuides, setDistGuides] = useState<DistributionGuide[]>([]);
-  // Connection-point markers shown while dragging an arrow endpoint (the
-  // anchors of nearby shapes). Coalesced through the same rAF as the guides.
-  const [snapTargets, setSnapTargets] = useState<SnapTarget[]>([]);
-  // Coalesce snap-guide state updates into a single rAF. The guides are
-  // purely cosmetic — the snap itself is applied synchronously in the
-  // `tick` below — so keeping their state update OFF the synchronous
-  // pointermove path (which fired setSnapGuides + tick back-to-back every
-  // frame) keeps the guide overlay out of the critical drag render and
-  // out of any synchronous update cascade. A pending frame is cancelled +
-  // rescheduled so only the latest guides land; the sameGuides guard then
-  // skips the render when they're unchanged.
-  const guideRafRef = useRef<number | null>(null);
+  // Cosmetic snap-guide overlay state (alignment + distribution guides,
+  // arrow snap markers), coalesced through rAF. See useSnapGuideState.
+  const { snapGuides, distGuides, snapTargets, scheduleGuides, scheduleSnapTargets } =
+    useSnapGuideState();
   // Whether the current body drag has crossed DRAG_ENGAGE_PX. Reset at the
   // start of each gesture (in the move effect below); flipped true once the
   // pointer travels far enough that the press is unambiguously a drag.
@@ -150,32 +129,6 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
   // (beginAnchorDrag), which never arms a checkpoint because it already
   // logged an "Added" entry via `commit` — so we don't double-log it.
   const logGestureRef = useRef(false);
-  const scheduleGuides = (align: AlignmentGuide[], dist: DistributionGuide[] = []) => {
-    if (guideRafRef.current !== null) cancelAnimationFrame(guideRafRef.current);
-    guideRafRef.current = requestAnimationFrame(() => {
-      guideRafRef.current = null;
-      setSnapGuides((prev) => (sameGuides(prev, align) ? prev : align));
-      setDistGuides((prev) => (sameDistGuides(prev, dist) ? prev : dist));
-    });
-  };
-  // Snap-target markers ride the same coalesce-through-rAF pattern as the
-  // guides: only the latest set lands, and the same-check skips the render
-  // when the marker set (positions + which is active) is unchanged.
-  const snapTargetsRafRef = useRef<number | null>(null);
-  const scheduleSnapTargets = (targets: SnapTarget[]) => {
-    if (snapTargetsRafRef.current !== null) cancelAnimationFrame(snapTargetsRafRef.current);
-    snapTargetsRafRef.current = requestAnimationFrame(() => {
-      snapTargetsRafRef.current = null;
-      setSnapTargets((prev) => (sameTargets(prev, targets) ? prev : targets));
-    });
-  };
-  useEffect(
-    () => () => {
-      if (guideRafRef.current !== null) cancelAnimationFrame(guideRafRef.current);
-      if (snapTargetsRafRef.current !== null) cancelAnimationFrame(snapTargetsRafRef.current);
-    },
-    [],
-  );
 
   // Stash deps on every render so the move-effect always reads
   // fresh values without re-subscribing global pointer listeners.
@@ -1322,7 +1275,7 @@ export function useEditorDrag(deps: EditorDragDeps): EditorDragApi {
       window.removeEventListener('pointerdown', onPlaceClick, true);
       window.removeEventListener('keydown', onKey);
     };
-  }, [drag]);
+  }, [drag, scheduleGuides, scheduleSnapTargets]);
 
   return {
     drag,
