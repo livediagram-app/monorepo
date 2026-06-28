@@ -8,19 +8,35 @@
 // plain <a> with absolute hrefs because the destinations live in different apps
 // stitched under one host by the router, so client-side nav wouldn't cross them.
 
-type ProductNavKey = 'home' | 'explorer' | 'editor' | 'help';
+type ProductNavKey = 'home' | 'explorer' | 'editor' | 'help' | 'telemetry';
 
 const ITEMS: { key: ProductNavKey; label: string; href: string; desc: string }[] = [
   { key: 'home', label: 'Home', href: '/', desc: 'The livediagram landing page' },
   { key: 'explorer', label: 'Explorer', href: '/explorer/recent', desc: 'Your diagrams & folders' },
   { key: 'editor', label: 'Editor', href: '/new', desc: 'Start a new diagram' },
   { key: 'help', label: 'Help', href: '/help/', desc: 'Guides, tutorials & answers' },
+  {
+    key: 'telemetry',
+    label: 'Telemetry',
+    href: '/telemetry',
+    desc: 'Anonymous usage, in the open',
+  },
 ];
 
-export function ProductNav({ current }: { current: ProductNavKey }) {
+// `showOnMobile` opts a surface into rendering the menu on phones (next to the
+// logo), where it otherwise hides to save room. The Explorer, Help, and
+// Telemetry headers pass it; the space-tight editor toolbar leaves it off so
+// the menu stays desktop-only there.
+export function ProductNav({
+  current,
+  showOnMobile = false,
+}: {
+  current: ProductNavKey;
+  showOnMobile?: boolean;
+}) {
   const active = ITEMS.find((i) => i.key === current) ?? ITEMS[0]!;
   return (
-    <div className="group relative hidden sm:block">
+    <div className={`group relative ${showOnMobile ? 'block' : 'hidden sm:block'}`}>
       <button
         type="button"
         aria-haspopup="menu"

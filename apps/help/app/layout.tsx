@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-800 antialiased">
         <JsonLd data={webSiteJsonLd()} />
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-16">{children}</main>
         <Footer />
         <BackToTop />
       </body>

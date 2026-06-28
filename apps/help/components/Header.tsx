@@ -12,26 +12,16 @@ export function Header() {
       <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 md:px-8">
         <div className="flex shrink-0 items-center gap-2.5">
           <Brand href="/" size="md" />
-          <ProductNav current="help" />
+          <ProductNav current="help" showOnMobile />
         </div>
         <div className="hidden min-w-0 flex-1 justify-center sm:flex">
           <div className="w-full max-w-sm">
             <SearchInput />
           </div>
         </div>
+        {/* Cross-surface navigation lives in the apps menu next to the logo, so
+            the header keeps just the one primary CTA into the editor. */}
         <nav className="flex shrink-0 items-center gap-1.5">
-          <a
-            href="/help/"
-            className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
-          >
-            Help
-          </a>
-          <a
-            href="/explorer/recent"
-            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 sm:inline-flex"
-          >
-            Explorer
-          </a>
           <a
             href="/new"
             className="inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"

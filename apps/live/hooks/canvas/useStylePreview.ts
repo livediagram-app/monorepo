@@ -70,9 +70,21 @@ export function useStylePreview(deps: {
   commitTabs: (mapTabs: (tabs: Tab[]) => Tab[]) => void;
   // Activity-log emit for the committed change (before/after element diff).
   emitChange: (tabId: string, before: Element[], after: Element[]) => void;
+  // Flipped on while a preview is on screen so autosave skips the ephemeral
+  // tick (the preview mutates `tabs` to render, but must not be persisted).
+  // Cleared by the commit and the revert.
+  previewingRef: MutableRefObject<boolean>;
 }) {
-  const { editsBlocked, activeId, currentSelectionIds, tabsRef, tickTabs, commitTabs, emitChange } =
-    deps;
+  const {
+    editsBlocked,
+    activeId,
+    currentSelectionIds,
+    tabsRef,
+    tickTabs,
+    commitTabs,
+    emitChange,
+    previewingRef,
+  } = deps;
 
   const previewRef = useRef<Snapshot | null>(null);
 
@@ -102,6 +114,9 @@ export function useStylePreview(deps: {
     if (editsBlocked) return;
     const snap = ensureSnapshot();
     if (!snap) return;
+    // Mark the preview active so autosave ignores this (and any subsequent)
+    // tick until the pointer leaves (clearPreview) or the user clicks (commit).
+    previewingRef.current = true;
     writeElements(
       elementsNow().map((el) =>
         snap.originals.has(el.id) ? mapEl(snap.originals.get(el.id)!) : el,
@@ -114,6 +129,9 @@ export function useStylePreview(deps: {
     const snap = previewRef.current;
     if (!snap) return;
     previewRef.current = null;
+    // Preview gone: the revert tick below restores the pre-hover state, which
+    // equals what's already saved, so letting autosave run again is a no-op.
+    previewingRef.current = false;
     writeElements(
       elementsNow().map((el) => (snap.originals.has(el.id) ? snap.originals.get(el.id)! : el)),
     );
@@ -126,6 +144,8 @@ export function useStylePreview(deps: {
     const snap = ensureSnapshot();
     if (!snap) return;
     previewRef.current = null;
+    // The click commits for real: let autosave persist the result below.
+    previewingRef.current = false;
     const before = elementsNow().map((el) =>
       snap.originals.has(el.id) ? snap.originals.get(el.id)! : el,
     );
