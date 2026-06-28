@@ -40,8 +40,8 @@ export function useAutosave(opts: {
   loadedTabIdsRef: MutableRefObject<Set<string>>;
   remoteUpdateRef: MutableRefObject<boolean>;
   // True while a hover-preview is on screen. Previews mutate `tabs` (so they
-  // render live) but must never be persisted — the debounced save below skips
-  // while this is set; the click-commit clears it and saves normally.
+  // render live) but must never be persisted; the debounced save below skips
+  // while this is set, and the click-commit clears it and saves normally.
   previewingRef: MutableRefObject<boolean>;
   roomRef: RefObject<ReturnType<typeof connectRoom> | null>;
   setSaveStatus: Dispatch<SetStateAction<SaveStatus>>;
@@ -106,7 +106,7 @@ export function useAutosave(opts: {
     if (!hydrated || !diagramId) return;
     if (isReadOnly) return;
     // A hover-preview is showing: its tick mutated `tabs`, but it's ephemeral
-    // and will revert (or be replaced by a real commit) — don't persist it.
+    // and will revert (or be replaced by a real commit), so don't persist it.
     // The commit/revert flips this ref off and re-runs the effect, which then
     // saves the committed state (or finds nothing changed after a revert).
     if (previewingRef.current) return;

@@ -78,7 +78,7 @@ function HelpNavIcon() {
 }
 
 function ExplorerNavIcon() {
-  // Folder glyph — mirrors the Explorer's own folder language so the link
+  // Folder glyph, mirrors the Explorer's own folder language so the link
   // reads as "go to your library" (matches the live app's header link).
   return (
     <svg

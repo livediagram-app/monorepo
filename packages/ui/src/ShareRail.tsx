@@ -15,7 +15,7 @@ const encodedUrl = encodeURIComponent(SHARE_URL);
 const encodedText = encodeURIComponent(SHARE_TEXT);
 
 // Icons are stored as raw <path> `d` strings, not JSX, so this module has no
-// top-level JSX evaluated at import time — that keeps the shared barrel
+// top-level JSX evaluated at import time, which keeps the shared barrel
 // importable from non-React test transforms. The <svg> is built in the render.
 type ShareTarget = {
   label: string;

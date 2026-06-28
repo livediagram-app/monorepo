@@ -6,7 +6,7 @@ import { WINDOW_META } from './windows';
 
 // A condensed version of the WindowPanel's Today / Last 7 / Last month
 // selector. It fades in, fixed just below the sticky site header, once the
-// full panel has scrolled out of view — so the active timeframe stays
+// full panel has scrolled out of view, so the active timeframe stays
 // changeable while the reader is deep in a long list. An IntersectionObserver
 // on the panel drives the show/hide; no scroll listener.
 export function StickyWindowBar({
