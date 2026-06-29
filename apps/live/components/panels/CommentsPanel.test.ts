@@ -68,7 +68,6 @@ describe('commentRowsFromElements', () => {
       elementId: 'a',
       label: 'Node A',
       count: 1,
-      resolved: false,
       latestText: 'hi',
       latestAt: 100,
       latestAuthorName: 'Alice',
@@ -111,9 +110,9 @@ describe('commentRowsFromElements', () => {
     expect(commentRowsFromElements([el])[0]!.label).toBe('My Node');
   });
 
-  it('carries the resolved flag through to the row', () => {
+  it('excludes a resolved thread from the panel rows', () => {
     const el = mkShape('a', [mkComment('hi', 100)], { resolved: true });
-    expect(commentRowsFromElements([el])[0]!.resolved).toBe(true);
+    expect(commentRowsFromElements([el])).toHaveLength(0);
   });
 
   it('sorts rows newest-first by latestAt across many elements', () => {
@@ -130,14 +129,13 @@ describe('commentRowsFromElements', () => {
     expect(rows.map((r) => r.elementId)).toEqual(['new', 'mid', 'old']);
   });
 
-  it('keeps resolved threads in the list (dimmed treatment lives in the row, not the filter)', () => {
-    // Resolved threads still surface so the user can jump back to
-    // them. The CommentsPanel dims the row visually; the helper
-    // doesn't filter them out.
+  it('hides resolved threads but keeps open ones', () => {
+    // A resolved thread's discussion is closed, so it drops out of the
+    // panel; the open thread still surfaces. The thread itself stays on
+    // the element and reopens from its comment badge.
     const resolved = mkShape('r', [mkComment('done', 100)], { resolved: true });
     const open = mkShape('o', [mkComment('todo', 200)]);
     const rows = commentRowsFromElements([resolved, open]);
-    expect(rows.map((r) => r.elementId)).toEqual(['o', 'r']);
-    expect(rows.find((r) => r.elementId === 'r')!.resolved).toBe(true);
+    expect(rows.map((r) => r.elementId)).toEqual(['o']);
   });
 });

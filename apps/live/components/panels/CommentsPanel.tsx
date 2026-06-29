@@ -10,13 +10,8 @@ export type CommentRow = {
   // Display label for the element, "Untitled" when missing so the
   // row never reads as blank.
   label: string;
-  // Number of unresolved + resolved comments together. Resolved
-  // threads still appear in the list, with a dimmed treatment, so
-  // the user can jump back to them.
+  // Number of comments in the thread.
   count: number;
-  // True when the thread has been resolved. Drives the dimmed row
-  // treatment + the "resolved" tag.
-  resolved: boolean;
   // Newest comment's author identity for the leading dot. Reused
   // from Comment.authorName / authorColor (denormalised on write
   // so the panel renders without joining the participant list).
@@ -95,9 +90,7 @@ export function CommentsPanel({
             <button
               type="button"
               onClick={() => onRowClick(row.elementId)}
-              className={`group flex w-full flex-col gap-1 rounded px-1.5 py-1.5 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800 ${
-                row.resolved ? 'opacity-60' : ''
-              }`}
+              className="group flex w-full flex-col gap-1 rounded px-1.5 py-1.5 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <div className="flex items-center gap-1.5">
                 <span
@@ -117,14 +110,7 @@ export function CommentsPanel({
               </p>
               <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-400">
                 <span className="truncate">{row.latestAuthorName}</span>
-                <span className="flex items-center gap-1">
-                  {row.resolved ? (
-                    <span className="rounded bg-emerald-100 px-1 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                      Resolved
-                    </span>
-                  ) : null}
-                  <span>{formatRelativeTimeShort(Date.now() - row.latestAt)}</span>
-                </span>
+                <span>{formatRelativeTimeShort(Date.now() - row.latestAt)}</span>
               </div>
             </button>
           </li>
@@ -143,7 +129,9 @@ export function commentRowsFromElements(elements: BoxedElement[]): CommentRow[] 
   for (const el of elements) {
     const thread = (el as { commentThread?: { comments: unknown[]; resolved: boolean } })
       .commentThread;
-    if (!thread || thread.comments.length === 0) continue;
+    // Resolved threads are hidden from the panel (the discussion is closed); the
+    // thread still lives on the element and opens from its comment badge.
+    if (!thread || thread.comments.length === 0 || thread.resolved) continue;
     const comments = thread.comments as {
       text: string;
       createdAt: number;
@@ -166,7 +154,6 @@ export function commentRowsFromElements(elements: BoxedElement[]): CommentRow[] 
       elementId: el.id,
       label,
       count: comments.length,
-      resolved: !!thread.resolved,
       latestAuthorName: latest.authorName,
       latestAuthorColor: latest.authorColor,
       latestText: latest.text,
