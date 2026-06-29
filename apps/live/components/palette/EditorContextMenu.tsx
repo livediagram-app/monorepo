@@ -13,7 +13,6 @@
 // inline version used). The page owns the open/closed state + the
 // handlers; this component only decides which items to show.
 
-import { useState } from 'react';
 import { onMouseHover, useRevertOnUnmount } from '@/components/primitives/hover-preview';
 import {
   animLoops,
