@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/ui/useToast';
 import { TrashIcon } from '@/components/panels/explorer-icons';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import { EXPIRY_LABELS, LinkIcon, RefreshIcon, RoleButton } from './share-dialog-parts';
+import { LiveImageMenu } from './LiveImageMenu';
 import type { ShareDialogProps } from './ShareDialog.types';
 import { SharePasswordSection } from './SharePasswordSection';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
@@ -337,6 +338,12 @@ export function ShareDialog({
                         {copiedCode === `embed:${link.code}` ? 'Copied' : 'Embed'}
                       </button>
                     </Tooltip>
+                    {/* Live image (spec/54 + spec/67): an <img>-able SVG
+                            URL. Hidden while a password is set — an <img>
+                            can't supply one, so the server refuses an
+                            image for gated shares and offering it here
+                            would mislead. */}
+                    {sharePassword ? null : <LiveImageMenu code={link.code} />}
                     <span className="flex-1" />
                     <Tooltip
                       title="Revoke link"

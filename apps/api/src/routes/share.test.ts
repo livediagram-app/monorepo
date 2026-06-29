@@ -26,15 +26,70 @@ vi.mock('../db', () => ({
   getDiagram: vi.fn(),
   getDiagramSharePassword: (env: Env, id: string) => getSharePasswordMock(env, id),
   getShareLink: vi.fn(),
+  getParticipant: vi.fn(),
   recordSharedAccess: vi.fn(),
 }));
+
+// The live-image endpoint (spec/54 + spec/67) delegates the actual
+// render-cache to ./thumbnail; stub it so this suite pins the route's
+// resolve + password-exclusion wiring, not the rendering.
+vi.mock('../thumbnail', () => ({ getDiagramThumbnailSvg: vi.fn() }));
 
 // Import AFTER the mock so the share.ts module picks up the stubbed
 // db helpers. passwordGate is module-private to share.ts, exported
 // only for this suite (see the comment on the export).
-import { passwordGate } from './share';
+import { handleShare, passwordGate } from './share';
+import { getDiagram, getShareLink } from '../db';
+import { getDiagramThumbnailSvg } from '../thumbnail';
+import type { RouteContext } from './context';
 
 const FAKE_ENV = {} as Env;
+
+const getDiagramMock = vi.mocked(getDiagram);
+const getShareLinkMock = vi.mocked(getShareLink);
+const getThumbnailMock = vi.mocked(getDiagramThumbnailSvg);
+
+function imageCtx(code: string): RouteContext {
+  const url = new URL(`https://api.test/api/share/${code}/image.svg`);
+  return {
+    request: new Request(url, { method: 'GET' }),
+    env: FAKE_ENV,
+    url,
+    segments: url.pathname.replace(/^\//, '').split('/'),
+    clerkUserId: null,
+    clerkEmail: null,
+    resolveOwner: () => null,
+  };
+}
+
+function shareLink(diagramId: string) {
+  return {
+    code: 'C',
+    diagramId,
+    role: 'view' as const,
+    createdAt: 0,
+    expiry: 'never' as const,
+    expiresAt: null,
+  };
+}
+
+function diagram(id: string) {
+  return {
+    id,
+    ownerId: 'o1',
+    name: 'D',
+    tabs: [],
+    shareable: true,
+    shareCode: 'C',
+    folderId: null,
+    teamId: null,
+    source: null,
+    savedAt: 1,
+    createdAt: 0,
+    ownerName: null,
+    ownerColor: null,
+  };
+}
 
 beforeEach(() => {
   getSharePasswordMock.mockReset();
@@ -104,5 +159,58 @@ describe('passwordGate (spec/24 status-code mapping)', () => {
     const result = await passwordGate(FAKE_ENV, 'diag-7', 'hunter2');
     expect(result).not.toBeNull();
     expect(result!.status).toBe(403);
+  });
+});
+
+describe('GET /api/share/<code>/image.svg (spec/54 + spec/67 live image)', () => {
+  beforeEach(() => {
+    getDiagramMock.mockReset();
+    getShareLinkMock.mockReset();
+    getThumbnailMock.mockReset();
+    getSharePasswordMock.mockReset();
+  });
+
+  it('serves the cached SVG with a public stale-while-revalidate cache', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue(null);
+    getThumbnailMock.mockResolvedValue('<svg>live</svg>');
+
+    const res = await handleShare(imageCtx('C'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toContain('image/svg+xml');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=30, stale-while-revalidate=300');
+    expect(await res.text()).toBe('<svg>live</svg>');
+  });
+
+  it('404s a password-protected diagram WITHOUT rendering (an <img> cannot supply the password)', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue('hunter2');
+
+    const res = await handleShare(imageCtx('C'));
+
+    expect(res.status).toBe(404);
+    // The security property: we never even reach the renderer for a
+    // gated diagram, so no bytes can leak past the password gate.
+    expect(getThumbnailMock).not.toHaveBeenCalled();
+  });
+
+  it('404s an unknown / revoked / expired share code', async () => {
+    getShareLinkMock.mockResolvedValue(null);
+    const res = await handleShare(imageCtx('NOPE'));
+    expect(res.status).toBe(404);
+    expect(getDiagramMock).not.toHaveBeenCalled();
+  });
+
+  it('404s an empty diagram (the render-cache yields no snapshot)', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue(null);
+    getThumbnailMock.mockResolvedValue(null);
+
+    const res = await handleShare(imageCtx('C'));
+    expect(res.status).toBe(404);
   });
 });

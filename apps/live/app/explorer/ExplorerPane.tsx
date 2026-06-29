@@ -240,6 +240,7 @@ export function ExplorerPane() {
         <ListView
           folders={paneContent.folders}
           diagrams={paneContent.diagrams}
+          ownerId={ownerId}
           showUnsortedRow={paneContent.showUnsortedRow}
           unsortedCount={unsortedDiagrams.length}
           onOpenUnsorted={() => go({ kind: 'unsorted' })}

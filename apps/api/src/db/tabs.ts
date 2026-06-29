@@ -23,6 +23,25 @@ export async function getTab(env: Env, diagramId: string, tabId: string): Promis
   return row ? rowToTab(row) : null;
 }
 
+// The raw `tabs.data` JSON for a diagram's first tab (lowest
+// order_index in the diagram_tabs link), or null when the diagram has
+// no tabs. Used by the SVG snapshot render-cache (spec/67), which needs
+// only the element body — never the full TabDTO hydration — so this
+// reads the single `data` column rather than going through getTab.
+export async function getFirstTabData(env: Env, diagramId: string): Promise<string | null> {
+  const row = await env.DB.prepare(
+    `SELECT t.data
+       FROM diagram_tabs dt
+       JOIN tabs t ON t.id = dt.tab_id
+      WHERE dt.diagram_id = ?
+      ORDER BY dt.order_index ASC
+      LIMIT 1`,
+  )
+    .bind(diagramId)
+    .first<{ data: string }>();
+  return row?.data ?? null;
+}
+
 // Full upsert for a single tab. Splits the live-app's Tab type into
 // columns + a `data` JSON blob (everything except id + name) so list
 // queries can return summaries without parsing element trees.

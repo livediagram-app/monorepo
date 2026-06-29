@@ -30,7 +30,8 @@ import {
   setDiagramFolder,
   upsertDiagramMeta,
 } from '../db';
-import { badRequest, forbidden, json, noContent, notFound } from '../responses';
+import { badRequest, forbidden, json, noContent, notFound, svgImage } from '../responses';
+import { getDiagramThumbnailSvg } from '../thumbnail';
 import { emailEnabled } from '../email/client';
 import { notifyMilestone } from '../email/notifications';
 import { handleDiagramSubresources } from './diagram-subresource-routes';
@@ -323,6 +324,27 @@ export async function handleDiagrams(ctx: RouteContext): Promise<Response> {
       }
       await setDiagramFolder(env, id, folderId, teamId, newOwnerId);
       return noContent();
+    }
+  }
+
+  // /api/diagrams/<id>/thumbnail — cached SVG snapshot (spec/67). Read-
+  // gated exactly like GET /api/diagrams/<id>: the owner, a joined team
+  // member, or a valid share-code visitor. A native <img> can't send
+  // auth headers, so the live app fetches this with headers and wraps
+  // the bytes in a blob URL; a miss (no diagram, no read access, no R2
+  // binding, empty diagram) is a 404 the row turns into its icon.
+  if (segments.length === 4 && segments[3] === 'thumbnail') {
+    const id = segments[2]!;
+    if (request.method === 'GET') {
+      const d = await getDiagram(env, id);
+      if (!d) return notFound();
+      const allowed = await gateRead(ctx, id, d.ownerId, d.teamId);
+      if (!allowed) return notFound();
+      const svg = await getDiagramThumbnailSvg(env, d);
+      if (svg == null) return notFound();
+      // The client cache-busts via a `?v=<savedAt>` query param, so a
+      // long private max-age is safe: a changed diagram changes the URL.
+      return svgImage(svg, 'private, max-age=86400');
     }
   }
 

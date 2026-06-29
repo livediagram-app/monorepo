@@ -233,6 +233,37 @@ export async function setDiagramSharePassword(
 
 export async function deleteDiagram(env: Env, id: string): Promise<void> {
   await env.DB.prepare('DELETE FROM diagrams WHERE id = ?').bind(id).run();
+  // Drop the cached SVG snapshot (spec/67) alongside the row so a
+  // deleted diagram doesn't leave an orphaned R2 object behind. Best
+  // effort: a missing binding or a missing object is a no-op, and a
+  // failure here must never fail the delete itself.
+  if (env.IMAGES) await env.IMAGES.delete(thumbnailKey(id)).catch(() => {});
+}
+
+// R2 object key for a diagram's cached SVG snapshot (spec/67). Shared by
+// the render-cache (which writes it) and deleteDiagram (which clears it)
+// so the key shape lives in exactly one place.
+export function thumbnailKey(diagramId: string): string {
+  return `thumb/${diagramId}`;
+}
+
+// When the cached snapshot was last rendered (spec/67), or null when it
+// never has been. The render-on-read path compares this against the
+// diagram's saved_at to decide whether the R2 object is still fresh.
+export async function getThumbRenderedAt(env: Env, id: string): Promise<number | null> {
+  const row = await env.DB.prepare('SELECT thumb_rendered_at FROM diagrams WHERE id = ?')
+    .bind(id)
+    .first<{ thumb_rendered_at: number | null }>();
+  return row?.thumb_rendered_at ?? null;
+}
+
+// Stamp the snapshot as freshly rendered (spec/67). Called after a
+// successful R2 write so the next read streams the cached bytes instead
+// of re-rendering.
+export async function markThumbRendered(env: Env, id: string, now: number): Promise<void> {
+  await env.DB.prepare('UPDATE diagrams SET thumb_rendered_at = ? WHERE id = ?')
+    .bind(now, id)
+    .run();
 }
 
 // "Copy this diagram to my own files" — duplicates the source diagram

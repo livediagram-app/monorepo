@@ -1,9 +1,26 @@
 # 54 — Live image share link
 
+> **Status: implemented, as part of [spec/67](67-diagram-snapshots.md).** The
+> endpoint and Share-dialog option below shipped, but two design points here are
+> now superseded by spec/67 — read it for the authoritative behaviour:
+>
+> - **Not re-rendered per request.** The image serves a **cached SVG snapshot**
+>   from R2, refreshed render-on-read when the diagram has been saved since
+>   (`thumb_rendered_at`). Cheaper, and "live" within the cache window + last
+>   save. The cache is shared with the Explorer thumbnail (spec/67) — one
+>   artifact, two delivery paths.
+> - **Renderer already shared.** The "main work" below (extracting the renderer
+>   into a new package) is moot: `renderElementsToSvg` already lives DOM-free in
+>   `@livediagram/diagram` (`packages/diagram/src/svg-render.ts`) and powers the
+>   MCP worker (spec/62), so the worker imports it directly. No `@livediagram/render`
+>   package was created.
+>
+> The rest of this spec (URL shape, password exclusion, share dialog) holds.
+
 A share option that serves the diagram as a **live image**: an `<img>`-able URL
-that re-renders the current diagram on each request, so it can be embedded in a
-README / wiki / site and stay up to date — no editor chrome, just the content
-(like the SVG export).
+that serves the current diagram as SVG, so it can be embedded in a README / wiki
+/ site and stay up to date — no editor chrome, just the content (like the SVG
+export).
 
 ## Confirmed decisions
 

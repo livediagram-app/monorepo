@@ -16,12 +16,14 @@ import {
   TeamIcon,
 } from './icons';
 import type { PaneDiagram } from './views';
+import { DiagramThumbnail } from './DiagramThumbnail';
 
 // One diagram row in the full-page /explorer list (open / rename / move /
 // duplicate / delete + the drag source). Split out of views.tsx; rendered
 // by FolderRow + the unsorted list there.
 export function DiagramRow({
   diagram,
+  ownerId,
   renaming,
   onStartRename,
   onCommitRename,
@@ -33,6 +35,9 @@ export function DiagramRow({
   showOwner = false,
 }: {
   diagram: PaneDiagram;
+  // Viewer identity for the row's thumbnail fetch (spec/67). Null while a
+  // guest id is still resolving; the thumbnail holds its placeholder.
+  ownerId: string | null;
   renaming: boolean;
   onStartRename: () => void;
   onCommitRename: (name: string) => void;
@@ -94,9 +99,12 @@ export function DiagramRow({
       }
     >
       <span className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-slate-400 dark:text-slate-500">
-          <DiagramIcon />
-        </span>
+        <DiagramThumbnail
+          ownerId={ownerId}
+          diagramId={diagram.id}
+          version={diagram.savedAt}
+          shareCode={diagram.shared?.shareCode}
+        />
         {titleNode}
       </span>
       {showOwner ? (

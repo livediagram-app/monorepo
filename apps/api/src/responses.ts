@@ -37,6 +37,17 @@ export function notFound(): Response {
   return json({ error: 'not_found' }, { status: 404 });
 }
 
+// An SVG image body (spec/67 diagram snapshots). Same CORS treatment as
+// `json` so the live app's blob-URL fetch works cross-origin in dev; the
+// caller picks the `Cache-Control` (private + long for the owner
+// thumbnail, public + short for the live share image).
+export function svgImage(body: string, cacheControl: string): Response {
+  const headers = new Headers(CORS_HEADERS);
+  headers.set('Content-Type', 'image/svg+xml; charset=utf-8');
+  headers.set('Cache-Control', cacheControl);
+  return new Response(body, { headers });
+}
+
 // 204 No Content with the CORS header set. The canonical reply for a
 // successful write that returns no body (DELETE, folder assignment,
 // etc.); replaces the `new Response(null, { status: 204, headers:

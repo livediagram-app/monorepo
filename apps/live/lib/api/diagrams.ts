@@ -105,6 +105,31 @@ async function _apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
 }
 export const apiListDiagrams = dedupeInFlight(_apiListDiagrams, (ownerId) => ownerId);
 
+// Fetch a diagram's cached SVG snapshot (spec/67) and return a blob URL
+// for an `<img src>`. Native `<img>` can't send auth headers, so — like
+// apiFetchImageBlobUrl — the bytes come through the authenticated client
+// (Authorization / X-Owner-Id, plus X-Share-Code for a shared row) and
+// get wrapped in a blob URL the caller revokes on unmount. `version`
+// (the diagram's savedAt) rides as `?v=` purely to bust the browser/edge
+// cache when the diagram changes; the worker ignores it. Returns null on
+// 404 / 403 / 503 (empty diagram, no access, no R2) so the Explorer row
+// falls back to its generic icon.
+export async function apiFetchDiagramThumbnailUrl(
+  ownerId: string,
+  diagramId: string,
+  opts: { version?: number; shareCode?: string | null } = {},
+): Promise<string | null> {
+  const params = new URLSearchParams();
+  if (opts.version != null) params.set('v', String(opts.version));
+  const qs = params.toString();
+  const url = `${API_BASE}/diagrams/${encodeURIComponent(diagramId)}/thumbnail${qs ? `?${qs}` : ''}`;
+  const headers = new Headers(await apiHeaders(ownerId, { share: opts.shareCode ?? null }));
+  const res = await fetch(url, { headers });
+  if (!res.ok) return null;
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 // ---------------------------------------------------------------------
 // shared_with — "Shared with you" (migration 0010)
 // ---------------------------------------------------------------------

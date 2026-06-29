@@ -68,6 +68,7 @@ export type SelectedNode =
 export function ListView({
   folders,
   diagrams,
+  ownerId,
   showUnsortedRow,
   unsortedCount,
   onOpenUnsorted,
@@ -93,6 +94,9 @@ export function ListView({
 }: {
   folders: Folder[];
   diagrams: PaneDiagram[];
+  // Viewer identity, threaded to each row's thumbnail fetch (spec/67).
+  // Null while a guest id is still resolving.
+  ownerId: string | null;
   // Adds the desktop Owner column (Recent: "You" vs the team name).
   showOwner?: boolean;
   // True on the "All diagrams" (My Work) view: the synthetic Unsorted
@@ -170,6 +174,7 @@ export function ListView({
           <DiagramRow
             key={d.id}
             diagram={d}
+            ownerId={ownerId}
             showOwner={showOwner}
             renaming={renamingDiagramId === d.id}
             onStartRename={() => onStartRenameDiagram(d.id)}

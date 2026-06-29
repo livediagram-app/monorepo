@@ -8,8 +8,9 @@ import {
   recordSharedAccess,
 } from '../db';
 import { notifyDiagramJoin } from '../email/notifications';
-import { json, notFound } from '../responses';
+import { json, notFound, svgImage } from '../responses';
 import { timingSafeEqual } from '../auth/timing-safe';
+import { getDiagramThumbnailSvg } from '../thumbnail';
 import type { DiagramDTO } from '../types';
 import { sharePasswordOf, type RouteContext } from './context';
 
@@ -28,7 +29,14 @@ function redactOwner(d: DiagramDTO, visitor: string | null): DiagramDTO {
 // code doesn't exist OR was revoked.
 export async function handleShare(ctx: RouteContext): Promise<Response> {
   const { request, env, segments, resolveOwner } = ctx;
-  if (!(segments[1] === 'share' && segments.length === 3)) return notFound();
+  if (segments[1] !== 'share') return notFound();
+  // /api/share/<code>/image.svg — live image (spec/54 + spec/67): the
+  // diagram's cached SVG snapshot, served public-by-share-code so a bare
+  // <img> in a README / wiki / Notion can embed it with no auth header.
+  if (segments.length === 4 && segments[3] === 'image.svg' && request.method === 'GET') {
+    return handleShareImage(ctx, segments[2]!);
+  }
+  if (segments.length !== 3) return notFound();
   const code = segments[2]!;
   if (request.method === 'GET') {
     // Resolve through share_links (the single authority): it filters on
@@ -84,6 +92,31 @@ export async function handleShare(ctx: RouteContext): Promise<Response> {
     return notFound();
   }
   return notFound();
+}
+
+// Live image (spec/54 + spec/67): resolve the share code to its diagram
+// and stream the cached SVG snapshot. Public — the share code in the URL
+// is the only credential, matching a share link's "anyone with the URL"
+// semantics, since an <img> can't carry a password or auth header.
+//   - 404 on an unknown / revoked / expired code (getShareLink filters
+//     expiry), a missing diagram, or an empty diagram (no snapshot).
+//   - Password-protected shares (spec/24) get NO image: an <img> can't
+//     supply the password, so serving one would bypass the gate. The
+//     Share dialog hides the live-image option while a password is set,
+//     and this is the matching server-side enforcement.
+// Short, stale-while-revalidate cache so embeds stay close to live
+// without hammering the origin on every view (the bytes themselves come
+// from R2; the worker only re-renders when the diagram was saved since).
+async function handleShareImage(ctx: RouteContext, code: string): Promise<Response> {
+  const { env } = ctx;
+  const link = await getShareLink(env, code);
+  if (!link) return notFound();
+  const d = await getDiagram(env, link.diagramId);
+  if (!d) return notFound();
+  if (await getDiagramSharePassword(env, d.id)) return notFound();
+  const svg = await getDiagramThumbnailSvg(env, d);
+  if (svg == null) return notFound();
+  return svgImage(svg, 'public, max-age=30, stale-while-revalidate=300');
 }
 
 // Returns a 401/403 Response when the diagram is password-protected and
