@@ -84,7 +84,6 @@ describe.skipIf(!ENABLED)('live email send (manual harness)', () => {
   for (const [name, msg] of Object.entries(cases)) {
     it(`sends ${name} to ${TO}`, async () => {
       const res = await sendEmail(env, { to: TO!, ...msg });
-      // eslint-disable-next-line no-console
       console.log(`[send-test] ${name}: ${JSON.stringify(res)}`);
       expect(res.sent).toBe(true);
     });
