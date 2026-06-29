@@ -16,7 +16,7 @@ packages/
   diagram/        diagram data model (Tab, Element types + helpers)
   api-schema/     wire-format DTOs the api worker emits + the live editor consumes
   eslint-config/  shared ESLint flat config
-  prettier-config/
+  prettier-config/shared Prettier config
   tailwind-config/shared Tailwind theme (brand palette)
   vitest-config/  shared Vitest defaults
 specs/          product source of truth, read these before adding features
