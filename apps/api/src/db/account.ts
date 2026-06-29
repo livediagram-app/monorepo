@@ -2,7 +2,13 @@
 // These touch every table keyed (directly or via diagram_id) on an
 // owner, so they live together rather than under any one resource.
 
+import { thumbnailKey } from './diagrams';
 import type { Env } from '../types';
+
+// R2 batch delete takes at most 1000 keys per call. An owner has no hard
+// cap on diagram count, so chunk the snapshot-key deletes to stay under
+// it (the image delete above relies on the per-owner gallery cap instead).
+const R2_DELETE_CHUNK = 1000;
 
 // Wipe every row belonging to a given owner: diagrams, folders, the
 // participant record, AND the R2 image bytes (spec/19). Called from
@@ -41,6 +47,20 @@ export async function deleteAccount(
   const imagesRes = await env.DB.prepare('DELETE FROM images WHERE owner_id = ?')
     .bind(ownerId)
     .run();
+  // Diagram SVG snapshots (spec/67) live in R2 under thumb/<diagramId>,
+  // keyed off the diagram id rather than carried on a D1 row, so — like
+  // the images above — the cascade can't reach them. Enumerate the
+  // owner's diagram ids while the rows still exist, then bulk-delete
+  // their snapshot objects before the diagrams DELETE drops the ids.
+  if (env.IMAGES) {
+    const diagramRows = await env.DB.prepare('SELECT id FROM diagrams WHERE owner_id = ?')
+      .bind(ownerId)
+      .all<{ id: string }>();
+    const thumbKeys = (diagramRows.results ?? []).map((r) => thumbnailKey(r.id));
+    for (let i = 0; i < thumbKeys.length; i += R2_DELETE_CHUNK) {
+      await env.IMAGES.delete(thumbKeys.slice(i, i + R2_DELETE_CHUNK));
+    }
+  }
   const diagramsRes = await env.DB.prepare('DELETE FROM diagrams WHERE owner_id = ?')
     .bind(ownerId)
     .run();
