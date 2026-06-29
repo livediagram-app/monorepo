@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { articleHref, articles, categories, categoryHref } from '@/lib/articles';
+import { HELP_URL } from '@/lib/site';
 
-const BASE = 'https://livediagram.app/help';
+const BASE = HELP_URL;
 
 // Static sitemap for the help centre. Mirrors the article index in
 // lib/articles.ts so new content is picked up automatically.

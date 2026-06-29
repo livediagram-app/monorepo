@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from './site';
 
-const SITE_URL = 'https://livediagram.app';
 const SITE_NAME = 'livediagram Help';
 const LOCALE = 'en_GB';
 

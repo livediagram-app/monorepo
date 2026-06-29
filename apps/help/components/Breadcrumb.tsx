@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { HELP_URL } from '@/lib/site';
 
 interface BreadcrumbItem {
   label: string;
@@ -66,13 +67,13 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Help',
-                item: 'https://livediagram.app/help/',
+                item: `${HELP_URL}/`,
               },
               ...items.map((item, i) => ({
                 '@type': 'ListItem',
                 position: i + 2,
                 name: item.label,
-                ...(item.href ? { item: `https://livediagram.app/help${item.href}` } : {}),
+                ...(item.href ? { item: `${HELP_URL}${item.href}` } : {}),
               })),
             ],
           }),

@@ -7,8 +7,7 @@
 // `${SITE}/help${appPath}` where appPath is the app-relative href the article
 // registry produces (articleHref / categoryHref, which omit the basePath).
 
-const SITE = 'https://livediagram.app';
-const HELP = `${SITE}/help`;
+import { SITE_URL as SITE, HELP_URL as HELP } from './site';
 
 /** Absolute help-centre URL from an app-relative href (e.g. "/canvas/themes/"). */
 export function helpUrl(appPath: string): string {

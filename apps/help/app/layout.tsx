@@ -5,13 +5,14 @@ import { Footer } from '@/components/Footer';
 import { BackToTop } from '@/components/BackToTop';
 import { JsonLd } from '@/components/JsonLd';
 import { webSiteJsonLd } from '@/lib/structured-data';
+import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
 // The livediagram help centre (spec/55). Indexable static site served
 // under /help by the router. No third-party scripts, it stays
 // self-host-clean (spec/03).
 export const metadata: Metadata = {
-  metadataBase: new URL('https://livediagram.app'),
+  metadataBase: new URL(SITE_URL),
   // Consistent page titles across the help centre: every page reads
   // "<Page Title> | livediagram"; the bare help home is "Help | livediagram".
   title: {
