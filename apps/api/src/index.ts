@@ -1,6 +1,7 @@
 import { getClerkIdentity } from './auth/clerk';
 import { emailEnabled } from './email/client';
 import { runLifecycleSweep, welcomeOnSighting } from './email/lifecycle';
+import { runTokenExpirySweep } from './email/token-expiry';
 import {
   deleteOldChangeLogEntries,
   deleteOldEvents,
@@ -266,6 +267,8 @@ export default {
       // spec/64: send any due onboarding emails (welcome catch-up + week 1 / 2).
       // No-op when RESEND_API_KEY is unset.
       ctx.waitUntil(runLifecycleSweep(env));
+      // spec/64 (#3): warn owners whose API token is within a week of expiry.
+      ctx.waitUntil(runTokenExpirySweep(env));
       scheduleSweep(
         ctx,
         env,

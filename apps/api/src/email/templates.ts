@@ -239,3 +239,48 @@ function escapeHtml(s: string): string {
 function escapeText(s: string): string {
   return s.replace(/[\r\n]+/g, ' ').slice(0, 80);
 }
+
+// spec/64 (#3): a one-time heads-up that an API token (spec/61) is within a week
+// of its 6-month expiry, so a script / connected tool doesn't silently break.
+// Transactional (account-important); not opt-out.
+const EXPIRY_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+export function tokenExpiringEmail(
+  env: Env,
+  tokenName: string | null,
+  expiresAt: number,
+): RenderedEmail {
+  const base = appBaseUrl(env);
+  const name = tokenName && tokenName.trim() ? escapeHtml(tokenName.trim()) : 'an API token';
+  const d = new Date(expiresAt);
+  const when = `${EXPIRY_MONTHS[d.getUTCMonth()]!} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+  return {
+    subject: 'Your livediagram API token expires soon',
+    html: shell({
+      heading: 'An API token is about to expire',
+      intro: `Your API token <strong>${name}</strong> expires on ${when}. Once it lapses, any script or connected tool using it will stop being able to reach your diagrams.`,
+      points: [
+        'Create a fresh token from Explorer, Tokens before this one expires.',
+        'Update whatever uses it (your scripts, or a connected AI tool) with the new token.',
+        'Revoke the old token once the switch is done.',
+      ],
+      outro: 'Tokens last six months; this is the only reminder we send for each one.',
+      ctaText: 'Manage your tokens',
+      ctaHref: `${base}/explorer/tokens`,
+      footer:
+        'You’re receiving this because an API token on your livediagram account is nearing its expiry.',
+    }),
+  };
+}

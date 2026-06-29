@@ -90,3 +90,36 @@ export async function revokeApiToken(env: Env, ownerId: string, id: string): Pro
 export async function deleteApiTokensByOwner(env: Env, ownerId: string): Promise<void> {
   await env.DB.prepare('DELETE FROM api_tokens WHERE owner_id = ?').bind(ownerId).run();
 }
+
+// spec/64 (#3): tokens that expire within `windowMs` and haven't been warned
+// yet (live only). The daily cron uses this to send a one-time "expiring soon"
+// heads-up so a programmatic integration doesn't silently break. Bounded batch,
+// soonest-first.
+export type ExpiringToken = { id: string; ownerId: string; name: string | null; expiresAt: number };
+export async function apiTokensExpiringSoon(
+  env: Env,
+  now: number,
+  windowMs: number,
+  limit: number,
+): Promise<ExpiringToken[]> {
+  const { results } = await env.DB.prepare(
+    `SELECT id, owner_id, name, expires_at FROM api_tokens
+     WHERE revoked = 0 AND expiry_warned_at IS NULL
+       AND expires_at > ? AND expires_at <= ?
+     ORDER BY expires_at ASC LIMIT ?`,
+  )
+    .bind(now, now + windowMs, limit)
+    .all<{ id: string; owner_id: string; name: string | null; expires_at: number }>();
+  return (results ?? []).map((r) => ({
+    id: r.id,
+    ownerId: r.owner_id,
+    name: r.name,
+    expiresAt: r.expires_at,
+  }));
+}
+
+export async function markApiTokenExpiryWarned(env: Env, id: string): Promise<void> {
+  await env.DB.prepare('UPDATE api_tokens SET expiry_warned_at = ? WHERE id = ?')
+    .bind(Date.now(), id)
+    .run();
+}
