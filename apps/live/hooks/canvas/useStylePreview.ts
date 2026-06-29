@@ -103,7 +103,20 @@ export function useStylePreview(deps: {
   };
 
   const writeElements = (elements: Element[]) => {
-    tickTabs((ts) => ts.map((t) => (t.id === activeId ? { ...t, elements } : t)));
+    const mapTabs = (ts: Tab[]) => ts.map((t) => (t.id === activeId ? { ...t, elements } : t));
+    // Keep the live mirror in lockstep with this write. `tabsRef` is otherwise
+    // only re-synced to React state in a post-render effect, so it LAGS a
+    // tickTabs by a frame. Sweeping the pointer across a row of tiles fires
+    // pointerleave→pointerenter pairs faster than that: the leave's revert
+    // (clearPreview) nulls previewRef and schedules the restore, then the next
+    // tile's ensureSnapshot — seeing previewRef null — re-captures "originals"
+    // from the still-stale ref, baking the PREVIOUS preview in as the baseline.
+    // The final leave then reverts to that polluted baseline, leaving a tile the
+    // user only hovered stuck on the element (the "a random one got selected"
+    // bug). Writing the ref eagerly here makes every elementsNow() read reflect
+    // the latest preview/revert immediately, so the snapshot is always true.
+    tabsRef.current = mapTabs(tabsRef.current);
+    tickTabs(mapTabs);
   };
 
   // Ephemeral preview of `mapEl` over the selection. Maps from the captured
