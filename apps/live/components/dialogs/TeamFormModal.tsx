@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, TextInput } from '@livediagram/ui';
 import { Dialog } from '@/components/dialogs/Dialog';
 import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
+import { CloseIcon } from '@/components/primitives/CloseIcon';
 
 // Create / edit form for a team (spec/32): name + organisation.
 // Visual sibling of ConfirmDialog (same backdrop, fly-up animation,
@@ -58,21 +59,39 @@ export function TeamFormModal({
           submit();
         }}
       >
-        <div className="border-b border-slate-100 px-6 pt-6 pb-5 dark:border-slate-800">
-          <h2
-            id="team-form-title"
-            className="text-lg font-semibold text-slate-900 dark:text-slate-50"
-          >
-            {title}
-          </h2>
-          <div className="mt-1.5">
-            <HelpArticleLink
-              article="teamRolesAndInvites"
-              variant="text"
-              title="Teams"
-              description="Admin and Member roles, and how invites work."
-            />
+        <div className="border-b border-slate-100 px-6 pt-5 pb-5 dark:border-slate-800">
+          <div className="flex items-start justify-between gap-3">
+            <h2
+              id="team-form-title"
+              className="text-lg font-semibold text-slate-900 dark:text-slate-50"
+            >
+              {title}
+            </h2>
+            {/* Help (the old inline "learn more" link, now an icon button) +
+                an explicit close, sat together top-right. */}
+            <div className="-mr-1.5 -mt-0.5 flex items-center gap-0.5">
+              <HelpArticleLink
+                article="teamRolesAndInvites"
+                variant="icon"
+                title="Teams"
+                description="Admin and Member roles, and how invites work."
+              />
+              <button
+                type="button"
+                onClick={onCancel}
+                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              >
+                <CloseIcon size={16} />
+              </button>
+            </div>
           </div>
+          {/* Concise "what teams do" primer so first-time creators know what
+              they're setting up before naming it. */}
+          <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+            Teams let you invite people by email and share a library of diagrams everyone can open.
+            Members edit shared work; admins also manage who&rsquo;s in the team.
+          </p>
           <label className="mt-4 block">
             <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
               Team name

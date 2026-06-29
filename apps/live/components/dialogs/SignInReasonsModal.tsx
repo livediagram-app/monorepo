@@ -42,6 +42,11 @@ const REASONS: Reason[] = [
     body: 'Create teams, invite people by email, and share a team library everyone can open and manage.',
   },
   {
+    icon: <PlugIcon />,
+    title: 'Connect AI tools',
+    body: 'Mint API tokens and connect external AI assistants over MCP, so tools like Claude can read and build your diagrams for you.',
+  },
+  {
     icon: <BadgeIcon />,
     title: 'Use your real name',
     body: 'Shared diagrams and live cursors show your name instead of a random guest id, so collaborators know who did what.',
@@ -221,6 +226,16 @@ function LinkIcon() {
       <path d="M7.5 10.5 10.5 7.5" />
       <path d="M8.5 5.5 10 4a2.8 2.8 0 0 1 4 4l-1.5 1.5" />
       <path d="M9.5 12.5 8 14a2.8 2.8 0 0 1-4-4l1.5-1.5" />
+    </Svg>
+  );
+}
+
+function PlugIcon() {
+  return (
+    <Svg>
+      <path d="M6 2v3M12 2v3" />
+      <path d="M4.5 5h9v2.5a4.5 4.5 0 0 1-9 0V5Z" />
+      <path d="M9 12v4" />
     </Svg>
   );
 }

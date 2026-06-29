@@ -16,6 +16,7 @@ import {
 } from './glyphs';
 import { WindowPanel } from './WindowPanel';
 import { StickyWindowBar } from './StickyWindowBar';
+import { ViewTabs } from './ViewTabs';
 import { HighlightsView } from './HighlightsView';
 import { AcquisitionView } from './AcquisitionView';
 import { RawView } from './RawView';
@@ -143,38 +144,9 @@ export default function TelemetryDashboard() {
               onSelectView={(k) => setView(k as ViewKey)}
             />
 
-            {/* View tabs. A centred pill group: every tab keeps its label on a
-              single line, and the group wraps to a second centred row when the
-              full set is wider than the column (rather than squeezing labels or
-              hiding tabs off-screen), so every view stays visible at any width. */}
-            <div className="mt-8 flex justify-center">
-              <div
-                role="tablist"
-                aria-label="Telemetry views"
-                className="flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm"
-              >
-                {VIEWS.map((v) => (
-                  <button
-                    key={v.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={view === v.key}
-                    onClick={() => setView(v.key)}
-                    className={
-                      'flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition ' +
-                      (view === v.key
-                        ? 'bg-brand-500 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
-                    }
-                  >
-                    <span aria-hidden className="shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5">
-                      {v.icon}
-                    </span>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* View tabs — a single-line carousel; chevrons appear when the
+              full set overflows the column (see ViewTabs). */}
+            <ViewTabs views={VIEWS} view={view} onSelect={setView} />
 
             {view === 'highlights' ? (
               <HighlightsView summary={summary} active={active} />

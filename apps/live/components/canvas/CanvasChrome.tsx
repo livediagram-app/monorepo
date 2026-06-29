@@ -494,7 +494,10 @@ export function CanvasChrome(props: CanvasChromeProps) {
         stackBelowY={dockingActive ? undefined : legacyStackBelowY}
         width="w-auto sm:w-64"
         collapsible
-        onReset={aiWiring.onReset}
+        // No header reset button here (unlike the other panels): the AI
+        // panel's Settings popover already carries a "Reset position" item,
+        // so a second one in the title row was redundant. Drag-to-move still
+        // works via onMoveTo; the popover handles the reset.
         onMoveTo={aiPanel.onMove}
         {...aiWiring.dock}
         headerActions={

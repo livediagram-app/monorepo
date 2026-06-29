@@ -251,7 +251,7 @@ export function MetricPicker({
       : null; // deeper levels render a breadcrumb back-button instead
 
   return (
-    <div className="relative max-w-xl">
+    <div className="relative w-full">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
         <SearchGlyph />
       </span>
@@ -261,7 +261,7 @@ export function MetricPicker({
         aria-expanded={open}
         aria-controls={listboxId}
         aria-autocomplete="list"
-        className="!pl-9 !pr-9"
+        className="!py-3 !pl-10 !pr-10 text-base"
         placeholder="Search a metric, or browse — e.g. “element added”"
         value={query}
         onChange={(e) => reset(e.target.value)}

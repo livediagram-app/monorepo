@@ -3,8 +3,6 @@ import { NameEditor } from '@/components/primitives/NameEditor';
 import { Brand, ProductNav } from '@livediagram/ui';
 import { AuthControls } from '@/components/chrome/AuthControls';
 import { Tooltip } from '@/components/primitives/Tooltip';
-import { ExplorerIcon, HelpIcon } from '@/components/chrome/tab-bar-icons';
-import { track } from '@/lib/telemetry';
 
 // Sync state surfaced as a small pill next to the diagram title. The
 // editor is autosave-driven, so silent failures (offline, API down,
@@ -163,43 +161,9 @@ export function EditorHeader({
             </button>
           </Tooltip>
         ) : null}
-        {/* Explorer link — in-app navigation to the diagram library, sat just
-            left of Help. Same tab (it's part of the live app, not external).
-            Hidden on phones (< sm): the Explorer is reachable from the in-canvas
-            panel there, so the header keeps its room. */}
-        <div className="hidden h-full sm:flex">
-          <Tooltip title="Explorer" description="Browse your diagrams, folders, and teams.">
-            <a
-              href="/explorer/recent"
-              onClick={() => track('UI', 'Opened', 'Explorer')}
-              aria-label="Explorer"
-              className={`${HEADER_ACTION_BTN} text-slate-600 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800`}
-            >
-              <ExplorerIcon />
-              <span>Explorer</span>
-            </a>
-          </Tooltip>
-        </div>
-        {/* Help-centre link (spec/55), moved here from the tab bar so it sits
-            with the other top-right actions. Plain external <a> opening /help
-            in a new tab; fires a telemetry event like the old tab-bar link.
-            Hidden on phones (< sm) to save the cramped header room; Help is
-            still reachable from the in-app surfaces. */}
-        <div className="hidden h-full sm:flex">
-          <Tooltip title="Help" description="Guides, tutorials, and answers in Help.">
-            <a
-              href="/help/"
-              target="_blank"
-              rel="noreferrer noopener"
-              onClick={() => track('UI', 'Opened', 'Help')}
-              aria-label="Help"
-              className={`${HEADER_ACTION_BTN} text-slate-600 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800`}
-            >
-              <HelpIcon />
-              <span>Help</span>
-            </a>
-          </Tooltip>
-        </div>
+        {/* Explorer + Help used to sit here as top-right links; both now live
+            in the ProductNav apps menu next to the logo, so the header keeps
+            just its primary actions. */}
         <AuthControls />
       </div>
     </header>
