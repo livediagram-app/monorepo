@@ -28,15 +28,33 @@ Five messages, two kinds:
 5. **Account deleted** — after a user deletes their account (spec: account
    self-deletion), a confirmation that the account and its data are gone.
 
-[spec/65](65-profile-and-email-notifications.md) adds two further transactional
-messages — **someone joined my diagram** and **someone responded to my team
-invite** — each opt-**out** per user via a notification preference, on the same
-`RESEND_API_KEY` gate and the same best-effort `ctx.waitUntil` contract.
+[spec/65](65-profile-and-email-notifications.md) adds two further opt-out
+notifications — **someone joined my diagram** and **someone responded to my team
+invite** — read from the spec/20 preference blob on the new profile page.
 
-The lifecycle series has **no unsubscribe link** for now (decision: treat as
-low-volume onboarding). If that changes, add an `unsubscribed_at` column +
-a public `GET /api/email/unsubscribe?token=…` endpoint and skip the series for
-unsubscribed rows; the schema below leaves room for it.
+**Later additions (same gate + best-effort `ctx.waitUntil` contract):**
+
+6. **Activation nudge** (#4, onboarding) — ~3 days after sign-up, to anyone who
+   still has zero diagrams (`dueForActivation`'s `NOT EXISTS` check). Daily cron,
+   not opt-out. `activation_sent_at`, migration 0031.
+7. **Win-back** (#5, opt-out `notifyTips`) — one-shot for owners quiet ~4 weeks
+   (last diagram activity via `MAX(updated_at)`; zero-diagram owners are excluded,
+   that's #4's job). Daily cron. `winback_sent_at`, migration 0032.
+8. **Milestone** (#6, opt-out `notifyMilestones`) — a celebration when an owner's
+   diagram count reaches 10, fired on a genuine create. Atomic `claimMilestone`
+   dedups a burst of saves. `milestone_sent_at`, migration 0033.
+9. **API-token expiry** (#3, transactional) — 7 days before a token's 6-month
+   expiry, so a script / connected tool doesn't silently break. Daily cron.
+   `api_tokens.expiry_warned_at`, migration 0030.
+10. **New comment** (#1, opt-out `notifyComments`) — when someone other than the
+    owner comments on a diagram (either comment path), the owner is emailed
+    **immediately** (no cron). Never includes the comment text.
+
+The three opt-out lifecycle/notification categories (`notifyComments`,
+`notifyTips`, `notifyMilestones`) join the spec/65 pair in `getNotificationPrefs`
+and as toggles on the profile page; every opt-out email's footer links to
+`/explorer/profile` so the recipient can turn it off in one click. The pure
+onboarding series (welcome / week 1 / week 2 / activation) stays no-unsubscribe.
 
 ## 2. Gating — the secret is the switch
 
