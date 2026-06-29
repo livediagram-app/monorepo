@@ -15,7 +15,6 @@
 
 import { onMouseHover } from '@/components/primitives/hover-preview';
 import {
-  animLoops,
   defaultFillColor,
   defaultStrokeColor,
   defaultTextColor,
@@ -25,24 +24,13 @@ import {
   isProgressShape,
   isRailShape,
   isRatingShape,
-  LINE_DEFAULT_SERIES,
-  PIE_DEFAULT_SLICES,
-  PIE_LOOPING_ANIMS,
-  PROGRESS_LOOPING_ANIMS,
-  RAIL_DEFAULT_POINTS,
-  RATING_DEFAULT,
-  RATING_LOOPING_ANIMS,
   supportsBorderControls,
   supportsBorderRadius,
   supportsColours,
-  type AnimationSpeed,
-  type ArrowFlow,
   type BorderRadius,
   type BorderStroke,
   type BorderStyle,
   type BoxedElement,
-  type ElementAnimation,
-  type IconAnimation,
 } from '@livediagram/diagram';
 import { ContextMenuDivider } from '@/components/palette/ContextMenu';
 import { SizeButton } from '@/components/palette/palette-controls';
@@ -54,8 +42,6 @@ import {
 import {
   BorderGlyph,
   IconCategoryGlyph,
-  AnimationMenuGlyph,
-  ProgressMenuGlyph,
   PresetsMenuGlyph,
   PaletteMenuIcon,
   RemoveIconGlyph,
@@ -67,38 +53,20 @@ import {
   MenuTile,
 } from '@/components/primitives/PortalMenu';
 
-import {
-  AnimationTiles,
-  FlowTiles,
-  IconAnimationTiles,
-  LegendPositionTiles,
-} from '@/components/palette/context-menu-tiles';
+import {} from '@/components/palette/context-menu-tiles';
 import { ArrowPresets, ShapePresets } from '@/components/palette/StylePresets';
 import {
   BorderGrid,
-  ChartMenuGlyph,
   ColourRow,
-  DataMenuGlyph,
   IconPositionGrid,
-  LineDataSummary,
   MarkersMenuGlyph,
   MarkerTiles,
-  PieAnimTiles,
-  PieDataEditor,
-  ProgressAnimTiles,
-  ProgressRow,
-  RailPointsRow,
-  RatingAnimTiles,
-  RatingMenuGlyph,
-  RatingPickerRow,
 } from '@/components/palette/context-menu-rows';
 import type { EditorContextMenuProps } from './EditorContextMenu.types';
 import { useContextMenuScaffold } from './useContextMenuScaffold';
+import { ElementDataSections } from './ElementDataSections';
 
 import { BORDER_RADII, BORDER_STROKES, BORDER_STYLES } from './context-menu-constants';
-
-// Cursor position + which menu to show. `element` carries the clicked
-// element id; `canvas` is the empty-canvas right-click. Exported so
 
 type Scaffold = ReturnType<typeof useContextMenuScaffold>;
 
@@ -219,170 +187,18 @@ export function ElementAppearanceSections({
           />
         </MenuAccordionSection>
       ) : null}
-      {/* Progress (spec/46) — the percentage + how the fill animates. Only
-            for progress bars / rings. */}
-      {isProgress ? (
-        <MenuAccordionSection
-          title="Progress"
-          icon={<ProgressMenuGlyph />}
-          {...sectionProps('progress')}
-        >
-          <ProgressRow value={shapeTarget?.progress ?? 50} onChange={props.onSetProgress} />
-          <ProgressAnimTiles
-            anim={shapeTarget?.progressAnim ?? null}
-            speed={shapeTarget?.progressAnimSpeed ?? 'normal'}
-            repeat={animLoops(
-              shapeTarget?.progressAnim,
-              shapeTarget?.progressAnimRepeat,
-              PROGRESS_LOOPING_ANIMS,
-            )}
-            onSet={props.onSetProgressAnim}
-            onSetSpeed={props.onSetProgressAnimSpeed}
-            onSetRepeat={props.onSetProgressAnimRepeat}
-          />
-        </MenuAccordionSection>
-      ) : null}
-      {/* Timeline (spec/51) — how many points sit on the rail. The right-end
-            "+" on the canvas adds one too; this is the precise control. */}
-      {isRail ? (
-        <MenuAccordionSection
-          title="Timeline"
-          icon={<ProgressMenuGlyph />}
-          {...sectionProps('timeline')}
-        >
-          <RailPointsRow
-            value={shapeTarget?.railCount ?? RAIL_DEFAULT_POINTS}
-            onChange={props.onSetRailCount}
-          />
-        </MenuAccordionSection>
-      ) : null}
-      {/* Rating (spec/52) — the star score + a star-specific animation. */}
-      {isRating ? (
-        <MenuAccordionSection title="Rating" icon={<RatingMenuGlyph />} {...sectionProps('rating')}>
-          <RatingPickerRow
-            value={shapeTarget?.rating ?? RATING_DEFAULT}
-            onChange={props.onSetRating}
-          />
-          <RatingAnimTiles
-            anim={shapeTarget?.ratingAnim ?? null}
-            speed={shapeTarget?.ratingAnimSpeed ?? 'normal'}
-            repeat={animLoops(
-              shapeTarget?.ratingAnim,
-              shapeTarget?.ratingAnimRepeat,
-              RATING_LOOPING_ANIMS,
-            )}
-            onSet={props.onSetRatingAnim}
-            onSetSpeed={props.onSetRatingAnimSpeed}
-            onSetRepeat={props.onSetRatingAnimRepeat}
-          />
-        </MenuAccordionSection>
-      ) : null}
-      {/* Data (spec/53) — the chart's data. Pie / bar edit a single row of
-            label+value inline; the line chart's 2-D grid is too wide for the
-            menu, so it summarises the series + opens a modal to edit. */}
-      {isChart ? (
-        <MenuAccordionSection title="Data" icon={<DataMenuGlyph />} {...sectionProps('pie-data')}>
-          {isLine ? (
-            <LineDataSummary
-              series={
-                shapeTarget?.lineSeries ??
-                LINE_DEFAULT_SERIES.map((s) => ({ ...s, values: [...s.values] }))
-              }
-              onEdit={() => target.type === 'shape' && props.onEditLineData(target.id)}
-            />
-          ) : (
-            <PieDataEditor
-              slices={shapeTarget?.pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))}
-              onChange={props.onSetPieData}
-            />
-          )}
-        </MenuAccordionSection>
-      ) : null}
-      {/* Chart (spec/53) — display options. Legend placement: Off + 4 sides. */}
-      {isChart ? (
-        <MenuAccordionSection title="Chart" icon={<ChartMenuGlyph />} {...sectionProps('chart')}>
-          <p className="px-3 pt-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-            Legend
-          </p>
-          <LegendPositionTiles
-            position={shapeTarget?.chartLegendPosition ?? 'right'}
-            show={shapeTarget?.chartLegend !== false}
-            onSetOff={() => props.onSetChartLegend(false)}
-            onSetPosition={props.onSetChartLegendPosition}
-          />
-        </MenuAccordionSection>
-      ) : null}
-      {/* Animation (spec/09) — a looping attention/status effect on the
-            element. None clears it. Pie charts swap the boxed-element set for
-            their own slice animations (the chart family's set). */}
-      {boxed ? (
-        <MenuAccordionSection
-          title="Animation"
-          icon={<AnimationMenuGlyph />}
-          {...sectionProps('animation')}
-        >
-          {isChart ? (
-            <PieAnimTiles
-              anim={shapeTarget?.pieAnim ?? null}
-              speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
-              repeat={animLoops(
-                shapeTarget?.pieAnim,
-                shapeTarget?.pieAnimRepeat,
-                PIE_LOOPING_ANIMS,
-              )}
-              onSet={props.onSetPieAnim}
-              onSetSpeed={props.onSetPieAnimSpeed}
-              onSetRepeat={props.onSetPieAnimRepeat}
-            />
-          ) : isIcon ? (
-            // Icons get their own glyph-motion set (spin / beat / pulse / …)
-            // instead of the boxed-element animation set.
-            <IconAnimationTiles
-              animation={(target as { iconAnimation?: IconAnimation }).iconAnimation ?? null}
-              speed={
-                (target as { iconAnimationSpeed?: AnimationSpeed }).iconAnimationSpeed ?? 'normal'
-              }
-              onSet={props.onSetIconAnimation}
-              onSetSpeed={props.onSetIconAnimationSpeed}
-              onPreview={props.onPreviewIconAnimation}
-              onPreviewEnd={props.onAnimationPreviewEnd}
-            />
-          ) : (
-            <AnimationTiles
-              animation={(target as { animation?: ElementAnimation }).animation ?? null}
-              speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
-              onSet={props.onSetAnimation}
-              onSetSpeed={props.onSetAnimationSpeed}
-              onPreview={props.onPreviewAnimation}
-              onPreviewEnd={props.onAnimationPreviewEnd}
-            />
-          )}
-        </MenuAccordionSection>
-      ) : null}
-      {/* Animation (spec/09) — animate an arrow to show direction: marching
-            dashes, a travelling dot, beads, or an in-place pulse / grow / glow.
-            None clears it. (Labelled "Animation" to match the boxed-element
-            control; the field is still `flow`.) */}
-      {target.type === 'arrow' ? (
-        <MenuAccordionSection
-          title="Animation"
-          icon={<AnimationMenuGlyph />}
-          {...sectionProps('flow')}
-        >
-          <FlowTiles
-            flow={(target as { flow?: ArrowFlow }).flow ?? null}
-            speed={(target as { flowSpeed?: AnimationSpeed }).flowSpeed ?? 'normal'}
-            onSet={props.onSetArrowFlow}
-            onSetSpeed={props.onSetFlowSpeed}
-            onPreview={props.onPreviewArrowFlow}
-            onPreviewEnd={props.onAnimationPreviewEnd}
-          />
-        </MenuAccordionSection>
-      ) : null}
-      {/* Colours — text / background / border swatches. Boxed elements that
-            support colours (excludes images). Icons included: Text tints a
-            line-art glyph, Background / Border paint the icon's box. Pie charts
-            colour per-slice via their Data category, so they're excluded. */}
+      <ElementDataSections
+        props={props}
+        target={target}
+        isProgress={isProgress}
+        isRail={isRail}
+        isRating={isRating}
+        isChart={isChart}
+        isLine={isLine}
+        isIcon={isIcon}
+        boxed={boxed}
+        sectionProps={sectionProps}
+      />
       {boxed && supportsColours(target) && !isChart ? (
         <>
           <MenuAccordionSection
