@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import type { DiagramSummary, Folder } from '@livediagram/api-schema';
 import { FolderRow, UnsortedRow } from '@/app/explorer/views';
+import { CardView } from '@/app/explorer/CardView';
+import { ViewToggle } from '@/app/explorer/ViewToggle';
+import { useExplorerViewMode } from '@/app/explorer/useExplorerViewMode';
 import { MenuFolderIcon, MenuTrashIcon, PlusIcon } from '@/app/explorer/icons';
 import { DiagramIcon, EllipsisIcon, MenuDuplicateIcon, MenuPencilIcon } from '@/app/explorer/icons';
 import { DiagramThumbnail } from '@/components/panels/DiagramThumbnail';
@@ -46,6 +49,9 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
   const [createOpen, setCreateOpen] = useState(false);
   const createRef = useRef<HTMLButtonElement>(null);
   const confirm = useConfirm();
+  // List vs card layout — the same device-local preference (spec/67) the
+  // Explorer browse views use, so a card-view user gets cards here too.
+  const [viewMode, setViewMode] = useExplorerViewMode();
   useRelativeTimeTick();
 
   const unsorted = lib.diagramsByFolder.get(null) ?? [];
@@ -129,6 +135,29 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
       .map((f) => ({ id: f.id, name: f.name, parentId: f.parentId }));
   })();
 
+  // Row callbacks, shared by the list rows and the card grid so the two
+  // layouts can't drift on what an action does (mirrors the Explorer's
+  // diagram-row-shared split).
+  const commitRenameFolder = (id: string, name: string) => {
+    setRenamingFolderId(null);
+    void lib.renameFolder(id, name);
+  };
+  const startRenameDiagram = (id: string) => setRenamingDiagramId(id);
+  const commitRenameDiagram = (id: string, name: string) => {
+    setRenamingDiagramId(null);
+    void lib.renameDiagram(id, name);
+  };
+  const duplicateDiagram = (id: string) => void lib.duplicateDiagram(id);
+  const deleteDiagram = async (id: string) => {
+    const d = lib.diagrams.find((x) => x.id === id);
+    const ok = await confirm({
+      title: 'Delete team diagram?',
+      message: `"${d?.name || 'This diagram'}" will be permanently deleted for the whole team. This can't be undone.`,
+      confirmLabel: 'Delete',
+    });
+    if (ok) void lib.deleteDiagram(id);
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       {/* ---------- Breadcrumb + new-folder ---------- */}
@@ -169,65 +198,68 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
             );
           })}
         </nav>
-        <div className="shrink-0">
-          <button
-            ref={createRef}
-            type="button"
-            onClick={() => setCreateOpen((o) => !o)}
-            aria-haspopup="menu"
-            aria-expanded={createOpen}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-500 px-2 py-1 text-[11px] font-medium text-white shadow-sm transition hover:bg-brand-600"
-          >
-            <PlusIcon />
-            Create
-            <svg
-              width="9"
-              height="9"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="-mr-0.5"
+        <div className="flex shrink-0 items-center gap-2">
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
+          <div className="relative">
+            <button
+              ref={createRef}
+              type="button"
+              onClick={() => setCreateOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={createOpen}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-500 px-2 py-1 text-[11px] font-medium text-white shadow-sm transition hover:bg-brand-600"
             >
-              <path d="M4 6l4 4 4-4" />
-            </svg>
-          </button>
-          {createOpen ? (
-            <PortalMenu
-              anchor={createRef.current}
-              placement="below"
-              onClose={() => setCreateOpen(false)}
-            >
-              {/* New diagram lands directly in the team library, scoped
+              <PlusIcon />
+              Create
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+                className="-mr-0.5"
+              >
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+            </button>
+            {createOpen ? (
+              <PortalMenu
+                anchor={createRef.current}
+                placement="below"
+                onClose={() => setCreateOpen(false)}
+              >
+                {/* New diagram lands directly in the team library, scoped
                   to the folder currently open (spec/35): /live/new
                   applies the team + folder placement after the create. */}
-              <MenuItem
-                icon={<DiagramIcon />}
-                label="New diagram"
-                onClick={() => {
-                  setCreateOpen(false);
-                  window.location.assign(
-                    `/new?team=${encodeURIComponent(teamId)}${
-                      currentFolderId ? `&folder=${encodeURIComponent(currentFolderId)}` : ''
-                    }`,
-                  );
-                }}
-              />
-              <MenuItem
-                icon={<MenuFolderIcon />}
-                label={spot.kind === 'folder' ? 'New subfolder' : 'New folder'}
-                onClick={() => {
-                  setCreateOpen(false);
-                  void lib.createFolder(currentFolderId).then((created) => {
-                    if (created) setRenamingFolderId(created.id);
-                  });
-                }}
-              />
-            </PortalMenu>
-          ) : null}
+                <MenuItem
+                  icon={<DiagramIcon />}
+                  label="New diagram"
+                  onClick={() => {
+                    setCreateOpen(false);
+                    window.location.assign(
+                      `/new?team=${encodeURIComponent(teamId)}${
+                        currentFolderId ? `&folder=${encodeURIComponent(currentFolderId)}` : ''
+                      }`,
+                    );
+                  }}
+                />
+                <MenuItem
+                  icon={<MenuFolderIcon />}
+                  label={spot.kind === 'folder' ? 'New subfolder' : 'New folder'}
+                  onClick={() => {
+                    setCreateOpen(false);
+                    void lib.createFolder(currentFolderId).then((created) => {
+                      if (created) setRenamingFolderId(created.id);
+                    });
+                  }}
+                />
+              </PortalMenu>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -249,6 +281,36 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
             ? 'Nothing shared yet. Move a diagram here from your personal explorer, or create a folder to organise ahead.'
             : 'This folder is empty.'}
         </p>
+      ) : viewMode === 'card' ? (
+        // Same folders + diagrams as the list, rendered as the Explorer's
+        // card grid (spec/67). Team diagrams (DiagramSummary) satisfy the
+        // grid's PaneDiagram contract; the visibility badge is hidden
+        // since every card here is a team diagram.
+        <div className="p-3">
+          <CardView
+            folders={visibleFolders}
+            diagrams={visibleDiagrams}
+            ownerId={ownerId}
+            showUnsortedRow={spot.kind === 'root' && unsorted.length > 0}
+            unsortedCount={unsorted.length}
+            onOpenUnsorted={() => setSpot({ kind: 'unsorted' })}
+            onOpenFolder={(id) => setSpot({ kind: 'folder', id })}
+            onCommitRenameFolder={commitRenameFolder}
+            onCancelRenameFolder={() => setRenamingFolderId(null)}
+            renamingFolderId={renamingFolderId}
+            renamingDiagramId={renamingDiagramId}
+            onCommitRenameDiagram={commitRenameDiagram}
+            onCancelRenameDiagram={() => setRenamingDiagramId(null)}
+            folderActions={folderActions}
+            onStartRenameDiagram={startRenameDiagram}
+            onDuplicateDiagram={duplicateDiagram}
+            onDeleteDiagram={deleteDiagram}
+            onMoveDiagram={(id) => setMoveTarget({ kind: 'diagram', id })}
+            childrenCount={(id) => lib.childrenByParent.get(id)?.length ?? 0}
+            diagramsCount={(id) => lib.diagramsByFolder.get(id)?.length ?? 0}
+            showVisibilityBadge={false}
+          />
+        </div>
       ) : (
         <ul className="divide-y divide-slate-100">
           {spot.kind === 'root' && unsorted.length > 0 ? (
@@ -264,10 +326,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
                 (lib.diagramsByFolder.get(f.id)?.length ?? 0)
               }
               onOpen={() => setSpot({ kind: 'folder', id: f.id })}
-              onCommitRename={(name) => {
-                setRenamingFolderId(null);
-                void lib.renameFolder(f.id, name);
-              }}
+              onCommitRename={(name) => commitRenameFolder(f.id, name)}
               onCancelRename={() => setRenamingFolderId(null)}
               getActionsForAnchor={(anchor) => folderActions(f, anchor)}
             />
@@ -278,24 +337,12 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
               diagram={d}
               ownerId={ownerId}
               renaming={renamingDiagramId === d.id}
-              onMove={() => {
-                setMoveTarget({ kind: 'diagram', id: d.id });
-              }}
-              onStartRename={() => setRenamingDiagramId(d.id)}
-              onCommitRename={(name) => {
-                setRenamingDiagramId(null);
-                void lib.renameDiagram(d.id, name);
-              }}
+              onMove={() => setMoveTarget({ kind: 'diagram', id: d.id })}
+              onStartRename={() => startRenameDiagram(d.id)}
+              onCommitRename={(name) => commitRenameDiagram(d.id, name)}
               onCancelRename={() => setRenamingDiagramId(null)}
-              onDuplicate={() => void lib.duplicateDiagram(d.id)}
-              onDelete={async () => {
-                const ok = await confirm({
-                  title: 'Delete team diagram?',
-                  message: `"${d.name || 'This diagram'}" will be permanently deleted for the whole team. This can't be undone.`,
-                  confirmLabel: 'Delete',
-                });
-                if (ok) void lib.deleteDiagram(d.id);
-              }}
+              onDuplicate={() => duplicateDiagram(d.id)}
+              onDelete={() => deleteDiagram(d.id)}
             />
           ))}
         </ul>

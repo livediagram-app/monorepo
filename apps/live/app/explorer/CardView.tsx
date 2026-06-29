@@ -56,6 +56,7 @@ export function CardView({
   childrenCount,
   diagramsCount,
   showOwner = false,
+  showVisibilityBadge = true,
 }: {
   folders: Folder[];
   diagrams: PaneDiagram[];
@@ -82,6 +83,10 @@ export function CardView({
   childrenCount: (id: string) => number;
   diagramsCount: (id: string) => number;
   showOwner?: boolean;
+  // Team library cards (spec/35) hide the visibility badge: every diagram
+  // in that grid is a team diagram, so a per-card "Team"/"Private" badge is
+  // noise — its list view omits it too. Defaults on for the Explorer.
+  showVisibilityBadge?: boolean;
 }) {
   useRelativeTimeTick();
   return (
@@ -120,6 +125,7 @@ export function CardView({
           diagram={d}
           ownerId={ownerId}
           showOwner={showOwner}
+          showVisibilityBadge={showVisibilityBadge}
           renaming={renamingDiagramId === d.id}
           onStartRename={() => onStartRenameDiagram(d.id)}
           onCommitRename={(name) => onCommitRenameDiagram(d.id, name)}
@@ -148,6 +154,7 @@ function DiagramCard({
   diagram,
   ownerId,
   showOwner,
+  showVisibilityBadge,
   renaming,
   onStartRename,
   onCommitRename,
@@ -160,6 +167,7 @@ function DiagramCard({
   diagram: PaneDiagram;
   ownerId: string | null;
   showOwner: boolean;
+  showVisibilityBadge: boolean;
   renaming: boolean;
   onStartRename: () => void;
   onCommitRename: (name: string) => void;
@@ -248,7 +256,7 @@ function DiagramCard({
         </div>
         {/* Keep every column the list shows: owner, visibility, updated. */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <VisibilityBadge diagram={diagram} />
+          {showVisibilityBadge ? <VisibilityBadge diagram={diagram} /> : null}
           <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
             {relativeSince(diagram.savedAt)}
           </span>

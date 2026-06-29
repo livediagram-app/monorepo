@@ -115,15 +115,21 @@ snapshot and every column the list shows (name, owner, visibility badge,
 updated time, actions menu). List and card share one badge + actions-menu
 module (`diagram-row-shared.tsx`) so they can't drift.
 
+The same toggle is on the **team library** (spec/35) — its shared
+diagrams + folders reuse the same `CardView`, sharing the
+`livediagram:explorer-view` preference so a card-view user gets cards
+there too. Team cards hide the visibility badge (every card is a team
+diagram, so a per-card badge is noise — the team list omits it as well).
+
 ## Scope (v1)
 
 - **First tab only.** A diagram has many tabs; both paths render the
   first. A `?tab=<id>` selector (spec/54's power-user param) is deferred.
 - **No PNG.** SVG only — vector, tiny, headless-renderable. A rasterised
   variant is out of scope.
-- The List/Card toggle covers the main browse views; the team and
-  "Shared with me" pages keep their fixed layout (they already show the
-  thumbnail).
+- The List/Card toggle covers the main browse views and the team
+  library; the "Shared with me" page keeps its fixed layout (it already
+  shows the thumbnail).
 
 ## Self-hosting
 
