@@ -171,11 +171,17 @@ export function useExplorerState() {
         apiListSharedWith(ownerId).catch(() => null),
         refreshFolders(),
       ]);
-      setDiagrams(list ?? []);
-      setShared(sharedList ?? []);
+      // A failed load must not masquerade as an empty account: set only what
+      // actually came back (a failed list keeps its prior value) and tell the
+      // user, rather than flashing the "you have no diagrams" empty state.
+      if (list !== null) setDiagrams(list);
+      if (sharedList !== null) setShared(sharedList);
+      if (list === null || sharedList === null) {
+        toast.error('Could not load your diagrams. Check your connection and try again.');
+      }
       setLoading(false);
     },
-    [refreshFolders],
+    [refreshFolders, toast],
   );
 
   useEffect(() => {
