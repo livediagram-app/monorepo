@@ -1,4 +1,5 @@
 import type { BackgroundPattern, Tab } from '@livediagram/diagram';
+import { titleCase } from '@livediagram/api-schema';
 
 export type TemplateKind =
   | 'blank'
@@ -358,12 +359,6 @@ const TEMPLATE_CATEGORY: Record<TemplateKind, TemplateCategory> = {
 
 export function templateCategory(kind: TemplateKind): TemplateCategory {
   return TEMPLATE_CATEGORY[kind];
-}
-
-// Title-case each word, only ever upper-casing the leading letter so existing
-// caps survive (acronyms like ER / UML / SWOT stay intact).
-function titleCase(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // Default name for a freshly-created diagram: "Untitled <Template Title>" in

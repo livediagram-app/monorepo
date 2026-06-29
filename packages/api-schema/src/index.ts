@@ -435,6 +435,11 @@ export const CHANGE_LOG_LIST_LIMIT = 30;
 // (see ./sha256.ts for the rationale).
 export { sha256Hex } from './sha256';
 
+// Shared display-casing for preset values (template ids, theme names,
+// telemetry action / type enums). One definition so the live editor and
+// the telemetry dashboard can't drift (see ./title-case.ts).
+export { titleCase } from './title-case';
+
 export type AiMode = 'clean' | 'ask';
 
 export type AiConversationTurn = { role: 'user' | 'assistant'; content: string };
