@@ -138,23 +138,27 @@ describe('getTheme', () => {
 });
 
 describe('shapeColorPresets (spec/48)', () => {
-  it('returns eight deduped {fill, stroke, text} presets for a single-accent theme', () => {
+  it('returns twelve deduped style presets (colour + border) for a single-accent theme', () => {
     const presets = shapeColorPresets(getTheme('slate'));
-    expect(presets).toHaveLength(8);
+    expect(presets).toHaveLength(12);
     const keys = presets.map((p) => `${p.fill}|${p.stroke}|${p.text}`.toLowerCase());
-    expect(new Set(keys).size).toBe(8); // all distinct
+    expect(new Set(keys).size).toBe(12); // all distinct
     for (const p of presets) {
       expect(p.fill).toMatch(/^#[0-9a-f]{6}$/i);
       expect(p.stroke).toMatch(/^#[0-9a-f]{6}$/i);
       expect(p.text).toMatch(/^#[0-9a-f]{6}$/i);
+      // Each preset is a complete look: it carries a border treatment too.
+      expect(p.borderStroke).toBeTruthy();
+      expect(p.borderStyle).toBeTruthy();
+      expect(p.borderRadius).toBeTruthy();
     }
   });
 
-  it('caps a multi-colour (palette) theme at eight presets too', () => {
+  it('caps a multi-colour (palette) theme at twelve presets too', () => {
     const rainbow = THEMES.find((t) => t.palette && t.palette.length > 0);
     if (!rainbow) return; // no palette theme in the catalogue
     const presets = shapeColorPresets(rainbow);
-    expect(presets.length).toBeLessThanOrEqual(8);
+    expect(presets.length).toBeLessThanOrEqual(12);
     expect(presets.length).toBeGreaterThan(0);
   });
 

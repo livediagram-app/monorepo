@@ -150,14 +150,9 @@ export function ElementAppearanceSections({
               strokeColor: (target as { strokeColor?: string }).strokeColor,
               textColor: (target as { textColor?: string }).textColor,
               colorPreset: (target as { colorPreset?: string }).colorPreset,
-              strokeWidth: (target as { strokeWidth?: BorderStroke }).strokeWidth,
-              strokeStyle: (target as { strokeStyle?: BorderStyle }).strokeStyle,
-              borderRadius: (target as { borderRadius?: BorderRadius }).borderRadius,
             }}
             onApplyColor={(p) => props.onApplyShapeColorPreset(p)}
-            onApplyBorder={(p) => props.onApplyShapeBorderPreset(p)}
             onPreviewColor={(p) => props.onPreviewShapeColorPreset(p)}
-            onPreviewBorder={(p) => props.onPreviewShapeBorderPreset(p)}
             onPreviewEnd={props.onPreviewStyleEnd}
             onReset={() => {
               props.onResetShapeStyle();

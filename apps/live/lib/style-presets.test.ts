@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { ShapeColorPreset } from './themes';
 import {
   applyArrowPresetToEl,
-  applyBorderPresetToEl,
   applyBorderRadiusToEl,
   applyBorderStrokeToEl,
   applyBorderStyleToEl,
@@ -25,13 +24,24 @@ const el = (type: string, over: Record<string, unknown> = {}): Element =>
   }) as unknown as Element;
 
 describe('applyColorPresetToEl', () => {
-  const p = { id: 'cp', fill: '#fill', stroke: '#stroke', text: '#text' } as ShapeColorPreset;
+  const p = {
+    id: 'cp',
+    fill: '#fill',
+    stroke: '#stroke',
+    text: '#text',
+    borderStroke: 'thick',
+    borderStyle: 'dashed',
+    borderRadius: 'lg',
+  } as ShapeColorPreset;
 
-  it('stamps fill/stroke/text + the preset id onto a shape', () => {
+  it('stamps colours + the matching border + the preset id onto a shape', () => {
     expect(applyColorPresetToEl(el('shape'), p)).toMatchObject({
       fillColor: '#fill',
       strokeColor: '#stroke',
       textColor: '#text',
+      strokeWidth: 'thick',
+      strokeStyle: 'dashed',
+      borderRadius: 'lg',
       colorPreset: 'cp',
     });
   });
@@ -39,23 +49,6 @@ describe('applyColorPresetToEl', () => {
   it('is a no-op on non-shapes', () => {
     const sticky = el('sticky');
     expect(applyColorPresetToEl(sticky, p)).toBe(sticky);
-  });
-});
-
-describe('applyBorderPresetToEl', () => {
-  it('sets border fields on a shape and leaves colours/colorPreset alone', () => {
-    const out = applyBorderPresetToEl(el('shape', { colorPreset: 'keep' }), {
-      stroke: 'thick',
-      style: 'dashed',
-      radius: 'lg',
-    });
-    expect(out).toMatchObject({ strokeWidth: 'thick', strokeStyle: 'dashed', borderRadius: 'lg' });
-    expect((out as { colorPreset?: string }).colorPreset).toBe('keep');
-  });
-
-  it('is a no-op on non-shapes', () => {
-    const t = el('table');
-    expect(applyBorderPresetToEl(t, { stroke: 'thin', style: 'solid', radius: 'sm' })).toBe(t);
   });
 });
 

@@ -12,7 +12,6 @@ import {
 } from '@livediagram/diagram';
 import { getTheme, type ShapeColorPreset } from '@/lib/themes';
 import {
-  applyBorderPresetToEl,
   applyRotationToEl,
   applyBorderRadiusToEl,
   applyBorderStrokeToEl,
@@ -142,25 +141,14 @@ export function useShapeStyleSetters({
   const setMarkerSizeSelected = (size: TextSize) =>
     setShapeFieldSelected({ markerSize: size }, 'MarkerSize');
 
-  // applied in a single history step (unlike the per-field setters above, a
-  // preset writes fill+stroke+text — or width+style+radius — at once).
-  // Colour and border presets are independent: each touches only its own
-  // fields so the two combine. Shapes only.
+  // A preset is one complete look (spec/48): in a single history step it writes
+  // fill + stroke + text + border weight / style / radius at once (unlike the
+  // per-field setters above). Shapes only.
   const applyShapeColorPresetSelected = (preset: ShapeColorPreset) => {
     const ids = currentSelectionIds();
     if (ids.size === 0) return;
     commit((els) => els.map((el) => (ids.has(el.id) ? applyColorPresetToEl(el, preset) : el)));
     track('Element', 'Changed', 'StylePreset');
-  };
-  const applyShapeBorderPresetSelected = (preset: {
-    stroke: BorderStroke;
-    style: BorderStyle;
-    radius: BorderRadius;
-  }) => {
-    const ids = currentSelectionIds();
-    if (ids.size === 0) return;
-    commit((els) => els.map((el) => (ids.has(el.id) ? applyBorderPresetToEl(el, preset) : el)));
-    track('Element', 'Changed', 'BorderPreset');
   };
   // Reset a preset-styled shape back to its theme default: colour overrides
   // fall back to the theme (mirroring resetColorsSelected's shape branch) and
@@ -205,7 +193,6 @@ export function useShapeStyleSetters({
     setMarkerSelected,
     setMarkerSizeSelected,
     applyShapeColorPresetSelected,
-    applyShapeBorderPresetSelected,
     resetShapeStyleSelected,
   };
 }

@@ -40,7 +40,6 @@ import type {
 } from '@livediagram/diagram';
 import {
   applyArrowPresetToEl,
-  applyBorderPresetToEl,
   applyBorderRadiusToEl,
   applyBorderStrokeToEl,
   applyBorderStyleToEl,
@@ -54,7 +53,6 @@ import type { ShapeColorPreset } from '@/lib/themes';
 import { track } from '@/lib/telemetry';
 
 type Snapshot = { ids: Set<string>; originals: Map<string, Element> };
-type BorderPreset = { stroke: BorderStroke; style: BorderStyle; radius: BorderRadius };
 type ArrowPreset = { style: BorderStyle; thickness: ArrowThickness; flow?: ArrowFlow };
 
 export function useStylePreview(deps: {
@@ -165,11 +163,6 @@ export function useStylePreview(deps: {
       previewStyle((el) => applyColorPresetToEl(el, p)),
     commitShapeColorPreset: (p: ShapeColorPreset) =>
       commitStyle((el) => applyColorPresetToEl(el, p), 'StylePreset'),
-    // Shape border preset
-    previewShapeBorderPreset: (p: BorderPreset) =>
-      previewStyle((el) => applyBorderPresetToEl(el, p)),
-    commitShapeBorderPreset: (p: BorderPreset) =>
-      commitStyle((el) => applyBorderPresetToEl(el, p), 'BorderPreset'),
     // Arrow preset
     previewArrowPreset: (p: ArrowPreset) => previewStyle((el) => applyArrowPresetToEl(el, p)),
     commitArrowPreset: (p: ArrowPreset) =>

@@ -22,21 +22,22 @@ import {
 } from '@livediagram/diagram';
 import type { ShapeColorPreset } from './themes';
 
-// Apply a theme-derived colour preset to a shape (fill + stroke + text), and
-// record the preset id so theme changes can re-derive it. No-op on non-shapes.
+// Apply a theme-derived style preset to a shape: its colours (fill + stroke +
+// text) AND its border (weight / pattern / radius) together — a preset is one
+// complete look (spec/48). Records the preset id so theme changes can re-derive
+// it. No-op on non-shapes.
 export function applyColorPresetToEl(el: Element, p: ShapeColorPreset): Element {
   if (el.type !== 'shape') return el;
-  return { ...el, fillColor: p.fill, strokeColor: p.stroke, textColor: p.text, colorPreset: p.id };
-}
-
-// Apply a border preset (weight × pattern × radius) to a shape. Independent of
-// the colour preset, so it leaves `colorPreset` (and the colours) alone.
-export function applyBorderPresetToEl(
-  el: Element,
-  p: { stroke: BorderStroke; style: BorderStyle; radius: BorderRadius },
-): Element {
-  if (el.type !== 'shape') return el;
-  return { ...el, strokeWidth: p.stroke, strokeStyle: p.style, borderRadius: p.radius };
+  return {
+    ...el,
+    fillColor: p.fill,
+    strokeColor: p.stroke,
+    textColor: p.text,
+    strokeWidth: p.borderStroke,
+    strokeStyle: p.borderStyle,
+    borderRadius: p.borderRadius,
+    colorPreset: p.id,
+  };
 }
 
 // ── Granular single-field transforms ────────────────────────────────────

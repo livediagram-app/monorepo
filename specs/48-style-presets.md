@@ -8,28 +8,23 @@ hand. A **Presets** category sits at the top of the appearance group (above
 ## Shapes
 
 When a single **shape** element is right-clicked, the menu shows a **Presets**
-category with two preset rows the user combines freely, plus a reset. The
-dedicated **icon** glyph is excluded — it has no fill / border to preset:
+category with a single row of one-click looks, plus a reset. The dedicated
+**icon** glyph is excluded — it has no fill / border to preset:
 
-- **Colour** — eight one-click colour variations derived from the active
-  theme. Each preset sets the shape's fill, border (stroke) and text colour
-  together. The set spans the theme's on-theme look plus soft / tinted / solid
-  / bold / outline / muted / inked emphasis variants (and, on multi-colour
-  themes, a card per branch hue), so the same theme yields a legible spread of
-  intensities. Text colour is auto-contrasted on filled variants so labels
-  stay readable.
-- **Border** — up to eight border-shape variations combining weight
-  (thin / medium / thick), pattern (solid / dotted / dashed) and corner radius
-  (none / small / medium / large / full). Includes a sharp (un-rounded) preset
-  and a rounded preset using the border-radius the Border category exposes, so
-  the user can pick variety and emphasis at a glance.
+- **Style presets** — twelve one-click looks derived from the active theme.
+  Each preset is a _complete_ style: it sets the shape's fill, border (stroke)
+  and text colour AND a matching border treatment (weight, pattern, corner
+  radius) together, so the border isn't a separate choice. The set spans the
+  theme's on-theme look plus soft / tinted / solid / bold / outline / muted /
+  inked / pill / dotted / frame / ghost variants (and, on multi-colour themes, a
+  card per branch hue), each pairing a colour with the border that suits it
+  (Bold → thick, Outline → dashed, Pill → full radius, Dotted → dotted, Frame →
+  thick + sharp, Ghost → thin dashed). Text colour is auto-contrasted on filled
+  variants so labels stay readable. The standalone weight / pattern / radius
+  controls in the **Border** category remain for fine-tuning after a preset.
 - **Reset to default** — clears the shape's colour overrides back to the
   theme and removes border weight / pattern / radius overrides, returning the
   shape to its theme default in one click.
-
-Colour and border presets are independent: applying one never disturbs the
-other, so the two combine (e.g. a tinted colour with a dashed un-rounded
-border).
 
 ### Colour presets track the theme
 
@@ -92,10 +87,11 @@ arrow's line-pattern / thickness / animation overrides.
   preset-bound shape re-derives instead of being preserved as a manual
   override. The `colorPreset` binding lives on `ShapeElement` in
   `packages/diagram`.
-- Border and arrow presets are static preset tables in the presets component
-  (`apps/live/components/StylePresets.tsx`).
+- Arrow presets are a static preset table in the presets component
+  (`apps/live/components/StylePresets.tsx`); shape style presets are theme-derived
+  (`shapeColorPresets`), each carrying its border treatment.
 - The element transforms each preset performs live in `apps/live/lib/style-presets.ts`
-  (`applyColorPresetToEl` / `applyBorderPresetToEl` / `applyArrowPresetToEl`),
+  (`applyColorPresetToEl` / `applyArrowPresetToEl`),
   shared so the hover preview is byte-for-byte the change the click commits. The
   granular single-field transforms live in the same file
   (`applyFillColorToEl` / `applyStrokeColorToEl` / `applyTextColorToEl` /
@@ -105,8 +101,8 @@ arrow's line-pattern / thickness / animation overrides.
   the swatch/tile preview matches its commit exactly.
 - Direct (non-preview) commits go through the selection setters in
   `apps/live/hooks/useElementStyle.ts` (`applyShapeColorPresetSelected` /
-  `applyShapeBorderPresetSelected` / `resetShapeStyleSelected` /
-  `applyArrowPresetSelected` / `resetArrowStyleSelected`). Hand-editing a
+  `resetShapeStyleSelected` / `applyArrowPresetSelected` /
+  `resetArrowStyleSelected`). Hand-editing a
   colour or resetting clears the `colorPreset` binding there.
 - Hover preview is owned by `apps/live/hooks/useStylePreview.ts`: preview +
   revert go through `tickTabs` (present-only, no history / no log); the click

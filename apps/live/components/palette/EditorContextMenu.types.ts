@@ -22,7 +22,7 @@ import type {
   ShapeMarker,
   TextSize,
 } from '@livediagram/diagram';
-import type { ArrowPreset, ShapeBorderPreset } from '@/components/palette/StylePresets';
+import type { ArrowPreset } from '@/components/palette/StylePresets';
 import type { ShapeColorPreset } from '@/lib/themes';
 
 export type EditorContextMenuState =
@@ -109,15 +109,13 @@ export type EditorContextMenuProps = {
   // theme-derived (see shapeColorPresets in lib/themes).
   shapeColorPresets: ShapeColorPreset[];
   onApplyShapeColorPreset: (preset: ShapeColorPreset) => void;
-  onApplyShapeBorderPreset: (preset: ShapeBorderPreset) => void;
   onResetShapeStyle: () => void;
   // Hover-to-preview (spec/48): on a desktop pointer, hovering a preset tile
   // shows it live on the selected element; it only sticks on click. The
   // `onPreview*` callbacks apply the ephemeral preview; `onPreviewStyleEnd`
   // reverts it when the pointer leaves the tile without clicking. Shared across
-  // the shape colour / border and arrow preset rows.
+  // the shape style and arrow preset rows.
   onPreviewShapeColorPreset: (preset: ShapeColorPreset) => void;
-  onPreviewShapeBorderPreset: (preset: ShapeBorderPreset) => void;
   onPreviewArrowPreset: (preset: ArrowPreset) => void;
   onPreviewStyleEnd: () => void;
   // Arrow style presets (spec/48): one-click line looks (pattern / thickness /

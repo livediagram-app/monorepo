@@ -199,7 +199,7 @@ describe('useElementStyle pie chart (spec/53)', () => {
 });
 
 describe('useElementStyle shape style presets (spec/48)', () => {
-  it('applies a colour preset (fill + stroke + text) in one step, untouched border', () => {
+  it('applies a style preset (colour + matching border) in one step', () => {
     const a = createShape('square', 0, 0);
     const { style, result } = harness([a], new Set([a.id]));
 
@@ -209,43 +209,32 @@ describe('useElementStyle shape style presets (spec/48)', () => {
       fill: '#fee2e2',
       stroke: '#ef4444',
       text: '#7f1d1d',
+      borderStroke: 'thick',
+      borderStyle: 'solid',
+      borderRadius: 'sm',
     });
 
     const el = result()[0] as {
       fillColor?: string;
       strokeColor?: string;
       textColor?: string;
+      strokeWidth?: string;
       strokeStyle?: string;
+      borderRadius?: string;
       colorPreset?: string;
     };
     expect(el.fillColor).toBe('#fee2e2');
     expect(el.strokeColor).toBe('#ef4444');
     expect(el.textColor).toBe('#7f1d1d');
-    // The preset id is recorded so a theme change can re-derive it (spec/48).
-    expect(el.colorPreset).toBe('bold');
-    // Border fields are independent of the colour preset.
-    expect(el.strokeStyle).toBeUndefined();
-  });
-
-  it('applies a border preset (weight + pattern + radius), untouched colour', () => {
-    const a = createShape('square', 0, 0);
-    const { style, result } = harness([a], new Set([a.id]));
-
-    style.applyShapeBorderPresetSelected({ stroke: 'thick', style: 'dotted', radius: 'lg' });
-
-    const el = result()[0] as {
-      strokeWidth?: string;
-      strokeStyle?: string;
-      borderRadius?: string;
-      fillColor?: string;
-    };
+    // A preset is one complete look now: it stamps the border too (spec/48).
     expect(el.strokeWidth).toBe('thick');
-    expect(el.strokeStyle).toBe('dotted');
-    expect(el.borderRadius).toBe('lg');
-    expect(el.fillColor).toBeUndefined();
+    expect(el.strokeStyle).toBe('solid');
+    expect(el.borderRadius).toBe('sm');
+    // The preset id is recorded so a theme change can re-derive it.
+    expect(el.colorPreset).toBe('bold');
   });
 
-  it('resets a preset-styled shape back to its defaults (border cleared)', () => {
+  it('resets a preset-styled shape back to its defaults (colour + border cleared)', () => {
     const a = createShape('square', 0, 0);
     const { style, result } = harness([a], new Set([a.id]));
 
@@ -255,8 +244,10 @@ describe('useElementStyle shape style presets (spec/48)', () => {
       fill: '#fee2e2',
       stroke: '#ef4444',
       text: '#7f1d1d',
+      borderStroke: 'thick',
+      borderStyle: 'dotted',
+      borderRadius: 'lg',
     });
-    style.applyShapeBorderPresetSelected({ stroke: 'thick', style: 'dotted', radius: 'lg' });
     style.resetShapeStyleSelected();
 
     const el = result()[0] as {
@@ -282,6 +273,9 @@ describe('useElementStyle shape style presets (spec/48)', () => {
       fill: '#fee2e2',
       stroke: '#ef4444',
       text: '#7f1d1d',
+      borderStroke: 'thick',
+      borderStyle: 'solid',
+      borderRadius: 'sm',
     });
     style.setFillColorSelected('#123456');
 
