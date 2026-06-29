@@ -730,6 +730,7 @@ export * from './colors';
 export * from './rich-text';
 
 export * from './factories';
+export * from './polyline';
 export * from './component-factories';
 export * from './table';
 
