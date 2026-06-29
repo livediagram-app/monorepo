@@ -111,6 +111,7 @@ export type UserPreferences = {
   notifyDiagramJoin?: boolean;
   // "Someone accepted / declined a team invite I sent" (to the team's admins).
   notifyInviteResponse?: boolean;
+  notifyComments?: boolean;
 };
 
 export const STORAGE_KEY = 'livediagram:user-preferences:v1';

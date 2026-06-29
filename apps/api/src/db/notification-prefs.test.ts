@@ -21,12 +21,17 @@ describe('getNotificationPrefs (spec/65)', () => {
     expect(await getNotificationPrefs(envWithPrefsRow(null), 'user_x')).toEqual({
       notifyDiagramJoin: true,
       notifyInviteResponse: true,
+      notifyComments: true,
     });
   });
 
   it('defaults to true when the key is absent from the blob', async () => {
     const prefs = await getNotificationPrefs(envWithPrefsRow('{"telemetryEnabled":false}'), 'u');
-    expect(prefs).toEqual({ notifyDiagramJoin: true, notifyInviteResponse: true });
+    expect(prefs).toEqual({
+      notifyDiagramJoin: true,
+      notifyInviteResponse: true,
+      notifyComments: true,
+    });
   });
 
   it('only an explicit false opts out', async () => {
@@ -34,12 +39,20 @@ describe('getNotificationPrefs (spec/65)', () => {
       envWithPrefsRow('{"notifyDiagramJoin":false,"notifyInviteResponse":true}'),
       'u',
     );
-    expect(prefs).toEqual({ notifyDiagramJoin: false, notifyInviteResponse: true });
+    expect(prefs).toEqual({
+      notifyDiagramJoin: false,
+      notifyInviteResponse: true,
+      notifyComments: true,
+    });
   });
 
   it('falls back to defaults on a corrupt blob', async () => {
     const prefs = await getNotificationPrefs(envWithPrefsRow('not json'), 'u');
-    expect(prefs).toEqual({ notifyDiagramJoin: true, notifyInviteResponse: true });
+    expect(prefs).toEqual({
+      notifyDiagramJoin: true,
+      notifyInviteResponse: true,
+      notifyComments: true,
+    });
   });
 
   it('treats a non-boolean value as notify (defends against a misbehaving client)', async () => {

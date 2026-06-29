@@ -17,6 +17,13 @@ const MUTED = '#475569';
 const ACCOUNT_FOOTER =
   'You’re receiving this because you have a livediagram account. The editor is free and open source.';
 
+// spec/64: footer for an opt-out notification email — the reason, plus a link to
+// the profile page where the recipient can turn the category off in one click.
+function manageNotificationsFooter(env: Env, reason: string): string {
+  const href = `${appBaseUrl(env)}/explorer/profile`;
+  return `${reason} <a href="${href}" style="color:${BRAND};text-decoration:underline">Manage your notifications</a> to turn these off.`;
+}
+
 export type RenderedEmail = { subject: string; html: string };
 
 type Section = {
@@ -189,8 +196,10 @@ export function diagramJoinedEmail(
         'You’re getting this because you turned on join notifications. You can turn them off any time from your profile.',
       ctaText: 'Open the diagram',
       ctaHref: `${base}/explorer`,
-      footer:
-        'You’re receiving this because someone opened a diagram you shared and you have join notifications on. Turn them off on your livediagram profile.',
+      footer: manageNotificationsFooter(
+        env,
+        'You’re receiving this because someone opened a diagram you shared.',
+      ),
     }),
   };
 }
@@ -219,8 +228,10 @@ export function inviteResponseEmail(
         : `<strong>${who}</strong> declined your invitation to <strong>${team}</strong>. You can invite them again any time.`,
       ctaText: 'Open the team',
       ctaHref: `${base}/explorer/team`,
-      footer:
-        'You’re receiving this because you’re an admin of this team and have invite-response notifications on. Turn them off on your livediagram profile.',
+      footer: manageNotificationsFooter(
+        env,
+        'You’re receiving this because you’re an admin of this team.',
+      ),
     }),
   };
 }
@@ -303,6 +314,37 @@ export function activationEmail(env: Env): RenderedEmail {
       outro: 'No pressure: the canvas is free and always here.',
       ctaText: 'Make your first diagram',
       ctaHref: `${base}/new`,
+    }),
+  };
+}
+
+// spec/64 (#1): someone other than the owner left a comment on a diagram the
+// recipient owns. Opt-out (notifyComments). Never includes the comment text
+// (privacy): just who, which diagram, and a link to open it.
+export function commentNotificationEmail(
+  env: Env,
+  diagramName: string,
+  diagramId: string,
+  commenterName: string | null,
+): RenderedEmail {
+  const base = appBaseUrl(env);
+  const whoText =
+    commenterName && commenterName.trim() ? escapeText(commenterName.trim()) : 'Someone';
+  const nameText =
+    diagramName && diagramName.trim() ? escapeText(diagramName.trim()) : 'your diagram';
+  const who = commenterName && commenterName.trim() ? escapeHtml(commenterName.trim()) : 'Someone';
+  const name = diagramName && diagramName.trim() ? escapeHtml(diagramName.trim()) : 'your diagram';
+  return {
+    subject: `${whoText} commented on ${nameText}`,
+    html: shell({
+      heading: 'New comment on your diagram',
+      intro: `<strong>${who}</strong> left a comment on <strong>${name}</strong>. Open the diagram to read it and reply.`,
+      ctaText: 'Open the diagram',
+      ctaHref: `${base}/diagram/${encodeURIComponent(diagramId)}`,
+      footer: manageNotificationsFooter(
+        env,
+        'You’re receiving this because someone commented on a diagram you own.',
+      ),
     }),
   };
 }

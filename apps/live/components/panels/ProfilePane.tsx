@@ -61,7 +61,10 @@ function ProfilePaneEnabled() {
   // Flip one notification preference. Telemetry fires BEFORE the write so the
   // event isn't lost if the user is simultaneously toggling other prefs
   // (spec/22 convention). `undefined === on`, so we default to true.
-  const setFlag = (key: 'notifyDiagramJoin' | 'notifyInviteResponse', telemetryType: string) => {
+  const setFlag = (
+    key: 'notifyDiagramJoin' | 'notifyInviteResponse' | 'notifyComments',
+    telemetryType: string,
+  ) => {
     const on = !(prefs[key] !== false);
     track('UI', 'Toggled', on ? `${telemetryType}On` : `${telemetryType}Off`);
     const next = { ...prefs, [key]: on };
@@ -99,7 +102,7 @@ function ProfilePaneEnabled() {
             We’ll email {email ?? 'you'} when one of these happens. Turn off the ones you don’t
             want.
           </p>
-          <div className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
+          <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
             <NotificationRow
               title="Someone joins my diagram"
               description="When a new person opens one of your shared diagrams for the first time."
@@ -111,6 +114,12 @@ function ProfilePaneEnabled() {
               description="When someone you invited accepts or declines, for teams you’re an admin of."
               checked={prefs.notifyInviteResponse !== false}
               onChange={() => setFlag('notifyInviteResponse', 'NotifyInviteResponse')}
+            />
+            <NotificationRow
+              title="Someone comments on my diagram"
+              description="When someone leaves a comment on a diagram you own."
+              checked={prefs.notifyComments !== false}
+              onChange={() => setFlag('notifyComments', 'NotifyComments')}
             />
           </div>
         </section>
@@ -162,14 +171,26 @@ function NotificationRow({
   checked: boolean;
   onChange: () => void;
 }) {
+  // The whole row is the click target (not just the switch), so the toggle is a
+  // presentational <span> — nesting a real toggle button inside this button
+  // would be invalid, and block <p>s can't live in a button either (use spans).
   return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{description}</p>
-      </div>
-      <ToggleSwitch checked={checked} onChange={onChange} label={title} />
-    </div>
+    <button
+      type="button"
+      onClick={onChange}
+      aria-pressed={checked}
+      className="flex w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-slate-800 dark:text-slate-200">
+          {title}
+        </span>
+        <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+          {description}
+        </span>
+      </span>
+      <ToggleSwitch presentational checked={checked} label={title} />
+    </button>
   );
 }
 

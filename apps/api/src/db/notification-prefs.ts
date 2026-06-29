@@ -12,11 +12,13 @@ import type { Env } from '../types';
 export type NotificationPrefs = {
   notifyDiagramJoin: boolean;
   notifyInviteResponse: boolean;
+  notifyComments: boolean;
 };
 
 const DEFAULTS: NotificationPrefs = {
   notifyDiagramJoin: true,
   notifyInviteResponse: true,
+  notifyComments: true,
 };
 
 // One SELECT + JSON.parse. Reads only the two notification keys; every other
@@ -37,6 +39,7 @@ export async function getNotificationPrefs(env: Env, ownerId: string): Promise<N
       // true, or a non-boolean a misbehaving client wrote) means notify.
       notifyDiagramJoin: blob.notifyDiagramJoin !== false,
       notifyInviteResponse: blob.notifyInviteResponse !== false,
+      notifyComments: blob.notifyComments !== false,
     };
   } catch {
     return DEFAULTS;

@@ -109,3 +109,22 @@ export function redactCommentAuthorIds(elements: Element[], viewerId: string | n
     return { ...el, commentThread: { ...thread, comments } } as Element;
   });
 }
+
+// spec/64 (#1): true when `nextElements` adds at least one comment id not in
+// `prevElements`. Used by the tab-autosave handler to fire the "someone
+// commented on your diagram" notification only when a genuinely new comment
+// landed (not on every autosave).
+export function hasNewComments(nextElements: Element[], prevElements: Element[]): boolean {
+  const seen = new Set<string>();
+  for (const el of prevElements) {
+    const thread = (el as { commentThread?: { comments?: Comment[] } }).commentThread;
+    for (const c of thread?.comments ?? []) seen.add(c.id);
+  }
+  for (const el of nextElements) {
+    const thread = (el as { commentThread?: { comments?: Comment[] } }).commentThread;
+    for (const c of thread?.comments ?? []) {
+      if (!seen.has(c.id)) return true;
+    }
+  }
+  return false;
+}

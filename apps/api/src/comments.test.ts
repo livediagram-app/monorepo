@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Comment, Element, ShapeElement } from '@livediagram/diagram';
 import {
   findComment,
+  hasNewComments,
   redactCommentAuthorIds,
   removeComment,
   rewriteCommentAuthors,
@@ -189,5 +190,30 @@ describe('redactCommentAuthorIds', () => {
     const els = [mkShape('a', [mkComment('c1', 'Owner', '#000', 't', 'owner-9')])];
     const [out] = redactCommentAuthorIds(els, 'someone-else') as [ShapeElement];
     expect(out.commentThread!.comments[0]!.authorId).toBeUndefined();
+  });
+});
+
+describe('hasNewComments (spec/64 #1)', () => {
+  const cm = (id: string): Comment => ({
+    id,
+    text: 't',
+    createdAt: 0,
+    authorName: 'a',
+    authorColor: '#000',
+  });
+  it('is true when a comment id appears that was not in prev', () => {
+    expect(hasNewComments([mkShape('e1', [cm('c1'), cm('c2')])], [mkShape('e1', [cm('c1')])])).toBe(
+      true,
+    );
+  });
+  it('is false when nothing new was added (a removal)', () => {
+    expect(hasNewComments([mkShape('e1', [cm('c1')])], [mkShape('e1', [cm('c1'), cm('c2')])])).toBe(
+      false,
+    );
+  });
+  it('is false on identical sets and with empty threads', () => {
+    const els = [mkShape('e1', [cm('c1')])];
+    expect(hasNewComments(els, els)).toBe(false);
+    expect(hasNewComments([mkShape('e1', [])], [])).toBe(false);
   });
 });

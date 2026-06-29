@@ -11,7 +11,7 @@
 import { getNotificationPrefs, getOwnerEmail, listTeamAdminUserIds } from '../db';
 import type { Env } from '../types';
 import { emailEnabled, sendEmail } from './client';
-import { diagramJoinedEmail, inviteResponseEmail } from './templates';
+import { commentNotificationEmail, diagramJoinedEmail, inviteResponseEmail } from './templates';
 
 // Someone opened one of an owner's shared diagrams for the FIRST time
 // (recordSharedAccess reported a new row). No-op unless email is on, the owner
@@ -57,4 +57,23 @@ export async function notifyInviteResponse(
       });
     }),
   );
+}
+
+// Someone OTHER than the owner left a comment on a diagram the owner owns
+// (spec/64 #1). Immediate, opt-out (notifyComments). Best-effort; never blocks
+// the comment write. The comment text is deliberately NOT included.
+export async function notifyNewComment(
+  env: Env,
+  diagram: { id: string; ownerId: string; name: string },
+  commenterName: string | null,
+): Promise<void> {
+  if (!emailEnabled(env)) return;
+  const to = await getOwnerEmail(env, diagram.ownerId);
+  if (!to) return;
+  const prefs = await getNotificationPrefs(env, diagram.ownerId);
+  if (!prefs.notifyComments) return;
+  await sendEmail(env, {
+    to,
+    ...commentNotificationEmail(env, diagram.name, diagram.id, commenterName),
+  });
 }

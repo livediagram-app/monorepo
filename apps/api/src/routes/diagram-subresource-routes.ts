@@ -8,10 +8,13 @@ import { isValidTab } from '@livediagram/diagram';
 import { MAX_TAB_BYTES, MAX_PASSWORD_LEN, byteLength } from '../limits';
 import {
   findComment,
+  hasNewComments,
   redactCommentAuthorIds,
   removeComment,
   rewriteCommentAuthors,
 } from '../comments';
+import { emailEnabled } from '../email/client';
+import { notifyNewComment } from '../email/notifications';
 import {
   createShareLink,
   deleteShareLink,
@@ -139,6 +142,21 @@ export async function handleDiagramSubresources(ctx: RouteContext): Promise<Resp
           }
         : body;
       await upsertTab(env, id, { ...sanitised, id: tabId }, orderIndex);
+      // spec/64 (#1): an edit-role visitor (not the owner) adding a comment
+      // notifies the owner immediately. Best-effort, off the request path.
+      if (
+        emailEnabled(env) &&
+        owner !== existing.ownerId &&
+        hasNewComments(body.elements, existingTab?.elements ?? [])
+      ) {
+        ctx.waitUntil?.(
+          notifyNewComment(
+            env,
+            { id, ownerId: existing.ownerId, name: existing.name },
+            writerParticipant?.name ?? null,
+          ),
+        );
+      }
       const tab = await getTab(env, id, tabId);
       return tab ? json({ tab }) : notFound();
     }
@@ -214,6 +232,12 @@ export async function handleDiagramSubresources(ctx: RouteContext): Promise<Resp
       };
     });
     await upsertTab(env, id, { ...tab, elements: updatedElements }, tab.orderIndex);
+    // spec/64 (#1): a view-role visitor's comment notifies the owner immediately.
+    if (emailEnabled(env) && owner !== existing.ownerId) {
+      ctx.waitUntil?.(
+        notifyNewComment(env, { id, ownerId: existing.ownerId, name: existing.name }, authorName),
+      );
+    }
     return json({ comment });
   }
 
