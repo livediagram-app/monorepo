@@ -47,7 +47,9 @@ function ProfilePaneEnabled() {
   const name =
     user.fullName ?? user.username ?? user.primaryEmailAddress?.emailAddress ?? 'Your account';
   const email = user.primaryEmailAddress?.emailAddress ?? null;
-  const initial = (user.firstName ?? user.username ?? email ?? '?').slice(0, 1).toUpperCase();
+  // Same initial-letter bubble as the header account button (AuthControls),
+  // not the user's external (e.g. Google) avatar — keep the two consistent.
+  const initial = (user.firstName ?? user.username ?? '?').slice(0, 1).toUpperCase();
   const joined = user.createdAt
     ? user.createdAt.toLocaleDateString(undefined, {
         year: 'numeric',
@@ -68,23 +70,12 @@ function ProfilePaneEnabled() {
   };
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="space-y-8">
       {/* Identity card */}
       <section className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
-        {user.hasImage ? (
-          // Plain <img>: output:export rules out the Next image loader, and the
-          // avatar is a remote Clerk URL (same approach as the gallery thumbnails).
-          <img
-            src={user.imageUrl}
-            alt=""
-            className="h-16 w-16 shrink-0 rounded-full object-cover"
-            draggable={false}
-          />
-        ) : (
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-2xl font-semibold text-white">
-            {initial}
-          </span>
-        )}
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-2xl font-semibold text-white">
+          {initial}
+        </span>
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
             {name}

@@ -21,8 +21,9 @@ it sees the same "sign in" prompt the Tokens pane shows, never a broken page.
 
 The page shows, read from Clerk's `useUser()` on the client (no new API):
 
-- **Avatar** — `user.imageUrl` when `user.hasImage`, else the same
-  initial-letter bubble the header pill uses (shared look, spec/04).
+- **Avatar** — the same initial-letter + brand-colour bubble the header
+  account button uses (shared look, spec/04). The external Clerk / Google
+  avatar is intentionally not shown so the two surfaces stay consistent.
 - **Name** — `user.fullName ?? username ?? email`.
 - **Email** — `user.primaryEmailAddress.emailAddress`.
 - **Joined** — `user.createdAt`, formatted as a plain date.

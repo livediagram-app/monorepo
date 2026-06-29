@@ -140,7 +140,7 @@ export function DeleteAccountDialog({
             </h2>
             <p className="mt-1 text-sm text-slate-600">
               This permanently removes your diagrams, folders, and participant record from the
-              livediagram server, then deletes your Clerk account. This cannot be undone.
+              livediagram server, then deletes your account. This cannot be undone.
             </p>
           </div>
 
