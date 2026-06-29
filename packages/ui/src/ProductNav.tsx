@@ -118,8 +118,14 @@ export function ProductNav({
     };
   }, [open]);
 
+  // ml-* gives the menu breathing room from the logo it always sits beside,
+  // in every header that renders it (marketing / telemetry / editor / explorer
+  // / help) without each having to widen its own gap.
   return (
-    <div ref={ref} className={`group relative ${showOnMobile ? 'block' : 'hidden sm:block'}`}>
+    <div
+      ref={ref}
+      className={`group relative ml-1.5 sm:ml-3 ${showOnMobile ? 'block' : 'hidden sm:block'}`}
+    >
       <button
         type="button"
         aria-haspopup="menu"
