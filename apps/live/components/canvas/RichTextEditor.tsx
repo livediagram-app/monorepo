@@ -24,16 +24,11 @@ import {
   runsFromPlainText,
   runsPlainText,
   toggleFormatInRange,
-  type BoxedElement,
   type ListStyle,
-  type Padding,
   type RunBoolKey,
   type RunPatch,
   type RunSize,
-  type TextAlignX,
-  type TextAlignY,
   type TextRun,
-  type TextSize,
 } from '@livediagram/diagram';
 import {
   ALIGN_ITEMS,
@@ -54,130 +49,11 @@ import {
 } from '@/components/canvas/rich-text-dom';
 import { RichTextToolbar, type ActiveFormat } from '@/components/canvas/RichTextToolbar';
 import { track } from '@/lib/telemetry';
-
-type RichTextEditorProps = {
-  // The element being edited — its whole-element text* fields are the
-  // defaults each run's unset attrs inherit (for effective styling +
-  // toggle computation).
-  element: BoxedElement;
-  initialLabel: string;
-  initialRuns?: TextRun[];
-  placeholder: string;
-  textSize: TextSize;
-  alignX: TextAlignX;
-  alignY: TextAlignY;
-  padding: number;
-  fontFamily?: string;
-  multiline: boolean;
-  cursorAtEnd: boolean;
-  zoom: number;
-  textClassName?: string;
-  // When true, the editor lays out as a flex CHILD (it fills the slot it's
-  // given) instead of an `absolute inset-0` fill of the whole element, and
-  // drops its own padding (the surrounding layout owns the inset). Used by
-  // the inline-icon shape layout so the icon stays visible beside the editor
-  // while typing; positioning + padding are handled by that flex group.
-  inline?: boolean;
-  onCommit: (label: string, runs: TextRun[]) => void;
-  onCancel: () => void;
-  // Whole-element controls surfaced in the edit toolbar (they operate on the
-  // current selection = the editing element).
-  onSetAlign?: (x: TextAlignX, y: TextAlignY) => void;
-  onSetPadding?: (padding: Padding) => void;
-  onSetFont?: (font: string | null) => void;
-  onSetTextSize?: (size: TextSize) => void;
-  currentFont?: string | null;
-};
+import type { RichTextEditorProps } from './RichTextEditor.types';
+import { applyCss, BOOL_DEFAULT, computeActiveFormat } from './rich-text-editor-helpers';
 
 // Apply a React.CSSProperties object onto a live DOM style declaration,
 // skipping undefined so we don't write the string "undefined".
-function applyCss(target: CSSStyleDeclaration, props: React.CSSProperties): void {
-  for (const [k, v] of Object.entries(props)) {
-    if (v == null) continue;
-    (target as unknown as Record<string, string>)[k] = typeof v === 'number' ? String(v) : v;
-  }
-}
-
-// Expand a collapsed caret to the word it sits in (or just left of), so a
-// toolbar click with no selection formats the surrounding word. Returns
-// null when there's no word to act on (whitespace / empty).
-function wordRangeAt(text: string, pos: number): { start: number; end: number } | null {
-  const n = text.length;
-  if (n === 0) return null;
-  const ws = (i: number) => i < 0 || i >= n || /\s/.test(text[i]!);
-  let i = Math.max(0, Math.min(pos, n));
-  if (ws(i)) i -= 1; // caret at end of / after a word -> use the char to the left
-  if (i < 0 || ws(i)) return null;
-  let start = i;
-  let end = i + 1;
-  while (start > 0 && !ws(start - 1)) start--;
-  while (end < n && !ws(end)) end++;
-  return { start, end };
-}
-
-const BOOL_DEFAULT: Record<RunBoolKey, (el: BoxedElement) => boolean> = {
-  bold: (el) => !!el.textBold,
-  italic: (el) => !!el.textItalic,
-  underline: (el) => !!el.textUnderline,
-  strikethrough: (el) => !!el.textStrikethrough,
-};
-
-// The slice of runs covering [start, end) as effective attrs, used to
-// decide toolbar active-state. Walks runs accumulating offsets.
-function computeActiveFormat(
-  runs: TextRun[],
-  range: { start: number; end: number } | null,
-  el: BoxedElement,
-): ActiveFormat {
-  // A run with no size override inherits the element's textSize; reflect
-  // that as the active size so the toolbar highlights the current size by
-  // default ('scale' is a first-class option now).
-  const sizeFallback: RunSize | 'scale' = el.textSize ?? 'scale';
-  const empty: ActiveFormat = {
-    bold: BOOL_DEFAULT.bold(el),
-    italic: BOOL_DEFAULT.italic(el),
-    underline: BOOL_DEFAULT.underline(el),
-    strikethrough: BOOL_DEFAULT.strikethrough(el),
-    size: sizeFallback,
-    color: el.textColor ?? null,
-  };
-  if (!range) return empty;
-  let { start, end } = range;
-  if (start === end) {
-    // Reflect the run just left of the caret so the toolbar reads sensibly.
-    const w = wordRangeAt(runsPlainText(runs), start);
-    if (!w) return empty;
-    start = w.start;
-    end = w.end;
-  }
-  const covered: TextRun[] = [];
-  let pos = 0;
-  for (const run of runs) {
-    const runEnd = pos + run.text.length;
-    if (pos < end && runEnd > start) covered.push(run);
-    pos = runEnd;
-  }
-  if (covered.length === 0) return empty;
-  const allBool = (key: RunBoolKey) =>
-    covered.every((r) => (r[key] ?? BOOL_DEFAULT[key](el)) === true);
-  const uniform = <T,>(pick: (r: TextRun) => T | undefined, fallback: T | null): T | null => {
-    const vals = covered.map((r) => pick(r) ?? fallback);
-    return vals.every((v) => v === vals[0]) ? (vals[0] as T | null) : null;
-  };
-  // Size resolves to each run's override or the element default ('scale'
-  // included), uniform across the selection or null when mixed.
-  const sizeVals = covered.map((r): RunSize | 'scale' => r.size ?? sizeFallback);
-  const size = sizeVals.every((v) => v === sizeVals[0]) ? (sizeVals[0] ?? null) : null;
-  return {
-    bold: allBool('bold'),
-    italic: allBool('italic'),
-    underline: allBool('underline'),
-    strikethrough: allBool('strikethrough'),
-    size,
-    color: uniform((r) => r.color, el.textColor ?? null),
-  };
-}
-
 export function RichTextEditor({
   element,
   initialLabel,
