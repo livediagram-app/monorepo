@@ -46,6 +46,7 @@ export function SizeButton({
   onClick,
   onPointerEnter,
   onPointerLeave,
+  title,
   children,
 }: {
   active: boolean;
@@ -54,6 +55,9 @@ export function SizeButton({
   // preview a preset live on the canvas while the pointer is over the tile.
   onPointerEnter?: (e: React.PointerEvent) => void;
   onPointerLeave?: (e: React.PointerEvent) => void;
+  // Accessible name (+ native tooltip) for tiles whose children are purely
+  // visual (a colour swatch, an icon) and so carry no readable text.
+  title?: string;
   children: React.ReactNode;
 }) {
   // Stretches to fill its parent grid cell so the row reads as four
@@ -70,6 +74,9 @@ export function SizeButton({
       onClick={onClick}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
+      aria-pressed={active}
+      aria-label={title}
+      title={title}
       className={`${base} ${styled}`}
     >
       {children}
@@ -96,7 +103,13 @@ export function PatternButton({
     ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200'
     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
   return (
-    <button type="button" onClick={onClick} className={`${base} ${styled}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={label}
+      className={`${base} ${styled}`}
+    >
       {children}
       <span className="w-full truncate text-center text-[10px] font-medium">{label}</span>
     </button>

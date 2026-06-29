@@ -349,6 +349,7 @@ export function TabBar({
             type="button"
             onClick={() => onSelect(tab.id)}
             onDoubleClick={readOnly ? undefined : () => isActive && setEditingId(tab.id)}
+            aria-current={isActive ? 'page' : undefined}
             className="flex items-center gap-1 rounded-md py-1.5 text-sm font-medium"
           >
             {tab.locked ? <TabLockIcon /> : null}
