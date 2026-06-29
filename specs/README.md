@@ -71,6 +71,7 @@ The numeric prefix is the suggested read order (purpose → constraints → arch
 | 61  | [Public API and API tokens](61-public-api-and-tokens.md)           | Implemented: signed-in-only API tokens (gated like teams) for external callers + an HMAC requirement on X-Owner-Id to close a current owner-impersonation escalation; input hardening shipped                                                             |
 | 62  | [MCP server](62-mcp-server.md)                                     | Implemented: standalone Cloudflare Worker exposing find/read/create/update diagram tools to the user's own AI tool via MCP; OAuth 2.1 minting an lvd\_ token; inline PNG render + server-side auto-layout; the calling LLM does the thinking, not /api/ai |
 | 63  | [Panel corner docking](63-panel-docking.md)                        | Choose which corner each floating panel sits in: desktop drag with snap-to-corner guides, free drop kept where released, stacking + reflow within a corner, device-local localStorage layout                                                              |
+| 64  | [Transactional & lifecycle email](64-transactional-email.md)       | Optional Resend integration, gated on `RESEND_API_KEY`: welcome + week-1 (Explorer) + week-2 (Teams) onboarding series off the daily cron, plus transactional team-invite and account-deleted emails. Off (no sends) when the key is unset                |
 
 ## Workflow
 

@@ -1,4 +1,6 @@
 import { getClerkIdentity } from './auth/clerk';
+import { emailEnabled } from './email/client';
+import { runLifecycleSweep, welcomeOnSighting } from './email/lifecycle';
 import {
   deleteOldChangeLogEntries,
   deleteOldEvents,
@@ -49,7 +51,7 @@ async function isWriteRateLimited(env: Env, ownerId: string): Promise<boolean> {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, executionCtx?: ExecutionContext): Promise<Response> {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });
     }
@@ -77,6 +79,12 @@ export default {
     // session token (dashboard → Sessions → Customize session token →
     // `{"email": "{{user.primary_email_address}}"}`); see auth/clerk.ts.
     const clerkEmail = clerkIdentity?.email ?? null;
+    // spec/64: first authenticated sighting => sign-up. Fire-and-forget (the
+    // sighting + welcome run in the background) so it never delays the response;
+    // a no-op when RESEND_API_KEY is unset.
+    if (clerkUserId && clerkEmail && emailEnabled(env)) {
+      executionCtx?.waitUntil(welcomeOnSighting(env, clerkUserId, clerkEmail));
+    }
     // API token (spec/61): a `Bearer lvd_…` resolves to its owner — always a
     // Clerk account — via the hashed-token lookup. Only consulted when no Clerk
     // JWT verified (a token and a JWT can't both be the bearer). The resolved
@@ -177,6 +185,7 @@ export default {
       clerkUserId,
       clerkEmail,
       resolveOwner,
+      waitUntil: (promise) => executionCtx?.waitUntil(promise),
     };
     try {
       switch (segments[1]) {
@@ -254,6 +263,9 @@ export default {
         deleteOldChangeLogEntries,
       );
       scheduleSweep(ctx, env, 'events', 'rows', now - EVENTS_RETENTION_MS, deleteOldEvents);
+      // spec/64: send any due onboarding emails (welcome catch-up + week 1 / 2).
+      // No-op when RESEND_API_KEY is unset.
+      ctx.waitUntil(runLifecycleSweep(env));
       scheduleSweep(
         ctx,
         env,

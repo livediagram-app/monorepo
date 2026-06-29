@@ -90,6 +90,17 @@ export type Env = {
   // default, so OSS forks never ingest or serve analytics unless they
   // opt in.
   TELEMETRY_ENABLED?: string;
+  // Resend API key for transactional + lifecycle email (spec/64). When absent
+  // the whole email feature is inert — no sends, and the email_lifecycle table
+  // is never touched. Set via `wrangler secret put RESEND_API_KEY` for prod;
+  // drop into `apps/api/.dev.vars` for local dev (gitignored, never commit).
+  RESEND_API_KEY?: string;
+  // From identity for outbound email (optional). Defaults to
+  // "livediagram <hello@livediagram.app>". The domain must be verified in Resend.
+  RESEND_FROM?: string;
+  // Public origin used to build links in emails (optional). Defaults to
+  // "https://livediagram.app".
+  APP_BASE_URL?: string;
   // OpenAI API key for the AI assistance feature (spec/25). When absent
   // the feature is hidden entirely — GET /api/capabilities returns
   // { aiEnabled: false } and POST /api/ai returns 503. Set via

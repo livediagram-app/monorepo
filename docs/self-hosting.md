@@ -197,6 +197,23 @@ Optional knobs (all plain `[vars]` in `apps/api/wrangler.toml`, the dashboard, o
 
 The last two are the spend-DoS defence: on a public deployment they stop a third-party site from minting fresh owner ids to drain your OpenAI budget. The hosted livediagram.app sets both; a private or Clerk-less fork can leave them unset. Two further defences live alongside them: the `AI_RATE_LIMITER` binding (declared in `apps/api/wrangler.toml` as a Cloudflare rate-limit binding, 20 requests / 60 s per IP) caps how fast one client can drive the endpoint; absent binding falls through to "allow" so a self-host without the paid Cloudflare feature still works. AI is also per-user opt-in via the Settings dialog even once the key is present.
 
+## Email (optional, Resend)
+
+The api worker can send a small set of account emails via [Resend](https://resend.com) (spec/64): a welcome on first sign-in, week-1 (Explorer) and week-2 (Teams) onboarding tips off the daily cron, plus transactional team-invite and account-deleted messages. The whole feature is **off until you provide a key** — no key, no sends, and the `email_lifecycle` table is never touched. Guests never receive email (it's authenticated-only).
+
+To turn it on, verify a sending domain in Resend, then:
+
+```bash
+pnpm --filter @livediagram/api exec wrangler secret put RESEND_API_KEY
+```
+
+Optional knobs (plain `[vars]`):
+
+- `RESEND_FROM`: the From identity, e.g. `livediagram <hello@livediagram.app>` (the default). Must be on your verified domain.
+- `APP_BASE_URL`: public origin for links in emails, defaults to `https://livediagram.app`.
+
+If you enable this on a deployment that already has signed-in users, run the one-time backfill in [spec/64 §4](../specs/64-transactional-email.md) first, so existing users aren't "welcomed" on their next sign-in.
+
 ## Per-owner image gallery caps
 
 The api worker honours two optional `[vars]` that cap how much one owner can keep in the image gallery (spec/19), surfaced as a 403 `{ error: "gallery-full", reason, limit, current }` on `POST /api/images`:

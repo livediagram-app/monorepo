@@ -58,6 +58,9 @@ export async function deleteAccount(
   await env.DB.prepare('DELETE FROM custom_themes WHERE owner_id = ?').bind(ownerId).run();
   // api_tokens (spec/61): no API credential outlives the account.
   await env.DB.prepare('DELETE FROM api_tokens WHERE owner_id = ?').bind(ownerId).run();
+  // email_lifecycle (spec/64): drop the onboarding-email row so the address
+  // isn't retained and a re-signup starts the series fresh.
+  await env.DB.prepare('DELETE FROM email_lifecycle WHERE owner_id = ?').bind(ownerId).run();
   return {
     diagrams: diagramsRes.meta.changes ?? 0,
     folders: foldersRes.meta.changes ?? 0,

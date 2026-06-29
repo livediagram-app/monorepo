@@ -30,6 +30,12 @@ export type RouteContext = {
   // Hybrid identity (spec/04): the verified Clerk userId, else the
   // legacy X-Owner-Id header, else null. Resolved once in `fetch`.
   resolveOwner: () => string | null;
+  // Schedule background work that may outlive the response (spec/64 email
+  // sends). Forwards to the fetch handler's ExecutionContext.waitUntil.
+  // Optional so unit tests can build a RouteContext without a real
+  // ExecutionContext; the production `fetch` always provides it. Call sites
+  // guard with `ctx.waitUntil?.(...)`.
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 // Visitor share code carried on edit/view-link requests so a non-owner

@@ -181,6 +181,20 @@ simple = { limit = 120, period = 60 }
 # parseInt at request time. Unset, blank, "0", or non-numeric values
 # all read as "no limit".
 
+# RESEND_API_KEY + RESEND_FROM + APP_BASE_URL drive transactional &
+# lifecycle email (spec/64). All optional; an absent RESEND_API_KEY makes
+# the whole email feature inert — no sends, and the email_lifecycle table
+# is never touched, so a deployment with email off does zero extra work:
+#
+#   - RESEND_API_KEY: worker secret. Local dev: drop
+#     `RESEND_API_KEY=re_...` into `apps/api/.dev.vars` (gitignored).
+#     Production: `wrangler secret put RESEND_API_KEY`.
+#   - RESEND_FROM: optional [vars] From identity, e.g.
+#     "livediagram <hello@livediagram.app>" (the default). The domain
+#     must be verified in Resend.
+#   - APP_BASE_URL: optional [vars] public origin for links in emails.
+#     Defaults to "https://livediagram.app".
+
 # CLERK_JWKS_URL is provisioned out-of-band so the value never lands
 # in the public repo (spec/06):
 #

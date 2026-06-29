@@ -1,6 +1,8 @@
 // /api/account — account self-deletion.
 
 import { deleteAccount } from '../db';
+import { emailEnabled, sendEmail } from '../email/client';
+import { accountDeletedEmail } from '../email/templates';
 import { json, missingAuth, notFound } from '../responses';
 import type { RouteContext } from './context';
 
@@ -15,11 +17,15 @@ import type { RouteContext } from './context';
 // calling with the same Clerk id is a no-op once the rows
 // are gone.
 export async function handleAccount(ctx: RouteContext): Promise<Response> {
-  const { request, env, segments, clerkUserId } = ctx;
+  const { request, env, segments, clerkUserId, clerkEmail } = ctx;
   if (!(segments[1] === 'account' && segments.length === 2)) return notFound();
   if (request.method === 'DELETE') {
     if (!clerkUserId) return missingAuth();
     const deleted = await deleteAccount(env, clerkUserId);
+    // spec/64: a parting confirmation (best-effort, after the rows are gone).
+    if (clerkEmail && emailEnabled(env)) {
+      ctx.waitUntil?.(sendEmail(env, { to: clerkEmail, ...accountDeletedEmail(env) }));
+    }
     return json({ deleted });
   }
   return notFound();

@@ -41,6 +41,8 @@ import {
   notFound,
   signInRequired,
 } from '../responses';
+import { emailEnabled, sendEmail } from '../email/client';
+import { teamInviteEmail } from '../email/templates';
 import type { RouteContext } from './context';
 
 // Light shape check, not RFC 5322: something@something.tld. The real
@@ -233,6 +235,11 @@ export async function handleTeams(ctx: RouteContext): Promise<Response> {
       if (!email || !EMAIL_PATTERN.test(email)) return badRequest('invalid email');
       if (await teamHasEmail(env, teamId, email)) return conflict('already_member');
       const member = await addTeamMember(env, { teamId, email });
+      // spec/64: tell the invitee they've been invited, with a link to their
+      // invites page. Best-effort, in the background; no-op when email is off.
+      if (emailEnabled(env)) {
+        ctx.waitUntil?.(sendEmail(env, { to: email, ...teamInviteEmail(env, team.name) }));
+      }
       return json({ member }, { status: 201 });
     }
     return notFound();
