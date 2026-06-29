@@ -18,6 +18,7 @@ import {
   type ShareRole,
 } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
+import { useToast } from '@/hooks/ui/useToast';
 import type { Participant } from '@/lib/identity';
 
 type ShareLinksDeps = {
@@ -53,6 +54,7 @@ export function useShareLinks(deps: ShareLinksDeps) {
     diagramShareCode,
     confirmName,
   } = deps;
+  const toast = useToast();
 
   // Save the participant's name (used from the share dialog's identity
   // card). Mints the diagram id if this is the first share gesture so
@@ -91,7 +93,7 @@ export function useShareLinks(deps: ShareLinksDeps) {
         track('Diagram', 'Shared', expiryType);
       }
     } catch {
-      // Network glitch — leave state alone. A real app would toast.
+      toast.error('Could not create the share link. Try again.');
     }
   };
 
@@ -106,7 +108,7 @@ export function useShareLinks(deps: ShareLinksDeps) {
       setShareLinks((prev) => prev.map((l) => (l.code === code ? link : l)));
       track('Diagram', 'Shared', 'Extended');
     } catch {
-      // Network glitch — leave state alone. A real app would toast.
+      toast.error('Could not extend the link. Try again.');
     }
   };
 
@@ -115,7 +117,10 @@ export function useShareLinks(deps: ShareLinksDeps) {
     try {
       await apiDeleteShareLink(selfParticipant.id, diagramId, code);
     } catch {
-      // ignore — list refresh below reconciles if it actually went through.
+      // Don't optimistically drop the row when the revoke didn't land: the link
+      // still works, so leave it on screen and tell the user.
+      toast.error('Could not revoke the link. Try again.');
+      return;
     }
     // Counterpart to the Diagram/Shared emit when a link is created.
     track('Diagram', 'Removed', 'ShareLink');
@@ -145,7 +150,7 @@ export function useShareLinks(deps: ShareLinksDeps) {
       track('Diagram', 'Shared', stored ? 'PasswordSet' : 'PasswordCleared');
       return stored;
     } catch {
-      // Network glitch — leave state alone. A real app would toast.
+      toast.error('Could not update the share password. Try again.');
       return null;
     }
   };
