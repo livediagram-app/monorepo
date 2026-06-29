@@ -78,3 +78,30 @@ export async function getOwnerEmail(env: Env, ownerId: string): Promise<string |
   const email = row?.email?.trim();
   return email ? email : null;
 }
+
+// spec/64 (#4): owners who signed up at or before `cutoff`, still have ZERO
+// diagrams, and haven't yet been nudged or reached week 1. The NOT EXISTS
+// subquery is the "never drew anything" test (guest diagrams migrate in on
+// sign-up, so a real account that drew anything is excluded). Soonest-first.
+export async function dueForActivation(
+  env: Env,
+  cutoff: number,
+  limit: number,
+): Promise<LifecycleRow[]> {
+  const { results } = await env.DB.prepare(
+    `SELECT el.owner_id, el.email FROM email_lifecycle el
+     WHERE el.created_at <= ? AND el.activation_sent_at IS NULL AND el.week1_sent_at IS NULL
+       AND el.email <> ''
+       AND NOT EXISTS (SELECT 1 FROM diagrams d WHERE d.owner_id = el.owner_id)
+     ORDER BY el.created_at ASC LIMIT ?`,
+  )
+    .bind(cutoff, limit)
+    .all<{ owner_id: string; email: string }>();
+  return (results ?? []).map((r) => ({ ownerId: r.owner_id, email: r.email }));
+}
+
+export async function markActivationSent(env: Env, ownerId: string): Promise<void> {
+  await env.DB.prepare('UPDATE email_lifecycle SET activation_sent_at = ? WHERE owner_id = ?')
+    .bind(Date.now(), ownerId)
+    .run();
+}

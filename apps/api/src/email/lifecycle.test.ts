@@ -5,6 +5,8 @@ vi.mock('../db/email-lifecycle', () => ({
   recordSighting: vi.fn(),
   dueForStage: vi.fn(),
   markStageSent: vi.fn(),
+  dueForActivation: vi.fn(),
+  markActivationSent: vi.fn(),
 }));
 // Keep emailEnabled + appBaseUrl real; only the network send is mocked.
 vi.mock('./client', async (importOriginal) => ({
@@ -12,7 +14,13 @@ vi.mock('./client', async (importOriginal) => ({
   sendEmail: vi.fn(),
 }));
 
-import { dueForStage, markStageSent, recordSighting } from '../db/email-lifecycle';
+import {
+  dueForActivation,
+  dueForStage,
+  markActivationSent,
+  markStageSent,
+  recordSighting,
+} from '../db/email-lifecycle';
 import { sendEmail } from './client';
 import { runLifecycleSweep, welcomeOnSighting } from './lifecycle';
 
@@ -56,6 +64,7 @@ describe('runLifecycleSweep', () => {
 
   it('sweeps welcome, week1, week2 with widening age cutoffs', async () => {
     vi.mocked(dueForStage).mockResolvedValue([]);
+    vi.mocked(dueForActivation).mockResolvedValue([]);
     await runLifecycleSweep(env);
     const calls = vi.mocked(dueForStage).mock.calls;
     expect(calls.map((c) => c[1])).toEqual(['welcome', 'week1', 'week2']);
@@ -68,9 +77,19 @@ describe('runLifecycleSweep', () => {
     vi.mocked(dueForStage)
       .mockResolvedValueOnce([{ ownerId: 'u1', email: 'a@b.com' }])
       .mockResolvedValue([]);
+    vi.mocked(dueForActivation).mockResolvedValue([]);
     vi.mocked(sendEmail).mockResolvedValue({ sent: true });
     await runLifecycleSweep(env);
     expect(sendEmail).toHaveBeenCalledOnce();
     expect(markStageSent).toHaveBeenCalledWith(env, 'u1', 'welcome');
+  });
+
+  it('nudges + stamps a zero-diagram signup (activation, spec/64 #4)', async () => {
+    vi.mocked(dueForStage).mockResolvedValue([]);
+    vi.mocked(dueForActivation).mockResolvedValue([{ ownerId: 'u2', email: 'c@d.com' }]);
+    vi.mocked(sendEmail).mockResolvedValue({ sent: true });
+    await runLifecycleSweep(env);
+    expect(sendEmail).toHaveBeenCalledOnce();
+    expect(markActivationSent).toHaveBeenCalledWith(env, 'u2');
   });
 });

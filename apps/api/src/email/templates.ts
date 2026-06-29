@@ -284,3 +284,25 @@ export function tokenExpiringEmail(
     }),
   };
 }
+
+// spec/64 (#4): a gentle nudge for someone who signed up but hasn't created a
+// diagram yet (fires once, ~3 days in). Onboarding, not opt-out.
+export function activationEmail(env: Env): RenderedEmail {
+  const base = appBaseUrl(env);
+  return {
+    subject: 'Your canvas is waiting',
+    html: shell({
+      heading: 'Ready when you are',
+      intro:
+        'You signed up for livediagram but haven’t made a diagram yet. It takes about thirty seconds to get going:',
+      points: [
+        'Open a blank canvas and drop a shape, or start from a template (flowchart, mind map, kanban and more).',
+        'Double-click to type, drag from an edge to connect, and it all autosaves as you go.',
+        'Pick a theme for an instant look you can change any time.',
+      ],
+      outro: 'No pressure: the canvas is free and always here.',
+      ctaText: 'Make your first diagram',
+      ctaHref: `${base}/new`,
+    }),
+  };
+}

@@ -3,16 +3,25 @@
 // welcome (immediate) and the daily cron sweep (welcome catch-up + week 1 / 2).
 
 import {
+  dueForActivation,
   dueForStage,
+  markActivationSent,
   markStageSent,
   recordSighting,
   type LifecycleStage,
 } from '../db/email-lifecycle';
 import type { Env } from '../types';
 import { emailEnabled, sendEmail } from './client';
-import { week1Email, week2Email, welcomeEmail, type RenderedEmail } from './templates';
+import {
+  activationEmail,
+  week1Email,
+  week2Email,
+  welcomeEmail,
+  type RenderedEmail,
+} from './templates';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const ACTIVATION_DELAY_MS = 3 * 24 * 60 * 60 * 1000; // nudge zero-diagram signups ~day 3
 const SWEEP_LIMIT = 100; // bounded per daily run, oldest-first
 
 const STAGE_BUILDER: Record<LifecycleStage, (env: Env) => RenderedEmail> = {
@@ -38,6 +47,10 @@ export async function runLifecycleSweep(env: Env): Promise<void> {
   if (!emailEnabled(env)) return;
   const now = Date.now();
   await sweepStage(env, 'welcome', now);
+  // Activation nudge (spec/64 #4): zero-diagram signups ~3 days in. Runs before
+  // week 1 so an empty account hears this first; dueForActivation excludes rows
+  // that already reached week 1.
+  await sweepActivation(env, now - ACTIVATION_DELAY_MS);
   await sweepStage(env, 'week1', now - WEEK_MS);
   await sweepStage(env, 'week2', now - 2 * WEEK_MS);
 }
@@ -47,5 +60,13 @@ async function sweepStage(env: Env, stage: LifecycleStage, cutoff: number): Prom
   for (const row of rows) {
     const { sent } = await sendEmail(env, { to: row.email, ...STAGE_BUILDER[stage](env) });
     if (sent) await markStageSent(env, row.ownerId, stage);
+  }
+}
+
+async function sweepActivation(env: Env, cutoff: number): Promise<void> {
+  const rows = await dueForActivation(env, cutoff, SWEEP_LIMIT);
+  for (const row of rows) {
+    const { sent } = await sendEmail(env, { to: row.email, ...activationEmail(env) });
+    if (sent) await markActivationSent(env, row.ownerId);
   }
 }
