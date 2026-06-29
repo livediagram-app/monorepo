@@ -15,14 +15,20 @@ export function SiteHeader({ productNav }: { productNav?: ProductNavKey }) {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-slate-50/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        {/* gap-* guarantees breathing room between the left cluster and the CTA
+            even when justify-between collapses to zero on a narrow phone (where
+            Brand + the apps-menu dropdown + CTA otherwise sit flush). Mobile
+            also trims the side padding to reclaim width, and the CTA is shrink-0
+            so it never squishes. The dropdown drops its text label on mobile
+            (see ProductNav) so the three never crowd. */}
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-4 sm:gap-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <Brand href="/" size="md" />
             {productNav ? <ProductNav current={productNav} showOnMobile /> : null}
           </div>
           <a
             href="/new"
-            className="inline-flex items-center rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            className="inline-flex shrink-0 items-center rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >
             Start drawing
           </a>

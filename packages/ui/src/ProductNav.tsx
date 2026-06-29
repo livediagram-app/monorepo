@@ -147,7 +147,11 @@ export function ProductNav({
         >
           <path d="M2.5 5h11M2.5 8h11M2.5 11h11" />
         </svg>
-        {active.label}
+        {/* Hide the section label on phones (the hamburger + chevron still read
+            as a menu, and the aria-label carries the current section) so the
+            header's Brand + menu + "Start drawing" CTA stop crowding each other
+            on a narrow screen. The label returns at sm+. */}
+        <span className="hidden sm:inline">{active.label}</span>
         <svg
           viewBox="0 0 16 16"
           fill="none"
