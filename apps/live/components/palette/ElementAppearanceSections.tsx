@@ -1,0 +1,548 @@
+'use client';
+
+// Right-click context menu for the editor, lifted out of
+// editor-page.tsx. Renders one of two menus depending on what was
+// clicked: a single-element menu (link / layer order / note /
+// comment) or a whole-selection 'multi' menu. The canvas (empty-space)
+// right-click opens the tab menu with its canvas sections folded in,
+// rendered by the TabBar — not here. Duplicate lives in the selection
+// toolbar (SelectionPopover), not here.
+//
+// Purely presentational: every action is a callback prop, and each
+// item closes the menu after firing (the close-then-act pattern the
+// inline version used). The page owns the open/closed state + the
+// handlers; this component only decides which items to show.
+
+import { onMouseHover } from '@/components/primitives/hover-preview';
+import {
+  animLoops,
+  defaultFillColor,
+  defaultStrokeColor,
+  defaultTextColor,
+  isBoxed,
+  isChartShape,
+  isLineShape,
+  isProgressShape,
+  isRailShape,
+  isRatingShape,
+  LINE_DEFAULT_SERIES,
+  PIE_DEFAULT_SLICES,
+  PIE_LOOPING_ANIMS,
+  PROGRESS_LOOPING_ANIMS,
+  RAIL_DEFAULT_POINTS,
+  RATING_DEFAULT,
+  RATING_LOOPING_ANIMS,
+  supportsBorderControls,
+  supportsBorderRadius,
+  supportsColours,
+  type AnimationSpeed,
+  type ArrowFlow,
+  type BorderRadius,
+  type BorderStroke,
+  type BorderStyle,
+  type BoxedElement,
+  type ElementAnimation,
+  type IconAnimation,
+} from '@livediagram/diagram';
+import { ContextMenuDivider } from '@/components/palette/ContextMenu';
+import { SizeButton } from '@/components/palette/palette-controls';
+import {
+  BorderRadiusIcon,
+  BorderStrokeIcon,
+  BorderStyleIcon,
+} from '@/components/palette/palette-icons';
+import {
+  BorderGlyph,
+  IconCategoryGlyph,
+  AnimationMenuGlyph,
+  ProgressMenuGlyph,
+  PresetsMenuGlyph,
+  PaletteMenuIcon,
+  RemoveIconGlyph,
+} from '@/components/palette/context-menu-icons';
+import {
+  MenuAccordionSection,
+  MenuActionButton,
+  MenuGroupSeparator,
+  MenuTile,
+} from '@/components/primitives/PortalMenu';
+
+import {
+  AnimationTiles,
+  FlowTiles,
+  IconAnimationTiles,
+  LegendPositionTiles,
+} from '@/components/palette/context-menu-tiles';
+import { ArrowPresets, ShapePresets } from '@/components/palette/StylePresets';
+import {
+  BorderGrid,
+  ChartMenuGlyph,
+  ColourRow,
+  DataMenuGlyph,
+  IconPositionGrid,
+  LineDataSummary,
+  MarkersMenuGlyph,
+  MarkerTiles,
+  PieAnimTiles,
+  PieDataEditor,
+  ProgressAnimTiles,
+  ProgressRow,
+  RailPointsRow,
+  RatingAnimTiles,
+  RatingMenuGlyph,
+  RatingPickerRow,
+} from '@/components/palette/context-menu-rows';
+import type { EditorContextMenuProps } from './EditorContextMenu.types';
+import { useContextMenuScaffold } from './useContextMenuScaffold';
+
+import { BORDER_RADII, BORDER_STROKES, BORDER_STYLES } from './context-menu-constants';
+
+// Cursor position + which menu to show. `element` carries the clicked
+// element id; `canvas` is the empty-canvas right-click. Exported so
+
+type Scaffold = ReturnType<typeof useContextMenuScaffold>;
+
+// The element menu's appearance group: type-specific style sections — Presets,
+// Progress / Rail / Rating, Animation, Colours, Border, Data / Chart. Derives
+// its own type flags off `target` and shares the accordion + colour
+// scaffolding via props. Split out of EditorContextMenu.
+type ElementAppearanceSectionsProps = {
+  props: EditorContextMenuProps;
+  target: EditorContextMenuProps['elements'][number];
+  onClose: () => void;
+  sectionProps: Scaffold['sectionProps'];
+  colorProps: Scaffold['colorProps'];
+  textColorHandlers: Scaffold['textColorHandlers'];
+  fillColorHandlers: Scaffold['fillColorHandlers'];
+  strokeColorHandlers: Scaffold['strokeColorHandlers'];
+};
+
+export function ElementAppearanceSections({
+  props,
+  target,
+  onClose,
+  sectionProps,
+  colorProps,
+  textColorHandlers,
+  fillColorHandlers,
+  strokeColorHandlers,
+}: ElementAppearanceSectionsProps) {
+  const boxed = isBoxed(target);
+  const isIcon = target.type === 'shape' && target.shape === 'icon';
+  // Border + colour controls apply to shapes / freehand / tables, including
+  // standalone icons — their wrapper paints fillColor as the box background
+  // and strokeColor as the border just like a square (the icon glyph sits on
+  // top). A brand icon's glyph stays fixed-colour, but its box background /
+  // border are the user's to set, so we offer the same controls.
+  const borderable = supportsBorderControls(target);
+  const borderStrokeVal: BorderStroke =
+    (target as { strokeWidth?: BorderStroke }).strokeWidth ??
+    (target.type === 'table' ? 'thin' : 'medium');
+  const borderStyleVal: BorderStyle =
+    (target as { strokeStyle?: BorderStyle }).strokeStyle ?? 'solid';
+  const borderRadiusVal: BorderRadius =
+    (target as { borderRadius?: BorderRadius }).borderRadius ?? 'sm';
+  // A regular shape carrying an inline icon (drag-an-icon-onto-it
+  // feature, spec/09) gets a "Remove icon" entry; the dedicated 'icon'
+  // shape is its own glyph and excluded.
+  const hasInlineIcon =
+    target.type === 'shape' && target.shape !== 'icon' && target.iconId !== undefined;
+  const isProgress = target.type === 'shape' && isProgressShape(target.shape);
+  const isRail = target.type === 'shape' && isRailShape(target.shape);
+  const isRating = target.type === 'shape' && isRatingShape(target.shape);
+  const isChart = target.type === 'shape' && isChartShape(target.shape);
+  const isLine = target.type === 'shape' && isLineShape(target.shape);
+  // The shape-only sections below (Marker / Progress / Rail / Rating / Data)
+  // all render under a `target.type === 'shape'` guard, so this is non-null
+  // wherever they read it — `shapeTarget?.field ?? default` reads the shape
+  // fields without an `as ShapeElement` assertion at each site.
+  const shapeTarget = target.type === 'shape' ? target : null;
+  // The appearance group's divider shows whenever any appearance section will
+  // render — boxed elements (shapes / freehand / tables / images) and arrows.
+  const showAppearanceGroup = boxed || target.type === 'arrow';
+  return (
+    <>
+      {showAppearanceGroup ? <MenuGroupSeparator /> : null}
+      {/* Presets (spec/48) — pinned at the top of the appearance group (above
+            Animation): one-click theme-colour + border looks for a shape, plus
+            a reset to the theme default. Regular shapes only — the dedicated
+            icon glyph has no fill/border to preset, and the pie chart styles
+            per-slice via its Data category, so both are excluded. */}
+      {target.type === 'shape' && !isIcon && !isChart ? (
+        <MenuAccordionSection
+          title="Presets"
+          icon={<PresetsMenuGlyph />}
+          {...sectionProps('presets')}
+        >
+          <ShapePresets
+            shape={target.shape}
+            colorPresets={props.shapeColorPresets}
+            current={{
+              fillColor: (target as { fillColor?: string }).fillColor,
+              strokeColor: (target as { strokeColor?: string }).strokeColor,
+              textColor: (target as { textColor?: string }).textColor,
+              colorPreset: (target as { colorPreset?: string }).colorPreset,
+              strokeWidth: (target as { strokeWidth?: BorderStroke }).strokeWidth,
+              strokeStyle: (target as { strokeStyle?: BorderStyle }).strokeStyle,
+              borderRadius: (target as { borderRadius?: BorderRadius }).borderRadius,
+            }}
+            onApplyColor={(p) => props.onApplyShapeColorPreset(p)}
+            onApplyBorder={(p) => props.onApplyShapeBorderPreset(p)}
+            onPreviewColor={(p) => props.onPreviewShapeColorPreset(p)}
+            onPreviewBorder={(p) => props.onPreviewShapeBorderPreset(p)}
+            onPreviewEnd={props.onPreviewStyleEnd}
+            onReset={() => {
+              props.onResetShapeStyle();
+              onClose();
+            }}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Presets (spec/48) — one-click line looks for an arrow (pattern /
+            thickness / optional flow animation, e.g. a dashed animated arrow),
+            pinned above the arrow Animation. Arrows only. */}
+      {target.type === 'arrow' ? (
+        <MenuAccordionSection
+          title="Presets"
+          icon={<PresetsMenuGlyph />}
+          {...sectionProps('presets')}
+        >
+          <ArrowPresets
+            current={{ strokeStyle: target.strokeStyle, flow: target.flow }}
+            onApply={(p) => props.onApplyArrowPreset(p)}
+            onPreview={(p) => props.onPreviewArrowPreset(p)}
+            onPreviewEnd={props.onPreviewStyleEnd}
+            onReset={() => {
+              props.onResetArrowStyle();
+              onClose();
+            }}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Progress (spec/46) — the percentage + how the fill animates. Only
+            for progress bars / rings. */}
+      {isProgress ? (
+        <MenuAccordionSection
+          title="Progress"
+          icon={<ProgressMenuGlyph />}
+          {...sectionProps('progress')}
+        >
+          <ProgressRow value={shapeTarget?.progress ?? 50} onChange={props.onSetProgress} />
+          <ProgressAnimTiles
+            anim={shapeTarget?.progressAnim ?? null}
+            speed={shapeTarget?.progressAnimSpeed ?? 'normal'}
+            repeat={animLoops(
+              shapeTarget?.progressAnim,
+              shapeTarget?.progressAnimRepeat,
+              PROGRESS_LOOPING_ANIMS,
+            )}
+            onSet={props.onSetProgressAnim}
+            onSetSpeed={props.onSetProgressAnimSpeed}
+            onSetRepeat={props.onSetProgressAnimRepeat}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Timeline (spec/51) — how many points sit on the rail. The right-end
+            "+" on the canvas adds one too; this is the precise control. */}
+      {isRail ? (
+        <MenuAccordionSection
+          title="Timeline"
+          icon={<ProgressMenuGlyph />}
+          {...sectionProps('timeline')}
+        >
+          <RailPointsRow
+            value={shapeTarget?.railCount ?? RAIL_DEFAULT_POINTS}
+            onChange={props.onSetRailCount}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Rating (spec/52) — the star score + a star-specific animation. */}
+      {isRating ? (
+        <MenuAccordionSection title="Rating" icon={<RatingMenuGlyph />} {...sectionProps('rating')}>
+          <RatingPickerRow
+            value={shapeTarget?.rating ?? RATING_DEFAULT}
+            onChange={props.onSetRating}
+          />
+          <RatingAnimTiles
+            anim={shapeTarget?.ratingAnim ?? null}
+            speed={shapeTarget?.ratingAnimSpeed ?? 'normal'}
+            repeat={animLoops(
+              shapeTarget?.ratingAnim,
+              shapeTarget?.ratingAnimRepeat,
+              RATING_LOOPING_ANIMS,
+            )}
+            onSet={props.onSetRatingAnim}
+            onSetSpeed={props.onSetRatingAnimSpeed}
+            onSetRepeat={props.onSetRatingAnimRepeat}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Data (spec/53) — the chart's data. Pie / bar edit a single row of
+            label+value inline; the line chart's 2-D grid is too wide for the
+            menu, so it summarises the series + opens a modal to edit. */}
+      {isChart ? (
+        <MenuAccordionSection title="Data" icon={<DataMenuGlyph />} {...sectionProps('pie-data')}>
+          {isLine ? (
+            <LineDataSummary
+              series={
+                shapeTarget?.lineSeries ??
+                LINE_DEFAULT_SERIES.map((s) => ({ ...s, values: [...s.values] }))
+              }
+              onEdit={() => target.type === 'shape' && props.onEditLineData(target.id)}
+            />
+          ) : (
+            <PieDataEditor
+              slices={shapeTarget?.pieSlices ?? PIE_DEFAULT_SLICES.map((s) => ({ ...s }))}
+              onChange={props.onSetPieData}
+            />
+          )}
+        </MenuAccordionSection>
+      ) : null}
+      {/* Chart (spec/53) — display options. Legend placement: Off + 4 sides. */}
+      {isChart ? (
+        <MenuAccordionSection title="Chart" icon={<ChartMenuGlyph />} {...sectionProps('chart')}>
+          <p className="px-3 pt-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            Legend
+          </p>
+          <LegendPositionTiles
+            position={shapeTarget?.chartLegendPosition ?? 'right'}
+            show={shapeTarget?.chartLegend !== false}
+            onSetOff={() => props.onSetChartLegend(false)}
+            onSetPosition={props.onSetChartLegendPosition}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Animation (spec/09) — a looping attention/status effect on the
+            element. None clears it. Pie charts swap the boxed-element set for
+            their own slice animations (the chart family's set). */}
+      {boxed ? (
+        <MenuAccordionSection
+          title="Animation"
+          icon={<AnimationMenuGlyph />}
+          {...sectionProps('animation')}
+        >
+          {isChart ? (
+            <PieAnimTiles
+              anim={shapeTarget?.pieAnim ?? null}
+              speed={shapeTarget?.pieAnimSpeed ?? 'normal'}
+              repeat={animLoops(
+                shapeTarget?.pieAnim,
+                shapeTarget?.pieAnimRepeat,
+                PIE_LOOPING_ANIMS,
+              )}
+              onSet={props.onSetPieAnim}
+              onSetSpeed={props.onSetPieAnimSpeed}
+              onSetRepeat={props.onSetPieAnimRepeat}
+            />
+          ) : isIcon ? (
+            // Icons get their own glyph-motion set (spin / beat / pulse / …)
+            // instead of the boxed-element animation set.
+            <IconAnimationTiles
+              animation={(target as { iconAnimation?: IconAnimation }).iconAnimation ?? null}
+              speed={
+                (target as { iconAnimationSpeed?: AnimationSpeed }).iconAnimationSpeed ?? 'normal'
+              }
+              onSet={props.onSetIconAnimation}
+              onSetSpeed={props.onSetIconAnimationSpeed}
+              onPreview={props.onPreviewIconAnimation}
+              onPreviewEnd={props.onAnimationPreviewEnd}
+            />
+          ) : (
+            <AnimationTiles
+              animation={(target as { animation?: ElementAnimation }).animation ?? null}
+              speed={(target as { animationSpeed?: AnimationSpeed }).animationSpeed ?? 'normal'}
+              onSet={props.onSetAnimation}
+              onSetSpeed={props.onSetAnimationSpeed}
+              onPreview={props.onPreviewAnimation}
+              onPreviewEnd={props.onAnimationPreviewEnd}
+            />
+          )}
+        </MenuAccordionSection>
+      ) : null}
+      {/* Animation (spec/09) — animate an arrow to show direction: marching
+            dashes, a travelling dot, beads, or an in-place pulse / grow / glow.
+            None clears it. (Labelled "Animation" to match the boxed-element
+            control; the field is still `flow`.) */}
+      {target.type === 'arrow' ? (
+        <MenuAccordionSection
+          title="Animation"
+          icon={<AnimationMenuGlyph />}
+          {...sectionProps('flow')}
+        >
+          <FlowTiles
+            flow={(target as { flow?: ArrowFlow }).flow ?? null}
+            speed={(target as { flowSpeed?: AnimationSpeed }).flowSpeed ?? 'normal'}
+            onSet={props.onSetArrowFlow}
+            onSetSpeed={props.onSetFlowSpeed}
+            onPreview={props.onPreviewArrowFlow}
+            onPreviewEnd={props.onAnimationPreviewEnd}
+          />
+        </MenuAccordionSection>
+      ) : null}
+      {/* Colours — text / background / border swatches. Boxed elements that
+            support colours (excludes images). Icons included: Text tints a
+            line-art glyph, Background / Border paint the icon's box. Pie charts
+            colour per-slice via their Data category, so they're excluded. */}
+      {boxed && supportsColours(target) && !isChart ? (
+        <>
+          <MenuAccordionSection
+            title="Colours"
+            icon={<PaletteMenuIcon />}
+            {...sectionProps('colours')}
+          >
+            <ColourRow
+              label="Text"
+              value={
+                (target as { textColor?: string }).textColor ??
+                defaultTextColor(target as BoxedElement)
+              }
+              {...textColorHandlers}
+              {...colorProps('text')}
+              presets={props.presetColors}
+            />
+            {defaultFillColor(target as BoxedElement) !== 'transparent' ? (
+              <ColourRow
+                label="Background"
+                value={
+                  (target as { fillColor?: string }).fillColor ??
+                  defaultFillColor(target as BoxedElement)
+                }
+                {...fillColorHandlers}
+                {...colorProps('background')}
+                presets={props.presetColors}
+              />
+            ) : null}
+            {defaultStrokeColor(target as BoxedElement) !== 'transparent' ? (
+              <ColourRow
+                label="Border"
+                value={
+                  (target as { strokeColor?: string }).strokeColor ??
+                  defaultStrokeColor(target as BoxedElement)
+                }
+                {...strokeColorHandlers}
+                {...colorProps('border')}
+                presets={props.presetColors}
+              />
+            ) : null}
+            <div className="px-2 pb-1 pt-1.5">
+              <MenuActionButton
+                label="Reset to theme"
+                onClick={() => {
+                  props.onResetColors();
+                  onClose();
+                }}
+              />
+            </div>
+          </MenuAccordionSection>
+        </>
+      ) : null}
+      {/* Border — strength / pattern / radius. Pie charts have no box border
+            to style, so they're excluded. */}
+      {borderable && !isChart ? (
+        <>
+          <MenuAccordionSection title="Border" icon={<BorderGlyph />} {...sectionProps('border')}>
+            <div className="px-2 py-1">
+              <BorderGrid label="Strength" cols={5}>
+                {BORDER_STROKES.map((v) => (
+                  <SizeButton
+                    key={v}
+                    active={borderStrokeVal === v}
+                    onClick={() => props.onCommitBorderStroke(v)}
+                    onPointerEnter={onMouseHover(() => props.onPreviewBorderStroke(v))}
+                    onPointerLeave={onMouseHover(props.onPreviewStyleEnd)}
+                  >
+                    <BorderStrokeIcon value={v} />
+                  </SizeButton>
+                ))}
+              </BorderGrid>
+              <BorderGrid label="Pattern" cols={3}>
+                {BORDER_STYLES.map((v) => (
+                  <SizeButton
+                    key={v}
+                    active={borderStyleVal === v}
+                    onClick={() => props.onCommitBorderStyle(v)}
+                    onPointerEnter={onMouseHover(() => props.onPreviewBorderStyle(v))}
+                    onPointerLeave={onMouseHover(props.onPreviewStyleEnd)}
+                  >
+                    <BorderStyleIcon value={v} />
+                  </SizeButton>
+                ))}
+              </BorderGrid>
+              {supportsBorderRadius(target) ? (
+                <BorderGrid label="Radius" cols={5}>
+                  {BORDER_RADII.map((v) => (
+                    <SizeButton
+                      key={v}
+                      active={borderRadiusVal === v}
+                      onClick={() => props.onCommitBorderRadius(v)}
+                      onPointerEnter={onMouseHover(() => props.onPreviewBorderRadius(v))}
+                      onPointerLeave={onMouseHover(props.onPreviewStyleEnd)}
+                    >
+                      <BorderRadiusIcon value={v} />
+                    </SizeButton>
+                  ))}
+                </BorderGrid>
+              ) : null}
+            </div>
+          </MenuAccordionSection>
+        </>
+      ) : null}
+      {/* Icon — re-place or remove a shape's inline icon. Sits directly
+            above Markers (both are shape-content controls); the Icon position
+            grid here is now the only way to move the icon, since drag-to-
+            reposition was removed. */}
+      {hasInlineIcon ? (
+        <>
+          <MenuGroupSeparator />
+          <MenuAccordionSection title="Icon" icon={<IconCategoryGlyph />} {...sectionProps('icon')}>
+            <p className="px-3 pb-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Icon position
+            </p>
+            <IconPositionGrid
+              current={(target as { iconPosition?: string }).iconPosition ?? 'left'}
+              onPick={(pos) =>
+                props.onSetIconPosition(
+                  target.id,
+                  (target as { iconId?: string }).iconId ?? '',
+                  pos,
+                )
+              }
+            />
+            <ContextMenuDivider />
+            <div className="px-2 py-1.5">
+              <MenuTile
+                icon={<RemoveIconGlyph />}
+                label="Remove icon"
+                onClick={() => {
+                  props.onRemoveIcon(target.id);
+                  onClose();
+                }}
+              />
+            </div>
+          </MenuAccordionSection>
+        </>
+      ) : null}
+      {/* ── Markers group (spec/49): its own band between Border and the
+            content / collaborate groups. Regular shapes only — the self-drawing
+            shapes (progress / rail / rating) have no label slot for a marker. ── */}
+      {target.type === 'shape' && !isProgress && !isRail && !isRating && !isChart ? (
+        <>
+          <MenuGroupSeparator />
+          <MenuAccordionSection
+            title="Markers"
+            icon={<MarkersMenuGlyph />}
+            {...sectionProps('markers')}
+          >
+            <MarkerTiles
+              marker={shapeTarget?.marker ?? null}
+              size={shapeTarget?.markerSize ?? 'scale'}
+              onSet={props.onSetMarker}
+              onSetSize={props.onSetMarkerSize}
+            />
+          </MenuAccordionSection>
+        </>
+      ) : null}
+      {/* ── Content group: Line / Pointer / Text / Icon / Image / Table / Link ── */}
+    </>
+  );
+}
