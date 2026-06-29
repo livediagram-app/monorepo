@@ -32,6 +32,7 @@ import { AnimationTiles, FlowTiles } from '@/components/palette/context-menu-til
 import { BorderGrid, ColourRow, TextSizeTiles } from '@/components/palette/context-menu-rows';
 import { BORDER_STROKES, BORDER_STYLES } from './context-menu-constants';
 import type { EditorContextMenuProps } from './EditorContextMenu.types';
+import { ArrowPresetsSection, ShapePresetsSection, shapeSupportsPresets } from './PresetSections';
 import { useContextMenuScaffold } from './useContextMenuScaffold';
 
 type MultiSelectionContextMenuProps = {
@@ -73,6 +74,10 @@ export function MultiSelectionContextMenu({
         const sel = props.selectionElements;
         const boxedSel = sel.filter(isBoxed);
         const arrowSel = sel.filter((el) => el.type === 'arrow');
+        // Presets (spec/48) apply selection-wide: a shape preset to every
+        // preset-eligible shape, an arrow preset to every arrow. The
+        // active-tile highlight reads off the first matching member.
+        const presetShapeSrc = sel.find(shapeSupportsPresets);
         const colourable = sel.some((el) => supportsColours(el));
         const borderableSel = sel.some((el) => supportsBorderControls(el));
         const textSrc = boxedSel[0] ?? arrowSel[0];
@@ -101,6 +106,31 @@ export function MultiSelectionContextMenu({
         const bothAnimated = boxedSel.length > 0 && !!arrowSrc;
         return (
           <>
+            {/* Presets (spec/48) — pinned at the top of the appearance group,
+                  same as the single-element menu; applies to every matching
+                  member of the selection. */}
+            {presetShapeSrc ? (
+              <ShapePresetsSection
+                shape={presetShapeSrc.shape}
+                current={{
+                  fillColor: presetShapeSrc.fillColor,
+                  strokeColor: presetShapeSrc.strokeColor,
+                  textColor: presetShapeSrc.textColor,
+                  colorPreset: presetShapeSrc.colorPreset,
+                }}
+                props={props}
+                accordion={sectionProps('m-shape-presets')}
+                onClose={onClose}
+              />
+            ) : null}
+            {arrowSrc ? (
+              <ArrowPresetsSection
+                current={{ strokeStyle: arrowSrc.strokeStyle, flow: arrowSrc.flow }}
+                props={props}
+                accordion={sectionProps('m-arrow-presets')}
+                onClose={onClose}
+              />
+            ) : null}
             {/* Animation (spec/09) — applies to every boxed member of the
                   selection. */}
             {boxedSel.length ? (

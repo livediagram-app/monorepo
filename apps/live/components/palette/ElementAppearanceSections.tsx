@@ -42,7 +42,6 @@ import {
 import {
   BorderGlyph,
   IconCategoryGlyph,
-  PresetsMenuGlyph,
   PaletteMenuIcon,
   RemoveIconGlyph,
 } from '@/components/palette/context-menu-icons';
@@ -54,7 +53,11 @@ import {
 } from '@/components/primitives/PortalMenu';
 
 import {} from '@/components/palette/context-menu-tiles';
-import { ArrowPresets, ShapePresets } from '@/components/palette/StylePresets';
+import {
+  ArrowPresetsSection,
+  ShapePresetsSection,
+  shapeSupportsPresets,
+} from '@/components/palette/PresetSections';
 import {
   BorderGrid,
   ColourRow,
@@ -132,55 +135,30 @@ export function ElementAppearanceSections({
     <>
       {showAppearanceGroup ? <MenuGroupSeparator /> : null}
       {/* Presets (spec/48) — pinned at the top of the appearance group (above
-            Animation): one-click theme-colour + border looks for a shape, plus
-            a reset to the theme default. Regular shapes only — the dedicated
-            icon glyph has no fill/border to preset, and the pie chart styles
-            per-slice via its Data category, so both are excluded. */}
-      {target.type === 'shape' && !isIcon && !isChart ? (
-        <MenuAccordionSection
-          title="Presets"
-          icon={<PresetsMenuGlyph />}
-          {...sectionProps('presets')}
-        >
-          <ShapePresets
-            shape={target.shape}
-            colorPresets={props.shapeColorPresets}
-            current={{
-              fillColor: (target as { fillColor?: string }).fillColor,
-              strokeColor: (target as { strokeColor?: string }).strokeColor,
-              textColor: (target as { textColor?: string }).textColor,
-              colorPreset: (target as { colorPreset?: string }).colorPreset,
-            }}
-            onApplyColor={(p) => props.onApplyShapeColorPreset(p)}
-            onPreviewColor={(p) => props.onPreviewShapeColorPreset(p)}
-            onPreviewEnd={props.onPreviewStyleEnd}
-            onReset={() => {
-              props.onResetShapeStyle();
-              onClose();
-            }}
-          />
-        </MenuAccordionSection>
+            Animation). Regular shapes only (icon glyph / charts excluded, see
+            shapeSupportsPresets); arrows get their own line-look presets. Both
+            share the PresetSections components with the multi-selection menu. */}
+      {shapeSupportsPresets(target) ? (
+        <ShapePresetsSection
+          shape={target.shape}
+          current={{
+            fillColor: target.fillColor,
+            strokeColor: target.strokeColor,
+            textColor: target.textColor,
+            colorPreset: target.colorPreset,
+          }}
+          props={props}
+          accordion={sectionProps('presets')}
+          onClose={onClose}
+        />
       ) : null}
-      {/* Presets (spec/48) — one-click line looks for an arrow (pattern /
-            thickness / optional flow animation, e.g. a dashed animated arrow),
-            pinned above the arrow Animation. Arrows only. */}
       {target.type === 'arrow' ? (
-        <MenuAccordionSection
-          title="Presets"
-          icon={<PresetsMenuGlyph />}
-          {...sectionProps('presets')}
-        >
-          <ArrowPresets
-            current={{ strokeStyle: target.strokeStyle, flow: target.flow }}
-            onApply={(p) => props.onApplyArrowPreset(p)}
-            onPreview={(p) => props.onPreviewArrowPreset(p)}
-            onPreviewEnd={props.onPreviewStyleEnd}
-            onReset={() => {
-              props.onResetArrowStyle();
-              onClose();
-            }}
-          />
-        </MenuAccordionSection>
+        <ArrowPresetsSection
+          current={{ strokeStyle: target.strokeStyle, flow: target.flow }}
+          props={props}
+          accordion={sectionProps('presets')}
+          onClose={onClose}
+        />
       ) : null}
       <ElementDataSections
         props={props}

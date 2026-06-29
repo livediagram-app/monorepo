@@ -7,9 +7,13 @@ hand. A **Presets** category sits at the top of the appearance group (above
 
 ## Shapes
 
-When a single **shape** element is right-clicked, the menu shows a **Presets**
-category with a single row of one-click looks, plus a reset. The dedicated
-**icon** glyph is excluded — it has no fill / border to preset:
+When a **shape** element is right-clicked — on its own, or as part of a
+multi-selection that contains one or more shapes — the menu shows a **Presets**
+category with a single row of one-click looks, plus a reset. In a
+multi-selection the chosen preset (or reset) applies to **every** selected
+shape at once, in a single history step; the active-tile highlight reads off
+the first selected shape. The dedicated **icon** glyph is excluded — it has no
+fill / border to preset:
 
 - **Style presets** — twelve one-click looks derived from the active theme.
   Each preset is a _complete_ style: it sets the shape's fill, border (stroke)
@@ -66,17 +70,25 @@ must not land a history step per pixel), so it does not hover-preview.
 
 ## Arrows
 
-When a single **arrow** is right-clicked, the **Presets** category offers
-eight one-click arrow styles that combine line pattern (solid / dashed /
-dotted), thickness and an optional flow animation (e.g. a dashed animated
-arrow, a travelling-dot arrow), plus **Reset to default**. Reset clears the
-arrow's line-pattern / thickness / animation overrides.
+When an **arrow** is right-clicked — on its own, or within a multi-selection
+that contains one or more arrows — the **Presets** category offers eight
+one-click arrow styles that combine line pattern (solid / dashed / dotted),
+thickness and an optional flow animation (e.g. a dashed animated arrow, a
+travelling-dot arrow), plus **Reset to default**. Reset clears the arrow's
+line-pattern / thickness / animation overrides. In a multi-selection the preset
+applies to every selected arrow at once.
 
 ## Implementation notes
 
-- The category renders only in the single-element context menu, only for the
-  matching element type (shape vs arrow). It is not offered in the
-  multi-selection menu.
+- The category renders in both the single-element context menu and the
+  multi-selection menu, for the matching element type (shape vs arrow). The
+  `ShapePresetsSection` / `ArrowPresetsSection` components in
+  `apps/live/components/palette/PresetSections.tsx` are shared by both menus so
+  there is one implementation; the multi menu surfaces a shape section when the
+  selection holds any preset-eligible shape and an arrow section when it holds
+  any arrow, and the apply / reset handlers are already selection-wide
+  (`applyShapeColorPresetSelected` / `applyArrowPresetSelected` walk every
+  selected element id).
 - Colour presets are theme-derived via `shapeColorPresets(theme)` in
   `apps/live/lib/themes.ts` (reusing the existing `tint` / `shade` /
   `isLightColor` colour helpers), so they always track the active theme like
