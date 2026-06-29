@@ -136,8 +136,13 @@ export function CardView({
 
 const cardShell =
   'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500/50';
+// Fixed height (not an aspect ratio): every diagram's SVG has a
+// different intrinsic shape, so an aspect-ratio box would resolve to a
+// different height per card. A fixed-height letterbox keeps every
+// preview — and therefore every card — the same height; the snapshot
+// sits centred via object-contain.
 const previewArea =
-  'flex aspect-[16/10] w-full items-center justify-center border-b border-slate-100 bg-slate-50/70 dark:border-slate-700/60 dark:bg-slate-900/30';
+  'flex h-36 w-full items-center justify-center border-b border-slate-100 bg-slate-50/70 dark:border-slate-700/60 dark:bg-slate-900/30';
 
 function DiagramCard({
   diagram,
