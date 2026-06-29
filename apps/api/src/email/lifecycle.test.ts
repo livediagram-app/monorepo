@@ -95,10 +95,24 @@ describe('runLifecycleSweep', () => {
   it('nudges + stamps a zero-diagram signup (activation, spec/64 #4)', async () => {
     vi.mocked(dueForStage).mockResolvedValue([]);
     vi.mocked(dueForActivation).mockResolvedValue([{ ownerId: 'u2', email: 'c@d.com' }]);
+    vi.mocked(dueForWinback).mockResolvedValue([]);
+    vi.mocked(getNotificationPrefs).mockResolvedValue({ notifyTips: true } as never);
     vi.mocked(sendEmail).mockResolvedValue({ sent: true });
     await runLifecycleSweep(env);
     expect(sendEmail).toHaveBeenCalledOnce();
     expect(markActivationSent).toHaveBeenCalledWith(env, 'u2');
+  });
+
+  it('respects the tips opt-out: stamps week1 without sending (spec/64)', async () => {
+    vi.mocked(dueForStage).mockImplementation(async (_e, stage) =>
+      stage === 'week1' ? [{ ownerId: 'u5', email: 'i@j.com' }] : [],
+    );
+    vi.mocked(dueForActivation).mockResolvedValue([]);
+    vi.mocked(dueForWinback).mockResolvedValue([]);
+    vi.mocked(getNotificationPrefs).mockResolvedValue({ notifyTips: false } as never);
+    await runLifecycleSweep(env);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(markStageSent).toHaveBeenCalledWith(env, 'u5', 'week1');
   });
 
   it('win-back: sends + stamps a quiet owner who has tips on (spec/64 #5)', async () => {

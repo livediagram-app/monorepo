@@ -51,14 +51,24 @@ export async function welcomeOnSighting(env: Env, ownerId: string, email: string
 export async function runLifecycleSweep(env: Env): Promise<void> {
   if (!emailEnabled(env)) return;
   const now = Date.now();
-  await sweepStage(env, 'welcome', now);
+  // Welcome is the immediate first touch and isn't gated on a preference (the
+  // user can't have toggled before it fires). Every LATER tip/check-in respects
+  // notifyTips, so the "Tips and check-ins" toggle genuinely turns them all off.
+  await sweepStage(env, 'welcome', now, false);
   // Activation nudge (spec/64 #4): zero-diagram signups ~3 days in. Runs before
   // week 1 so an empty account hears this first; dueForActivation excludes rows
   // that already reached week 1.
   await sweepActivation(env, now - ACTIVATION_DELAY_MS);
-  await sweepStage(env, 'week1', now - WEEK_MS);
-  await sweepStage(env, 'week2', now - 2 * WEEK_MS);
+  await sweepStage(env, 'week1', now - WEEK_MS, true);
+  await sweepStage(env, 'week2', now - 2 * WEEK_MS, true);
   await sweepWinback(env, now - WINBACK_QUIET_MS);
+}
+
+// Whether the owner has opted out of tips / check-ins (spec/64). Shared by the
+// later onboarding stages, the activation nudge, and win-back.
+async function tipsOptedOut(env: Env, ownerId: string): Promise<boolean> {
+  const prefs = await getNotificationPrefs(env, ownerId);
+  return !prefs.notifyTips;
 }
 
 // Win-back (spec/64 #5): one-shot re-engagement for owners quiet ~4 weeks.
@@ -68,8 +78,7 @@ export async function runLifecycleSweep(env: Env): Promise<void> {
 async function sweepWinback(env: Env, cutoff: number): Promise<void> {
   const rows = await dueForWinback(env, cutoff, SWEEP_LIMIT);
   for (const row of rows) {
-    const prefs = await getNotificationPrefs(env, row.ownerId);
-    if (!prefs.notifyTips) {
+    if (await tipsOptedOut(env, row.ownerId)) {
       await markWinbackSent(env, row.ownerId);
       continue;
     }
@@ -78,9 +87,19 @@ async function sweepWinback(env: Env, cutoff: number): Promise<void> {
   }
 }
 
-async function sweepStage(env: Env, stage: LifecycleStage, cutoff: number): Promise<void> {
+async function sweepStage(
+  env: Env,
+  stage: LifecycleStage,
+  cutoff: number,
+  respectTips: boolean,
+): Promise<void> {
   const rows = await dueForStage(env, stage, cutoff, SWEEP_LIMIT);
   for (const row of rows) {
+    // Opted out of tips: stamp the stage so we stop re-checking, but send nothing.
+    if (respectTips && (await tipsOptedOut(env, row.ownerId))) {
+      await markStageSent(env, row.ownerId, stage);
+      continue;
+    }
     const { sent } = await sendEmail(env, { to: row.email, ...STAGE_BUILDER[stage](env) });
     if (sent) await markStageSent(env, row.ownerId, stage);
   }
@@ -89,6 +108,11 @@ async function sweepStage(env: Env, stage: LifecycleStage, cutoff: number): Prom
 async function sweepActivation(env: Env, cutoff: number): Promise<void> {
   const rows = await dueForActivation(env, cutoff, SWEEP_LIMIT);
   for (const row of rows) {
+    // The activation nudge is a tip too — respect the opt-out (stamp + skip).
+    if (await tipsOptedOut(env, row.ownerId)) {
+      await markActivationSent(env, row.ownerId);
+      continue;
+    }
     const { sent } = await sendEmail(env, { to: row.email, ...activationEmail(env) });
     if (sent) await markActivationSent(env, row.ownerId);
   }
