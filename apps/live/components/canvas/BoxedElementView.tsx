@@ -20,12 +20,6 @@ import {
   defaultStrokeColor,
   defaultTextAlign,
   defaultTextColor,
-  isBarShape,
-  isLineShape,
-  isPieShape,
-  isProgressShape,
-  isRailShape,
-  isRatingShape,
   isSelfDrawingShape,
   PADDING_PX,
   type FreehandElement,
@@ -37,27 +31,19 @@ import { iconDropSide } from '@/lib/canvas';
 import { renderLabel } from '@/components/canvas/element-labels';
 import { EdgeResizeHandle, LockBadge, ResizeHandles } from '@/components/canvas/element-parts';
 import { ImageElementView } from '@/components/canvas/ImageElementView';
-import { ProgressView } from '@/components/canvas/ProgressView';
-import { isSvgRenderedShape, ShapeSvgOverlay } from '@/components/canvas/shape-svg-overlay';
+import { isSvgRenderedShape } from '@/components/canvas/shape-svg-overlay';
 import { BoxBorderOverlay } from '@/components/canvas/BoxBorderOverlay';
 import { isCssNativeBorderStyle } from '@/components/canvas/border-css';
 import { describeVariant } from '@/components/canvas/element-variant';
 import { BadgeStrip, RemoteSelectorsStrip } from '@/components/canvas/element-badges';
 import { AnnotationGlyph, AnnotationHoverNote } from '@/components/canvas/AnnotationMarker';
 import { LinkCardView } from '@/components/canvas/LinkCardView';
-import { IconGlyph } from '@/components/primitives/icon-glyph';
 import { ShapeInlineIconLayout } from '@/components/canvas/shape-inline-icon-layout';
-import { RailView } from '@/components/canvas/RailView';
-import { RatingView } from '@/components/canvas/RatingView';
-import { PieChartView } from '@/components/canvas/PieChartView';
-import { BarChartView } from '@/components/canvas/BarChartView';
-import { LineChartView } from '@/components/canvas/LineChartView';
-import { TechIconGlyph } from '@/components/primitives/tech-icon-glyph';
 import { ICON_DND_MIME } from '@/lib/icons';
-import { isTechIconId } from '@/lib/tech-icons';
 import { useLongPress } from '@/hooks/ui/useLongPress';
 import { describeLink } from '@/lib/link-label';
 import { TableView } from '@/components/canvas/TableView';
+import { ShapeContentRouter } from '@/components/canvas/ShapeContentRouter';
 import { Tooltip } from '@/components/primitives/Tooltip';
 
 import type { BoxedElementViewProps } from './BoxedElementView.types';
@@ -466,98 +452,19 @@ function BoxedElementViewImpl({
         ...(isEditing ? { zIndex: 10 } : {}),
       }}
     >
-      {element.type === 'shape' && element.shape === 'icon' && isTechIconId(element.iconId) ? (
-        // Technology (brand) icon: a fixed-colour tile + white glyph
-        // (spec/41). Same shape kind as a curated icon, but the id
-        // resolves in the tech catalogue, so it renders coloured rather
-        // than stroke-tinted.
-        <TechIconGlyph
-          iconId={element.iconId}
-          hasLabel={(element.label ?? '').trim().length > 0}
-          animation={element.iconAnimation}
-          animationSpeed={element.iconAnimationSpeed}
-        />
-      ) : element.type === 'shape' && element.shape === 'icon' ? (
-        // Curated glyph: line art tinted by the element's stroke
-        // colour. Rendered separately from ShapeSvgOverlay because it
-        // keeps aspect ratio (the catalogue art must not warp) and is
-        // data-driven by `iconId`.
-        <IconGlyph
-          iconId={element.iconId}
-          stroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
-          strokeWidth={remoteBorderColor ? 3 : 2}
-          hasLabel={(element.label ?? '').trim().length > 0}
-          // Per-icon looping animation (spec/09). Picked from the icon context
-          // menu; undefined = static.
-          animation={element.iconAnimation}
-          animationSpeed={element.iconAnimationSpeed}
-        />
-      ) : element.type === 'shape' && isProgressShape(element.shape) ? (
-        // Progress elements (spec/46): a bar / donut showing element.progress.
-        // The fill takes the stroke accent; the track takes the fill colour.
-        <ProgressView
-          element={element}
-          accent={accent}
-          track={element.fillColor ?? '#e2e8f0'}
-          textColor={textColor}
-        />
-      ) : element.type === 'shape' && isRailShape(element.shape) ? (
-        // Timeline rail (spec/51): a line + evenly-spaced points, with an
-        // add-point affordance at the right end when selected + editable.
-        <RailView
-          element={element}
-          accent={accent}
-          textColor={textColor}
-          fontFamily={fontFamily}
-          editable={isSelected && !readOnly && !isLocked}
-          onSetLabel={onSetRailLabel}
-        />
-      ) : element.type === 'shape' && isRatingShape(element.shape) ? (
-        // Rating (spec/52): a row of stars showing element.rating.
-        <RatingView element={element} accent={accent} />
-      ) : element.type === 'shape' && isPieShape(element.shape) ? (
-        // Pie chart (spec/53): slices sized by value + a legend.
-        <PieChartView
-          element={element}
-          fontFamily={fontFamily}
-          textColor={textColor}
-          palette={chartPalette}
-        />
-      ) : element.type === 'shape' && isBarShape(element.shape) ? (
-        // Bar chart (spec/53): bars sized by value + a legend.
-        <BarChartView
-          element={element}
-          fontFamily={fontFamily}
-          textColor={textColor}
-          palette={chartPalette}
-        />
-      ) : element.type === 'shape' && isLineShape(element.shape) ? (
-        // Line chart (spec/53): multi-series lines + a legend.
-        <LineChartView
-          element={element}
-          fontFamily={fontFamily}
-          textColor={textColor}
-          palette={chartPalette}
-        />
-      ) : element.type === 'shape' && isSvgRenderedShape(element.shape) ? (
-        <ShapeSvgOverlay
-          shape={element.shape}
-          fill={element.fillColor ?? defaultFillColor(element)}
-          stroke={remoteBorderColor ?? element.strokeColor ?? defaultStrokeColor(element)}
-          strokeWidth={
-            remoteBorderColor ? 3 : BORDER_STROKE_PX[element.strokeWidth ?? DEFAULT_BORDER_STROKE]
-          }
-          strokeDasharray={
-            BORDER_DASH_ARRAY[element.strokeStyle ?? DEFAULT_BORDER_STYLE] ?? undefined
-          }
-          aspect={element.height > 0 ? element.width / element.height : 1}
-          // trace / gradient / pulse / glow render against the true SVG
-          // geometry here; blink / bounce / wobble (shape-agnostic) stay on the
-          // wrapper. svgHandlesAnim above suppresses the wrapper class so these
-          // don't double up.
-          animation={svgAnim}
-        />
-      ) : null}
+      <ShapeContentRouter
+        element={element}
+        accent={accent}
+        textColor={textColor}
+        remoteBorderColor={remoteBorderColor}
+        isLocked={isLocked}
+        isSelected={isSelected}
+        readOnly={readOnly}
+        onSetRailLabel={onSetRailLabel}
+        chartPalette={chartPalette}
+        fontFamily={fontFamily}
+        svgAnim={svgAnim}
+      />
       {/* CSS-rendered shapes (square / circle / stadium / browser) paint
           their border via the wrapper's CSS `border`, which can't draw the
           composite dash patterns. When one of those is picked, stroke the
