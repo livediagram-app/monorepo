@@ -15,9 +15,9 @@ import { InlineRenameInput } from '@/components/primitives/InlineRenameInput';
 import { MenuItem, PortalMenu } from '@/components/primitives/PortalMenu';
 import { EmptyPane } from './ExplorerEmptyState';
 import { DiagramRow } from './explorer-route-diagram-row';
+import { DiagramThumbnail } from '@/components/panels/DiagramThumbnail';
 import {
   CloseIcon,
-  DiagramIcon,
   EllipsisIcon,
   FolderIcon,
   MenuFolderIcon,
@@ -414,9 +414,13 @@ export function FolderMenuItems({
 
 export function SharedList({
   shared,
+  ownerId,
   onDismiss,
 }: {
   shared: SharedWithItem[];
+  // Viewer identity for each row's thumbnail fetch (spec/67); the share
+  // code on the item authorises the read.
+  ownerId: string | null;
   onDismiss: (id: string) => void;
 }) {
   useRelativeTimeTick();
@@ -442,9 +446,12 @@ export function SharedList({
               href={`/diagram/${s.id}?s=${encodeURIComponent(s.shareCode)}`}
               className="flex min-w-0 items-center gap-2 truncate text-sm font-medium text-slate-900 hover:text-brand-700 dark:text-slate-100 dark:hover:text-brand-300"
             >
-              <span className="shrink-0 text-slate-400">
-                <DiagramIcon />
-              </span>
+              <DiagramThumbnail
+                ownerId={ownerId}
+                diagramId={s.id}
+                version={s.savedAt}
+                shareCode={s.shareCode}
+              />
               <span className="truncate">{s.name}</span>
             </Link>
             <span className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">

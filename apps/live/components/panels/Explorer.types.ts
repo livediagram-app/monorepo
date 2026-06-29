@@ -8,6 +8,10 @@ export type ExplorerProps = {
   // active; clicking any other navigates to it (preserving the
   // current's state via the auto-save).
   diagrams: DiagramListItem[];
+  // The VIEWER's resolved owner id (self/participant id), threaded down
+  // to each DiagramRow so its thumbnail fetch authenticates as the
+  // viewer. Distinct from a diagram's own ownerId.
+  ownerId: string | null;
   // Every folder for the owner. Empty array = no user folders, but
   // the synthetic Unsorted bucket still renders. See spec/15.
   folders: Folder[];

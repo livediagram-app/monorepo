@@ -93,15 +93,37 @@ A per-active-link **Live image** control (non-password links only) opens
 a menu to copy the URL, a Markdown `![](...)` snippet, or an HTML
 `<img>` snippet. Sits beside the existing Copy / Embed actions.
 
+### Where thumbnails appear
+
+The thumbnail shows on **every** Explorer surface that lists a diagram:
+the full-page `/explorer` rows (Recent / My Work / folders / Unsorted /
+Generated), the team library page, the "Shared with me" list, and the
+floating in-editor Explorer panel. A single shared `DiagramThumbnail`
+component (`components/panels/DiagramThumbnail.tsx`) backs them all, fed
+the **viewer's** owner id (never the diagram's) plus, for a shared row,
+its share code — so the authed fetch authorises the same way the diagram
+itself does (owner / team membership / share code). A stranger with none
+of those gets a 404 and the row falls back to its icon.
+
+### List / card view
+
+The browse views (Recent / My Work / folders / Unsorted / Generated)
+have a **List ↔ Card** toggle at the far right of the header (device-
+local preference, `livediagram:explorer-view`). Card view renders the
+same folders + diagrams as a responsive grid of cards, each with a large
+snapshot and every column the list shows (name, owner, visibility badge,
+updated time, actions menu). List and card share one badge + actions-menu
+module (`diagram-row-shared.tsx`) so they can't drift.
+
 ## Scope (v1)
 
 - **First tab only.** A diagram has many tabs; both paths render the
   first. A `?tab=<id>` selector (spec/54's power-user param) is deferred.
 - **No PNG.** SVG only — vector, tiny, headless-renderable. A rasterised
   variant is out of scope.
-- Thumbnails ship on the full-page `/explorer` list rows. The floating
-  in-editor Explorer panel uses a separate row component and is a later
-  follow-up.
+- The List/Card toggle covers the main browse views; the team and
+  "Shared with me" pages keep their fixed layout (they already show the
+  thumbnail).
 
 ## Self-hosting
 

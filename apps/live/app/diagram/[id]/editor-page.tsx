@@ -73,6 +73,7 @@ export default function LivePage({ embed = false }: { embed?: boolean } = {}) {
     <Explorer
       position={explorerPosition}
       diagrams={diagramList}
+      ownerId={state.selfParticipant?.id ?? null}
       folders={folders}
       loading={diagramListLoading}
       shared={sharedDiagrams}

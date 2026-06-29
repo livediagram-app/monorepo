@@ -6,8 +6,15 @@ import { useExplorer } from './ExplorerContext';
 import { NewTokenButton } from '@/components/panels/NewTokenButton';
 import type { HelpArticleKey } from '@/lib/help-articles';
 import { ListView, PaneHeader, SharedList, SkeletonRows } from './views';
+import { CardView } from './CardView';
+import { useExplorerViewMode } from './useExplorerViewMode';
 import { EmptyPane } from './ExplorerEmptyState';
 import { DynamicFolderInfo } from './DynamicFolderInfo';
+
+// The browse sections that render a folders + diagrams grid the List/Card
+// toggle (spec/67) can swap. Other sections (gallery, themes, tokens,
+// profile, team, invites, shared) have their own fixed layout.
+const BROWSE_KINDS = new Set(['recent', 'all', 'folder', 'unsorted', 'generated']);
 
 // Each Explorer section deep-links its matching help-centre article from a
 // "?" button in the pane header (spec/56). Sections without a guide (team,
@@ -127,6 +134,10 @@ export function ExplorerPane() {
   }, [selected]);
   const hideTeamTitle = selected.kind === 'team' && teamNotFound;
   const sectionHelp = SECTION_HELP[selected.kind];
+  const [viewMode, setViewMode] = useExplorerViewMode();
+  // The toggle only appears on the browse sections (the ones the
+  // List/Card swap below applies to).
+  const isBrowse = BROWSE_KINDS.has(selected.kind);
 
   return (
     <>
@@ -140,6 +151,8 @@ export function ExplorerPane() {
         headerActions={
           selected.kind === 'tokens' && clerkUserId ? <NewTokenButton tokens={tokens} /> : undefined
         }
+        viewMode={isBrowse ? viewMode : undefined}
+        onSetViewMode={isBrowse ? setViewMode : undefined}
         onCreateDiagram={
           selected.kind === 'shared' ||
           selected.kind === 'gallery' ||
@@ -231,42 +244,49 @@ export function ExplorerPane() {
           </div>
         )
       ) : selected.kind === 'shared' ? (
-        <SharedList shared={shared} onDismiss={dismissShared} />
+        <SharedList shared={shared} ownerId={ownerId} onDismiss={dismissShared} />
       ) : paneContent.folders.length === 0 &&
         paneContent.diagrams.length === 0 &&
         !paneContent.showUnsortedRow ? (
         <EmptyPane selected={selected} />
       ) : (
-        <ListView
-          folders={paneContent.folders}
-          diagrams={paneContent.diagrams}
-          ownerId={ownerId}
-          showUnsortedRow={paneContent.showUnsortedRow}
-          unsortedCount={unsortedDiagrams.length}
-          onOpenUnsorted={() => go({ kind: 'unsorted' })}
-          // Generated sits beside Unsorted on the My Work (/all) list.
-          showGeneratedRow={selected.kind === 'all'}
-          generatedCount={generatedDiagrams.length}
-          onOpenGenerated={() => go({ kind: 'generated' })}
-          onOpenFolder={(id) => go({ kind: 'folder', id })}
-          onCommitRenameFolder={commitRenameFolder}
-          onCancelRenameFolder={() => setRenamingFolderId(null)}
-          renamingFolderId={renamingFolderId}
-          renamingDiagramId={renamingDiagramId}
-          onCommitRenameDiagram={renameDiagram}
-          onCancelRenameDiagram={() => setRenamingDiagramId(null)}
-          folderActions={folderActions}
-          onStartRenameDiagram={(id) => setRenamingDiagramId(id)}
-          onDuplicateDiagram={(id) => void duplicateDiagram(id)}
-          onDeleteDiagram={deleteDiagram}
-          onMoveDiagram={openMovePickerForDiagram}
-          onDismissShared={dismissShared}
-          childrenCount={(id) => childrenByParent.get(id)?.length ?? 0}
-          diagramsCount={(id) => diagramsByFolder.get(id)?.length ?? 0}
-          // Owner column (desktop): Recent mixes personal + team rows
-          // (spec/35), so it's the one list where ownership varies.
-          showOwner={selected.kind === 'recent'}
-        />
+        (() => {
+          // List and Card take the SAME props (spec/67), so build them
+          // once and pick the component by the toggle.
+          const ViewComponent = viewMode === 'card' ? CardView : ListView;
+          return (
+            <ViewComponent
+              folders={paneContent.folders}
+              diagrams={paneContent.diagrams}
+              ownerId={ownerId}
+              showUnsortedRow={paneContent.showUnsortedRow}
+              unsortedCount={unsortedDiagrams.length}
+              onOpenUnsorted={() => go({ kind: 'unsorted' })}
+              // Generated sits beside Unsorted on the My Work (/all) list.
+              showGeneratedRow={selected.kind === 'all'}
+              generatedCount={generatedDiagrams.length}
+              onOpenGenerated={() => go({ kind: 'generated' })}
+              onOpenFolder={(id) => go({ kind: 'folder', id })}
+              onCommitRenameFolder={commitRenameFolder}
+              onCancelRenameFolder={() => setRenamingFolderId(null)}
+              renamingFolderId={renamingFolderId}
+              renamingDiagramId={renamingDiagramId}
+              onCommitRenameDiagram={renameDiagram}
+              onCancelRenameDiagram={() => setRenamingDiagramId(null)}
+              folderActions={folderActions}
+              onStartRenameDiagram={(id) => setRenamingDiagramId(id)}
+              onDuplicateDiagram={(id) => void duplicateDiagram(id)}
+              onDeleteDiagram={deleteDiagram}
+              onMoveDiagram={openMovePickerForDiagram}
+              onDismissShared={dismissShared}
+              childrenCount={(id) => childrenByParent.get(id)?.length ?? 0}
+              diagramsCount={(id) => diagramsByFolder.get(id)?.length ?? 0}
+              // Owner column (desktop): Recent mixes personal + team rows
+              // (spec/35), so it's the one list where ownership varies.
+              showOwner={selected.kind === 'recent'}
+            />
+          );
+        })()
       )}
     </>
   );

@@ -10,6 +10,8 @@ import { HelpArticleLink } from '@/components/primitives/HelpArticleLink';
 import type { HelpArticleKey } from '@/lib/help-articles';
 import { MenuTile, PortalMenu } from '@/components/primitives/PortalMenu';
 import { DiagramIcon, MenuFolderIcon, PlusIcon } from './icons';
+import { ViewToggle } from './ViewToggle';
+import type { ExplorerViewMode } from './useExplorerViewMode';
 
 function HamburgerIcon() {
   return (
@@ -58,6 +60,8 @@ export function PaneHeader({
   helpTitle,
   helpDescription,
   headerActions,
+  viewMode,
+  onSetViewMode,
 }: {
   title: string;
   crumbs: { name: string; onClick?: () => void }[];
@@ -88,13 +92,20 @@ export function PaneHeader({
   // button, spec/61). Lets a section add a header CTA without going through
   // the diagram/folder Create dropdown.
   headerActions?: ReactNode;
+  // List/Card toggle (spec/67), shown at the far right of the actions row
+  // on the browse views that can render either layout. Both must be
+  // present for the toggle to appear; sections that only list one way
+  // (gallery, tokens, …) omit them.
+  viewMode?: ExplorerViewMode;
+  onSetViewMode?: (mode: ExplorerViewMode) => void;
 }) {
   // A single-item breadcrumb is just the page title in a second
   // place: visually noisy and provides no navigation. Show only
   // when there are actual parents to click back to.
   const showCrumbs = crumbs.length >= 2;
   const hasCreate = Boolean(onCreateDiagram || onCreateFolder);
-  const hasActions = hasCreate || Boolean(helpArticle) || Boolean(headerActions);
+  const showViewToggle = Boolean(viewMode && onSetViewMode);
+  const hasActions = hasCreate || Boolean(helpArticle) || Boolean(headerActions) || showViewToggle;
   // A single "+ Create" dropdown (both desktop and mobile) replaces the
   // standalone New-diagram / New-folder buttons: two shrink-0 buttons
   // squeezed the folder-name title to nothing on a narrow phone, and
@@ -146,6 +157,7 @@ export function PaneHeader({
                 <CaretDownIcon />
               </button>
             ) : null}
+            {showViewToggle ? <ViewToggle mode={viewMode!} onChange={onSetViewMode!} /> : null}
             {createOpen ? (
               <PortalMenu
                 anchor={createRef.current}

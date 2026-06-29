@@ -28,6 +28,7 @@ type TeamFolderTreeNode = { id: string; name: string; parentId: string | null };
 
 function TeamFolderNode({
   folder,
+  ownerId,
   depth,
   childrenByParent,
   diagramsByFolder,
@@ -38,6 +39,10 @@ function TeamFolderNode({
   deleteFor,
 }: {
   folder: TeamFolderTreeNode;
+  // The VIEWER's owner id, threaded down to each DiagramRow for its
+  // authenticated thumbnail fetch (team rows authorise via membership
+  // server-side; they carry no share code).
+  ownerId: string | null;
   depth: number;
   childrenByParent: Map<string | null, TeamFolderTreeNode[]>;
   diagramsByFolder: Map<string | null, DiagramListItem[]>;
@@ -92,6 +97,7 @@ function TeamFolderNode({
             <TeamFolderNode
               key={k.id}
               folder={k}
+              ownerId={ownerId}
               depth={depth + 1}
               childrenByParent={childrenByParent}
               diagramsByFolder={diagramsByFolder}
@@ -106,6 +112,7 @@ function TeamFolderNode({
             <li key={d.id} style={{ paddingLeft: 4 + (depth + 1) * 12 }}>
               <DiagramRow
                 item={d}
+                ownerId={ownerId}
                 active={d.id === currentDiagramId}
                 onOpen={() => onOpenDiagram(d.id)}
                 onDelete={deleteFor(d)}
@@ -120,6 +127,7 @@ function TeamFolderNode({
 
 export function TeamNode({
   team,
+  ownerId,
   folders,
   diagrams,
   currentDiagramId,
@@ -130,6 +138,9 @@ export function TeamNode({
   onDeleteDiagram,
 }: {
   team: { id: string; name: string };
+  // The VIEWER's owner id, threaded down to each DiagramRow for its
+  // authenticated thumbnail fetch.
+  ownerId: string | null;
   // This team's folder rows (flat, with parentId).
   folders: TeamFolderTreeNode[];
   // This team's diagrams (carry folderId; null = the team's Unsorted).
@@ -219,6 +230,7 @@ export function TeamNode({
             <TeamFolderNode
               key={f.id}
               folder={f}
+              ownerId={ownerId}
               depth={1}
               childrenByParent={childrenByParent}
               diagramsByFolder={diagramsByFolder}
@@ -233,6 +245,7 @@ export function TeamNode({
             <li key={d.id} style={{ paddingLeft: 4 + 1 * 12 }}>
               <DiagramRow
                 item={d}
+                ownerId={ownerId}
                 active={d.id === currentDiagramId}
                 onOpen={() => onOpenDiagram(d.id)}
                 onDelete={deleteFor(d)}

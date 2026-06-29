@@ -6,6 +6,7 @@ import type { DiagramSummary, Folder } from '@livediagram/api-schema';
 import { FolderRow, UnsortedRow } from '@/app/explorer/views';
 import { MenuFolderIcon, MenuTrashIcon, PlusIcon } from '@/app/explorer/icons';
 import { DiagramIcon, EllipsisIcon, MenuDuplicateIcon, MenuPencilIcon } from '@/app/explorer/icons';
+import { DiagramThumbnail } from '@/components/panels/DiagramThumbnail';
 import { MenuItem, PortalMenu } from '@/components/primitives/PortalMenu';
 import { InlineRenameInput } from '@/components/primitives/InlineRenameInput';
 import { MoveToFolderDialog } from '@/components/dialogs/MoveToFolderDialog';
@@ -275,6 +276,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
             <TeamDiagramRow
               key={d.id}
               diagram={d}
+              ownerId={ownerId}
               renaming={renamingDiagramId === d.id}
               onMove={() => {
                 setMoveTarget({ kind: 'diagram', id: d.id });
@@ -335,6 +337,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
 // the personal + Recent surfaces do: rename, duplicate, change folder.
 function TeamDiagramRow({
   diagram,
+  ownerId,
   renaming,
   onMove,
   onStartRename,
@@ -344,6 +347,9 @@ function TeamDiagramRow({
   onDelete,
 }: {
   diagram: DiagramSummary;
+  // Viewer identity for the thumbnail fetch (spec/67). A team diagram
+  // has no share code; the authed fetch authorises via team membership.
+  ownerId: string | null;
   renaming: boolean;
   onMove: (anchor: HTMLElement | null) => void;
   onStartRename: () => void;
@@ -357,9 +363,7 @@ function TeamDiagramRow({
   return (
     <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
       <span className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-slate-400">
-          <DiagramIcon />
-        </span>
+        <DiagramThumbnail ownerId={ownerId} diagramId={diagram.id} version={diagram.savedAt} />
         {renaming ? (
           <InlineRenameInput
             initial={diagram.name}

@@ -38,6 +38,7 @@ export { DiagramRow };
 // Synthetic root-level "Unsorted" folder. Holds every diagram with
 // folder_id IS NULL. Can't be renamed or deleted.
 export function UnsortedNode({
+  ownerId,
   expanded,
   onToggleExpanded,
   diagrams,
@@ -49,6 +50,9 @@ export function UnsortedNode({
   onMoveDiagramRequest,
   onMoveDiagramToFolder,
 }: {
+  // The VIEWER's owner id, threaded down to each DiagramRow for its
+  // authenticated thumbnail fetch.
+  ownerId: string | null;
   expanded: Record<string, boolean>;
   onToggleExpanded: (key: string) => void;
   diagrams: DiagramListItem[];
@@ -139,6 +143,7 @@ export function UnsortedNode({
             >
               <DiagramRow
                 item={d}
+                ownerId={ownerId}
                 active={d.id === currentDiagramId}
                 draggable={!!onMoveDiagramToFolder}
                 onOpen={() => onOpenDiagram(d.id)}

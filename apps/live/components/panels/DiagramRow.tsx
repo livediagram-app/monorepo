@@ -14,7 +14,6 @@ import {
 } from '@/components/primitives/PortalMenu';
 import { Tooltip } from '@/components/primitives/Tooltip';
 import {
-  DiagramIcon,
   DuplicateIcon,
   FolderIcon,
   OpenIcon,
@@ -22,19 +21,31 @@ import {
   SharedDiagramIcon,
   TrashIcon,
 } from '@/components/panels/explorer-icons';
+import { DiagramThumbnail } from '@/components/panels/DiagramThumbnail';
 import { DIAGRAM_DRAG_MIME } from './explorer-drag-mime';
 
 export function DiagramRow({
   item,
+  ownerId,
   active,
   onOpen,
   onRename,
   onDelete,
   onDuplicate,
   onMoveRequest,
+  thumbnailShareCode,
   draggable: isDraggable,
 }: {
   item: DiagramListItem;
+  // The VIEWER's owner id (self/participant id) for the authenticated
+  // thumbnail fetch — NOT item.ownerId (that's the diagram's owner, and
+  // it's blanked for shared rows).
+  ownerId: string | null;
+  // Share code used ONLY to authorise the thumbnail fetch (spec/67) when
+  // it isn't carried on item.shareCode — e.g. the "currently open shared
+  // diagram" row, where item.shareCode is intentionally nulled so it
+  // doesn't show a "has a share link" badge. Falls back to item.shareCode.
+  thumbnailShareCode?: string | null;
   active: boolean;
   onOpen: () => void;
   onRename?: (name: string) => void;
@@ -94,9 +105,12 @@ export function DiagramRow({
   const mainClass = `flex flex-1 items-start gap-1.5 rounded-md bg-transparent px-2 py-1.5 text-left text-xs ${active ? 'font-medium' : ''}`;
   const mainInner = (
     <>
-      <span className="mt-0.5">
-        <DiagramIcon active={active} />
-      </span>
+      <DiagramThumbnail
+        ownerId={ownerId}
+        diagramId={item.id}
+        version={item.savedAt}
+        shareCode={thumbnailShareCode ?? item.shareCode}
+      />
       <span className="flex min-w-0 flex-1 flex-col">
         {editing ? (
           <InlineRenameInput

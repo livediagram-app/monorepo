@@ -31,6 +31,7 @@ import { useExplorerViewModel } from './useExplorerViewModel';
 function ExplorerImpl({
   position,
   diagrams,
+  ownerId,
   folders,
   loading,
   currentDiagramId,
@@ -324,6 +325,7 @@ function ExplorerImpl({
                 >
                   <DiagramRow
                     item={current}
+                    ownerId={ownerId}
                     active
                     draggable={!!onMoveDiagramToFolder}
                     onOpen={() => onOpenDiagram(current.id)}
@@ -345,6 +347,7 @@ function ExplorerImpl({
                 <li className="animate-slide-row-in overflow-hidden">
                   <DiagramRow
                     item={currentTeam}
+                    ownerId={ownerId}
                     active
                     onOpen={() => onOpenDiagram(currentTeam.id)}
                     onRename={onRenameCurrent}
@@ -361,6 +364,11 @@ function ExplorerImpl({
                 <li className="animate-slide-row-in overflow-hidden">
                   <DiagramRow
                     item={{ ...currentShared, folderId: null, shareCode: null, ownerId: '' }}
+                    ownerId={ownerId}
+                    // item.shareCode is nulled (no "has a share link"
+                    // badge for a shared-with-me row), so authorise the
+                    // thumbnail via the share code separately (spec/67).
+                    thumbnailShareCode={currentShared.shareCode}
                     active
                     onOpen={() => onOpenDiagram(currentShared.id, currentShared.shareCode)}
                   />
@@ -420,6 +428,7 @@ function ExplorerImpl({
                       >
                         <DiagramRow
                           item={entry.d}
+                          ownerId={ownerId}
                           active={false}
                           // Team diagrams (spec/35) open for any joined
                           // member; their rename / move / delete live
@@ -494,6 +503,7 @@ function ExplorerImpl({
                   <FolderNode
                     key={f.id}
                     folder={f}
+                    ownerId={ownerId}
                     depth={0}
                     foldersByParent={foldersByParent}
                     diagramsByFolder={diagramsByFolder}
@@ -517,6 +527,7 @@ function ExplorerImpl({
                 ))}
                 {(diagramsByFolder.get(null) ?? []).length > 0 ? (
                   <UnsortedNode
+                    ownerId={ownerId}
                     expanded={expandedFolders}
                     onToggleExpanded={toggleFolder}
                     diagrams={diagramsByFolder.get(null) ?? []}
@@ -554,6 +565,7 @@ function ExplorerImpl({
                   <TeamNode
                     key={t.id}
                     team={t}
+                    ownerId={ownerId}
                     folders={foldersByTeam.get(t.id) ?? []}
                     diagrams={diagramsByTeam.get(t.id) ?? []}
                     currentDiagramId={currentDiagramId}

@@ -441,6 +441,7 @@ export function CanvasChrome(props: CanvasChromeProps) {
     <Explorer
       position={explorerWiring.position}
       diagrams={diagramList}
+      ownerId={selfParticipant?.id ?? null}
       folders={folders}
       loading={diagramListLoading}
       shared={sharedDiagrams}

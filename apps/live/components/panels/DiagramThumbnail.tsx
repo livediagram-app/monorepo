@@ -2,28 +2,36 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { apiFetchDiagramThumbnailUrl } from '@/lib/api-client';
-import { DiagramIcon } from './icons';
 
-// A small SVG snapshot of a diagram (spec/67) for the Explorer list, so
-// you can recognise a diagram without opening it. The bytes come from
-// the api worker's render-cache and are fetched through the
-// authenticated client (an <img src> can't carry auth headers), then
-// hung on an <img> via a blob URL.
+// A cached SVG snapshot of a diagram (spec/67) so you can recognise it
+// without opening it. Shared by every Explorer surface that lists
+// diagrams: the full-page rows, the "Shared with me" list, the team
+// library, and the floating in-editor panel.
 //
-// Performance: the diagram list endpoint stays lightweight (no element
-// data), and a thumbnail is only fetched once its row scrolls into view
-// — a long Recent list never fires dozens of requests (or server-side
-// renders) for rows the user never reaches. While idle / loading /
-// broken the box shows the generic diagram glyph, so the layout never
+// The bytes come from the api worker's render-cache fetched through the
+// authenticated client (an <img src> can't carry auth headers), then
+// hung on an <img> via a blob URL. The diagram list endpoints stay
+// lightweight (no element data); a thumbnail is fetched only once its
+// row/card scrolls into view, so a long list never fires dozens of
+// requests / server renders for things the user never reaches. While
+// idle / loading / broken it shows a generic glyph, so the layout never
 // shifts and an empty or access-denied diagram degrades gracefully.
+//
+// Size is controlled by the caller via `className` (a small box in a
+// row, a large preview in a card); the <img> fills it with object-fit
+// contain so the whole diagram stays visible at any aspect ratio.
 
 type State = { status: 'idle' | 'loading' | 'broken' } | { status: 'ready'; src: string };
+
+const DEFAULT_BOX =
+  'h-7 w-9 rounded border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40';
 
 export function DiagramThumbnail({
   ownerId,
   diagramId,
   version,
   shareCode,
+  className = DEFAULT_BOX,
 }: {
   // Viewer identity for the authenticated fetch. Null while a guest id
   // is still resolving — we just hold the placeholder until it lands.
@@ -33,14 +41,17 @@ export function DiagramThumbnail({
   // edited diagram re-fetches a fresh snapshot.
   version: number;
   // Present on a "shared with me" row (spec/35): authorises the read via
-  // the share code instead of ownership.
+  // the share code instead of ownership / team membership.
   shareCode?: string | null;
+  // Container sizing/appearance. Defaults to the compact row box; a card
+  // passes a larger box (e.g. a full-width 16:9 area).
+  className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
   const [state, setState] = useState<State>({ status: 'idle' });
 
-  // Defer the fetch until the row is near the viewport.
+  // Defer the fetch until the row/card is near the viewport.
   useEffect(() => {
     const el = ref.current;
     if (!el || visible) return;
@@ -88,7 +99,7 @@ export function DiagramThumbnail({
     <span
       ref={ref}
       aria-hidden
-      className="flex h-7 w-9 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500"
+      className={`flex shrink-0 items-center justify-center overflow-hidden text-slate-400 dark:text-slate-500 ${className}`}
     >
       {state.status === 'ready' ? (
         // A blob URL, not a remote asset, so a plain <img> is correct
@@ -96,8 +107,30 @@ export function DiagramThumbnail({
         // ImageElementView.
         <img src={state.src} alt="" className="h-full w-full object-contain" />
       ) : (
-        <DiagramIcon />
+        <ThumbnailGlyph />
       )}
     </span>
+  );
+}
+
+// Placeholder shown while loading / when there's no snapshot. Inlined so
+// the component carries no cross-folder icon dependency (it's imported
+// from both app/ and components/ surfaces).
+function ThumbnailGlyph() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="12" height="12" rx="2" />
+      <path d="M5 6h6M5 9h4" />
+    </svg>
   );
 }

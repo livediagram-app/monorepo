@@ -19,6 +19,7 @@ import { DiagramRow } from './DiagramRow';
 // + the diagrams in this folder (DiagramRow).
 export function FolderNode({
   folder,
+  ownerId,
   depth,
   foldersByParent,
   diagramsByFolder,
@@ -38,6 +39,9 @@ export function FolderNode({
   onMoveDiagramToFolder,
 }: {
   folder: Folder;
+  // The VIEWER's owner id, threaded down to each DiagramRow for its
+  // authenticated thumbnail fetch.
+  ownerId: string | null;
   depth: number;
   foldersByParent: Map<string | null, Folder[]>;
   diagramsByFolder: Map<string | null, DiagramListItem[]>;
@@ -233,6 +237,7 @@ export function FolderNode({
             <FolderNode
               key={f.id}
               folder={f}
+              ownerId={ownerId}
               depth={depth + 1}
               foldersByParent={foldersByParent}
               diagramsByFolder={diagramsByFolder}
@@ -264,6 +269,7 @@ export function FolderNode({
             >
               <DiagramRow
                 item={d}
+                ownerId={ownerId}
                 active={d.id === currentDiagramId}
                 draggable={!!onMoveDiagramToFolder}
                 onOpen={() => onOpenDiagram(d.id)}
