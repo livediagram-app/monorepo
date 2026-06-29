@@ -23,7 +23,7 @@ import type { BodySchema } from './types';
  *    rejected. */
 export type AuthMode = 'public' | 'guest-or-clerk' | 'clerk';
 
-export interface QueryParam {
+interface QueryParam {
   name: string;
   required: boolean;
   description: string;

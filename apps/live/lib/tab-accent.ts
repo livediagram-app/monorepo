@@ -11,7 +11,7 @@ import { getTheme } from './themes';
 const DEFAULT_TAB_ACCENT = 'rgb(2 132 199)';
 
 // The theme's element stroke, or the palette default when the theme sets none.
-export function tabAccent(tab: Tab): string {
+function tabAccent(tab: Tab): string {
   return getTheme(tab.theme).elementStroke ?? DEFAULT_TAB_ACCENT;
 }
 

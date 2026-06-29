@@ -10,7 +10,7 @@ import type { ApiToken } from '@livediagram/api-schema';
 import { apiCreateToken, apiListTokens, apiRevokeToken } from '@/lib/api-client';
 import { track } from '@/lib/telemetry';
 
-export const MAX_TOKENS = 10;
+const MAX_TOKENS = 10;
 
 export type TokensController = {
   list: ApiToken[] | null;

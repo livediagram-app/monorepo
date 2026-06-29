@@ -86,11 +86,6 @@ export async function revokeApiToken(env: Env, ownerId: string, id: string): Pro
   return (res.meta?.changes ?? 0) > 0;
 }
 
-// Account-deletion cascade (spec/61): no credential outlives the account.
-export async function deleteApiTokensByOwner(env: Env, ownerId: string): Promise<void> {
-  await env.DB.prepare('DELETE FROM api_tokens WHERE owner_id = ?').bind(ownerId).run();
-}
-
 // spec/64 (#3): tokens that expire within `windowMs` and haven't been warned
 // yet (live only). The daily cron uses this to send a one-time "expiring soon"
 // heads-up so a programmatic integration doesn't silently break. Bounded batch,

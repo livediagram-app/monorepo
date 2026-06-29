@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  PANEL_CORNERS,
   PANEL_LAYOUT_CHANGED_EVENT,
   STORAGE_KEY,
   dockPanel,
@@ -34,7 +33,7 @@ import {
 // resolved placement + drag state are handed to CanvasChrome, which
 // distributes panels into corner stacks and renders the snap overlay.
 
-export type PanelDragState = {
+type PanelDragState = {
   panelId: PanelId;
   // The corner the panel would snap to if released now, or null for a
   // free drop. Drives which corner shows the landing slot.
@@ -159,5 +158,3 @@ export function usePanelDock(): PanelDock {
     resetPanel,
   };
 }
-
-export { PANEL_CORNERS };

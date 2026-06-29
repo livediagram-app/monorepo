@@ -23,7 +23,7 @@ export function applyCss(target: CSSStyleDeclaration, props: React.CSSProperties
 // Expand a collapsed caret to the word it sits in (or just left of), so a
 // toolbar click with no selection formats the surrounding word. Returns
 // null when there's no word to act on (whitespace / empty).
-export function wordRangeAt(text: string, pos: number): { start: number; end: number } | null {
+function wordRangeAt(text: string, pos: number): { start: number; end: number } | null {
   const n = text.length;
   if (n === 0) return null;
   const ws = (i: number) => i < 0 || i >= n || /\s/.test(text[i]!);

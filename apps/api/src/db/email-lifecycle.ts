@@ -60,11 +60,6 @@ export async function markStageSent(
     .run();
 }
 
-// Called from deleteAccount so a deleted user leaves no lifecycle row behind.
-export async function deleteEmailLifecycle(env: Env, ownerId: string): Promise<void> {
-  await env.DB.prepare('DELETE FROM email_lifecycle WHERE owner_id = ?').bind(ownerId).run();
-}
-
 // The verified address stored for an authenticated owner at first sighting.
 // The only server-trusted way to reach a Clerk owner by email outside the
 // request that carried their token (spec/65 notifications fire on someone

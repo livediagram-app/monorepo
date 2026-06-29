@@ -117,7 +117,7 @@ function ActivityRow({
 /** The Activity panel surface, reused across articles. Pass `rows`, an optional
  *  highlighted row index (and how), and toggles for the per-row trailing
  *  control and the header buttons. */
-export function ActivityPanel({
+function ActivityPanel({
   rows = DEFAULT_ROWS,
   highlightIndex = -1,
   highlightKind = 'select',

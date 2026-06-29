@@ -19,7 +19,6 @@ import { lookupCustomTheme } from './custom-theme-registry';
 // Pass through the shared engine so `@/lib/themes` stays the editor's theme API.
 export {
   THEMES,
-  getBuiltInTheme,
   recolourElementForTheme,
   recolourElementsForTheme,
   switchThemeElement,
@@ -29,7 +28,6 @@ export {
   resetThemeElementsToTheme,
   resetArrowsToTheme,
   shapeColorPresets,
-  shapeColorPresetById,
   rederiveColorPresetForTheme,
   themePresetColors,
   themeChartPalette,
@@ -39,7 +37,6 @@ export type {
   ThemeDefinition,
   ThemeCategory,
   ShapeColorPreset,
-  TabBackdrop,
 } from '@livediagram/diagram';
 
 // Resolve an id to its real ThemeDefinition, or `undefined` when the id names

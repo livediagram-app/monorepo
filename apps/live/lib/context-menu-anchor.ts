@@ -7,7 +7,7 @@
 
 // ContextMenu renders at a fixed w-56 (14rem = 224px); used to decide whether
 // the menu fits to the right of the element before it would clip off-screen.
-export const CONTEXT_MENU_WIDTH = 224;
+const CONTEXT_MENU_WIDTH = 224;
 
 // Breathing room between the element edge and the menu, so a thick border /
 // selection ring isn't tucked under the menu's edge.

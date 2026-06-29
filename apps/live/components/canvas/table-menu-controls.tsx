@@ -54,7 +54,7 @@ export function Trigger({
 }
 
 // Large, tappable menu row (icon + label). Min height 36px for touch.
-export function MenuButton({
+function MenuButton({
   label,
   danger,
   disabled,

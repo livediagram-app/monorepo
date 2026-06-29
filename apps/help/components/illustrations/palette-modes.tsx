@@ -133,7 +133,7 @@ type ModeKey = (typeof MODES)[number]['key'];
  *  active one brand-filled. Reused at the top of every mode scene so each
  *  article shows the same picker with its own tool lit. `x`/`y` place the row;
  *  `active` lights the matching tile. */
-export function ModeRow({
+function ModeRow({
   x = 24,
   y = 20,
   active,

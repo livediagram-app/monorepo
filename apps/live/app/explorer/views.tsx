@@ -240,7 +240,7 @@ export function UnsortedRow({ count, onOpen }: { count: number; onOpen: () => vo
   );
 }
 
-export function GeneratedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
+function GeneratedRow({ count, onOpen }: { count: number; onOpen: () => void }) {
   return (
     <SyntheticFolderRow icon={<SparkleIcon />} label="Generated" count={count} onOpen={onOpen} />
   );

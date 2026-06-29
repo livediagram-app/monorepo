@@ -153,7 +153,7 @@ export function ResetGlyph() {
   );
 }
 
-export function CopyIcon() {
+function CopyIcon() {
   return (
     <svg
       width="9"
@@ -170,7 +170,7 @@ export function CopyIcon() {
   );
 }
 
-export function PasteGlyph() {
+function PasteGlyph() {
   return (
     <svg
       width="11"

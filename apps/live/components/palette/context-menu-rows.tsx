@@ -67,7 +67,7 @@ export function MarkersMenuGlyph() {
 }
 
 // The "None" tile glyph — a dashed empty circle, sized to match a marker glyph.
-export function NoMarkerGlyph() {
+function NoMarkerGlyph() {
   return (
     <svg
       width="18"
@@ -171,7 +171,7 @@ export function RailPointsRow({
 }
 
 // A small star glyph for the Rating controls (filled = scored, else outline).
-export function StarGlyph({ filled, size = 16 }: { filled: boolean; size?: number }) {
+function StarGlyph({ filled, size = 16 }: { filled: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
       <path
@@ -240,7 +240,7 @@ export type AnimTilesProps<T extends string> = {
   onSetSpeed: (v: AnimationSpeed) => void;
   onSetRepeat: (v: boolean) => void;
 };
-export function AnimTiles<T extends string>({
+function AnimTiles<T extends string>({
   anims,
   glyphFor,
   header = true,
@@ -295,7 +295,7 @@ export function RatingAnimTiles(props: AnimTilesProps<RatingAnim>) {
 }
 
 // A small pie glyph for the Data category + its animation tiles.
-export function PieGlyph({ size = 16 }: { size?: number }) {
+function PieGlyph({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
       <circle cx="12" cy="12" r="9" fill="#0ea5e9" />
@@ -364,7 +364,7 @@ export function PieAnimTiles(props: AnimTilesProps<PieAnim>) {
 // A labelled 0–100 range slider with a right-aligned `{pct}%` readout. Shared
 // by the Progress percentage + the Layer opacity rows; each owns its own
 // value<->pct conversion and passes the already-resolved pct in.
-export function PercentSliderRow({
+function PercentSliderRow({
   label,
   pct,
   onPct,

@@ -36,7 +36,7 @@ type Group = { title: string; rows: Row[] };
 
 /** The search overlay: a rounded query field with a magnifier, then groups of
  *  result rows. The single reusable surface behind every search-panel figure. */
-export function SearchOverlay({
+function SearchOverlay({
   query,
   groups,
   w = 420,

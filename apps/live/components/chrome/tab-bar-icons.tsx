@@ -216,49 +216,6 @@ export function KeyboardIcon() {
   );
 }
 
-// Question-mark-in-circle - the help-centre link (spec/55).
-export function HelpIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="10" cy="10" r="8" />
-      <path d="M7.75 7.5a2.25 2.25 0 0 1 4.37.75c0 1.5-2.25 2.25-2.25 2.25" />
-      <path d="M10 14h.01" />
-    </svg>
-  );
-}
-
-// Explorer (2x2 grid) - the header link to the diagram library.
-export function ExplorerIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="3" width="6" height="6" rx="1.5" />
-      <rect x="11" y="3" width="6" height="6" rx="1.5" />
-      <rect x="3" y="11" width="6" height="6" rx="1.5" />
-      <rect x="11" y="11" width="6" height="6" rx="1.5" />
-    </svg>
-  );
-}
-
 // GitHub mark - the open-source repo link in the footer (spec/03).
 export function GithubIcon() {
   return (
