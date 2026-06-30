@@ -211,30 +211,6 @@ export function OpenIcon() {
   );
 }
 
-export function ExpandIcon() {
-  // Diagonal-arrow-out glyph: "open this in a bigger surface".
-  // Same 9px size + 1.6 stroke as ChevronIcon so the panel header
-  // chrome stays visually consistent.
-  return (
-    <svg
-      width="9"
-      height="9"
-      viewBox="0 0 12 12"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M4.5 1.5h-3v3" />
-      <path d="M7.5 10.5h3v-3" />
-      <path d="M1.5 1.5l4 4" />
-      <path d="M10.5 10.5l-4-4" />
-    </svg>
-  );
-}
-
 export function PlusIcon() {
   return (
     <svg
