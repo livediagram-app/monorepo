@@ -5,12 +5,15 @@
 // (The closed event vocabulary itself lives in spec/22 + the api-schema
 // enums; this module only turns it into human-readable strings.)
 
-import { titleCase, type TelemetryCount } from '@livediagram/api-schema';
+import { titleCase, type TelemetryCategory, type TelemetryCount } from '@livediagram/api-schema';
 
 // One-line plain-language explanation per category, shown under the
 // group heading so visitors can read the dashboard cold without
-// knowing the product. Kept short so the layout stays scannable.
-export const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+// knowing the product. Kept short so the layout stays scannable. Keyed by
+// the full TelemetryCategory union so a new category fails the typecheck
+// here until it gets a description (the lookup still tolerates stray
+// strings via the `?? fallback` at the call site).
+export const CATEGORY_DESCRIPTIONS: Record<TelemetryCategory, string> = {
   Diagram:
     'Whole-diagram lifecycle: creating, sharing, joining, exporting, undo/redo, moving between folders.',
   Element:
@@ -37,8 +40,10 @@ export const CATEGORY_DESCRIPTIONS: Record<string, string> = {
 // Per-category colour used by every chart so the category-share bar,
 // per-category sparkline, and category-card legend dot all agree. Hand-
 // picked so adjacent slices in the stacked bar stay visually distinct
-// (no two adjacent blues). Any future category falls back to a slate.
-const CATEGORY_COLORS: Record<string, string> = {
+// (no two adjacent blues). Keyed by the full TelemetryCategory union so a
+// new category fails the typecheck until it gets its own colour; the
+// `categoryColor` accessor keeps a slate fallback for stray strings.
+const CATEGORY_COLORS: Record<TelemetryCategory, string> = {
   Diagram: '#0ea5e9',
   Element: '#10b981',
   Tab: '#f59e0b',
@@ -58,7 +63,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Token: '#d946ef',
   Mcp: '#f43f5e',
 };
-export const categoryColor = (c: string) => CATEGORY_COLORS[c] ?? '#94a3b8';
+export const categoryColor = (c: string) => CATEGORY_COLORS[c as TelemetryCategory] ?? '#94a3b8';
 
 export type Group = { category: string; subtotal: number; items: TelemetryCount[] };
 

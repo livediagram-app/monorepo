@@ -1,6 +1,7 @@
 'use client';
 
 import { Tooltip } from '@livediagram/ui';
+import type { TelemetryCategory } from '@livediagram/api-schema';
 import { pct } from './chart-utils';
 import { CATEGORY_DESCRIPTIONS, categoryColor, type Group } from './event-vocab';
 
@@ -71,7 +72,8 @@ export function CategoryDonut({ groups, total }: { groups: Group[]; total: numbe
               key={g.category}
               title={g.category}
               description={
-                CATEGORY_DESCRIPTIONS[g.category] ?? `${g.subtotal.toLocaleString()} events`
+                CATEGORY_DESCRIPTIONS[g.category as TelemetryCategory] ??
+                `${g.subtotal.toLocaleString()} events`
               }
               block
             >
