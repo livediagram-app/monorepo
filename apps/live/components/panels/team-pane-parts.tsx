@@ -32,8 +32,8 @@ export function RolePill({ member, pinned }: { member: TeamMember; pinned: boole
     <span
       className={`inline-flex w-fit shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ${
         member.role === 'admin'
-          ? 'bg-brand-50 text-brand-700 ring-brand-200'
-          : 'bg-slate-100 text-slate-600 ring-slate-200'
+          ? 'bg-brand-50 text-brand-700 ring-brand-200 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-500/30'
+          : 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-600'
       }`}
     >
       {member.role === 'admin' ? 'Admin' : 'Member'}

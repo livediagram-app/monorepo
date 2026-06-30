@@ -159,16 +159,16 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       {/* ---------- Breadcrumb + new-folder ---------- */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900/40">
         <nav aria-label="Team folders" className="flex min-w-0 flex-wrap items-center text-xs">
           {crumbs.map((c, i) => {
             const isLast = i === crumbs.length - 1;
             return (
               <span key={`${c.label}-${i}`} className="flex items-center">
                 {i > 0 ? (
-                  <span aria-hidden className="px-1 text-slate-300">
+                  <span aria-hidden className="px-1 text-slate-300 dark:text-slate-600">
                     ›
                   </span>
                 ) : null}
@@ -176,7 +176,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
                   <button
                     type="button"
                     onClick={c.onClick}
-                    className="rounded px-1 py-0.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    className="rounded px-1 py-0.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                   >
                     {c.label}
                   </button>
@@ -187,8 +187,8 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
                   <span
                     className={
                       i === 0
-                        ? 'px-1 py-0.5 font-semibold uppercase tracking-wider text-slate-500'
-                        : 'px-1 py-0.5 font-semibold text-slate-700'
+                        ? 'px-1 py-0.5 font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'
+                        : 'px-1 py-0.5 font-semibold text-slate-700 dark:text-slate-200'
                     }
                   >
                     {c.label}
@@ -265,18 +265,18 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
 
       {/* ---------- Rows ---------- */}
       {lib.loading ? (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
           {Array.from({ length: 2 }).map((_, i) => (
             <li key={i} className="flex items-center gap-3 px-4 py-3">
-              <span className="h-4 w-4 animate-pulse rounded bg-slate-200" />
-              <span className="h-4 flex-1 animate-pulse rounded bg-slate-200" />
+              <span className="h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+              <span className="h-4 flex-1 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
             </li>
           ))}
         </ul>
       ) : visibleFolders.length === 0 &&
         visibleDiagrams.length === 0 &&
         !(spot.kind === 'root' && unsorted.length > 0) ? (
-        <p className="px-4 py-8 text-center text-xs text-slate-500">
+        <p className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
           {spot.kind === 'root'
             ? 'Nothing shared yet. Move a diagram here from your personal explorer, or create a folder to organise ahead.'
             : 'This folder is empty.'}
@@ -312,7 +312,7 @@ export function TeamSharedDiagrams({ ownerId, teamId }: { ownerId: string; teamI
           />
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
           {spot.kind === 'root' && unsorted.length > 0 ? (
             <UnsortedRow count={unsorted.length} onOpen={() => setSpot({ kind: 'unsorted' })} />
           ) : null}
@@ -408,7 +408,7 @@ function TeamDiagramRow({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
   return (
-    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50">
+    <li className="group grid grid-cols-[1fr_140px_40px] items-center gap-2 px-4 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-700/40">
       <span className="flex min-w-0 items-center gap-2">
         <DiagramThumbnail ownerId={ownerId} diagramId={diagram.id} version={diagram.savedAt} />
         {renaming ? (
@@ -416,18 +416,18 @@ function TeamDiagramRow({
             initial={diagram.name}
             onCommit={onCommitRename}
             onCancel={onCancelRename}
-            className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900"
+            className="rounded border border-brand-300 bg-white px-1 py-0 text-sm font-medium text-slate-900 dark:border-brand-500/50 dark:bg-slate-900 dark:text-slate-100"
           />
         ) : (
           <Link
             href={`/diagram/${diagram.id}`}
-            className="truncate text-sm font-medium text-slate-900 transition hover:text-brand-700"
+            className="truncate text-sm font-medium text-slate-900 transition hover:text-brand-700 dark:text-slate-100 dark:hover:text-brand-300"
           >
             {diagram.name}
           </Link>
         )}
       </span>
-      <span className="text-[11px] uppercase tracking-wider text-slate-400">
+      <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
         {relativeSince(diagram.savedAt)}
       </span>
       {renaming ? (
@@ -441,7 +441,7 @@ function TeamDiagramRow({
             setMenuOpen((o) => !o);
           }}
           aria-label={`Menu for ${diagram.name}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
         >
           <EllipsisIcon />
         </button>
