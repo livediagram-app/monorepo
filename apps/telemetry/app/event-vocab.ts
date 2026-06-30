@@ -25,6 +25,10 @@ export const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   UI: 'Editor chrome: light/dark toggle, dialogs (Settings, Shortcuts, Share, Activity), share-link copy, welcome dismiss.',
   Folder: 'Diagram folders: create, rename, delete, re-parent.',
   Session: 'Account-level events when Clerk auth is configured: sign-in, sign-up, sign-out.',
+  AI: 'The optional in-editor AI assistant: running its Build / Ask / Review / Clean requests on the current tab.',
+  Team: 'Teams: creating and joining, renaming, role changes, member invites and removals, and the shared team library of diagrams.',
+  Participant:
+    'A new browser identity being minted, counted once per fresh visitor: the daily new-visitors signal.',
   Help: 'Help-centre articles: views and per-article helpful / not-really feedback.',
   Token: 'API tokens: minted by hand or via an AI tool connecting through MCP, and revoked.',
   Mcp: 'MCP server tool calls made by connected AI assistants.',
