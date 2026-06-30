@@ -61,7 +61,7 @@ Four routes inside `apps/live/`:
 - **`/sso-callback/`** — Clerk's `AuthenticateWithRedirectCallback` for the OAuth round-trip.
 - **`/explorer/`**: standalone full-page Explorer (item #12). Open to both guests and signed-in users: the owner id resolves the same way every other surface in the live app does (Clerk userId when signed in, the `livediagram:v2:self-id` localStorage UUID otherwise), so a guest sees the diagrams + folders + Image Gallery their per-browser id owns. Reached from the AuthControls dropdown's "Explorer" menu item (the same label spec/07 uses for the mobile entry point) or the floating Explorer panel's expand affordance. Signed-out visitors get the same "Sign in" CTA as everywhere else (AuthControls in the page header), the page itself doesn't gate. Guest data is per-browser by definition (no cross-device sync until they sign up and migrate).
 
-The shared card chrome and inputs live in `apps/live/components/auth-shared.tsx` so the two pages don't drift.
+The shared card chrome and inputs live in `apps/live/components/chrome/auth-shared.tsx` so the two pages don't drift.
 
 Signed-in status surfaces in the editor header via `<AuthControls>` (initial bubble + Sign out menu). Signed-out users see a "Sign in" link in the same slot. Neither blocks the editor — they're purely informational.
 

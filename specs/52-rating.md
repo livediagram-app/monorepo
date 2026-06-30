@@ -27,7 +27,7 @@ render/copy/export branches.
   `ratingAnimSpeed?`, `ratingAnimRepeat?`. The `RatingAnim` union +
   `RATING_ANIMS` + `clampRating()` + `isRatingShape()` live in
   `packages/diagram/src/index.ts`.
-- Rendered by `RatingView` (`apps/live/components/RatingView.tsx`): five star
+- Rendered by `RatingView` (`apps/live/components/canvas/RatingView.tsx`): five star
   SVGs sized to the box, filled up to the score; the filled stars carry the
   `lvd-rating-*` animation (CSS in `globals.css`, reduced-motion-safe) with
   speed / iteration from inline custom properties and a per-star stagger for

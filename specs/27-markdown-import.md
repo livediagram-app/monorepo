@@ -95,6 +95,6 @@ Implementation: `apps/live/lib/markdown-import.ts` (pure parser + layout +
 `buildTabFromMarkdown`, unit-tested), dynamically imported by
 `useTabActions.importIntoActiveTab` (which replaces the active tab) so the
 parser stays out of the initial editor bundle. The dialog is
-`apps/live/components/ImportTabDialog.tsx`. See also
+`apps/live/components/dialogs/ImportTabDialog.tsx`. See also
 [spec/05](05-diagram-structure.md) (element model) and
 [spec/09](09-canvas-and-palette.md) (import/export menu).

@@ -31,7 +31,7 @@ with no new render/copy/export branches to maintain.
   `RAIL_DEFAULT_POINTS` = 3, clamped `RAIL_MIN_POINTS`..`RAIL_MAX_POINTS` =
   2..12). Constants + `isRailShape()` live in `packages/diagram/src/index.ts`;
   `RAIL_POINT_STEP_PX` (120) is the per-point width step.
-- Rendered by `RailView` (`apps/live/components/RailView.tsx`): an SVG line +
+- Rendered by `RailView` (`apps/live/components/canvas/RailView.tsx`): an SVG line +
   dots-with-ticks sized to the element box (so resize never distorts the dots),
   plus the right-end "+" button when `interactive`. `element-variant.ts` gives
   the rail a borderless wrapper.

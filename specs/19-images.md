@@ -112,7 +112,7 @@ When `imageId === null`, `<ImageElementView>` (new component in `apps/live/compo
 
 ### Image picker modal
 
-New `apps/live/components/ImagePicker.tsx`, lazy-loaded via `next/dynamic` (matches the other on-demand modals like `ExportTabDialog` and `ShareDialog`). Two-tab modal:
+New `apps/live/components/panels/ImagePicker.tsx`, lazy-loaded via `next/dynamic` (matches the other on-demand modals like `ExportTabDialog` and `ShareDialog`). Two-tab modal:
 
 - **Upload tab.** Drag-and-drop zone + file-input fallback. On drop:
   1. Client checks the file's content type + size against the accepted list / cap.
@@ -134,7 +134,7 @@ When the picker is opened for an element that already has an attached image, a *
 R2 is a Cloudflare-only binding. Self-hosters on alternative runtimes (Node, Bun, other edge providers) won't have it. To keep [spec/03](03-open-source-and-business-model.md)'s self-host promise intact:
 
 - `apps/api/src/types.ts`: `Env.IMAGES` is optional. When unbound, every `/api/images*` endpoint returns 503 with `{ error: 'images-unavailable' }`.
-- `apps/live/components/ImagePicker.tsx`: a 503 response surfaces as a friendly "Image uploads aren't enabled on this deployment" notice instead of a generic error.
+- `apps/live/components/panels/ImagePicker.tsx`: a 503 response surfaces as a friendly "Image uploads aren't enabled on this deployment" notice instead of a generic error.
 - The Image palette entry hides entirely when a probe `GET /api/images` returns 503, so self-hosters without R2 don't see a dead-end button.
 - A future "S3-compatible storage" adapter can land alongside without changing the schema or the client (the R2 calls are localized to a handful of `env.IMAGES` put / get / delete calls in `apps/api/src/routes/images.ts`, so a Node-fs / S3 alternative could be slotted in from there).
 

@@ -23,7 +23,7 @@ global Help icon and the inline helper text.
 
 ### One reusable affordance
 
-A single component, `HelpArticleLink` (`apps/live/components/HelpArticleLink.tsx`),
+A single component, `HelpArticleLink` (`apps/live/components/primitives/HelpArticleLink.tsx`),
 is the only way the editor links to a help article. It:
 
 - takes an `article` key (see the registry below), not a raw URL;

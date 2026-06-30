@@ -23,7 +23,7 @@ The catalogue ships five multi-colour themes, all extra (grouped under the picke
 
 ## How a branch is decided
 
-The diagram model has no explicit parent/child field; hierarchy is **implicit in pinned arrows** ([spec/05](05-diagram-structure.md), `Endpoint.kind === 'pinned'`). `apps/live/lib/hierarchy.ts` derives branches from them:
+The diagram model has no explicit parent/child field; hierarchy is **implicit in pinned arrows** ([spec/05](05-diagram-structure.md), `Endpoint.kind === 'pinned'`). `packages/diagram/src/hierarchy.ts` derives branches from them:
 
 1. Each arrow whose **both** endpoints pin to elements defines a directed edge `from → to` (parent → child). Free-floating arrows contribute nothing.
 2. **Roots** are boxed elements with no incoming pinned edge but at least one outgoing one (the centre of a mind map, the CEO of an org chart). Roots get the sentinel `ROOT_BRANCH`.

@@ -100,7 +100,7 @@ existing standalone tech icon over a shape leaves it standalone — the
 icon-fold-into-shape gesture (`useEditorDrag`, which absorbs a dragged line-art
 `icon` shape into the shape beneath it) excludes tech icons via `isTechIconId`.
 
-## Rendering — `apps/live/components/tech-icon-glyph.tsx`
+## Rendering — `apps/live/components/primitives/tech-icon-glyph.tsx`
 
 `TechIconGlyph` paints the brand-coloured tile + the icon's white `glyph` markup
 inside an `<svg>` whose viewBox expands from `0 0 24 24` to `0 0 24 40` when the

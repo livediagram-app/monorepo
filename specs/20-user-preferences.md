@@ -276,7 +276,7 @@ entirely: settings move out to the surfaces they govern, so the user
 flips them where they see their effect rather than in a context-free
 modal.
 
-- **Palette settings popover**: `apps/live/components/PaletteSettingsPopover.tsx`.
+- **Palette settings popover**: `apps/live/components/palette/PaletteSettingsPopover.tsx`.
   Trigger: a sliders (gear) icon button in the Palette header — the only
   header affordance besides minimise (desktop floating panel only; the
   mobile dock palette has no header). Opens a small portal-rendered popover
@@ -310,7 +310,7 @@ modal.
 
   Closes on outside click or Escape.
 
-- **Settings dialog**: `apps/live/components/SettingsDialog.tsx`,
+- **Settings dialog**: `apps/live/components/dialogs/SettingsDialog.tsx`,
   lazy-loaded via `next/dynamic` (matches the other on-demand
   modals: ShareDialog, ExportTabDialog, ShortcutsDialog,
   ImagePicker). Trigger: a gear-icon button in the TabBar footer,

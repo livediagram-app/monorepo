@@ -18,7 +18,7 @@ They are `ShapeElement`s with new `ShapeKind`s `'progress-bar'` and `'progress-r
 
 ## Rendering
 
-`ProgressView` (`apps/live/components/ProgressView.tsx`), rendered by `BoxedElementView` for the two kinds (ahead of the generic `ShapeSvgOverlay` branch, which has no case for them):
+`ProgressView` (`apps/live/components/canvas/ProgressView.tsx`), rendered by `BoxedElementView` for the two kinds (ahead of the generic `ShapeSvgOverlay` branch, which has no case for them):
 
 - **Bar** — an HTML track (the element's **fill** colour, fully rounded) with an inner fill (the element's **stroke/accent** colour) sized to `progress%`.
 - **Ring** — an SVG track circle plus a progress arc (`pathLength={100}`, `stroke-dasharray="<pct> 100"`, round cap, starting at 12 o'clock).
