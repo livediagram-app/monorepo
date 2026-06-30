@@ -103,16 +103,6 @@ export function getIcon(id: string | undefined): IconDef {
   return (id && ICON_BY_ID.get(id)) || PLACEHOLDER_ICON;
 }
 
-// Case-insensitive search over label + keywords + id. Empty query
-// returns the whole catalogue (the picker shows everything by default).
-export function searchIcons(query: string): IconDef[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return ICON_CATALOG;
-  return ICON_CATALOG.filter(
-    (i) => i.label.toLowerCase().includes(q) || i.keywords.includes(q) || i.id.includes(q),
-  );
-}
-
 // Theme chips for the Icons accordion: a handful of categories so the
 // user can narrow ~35 glyphs to the dozen related to what they're
 // drawing. Kept as id-lists here (rather than a per-icon field) so the

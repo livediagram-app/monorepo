@@ -6,7 +6,6 @@ import {
   PLACEHOLDER_ICON,
   getIcon,
   iconsInCategory,
-  searchIcons,
 } from './icons';
 
 describe('icon catalogue', () => {
@@ -36,26 +35,6 @@ describe('getIcon', () => {
   it('falls back to the placeholder for unknown / missing ids', () => {
     expect(getIcon('does-not-exist')).toBe(PLACEHOLDER_ICON);
     expect(getIcon(undefined)).toBe(PLACEHOLDER_ICON);
-  });
-});
-
-describe('searchIcons', () => {
-  it('returns the whole catalogue for an empty / whitespace query', () => {
-    expect(searchIcons('')).toHaveLength(ICON_CATALOG.length);
-    expect(searchIcons('   ')).toHaveLength(ICON_CATALOG.length);
-  });
-
-  it('matches on label case-insensitively', () => {
-    expect(searchIcons('SERVER').some((i) => i.id === 'server')).toBe(true);
-  });
-
-  it('matches on keywords beyond the label', () => {
-    // 'database' carries the keyword 'db'.
-    expect(searchIcons('db').some((i) => i.id === 'database')).toBe(true);
-  });
-
-  it('returns an empty array when nothing matches', () => {
-    expect(searchIcons('zzzznotanicon')).toEqual([]);
   });
 });
 
