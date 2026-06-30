@@ -8,7 +8,7 @@ import { MoveToFolderDialog } from '@/components/dialogs/MoveToFolderDialog';
 import { SignInPrompt } from '@/components/chrome/SignInPrompt';
 import { ConfirmPopover } from '@/components/primitives/ConfirmPopover';
 import { Tooltip } from '@/components/primitives/Tooltip';
-import { ExpandIcon, PlusIcon } from '@/components/panels/explorer-icons';
+import { PlusIcon } from '@/components/panels/explorer-icons';
 import {
   AccordionHeader,
   DiagramRow,
@@ -51,7 +51,6 @@ function ExplorerImpl({
   teamFolders = [],
   teamDiagrams = [],
   onDismissShared,
-  onOpenFullExplorer,
   defaultRecentOpen = false,
   onSize,
   dock,
@@ -583,21 +582,6 @@ function ExplorerImpl({
               </ul>
             ) : null}
           </div>
-        ) : null}
-
-        {/* Open the full Explorer page (all diagrams, folders, teams) as a
-            full-width button at the bottom of the panel body, easier to hit
-            than the old header icon. The standalone route gates itself with a
-            sign-in CTA, so it's safe to show guests too. */}
-        {onOpenFullExplorer ? (
-          <button
-            type="button"
-            onClick={onOpenFullExplorer}
-            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200 dark:hover:border-brand-400/60 dark:hover:bg-brand-500/20"
-          >
-            <ExpandIcon />
-            Open Explorer
-          </button>
         ) : null}
 
         {/* Sign-in prompt for signed-out guests. */}
