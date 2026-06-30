@@ -69,7 +69,8 @@ regression-free. New top-level package ⇒ update `README.md` +
 ## Share dialog
 
 A new **Live image** option in the Share dialog (owner, non-password, shared):
-the `.../image.svg` URL with copy buttons for the raw URL, a Markdown
-`![](...)` snippet, and an HTML `<img>` snippet. Out of scope for v1: a PNG
+a menu off the `.../image.svg` URL to copy the raw URL, a Markdown
+`![](...)` snippet, or an HTML `<img>` snippet (the same `ShareCopyMenu`
+the Embed control uses). Out of scope for v1: a PNG
 variant (Worker rasterization), per-tab pickers in the UI (the `?tab=` param
 exists for power users), and themed cache invalidation.
