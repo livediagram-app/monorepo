@@ -16,7 +16,10 @@ import { renderElementsToSvg, type Tab } from '@livediagram/diagram';
 import { getFirstTabData, getThumbRenderedAt, markThumbRendered, thumbnailKey } from './db';
 import type { DiagramDTO, Env } from './types';
 
-export const THUMBNAIL_CONTENT_TYPE = 'image/svg+xml; charset=utf-8';
+// Content type for the cached SVG snapshot. Local to this module — the
+// HTTP responses set their own header (responses.ts); this only stamps
+// the R2 object's metadata on write.
+const THUMBNAIL_CONTENT_TYPE = 'image/svg+xml; charset=utf-8';
 
 // Resolve a diagram's cached SVG snapshot, rendering + caching it first
 // if stale. Returns null — caller should 404 / fall back to an icon —

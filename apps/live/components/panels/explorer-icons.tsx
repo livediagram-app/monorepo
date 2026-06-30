@@ -66,26 +66,6 @@ export function ChevronIcon() {
   );
 }
 
-export function DiagramIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={active ? 'text-brand-600' : 'text-slate-400'}
-      aria-hidden
-    >
-      <rect x="2.5" y="3" width="11" height="10" rx="1.5" />
-      <path d="M5 6h6M5 9h4" />
-    </svg>
-  );
-}
-
 export function FolderIcon() {
   return (
     <svg
