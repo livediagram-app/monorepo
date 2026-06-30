@@ -90,7 +90,7 @@ export function CardView({
 }) {
   useRelativeTimeTick();
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {showUnsortedRow ? (
         <SyntheticFolderCard
           icon={<FolderIcon open={false} />}
@@ -148,7 +148,7 @@ const cardShell =
 // preview — and therefore every card — the same height; the snapshot
 // sits centred via object-contain.
 const previewArea =
-  'flex h-36 w-full items-center justify-center border-b border-slate-100 bg-slate-50/70 dark:border-slate-700/60 dark:bg-slate-900/30';
+  'flex h-48 w-full items-center justify-center border-b border-slate-100 bg-slate-50/70 dark:border-slate-700/60 dark:bg-slate-900/30';
 
 function DiagramCard({
   diagram,

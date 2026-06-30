@@ -105,20 +105,31 @@ async function _apiListDiagrams(ownerId: string): Promise<DiagramSummary[]> {
 }
 export const apiListDiagrams = dedupeInFlight(_apiListDiagrams, (ownerId) => ownerId);
 
+// Pull the snapshot's solid background colour out of the SVG text: it's
+// the first `<rect>`'s fill, since renderElementsToSvg (spec/67) draws a
+// full-viewBox background rect before any element, and the snapshot has no
+// backdrop pattern, so the fill is always a plain colour string. Lets a
+// card paint its letterbox to match the diagram instead of a generic
+// slate. Null when absent (an unexpected SVG shape) — the caller falls
+// back to its default box colour.
+function svgBackgroundColor(svg: string): string | null {
+  return /<rect[^>]*\bfill="([^"]+)"/.exec(svg)?.[1] ?? null;
+}
+
 // Fetch a diagram's cached SVG snapshot (spec/67) and return a blob URL
-// for an `<img src>`. Native `<img>` can't send auth headers, so — like
-// apiFetchImageBlobUrl — the bytes come through the authenticated client
-// (Authorization / X-Owner-Id, plus X-Share-Code for a shared row) and
-// get wrapped in a blob URL the caller revokes on unmount. `version`
-// (the diagram's savedAt) rides as `?v=` purely to bust the browser/edge
-// cache when the diagram changes; the worker ignores it. Returns null on
-// 404 / 403 / 503 (empty diagram, no access, no R2) so the Explorer row
-// falls back to its generic icon.
+// for an `<img src>` plus the diagram's background colour. Native `<img>`
+// can't send auth headers, so — like apiFetchImageBlobUrl — the bytes
+// come through the authenticated client (Authorization / X-Owner-Id, plus
+// X-Share-Code for a shared row) and get wrapped in a blob URL the caller
+// revokes on unmount. `version` (the diagram's savedAt) rides as `?v=`
+// purely to bust the browser/edge cache when the diagram changes; the
+// worker ignores it. Returns null on 404 / 403 / 503 (empty diagram, no
+// access, no R2) so the Explorer row falls back to its generic icon.
 export async function apiFetchDiagramThumbnailUrl(
   ownerId: string,
   diagramId: string,
   opts: { version?: number; shareCode?: string | null } = {},
-): Promise<string | null> {
+): Promise<{ url: string; backgroundColor: string | null } | null> {
   const params = new URLSearchParams();
   if (opts.version != null) params.set('v', String(opts.version));
   const qs = params.toString();
@@ -126,8 +137,16 @@ export async function apiFetchDiagramThumbnailUrl(
   const headers = new Headers(await apiHeaders(ownerId, { share: opts.shareCode ?? null }));
   const res = await fetch(url, { headers });
   if (!res.ok) return null;
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
+  const svg = await res.text();
+  const backgroundColor = svgBackgroundColor(svg);
+  // Drop the snapshot's fixed width/height so the <img> renders the vector at
+  // the card's display size (crisp) instead of rasterising at the snapshot's
+  // intrinsic pixel size and upscaling it, which softens it in a large card.
+  // The viewBox stays, so aspect ratio + object-contain are unchanged, and the
+  // <img> sandbox (no script/font loading) is kept vs inlining the markup.
+  const scalable = svg.replace(/(<svg\b[^>]*?)\s+width="[^"]*"\s+height="[^"]*"/, '$1');
+  const blobUrl = URL.createObjectURL(new Blob([scalable], { type: 'image/svg+xml' }));
+  return { url: blobUrl, backgroundColor };
 }
 
 // ---------------------------------------------------------------------

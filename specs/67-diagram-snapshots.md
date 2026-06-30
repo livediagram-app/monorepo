@@ -110,10 +110,19 @@ of those gets a 404 and the row falls back to its icon.
 The browse views (Recent / My Work / folders / Unsorted / Generated)
 have a **List ↔ Card** toggle at the far right of the header (device-
 local preference, `livediagram:explorer-view`). Card view renders the
-same folders + diagrams as a responsive grid of cards, each with a large
-snapshot and every column the list shows (name, owner, visibility badge,
-updated time, actions menu). List and card share one badge + actions-menu
-module (`diagram-row-shared.tsx`) so they can't drift.
+same folders + diagrams as a responsive grid of cards (1 / 2 / 3 columns
+by width), each with a large snapshot and every column the list shows
+(name, owner, visibility badge, updated time, actions menu). List and
+card share one badge + actions-menu module (`diagram-row-shared.tsx`) so
+they can't drift.
+
+The snapshot preview paints its letterbox in the diagram's own
+background colour (parsed client-side from the SVG's background rect)
+instead of a generic slate, so a card reads as a continuation of the
+diagram rather than a framed cut-out. The client also strips the
+snapshot's fixed `width`/`height` (keeping the `viewBox`) before handing
+it to the `<img>`, so the vector scales to the card's size crisply
+rather than rasterising at its intrinsic size and upscaling.
 
 The same toggle is on the **team library** (spec/35) — its shared
 diagrams + folders reuse the same `CardView`, sharing the

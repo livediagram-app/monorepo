@@ -21,7 +21,9 @@ import { apiFetchDiagramThumbnailUrl } from '@/lib/api-client';
 // row, a large preview in a card); the <img> fills it with object-fit
 // contain so the whole diagram stays visible at any aspect ratio.
 
-type State = { status: 'idle' | 'loading' | 'broken' } | { status: 'ready'; src: string };
+type State =
+  | { status: 'idle' | 'loading' | 'broken' }
+  | { status: 'ready'; src: string; backgroundColor: string | null };
 
 const DEFAULT_BOX =
   'h-7 w-9 rounded border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40';
@@ -74,17 +76,17 @@ export function DiagramThumbnail({
     let activeUrl: string | null = null;
     setState({ status: 'loading' });
     apiFetchDiagramThumbnailUrl(ownerId, diagramId, { version, shareCode: shareCode ?? null })
-      .then((url) => {
+      .then((result) => {
         if (cancelled) {
-          if (url) URL.revokeObjectURL(url);
+          if (result) URL.revokeObjectURL(result.url);
           return;
         }
-        if (!url) {
+        if (!result) {
           setState({ status: 'broken' });
           return;
         }
-        activeUrl = url;
-        setState({ status: 'ready', src: url });
+        activeUrl = result.url;
+        setState({ status: 'ready', src: result.url, backgroundColor: result.backgroundColor });
       })
       .catch(() => {
         if (!cancelled) setState({ status: 'broken' });
@@ -99,6 +101,14 @@ export function DiagramThumbnail({
     <span
       ref={ref}
       aria-hidden
+      // Paint the box in the diagram's own background colour once the
+      // snapshot loads, so the object-contain letterbox blends into the
+      // preview instead of clashing with a generic slate fill (spec/67).
+      style={
+        state.status === 'ready' && state.backgroundColor
+          ? { backgroundColor: state.backgroundColor }
+          : undefined
+      }
       className={`flex shrink-0 items-center justify-center overflow-hidden text-slate-400 dark:text-slate-500 ${className}`}
     >
       {state.status === 'ready' ? (
