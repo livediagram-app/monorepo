@@ -15,7 +15,7 @@ Every event is three small fields (`packages/api-schema`, shared by emitter + in
 
 ```ts
 type TelemetryEvent = {
-  category: TelemetryCategory; // the "parent": Diagram | Element | Tab | Theme | Canvas | Template | Comment | Note | Search | UI | Folder | Session | AI | Team | Participant | Help | Token
+  category: TelemetryCategory; // the "parent": Diagram | Element | Tab | Theme | Canvas | Template | Comment | Note | Search | UI | Folder | Session | AI | Team | Participant | Help | Token | Mcp
   action: TelemetryAction; // the "verb": Created | Deleted | Shared | Joined | Added | ...
   type?: string | null; // one app-defined reference value: 'Square', 'Edit', 'PNG', a template id, a theme name
 };
