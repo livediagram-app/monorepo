@@ -15,7 +15,7 @@ import {
   curveControlPoint,
 } from './arrow-path';
 import { arrowStyleOf } from './arrow-style';
-import { BORDER_DASH_ARRAY } from './border-style';
+import { BORDER_DASH_ARRAY, BORDER_RADIUS_PX } from './border-style';
 import {
   defaultArrowStrokeColor,
   defaultFillColor,
@@ -54,14 +54,24 @@ export type ExportLabel = {
   runs?: ExportRun[];
 };
 
-// `image` is a dashed placeholder (a static export can't embed the bitmap);
-// `none` is a label-only element (text); the rest carry resolved fill + stroke.
+// `image` carries the resolved bitmap render info: `href` is a data URL when a
+// caller has supplied the bytes (the bitmap is embedded), else undefined (a
+// dashed placeholder is drawn — e.g. a headless thumbnail with no bytes on
+// hand). `objectFit` / `radius` mirror the on-screen ImageElementView so cover
+// crops, contain letterboxes, and avatars clip to a circle. `none` is a
+// label-only element (text); the rest carry resolved fill + stroke.
 export type ExportShape =
-  | { kind: 'image' }
+  | { kind: 'image'; href?: string; objectFit: 'cover' | 'contain'; radius: number }
   | { kind: 'ellipse'; fill: string; stroke: string }
   | { kind: 'diamond'; fill: string; stroke: string }
   | { kind: 'rect'; fill: string; stroke: string }
   | { kind: 'none' };
+
+// Resolves an image element's `imageId` to a data URL to embed, or undefined
+// to fall back to the placeholder. The bytes are fetched / read by the caller
+// (the browser export prefetches via the authenticated image API; a future
+// worker path could read R2), keeping this renderer free of any IO.
+export type ResolveImageHref = (imageId: string) => string | undefined;
 
 export type BoxedExport = { opacity: number; shape: ExportShape; label: ExportLabel | null };
 
@@ -170,22 +180,34 @@ export function contentBounds(elements: Element[]): { x: number; y: number; w: n
 // Resolve a boxed element to its export descriptor: branch decision + resolved
 // colours + label, using the SAME element-type defaults the editor renders so
 // a theme-deferring element exports with its rendered look.
-export function describeBoxedExport(el: BoxedElement): BoxedExport {
+export function describeBoxedExport(
+  el: BoxedElement,
+  resolveImageHref?: ResolveImageHref,
+): BoxedExport {
   const opacity = el.opacity ?? 1;
   if (el.type === 'image') {
+    // Mirror ImageElementView: borderRadius drives the corner clip (avatar
+    // 'full' → circle), objectFit defaults to 'contain'.
+    const radius = el.borderRadius !== undefined ? BORDER_RADIUS_PX[el.borderRadius] : 4;
+    const objectFit = el.objectFit ?? 'contain';
+    const href = el.imageId ? resolveImageHref?.(el.imageId) : undefined;
     return {
       opacity,
-      shape: { kind: 'image' },
-      label: {
-        text: el.alt ?? 'Image',
-        x: el.x + el.width / 2,
-        y: el.y + el.height / 2,
-        anchor: 'middle',
-        color: EXPORT_IMAGE_LABEL,
-        size: 12,
-        bold: true,
-        italic: false,
-      },
+      shape: { kind: 'image', href, objectFit, radius },
+      // Only paint the alt-text placeholder label when the bitmap ISN'T
+      // embedded — an inlined image shouldn't have "Image" text over it.
+      label: href
+        ? null
+        : {
+            text: el.alt ?? 'Image',
+            x: el.x + el.width / 2,
+            y: el.y + el.height / 2,
+            anchor: 'middle',
+            color: EXPORT_IMAGE_LABEL,
+            size: 12,
+            bold: true,
+            italic: false,
+          },
     };
   }
   const fill = el.fillColor ?? defaultFillColor(el);
@@ -318,16 +340,46 @@ export function svgRichLabel(
   );
 }
 
-export function svgBoxed(el: BoxedElement): string {
-  const { opacity, shape, label } = describeBoxedExport(el);
+// Inline a bitmap as a clipped <image>. The data URL is embedded so the SVG
+// stays self-contained when downloaded; preserveAspectRatio maps objectFit
+// ('cover' → slice/crop, 'contain' → meet/letterbox) and a per-element
+// clipPath rounds the corners (a 'full'-radius avatar clamps to a circle). A
+// white backing rect matches the on-screen white background behind the bitmap
+// so a letterboxed 'contain' image doesn't show the page colour in its margins.
+export function svgImageShape(
+  el: BoxedElement,
+  href: string,
+  objectFit: 'cover' | 'contain',
+  radius: number,
+): string {
+  const x = r2(el.x);
+  const y = r2(el.y);
+  const w = r2(el.width);
+  const h = r2(el.height);
+  const rr = r2(Math.min(radius, el.width / 2, el.height / 2));
+  const par = objectFit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet';
+  // Unique, XML-id-safe clip id per element (element ids are unique per tab).
+  const clipId = `lvd-img-${String(el.id).replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  return (
+    `<clipPath id="${clipId}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rr}" ry="${rr}"/></clipPath>` +
+    `<g clip-path="url(#${clipId})">` +
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffffff"/>` +
+    `<image x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="${par}" href="${href}"/>` +
+    `</g>`
+  );
+}
+
+export function svgBoxed(el: BoxedElement, resolveImageHref?: ResolveImageHref): string {
+  const { opacity, shape, label } = describeBoxedExport(el, resolveImageHref);
   const opAttr = opacity !== 1 ? ` opacity="${r2(opacity)}"` : '';
   const cx = el.x + el.width / 2;
   const cy = el.y + el.height / 2;
   let shapeStr = '';
   if (shape.kind === 'image') {
-    shapeStr =
-      `<rect x="${r2(el.x)}" y="${r2(el.y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6"` +
-      ` fill="${EXPORT_IMAGE_FILL}" stroke="${EXPORT_IMAGE_STROKE}" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    shapeStr = shape.href
+      ? svgImageShape(el, shape.href, shape.objectFit, shape.radius)
+      : `<rect x="${r2(el.x)}" y="${r2(el.y)}" width="${r2(el.width)}" height="${r2(el.height)}" rx="6"` +
+        ` fill="${EXPORT_IMAGE_FILL}" stroke="${EXPORT_IMAGE_STROKE}" stroke-width="1.5" stroke-dasharray="4 4"/>`;
   } else if (shape.kind === 'ellipse') {
     shapeStr = `<ellipse cx="${r2(cx)}" cy="${r2(cy)}" rx="${r2(el.width / 2)}" ry="${r2(el.height / 2)}" fill="${xmlEscape(shape.fill)}" stroke="${xmlEscape(shape.stroke)}" stroke-width="1.5"/>`;
   } else if (shape.kind === 'diamond') {
@@ -426,7 +478,7 @@ const isFrameEl = (el: Element): boolean => el.type === 'shape' && el.shape === 
 // This is the renderer the MCP worker rasterises for its inline images.
 export function renderElementsToSvg(
   tab: Tab,
-  opts: { padding?: number; background?: string } = {},
+  opts: { padding?: number; background?: string; resolveImageHref?: ResolveImageHref } = {},
 ): string {
   const padding = opts.padding ?? EXPORT_PADDING;
   const bounds = contentBounds(tab.elements);
@@ -443,7 +495,7 @@ export function renderElementsToSvg(
     `<rect x="${r2(vbX)}" y="${r2(vbY)}" width="${r2(vbW)}" height="${r2(vbH)}" fill="${xmlEscape(bg)}"/>`,
   ];
   for (const el of ordered) {
-    if (el.type !== 'arrow') parts.push(svgBoxed(el));
+    if (el.type !== 'arrow') parts.push(svgBoxed(el, opts.resolveImageHref));
   }
   for (const el of tab.elements) {
     if (el.type === 'arrow') parts.push(svgArrow(el, tab.elements));

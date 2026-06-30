@@ -107,6 +107,35 @@ export async function apiFetchImageBlobUrl(
   imageId: string,
   opts: { diagramId?: string; shareCode?: string | null } = {},
 ): Promise<string | null> {
+  const res = await fetchImage(ownerId, imageId, opts);
+  if (!res) return null;
+  return URL.createObjectURL(await res.blob());
+}
+
+// Same authenticated fetch, but as a base64 `data:` URL rather than a blob
+// URL. Used by the tab exporters (PNG / SVG / PDF): a data URL stays valid
+// when the SVG is downloaded and saved elsewhere (a blob URL would dangle),
+// and decodes onto the export canvas without tainting it (same-origin bytes).
+// Returns null on 404 / 403 / 503 so the export falls back to a placeholder.
+export async function apiFetchImageDataUrl(
+  ownerId: string,
+  imageId: string,
+  opts: { diagramId?: string; shareCode?: string | null } = {},
+): Promise<string | null> {
+  const res = await fetchImage(ownerId, imageId, opts);
+  if (!res) return null;
+  return blobToDataUrl(await res.blob());
+}
+
+// Shared authenticated GET for one image's bytes. Returns the ok Response, or
+// null on any non-ok status (the callers map that to a broken / placeholder
+// state). Native `<img src>` can't send auth headers, so every read goes
+// through this fetch.
+async function fetchImage(
+  ownerId: string,
+  imageId: string,
+  opts: { diagramId?: string; shareCode?: string | null },
+): Promise<Response | null> {
   const params = new URLSearchParams();
   if (opts.diagramId) params.set('d', opts.diagramId);
   const url = `${API_BASE}/images/${encodeURIComponent(imageId)}${
@@ -114,7 +143,14 @@ export async function apiFetchImageBlobUrl(
   }`;
   const headers = new Headers(await apiHeaders(ownerId, { share: opts.shareCode ?? null }));
   const res = await fetch(url, { headers });
-  if (!res.ok) return null;
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
+  return res.ok ? res : null;
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('image read failed'));
+    reader.readAsDataURL(blob);
+  });
 }

@@ -129,6 +129,15 @@ When the picker is opened for an element that already has an attached image, a *
 
 `naturalWidth` / `naturalHeight` are captured on load so a future "Reset to natural size" affordance can snap back to them — but that menu entry is **not yet wired** (the right-click context menu currently exposes Link / Remove icon / layer order / Note / Comment only). Aspect lock defaults to true on first paint (the user can explicitly unlock via the Shape accordion's existing aspect-lock toggle, which works on ImageElement the same way it works on shapes).
 
+### Visual export (PNG / SVG / PDF)
+
+The visual tab exporters embed the bitmap so an image / avatar element looks the same in a downloaded file as on the canvas — they no longer fall back to a dashed placeholder. Because the bytes live behind the authenticated `GET /api/images/<id>` endpoint (a native `<img src>` can't send the owner / share headers), the export **prefetches** each referenced image as a base64 `data:` URL via `apiFetchImageDataUrl` (`apps/live/lib/export-tab-images.ts` → `loadTabImages`), then threads a `imageId → bytes` map into the renderers:
+
+- **SVG** inlines an `<image>` with the data URL (so the downloaded `.svg` stays self-contained), a per-element `clipPath` for the corner radius (a `full`-radius avatar clamps to a circle), and `preserveAspectRatio` mapping `objectFit` (`cover` → `slice`, `contain` → `meet`), over a white backing rect that matches the on-screen white background.
+- **PNG / PDF** `ctx.drawImage` the decoded bitmap into the same rounded, clipped box (data URLs are same-origin, so the canvas isn't tainted and the PDF's `getImageData` read still works).
+
+The decision is centralized in `describeBoxedExport` (`packages/diagram/src/svg-render.ts`), which now carries `href` / `objectFit` / `radius` on the image `ExportShape`. A missing / failed image (or any caller that supplies no bytes — e.g. the headless thumbnail path) keeps the placeholder, so the export degrades gracefully per-image.
+
 ## Self-host degradation
 
 R2 is a Cloudflare-only binding. Self-hosters on alternative runtimes (Node, Bun, other edge providers) won't have it. To keep [spec/03](03-open-source-and-business-model.md)'s self-host promise intact:

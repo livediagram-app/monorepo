@@ -26,6 +26,7 @@ export function EditorTabDialogs() {
     activeTab,
     multiSelectedIds,
     diagramName,
+    imageContext,
     setExportOpen,
     importOpen,
     importIntoActiveTab,
@@ -60,6 +61,7 @@ export function EditorTabDialogs() {
           }
           scope={exportScope}
           diagramName={diagramName}
+          imageContext={imageContext}
           onClose={() => setExportOpen(false)}
         />
       ) : null}

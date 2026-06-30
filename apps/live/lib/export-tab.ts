@@ -35,12 +35,20 @@ import {
   ISO_TILT_DEG,
 } from './isometric';
 import { drawArrow, drawBoxed, drawBoxedExtrusion } from './export-tab-canvas-draw';
+import type { ExportImageMap } from './export-tab-images';
 
 // Shared options for the image exports (PNG / SVG / PDF). `isometric` tilts
 // the rendered scene into the editor's isometric projection (spec/45 / 48),
 // off by default. `pattern` paints the tab's backdrop pattern (grid / dots /
 // …); on by default, the user can switch it off in the Export dialog.
-export type ImageExportOpts = { isometric?: boolean; pattern?: boolean };
+// `images` carries pre-loaded bitmaps (keyed by imageId) so image / avatar
+// elements embed their photo instead of a placeholder; absent ids (or no map)
+// fall back to the placeholder. Build it with loadTabImages (export-tab-images).
+export type ImageExportOpts = { isometric?: boolean; pattern?: boolean; images?: ExportImageMap };
+
+// Re-export so callers (the export dialog) get the loader + map type from the
+// same `@/lib/export-tab` barrel they already import the exporters from.
+export { loadTabImages, type ExportImageMap } from './export-tab-images';
 
 // Default backdrop pattern colour when a tab leaves it unset (matches the
 // editor's fallback).
@@ -153,9 +161,10 @@ export async function renderTabToCanvas(
   // Boxed elements first so arrows draw over them with the right
   // z-order on either end; framesFirst keeps frame sections behind
   // their contents (spec/09).
+  const resolveImage = opts.images ? (id: string) => opts.images!.get(id)?.image : undefined;
   for (const el of framesFirst(tab.elements)) {
     if (el.type === 'arrow') continue;
-    drawBoxed(ctx, el);
+    drawBoxed(ctx, el, resolveImage);
   }
   for (const el of tab.elements) {
     if (el.type !== 'arrow') continue;
@@ -256,8 +265,9 @@ function renderTabToSvg(tab: Tab, opts: ImageExportOpts = {}): string {
   }
   // Boxed elements first, then arrows on top (same z-order as the canvas).
   // framesFirst keeps frame sections behind their contents (spec/09).
+  const resolveImageHref = opts.images ? (id: string) => opts.images!.get(id)?.href : undefined;
   for (const el of framesFirst(tab.elements)) {
-    if (el.type !== 'arrow') parts.push(svgBoxed(el));
+    if (el.type !== 'arrow') parts.push(svgBoxed(el, resolveImageHref));
   }
   for (const el of tab.elements) {
     if (el.type === 'arrow') parts.push(svgArrow(el, tab.elements));

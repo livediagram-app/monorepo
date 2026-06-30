@@ -10,6 +10,7 @@ import {
   exportTabAsMarkdown,
   exportTabAsPng,
   exportTabAsSvg,
+  loadTabImages,
 } from '@/lib/export-tab';
 import { exportTabAsPdf } from '@/lib/export-tab-pdf';
 import { track } from '@/lib/telemetry';
@@ -36,6 +37,11 @@ type ExportTabDialogProps = {
   // flag only drives the copy, filename suffix, and telemetry so the dialog
   // stays a dumb renderer over whatever Tab it's given.
   scope?: 'tab' | 'selection';
+  // Owner / diagram / share context for fetching image bytes so PNG / SVG /
+  // PDF embed image + avatar elements (the bitmaps live behind an
+  // authenticated endpoint). Absent (e.g. no diagram id) → images export as
+  // their placeholder, same as before.
+  imageContext?: { ownerId: string; diagramId: string; shareCode: string | null };
 };
 
 type Format = 'text' | 'markdown' | 'pdf' | 'png' | 'svg' | 'file';
@@ -50,6 +56,7 @@ export function ExportTabDialog({
   diagramName,
   onClose,
   scope = 'tab',
+  imageContext,
 }: ExportTabDialogProps) {
   const [busyFormat, setBusyFormat] = useState<Format | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +83,18 @@ export function ExportTabDialog({
         downloadBlob(exportTabAsDsl(tab), `${baseName}.lvd`);
       } else if (format === 'markdown') {
         downloadBlob(exportTabAsMarkdown(tab), `${baseName}.md`);
-      } else if (format === 'png') {
-        downloadBlob(await exportTabAsPng(tab, { isometric, pattern }), `${baseName}.png`);
-      } else if (format === 'svg') {
-        downloadBlob(exportTabAsSvg(tab, { isometric, pattern }), `${baseName}.svg`);
-      } else if (format === 'pdf') {
-        downloadBlob(await exportTabAsPdf(tab, { isometric, pattern }), `${baseName}.pdf`);
+      } else {
+        // Visual formats embed image / avatar bitmaps. Fetch them once here
+        // and share the loaded map across whichever format the user picked.
+        const images = imageContext ? await loadTabImages(tab, imageContext) : undefined;
+        const opts = { isometric, pattern, images };
+        if (format === 'png') {
+          downloadBlob(await exportTabAsPng(tab, opts), `${baseName}.png`);
+        } else if (format === 'svg') {
+          downloadBlob(exportTabAsSvg(tab, opts), `${baseName}.svg`);
+        } else if (format === 'pdf') {
+          downloadBlob(await exportTabAsPdf(tab, opts), `${baseName}.pdf`);
+        }
       }
       track('Diagram', 'Exported', EXPORT_LABEL[format]);
       onClose();

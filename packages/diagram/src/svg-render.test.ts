@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ArrowElement, ShapeElement, Tab } from './index';
+import type { ArrowElement, ImageElement, ShapeElement, Tab } from './index';
 import { renderElementsToSvg } from './svg-render';
 
 const shape = (id: string, o: Partial<ShapeElement> = {}): ShapeElement => ({
@@ -10,6 +10,17 @@ const shape = (id: string, o: Partial<ShapeElement> = {}): ShapeElement => ({
   y: 0,
   width: 100,
   height: 80,
+  ...o,
+});
+
+const image = (id: string, o: Partial<ImageElement> = {}): ImageElement => ({
+  id,
+  type: 'image',
+  x: 0,
+  y: 0,
+  width: 100,
+  height: 80,
+  imageId: 'img1',
   ...o,
 });
 
@@ -71,5 +82,44 @@ describe('renderElementsToSvg', () => {
   it('defaults an empty tab to a standard page rather than a 0x0 frame', () => {
     const svg = renderElementsToSvg(tab([]));
     expect(svg).toContain('viewBox="-32 -32 664 464"');
+  });
+
+  describe('image elements', () => {
+    it('draws a dashed placeholder + alt label when no bytes are resolved', () => {
+      const svg = renderElementsToSvg(tab([image('i', { alt: 'A photo' })]));
+      expect(svg).toContain('stroke-dasharray="4 4"');
+      expect(svg).toContain('A photo');
+      expect(svg).not.toContain('<image');
+    });
+
+    it('embeds the bitmap as an <image> when a data URL is resolved', () => {
+      const href = 'data:image/png;base64,AAAA';
+      const svg = renderElementsToSvg(tab([image('i', { alt: 'A photo' })]), {
+        resolveImageHref: (id) => (id === 'img1' ? href : undefined),
+      });
+      expect(svg).toContain(`<image`);
+      expect(svg).toContain(`href="${href}"`);
+      // contain (the default) letterboxes via meet; no placeholder / alt text.
+      expect(svg).toContain('preserveAspectRatio="xMidYMid meet"');
+      expect(svg).toContain('clip-path="url(#lvd-img-i)"');
+      expect(svg).not.toContain('stroke-dasharray="4 4"');
+      expect(svg).not.toContain('A photo');
+    });
+
+    it("uses slice for objectFit 'cover'", () => {
+      const svg = renderElementsToSvg(tab([image('i', { objectFit: 'cover' })]), {
+        resolveImageHref: () => 'data:image/png;base64,AAAA',
+      });
+      expect(svg).toContain('preserveAspectRatio="xMidYMid slice"');
+    });
+
+    it("clips a 'full'-radius avatar to a circle (rx = half the shorter side)", () => {
+      const svg = renderElementsToSvg(
+        tab([image('i', { width: 100, height: 80, borderRadius: 'full' })]),
+        { resolveImageHref: () => 'data:image/png;base64,AAAA' },
+      );
+      // min(width/2, height/2) = 40.
+      expect(svg).toContain('rx="40" ry="40"');
+    });
   });
 });

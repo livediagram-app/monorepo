@@ -99,19 +99,65 @@ export function drawBoxedExtrusion(ctx: CanvasRenderingContext2D, el: BoxedEleme
   ctx.restore();
 }
 
-export function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void {
+// Draw a loaded bitmap into the element's rounded box, honouring objectFit
+// (cover crops, contain letterboxes) and the corner radius (avatars clip to a
+// circle). A white backing fill matches the on-screen white background behind
+// the image so a 'contain' letterbox doesn't expose the page colour.
+function drawImageElement(
+  ctx: CanvasRenderingContext2D,
+  el: BoxedElement,
+  img: HTMLImageElement,
+  objectFit: 'cover' | 'contain',
+  radius: number,
+): void {
+  ctx.save();
+  roundedRect(ctx, el.x, el.y, el.width, el.height, radius);
+  ctx.clip();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(el.x, el.y, el.width, el.height);
+  const iw = img.naturalWidth || img.width || 0;
+  const ih = img.naturalHeight || img.height || 0;
+  if (iw > 0 && ih > 0) {
+    const scale =
+      objectFit === 'cover'
+        ? Math.max(el.width / iw, el.height / ih)
+        : Math.min(el.width / iw, el.height / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    ctx.drawImage(img, el.x + (el.width - dw) / 2, el.y + (el.height - dh) / 2, dw, dh);
+  }
+  ctx.restore();
+}
+
+export function drawBoxed(
+  ctx: CanvasRenderingContext2D,
+  el: BoxedElement,
+  resolveImage?: (imageId: string) => HTMLImageElement | undefined,
+): void {
   const { opacity, shape, label } = describeBoxedExport(el);
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.lineWidth = 1.5;
+  // True once a real bitmap is painted, so the alt-text label (which
+  // describeBoxedExport returns for an image element) is suppressed — it's
+  // only meant for the empty-state placeholder, not over a drawn photo.
+  let drewImage = false;
   if (shape.kind === 'image') {
-    ctx.strokeStyle = EXPORT_IMAGE_STROKE;
-    ctx.fillStyle = EXPORT_IMAGE_FILL;
-    ctx.setLineDash([4, 4]);
-    boxedSilhouettePath(ctx, el, 'image');
-    ctx.fill();
-    ctx.stroke();
-    ctx.setLineDash([]);
+    const imageId = el.type === 'image' ? el.imageId : null;
+    const img = imageId ? resolveImage?.(imageId) : undefined;
+    if (img) {
+      drawImageElement(ctx, el, img, shape.objectFit, shape.radius);
+      drewImage = true;
+    } else {
+      // No bytes on hand: dashed empty-state placeholder.
+      ctx.strokeStyle = EXPORT_IMAGE_STROKE;
+      ctx.fillStyle = EXPORT_IMAGE_FILL;
+      ctx.setLineDash([4, 4]);
+      boxedSilhouettePath(ctx, el, 'image');
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   } else if (shape.kind !== 'none') {
     ctx.fillStyle = shape.fill;
     ctx.strokeStyle = shape.stroke;
@@ -119,7 +165,7 @@ export function drawBoxed(ctx: CanvasRenderingContext2D, el: BoxedElement): void
     ctx.fill();
     ctx.stroke();
   }
-  if (label) {
+  if (label && !drewImage) {
     ctx.textBaseline = 'middle';
     if (label.runs) {
       // Per-range label: lay the spans on one baseline from the anchor
