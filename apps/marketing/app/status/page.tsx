@@ -5,7 +5,7 @@ import { subpageMetadata } from '@/lib/subpage-metadata';
 
 const STATUS_TITLE = 'Status · livediagram';
 const STATUS_DESCRIPTION =
-  'Operational status of the livediagram services: editor, API, realtime room, marketing site, and database.';
+  'Operational status of the livediagram services: editor, API, realtime room, marketing site, telemetry dashboard, help centre, and database.';
 
 export const metadata = subpageMetadata({
   title: STATUS_TITLE,
@@ -39,6 +39,16 @@ const COMPONENTS: Component[] = [
       'The diagram editor at https://livediagram.app/new. Static export served by a Cloudflare Worker.',
   },
   {
+    name: 'Telemetry dashboard',
+    description:
+      'The public anonymous-events dashboard at https://livediagram.app/telemetry. Static export served by a Cloudflare Worker.',
+  },
+  {
+    name: 'Help centre',
+    description:
+      'The help centre at https://livediagram.app/help. Static export served by a Cloudflare Worker.',
+  },
+  {
     name: 'API',
     description:
       'The backend at https://livediagram.app/api. A Cloudflare Worker that owns the D1 binding.',
@@ -56,7 +66,7 @@ const COMPONENTS: Component[] = [
   {
     name: 'Edge router',
     description:
-      'Cloudflare Worker that stitches marketing, live, api, and telemetry under one hostname via service bindings.',
+      'Cloudflare Worker that stitches marketing, live, telemetry, help, and api under one hostname via service bindings.',
   },
 ];
 
