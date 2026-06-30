@@ -14,7 +14,7 @@ import { ShareRail } from './ShareRail';
 export function SiteHeader({ productNav }: { productNav?: ProductNavKey }) {
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-slate-50/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-y border-slate-200/70 bg-slate-50/80 backdrop-blur">
         {/* gap-* guarantees breathing room between the left cluster and the CTA
             even when justify-between collapses to zero on a narrow phone (where
             Brand + the apps-menu dropdown + CTA otherwise sit flush). Mobile

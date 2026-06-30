@@ -8,7 +8,7 @@ import { SearchInput } from '@/components/SearchInput';
 // it's reachable from every article, not just the home hero.
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-slate-200/70 bg-slate-50/85 backdrop-blur">
+    <header className="sticky top-0 z-50 h-16 border-y border-slate-200/70 bg-slate-50/85 backdrop-blur">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 md:px-8">
         <div className="flex shrink-0 items-center gap-2.5">
           <Brand href="/" size="md" />
