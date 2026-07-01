@@ -31,8 +31,10 @@ type TabFolderChipProps = {
   // folder members behave exactly like loose tabs.
   renderTab: (tab: Tab) => ReactNode;
   // Drop a dragged tab next to this folder. Reorder-only (membership is
-  // menu-only, spec/30); the parent normalizes afterwards.
-  onReorder: (sourceId: string, targetId: string) => void;
+  // menu-only, spec/30); the parent normalizes afterwards. The optional
+  // `placeBefore` is unused here (dropping on the chip always joins at the
+  // head), but keeps the signature aligned with the parent's onReorder.
+  onReorder: (sourceId: string, targetId: string, placeBefore?: boolean) => void;
   onRename: (oldName: string, newName: string) => void;
   // Live presence per tab + the local participant, so a COLLAPSED folder
   // can surface the participants viewing its (hidden) member tabs — when

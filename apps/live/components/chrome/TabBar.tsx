@@ -119,7 +119,11 @@ type TabBarProps = {
   // Flip tab.locked. Disables every mutator until toggled back on.
   // The lock icon appears on the tab itself + on every element.
   onToggleLockTab: () => void;
-  onReorder: (sourceId: string, targetId: string) => void;
+  // Move `sourceId` next to `targetId`. `placeBefore` (default true) picks
+  // which side of the target it lands on — the tab bar sets it from the
+  // pointer position so the drop matches the insertion caret. Omitting it
+  // (folder-chip drop) falls back to inserting before the target.
+  onReorder: (sourceId: string, targetId: string, placeBefore?: boolean) => void;
   // True for a view-only ('view' share role) session. Suppresses
   // every mutation affordance on the bar: tab rename (double-click
   // + the ellipsis Rename row), the "+" add button, the whole
@@ -196,7 +200,14 @@ export function TabBar({
     if (renameActiveNonce > 0 && !readOnly) setEditingId(activeId);
   }, [renameActiveNonce, readOnly, activeId]);
   const [dragId, setDragId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
+  // Where the dragged tab will land: a target pill + which side of it. The
+  // side is chosen from the pointer's position within the pill (left half =
+  // before, right half = after), so the drop is deterministic rather than
+  // direction-dependent, and a vertical caret renders in that gap so the
+  // user can see exactly where the tab will go before releasing (spec/30).
+  const [dropTarget, setDropTarget] = useState<{ id: string; side: 'before' | 'after' } | null>(
+    null,
+  );
   // Drives the per-tab accent's legibility guard: the bar is white in
   // light mode, slate-900 in dark, so a stroke that reads on one can
   // vanish on the other.
@@ -281,7 +292,9 @@ export function TabBar({
   const renderTabPill = (tab: Tab): ReactNode => {
     const isActive = tab.id === activeId;
     const isEditing = editingId === tab.id;
-    const isDragOver = overId === tab.id && dragId && dragId !== tab.id;
+    const isDragTarget = dropTarget?.id === tab.id && dragId != null && dragId !== tab.id;
+    const showCaretBefore = isDragTarget && dropTarget?.side === 'before';
+    const showCaretAfter = isDragTarget && dropTarget?.side === 'after';
     return (
       <div
         key={tab.id}
@@ -294,21 +307,28 @@ export function TabBar({
         onDragOver={(e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          if (overId !== tab.id) setOverId(tab.id);
+          if (dragId === tab.id) return;
+          // Pick the side from the pointer's position within the pill so the
+          // insertion caret sits exactly where the tab will land.
+          const rect = e.currentTarget.getBoundingClientRect();
+          const side = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
+          if (dropTarget?.id !== tab.id || dropTarget.side !== side)
+            setDropTarget({ id: tab.id, side });
         }}
         onDragLeave={() => {
-          if (overId === tab.id) setOverId(null);
+          if (dropTarget?.id === tab.id) setDropTarget(null);
         }}
         onDrop={(e) => {
           e.preventDefault();
           const src = e.dataTransfer.getData('text/plain');
-          if (src && src !== tab.id) onReorder(src, tab.id);
+          const side = dropTarget?.id === tab.id ? dropTarget.side : 'before';
+          if (src && src !== tab.id) onReorder(src, tab.id, side === 'before');
           setDragId(null);
-          setOverId(null);
+          setDropTarget(null);
         }}
         onDragEnd={() => {
           setDragId(null);
-          setOverId(null);
+          setDropTarget(null);
         }}
         onContextMenu={
           readOnly
@@ -332,8 +352,16 @@ export function TabBar({
         }}
         className={`relative flex shrink-0 items-center gap-1 rounded-md px-2 transition ${
           isActive ? '' : 'hover:bg-slate-100'
-        } ${isDragOver ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
+        }`}
       >
+        {/* Insertion caret: a vertical bar in the gap on the side the tab
+            will land. pointer-events-none so it never intercepts the drag. */}
+        {showCaretBefore ? (
+          <span className="pointer-events-none absolute inset-y-1 -left-1 z-10 w-1 rounded-full bg-brand-500" />
+        ) : null}
+        {showCaretAfter ? (
+          <span className="pointer-events-none absolute inset-y-1 -right-1 z-10 w-1 rounded-full bg-brand-500" />
+        ) : null}
         {isEditing ? (
           <NameEditor
             initial={tab.name}

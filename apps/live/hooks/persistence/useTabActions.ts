@@ -371,7 +371,7 @@ export function useTabActions(deps: TabActionsDeps) {
     setEditingId(null);
   };
 
-  const reorderTabs = (sourceId: string, targetId: string) => {
+  const reorderTabs = (sourceId: string, targetId: string, placeBefore = true) => {
     if (sourceId === targetId) return;
     const srcIdx0 = tabs.findIndex((t) => t.id === sourceId);
     const tgtIdx0 = tabs.findIndex((t) => t.id === targetId);
@@ -392,7 +392,14 @@ export function useTabActions(deps: TabActionsDeps) {
       const folder = tabFolderName(ts[tIdx]!);
       const next = [...ts];
       const [moved] = next.splice(sIdx, 1);
-      next.splice(tIdx, 0, { ...moved!, folder: folder ?? undefined });
+      // Recompute the target's index AFTER removing the source (removing an
+      // earlier source shifts the target left by one), then land before or
+      // after it per `placeBefore`. This makes the drop deterministic: the
+      // caret the user saw is exactly where the tab goes, regardless of drag
+      // direction.
+      const insertBase = next.findIndex((t) => t.id === targetId);
+      const insertIdx = placeBefore ? insertBase : insertBase + 1;
+      next.splice(insertIdx, 0, { ...moved!, folder: folder ?? undefined });
       // Re-normalize so every folder stays one contiguous run (spec/30).
       return normalizeFolderOrder(next);
     });

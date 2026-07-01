@@ -290,6 +290,10 @@ export function useElementCreation(opts: {
     );
     setSelectedId(el.id);
     setEditingId(el.id);
+    // Double-clicking empty canvas is a first-class "make a Text element"
+    // path, same as the quick-connect "add text" action — count it so it
+    // isn't invisible to the Element/Added dashboard (spec/22).
+    track('Element', 'Added', 'Text');
   };
 
   return {
