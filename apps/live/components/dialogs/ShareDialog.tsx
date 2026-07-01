@@ -40,6 +40,7 @@ export function ShareDialog({
   links,
   sharePassword,
   shareUrlFor,
+  tabs,
   nameConfirmed,
   lockedName,
   onSaveName,
@@ -61,6 +62,13 @@ export function ShareDialog({
   // Lifetime for the next link (spec/34). Never = the pre-expiry
   // default: the link works until revoked.
   const [newExpiry, setNewExpiry] = useState<ShareLinkExpiry>('never');
+  // Which tab the Live image renders (spec/54). null = the first tab,
+  // which the server serves from its cached snapshot, so the URL omits
+  // `?tab=`. Diagram-wide: the same choice applies to every share link's
+  // image. Any other tab id is threaded straight into the image URL.
+  const [liveImageTabId, setLiveImageTabId] = useState<string | null>(null);
+  const firstTabId = tabs[0]?.id;
+  const liveImageTabParam = liveImageTabId ?? undefined;
 
   const trimmedName = name.trim();
   const effectiveName = trimmedName || participant.name;
@@ -352,23 +360,50 @@ export function ShareDialog({
                         tooltipTitle="Live image"
                         tooltipDescription="An <img>-able SVG URL that re-renders this diagram, so an embed in a README, wiki, or doc stays up to date."
                         trackType="LiveImage"
+                        header={
+                          // Per-tab picker (spec/54): only worth showing
+                          // when there's more than one tab. Selecting the
+                          // first tab clears back to the cached default
+                          // (null → no `?tab=`).
+                          tabs.length > 1 ? (
+                            <label className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                              Tab
+                              <select
+                                value={liveImageTabId ?? firstTabId ?? ''}
+                                onChange={(e) => {
+                                  const id = e.target.value;
+                                  const next = id === firstTabId ? null : id;
+                                  setLiveImageTabId(next);
+                                  if (next) track('UI', 'Selected', 'LiveImageTab');
+                                }}
+                                className="min-w-0 flex-1 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                              >
+                                {tabs.map((t) => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null
+                        }
                         items={[
                           {
                             label: 'Copy image URL',
                             icon: <ImageGlyph />,
-                            text: liveImageUrlFor(origin, link.code),
+                            text: liveImageUrlFor(origin, link.code, liveImageTabParam),
                             what: 'image URL',
                           },
                           {
                             label: 'Copy Markdown',
                             icon: <ImageGlyph />,
-                            text: liveImageMarkdown(origin, link.code),
+                            text: liveImageMarkdown(origin, link.code, liveImageTabParam),
                             what: 'Markdown',
                           },
                           {
                             label: 'Copy HTML',
                             icon: <ImageGlyph />,
-                            text: liveImageHtml(origin, link.code),
+                            text: liveImageHtml(origin, link.code, liveImageTabParam),
                             what: 'HTML',
                           },
                         ]}

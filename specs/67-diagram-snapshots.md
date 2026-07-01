@@ -93,6 +93,14 @@ A per-active-link **Live image** control (non-password links only) opens
 a menu to copy the URL, a Markdown `![](...)` snippet, or an HTML
 `<img>` snippet. Sits beside the existing Copy / Embed actions.
 
+The menu also carries a **tab picker** (a `<select>` header, shown only
+when the diagram has more than one tab) so the copied URL / snippet can
+target any tab, not just the first (spec/54's `?tab=<id>`). Picking the
+first tab clears back to the default (no `?tab=`, so the cached
+first-tab snapshot serves it); picking another appends `?tab=<id>` and
+the endpoint renders that tab **on read, uncached** (see Scope). The
+choice is diagram-wide, applying to every share link's image.
+
 ### Where thumbnails appear
 
 The thumbnail shows on **every** Explorer surface that lists a diagram:
@@ -132,8 +140,17 @@ diagram, so a per-card badge is noise — the team list omits it as well).
 
 ## Scope (v1)
 
-- **First tab only.** A diagram has many tabs; both paths render the
-  first. A `?tab=<id>` selector (spec/54's power-user param) is deferred.
+- **R2 cache is first-tab only.** The persisted snapshot
+  (`thumb/<diagramId>`, one per diagram, shared by the Explorer
+  thumbnail and the default live image) always renders the **first**
+  tab. The live image's `?tab=<id>` selector (spec/54) now ships in the
+  Share dialog, but a non-default tab is rendered **on read and not
+  written to that cache** — the single per-diagram key + freshness stamp
+  has no room for a second tab, and per-tab embeds are niche. The
+  endpoint's `max-age=30, stale-while-revalidate=300` keeps repeat views
+  cheap without a persistent cache. So "first tab only" still describes
+  the cached artifact and the Explorer thumbnail, just no longer the
+  live image.
 - **No PNG.** SVG only — vector, tiny, headless-renderable. A rasterised
   variant is out of scope.
 - The List/Card toggle covers the main browse views and the team

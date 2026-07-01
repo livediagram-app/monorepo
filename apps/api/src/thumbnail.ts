@@ -13,7 +13,13 @@
 // invalidates the snapshot uniformly because they all bump saved_at.
 
 import { renderElementsToSvg, type Tab } from '@livediagram/diagram';
-import { getFirstTabData, getThumbRenderedAt, markThumbRendered, thumbnailKey } from './db';
+import {
+  getFirstTabData,
+  getTabData,
+  getThumbRenderedAt,
+  markThumbRendered,
+  thumbnailKey,
+} from './db';
 import type { DiagramDTO, Env } from './types';
 
 // Content type for the cached SVG snapshot. Local to this module — the
@@ -73,11 +79,42 @@ export async function getDiagramThumbnailSvg(
   return svg;
 }
 
+// Live image for a SPECIFIC tab (spec/54's per-tab picker, now surfaced
+// in the Share dialog). Rendered on read and deliberately NOT written to
+// the R2 snapshot cache: `thumb/<diagramId>` is the first-tab artifact
+// shared with the Explorer thumbnail (spec/67) and carries a single
+// per-diagram freshness stamp, so it has no room for a second tab. A
+// non-default tab is a niche embed, and the endpoint's short
+// stale-while-revalidate Cache-Control keeps repeat views cheap without
+// a persistent cache. Returns null (caller 404s) when there's no object
+// store, the tab isn't in the diagram, or the tab is empty / unparseable.
+export async function getDiagramTabImageSvg(
+  env: Env,
+  diagram: DiagramDTO,
+  tabId: string,
+): Promise<string | null> {
+  // Gate on the same optional R2 binding as the cached path, so the
+  // whole live-image feature is uniformly off on a binding-less deploy.
+  if (!env.IMAGES) return null;
+  const data = await getTabData(env, diagram.id, tabId);
+  return renderTabDataToSvg(env, diagram, data);
+}
+
 // Render the diagram's first tab to SVG, or null when the tab is
 // missing, unparseable, or has no elements (an empty canvas has no
 // meaningful thumbnail — the row shows its icon instead).
 async function renderFirstTab(env: Env, diagram: DiagramDTO): Promise<string | null> {
-  const data = await getFirstTabData(env, diagram.id);
+  return renderTabDataToSvg(env, diagram, await getFirstTabData(env, diagram.id));
+}
+
+// Turn a raw `tabs.data` body into an SVG, shared by the first-tab
+// snapshot and the per-tab live image. Null when the data is absent,
+// unparseable, or has no elements.
+async function renderTabDataToSvg(
+  env: Env,
+  diagram: DiagramDTO,
+  data: string | null,
+): Promise<string | null> {
   if (!data) return null;
   let parsed: Partial<Tab>;
   try {

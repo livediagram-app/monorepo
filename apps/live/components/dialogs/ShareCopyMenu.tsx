@@ -29,12 +29,18 @@ export function ShareCopyMenu({
   // Telemetry `type` for the copy event (UI / Copied / <trackType>).
   trackType,
   items,
+  header,
 }: {
   label: string;
   tooltipTitle: string;
   tooltipDescription: string;
   trackType: string;
   items: ShareCopyItem[];
+  // Optional controls pinned above the copy rows inside the menu — used
+  // by the Live image control for its per-tab picker (spec/54). Lives
+  // inside the PortalMenu so interacting with it doesn't dismiss the menu
+  // (the menu only closes on a click outside its own DOM).
+  header?: ReactNode;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -68,6 +74,11 @@ export function ShareCopyMenu({
       </Tooltip>
       {open ? (
         <PortalMenu anchor={ref.current} placement="below" onClose={() => setOpen(false)}>
+          {header ? (
+            <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
+              {header}
+            </div>
+          ) : null}
           {items.map((item) => (
             <MenuItem
               key={item.label}

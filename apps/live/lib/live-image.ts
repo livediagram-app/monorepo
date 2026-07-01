@@ -9,16 +9,21 @@
 // onto the app's hostname), so the public URL is `<origin>/api/share/...`
 // — matching how embedUrlFor builds its `<origin>/embed?s=` URL.
 
-export function liveImageUrlFor(origin: string, code: string): string {
-  return `${origin}/api/share/${encodeURIComponent(code)}/image.svg`;
+// `tabId` (spec/54) selects which tab the image renders; omit it for the
+// default (first tab), which the server serves from its cached snapshot.
+// A supplied id is appended as `?tab=<id>` so the endpoint renders that
+// specific tab.
+export function liveImageUrlFor(origin: string, code: string, tabId?: string): string {
+  const base = `${origin}/api/share/${encodeURIComponent(code)}/image.svg`;
+  return tabId ? `${base}?tab=${encodeURIComponent(tabId)}` : base;
 }
 
 // GitHub / docs Markdown image syntax.
-export function liveImageMarkdown(origin: string, code: string): string {
-  return `![diagram](${liveImageUrlFor(origin, code)})`;
+export function liveImageMarkdown(origin: string, code: string, tabId?: string): string {
+  return `![diagram](${liveImageUrlFor(origin, code, tabId)})`;
 }
 
 // Plain HTML <img> for wikis / sites that take raw HTML.
-export function liveImageHtml(origin: string, code: string): string {
-  return `<img src="${liveImageUrlFor(origin, code)}" alt="diagram" />`;
+export function liveImageHtml(origin: string, code: string, tabId?: string): string {
+  return `<img src="${liveImageUrlFor(origin, code, tabId)}" alt="diagram" />`;
 }

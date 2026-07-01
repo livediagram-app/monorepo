@@ -33,14 +33,17 @@ vi.mock('../db', () => ({
 // The live-image endpoint (spec/54 + spec/67) delegates the actual
 // render-cache to ./thumbnail; stub it so this suite pins the route's
 // resolve + password-exclusion wiring, not the rendering.
-vi.mock('../thumbnail', () => ({ getDiagramThumbnailSvg: vi.fn() }));
+vi.mock('../thumbnail', () => ({
+  getDiagramThumbnailSvg: vi.fn(),
+  getDiagramTabImageSvg: vi.fn(),
+}));
 
 // Import AFTER the mock so the share.ts module picks up the stubbed
 // db helpers. passwordGate is module-private to share.ts, exported
 // only for this suite (see the comment on the export).
 import { handleShare, passwordGate } from './share';
 import { getDiagram, getShareLink } from '../db';
-import { getDiagramThumbnailSvg } from '../thumbnail';
+import { getDiagramTabImageSvg, getDiagramThumbnailSvg } from '../thumbnail';
 import type { RouteContext } from './context';
 
 const FAKE_ENV = {} as Env;
@@ -48,9 +51,11 @@ const FAKE_ENV = {} as Env;
 const getDiagramMock = vi.mocked(getDiagram);
 const getShareLinkMock = vi.mocked(getShareLink);
 const getThumbnailMock = vi.mocked(getDiagramThumbnailSvg);
+const getTabImageMock = vi.mocked(getDiagramTabImageSvg);
 
-function imageCtx(code: string): RouteContext {
+function imageCtx(code: string, tab?: string): RouteContext {
   const url = new URL(`https://api.test/api/share/${code}/image.svg`);
+  if (tab !== undefined) url.searchParams.set('tab', tab);
   return {
     request: new Request(url, { method: 'GET' }),
     env: FAKE_ENV,
@@ -167,6 +172,7 @@ describe('GET /api/share/<code>/image.svg (spec/54 + spec/67 live image)', () =>
     getDiagramMock.mockReset();
     getShareLinkMock.mockReset();
     getThumbnailMock.mockReset();
+    getTabImageMock.mockReset();
     getSharePasswordMock.mockReset();
   });
 
@@ -212,5 +218,45 @@ describe('GET /api/share/<code>/image.svg (spec/54 + spec/67 live image)', () =>
 
     const res = await handleShare(imageCtx('C'));
     expect(res.status).toBe(404);
+  });
+
+  it('renders the requested tab (not the cached snapshot) when ?tab= is present (spec/54)', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue(null);
+    getTabImageMock.mockResolvedValue('<svg>tab2</svg>');
+
+    const res = await handleShare(imageCtx('C', 'tab-2'));
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe('<svg>tab2</svg>');
+    // The per-tab path renders on read; the cached first-tab snapshot is
+    // never touched for a ?tab= request.
+    expect(getTabImageMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), 'tab-2');
+    expect(getThumbnailMock).not.toHaveBeenCalled();
+  });
+
+  it('404s ?tab= with an unknown tab id (no cross-diagram leak) without falling back to tab one', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue(null);
+    getTabImageMock.mockResolvedValue(null); // tab not in this diagram
+
+    const res = await handleShare(imageCtx('C', 'other-diagrams-tab'));
+
+    expect(res.status).toBe(404);
+    // Must NOT quietly serve the first tab when the requested one is bogus.
+    expect(getThumbnailMock).not.toHaveBeenCalled();
+  });
+
+  it('still 404s a password-protected diagram for a ?tab= request (gate before render)', async () => {
+    getShareLinkMock.mockResolvedValue(shareLink('d1'));
+    getDiagramMock.mockResolvedValue(diagram('d1'));
+    getSharePasswordMock.mockResolvedValue('hunter2');
+
+    const res = await handleShare(imageCtx('C', 'tab-2'));
+
+    expect(res.status).toBe(404);
+    expect(getTabImageMock).not.toHaveBeenCalled();
   });
 });

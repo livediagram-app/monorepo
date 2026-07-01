@@ -71,6 +71,9 @@ regression-free. New top-level package ⇒ update `README.md` +
 A new **Live image** option in the Share dialog (owner, non-password, shared):
 a menu off the `.../image.svg` URL to copy the raw URL, a Markdown
 `![](...)` snippet, or an HTML `<img>` snippet (the same `ShareCopyMenu`
-the Embed control uses). Out of scope for v1: a PNG
-variant (Worker rasterization), per-tab pickers in the UI (the `?tab=` param
-exists for power users), and themed cache invalidation.
+the Embed control uses). The menu also carries a **per-tab picker** (a
+`<select>`, shown when the diagram has more than one tab) that threads
+`?tab=<id>` into the copied URL / snippets; see
+[spec/67](67-diagram-snapshots.md#share-dialog) for the caching detail
+(a non-default tab renders on read, uncached). Out of scope for v1: a
+PNG variant (Worker rasterization) and themed cache invalidation.

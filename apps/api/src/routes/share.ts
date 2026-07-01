@@ -10,7 +10,7 @@ import {
 import { notifyDiagramJoin } from '../email/notifications';
 import { json, notFound, svgImage } from '../responses';
 import { timingSafeEqual } from '../auth/timing-safe';
-import { getDiagramThumbnailSvg } from '../thumbnail';
+import { getDiagramTabImageSvg, getDiagramThumbnailSvg } from '../thumbnail';
 import type { DiagramDTO } from '../types';
 import { sharePasswordOf, type RouteContext } from './context';
 
@@ -108,13 +108,20 @@ export async function handleShare(ctx: RouteContext): Promise<Response> {
 // without hammering the origin on every view (the bytes themselves come
 // from R2; the worker only re-renders when the diagram was saved since).
 async function handleShareImage(ctx: RouteContext, code: string): Promise<Response> {
-  const { env } = ctx;
+  const { env, request } = ctx;
   const link = await getShareLink(env, code);
   if (!link) return notFound();
   const d = await getDiagram(env, link.diagramId);
   if (!d) return notFound();
   if (await getDiagramSharePassword(env, d.id)) return notFound();
-  const svg = await getDiagramThumbnailSvg(env, d);
+  // `?tab=<id>` (spec/54) picks a specific tab; without it we serve the
+  // cached first-tab snapshot (the default, shared with the Explorer
+  // thumbnail). An unknown tab id resolves to null below → 404, same as
+  // an empty diagram, so a bad param can't leak another diagram's tab.
+  const tabId = new URL(request.url).searchParams.get('tab');
+  const svg = tabId
+    ? await getDiagramTabImageSvg(env, d, tabId)
+    : await getDiagramThumbnailSvg(env, d);
   if (svg == null) return notFound();
   return svgImage(svg, 'public, max-age=30, stale-while-revalidate=300');
 }

@@ -24,6 +24,7 @@ export function EditorTabDialogs() {
     exportOpen,
     exportScope,
     activeTab,
+    tabs,
     multiSelectedIds,
     diagramName,
     imageContext,
@@ -78,6 +79,7 @@ export function EditorTabDialogs() {
           links={shareLinks}
           sharePassword={sharePassword}
           shareUrlFor={shareUrlFor}
+          tabs={tabs}
           nameConfirmed={nameConfirmed}
           // Signed-in via Clerk → name is locked to the account
           // display name (same rule as the welcome modal, spec/04).

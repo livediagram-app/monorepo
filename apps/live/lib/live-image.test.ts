@@ -16,6 +16,27 @@ describe('live-image builders (spec/54 + spec/67)', () => {
     );
   });
 
+  it('appends ?tab= (encoded) when a tab id is supplied', () => {
+    expect(liveImageUrlFor(origin, 'ABC123', 'tab/9')).toBe(
+      'https://livediagram.app/api/share/ABC123/image.svg?tab=tab%2F9',
+    );
+  });
+
+  it('omits ?tab= when the tab id is undefined (default first tab)', () => {
+    expect(liveImageUrlFor(origin, 'ABC123', undefined)).toBe(
+      'https://livediagram.app/api/share/ABC123/image.svg',
+    );
+  });
+
+  it('threads the tab id through the Markdown + HTML wrappers', () => {
+    expect(liveImageMarkdown(origin, 'C', 't2')).toBe(
+      '![diagram](https://livediagram.app/api/share/C/image.svg?tab=t2)',
+    );
+    expect(liveImageHtml(origin, 'C', 't2')).toBe(
+      '<img src="https://livediagram.app/api/share/C/image.svg?tab=t2" alt="diagram" />',
+    );
+  });
+
   it('wraps the URL in Markdown image syntax', () => {
     expect(liveImageMarkdown(origin, 'C')).toBe(
       '![diagram](https://livediagram.app/api/share/C/image.svg)',

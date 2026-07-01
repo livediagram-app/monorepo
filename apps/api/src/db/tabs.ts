@@ -42,6 +42,30 @@ export async function getFirstTabData(env: Env, diagramId: string): Promise<stri
   return row?.data ?? null;
 }
 
+// The raw `tabs.data` JSON for a SPECIFIC tab in a diagram, or null when
+// that tab isn't part of the diagram. Resolved through the diagram_tabs
+// link (like getTab) so a tab id only renders for a diagram that
+// actually contains it — a share code for diagram A can never coax out
+// a tab that lives only in diagram B. Backs the per-tab live image
+// (spec/54); mirrors getFirstTabData but keyed by tab id instead of the
+// lowest order_index.
+export async function getTabData(
+  env: Env,
+  diagramId: string,
+  tabId: string,
+): Promise<string | null> {
+  const row = await env.DB.prepare(
+    `SELECT t.data
+       FROM diagram_tabs dt
+       JOIN tabs t ON t.id = dt.tab_id
+      WHERE dt.diagram_id = ? AND dt.tab_id = ?
+      LIMIT 1`,
+  )
+    .bind(diagramId, tabId)
+    .first<{ data: string }>();
+  return row?.data ?? null;
+}
+
 // Full upsert for a single tab. Splits the live-app's Tab type into
 // columns + a `data` JSON blob (everything except id + name) so list
 // queries can return summaries without parsing element trees.

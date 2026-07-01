@@ -8,6 +8,11 @@ export type ShareDialogProps = {
   // Shown in the clear so the owner can always see + change it.
   sharePassword: string | null;
   shareUrlFor: (code: string) => string;
+  // The diagram's tabs, in bar order, for the Live image control's
+  // per-tab picker (spec/54). The first entry is the default the cached
+  // snapshot renders; picking another appends `?tab=<id>` to the image
+  // URL. Only `id` + `name` are read.
+  tabs: { id: string; name: string }[];
   // Whether the owner has confirmed their name (drives the share button
   // behaviour but no longer hides the identity card).
   nameConfirmed: boolean;
